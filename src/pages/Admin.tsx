@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
@@ -9,35 +9,136 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, FileText, Trash2 } from 'lucide-react';
+import { Upload, FileText, Trash2, Plus } from 'lucide-react';
 
 export default function Admin() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('manuel');
+  const [customCategory, setCustomCategory] = useState('');
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
+  const [categories, setCategories] = useState<string[]>([
+    'manuel',
+    'api',
+    'tarifs',
+    'tutoriel',
+    'technique',
+    'apporteurs',
+    'devis',
+    'fondamentaux'
+  ]);
   const [content, setContent] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
+
+  // Charger les catégories existantes
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('knowledge_base')
+        .select('category');
+      
+      if (error) throw error;
+      
+      if (data) {
+        const uniqueCategories = Array.from(new Set(data.map(d => d.category)));
+        const allCategories = Array.from(new Set([...categories, ...uniqueCategories]));
+        setCategories(allCategories);
+      }
+    } catch (error) {
+      console.error('Erreur chargement catégories:', error);
+    }
+  };
+
+  const handleAddCategory = () => {
+    if (customCategory.trim()) {
+      const newCategories = [...categories, customCategory.trim()];
+      setCategories(newCategories);
+      setCategory(customCategory.trim());
+      setCustomCategory('');
+      setShowCustomCategory(false);
+      toast({
+        title: 'Catégorie ajoutée',
+        description: `La catégorie "${customCategory}" a été créée.`,
+      });
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
     setFile(selectedFile);
+    setIsParsing(true);
     
-    // Lire le contenu du fichier
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      setContent(text);
-      
-      // Extraire le nom du fichier comme titre si pas déjà renseigné
-      if (!title) {
-        setTitle(selectedFile.name.replace(/\.[^/.]+$/, ""));
+    const fileType = selectedFile.type;
+    const fileName = selectedFile.name.toLowerCase();
+    
+    // Extraire le nom comme titre si pas déjà renseigné
+    if (!title) {
+      setTitle(selectedFile.name.replace(/\.[^/.]+$/, ""));
+    }
+
+    try {
+      // PDFs et images : nécessitent un parsing spécial
+      if (fileType === 'application/pdf' || fileName.endsWith('.pdf') || 
+          fileType.startsWith('image/') || 
+          ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.endsWith(ext))) {
+        
+        toast({
+          title: 'Traitement en cours...',
+          description: 'Extraction du contenu du document (peut prendre jusqu\'à 1 minute)',
+        });
+
+        // Créer un FormData pour envoyer le fichier
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        // Envoyer au backend pour parsing
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-document`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Erreur lors du parsing du document');
+        }
+
+        const result = await response.json();
+        setContent(result.content || 'Impossible d\'extraire le contenu');
+        
+        toast({
+          title: 'Document traité',
+          description: 'Le contenu a été extrait avec succès',
+        });
+      } else {
+        // Fichiers texte : lecture simple
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const text = event.target?.result as string;
+          setContent(text);
+        };
+        reader.readAsText(selectedFile);
       }
-    };
-    reader.readAsText(selectedFile);
+    } catch (error) {
+      console.error('Erreur:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de traiter ce fichier. Essayez de copier-coller le contenu manuellement.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsParsing(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,15 +146,20 @@ export default function Admin() {
     setIsLoading(true);
 
     try {
+      const finalCategory = showCustomCategory && customCategory.trim() 
+        ? customCategory.trim() 
+        : category;
+
       const { error } = await supabase
         .from('knowledge_base')
         .insert({
           title,
-          category,
+          category: finalCategory,
           content,
           metadata: {
             originalFileName: file?.name,
             fileSize: file?.size,
+            fileType: file?.type,
             uploadedAt: new Date().toISOString(),
           }
         });
@@ -70,10 +176,15 @@ export default function Admin() {
       setContent('');
       setFile(null);
       setCategory('manuel');
+      setCustomCategory('');
+      setShowCustomCategory(false);
       
       // Réinitialiser l'input file
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
+
+      // Recharger les catégories
+      loadCategories();
 
     } catch (error) {
       console.error('Erreur:', error);
@@ -113,21 +224,27 @@ export default function Admin() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="file-upload">
-                  Importer un fichier texte
+                  Importer un fichier
                 </Label>
                 <div className="flex items-center gap-4">
                   <Input
                     id="file-upload"
                     type="file"
-                    accept=".txt,.html,.csv,.json,.md"
+                    accept=".txt,.html,.csv,.json,.md,.pdf,.jpg,.jpeg,.png,.webp"
                     onChange={handleFileUpload}
                     className="flex-1"
+                    disabled={isParsing}
                   />
                   <Upload className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Formats acceptés : .txt, .html, .csv, .json, .md
+                  Formats acceptés : .txt, .html, .csv, .json, .md, .pdf, .jpg, .jpeg, .png, .webp
                 </p>
+                {isParsing && (
+                  <p className="text-sm text-primary font-medium">
+                    ⏳ Extraction du contenu en cours...
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -142,20 +259,51 @@ export default function Admin() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">Catégorie</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="manuel">Manuel utilisateur</SelectItem>
-                    <SelectItem value="api">Documentation API</SelectItem>
-                    <SelectItem value="tarifs">Tarifs et catalogues</SelectItem>
-                    <SelectItem value="tutoriel">Tutoriels et guides</SelectItem>
-                    <SelectItem value="technique">Documentation technique</SelectItem>
-                    <SelectItem value="autre">Autre</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="category">Catégorie</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCustomCategory(!showCustomCategory)}
+                    className="h-8 text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    {showCustomCategory ? 'Liste' : 'Nouvelle'}
+                  </Button>
+                </div>
+                
+                {showCustomCategory ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      placeholder="Nom de la catégorie..."
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddCategory}
+                      disabled={!customCategory.trim()}
+                      size="sm"
+                    >
+                      Ajouter
+                    </Button>
+                  </div>
+                ) : (
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger className="bg-popover">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      {categories.map((cat) => (
+                        <SelectItem key={cat} value={cat} className="capitalize">
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <div className="space-y-2">
