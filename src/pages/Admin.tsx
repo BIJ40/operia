@@ -83,8 +83,12 @@ export default function Admin() {
   // Fonction pour extraire le texte d'un PDF
   const extractPdfText = async (file: File): Promise<string> => {
     try {
+      console.log(`🔍 Début extraction PDF: ${file.name}`);
       const arrayBuffer = await file.arrayBuffer();
+      console.log(`📦 ArrayBuffer size: ${arrayBuffer.byteLength} bytes`);
+      
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      console.log(`📄 PDF chargé: ${pdf.numPages} pages`);
       
       let fullText = '';
       
@@ -95,12 +99,14 @@ export default function Admin() {
           .map((item: any) => item.str)
           .join(' ');
         fullText += pageText + '\n\n';
+        console.log(`📃 Page ${pageNum}/${pdf.numPages}: ${pageText.length} caractères`);
       }
       
+      console.log(`✅ Extraction terminée: ${fullText.length} caractères totaux`);
       return fullText.trim();
     } catch (error) {
-      console.error('Erreur extraction PDF:', error);
-      throw new Error('Impossible d\'extraire le texte du PDF');
+      console.error('❌ Erreur extraction PDF:', error);
+      throw new Error(`Impossible d'extraire le texte du PDF: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   };
 
@@ -207,27 +213,38 @@ export default function Admin() {
         else if (fileName.includes('fondament')) autoCategory = 'fondamentaux';
 
         // Parse le fichier
+        console.log(`🔄 Traitement: ${file.name} (${fileType})`);
+        
         if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
           // Extraction PDF côté client
           try {
+            console.log(`📄 Extraction PDF: ${file.name}`);
             extractedContent = await extractPdfText(file);
-            if (!extractedContent) {
-              extractedContent = `[PDF: ${file.name}] - Aucun texte extrait`;
+            console.log(`✅ Contenu extrait: ${extractedContent.length} caractères`);
+            
+            if (!extractedContent || extractedContent.length === 0) {
+              console.warn(`⚠️ Aucun texte dans ${file.name}`);
+              extractedContent = `[PDF: ${file.name}] - PDF vide ou scanné (aucun texte détecté)`;
             }
           } catch (error) {
-            console.error(`Erreur extraction PDF ${file.name}:`, error);
-            extractedContent = `[PDF: ${file.name}] - Erreur d'extraction`;
+            console.error(`❌ Erreur extraction ${file.name}:`, error);
+            extractedContent = `[PDF: ${file.name}] - Erreur d'extraction: ${error instanceof Error ? error.message : 'Erreur inconnue'}`;
           }
         } 
         else if (fileType.startsWith('image/') || 
             ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.endsWith(ext))) {
-          extractedContent = `[Image: ${file.name}] - Nécessite traitement manuel`;
+          console.log(`🖼️ Image détectée: ${file.name}`);
+          extractedContent = `[Image: ${file.name}] - Nécessite traitement manuel ou OCR`;
         } 
         else {
           // Fichier texte
+          console.log(`📝 Fichier texte: ${file.name}`);
           const text = await file.text();
           extractedContent = text;
+          console.log(`✅ Texte lu: ${extractedContent.length} caractères`);
         }
+
+        console.log(`📊 Contenu final pour ${file.name}: ${extractedContent.length} caractères`);
 
         // Insérer dans la base
         setUploadProgress({ 
@@ -237,6 +254,7 @@ export default function Admin() {
           status: 'uploading'
         });
 
+        console.log(`💾 Insertion en base: ${file.name}`);
         const { error } = await supabase
           .from('knowledge_base')
           .insert({
@@ -251,7 +269,12 @@ export default function Admin() {
             }
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error(`❌ Erreur insertion ${file.name}:`, error);
+          throw error;
+        }
+        
+        console.log(`✅ ${file.name} importé avec succès`);
         successCount++;
 
       } catch (error) {
