@@ -27,52 +27,25 @@ serve(async (req) => {
     const fileName = file.name;
     const fileType = file.type;
 
-    // Pour les PDFs
-    if (fileType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf')) {
-      extractedContent = `[Document PDF: ${fileName}]
-
-Ce fichier PDF a été reçu. Pour l'importer dans la base de connaissances :
-
-Option 1: Convertissez le PDF en texte en utilisant un outil externe, puis copiez-collez le contenu dans le champ "Contenu"
-
-Option 2: Si le PDF contient principalement des images ou du texte scanné, utilisez un outil OCR pour extraire le texte
-
-Métadonnées:
-- Nom du fichier: ${fileName}
-- Type: ${fileType}
-- Taille: ${bytes.length} octets
-
-Une fois le contenu extrait, remplacez ce message par le texte réel du document.`;
-    } 
-    // Pour les images
-    else if (fileType.startsWith('image/') || 
-             ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.toLowerCase().endsWith(ext))) {
-      extractedContent = `[Image: ${fileName}]
-
-Cette image a été reçue. Pour l'importer dans la base de connaissances :
-
-Si l'image contient du texte, vous pouvez :
-1. Utiliser un outil OCR en ligne (ex: Google Docs, Adobe Acrobat Online)
-2. Copier-coller le texte extrait dans le champ "Contenu"
-
-Si l'image est un schéma ou diagramme, décrivez son contenu dans le champ "Contenu"
-
-Métadonnées:
-- Nom du fichier: ${fileName}
-- Type: ${fileType}
-- Taille: ${bytes.length} octets
-
-Remplacez ce message par la description ou le texte extrait de l'image.`;
-    } 
     // Pour les fichiers texte
-    else {
+    if (fileType.startsWith('text/') || 
+        fileName.toLowerCase().endsWith('.txt') ||
+        fileName.toLowerCase().endsWith('.md') ||
+        fileName.toLowerCase().endsWith('.json') ||
+        fileName.toLowerCase().endsWith('.csv')) {
       try {
         extractedContent = new TextDecoder().decode(bytes);
       } catch (error) {
-        extractedContent = `[Erreur de lecture du fichier: ${fileName}]
-
-Impossible de lire ce fichier comme du texte. Veuillez vérifier le format et réessayer.`;
+        throw new Error(`Impossible de lire le fichier texte: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
       }
+    } 
+    // Pour les PDFs et images - renvoyer un message indiquant qu'ils ne sont pas supportés en batch
+    else if (fileType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf') ||
+             fileType.startsWith('image/')) {
+      throw new Error('Les fichiers PDF et images doivent être importés un par un via le formulaire principal');
+    }
+    else {
+      throw new Error(`Type de fichier non supporté pour l'import batch: ${fileType}`);
     }
 
     return new Response(
@@ -95,7 +68,7 @@ Impossible de lire ce fichier comme du texte. Veuillez vérifier le format et r�
         error: error instanceof Error ? error.message : 'Erreur inconnue',
       }),
       {
-        status: 500,
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );

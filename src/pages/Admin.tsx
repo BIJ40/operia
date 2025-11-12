@@ -10,6 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, FileText, Trash2, Plus } from 'lucide-react';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Configuration de PDF.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -71,6 +75,30 @@ export default function Admin() {
     }
   };
 
+  // Fonction pour extraire le texte d'un PDF
+  const extractPdfText = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      
+      let fullText = '';
+      
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(' ');
+        fullText += pageText + '\n\n';
+      }
+      
+      return fullText.trim();
+    } catch (error) {
+      console.error('Erreur extraction PDF:', error);
+      throw new Error('Impossible d\'extraire le texte du PDF');
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
     if (selectedFiles.length === 0) return;
@@ -94,42 +122,29 @@ export default function Admin() {
       }
 
       try {
-        // PDFs et images : nécessitent un parsing spécial
-        if (fileType === 'application/pdf' || fileName.endsWith('.pdf') || 
-            fileType.startsWith('image/') || 
-            ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.endsWith(ext))) {
+        // PDFs : extraction directe dans le navigateur
+        if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
           
           toast({
             title: 'Traitement en cours...',
-            description: 'Extraction du contenu du document (peut prendre jusqu\'à 1 minute)',
+            description: 'Extraction du contenu du PDF...',
           });
 
-          // Créer un FormData pour envoyer le fichier
-          const formData = new FormData();
-          formData.append('file', selectedFile);
-
-          // Envoyer au backend pour parsing
-          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-document`, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: formData,
-          });
-
-          if (!response.ok) {
-            throw new Error('Erreur lors du parsing du document');
-          }
-
-          const result = await response.json();
-          setContent(result.content || 'Impossible d\'extraire le contenu');
+          const pdfText = await extractPdfText(selectedFile);
+          setContent(pdfText || 'Aucun texte trouvé dans le PDF');
           
           toast({
             title: 'Document traité',
             description: 'Le contenu a été extrait avec succès',
           });
-        } else {
-          // Fichiers texte : lecture simple
+        } 
+        // Images : message pour traitement manuel
+        else if (fileType.startsWith('image/') || 
+            ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.endsWith(ext))) {
+          setContent(`[Image: ${fileName}]\n\nVeuillez décrire le contenu de cette image ou utiliser un outil OCR pour extraire le texte.`);
+        } 
+        // Fichiers texte : lecture simple
+        else {
           const reader = new FileReader();
           reader.onload = (event) => {
             const text = event.target?.result as string;
@@ -176,28 +191,23 @@ export default function Admin() {
         else if (fileName.includes('fondament')) autoCategory = 'fondamentaux';
 
         // Parse le fichier
-        if (fileType === 'application/pdf' || fileName.endsWith('.pdf') || 
-            fileType.startsWith('image/') || 
-            ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.endsWith(ext))) {
-          
-          const formData = new FormData();
-          formData.append('file', file);
-
-          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-document`, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: formData,
-          });
-
-          if (response.ok) {
-            const result = await response.json();
-            extractedContent = result.content || 'Contenu non extrait';
-          } else {
-            extractedContent = `[Fichier ${file.name}] - Contenu à extraire manuellement`;
+        if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
+          // Extraction PDF côté client
+          try {
+            extractedContent = await extractPdfText(file);
+            if (!extractedContent) {
+              extractedContent = `[PDF: ${file.name}] - Aucun texte extrait`;
+            }
+          } catch (error) {
+            console.error(`Erreur extraction PDF ${file.name}:`, error);
+            extractedContent = `[PDF: ${file.name}] - Erreur d'extraction`;
           }
-        } else {
+        } 
+        else if (fileType.startsWith('image/') || 
+            ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.endsWith(ext))) {
+          extractedContent = `[Image: ${file.name}] - Nécessite traitement manuel`;
+        } 
+        else {
           // Fichier texte
           const text = await file.text();
           extractedContent = text;
