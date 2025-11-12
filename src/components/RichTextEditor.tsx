@@ -2,7 +2,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -185,6 +185,59 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           className={editor.isActive('orderedList') ? 'bg-accent' : ''}
         >
           <ListOrdered className="w-4 h-4" />
+        </Button>
+
+        <div className="w-px h-6 bg-border mx-1" />
+
+        {/* Highlight buttons for selected text */}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().toggleHighlight({ color: '#fef3c7' }).run()}
+          className={editor.isActive('highlight', { color: '#fef3c7' }) ? 'bg-accent' : ''}
+          title="Surligner en jaune"
+        >
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fef3c7', border: '1px solid #ccc' }} />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().toggleHighlight({ color: '#d1fae5' }).run()}
+          className={editor.isActive('highlight', { color: '#d1fae5' }) ? 'bg-accent' : ''}
+          title="Surligner en vert"
+        >
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#d1fae5', border: '1px solid #ccc' }} />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().toggleHighlight({ color: '#dbeafe' }).run()}
+          className={editor.isActive('highlight', { color: '#dbeafe' }) ? 'bg-accent' : ''}
+          title="Surligner en bleu"
+        >
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#dbeafe', border: '1px solid #ccc' }} />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().toggleHighlight({ color: '#fee2e2' }).run()}
+          className={editor.isActive('highlight', { color: '#fee2e2' }) ? 'bg-accent' : ''}
+          title="Surligner en rouge"
+        >
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fee2e2', border: '1px solid #ccc' }} />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().unsetHighlight().run()}
+          title="Enlever le surlignage"
+        >
+          <Highlighter className="w-4 h-4" />
         </Button>
 
         <div className="w-px h-6 bg-border mx-1" />
