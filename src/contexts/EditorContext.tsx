@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { Block, AppData } from '@/types/block';
 import { loadAppData, saveAppData } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
+import seedData from '@/data/seed.json';
 
 interface EditorContextType {
   blocks: Block[];
@@ -27,8 +28,13 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
   // Load data on mount
   useEffect(() => {
     loadAppData().then((data) => {
-      if (data) {
+      if (data && data.blocks.length > 0) {
         setBlocks(data.blocks);
+      } else {
+        // Load seed data if no data exists
+        const initialData = seedData as AppData;
+        setBlocks(initialData.blocks);
+        saveAppData(initialData);
       }
       setLoading(false);
     });
