@@ -187,3 +187,19 @@ div[data-callout] p {
 .prose img {
   @apply cursor-pointer transition-opacity hover:opacity-80;
 }
+
+/* Make image modal buttons clickable in rendered content */
+.prose button[data-image-modal],
+button[data-image-modal] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+.prose [data-image-button] {
+  pointer-events: auto !important;
+}
+
+.prose [data-image-button] button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
