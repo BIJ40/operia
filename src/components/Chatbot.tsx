@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEditor } from '@/contexts/EditorContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import chatIcon from '@/assets/icone_chat.png';
+import chatIcon from '@/assets/logo_chat.png';
 
 type Message = {
   role: 'user' | 'assistant';
