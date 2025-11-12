@@ -31,6 +31,7 @@ const CalloutExtension = StarterKit.configure({
 export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   const [imageUrl, setImageUrl] = useState('');
   const [imageType, setImageType] = useState<'inline' | 'modal'>('inline');
+  const [imageLabel, setImageLabel] = useState('Voir');
   const [showImageDialog, setShowImageDialog] = useState(false);
   const { blocks } = useEditorContext();
   
@@ -109,11 +110,12 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       // Insérer un bouton d'image modal via l'extension
       editor?.chain().focus().insertContent({
         type: 'imageButton',
-        attrs: { src: imageUrl },
+        attrs: { src: imageUrl, label: imageLabel },
       }).run();
     }
 
     setImageUrl('');
+    setImageLabel('Voir');
     setShowImageDialog(false);
   };
 
@@ -328,6 +330,23 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                   </Label>
                 </div>
               </RadioGroup>
+
+              {imageType === 'modal' && (
+                <div>
+                  <Label htmlFor="image-label">Texte du bouton</Label>
+                  <Input
+                    id="image-label"
+                    type="text"
+                    placeholder="Voir"
+                    value={imageLabel}
+                    onChange={(e) => setImageLabel(e.target.value)}
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Par exemple : "Voir capture", "Voir tutoriel", "Afficher l&apos;exemple"
+                  </p>
+                </div>
+              )}
 
               <Button onClick={handleImageInsert} disabled={!imageUrl} className="w-full">
                 Insérer l&apos;image

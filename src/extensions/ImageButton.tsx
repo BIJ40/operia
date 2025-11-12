@@ -26,6 +26,19 @@ export const ImageButton = Node.create<ImageButtonOptions>({
           };
         },
       },
+      label: {
+        default: 'Voir',
+        parseHTML: (element) => {
+          return element.getAttribute('data-label') || 
+                 element.querySelector('button')?.textContent?.trim().replace('👁️', '').trim() || 
+                 'Voir';
+        },
+        renderHTML: (attributes) => {
+          return {
+            'data-label': attributes.label || 'Voir',
+          };
+        },
+      },
     };
   },
 
@@ -71,11 +84,13 @@ export const ImageButton = Node.create<ImageButtonOptions>({
 
   renderHTML({ HTMLAttributes }) {
     const src = HTMLAttributes.src || HTMLAttributes['data-src'];
+    const label = HTMLAttributes.label || HTMLAttributes['data-label'] || 'Voir';
     return [
       'div',
       { 
         'data-image-button': '',
         'data-src': src,
+        'data-label': label,
         style: 'display: inline-block; margin: 4px 8px;'
       },
       [
@@ -87,7 +102,7 @@ export const ImageButton = Node.create<ImageButtonOptions>({
           style: 'display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: transparent; color: #3b82f6; border: 1px solid #e5e7eb; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease;'
         },
         ['span', { style: 'font-size: 14px;' }, '👁️'],
-        ' Voir'
+        ' ' + label
       ]
     ];
   },
