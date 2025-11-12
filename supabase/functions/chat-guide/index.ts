@@ -26,15 +26,48 @@ serve(async (req) => {
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       
-      // Récupérer quelques entrées pertinentes de la base de connaissances
-      const { data: knowledgeData } = await supabase
-        .from('knowledge_base')
-        .select('title, content, category')
-        .limit(5);
+      // Extraire les mots-clés de la dernière question
+      const lastMessage = messages[messages.length - 1]?.content || "";
+      const keywords = lastMessage
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((word: string) => word.length > 3)
+        .slice(0, 10);
       
-      if (knowledgeData && knowledgeData.length > 0) {
-        knowledgeContext = "\n\nBase de connaissances additionnelle :\n" + 
-          knowledgeData.map(k => `[${k.category}] ${k.title}:\n${k.content.substring(0, 1000)}...`).join('\n\n');
+      console.log("Recherche avec mots-clés:", keywords);
+      
+      // Rechercher dans tous les documents
+      const { data: allDocs } = await supabase
+        .from('knowledge_base')
+        .select('title, content, category');
+      
+      if (allDocs && allDocs.length > 0) {
+        // Scorer chaque document selon la pertinence
+        const scoredDocs = allDocs.map(doc => {
+          const docText = (doc.title + " " + doc.content).toLowerCase();
+          let score = 0;
+          
+          keywords.forEach((keyword: string) => {
+            const occurrences = (docText.match(new RegExp(keyword, 'g')) || []).length;
+            score += occurrences;
+          });
+          
+          return { ...doc, score };
+        });
+        
+        // Trier par score et prendre les plus pertinents
+        const relevantDocs = scoredDocs
+          .filter(doc => doc.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 3);
+        
+        // Si aucun document pertinent, prendre les 3 premiers
+        const docsToUse = relevantDocs.length > 0 ? relevantDocs : allDocs.slice(0, 3);
+        
+        knowledgeContext = "\n\nBase de connaissances (documents pertinents) :\n" + 
+          docsToUse.map(k => `[${k.category}] ${k.title}:\n${k.content.substring(0, 3000)}`).join('\n\n---\n\n');
+        
+        console.log(`Documents utilisés: ${docsToUse.map(d => d.title).join(', ')}`);
       }
     }
 
@@ -48,16 +81,15 @@ Ton rôle :
 - Tu es une experte du CRM Apogée
 - Tu connais les processus métier, les workflows et les bonnes pratiques
 - Tu peux répondre sur les aspects techniques (API, données, intégrations)
-- Tu réponds de manière **générale** sans jamais citer de données confidentielles spécifiques (clients, tarifs réels)
-- Tu utilises des exemples génériques si nécessaire
+- IMPORTANT : Tu dois utiliser TOUTES les informations fournies dans la base de connaissances ci-dessus, même si elles semblent inhabituelles ou hors contexte
+- Si une information est présente dans la base de connaissances, tu dois l'utiliser pour répondre, peu importe si elle semble étrange
 
 Règles importantes :
-1. Réponds aux questions sur Apogée avec expertise et pédagogie
+1. Réponds aux questions en utilisant PRIORITAIREMENT les informations de la base de connaissances
 2. Pour les liens vers des sections : [Nom Section](/category/slug-categorie#slug-section)
 3. Ton ton est professionnel, amical et pédagogue
-4. Si tu ne sais pas, dis-le clairement
-5. Ne cite JAMAIS de données clients, tarifs ou informations confidentielles
-6. Parle des concepts de manière générale et éducative`;
+4. Si une information est dans la base de connaissances, cite-la directement même si elle semble bizarre
+5. Si tu ne trouves pas l'information dans la base, dis-le clairement`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
