@@ -98,41 +98,43 @@ export default function Documents() {
     
     setIsLoading(true);
     try {
-      // Grouper par titre et identifier les doublons
-      const titleMap = new Map<string, Document[]>();
-      documents.forEach(doc => {
-        if (!titleMap.has(doc.title)) {
-          titleMap.set(doc.title, []);
-        }
-        titleMap.get(doc.title)!.push(doc);
-      });
+      console.log('Suppression des doublons...');
       
-      let deletedCount = 0;
+      // Récupérer tous les documents avec leur date
+      const { data: allDocs, error: fetchError } = await supabase
+        .from('knowledge_base')
+        .select('id, title, created_at')
+        .order('created_at', { ascending: false });
       
-      // Pour chaque groupe de doublons, garder le plus récent
-      for (const [title, docs] of titleMap.entries()) {
-        if (docs.length > 1) {
-          // Trier par date (plus récent en premier)
-          docs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-          
-          // Supprimer tous sauf le premier
-          for (let i = 1; i < docs.length; i++) {
-            const { error } = await supabase
-              .from('knowledge_base')
-              .delete()
-              .eq('id', docs[i].id);
-            
-            if (!error) {
-              deletedCount++;
-            }
+      if (fetchError) throw fetchError;
+      
+      if (allDocs) {
+        // Grouper par titre et garder seulement le premier (le plus récent) de chaque groupe
+        const seenTitles = new Set<string>();
+        const idsToKeep = new Set<string>();
+        
+        allDocs.forEach(doc => {
+          if (!seenTitles.has(doc.title)) {
+            seenTitles.add(doc.title);
+            idsToKeep.add(doc.id);
           }
+        });
+        
+        // Identifier les IDs à supprimer
+        const idsToDelete = allDocs.filter(doc => !idsToKeep.has(doc.id)).map(doc => doc.id);
+        
+        console.log(`Suppression de ${idsToDelete.length} doublons...`);
+        
+        // Supprimer les doublons
+        for (const id of idsToDelete) {
+          await supabase.from('knowledge_base').delete().eq('id', id);
         }
+        
+        toast({
+          title: 'Nettoyage terminé',
+          description: `${idsToDelete.length} doublon(s) supprimé(s)`,
+        });
       }
-      
-      toast({
-        title: 'Nettoyage terminé',
-        description: `${deletedCount} doublon(s) supprimé(s)`,
-      });
       
       // Recharger la liste
       await loadDocuments();
