@@ -127,20 +127,29 @@ export const Callout = Node.create<CalloutOptions>({
     return {
       setCallout:
         (type) =>
-        ({ commands, state, chain }) => {
-          const { from, to } = state.selection;
-          const hasSelection = from !== to;
+        ({ commands, state, chain, editor }) => {
+          const { from, to, empty } = state.selection;
           
-          if (hasSelection) {
+          if (!empty) {
             // Si du texte est sélectionné, l'envelopper dans un callout
-            const selectedContent = state.doc.slice(from, to).content;
+            const selectedText = state.doc.textBetween(from, to);
             
             return chain()
               .deleteSelection()
               .insertContent({
                 type: this.name,
                 attrs: { type },
-                content: selectedContent.toJSON(),
+                content: [
+                  {
+                    type: 'paragraph',
+                    content: [
+                      {
+                        type: 'text',
+                        text: selectedText,
+                      },
+                    ],
+                  },
+                ],
               })
               .run();
           } else {
