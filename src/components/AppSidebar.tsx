@@ -1,6 +1,7 @@
 import { useEditor } from '@/contexts/EditorContext';
 import { Link, useLocation } from 'react-router-dom';
 import * as Icons from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { 
   Sidebar, 
   SidebarContent, 
@@ -24,6 +25,7 @@ export function AppSidebar() {
   const { blocks } = useEditor();
   const location = useLocation();
   const { isAdmin } = useAuth();
+  const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
   
   const categories = blocks
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
@@ -37,6 +39,18 @@ export function AppSidebar() {
   // Déterminer quelle catégorie doit être ouverte selon la route actuelle
   const currentPath = location.pathname;
   const currentCategory = categories.find(cat => currentPath.includes(`/category/${cat.slug}`));
+
+  // Ouvrir automatiquement la catégorie correspondant à la page actuelle
+  useEffect(() => {
+    if (currentCategory) {
+      setOpenCategoryId(currentCategory.id);
+    }
+  }, [currentCategory?.id]);
+
+  // Gérer l'ouverture/fermeture des catégories (une seule à la fois)
+  const handleToggleCategory = (categoryId: string) => {
+    setOpenCategoryId(prev => prev === categoryId ? null : categoryId);
+  };
 
   return (
     <Sidebar className="border-r" collapsible="icon">
@@ -97,13 +111,14 @@ export function AppSidebar() {
                   .filter(b => b.type === 'section' && b.parentId === category.id)
                   .sort((a, b) => a.order - b.order);
 
-                const isCurrentCategory = currentCategory?.id === category.id;
+                const isOpen = openCategoryId === category.id;
 
                 return (
                   <Collapsible 
                     key={category.id} 
                     className="group/collapsible"
-                    defaultOpen={isCurrentCategory}
+                    open={isOpen}
+                    onOpenChange={() => handleToggleCategory(category.id)}
                   >
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
