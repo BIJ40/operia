@@ -29,13 +29,14 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
   // Load data on mount
   useEffect(() => {
     loadAppData().then((data) => {
-      if (data && data.blocks.length > 0) {
-        setBlocks(data.blocks);
-      } else {
-        // Load apogee data if no data exists
-        const initialData = apogeeData as AppData;
+      const initialData = apogeeData as AppData;
+      
+      // If cached data has fewer than 5 categories, reload from default data
+      if (!data || data.blocks.filter(b => b.type === 'category').length < 5) {
         setBlocks(initialData.blocks);
         saveAppData(initialData);
+      } else {
+        setBlocks(data.blocks);
       }
       setLoading(false);
     });
