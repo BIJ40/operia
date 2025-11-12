@@ -12,6 +12,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
   const containerRef = useRef<HTMLDivElement>(null);
   const startPosRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
   const aspectRatioRef = useRef(1);
+  const currentDimensionsRef = useRef({ width: 0, height: 0 });
 
   useEffect(() => {
     if (imageRef.current && !node.attrs.width) {
@@ -58,12 +59,21 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
       const newWidth = Math.max(50, startPosRef.current.width + delta);
       const newHeight = newWidth / aspectRatioRef.current;
 
+      // Store in ref for immediate access
+      currentDimensionsRef.current = { width: newWidth, height: newHeight };
       setDimensions({ width: newWidth, height: newHeight });
     };
 
     const handleMouseUp = () => {
       setIsResizing(false);
-      updateAttributes({ width: dimensions.width, height: dimensions.height });
+      
+      // Use the ref values which are up-to-date
+      const finalWidth = Math.round(currentDimensionsRef.current.width);
+      const finalHeight = Math.round(currentDimensionsRef.current.height);
+      
+      // Update attributes with the final dimensions
+      updateAttributes({ width: finalWidth, height: finalHeight });
+      
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
