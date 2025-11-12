@@ -12,6 +12,7 @@ import { Header } from '@/components/Header';
 import { LoginDialog } from '@/components/LoginDialog';
 import { Chatbot } from '@/components/Chatbot';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { ColorPreset } from '@/types/block';
 import { ImageModal } from '@/components/ImageModal';
 
 export default function Category() {
@@ -29,7 +30,7 @@ export default function Category() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
-  const [editColor, setEditColor] = useState<'white' | 'green' | 'yellow' | 'red' | 'blue'>('white');
+  const [editColor, setEditColor] = useState<ColorPreset>('white');
 
   // Scroll to section if hash is present - MUST be before any early return
   useEffect(() => {
@@ -96,6 +97,13 @@ export default function Category() {
       case 'yellow': return 'bg-yellow-50 border-l-4 border-l-yellow-500';
       case 'red': return 'bg-red-50 border-l-4 border-l-red-500';
       case 'blue': return 'bg-blue-50 border-l-4 border-l-blue-500';
+      case 'purple': return 'bg-purple-50 border-l-4 border-l-purple-500';
+      case 'pink': return 'bg-pink-50 border-l-4 border-l-pink-500';
+      case 'orange': return 'bg-orange-50 border-l-4 border-l-orange-500';
+      case 'cyan': return 'bg-cyan-50 border-l-4 border-l-cyan-500';
+      case 'indigo': return 'bg-indigo-50 border-l-4 border-l-indigo-500';
+      case 'teal': return 'bg-teal-50 border-l-4 border-l-teal-500';
+      case 'rose': return 'bg-rose-50 border-l-4 border-l-rose-500';
       default: return 'bg-white border border-border';
     }
   };
@@ -164,7 +172,7 @@ export default function Category() {
                       placeholder="Titre"
                       className="font-semibold text-xl"
                     />
-                    <Select value={editColor} onValueChange={(v: any) => setEditColor(v)}>
+                    <Select value={editColor} onValueChange={(v: ColorPreset) => setEditColor(v)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -174,6 +182,13 @@ export default function Category() {
                         <SelectItem value="yellow">Jaune (astuces)</SelectItem>
                         <SelectItem value="red">Rouge (attention)</SelectItem>
                         <SelectItem value="blue">Bleu (info)</SelectItem>
+                        <SelectItem value="purple">Violet</SelectItem>
+                        <SelectItem value="pink">Rose</SelectItem>
+                        <SelectItem value="orange">Orange</SelectItem>
+                        <SelectItem value="cyan">Cyan</SelectItem>
+                        <SelectItem value="indigo">Indigo</SelectItem>
+                        <SelectItem value="teal">Sarcelle</SelectItem>
+                        <SelectItem value="rose">Rose foncé</SelectItem>
                       </SelectContent>
                     </Select>
                     <RichTextEditor

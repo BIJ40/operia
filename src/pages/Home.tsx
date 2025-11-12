@@ -36,6 +36,13 @@ export default function Home() {
       case 'yellow': return 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100';
       case 'red': return 'bg-red-50 border-red-200 hover:bg-red-100';
       case 'blue': return 'bg-blue-50 border-blue-200 hover:bg-blue-100';
+      case 'purple': return 'bg-purple-50 border-purple-200 hover:bg-purple-100';
+      case 'pink': return 'bg-pink-50 border-pink-200 hover:bg-pink-100';
+      case 'orange': return 'bg-orange-50 border-orange-200 hover:bg-orange-100';
+      case 'cyan': return 'bg-cyan-50 border-cyan-200 hover:bg-cyan-100';
+      case 'indigo': return 'bg-indigo-50 border-indigo-200 hover:bg-indigo-100';
+      case 'teal': return 'bg-teal-50 border-teal-200 hover:bg-teal-100';
+      case 'rose': return 'bg-rose-50 border-rose-200 hover:bg-rose-100';
       default: return 'bg-card border-border hover:bg-accent';
     }
   };
@@ -127,6 +134,13 @@ export default function Home() {
                         <SelectItem value="yellow">Jaune</SelectItem>
                         <SelectItem value="red">Rouge</SelectItem>
                         <SelectItem value="blue">Bleu</SelectItem>
+                        <SelectItem value="purple">Violet</SelectItem>
+                        <SelectItem value="pink">Rose</SelectItem>
+                        <SelectItem value="orange">Orange</SelectItem>
+                        <SelectItem value="cyan">Cyan</SelectItem>
+                        <SelectItem value="indigo">Indigo</SelectItem>
+                        <SelectItem value="teal">Sarcelle</SelectItem>
+                        <SelectItem value="rose">Rose foncé</SelectItem>
                       </SelectContent>
                     </Select>
                     <div className="flex gap-2">
