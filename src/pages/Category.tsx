@@ -25,6 +25,19 @@ export default function Category() {
   const [editContent, setEditContent] = useState('');
   const [editColor, setEditColor] = useState<'white' | 'green' | 'yellow' | 'red' | 'blue'>('white');
 
+  // Scroll to section if hash is present - MUST be before any early return
+  useEffect(() => {
+    if (window.location.hash) {
+      const sectionId = window.location.hash.substring(1);
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
+  }, []);
+
   if (!category) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -80,19 +93,6 @@ export default function Category() {
       default: return 'bg-white border-border';
     }
   };
-
-  // Scroll to section if hash is present
-  useEffect(() => {
-    if (window.location.hash) {
-      const sectionId = window.location.hash.substring(1);
-      setTimeout(() => {
-        const element = document.getElementById(sectionId);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 300);
-    }
-  }, []);
 
   return (
     <>
