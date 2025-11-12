@@ -30,7 +30,7 @@ import {
   SidebarHeader,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import logoApogee from '@/assets/logo_chat.png';
+import logoApogee from '@/assets/logo_helpogee.png';
 
 export default function Home() {
   const { blocks, loading, isEditMode, updateBlock, addBlock, deleteBlock } = useEditor();
