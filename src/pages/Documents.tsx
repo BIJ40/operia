@@ -37,15 +37,21 @@ export default function Documents() {
 
   const loadDocuments = async () => {
     try {
+      // Charger seulement les métadonnées, pas le contenu complet
       const { data, error } = await supabase
         .from('knowledge_base')
-        .select('*')
+        .select('id, title, category, created_at, metadata')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
       
       if (data) {
-        setDocuments(data);
+        // Ajouter une propriété content vide pour la compatibilité
+        const docsWithEmptyContent = data.map(doc => ({
+          ...doc,
+          content: '' // Le contenu sera chargé à la demande lors de l'édition
+        }));
+        setDocuments(docsWithEmptyContent);
         const uniqueCategories = Array.from(new Set(data.map(d => d.category)));
         setCategories(uniqueCategories);
       }
@@ -142,12 +148,29 @@ export default function Documents() {
     }
   };
 
-  const startEditing = (doc: Document) => {
+  const startEditing = async (doc: Document) => {
+    // Charger le contenu complet seulement maintenant
+    const { data, error } = await supabase
+      .from('knowledge_base')
+      .select('content')
+      .eq('id', doc.id)
+      .single();
+    
+    if (error) {
+      console.error('Erreur chargement contenu:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger le contenu du document',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setEditingDoc(doc.id);
     setEditForm({
       title: doc.title,
       category: doc.category,
-      content: doc.content,
+      content: data?.content || '',
     });
   };
 
@@ -349,9 +372,11 @@ export default function Documents() {
                                 <span className="capitalize px-2 py-0.5 bg-primary/10 text-primary rounded-md">
                                   {doc.category}
                                 </span>
-                                <span>
-                                  {doc.content.length.toLocaleString()} caractères
-                                </span>
+                                {doc.metadata?.fileSize && (
+                                  <span>
+                                    {(doc.metadata.fileSize / 1024).toFixed(0)} KB
+                                  </span>
+                                )}
                                 <span>
                                   {new Date(doc.created_at).toLocaleDateString('fr-FR')}
                                 </span>
@@ -377,7 +402,11 @@ export default function Documents() {
                           </div>
                           
                           <div className="text-sm text-muted-foreground line-clamp-2 bg-muted/50 p-3 rounded-md font-mono">
-                            {doc.content.substring(0, 200)}...
+                            {doc.metadata?.originalFileName && (
+                              <span className="text-xs">
+                                Fichier: {doc.metadata.originalFileName}
+                              </span>
+                            )}
                           </div>
                         </div>
                       )}
