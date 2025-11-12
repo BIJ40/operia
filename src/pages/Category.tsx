@@ -90,11 +90,11 @@ export default function Category() {
 
   const getColorClass = (color?: string) => {
     switch (color) {
-      case 'green': return 'bg-green-50 border-green-200';
-      case 'yellow': return 'bg-yellow-50 border-yellow-200';
-      case 'red': return 'bg-red-50 border-red-200';
-      case 'blue': return 'bg-blue-50 border-blue-200';
-      default: return 'bg-white border-border';
+      case 'green': return 'bg-green-50 border-l-4 border-l-green-500';
+      case 'yellow': return 'bg-yellow-50 border-l-4 border-l-yellow-500';
+      case 'red': return 'bg-red-50 border-l-4 border-l-red-500';
+      case 'blue': return 'bg-blue-50 border-l-4 border-l-blue-500';
+      default: return 'bg-white border border-border';
     }
   };
 
@@ -152,7 +152,7 @@ export default function Category() {
               <div
                 key={section.id}
                 id={section.id}
-                className={`mb-8 p-6 rounded-lg border-2 ${getColorClass(section.colorPreset)}`}
+                className={`mb-8 p-6 rounded-lg ${getColorClass(section.colorPreset)}`}
               >
                 {editingId === section.id ? (
                   <div className="space-y-4">
