@@ -82,6 +82,35 @@ export const Callout = Node.create<CalloutOptions>({
     return [
       {
         tag: 'div[data-callout]',
+        getAttrs: (element) => {
+          if (typeof element === 'string') return false;
+          const type = element.getAttribute('data-type');
+          return { type };
+        },
+      },
+      // Reconnaître les anciens callouts avec classes Tailwind
+      {
+        tag: 'div',
+        getAttrs: (element) => {
+          if (typeof element === 'string') return false;
+          const classList = element.className;
+          
+          // Détecter le type basé sur les classes
+          if (classList.includes('bg-yellow-50') || classList.includes('border-l-yellow-500')) {
+            return { type: 'warning' };
+          }
+          if (classList.includes('bg-blue-50') || classList.includes('border-l-blue-500')) {
+            return { type: 'info' };
+          }
+          if (classList.includes('bg-green-50') || classList.includes('border-l-green-500')) {
+            return { type: 'tip' };
+          }
+          if (classList.includes('bg-red-50') || classList.includes('border-l-red-500')) {
+            return { type: 'danger' };
+          }
+          
+          return false;
+        },
       },
     ];
   },
