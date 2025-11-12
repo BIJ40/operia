@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import * as Icons from 'lucide-react';
+import { icons, Settings, LogOut, Home, HelpCircle, Edit3, Square, Circle } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -26,10 +26,10 @@ export function Header({ onOpenLogin }: HeaderProps) {
     b => b.type === 'category' && b.title.toLowerCase().includes('faq')
   );
 
-  const GuideIconComponent = (Icons as any)[guideIcon] || Icons.Home;
-  const FaqIconComponent = (Icons as any)[faqIcon] || Icons.HelpCircle;
-  const EditIconComponent = (Icons as any)[editIcon] || Icons.Edit3;
-  const StopIconComponent = (Icons as any)[stopIcon] || Icons.Square;
+  const GuideIconComponent = icons[guideIcon as keyof typeof icons] || Home;
+  const FaqIconComponent = icons[faqIcon as keyof typeof icons] || HelpCircle;
+  const EditIconComponent = icons[editIcon as keyof typeof icons] || Edit3;
+  const StopIconComponent = icons[stopIcon as keyof typeof icons] || Square;
 
   const handleEnrichirClick = () => {
     if (isEditMode) {
@@ -90,7 +90,7 @@ export function Header({ onOpenLogin }: HeaderProps) {
               variant="ghost"
               className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
             >
-              <Icons.Settings className="w-5 h-5 text-primary" />
+              <Settings className="w-5 h-5 text-primary" />
               <span className="font-semibold text-foreground">PARAMÈTRES</span>
             </Button>
 
@@ -99,7 +99,7 @@ export function Header({ onOpenLogin }: HeaderProps) {
               variant="ghost"
               className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all ml-auto"
             >
-              <Icons.LogOut className="w-5 h-5 text-muted-foreground" />
+              <LogOut className="w-5 h-5 text-muted-foreground" />
               <span className="font-semibold text-foreground">QUITTER</span>
             </Button>
           </>
@@ -141,7 +141,7 @@ export function Header({ onOpenLogin }: HeaderProps) {
             <div className="space-y-3">
               <h3 className="text-sm font-medium">Icônes des catégories</h3>
               {blocks.filter(b => b.type === 'category').map((category) => {
-                const CategoryIcon = (Icons as any)[category.icon || 'Circle'] || Icons.Circle;
+                const CategoryIcon = icons[category.icon as keyof typeof icons] || Circle;
                 
                 return (
                   <div key={category.id} className="space-y-2">

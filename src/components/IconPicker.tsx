@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import * as Icons from 'lucide-react';
+import { icons, Circle } from 'lucide-react';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 
@@ -30,7 +30,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
     icon.toLowerCase().includes(search.toLowerCase())
   );
 
-  const CurrentIcon = (Icons as any)[value] || Icons.Circle;
+  const CurrentIcon = icons[value as keyof typeof icons] || Circle;
 
   return (
     <>
@@ -59,7 +59,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
 
           <div className="grid grid-cols-6 gap-2">
             {filteredIcons.map((iconName) => {
-              const IconComponent = (Icons as any)[iconName];
+              const IconComponent = icons[iconName as keyof typeof icons];
               const isSelected = value === iconName;
 
               return (
