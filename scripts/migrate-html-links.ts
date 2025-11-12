@@ -151,10 +151,11 @@ function migrateHTMLContent(htmlContent: string, blocks: Block[]): string {
 }
 
 /**
- * Fonction principale
+ * Fonction principale - MODE MIGRATION RÉELLE ACTIVÉ
  */
 async function main() {
-  console.log('🚀 Démarrage de la migration des liens HTML...\n');
+  console.log('🚀 Démarrage de la migration RÉELLE des liens HTML...\n');
+  console.log('⚠️  MODE RÉEL ACTIVÉ - Les fichiers seront modifiés!\n');
 
   // Charger les données actuelles
   const dataPath = path.join(process.cwd(), 'src/data/apogee-data.json');
@@ -162,8 +163,12 @@ async function main() {
 
   console.log(`📦 ${data.blocks.length} blocs chargés\n`);
 
-  // Charger le HTML (simulé - vous devrez copier le contenu)
-  // Pour l'instant, on va juste montrer comment ça marcherait
+  // Créer un backup AVANT toute modification
+  const backupPath = path.join(process.cwd(), 'src/data/apogee-data.backup.json');
+  fs.writeFileSync(backupPath, JSON.stringify(data, null, 2));
+  console.log(`💾 Backup créé: ${backupPath}\n`);
+
+  // Exemple de démonstration d'abord
   const htmlSample = `
     <p>Avant de penser <a href="#theme-dossier">dossier (#dossier)</a>, 
     <a href="#theme-devis-commandes">devis (#devis)</a> ou
@@ -182,31 +187,45 @@ async function main() {
   console.log(migrated);
   console.log('\n');
 
-  // Pour migrer réellement, décommenter et adapter:
-  /*
-  const htmlPath = path.join(process.cwd(), 'user-uploads/manuelV9_copie_2.txt');
-  const htmlContent = fs.readFileSync(htmlPath, 'utf-8');
+  // MIGRATION RÉELLE - Parcourir tous les blocs
+  console.log('🔄 Migration des blocs en cours...\n');
   
-  // Mettre à jour chaque bloc de contenu
-  data.blocks.forEach(block => {
-    if (block.content) {
-      block.content = migrateHTMLContent(block.content, data.blocks);
+  let migratedCount = 0;
+  let totalLinks = 0;
+
+  data.blocks.forEach((block, index) => {
+    if (block.content && block.content.length > 0) {
+      const originalContent = block.content;
+      const newContent = migrateHTMLContent(originalContent, data.blocks);
+      
+      // Compter les liens trouvés
+      const linksFound = (originalContent.match(/<a\s+href="#/g) || []).length;
+      
+      if (originalContent !== newContent) {
+        block.content = newContent;
+        migratedCount++;
+        totalLinks += linksFound;
+        console.log(`  ✓ Bloc ${index + 1}/${data.blocks.length}: "${block.title}" - ${linksFound} lien(s) converti(s)`);
+      }
     }
   });
 
-  // Sauvegarder
-  const backupPath = path.join(process.cwd(), 'src/data/apogee-data.backup.json');
-  fs.writeFileSync(backupPath, JSON.stringify(data, null, 2));
-  console.log(`💾 Backup créé: ${backupPath}`);
+  console.log('\n📊 Statistiques de migration:');
+  console.log(`  • Blocs modifiés: ${migratedCount}/${data.blocks.length}`);
+  console.log(`  • Liens convertis: ${totalLinks}`);
+  console.log('\n');
 
+  // Mettre à jour la date de modification
+  data.lastModified = Date.now();
+
+  // Sauvegarder les modifications
   fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
-  console.log(`✅ Migration terminée: ${dataPath}`);
-  */
-
-  console.log('ℹ️  Pour migrer réellement vos données:');
-  console.log('   1. Décommentez la section de migration dans le script');
-  console.log('   2. Exécutez: npx tsx scripts/migrate-html-links.ts');
-  console.log('   3. Un backup sera créé automatiquement\n');
+  console.log(`✅ Migration terminée avec succès!`);
+  console.log(`📝 Fichier mis à jour: ${dataPath}`);
+  console.log(`💾 Backup disponible: ${backupPath}\n`);
+  
+  console.log('ℹ️  Pour annuler la migration:');
+  console.log(`   cp ${backupPath} ${dataPath}\n`);
 }
 
 main().catch(console.error);
