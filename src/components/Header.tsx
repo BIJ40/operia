@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { LogOut, Home, HelpCircle, Edit3, Square } from 'lucide-react';
+import { LogOut, Home, HelpCircle, Edit3, Square, Database } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -68,6 +68,16 @@ export function Header({ onOpenLogin }: HeaderProps) {
             </>
           )}
         </Button>
+
+        {isAuthenticated && (
+          <Link
+            to="/admin"
+            className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+          >
+            <Database className="w-5 h-5 text-primary" />
+            <span className="font-semibold text-foreground">ADMIN</span>
+          </Link>
+        )}
 
         {isAuthenticated && (
           <Button
