@@ -7,15 +7,18 @@ import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ColorPreset } from '@/types/block';
-import { Palette } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 export default function Home() {
-  const { blocks, loading, isEditMode, updateBlock } = useEditor();
+  const { blocks, loading, isEditMode, updateBlock, addBlock, deleteBlock } = useEditor();
   const { isAuthenticated } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editIcon, setEditIcon] = useState('');
   const [editColor, setEditColor] = useState<ColorPreset>('white');
 
   const categories = blocks
@@ -37,17 +40,36 @@ export default function Home() {
     }
   };
 
-  const handleEditColor = (id: string) => {
+  const handleAddCategory = () => {
+    const order = categories.length;
+    addBlock({
+      type: 'category',
+      title: 'Nouvelle catégorie',
+      content: '',
+      colorPreset: 'white',
+      icon: 'BookOpen',
+      slug: `categorie-${Date.now()}`,
+      attachments: [],
+    });
+  };
+
+  const handleEdit = (id: string) => {
     const cat = categories.find(c => c.id === id);
     if (cat) {
       setEditingId(id);
+      setEditTitle(cat.title);
+      setEditIcon(cat.icon || 'BookOpen');
       setEditColor(cat.colorPreset || 'white');
     }
   };
 
-  const handleSaveColor = () => {
+  const handleSave = () => {
     if (editingId) {
-      updateBlock(editingId, { colorPreset: editColor });
+      updateBlock(editingId, { 
+        title: editTitle,
+        icon: editIcon,
+        colorPreset: editColor 
+      });
       setEditingId(null);
     }
   };
@@ -65,6 +87,15 @@ export default function Home() {
       <Header onOpenLogin={() => setLoginOpen(true)} />
 
       <main className="container mx-auto px-4 py-8">
+        {isEditMode && isAuthenticated && (
+          <div className="mb-6 flex justify-end">
+            <Button onClick={handleAddCategory}>
+              <Plus className="w-4 h-4 mr-2" />
+              Ajouter une catégorie
+            </Button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {categories.map((category) => {
             const Icon = IconComponent(category.icon || 'BookOpen');
@@ -76,6 +107,16 @@ export default function Home() {
               >
                 {editingId === category.id ? (
                   <div className="space-y-3">
+                    <Input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      placeholder="Titre de la catégorie"
+                    />
+                    <Input
+                      value={editIcon}
+                      onChange={(e) => setEditIcon(e.target.value)}
+                      placeholder="Nom icône (ex: BookOpen)"
+                    />
                     <Select value={editColor} onValueChange={(v: ColorPreset) => setEditColor(v)}>
                       <SelectTrigger>
                         <SelectValue />
@@ -89,8 +130,10 @@ export default function Home() {
                       </SelectContent>
                     </Select>
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={handleSaveColor}>✓</Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>✕</Button>
+                      <Button size="sm" onClick={handleSave}>Enregistrer</Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>
+                        Annuler
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -104,14 +147,22 @@ export default function Home() {
                       </div>
                     </Link>
                     {isEditMode && isAuthenticated && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleEditColor(category.id)}
-                      >
-                        <Palette className="w-4 h-4" />
-                      </Button>
+                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(category.id)}
+                        >
+                          ✏️
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteBlock(category.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     )}
                   </>
                 )}
@@ -123,6 +174,12 @@ export default function Home() {
         {categories.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">Aucune catégorie disponible</p>
+            {isEditMode && isAuthenticated && (
+              <Button onClick={handleAddCategory}>
+                <Plus className="w-4 h-4 mr-2" />
+                Créer la première catégorie
+              </Button>
+            )}
           </div>
         )}
       </main>
