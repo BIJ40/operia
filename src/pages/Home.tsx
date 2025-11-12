@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { LoginDialog } from '@/components/LoginDialog';
+import { Chatbot } from '@/components/Chatbot';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -153,6 +154,7 @@ export default function Home() {
       </main>
 
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+      <Chatbot />
     </div>
   );
 }

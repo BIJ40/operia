@@ -8,12 +8,16 @@ import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Header } from '@/components/Header';
+import { LoginDialog } from '@/components/LoginDialog';
+import { Chatbot } from '@/components/Chatbot';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { ImageModal } from '@/components/ImageModal';
 
 export default function Category() {
   const { slug } = useParams();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useEditor();
+  
+  const [loginOpen, setLoginOpen] = useState(false);
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   const sections = blocks
@@ -96,7 +100,7 @@ export default function Category() {
 
   return (
     <>
-      <Header onOpenLogin={() => {}} />
+      <Header onOpenLogin={() => setLoginOpen(true)} />
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
         <Sidebar className="w-64 border-r">
@@ -217,6 +221,8 @@ export default function Category() {
         </div>
       </SidebarProvider>
       <ImageModal />
+      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+      <Chatbot />
     </>
   );
 }
