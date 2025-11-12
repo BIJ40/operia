@@ -7,12 +7,15 @@ export function ImageModal() {
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+      console.log('Click detected on:', target.tagName, target);
       
       // Gestion des boutons avec data-image-modal
       const button = target.closest('[data-image-modal]') as HTMLElement;
       if (button) {
         e.preventDefault();
+        e.stopPropagation();
         const url = button.getAttribute('data-image-modal');
+        console.log('Image button clicked, URL:', url);
         if (url) {
           setImageUrl(url);
         }
@@ -30,8 +33,8 @@ export function ImageModal() {
       }
     };
 
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
+    document.addEventListener('click', handleClick, true); // Utiliser capture phase
+    return () => document.removeEventListener('click', handleClick, true);
   }, []);
 
   return (
