@@ -53,16 +53,6 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           class: 'mention cursor-pointer text-primary font-medium hover:underline',
         },
         suggestion: createMentionSuggestion(mentions, '@'),
-      }).extend({
-        name: 'mention-at',
-      }),
-      Mention.configure({
-        HTMLAttributes: {
-          class: 'mention cursor-pointer text-blue-600 font-medium hover:underline',
-        },
-        suggestion: createMentionSuggestion(mentions, '#'),
-      }).extend({
-        name: 'mention-hash',
       }),
     ],
     content,
@@ -250,15 +240,6 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         >
           <AtSign className="w-4 h-4 text-primary" />
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          title="Insérer un lien # (tag/raccourci)"
-          onClick={() => editor?.chain().focus().insertContent('#').run()}
-        >
-          <Hash className="w-4 h-4 text-blue-600" />
-        </Button>
 
         <div className="w-px h-6 bg-border mx-1" />
 
@@ -329,7 +310,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         className="prose prose-sm max-w-none p-4 min-h-[300px] focus:outline-none [&_.mention]:cursor-pointer [&_.mention]:text-primary [&_.mention]:font-medium [&_.mention]:hover:underline"
       />
       <div className="text-xs text-muted-foreground px-4 pb-2">
-        💡 Tapez @ ou # pour créer des liens vers d&apos;autres sections
+        💡 Tapez @ pour créer des liens vers d&apos;autres sections
       </div>
     </div>
   );
