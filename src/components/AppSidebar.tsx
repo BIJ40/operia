@@ -74,28 +74,6 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              
-              {isAdmin && (
-                <>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={currentPath === '/admin'}>
-                      <Link to="/admin">
-                        <Upload className="w-4 h-4" />
-                        <span>Import</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={currentPath === '/documents'}>
-                      <Link to="/documents">
-                        <FileText className="w-4 h-4" />
-                        <span>Documents</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </>
-              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
