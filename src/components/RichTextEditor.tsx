@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Mention, createMentionSuggestion } from '@/extensions/Mention';
 import { ResizableImage } from '@/extensions/ResizableImage';
+import { Callout } from '@/extensions/Callout';
 import { getAllMentionSuggestions, navigateToMention, MentionSuggestion } from '@/lib/mentions';
 import { useEditor as useEditorContext } from '@/contexts/EditorContext';
 import 'tippy.js/dist/tippy.css';
@@ -39,6 +40,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     extensions: [
       CalloutExtension,
       ResizableImage,
+      Callout,
       Highlight.configure({
         multicolor: true,
       }),
@@ -90,26 +92,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   }
 
   const insertCallout = (type: 'warning' | 'info' | 'tip' | 'danger') => {
-    const colors = {
-      warning: '#fef3c7',
-      info: '#dbeafe',
-      tip: '#d1fae5',
-      danger: '#fee2e2',
-    };
-    
-    const icons = {
-      warning: '⚠️',
-      info: 'ℹ️',
-      tip: '💡',
-      danger: '🚨',
-    };
-
-    editor.chain().focus().insertContent(`
-      <div style="background-color: ${colors[type]}; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid ${type === 'warning' ? '#f59e0b' : type === 'info' ? '#3b82f6' : type === 'tip' ? '#10b981' : '#ef4444'}">
-        <p><strong>${icons[type]} ${type === 'warning' ? 'Attention' : type === 'info' ? 'Information' : type === 'tip' ? 'Astuce' : 'Danger'}</strong></p>
-        <p>Votre texte ici...</p>
-      </div>
-    `).run();
+    editor?.chain().focus().setCallout(type).run();
   };
 
   const handleImageInsert = () => {
