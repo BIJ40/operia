@@ -8,6 +8,7 @@ interface MentionListProps {
 
 export const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -28,6 +29,18 @@ export const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
       }, {} as Record<string, MentionSuggestion[]>)
     };
   }, [props.items]);
+
+  const toggleCategory = (categoryLabel: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryLabel)) {
+        next.delete(categoryLabel);
+      } else {
+        next.add(categoryLabel);
+      }
+      return next;
+    });
+  };
 
   useImperativeHandle(ref, () => ({
     onKeyDown: ({ event }: { event: KeyboardEvent }) => {
@@ -58,57 +71,43 @@ export const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
 
   return (
     <div className="bg-popover border border-border rounded-lg shadow-lg overflow-hidden max-h-[400px] overflow-y-auto z-[9999]">
-      {/* Categories */}
-      {groupedItems.categories.length > 0 && (
-        <div>
-          <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
-            Catégories
-          </div>
-          {groupedItems.categories.map((item, index) => (
+      {/* Categories with expandable sections */}
+      {groupedItems.categories.map((category) => {
+        const sections = groupedItems.sections[category.label] || [];
+        const isExpanded = expandedCategories.has(category.label);
+        const hasSection = sections.length > 0;
+
+        return (
+          <div key={category.id}>
             <button
-              key={item.id}
               type="button"
-              className={`w-full text-left px-3 py-2 text-sm transition-colors border-b border-border/50 ${
-                index === selectedIndex ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
-              }`}
-              onClick={() => props.command(item)}
+              className="w-full text-left px-3 py-2 text-sm transition-colors border-b border-border/50 hover:bg-accent/50 flex items-center justify-between"
+              onClick={() => hasSection ? toggleCategory(category.label) : props.command(category)}
             >
-              <div className="font-medium text-foreground">{item.label || 'Sans titre'}</div>
+              <div className="font-medium text-foreground">{category.label}</div>
+              {hasSection && (
+                <span className="text-xs text-muted-foreground">
+                  {isExpanded ? '▼' : '▶'} {sections.length}
+                </span>
+              )}
             </button>
-          ))}
-        </div>
-      )}
-      
-      {/* Sections grouped by category */}
-      {Object.entries(groupedItems.sections).map(([categoryLabel, sections]) => (
-        <div key={categoryLabel}>
-          <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
-            {categoryLabel}
-          </div>
-          {sections.map((item, sectionIndex) => {
-            const globalIndex = groupedItems.categories.length + 
-              Object.entries(groupedItems.sections)
-                .slice(0, Object.keys(groupedItems.sections).indexOf(categoryLabel))
-                .reduce((sum, [, items]) => sum + items.length, 0) + 
-              sectionIndex;
             
-            return (
+            {/* Sections */}
+            {isExpanded && sections.map((item) => (
               <button
                 key={item.id}
                 type="button"
-                className={`w-full text-left px-3 py-2 pl-5 text-sm transition-colors border-b border-border/30 ${
-                  globalIndex === selectedIndex ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
-                }`}
+                className="w-full text-left px-3 py-2 pl-6 text-sm transition-colors border-b border-border/30 hover:bg-accent/50"
                 onClick={() => props.command(item)}
               >
-                <div className="font-medium text-foreground">
+                <div className="font-medium text-foreground text-sm">
                   {item.label.split(' → ')[1] || item.label}
                 </div>
               </button>
-            );
-          })}
-        </div>
-      ))}
+            ))}
+          </div>
+        );
+      })}
     </div>
   );
 });
