@@ -76,7 +76,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
     <NodeViewWrapper className="resizable-image-wrapper inline-block relative">
       <div
         ref={containerRef}
-        className={`relative inline-block ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''}`}
+        className={`relative inline-block group ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''}`}
         style={{ width: dimensions.width, height: dimensions.height }}
       >
         <img
@@ -88,6 +88,16 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
           style={{ width: dimensions.width, height: dimensions.height }}
           draggable={false}
         />
+        
+        {/* Bouton "Voir l'image" qui apparaît au survol */}
+        <button
+          data-image-modal={node.attrs.src}
+          className="absolute top-2 right-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity shadow-lg flex items-center gap-1"
+          type="button"
+        >
+          <span>👁️</span>
+          <span>Voir</span>
+        </button>
         
         {selected && (
           <>
