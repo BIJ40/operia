@@ -1,14 +1,34 @@
 import { Link } from 'react-router-dom';
-import { HelpCircle, Home } from 'lucide-react';
+import { HelpCircle, Home, Edit3, Square } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
-export function Header() {
-  const { blocks } = useEditor();
+interface HeaderProps {
+  onOpenLogin?: () => void;
+}
+
+export function Header({ onOpenLogin }: HeaderProps) {
+  const { blocks, isEditMode, toggleEditMode } = useEditor();
+  const { isAuthenticated } = useAuth();
   
   // Find FAQ category
   const faqCategory = blocks.find(
     b => b.type === 'category' && b.title.toLowerCase().includes('faq')
   );
+
+  const handleEnrichirClick = () => {
+    if (isEditMode) {
+      // Si on est en mode édition, on quitte
+      toggleEditMode();
+    } else if (isAuthenticated) {
+      // Si on est authentifié mais pas en mode édition, on active le mode édition
+      toggleEditMode();
+    } else {
+      // Si on n'est pas authentifié, on ouvre le dialog de login
+      onOpenLogin?.();
+    }
+  };
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -30,6 +50,24 @@ export function Header() {
             <span className="font-semibold text-foreground">FAQ</span>
           </Link>
         )}
+
+        <Button
+          onClick={handleEnrichirClick}
+          variant="ghost"
+          className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+        >
+          {isEditMode ? (
+            <>
+              <Square className="w-5 h-5 text-destructive" />
+              <span className="font-semibold text-foreground">STOP</span>
+            </>
+          ) : (
+            <>
+              <Edit3 className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-foreground">ENRICHIR</span>
+            </>
+          )}
+        </Button>
       </div>
     </header>
   );

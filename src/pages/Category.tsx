@@ -82,7 +82,7 @@ export default function Category() {
 
   return (
     <>
-      <Header />
+      <Header onOpenLogin={() => {}} />
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
         <Sidebar className="w-64 border-r">

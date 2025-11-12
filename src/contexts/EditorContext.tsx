@@ -8,6 +8,7 @@ interface EditorContextType {
   blocks: Block[];
   isEditMode: boolean;
   setIsEditMode: (mode: boolean) => void;
+  toggleEditMode: () => void;
   addBlock: (block: Omit<Block, 'id' | 'order'>) => void;
   updateBlock: (id: string, updates: Partial<Block>) => void;
   deleteBlock: (id: string) => void;
@@ -111,12 +112,17 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     toast({ title: 'Données réinitialisées', description: 'Les données par défaut ont été restaurées' });
   }, [toast]);
 
+  const toggleEditMode = useCallback(() => {
+    setIsEditMode((prev) => !prev);
+  }, []);
+
   return (
     <EditorContext.Provider
       value={{
         blocks,
         isEditMode,
         setIsEditMode,
+        toggleEditMode,
         addBlock,
         updateBlock,
         deleteBlock,

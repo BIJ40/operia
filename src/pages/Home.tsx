@@ -1,8 +1,6 @@
 import { useEditor } from '@/contexts/EditorContext';
-import { EditorToolbar } from '@/components/EditorToolbar';
 import { Button } from '@/components/ui/button';
-import { Plus, LogIn } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { LoginDialog } from '@/components/LoginDialog';
 import { Link } from 'react-router-dom';
@@ -11,8 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Header } from '@/components/Header';
 
 export default function Home() {
-  const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, resetToDefault, loading } = useEditor();
-  const { isAuthenticated } = useAuth();
+  const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, loading } = useEditor();
   const [loginOpen, setLoginOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -66,27 +63,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      
-      {!isAuthenticated && (
-        <div className="border-b bg-muted/30">
-          <div className="container mx-auto px-4 py-3 flex justify-end">
-            <Button onClick={() => setLoginOpen(true)} variant="outline" size="sm">
-              <LogIn className="w-4 h-4 mr-2" />
-              Connexion Admin
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <EditorToolbar />
+      <Header onOpenLogin={() => setLoginOpen(true)} />
 
       <main className="container mx-auto px-4 py-8">
         {isEditMode && (
-          <div className="mb-6 flex justify-end gap-2">
-            <Button onClick={resetToDefault} variant="outline">
-              Réinitialiser les données
-            </Button>
+          <div className="mb-6 flex justify-end">
             <Button onClick={handleAddCategory}>
               <Plus className="w-4 h-4 mr-2" />
               Ajouter une catégorie
