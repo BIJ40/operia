@@ -1,73 +1,137 @@
-# Welcome to your Lovable project
+# Manuel CRM Apogée - Guide d'utilisation éditable
 
-## Project info
+Application React permettant de gérer et éditer le guide d'utilisation du CRM Apogée avec un système de blocs modulaires, navigation conditionnelle et édition visuelle.
 
-**URL**: https://lovable.dev/projects/fec9c289-c9ae-48ee-83c7-69ea7150d5b5
+## 🚀 Fonctionnalités
 
-## How can I edit this code?
+- **Grille de blocs modulaires** : Page d'accueil avec cartes éditables
+- **Navigation conditionnelle** : Épinglez des blocs pour créer des pages secondaires avec sidebar
+- **Éditeur visuel** : Drag & drop, réorganisation, édition en temps réel
+- **Couleurs préréglées** : Vert (bonnes pratiques), Jaune (astuces), Rouge (à éviter)
+- **Authentification admin** : Login simple pour activer le mode édition
+- **Persistance locale** : Sauvegarde automatique dans IndexedDB
+- **Export/Import** : Format JSON pour sauvegarde et transfert
 
-There are several ways of editing your application.
+## 📦 Installation
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/fec9c289-c9ae-48ee-83c7-69ea7150d5b5) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+```bash
+# Cloner le dépôt
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Installer les dépendances
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Lancer en développement
 npm run dev
+
+# Build pour production
+npm run build
 ```
 
-**Edit a file directly in GitHub**
+## 🔐 Authentification
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+**Identifiants par défaut :**
+- Utilisateur : `admin`
+- Mot de passe : `apogee2024`
 
-**Use GitHub Codespaces**
+> ⚠️ Pour la production, modifiez ces valeurs dans `src/contexts/AuthContext.tsx`
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📚 Import des données initiales
 
-## What technologies are used for this project?
+1. Connectez-vous en tant qu'administrateur
+2. Cliquez sur "Import" dans la barre d'outils
+3. Sélectionnez le fichier `src/data/seed.json`
 
-This project is built with:
+Le contenu initial contient 8 sections principales du manuel Apogée.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🎨 Utilisation
 
-## How can I deploy this project?
+### Mode Lecture (par défaut)
+- Visualisez les blocs en grille responsive
+- Cliquez sur les blocs épinglés pour accéder aux pages détaillées
+- Navigation via sidebar sur les pages secondaires
+
+### Mode Édition (après connexion)
+- **Ajouter un bloc** : Bouton "+" en haut à droite
+- **Réorganiser** : Glissez-déposez les blocs
+- **Épingler** : Activez le toggle "Épingler au menu" pour créer une page `/b/:slug`
+- **Supprimer** : Icône corbeille sur chaque bloc
+- **Exporter** : Sauvegardez toutes vos données en JSON
+- **Importer** : Restaurez ou transférez des données
+
+### Couleurs préréglées
+- **Vert pastel** : Bonnes pratiques
+- **Jaune pastel** : Astuces et conseils
+- **Rouge pastel** : Erreurs à éviter
+- **Neutre** : Contenu standard
+
+## 🏗️ Architecture
+
+```
+src/
+├── components/          # Composants réutilisables
+│   ├── BlockCard.tsx   # Carte de bloc avec drag & drop
+│   ├── EditorToolbar.tsx
+│   ├── LoginDialog.tsx
+│   └── Sidebar.tsx
+├── contexts/           # Contexts React
+│   ├── AuthContext.tsx
+│   └── EditorContext.tsx
+├── lib/
+│   └── db.ts          # Gestion IndexedDB
+├── pages/
+│   ├── Home.tsx       # Page d'accueil (grille)
+│   └── BlockDetail.tsx # Page bloc épinglé
+├── types/
+│   └── block.ts       # Types TypeScript
+└── data/
+    └── seed.json      # Données initiales
+```
+
+## 🔧 Stack technique
+
+- **React 18** + TypeScript
+- **TailwindCSS** : Design system
+- **React Router** : Navigation
+- **@dnd-kit** : Drag & drop
+- **@tiptap** : Éditeur riche (futur)
+- **idb** : IndexedDB wrapper
+- **Lucide React** : Icônes
+
+## 📝 Format de données
+
+```json
+{
+  "blocks": [
+    {
+      "id": "unique-id",
+      "type": "content",
+      "title": "Titre du bloc",
+      "content": "<p>Contenu HTML...</p>",
+      "icon": "BookOpen",
+      "colorPreset": "good",
+      "order": 0,
+      "size": "lg",
+      "pinned": true,
+      "slug": "titre-du-bloc",
+      "attachments": []
+    }
+  ],
+  "version": "1.0",
+  "lastModified": 1234567890
+}
+```
+
+## 🚀 Déploiement
 
 Simply open [Lovable](https://lovable.dev/projects/fec9c289-c9ae-48ee-83c7-69ea7150d5b5) and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
+You can also build manually:
+1. Build de production : `npm run build`
+2. Le dossier `dist/` contient l'application statique
+3. Déployez sur n'importe quel hébergement statique
 
-Yes, you can!
+## 📄 Licence
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Usage interne - Apogée / HELPCONFORT
