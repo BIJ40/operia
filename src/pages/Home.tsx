@@ -23,6 +23,14 @@ export default function Home() {
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
     .sort((a, b) => a.order - b.order);
 
+  // Filtrer les catégories selon la recherche
+  const filteredCategories = searchQuery.trim()
+    ? categories.filter(cat => 
+        cat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        cat.content.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : categories;
+
   const IconComponent = (iconName: string) => {
     const Icon = (Icons as any)[iconName] || Icons.BookOpen;
     return Icon;
@@ -58,6 +66,21 @@ export default function Home() {
     });
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // Ouvrir le chatbot avec la question
+      const chatButton = document.querySelector('[data-chatbot-trigger]') as HTMLElement;
+      if (chatButton) {
+        chatButton.click();
+        // Passer la question au chatbot via un événement personnalisé
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('chatbot-question', { detail: searchQuery }));
+        }, 100);
+      }
+    }
+  };
+
   const handleEdit = (id: string) => {
     const cat = categories.find(c => c.id === id);
     if (cat) {
@@ -90,7 +113,7 @@ export default function Home() {
   return (
     <div className="px-4 py-8 max-w-7xl mx-auto w-full">
       <div className="mb-6 flex items-center gap-4">
-        <div className="relative flex-1">
+        <form onSubmit={handleSearchSubmit} className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
@@ -99,7 +122,7 @@ export default function Home() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
-        </div>
+        </form>
         {isEditMode && isAuthenticated && (
           <Button onClick={handleAddCategory}>
             <Plus className="w-4 h-4 mr-2" />
@@ -109,7 +132,7 @@ export default function Home() {
       </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {categories.map((category) => {
+              {filteredCategories.map((category) => {
                 const Icon = IconComponent(category.icon || 'BookOpen');
                 
                 return (
@@ -189,7 +212,16 @@ export default function Home() {
               })}
             </div>
 
-            {categories.length === 0 && (
+            {filteredCategories.length === 0 && searchQuery.trim() && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">Aucune catégorie trouvée pour "{searchQuery}"</p>
+                <Button onClick={() => setSearchQuery('')} variant="outline">
+                  Effacer la recherche
+                </Button>
+              </div>
+            )}
+
+            {categories.length === 0 && !searchQuery.trim() && (
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-4">Aucune catégorie disponible</p>
                 {isEditMode && isAuthenticated && (

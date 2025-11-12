@@ -31,6 +31,63 @@ export function Chatbot() {
     scrollToBottom();
   }, [messages]);
 
+  // Écouter l'événement de question depuis la recherche
+  useEffect(() => {
+    const handleChatbotQuestion = (e: CustomEvent) => {
+      const question = e.detail;
+      if (question && typeof question === 'string') {
+        setIsOpen(true);
+        setInput(question);
+        // Auto-envoyer la question après un court délai pour laisser le chatbot s'ouvrir
+        setTimeout(() => {
+          setMessages([{ role: 'user', content: question }]);
+          handleSendMessage(question);
+        }, 300);
+      }
+    };
+
+    const handleSendMessage = async (userMessage: string) => {
+      setIsLoading(true);
+      setInput('');
+      
+      try {
+        const guideContent = prepareGuideContent();
+        
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-guide`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              message: userMessage,
+              guideContent,
+            }),
+          }
+        );
+
+        if (!response.ok) throw new Error('Erreur réseau');
+
+        const data = await response.json();
+        setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+      } catch (error) {
+        console.error('Chat error:', error);
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de se connecter au chatbot',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    window.addEventListener('chatbot-question', handleChatbotQuestion as EventListener);
+    return () => window.removeEventListener('chatbot-question', handleChatbotQuestion as EventListener);
+  }, [blocks, toast]);
+
   const prepareGuideContent = () => {
     return blocks
       .map((block) => {
@@ -175,6 +232,7 @@ export function Chatbot() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
+          data-chatbot-trigger
           className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-50 hover:scale-110 transition-transform"
         >
           <img src={chatIcon} alt="Chat" className="w-full h-full" />
@@ -241,6 +299,7 @@ export function Chatbot() {
           {/* Input */}
           <div className="p-4 border-t">
             <form
+              id="chatbot-form"
               onSubmit={(e) => {
                 e.preventDefault();
                 sendMessage();
