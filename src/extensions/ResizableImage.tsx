@@ -132,7 +132,9 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
 export const ResizableImage = Node.create({
   name: 'resizableImage',
 
-  group: 'block',
+  group: 'inline',
+  
+  inline: true,
 
   draggable: false,
 
