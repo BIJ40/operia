@@ -132,12 +132,12 @@ export function Header({ onOpenLogin }: HeaderProps) {
 
       {/* Settings Dialog */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Paramètres de l'interface</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6">
+          <div className="space-y-6 overflow-y-auto flex-1 pr-2">
             <div className="space-y-3">
               <h3 className="text-sm font-medium">Icônes du header</h3>
               
@@ -186,6 +186,12 @@ export function Header({ onOpenLogin }: HeaderProps) {
                 );
               })}
             </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button onClick={() => setSettingsOpen(false)}>
+              Fermer
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
