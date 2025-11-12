@@ -153,3 +153,32 @@ All colors MUST be HSL.
 .ProseMirror br::after {
   content: '\200B';
 }
+
+/* Callout styles for reading mode (when HTML is displayed via dangerouslySetInnerHTML) */
+div[data-callout] {
+  @apply border-l-4 p-4 rounded-lg my-4 relative;
+}
+
+div[data-callout][data-type="warning"] {
+  @apply bg-yellow-50 border-l-yellow-500;
+}
+
+div[data-callout][data-type="info"] {
+  @apply bg-blue-50 border-l-blue-500;
+}
+
+div[data-callout][data-type="tip"] {
+  @apply bg-green-50 border-l-green-500;
+}
+
+div[data-callout][data-type="danger"] {
+  @apply bg-red-50 border-l-red-500;
+}
+
+div[data-callout] .font-bold {
+  @apply mb-2;
+}
+
+div[data-callout] p {
+  @apply text-sm text-gray-800 my-1;
+}
