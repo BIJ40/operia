@@ -45,14 +45,25 @@ export const ImageButton = Node.create<ImageButtonOptions>({
   parseHTML() {
     return [
       {
+        tag: 'span[data-image-button]',
+        getAttrs: (element) => {
+          if (typeof element === 'string') return false;
+          
+          const src = element.getAttribute('data-src');
+          const label = element.getAttribute('data-label') || 'Voir';
+          
+          return src ? { src, label } : false;
+        },
+      },
+      // Reconnaître les anciens formats (div)
+      {
         tag: 'div[data-image-button]',
         getAttrs: (element) => {
           if (typeof element === 'string') return false;
           
-          // Chercher data-src dans le div
           let src = element.getAttribute('data-src');
+          const label = element.getAttribute('data-label') || 'Voir';
           
-          // Si pas trouvé, chercher dans le bouton enfant
           if (!src) {
             const button = element.querySelector('button[data-image-modal]');
             if (button) {
@@ -60,23 +71,7 @@ export const ImageButton = Node.create<ImageButtonOptions>({
             }
           }
           
-          return src ? { src } : false;
-        },
-      },
-      // Reconnaître les anciens boutons HTML directs (sans div parent)
-      {
-        tag: 'div',
-        getAttrs: (element) => {
-          if (typeof element === 'string') return false;
-          
-          // Vérifier si c'est un div qui contient un bouton avec data-image-modal
-          const button = element.querySelector('button[data-image-modal]');
-          if (button) {
-            const src = button.getAttribute('data-image-modal');
-            return src ? { src } : false;
-          }
-          
-          return false;
+          return src ? { src, label } : false;
         },
       },
     ];
@@ -86,12 +81,12 @@ export const ImageButton = Node.create<ImageButtonOptions>({
     const src = HTMLAttributes.src || HTMLAttributes['data-src'];
     const label = HTMLAttributes.label || HTMLAttributes['data-label'] || 'Voir';
     return [
-      'div',
+      'span',
       { 
         'data-image-button': '',
         'data-src': src,
         'data-label': label,
-        style: 'display: inline-block; margin: 4px 8px;'
+        style: 'display: inline-block; vertical-align: middle; margin: 0 4px;'
       },
       [
         'button',
@@ -99,7 +94,7 @@ export const ImageButton = Node.create<ImageButtonOptions>({
           'data-image-modal': src,
           type: 'button',
           class: 'image-preview-btn',
-          style: 'display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: transparent; color: #3b82f6; border: 1px solid #e5e7eb; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease;'
+          style: 'display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: transparent; color: #3b82f6; border: 1px solid #e5e7eb; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease; vertical-align: middle;'
         },
         ['span', { style: 'font-size: 14px;' }, '👁️'],
         ' ' + label

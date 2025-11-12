@@ -83,11 +83,14 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
   };
 
   return (
-    <NodeViewWrapper className="resizable-image-wrapper inline-block relative">
+    <NodeViewWrapper 
+      className="resizable-image-wrapper" 
+      style={{ display: 'inline-block', verticalAlign: 'middle', margin: '0 4px' }}
+    >
       <div
         ref={containerRef}
         className={`relative inline-block group ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''}`}
-        style={{ width: dimensions.width, height: dimensions.height }}
+        style={{ width: dimensions.width, height: dimensions.height, display: 'inline-block' }}
       >
         <img
           ref={imageRef}
@@ -235,7 +238,10 @@ export const ResizableImage = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['img', mergeAttributes(HTMLAttributes, { class: 'rounded-lg' })];
+    return ['img', mergeAttributes(HTMLAttributes, { 
+      class: 'rounded-lg',
+      style: 'display: inline-block; vertical-align: middle; margin: 0 4px;'
+    })];
   },
 
   addNodeView() {
