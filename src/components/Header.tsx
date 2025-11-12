@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { icons, Settings, LogOut, Home, HelpCircle, Edit3, Square, Circle } from 'lucide-react';
+import { Settings, LogOut, Home, HelpCircle, Edit3, Square, Circle, type LucideIcon } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,9 @@ import { useState } from 'react';
 import { IconPicker } from '@/components/IconPicker';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
+// Import all available icons for dynamic mapping
+import * as LucideIcons from 'lucide-react';
 
 interface HeaderProps {
   onOpenLogin?: () => void;
@@ -26,10 +29,10 @@ export function Header({ onOpenLogin }: HeaderProps) {
     b => b.type === 'category' && b.title.toLowerCase().includes('faq')
   );
 
-  const GuideIconComponent = icons[guideIcon as keyof typeof icons] || Home;
-  const FaqIconComponent = icons[faqIcon as keyof typeof icons] || HelpCircle;
-  const EditIconComponent = icons[editIcon as keyof typeof icons] || Edit3;
-  const StopIconComponent = icons[stopIcon as keyof typeof icons] || Square;
+  const GuideIconComponent = (LucideIcons as any)[guideIcon] || Home;
+  const FaqIconComponent = (LucideIcons as any)[faqIcon] || HelpCircle;
+  const EditIconComponent = (LucideIcons as any)[editIcon] || Edit3;
+  const StopIconComponent = (LucideIcons as any)[stopIcon] || Square;
 
   const handleEnrichirClick = () => {
     if (isEditMode) {
@@ -141,7 +144,7 @@ export function Header({ onOpenLogin }: HeaderProps) {
             <div className="space-y-3">
               <h3 className="text-sm font-medium">Icônes des catégories</h3>
               {blocks.filter(b => b.type === 'category').map((category) => {
-                const CategoryIcon = icons[category.icon as keyof typeof icons] || Circle;
+                const CategoryIcon = (LucideIcons as any)[category.icon] || Circle;
                 
                 return (
                   <div key={category.id} className="space-y-2">

@@ -1,6 +1,17 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { icons, Circle } from 'lucide-react';
+import { 
+  Home, Users, FileText, Folder, Calendar, Clock, Bell,
+  Mail, Phone, MapPin, Settings, Hammer, Wrench, Package,
+  ShoppingCart, CreditCard, DollarSign, TrendingUp, BarChart,
+  PieChart, Award, Star, Heart, ThumbsUp, MessageCircle,
+  Search, Filter, Download, Upload, Eye, Edit, Trash,
+  Plus, Minus, Check, X, AlertCircle, Info, HelpCircle,
+  Building, Briefcase, Clipboard, BookOpen, GraduationCap,
+  Lightbulb, Zap, Target, Flag, Key, Lock, Shield,
+  AlertTriangle, CheckCircle, XCircle, Activity, Database, Circle, Edit3, Square,
+  type LucideIcon
+} from 'lucide-react';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 
@@ -9,18 +20,20 @@ interface IconPickerProps {
   onChange: (icon: string) => void;
 }
 
-// Liste des icônes les plus courantes
-const commonIcons = [
-  'Home', 'Users', 'FileText', 'Folder', 'Calendar', 'Clock', 'Bell',
-  'Mail', 'Phone', 'MapPin', 'Settings', 'Tool', 'Wrench', 'Package',
-  'ShoppingCart', 'CreditCard', 'DollarSign', 'TrendingUp', 'BarChart',
-  'PieChart', 'Award', 'Star', 'Heart', 'ThumbsUp', 'MessageCircle',
-  'Search', 'Filter', 'Download', 'Upload', 'Eye', 'Edit', 'Trash',
-  'Plus', 'Minus', 'Check', 'X', 'AlertCircle', 'Info', 'HelpCircle',
-  'Building', 'Briefcase', 'Clipboard', 'BookOpen', 'GraduationCap',
-  'Lightbulb', 'Zap', 'Target', 'Flag', 'Key', 'Lock', 'Shield',
-  'AlertTriangle', 'CheckCircle', 'XCircle', 'Activity', 'Database',
-];
+// Map des icônes disponibles
+const iconMap: Record<string, LucideIcon> = {
+  Home, Users, FileText, Folder, Calendar, Clock, Bell,
+  Mail, Phone, MapPin, Settings, Hammer, Wrench, Package,
+  ShoppingCart, CreditCard, DollarSign, TrendingUp, BarChart,
+  PieChart, Award, Star, Heart, ThumbsUp, MessageCircle,
+  Search, Filter, Download, Upload, Eye, Edit, Trash,
+  Plus, Minus, Check, X, AlertCircle, Info, HelpCircle,
+  Building, Briefcase, Clipboard, BookOpen, GraduationCap,
+  Lightbulb, Zap, Target, Flag, Key, Lock, Shield,
+  AlertTriangle, CheckCircle, XCircle, Activity, Database, Circle, Edit3, Square
+};
+
+const commonIcons = Object.keys(iconMap);
 
 export function IconPicker({ value, onChange }: IconPickerProps) {
   const [open, setOpen] = useState(false);
@@ -30,7 +43,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
     icon.toLowerCase().includes(search.toLowerCase())
   );
 
-  const CurrentIcon = icons[value as keyof typeof icons] || Circle;
+  const CurrentIcon = iconMap[value] || Circle;
 
   return (
     <>
@@ -59,8 +72,10 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
 
           <div className="grid grid-cols-6 gap-2">
             {filteredIcons.map((iconName) => {
-              const IconComponent = icons[iconName as keyof typeof icons];
+              const IconComponent = iconMap[iconName];
               const isSelected = value === iconName;
+              
+              if (!IconComponent) return null;
 
               return (
                 <Button
