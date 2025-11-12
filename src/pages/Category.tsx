@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Edit2, Trash2 } from 'lucide-react';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider } from '@/components/ui/sidebar';
@@ -16,6 +17,7 @@ import { ImageModal } from '@/components/ImageModal';
 export default function Category() {
   const { slug } = useParams();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useEditor();
+  const { isAuthenticated } = useAuth();
   
   const [loginOpen, setLoginOpen] = useState(false);
   
@@ -133,7 +135,7 @@ export default function Category() {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            {isEditMode && (
+            {isEditMode && isAuthenticated && (
               <div className="p-4 border-t mt-auto">
                 <Button onClick={handleAddSection} size="sm" className="w-full">
                   <Plus className="w-4 h-4 mr-2" />
@@ -189,7 +191,7 @@ export default function Category() {
                   <>
                     <div className="flex items-start justify-between mb-4">
                       <h2 className="text-2xl font-semibold">{section.title}</h2>
-                      {isEditMode && (
+                      {isEditMode && isAuthenticated && (
                         <div className="flex gap-2">
                           <Button
                             size="sm"

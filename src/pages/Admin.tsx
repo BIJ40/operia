@@ -19,12 +19,31 @@ export default function Admin() {
   const { toast } = useToast();
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [uploadProgress, setUploadProgress] = useState({ 
     current: 0, 
     total: 0, 
     currentFile: '',
     status: '' as 'parsing' | 'uploading' | ''
   });
+
+  // Protection : vérifier l'authentification
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/');
+        toast({
+          title: 'Accès refusé',
+          description: 'Vous devez être connecté pour accéder à cette page',
+          variant: 'destructive'
+        });
+      } else {
+        setIsCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, [navigate, toast]);
 
   // Fonction pour extraire le texte d'un PDF
   const extractPdfText = async (file: File): Promise<string> => {
@@ -230,6 +249,14 @@ export default function Admin() {
     const fileInput = document.getElementById('file-upload') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Vérification...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

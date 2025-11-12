@@ -28,12 +28,31 @@ export default function Documents() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [categories, setCategories] = useState<string[]>([]);
   const [editingDoc, setEditingDoc] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [editForm, setEditForm] = useState({ title: '', category: '', content: '' });
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     loadDocuments();
   }, []);
+
+  // Protection : vérifier l'authentification
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/');
+        toast({
+          title: 'Accès refusé',
+          description: 'Vous devez être connecté pour accéder à cette page',
+          variant: 'destructive'
+        });
+      } else {
+        setIsCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, [navigate, toast]);
 
   const loadDocuments = async () => {
     try {
@@ -220,6 +239,14 @@ export default function Documents() {
     const matchesCategory = selectedCategory === 'all' || doc.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Vérification...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

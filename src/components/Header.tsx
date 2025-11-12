@@ -18,15 +18,15 @@ export function Header({ onOpenLogin }: HeaderProps) {
   );
 
   const handleEnrichirClick = () => {
-    if (isEditMode) {
-      // Si on est en mode édition, on quitte
-      toggleEditMode();
-    } else if (isAuthenticated) {
-      // Si on est authentifié mais pas en mode édition, on active le mode édition
+    if (!isAuthenticated) {
+      // Si pas authentifié, ouvrir le dialog de login
+      onOpenLogin?.();
+    } else if (isEditMode) {
+      // Si authentifié et en mode édition, on quitte
       toggleEditMode();
     } else {
-      // Si on n'est pas authentifié, on ouvre le dialog de login
-      onOpenLogin?.();
+      // Si authentifié mais pas en mode édition, on active le mode édition
+      toggleEditMode();
     }
   };
 
@@ -51,23 +51,25 @@ export function Header({ onOpenLogin }: HeaderProps) {
           </Link>
         )}
 
-        <Button
-          onClick={handleEnrichirClick}
-          variant="ghost"
-          className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-        >
-          {isEditMode ? (
-            <>
-              <Square className="w-5 h-5 text-destructive" />
-              <span className="font-semibold text-foreground">STOP</span>
-            </>
-          ) : (
-            <>
-              <Edit3 className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-foreground">ENRICHIR</span>
-            </>
-          )}
-        </Button>
+        {isAuthenticated && (
+          <Button
+            onClick={handleEnrichirClick}
+            variant="ghost"
+            className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+          >
+            {isEditMode ? (
+              <>
+                <Square className="w-5 h-5 text-destructive" />
+                <span className="font-semibold text-foreground">STOP</span>
+              </>
+            ) : (
+              <>
+                <Edit3 className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-foreground">ENRICHIR</span>
+              </>
+            )}
+          </Button>
+        )}
 
         {isAuthenticated && (
           <Link
