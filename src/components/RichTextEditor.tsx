@@ -1,6 +1,5 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
 import Highlight from '@tiptap/extension-highlight';
 import { Button } from '@/components/ui/button';
 import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash } from 'lucide-react';
@@ -10,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Mention, createMentionSuggestion } from '@/extensions/Mention';
+import { ResizableImage } from '@/extensions/ResizableImage';
 import { getAllMentionSuggestions, navigateToMention, MentionSuggestion } from '@/lib/mentions';
 import { useEditor as useEditorContext } from '@/contexts/EditorContext';
 import 'tippy.js/dist/tippy.css';
@@ -38,11 +38,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
       CalloutExtension,
-      Image.configure({
-        HTMLAttributes: {
-          class: 'max-w-full h-auto rounded-lg',
-        },
-      }),
+      ResizableImage,
       Highlight.configure({
         multicolor: true,
       }),
@@ -120,10 +116,13 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     if (!imageUrl) return;
 
     if (imageType === 'inline') {
-      editor.chain().focus().setImage({ src: imageUrl }).run();
+      editor?.chain().focus().insertContent({
+        type: 'resizableImage',
+        attrs: { src: imageUrl },
+      }).run();
     } else {
       // Insert a clickable "voir" button that opens in modal
-      editor.chain().focus().insertContent(`
+      editor?.chain().focus().insertContent(`
         <div style="margin: 16px 0;">
           <button data-image-modal="${imageUrl}" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: #3b82f6; color: white; border-radius: 6px; border: none; cursor: pointer; font-weight: 500;">
             <span style="font-size: 18px;">👁️</span> Voir l'image
