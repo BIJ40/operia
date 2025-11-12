@@ -89,14 +89,24 @@ export default function Home() {
 
   return (
     <div className="px-4 py-8 max-w-7xl mx-auto w-full">
-            {isEditMode && isAuthenticated && (
-              <div className="mb-6 flex justify-end">
-                <Button onClick={handleAddCategory}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ajouter une catégorie
-                </Button>
-              </div>
-            )}
+      <div className="mb-6 flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Rechercher avec Mme MICHU..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        {isEditMode && isAuthenticated && (
+          <Button onClick={handleAddCategory}>
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter une catégorie
+          </Button>
+        )}
+      </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {categories.map((category) => {
