@@ -68,6 +68,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
             <div className="grid grid-cols-6 gap-2">
               {filteredIcons.map((iconName) => {
                 const Icon = (Icons as any)[iconName];
+                if (!Icon) return null;
                 return (
                   <Button
                     key={iconName}
