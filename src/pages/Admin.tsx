@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, FileText, FolderOpen } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
+import * as XLSX from 'xlsx';
 
 // Configuration de PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -52,6 +53,33 @@ export default function Admin() {
     } catch (error) {
       console.error('❌ Erreur extraction PDF:', error);
       throw new Error(`Impossible d'extraire le texte du PDF: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+  };
+
+  // Fonction pour extraire le texte d'un fichier Excel
+  const extractExcelText = async (file: File): Promise<string> => {
+    try {
+      console.log(`🔍 Début extraction Excel: ${file.name}`);
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      
+      let fullText = '';
+      
+      // Parcourir toutes les feuilles
+      workbook.SheetNames.forEach((sheetName, index) => {
+        const sheet = workbook.Sheets[sheetName];
+        
+        // Convertir la feuille en CSV pour extraction texte
+        const csv = XLSX.utils.sheet_to_csv(sheet);
+        
+        fullText += `=== Feuille ${index + 1}: ${sheetName} ===\n\n${csv}\n\n`;
+      });
+      
+      console.log(`✅ Extraction Excel terminée: ${fullText.length} caractères`);
+      return fullText.trim();
+    } catch (error) {
+      console.error('❌ Erreur extraction Excel:', error);
+      throw new Error(`Impossible d'extraire le texte Excel: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   };
 
@@ -117,7 +145,26 @@ export default function Admin() {
             console.error(`❌ Erreur extraction ${file.name}:`, error);
             extractedContent = `[PDF: ${file.name}] - Erreur d'extraction: ${error instanceof Error ? error.message : 'Erreur inconnue'}`;
           }
-        } 
+        }
+        else if (fileType === 'application/vnd.ms-excel' || 
+                 fileType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                 fileName.endsWith('.xls') || 
+                 fileName.endsWith('.xlsx')) {
+          // Extraction Excel
+          try {
+            console.log(`📊 Extraction Excel: ${file.name}`);
+            extractedContent = await extractExcelText(file);
+            console.log(`✅ Contenu extrait: ${extractedContent.length} caractères`);
+            
+            if (!extractedContent || extractedContent.length === 0) {
+              console.warn(`⚠️ Aucune donnée dans ${file.name}`);
+              extractedContent = `[Excel: ${file.name}] - Fichier vide`;
+            }
+          } catch (error) {
+            console.error(`❌ Erreur extraction ${file.name}:`, error);
+            extractedContent = `[Excel: ${file.name}] - Erreur d'extraction: ${error instanceof Error ? error.message : 'Erreur inconnue'}`;
+          }
+        }
         else if (fileType.startsWith('image/') || 
             ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.endsWith(ext))) {
           console.log(`🖼️ Image détectée: ${file.name}`);
@@ -220,7 +267,7 @@ export default function Admin() {
                   <Input
                     id="file-upload"
                     type="file"
-                    accept=".txt,.html,.csv,.json,.md,.pdf,.jpg,.jpeg,.png,.webp"
+                    accept=".txt,.html,.csv,.json,.md,.pdf,.jpg,.jpeg,.png,.webp,.xls,.xlsx"
                     onChange={handleFileUpload}
                     className="flex-1"
                     disabled={isLoading}
@@ -229,7 +276,7 @@ export default function Admin() {
                   <Upload className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="text-sm text-muted-foreground space-y-1">
-                  <p>✅ Formats acceptés : .txt, .html, .csv, .json, .md, .pdf, .jpg, .png, .webp</p>
+                  <p>✅ Formats acceptés : .txt, .html, .csv, .json, .md, .pdf, .xls, .xlsx, .jpg, .png, .webp</p>
                   <p>✅ Import multiple : sélectionnez plusieurs fichiers en une fois</p>
                   <p>✅ Détection automatique : titre (nom fichier), catégorie (mots-clés), contenu (extraction)</p>
                 </div>
