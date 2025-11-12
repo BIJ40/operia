@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ColorPreset } from '@/types/block';
 import { Plus, Trash2 } from 'lucide-react';
+import { IconPicker } from '@/components/IconPicker';
 
 export default function Home() {
   const { blocks, loading, isEditMode, updateBlock, addBlock, deleteBlock } = useEditor();
@@ -119,10 +120,9 @@ export default function Home() {
                       onChange={(e) => setEditTitle(e.target.value)}
                       placeholder="Titre de la catégorie"
                     />
-                    <Input
+                    <IconPicker
                       value={editIcon}
-                      onChange={(e) => setEditIcon(e.target.value)}
-                      placeholder="Nom icône (ex: BookOpen)"
+                      onChange={setEditIcon}
                     />
                     <Select value={editColor} onValueChange={(v: ColorPreset) => setEditColor(v)}>
                       <SelectTrigger>
