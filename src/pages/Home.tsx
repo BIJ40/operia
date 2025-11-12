@@ -19,7 +19,7 @@ export default function Home() {
   const [editIcon, setEditIcon] = useState('');
 
   const categories = blocks
-    .filter(b => b.type === 'category')
+    .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
     .sort((a, b) => a.order - b.order);
 
   const handleAddCategory = () => {
