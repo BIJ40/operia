@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { Block, AppData } from '@/types/block';
 import { loadAppData, saveAppData } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
-import seedData from '@/data/seed.json';
+import apogeeData from '@/data/apogee-data.json';
 
 interface EditorContextType {
   blocks: Block[];
@@ -31,8 +31,8 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
       if (data && data.blocks.length > 0) {
         setBlocks(data.blocks);
       } else {
-        // Load seed data if no data exists
-        const initialData = seedData as AppData;
+        // Load apogee data if no data exists
+        const initialData = apogeeData as AppData;
         setBlocks(initialData.blocks);
         saveAppData(initialData);
       }

@@ -1,0 +1,204 @@
+{
+  "blocks": [
+    {
+      "id": "cat-1",
+      "type": "category",
+      "title": "Introduction & principes",
+      "content": "",
+      "icon": "BookOpen",
+      "colorPreset": "blue",
+      "order": 0,
+      "slug": "introduction-principes",
+      "attachments": []
+    },
+    {
+      "id": "sec-1-1",
+      "type": "section",
+      "parentId": "cat-1",
+      "title": "1. Introduction & principes",
+      "content": "<p>Ce manuel décrit le fonctionnement réel du CRM Apogee dans l'entreprise, du premier contact client jusqu'au dossier clos et facturé. Il suit le parcours logique : Client → Dossier → Rendez-vous → Application technicien → Relevé technique / Travaux → Devis → Commandes → Facturation → Paiements → Clôture.</p><p>Les écrans, boutons et statuts sont expliqués avec les impacts métiers associés. Aucune règle imaginaire n'est ajoutée : tout ce qui figure ici correspond aux usages décrits.</p><div style='background:#eff6ff;padding:12px;border-radius:8px;margin:12px 0'><strong>💡 Principes clés :</strong> éviter les doublons, partir du dossier pour créer les éléments, respecter les statuts automatiques, utiliser les sous-statuts pour classer sans casser le workflow.</div>",
+      "colorPreset": "blue",
+      "order": 0,
+      "slug": "intro-1",
+      "attachments": []
+    },
+    {
+      "id": "cat-2",
+      "type": "category",
+      "title": "Client & Apporteur",
+      "content": "",
+      "icon": "Users",
+      "colorPreset": "green",
+      "order": 1,
+      "slug": "client-apporteur",
+      "attachments": []
+    },
+    {
+      "id": "sec-2-1",
+      "type": "section",
+      "parentId": "cat-2",
+      "title": "2.1 Rôle du module Client",
+      "content": "<p>Le module <strong>Client</strong> est le point d'entrée de toute relation gérée dans Apogee. Chaque dossier, chaque rendez-vous, chaque devis, chaque facture repose sur une fiche client fiable. Avant de penser dossier, devis ou facture, il faut s'assurer que le client existe, est correctement identifié et qu'il n'est pas dupliqué.</p><p>Apogee ne doit pas être une simple liste de noms ; c'est un référentiel unique qui sécurise les envois, garantit les bons destinataires, alimente les exports et permet un reporting propre au niveau du réseau HELPCONFORT.</p><div style='background:#dbeafe;padding:12px;border-radius:8px;margin:12px 0'><strong>💡 Adoptez le réflexe :</strong> \"Pas de dossier sans fiche client vérifiée\". Cette discipline conditionne la fiabilité de toute la chaîne Client → Dossier → Rendez-vous → Devis → Facture.</div>",
+      "colorPreset": "white",
+      "order": 0,
+      "slug": "client-role",
+      "attachments": []
+    },
+    {
+      "id": "sec-2-2",
+      "type": "section",
+      "parentId": "cat-2",
+      "title": "2.2 Accéder aux clients & sécuriser l'absence de doublons",
+      "content": "<p>Depuis le menu principal, ouvrez <strong>Client > Client</strong>. Vous accédez à une vue structurée listant l'ensemble des clients connus de votre agence. La zone de recherche permet de filtrer immédiatement par nom, raison sociale, téléphone ou email selon les informations disponibles.</p><p>Avant toute création, saisissez au minimum les premières lettres du nom de famille ou de la raison sociale. Si nécessaire, essayez une variante (majuscules, minuscules, séparateurs) pour vérifier qu'un enregistrement n'existe pas déjà. En cas de doute, ouvrez la fiche la plus proche pour confirmer l'adresse, le téléphone ou l'apporteur associé.</p><div style='background:#fee2e2;padding:12px;border-radius:8px;margin:12px 0'><strong>⚠️ La création de doublons</strong> entraîne des dossiers éparpillés, des historiques tronqués et des erreurs de facturation. Ne validez jamais un nouveau client sans avoir cherché sérieusement.</div>",
+      "colorPreset": "white",
+      "order": 1,
+      "slug": "client-anti-doublons",
+      "attachments": []
+    },
+    {
+      "id": "sec-2-3",
+      "type": "section",
+      "parentId": "cat-2",
+      "title": "2.3 Créer un client Particulier",
+      "content": "<p>Si, après vérification, le client n'existe pas, cliquez sur <strong>\"Ajouter un client\"</strong>. Sélectionnez le type <strong>Particulier</strong> puis complétez les champs avec soin. Le nom, le prénom, au moins un numéro de téléphone actif et l'adresse complète sont essentiels. L'email doit être renseigné dès que possible, car il servira à l'envoi des devis, factures et comptes rendus.</p><p>Lorsque l'adresse d'intervention diffère de l'adresse de facturation, précisez-le clairement. La bonne structuration des adresses facilite le travail des techniciens sur le terrain et la compréhension des documents par le client. Cette fiche deviendra le socle de tous les futurs dossiers ouverts pour ce foyer.</p><div style='background:#dcfce7;padding:12px;border-radius:8px;margin:12px 0'><strong>✅ Renseignez toujours une information de contact exploitable</strong> (mobile ou email). Un client sans moyen de contact fiable complique les plannings et retarde les validations.</div>",
+      "colorPreset": "white",
+      "order": 2,
+      "slug": "client-particulier",
+      "attachments": []
+    },
+    {
+      "id": "cat-3",
+      "type": "category",
+      "title": "Dossier / Projet",
+      "content": "",
+      "icon": "FolderOpen",
+      "colorPreset": "green",
+      "order": 2,
+      "slug": "dossier-projet",
+      "attachments": []
+    },
+    {
+      "id": "sec-3-1",
+      "type": "section",
+      "parentId": "cat-3",
+      "title": "3.1 Le rôle central du dossier",
+      "content": "<p>Le <strong>dossier</strong> (ou <strong>projet</strong>) est le cœur du CRM Apogee. C'est l'unité de travail principale : il regroupe toutes les informations liées à un client, un apporteur, une mission, des rendez-vous, des devis, des documents et des factures. Chaque action du CRM doit partir ou revenir vers ce dossier pour maintenir la cohérence du flux.</p><p>Un dossier peut être ouvert à la suite d'un appel, d'un mail, d'un ordre de mission ou d'une demande d'un apporteur. Il matérialise le suivi de bout en bout : depuis la réception du besoin jusqu'à la clôture administrative.</p><div style='background:#dbeafe;padding:12px;border-radius:8px;margin:12px 0'><strong>💡 Dans Apogee,</strong> le dossier n'est pas un simple conteneur : il automatise la liaison entre client, rendez-vous, devis et facture. C'est ce lien qui permet le reporting et les statistiques fiables du réseau.</div>",
+      "colorPreset": "white",
+      "order": 0,
+      "slug": "dossier-role",
+      "attachments": []
+    },
+    {
+      "id": "cat-4",
+      "type": "category",
+      "title": "Rendez-vous & Planning",
+      "content": "",
+      "icon": "Calendar",
+      "colorPreset": "green",
+      "order": 3,
+      "slug": "rendez-vous-planning",
+      "attachments": []
+    },
+    {
+      "id": "cat-5",
+      "type": "category",
+      "title": "Application Technicien",
+      "content": "",
+      "icon": "Smartphone",
+      "colorPreset": "green",
+      "order": 4,
+      "slug": "application-technicien",
+      "attachments": []
+    },
+    {
+      "id": "cat-6",
+      "type": "category",
+      "title": "Devis & Commandes",
+      "content": "",
+      "icon": "FileText",
+      "colorPreset": "yellow",
+      "order": 5,
+      "slug": "devis-commandes",
+      "attachments": []
+    },
+    {
+      "id": "cat-7",
+      "type": "category",
+      "title": "Facturation & Paiements",
+      "content": "",
+      "icon": "Receipt",
+      "colorPreset": "red",
+      "order": 6,
+      "slug": "facturation-paiements",
+      "attachments": []
+    },
+    {
+      "id": "cat-8",
+      "type": "category",
+      "title": "Comptabilité & Articles",
+      "content": "",
+      "icon": "Calculator",
+      "colorPreset": "blue",
+      "order": 7,
+      "slug": "comptabilite-articles",
+      "attachments": []
+    },
+    {
+      "id": "cat-9",
+      "type": "category",
+      "title": "Documents & Médiathèque",
+      "content": "",
+      "icon": "FileBox",
+      "colorPreset": "blue",
+      "order": 8,
+      "slug": "documents-mediatheque",
+      "attachments": []
+    },
+    {
+      "id": "cat-10",
+      "type": "category",
+      "title": "Workflow & Statuts",
+      "content": "",
+      "icon": "GitBranch",
+      "colorPreset": "yellow",
+      "order": 9,
+      "slug": "workflow-statuts",
+      "attachments": []
+    },
+    {
+      "id": "cat-11",
+      "type": "category",
+      "title": "Gestion des listes & pictos",
+      "content": "",
+      "icon": "List",
+      "colorPreset": "blue",
+      "order": 10,
+      "slug": "gestion-listes-pictos",
+      "attachments": []
+    },
+    {
+      "id": "cat-12",
+      "type": "category",
+      "title": "Reporting / Suivi",
+      "content": "",
+      "icon": "BarChart3",
+      "colorPreset": "green",
+      "order": 11,
+      "slug": "reporting-suivi",
+      "attachments": []
+    },
+    {
+      "id": "cat-13",
+      "type": "category",
+      "title": "FAQ globale structurée",
+      "content": "",
+      "icon": "HelpCircle",
+      "colorPreset": "blue",
+      "order": 12,
+      "slug": "faq-globale",
+      "attachments": []
+    }
+  ],
+  "version": "1.0",
+  "lastModified": 1234567890
+}

@@ -1,5 +1,5 @@
-export type ColorPreset = "good" | "tip" | "bad" | "none";
-export type BlockSize = "sm" | "md" | "lg" | "xl";
+export type ColorPreset = "white" | "green" | "yellow" | "red" | "blue";
+export type BlockType = "category" | "section";
 
 export interface Attachment {
   id: string;
@@ -10,17 +10,15 @@ export interface Attachment {
 
 export interface Block {
   id: string;
-  type: string;
+  type: BlockType;
   title: string;
-  content: string; // JSON from TipTap editor
-  icon?: string; // lucide icon name
+  content: string;
+  icon?: string;
   colorPreset: ColorPreset;
   order: number;
-  size: BlockSize;
-  slug?: string;
-  pinned: boolean;
+  slug: string;
+  parentId?: string;
   attachments: Attachment[];
-  parentId?: string; // For sub-blocks
 }
 
 export interface AppData {
