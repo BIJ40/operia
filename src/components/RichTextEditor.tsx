@@ -31,11 +31,9 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   const [imageType, setImageType] = useState<'inline' | 'modal'>('inline');
   const [showImageDialog, setShowImageDialog] = useState(false);
   const { blocks } = useEditorContext();
-  const [mentions, setMentions] = useState<MentionSuggestion[]>([]);
-
-  useEffect(() => {
-    setMentions(getAllMentionSuggestions(blocks));
-  }, [blocks]);
+  
+  // Load mentions immediately
+  const mentions = getAllMentionSuggestions(blocks);
 
   const editor = useEditor({
     extensions: [
@@ -59,7 +57,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
-  });
+  }, [blocks]);
 
   useEffect(() => {
     if (!editor) return;
