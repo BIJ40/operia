@@ -1,74 +1,21 @@
 import { Link } from 'react-router-dom';
-import { Settings, LogOut, Home, HelpCircle, Edit3, Square, Circle, type LucideIcon } from 'lucide-react';
+import { LogOut, Home, HelpCircle, Edit3, Square } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
-import { IconPicker } from '@/components/IconPicker';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-
-// Import all available icons for dynamic mapping
-import * as LucideIcons from 'lucide-react';
 
 interface HeaderProps {
   onOpenLogin?: () => void;
 }
 
 export function Header({ onOpenLogin }: HeaderProps) {
-  const { blocks, isEditMode, toggleEditMode, updateBlock } = useEditor();
+  const { blocks, isEditMode, toggleEditMode } = useEditor();
   const { isAuthenticated, logout } = useAuth();
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  
-  // Load icons from localStorage or use defaults
-  const [guideIcon, setGuideIcon] = useState(() => 
-    localStorage.getItem('guideIcon') || 'Home'
-  );
-  const [faqIcon, setFaqIcon] = useState(() => 
-    localStorage.getItem('faqIcon') || 'HelpCircle'
-  );
-  const [editIcon, setEditIcon] = useState(() => 
-    localStorage.getItem('editIcon') || 'Edit3'
-  );
-  const [stopIcon, setStopIcon] = useState(() => 
-    localStorage.getItem('stopIcon') || 'Square'
-  );
-
-  // Save to localStorage when icons change
-  const handleGuideIconChange = (icon: string) => {
-    setGuideIcon(icon);
-    localStorage.setItem('guideIcon', icon);
-  };
-
-  const handleFaqIconChange = (icon: string) => {
-    setFaqIcon(icon);
-    localStorage.setItem('faqIcon', icon);
-  };
-
-  const handleEditIconChange = (icon: string) => {
-    setEditIcon(icon);
-    localStorage.setItem('editIcon', icon);
-  };
-
-  const handleStopIconChange = (icon: string) => {
-    setStopIcon(icon);
-    localStorage.setItem('stopIcon', icon);
-  };
   
   // Find FAQ category
   const faqCategory = blocks.find(
     b => b.type === 'category' && b.title.toLowerCase().includes('faq')
   );
-
-  const isGuideCustom = guideIcon.startsWith('data:image/') || guideIcon.startsWith('http');
-  const isFaqCustom = faqIcon.startsWith('data:image/') || faqIcon.startsWith('http');
-  const isEditCustom = editIcon.startsWith('data:image/') || editIcon.startsWith('http');
-  const isStopCustom = stopIcon.startsWith('data:image/') || stopIcon.startsWith('http');
-
-  const GuideIconComponent = !isGuideCustom ? ((LucideIcons as any)[guideIcon] || Home) : null;
-  const FaqIconComponent = !isFaqCustom ? ((LucideIcons as any)[faqIcon] || HelpCircle) : null;
-  const EditIconComponent = !isEditCustom ? ((LucideIcons as any)[editIcon] || Edit3) : null;
-  const StopIconComponent = !isStopCustom ? ((LucideIcons as any)[stopIcon] || Square) : null;
 
   const handleEnrichirClick = () => {
     if (isEditMode) {
@@ -90,11 +37,7 @@ export function Header({ onOpenLogin }: HeaderProps) {
           to="/" 
           className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
         >
-          {isGuideCustom ? (
-            <img src={guideIcon} alt="Guide" className="w-5 h-5 object-contain" />
-          ) : (
-            GuideIconComponent && <GuideIconComponent className="w-5 h-5 text-primary" />
-          )}
+          <Home className="w-5 h-5 text-primary" />
           <span className="font-semibold text-foreground">GUIDE</span>
         </Link>
         
@@ -103,11 +46,7 @@ export function Header({ onOpenLogin }: HeaderProps) {
             to={`/category/${faqCategory.slug}`}
             className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
           >
-            {isFaqCustom ? (
-              <img src={faqIcon} alt="FAQ" className="w-5 h-5 object-contain" />
-            ) : (
-              FaqIconComponent && <FaqIconComponent className="w-5 h-5 text-primary" />
-            )}
+            <HelpCircle className="w-5 h-5 text-primary" />
             <span className="font-semibold text-foreground">FAQ</span>
           </Link>
         )}
@@ -119,116 +58,28 @@ export function Header({ onOpenLogin }: HeaderProps) {
         >
           {isEditMode ? (
             <>
-              {isStopCustom ? (
-                <img src={stopIcon} alt="Stop" className="w-5 h-5 object-contain" />
-              ) : (
-                StopIconComponent && <StopIconComponent className="w-5 h-5 text-destructive" />
-              )}
+              <Square className="w-5 h-5 text-destructive" />
               <span className="font-semibold text-foreground">STOP</span>
             </>
           ) : (
             <>
-              {isEditCustom ? (
-                <img src={editIcon} alt="Enrichir" className="w-5 h-5 object-contain" />
-              ) : (
-                EditIconComponent && <EditIconComponent className="w-5 h-5 text-primary" />
-              )}
+              <Edit3 className="w-5 h-5 text-primary" />
               <span className="font-semibold text-foreground">ENRICHIR</span>
             </>
           )}
         </Button>
 
         {isAuthenticated && (
-          <>
-            <Button
-              onClick={() => setSettingsOpen(true)}
-              variant="ghost"
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-            >
-              <Settings className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-foreground">PARAMÈTRES</span>
-            </Button>
-
-            <Button
-              onClick={logout}
-              variant="ghost"
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all ml-auto"
-            >
-              <LogOut className="w-5 h-5 text-muted-foreground" />
-              <span className="font-semibold text-foreground">QUITTER</span>
-            </Button>
-          </>
+          <Button
+            onClick={logout}
+            variant="ghost"
+            className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all ml-auto"
+          >
+            <LogOut className="w-5 h-5 text-muted-foreground" />
+            <span className="font-semibold text-foreground">QUITTER</span>
+          </Button>
         )}
       </div>
-
-      {/* Settings Dialog */}
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Paramètres de l'interface</DialogTitle>
-            <DialogDescription>
-              Personnalisez les icônes de votre guide en important vos propres images
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6 overflow-y-auto flex-1 pr-2">
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium">Icônes du header</h3>
-              
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">Icône GUIDE</label>
-                <IconPicker value={guideIcon} onChange={handleGuideIconChange} />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">Icône FAQ</label>
-                <IconPicker value={faqIcon} onChange={handleFaqIconChange} />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">Icône ENRICHIR</label>
-                <IconPicker value={editIcon} onChange={handleEditIconChange} />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">Icône STOP</label>
-                <IconPicker value={stopIcon} onChange={handleStopIconChange} />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium">Icônes des catégories</h3>
-              {blocks.filter(b => b.type === 'category').map((category) => {
-                const isCustomCat = category.icon?.startsWith('data:image/') || category.icon?.startsWith('http');
-                const CategoryIcon = !isCustomCat ? ((LucideIcons as any)[category.icon || ''] || Circle) : null;
-                
-                return (
-                  <div key={category.id} className="space-y-2">
-                    <label className="text-sm text-muted-foreground flex items-center gap-2">
-                      {isCustomCat ? (
-                        <img src={category.icon} alt={category.title} className="w-4 h-4 object-contain" />
-                      ) : (
-                        CategoryIcon && <CategoryIcon className="w-4 h-4" />
-                      )}
-                      {category.title}
-                    </label>
-                    <IconPicker 
-                      value={category.icon || ''} 
-                      onChange={(icon) => updateBlock(category.id, { icon })}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button onClick={() => setSettingsOpen(false)}>
-              Fermer
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </header>
   );
 }
