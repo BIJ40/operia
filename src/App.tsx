@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import Category from "./pages/Category";
 import Admin from "./pages/Admin";
 import Documents from "./pages/Documents";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
@@ -26,6 +27,7 @@ const App = () => (
               <Route path="/category/:slug" element={<Category />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/documents" element={<Documents />} />
+              <Route path="/auth" element={<Auth />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

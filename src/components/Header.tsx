@@ -10,7 +10,7 @@ interface HeaderProps {
 
 export function Header({ onOpenLogin }: HeaderProps) {
   const { blocks, isEditMode, toggleEditMode } = useEditor();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, isAdmin, logout } = useAuth();
   
   // Find FAQ category
   const faqCategory = blocks.find(
@@ -69,7 +69,7 @@ export function Header({ onOpenLogin }: HeaderProps) {
           )}
         </Button>
 
-        {isAuthenticated && (
+        {isAdmin && (
           <Link
             to="/admin"
             className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"

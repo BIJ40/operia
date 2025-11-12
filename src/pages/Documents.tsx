@@ -24,7 +24,7 @@ interface Document {
 export default function Documents() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAdmin } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -33,12 +33,12 @@ export default function Documents() {
   const [editForm, setEditForm] = useState({ title: '', category: '', content: '' });
   const [isLoading, setIsLoading] = useState(false);
 
-  // Protection : rediriger si non authentifié
-  if (!isAuthenticated) {
+  // Protection : rediriger si non admin
+  if (!isAdmin) {
     navigate('/');
     toast({
       title: 'Accès refusé',
-      description: 'Vous devez être connecté pour accéder à cette page',
+      description: 'Seuls les administrateurs peuvent accéder à cette page',
       variant: 'destructive'
     });
     return null;

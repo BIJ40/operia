@@ -18,7 +18,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 export default function Admin() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAdmin } = useAuth();
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ 
@@ -28,12 +28,12 @@ export default function Admin() {
     status: '' as 'parsing' | 'uploading' | ''
   });
 
-  // Protection : rediriger si non authentifié
-  if (!isAuthenticated) {
+  // Protection : rediriger si non admin
+  if (!isAdmin) {
     navigate('/');
     toast({
       title: 'Accès refusé',
-      description: 'Vous devez être connecté pour accéder à cette page',
+      description: 'Seuls les administrateurs peuvent accéder à cette page',
       variant: 'destructive'
     });
     return null;
