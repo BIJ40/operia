@@ -10,7 +10,7 @@ import * as Icons from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 export default function Home() {
-  const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, loading } = useEditor();
+  const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, resetToDefault, loading } = useEditor();
   const { isAuthenticated } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -84,7 +84,10 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-8">
         {isEditMode && (
-          <div className="mb-6 flex justify-end">
+          <div className="mb-6 flex justify-end gap-2">
+            <Button onClick={resetToDefault} variant="outline">
+              Réinitialiser les données
+            </Button>
             <Button onClick={handleAddCategory}>
               <Plus className="w-4 h-4 mr-2" />
               Ajouter une catégorie

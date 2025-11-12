@@ -14,6 +14,7 @@ interface EditorContextType {
   reorderBlocks: (blocks: Block[]) => void;
   exportData: () => Promise<string>;
   importData: (data: string) => Promise<void>;
+  resetToDefault: () => void;
   loading: boolean;
 }
 
@@ -102,6 +103,13 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     }
   }, [toast]);
 
+  const resetToDefault = useCallback(() => {
+    const initialData = apogeeData as AppData;
+    setBlocks(initialData.blocks);
+    saveAppData(initialData);
+    toast({ title: 'Données réinitialisées', description: 'Les données par défaut ont été restaurées' });
+  }, [toast]);
+
   return (
     <EditorContext.Provider
       value={{
@@ -114,6 +122,7 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
         reorderBlocks,
         exportData: exportDataFn,
         importData: importDataFn,
+        resetToDefault,
         loading,
       }}
     >
