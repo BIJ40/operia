@@ -203,6 +203,23 @@ export const ResizableImage = Node.create({
     return [
       {
         tag: 'img[src]',
+        getAttrs: (element) => {
+          if (typeof element === 'string') return false;
+          
+          const width = element.getAttribute('width');
+          const height = element.getAttribute('height');
+          const src = element.getAttribute('src');
+          const alt = element.getAttribute('alt');
+          const title = element.getAttribute('title');
+          
+          return {
+            src,
+            alt,
+            title,
+            width: width ? parseInt(width, 10) : null,
+            height: height ? parseInt(height, 10) : null,
+          };
+        },
       },
     ];
   },
