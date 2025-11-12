@@ -188,7 +188,7 @@ export function Chatbot() {
           <div className="flex items-center justify-between p-4 border-b">
             <div className="flex items-center gap-2">
               <img src={chatIcon} alt="Chat" className="h-8 w-8" />
-              <h3 className="font-semibold">Assistant Guide</h3>
+              <h3 className="font-semibold">Mme MICHU</h3>
             </div>
             <Button onClick={() => setIsOpen(false)} variant="ghost" size="icon">
               <X className="h-4 w-4" />
@@ -199,7 +199,7 @@ export function Chatbot() {
           <ScrollArea className="flex-1 p-4">
             {messages.length === 0 && (
               <div className="text-center text-muted-foreground text-sm py-8">
-                Bonjour ! Comment puis-je vous aider avec le guide Apogée ?
+                Demandez à Mme Michu !
               </div>
             )}
             {messages.map((msg, idx) => (
