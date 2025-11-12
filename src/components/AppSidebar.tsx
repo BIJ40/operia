@@ -61,6 +61,7 @@ export function AppSidebar() {
             alt="Apogée CRM - Retour à l'accueil" 
             className="w-full h-auto cursor-pointer hover:opacity-80 transition-opacity"
             draggable={false}
+            data-no-modal="true"
           />
         </Link>
       </SidebarHeader>

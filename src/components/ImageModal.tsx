@@ -23,6 +23,10 @@ export function ImageModal() {
       // Gestion des images directes (inline)
       if (target.tagName === 'IMG') {
         const img = target as HTMLImageElement;
+        // Ignorer les images avec data-no-modal
+        if (img.hasAttribute('data-no-modal')) {
+          return;
+        }
         // Ne pas ouvrir les petites icônes (favicon, etc.)
         if (img.naturalWidth > 100 && img.naturalHeight > 100) {
           e.preventDefault();
