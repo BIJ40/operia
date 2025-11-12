@@ -41,18 +41,18 @@ export const MentionList = forwardRef<any, MentionListProps>((props, ref) => {
   }
 
   return (
-    <div className="bg-popover border rounded-lg shadow-lg overflow-hidden max-h-[300px] overflow-y-auto z-50">
+    <div className="bg-popover border border-border rounded-lg shadow-lg overflow-hidden max-h-[300px] overflow-y-auto z-[9999]">
       {props.items.map((item, index) => (
         <button
           key={item.id}
           type="button"
-          className={`w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors ${
-            index === selectedIndex ? 'bg-accent' : ''
+          className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+            index === selectedIndex ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
           }`}
           onClick={() => props.command(item)}
         >
-          <div className="font-medium">{item.label}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="font-medium text-foreground">{item.label || 'Sans titre'}</div>
+          <div className="text-xs text-muted-foreground mt-0.5">
             {item.type === 'category' ? 'Catégorie' : 'Section'}
           </div>
         </button>
