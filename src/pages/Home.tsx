@@ -23,12 +23,31 @@ export default function Home() {
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
     .sort((a, b) => a.order - b.order);
 
-  // Filtrer les catégories selon la recherche
+  // Filtrer les catégories selon la recherche - chercher dans catégories ET sections
   const filteredCategories = searchQuery.trim()
-    ? categories.filter(cat => 
-        cat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cat.content.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? categories.filter(cat => {
+        const searchLower = searchQuery.toLowerCase();
+        
+        // Chercher dans le titre et contenu de la catégorie
+        const categoryMatch = 
+          cat.title.toLowerCase().includes(searchLower) ||
+          cat.content.toLowerCase().includes(searchLower);
+        
+        if (categoryMatch) return true;
+        
+        // Chercher dans les sections de cette catégorie
+        const sections = blocks.filter(b => 
+          b.type === 'section' && 
+          b.parentId === cat.id
+        );
+        
+        const sectionMatch = sections.some(section =>
+          section.title.toLowerCase().includes(searchLower) ||
+          section.content.toLowerCase().includes(searchLower)
+        );
+        
+        return sectionMatch;
+      })
     : categories;
 
   const IconComponent = (iconName: string) => {
