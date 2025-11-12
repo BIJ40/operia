@@ -1,49 +1,38 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { 
-  Home, Users, FileText, Folder, Calendar, Clock, Bell,
-  Mail, Phone, MapPin, Settings, Hammer, Wrench, Package,
-  ShoppingCart, CreditCard, DollarSign, TrendingUp, BarChart,
-  PieChart, Award, Star, Heart, ThumbsUp, MessageCircle,
-  Search, Filter, Download, Upload, Eye, Edit, Trash,
-  Plus, Minus, Check, X, AlertCircle, Info, HelpCircle,
-  Building, Briefcase, Clipboard, BookOpen, GraduationCap,
-  Lightbulb, Zap, Target, Flag, Key, Lock, Shield,
-  AlertTriangle, CheckCircle, XCircle, Activity, Database, Circle, Edit3, Square,
-  type LucideIcon
-} from 'lucide-react';
-import { useState } from 'react';
+import { Upload, X } from 'lucide-react';
+import { useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface IconPickerProps {
   value: string;
   onChange: (icon: string) => void;
 }
 
-// Map des icônes disponibles
-const iconMap: Record<string, LucideIcon> = {
-  Home, Users, FileText, Folder, Calendar, Clock, Bell,
-  Mail, Phone, MapPin, Settings, Hammer, Wrench, Package,
-  ShoppingCart, CreditCard, DollarSign, TrendingUp, BarChart,
-  PieChart, Award, Star, Heart, ThumbsUp, MessageCircle,
-  Search, Filter, Download, Upload, Eye, Edit, Trash,
-  Plus, Minus, Check, X, AlertCircle, Info, HelpCircle,
-  Building, Briefcase, Clipboard, BookOpen, GraduationCap,
-  Lightbulb, Zap, Target, Flag, Key, Lock, Shield,
-  AlertTriangle, CheckCircle, XCircle, Activity, Database, Circle, Edit3, Square
-};
-
-const commonIcons = Object.keys(iconMap);
-
 export function IconPicker({ value, onChange }: IconPickerProps) {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const isCustomImage = value.startsWith('data:image/') || value.startsWith('http');
 
-  const filteredIcons = commonIcons.filter(icon =>
-    icon.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        onChange(base64String);
+        setOpen(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-  const CurrentIcon = iconMap[value] || Circle;
+  const handleRemoveCustomIcon = () => {
+    onChange('');
+    setOpen(false);
+  };
 
   return (
     <>
@@ -53,47 +42,79 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
         onClick={() => setOpen(true)}
         className="w-full justify-start gap-2"
       >
-        <CurrentIcon className="w-4 h-4" />
-        <span>{value}</span>
+        {isCustomImage ? (
+          <>
+            <img src={value} alt="Icône personnalisée" className="w-4 h-4 object-contain" />
+            <span>Icône personnalisée</span>
+          </>
+        ) : (
+          <span>{value || "Choisir une icône"}</span>
+        )}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Choisir une icône</DialogTitle>
+            <DialogTitle>Personnaliser l'icône</DialogTitle>
           </DialogHeader>
 
-          <Input
-            placeholder="Rechercher une icône..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="mb-4"
-          />
+          <Tabs defaultValue="upload" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload">Importer une image</TabsTrigger>
+              <TabsTrigger value="current">Image actuelle</TabsTrigger>
+            </TabsList>
 
-          <div className="grid grid-cols-6 gap-2">
-            {filteredIcons.map((iconName) => {
-              const IconComponent = iconMap[iconName];
-              const isSelected = value === iconName;
-              
-              if (!IconComponent) return null;
-
-              return (
+            <TabsContent value="upload" className="space-y-4">
+              <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
                 <Button
-                  key={iconName}
                   type="button"
-                  variant={isSelected ? 'default' : 'ghost'}
-                  className="h-16 flex flex-col items-center justify-center gap-1"
-                  onClick={() => {
-                    onChange(iconName);
-                    setOpen(false);
-                  }}
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2"
                 >
-                  <IconComponent className="w-6 h-6" />
-                  <span className="text-xs truncate max-w-full">{iconName}</span>
+                  <Upload className="w-4 h-4" />
+                  Choisir une image
                 </Button>
-              );
-            })}
-          </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  PNG, JPG, SVG (max 2MB)
+                </p>
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                💡 Pour un meilleur résultat, utilisez des images carrées avec fond transparent (PNG)
+              </div>
+            </TabsContent>
+
+            <TabsContent value="current" className="space-y-4">
+              {isCustomImage ? (
+                <div className="space-y-4">
+                  <div className="border rounded-lg p-4 flex items-center justify-center bg-muted">
+                    <img src={value} alt="Icône actuelle" className="w-24 h-24 object-contain" />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={handleRemoveCustomIcon}
+                    className="w-full gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    Supprimer l'icône personnalisée
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center text-muted-foreground py-8">
+                  Aucune icône personnalisée définie
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </>

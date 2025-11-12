@@ -29,10 +29,15 @@ export function Header({ onOpenLogin }: HeaderProps) {
     b => b.type === 'category' && b.title.toLowerCase().includes('faq')
   );
 
-  const GuideIconComponent = (LucideIcons as any)[guideIcon] || Home;
-  const FaqIconComponent = (LucideIcons as any)[faqIcon] || HelpCircle;
-  const EditIconComponent = (LucideIcons as any)[editIcon] || Edit3;
-  const StopIconComponent = (LucideIcons as any)[stopIcon] || Square;
+  const isGuideCustom = guideIcon.startsWith('data:image/') || guideIcon.startsWith('http');
+  const isFaqCustom = faqIcon.startsWith('data:image/') || faqIcon.startsWith('http');
+  const isEditCustom = editIcon.startsWith('data:image/') || editIcon.startsWith('http');
+  const isStopCustom = stopIcon.startsWith('data:image/') || stopIcon.startsWith('http');
+
+  const GuideIconComponent = !isGuideCustom ? ((LucideIcons as any)[guideIcon] || Home) : null;
+  const FaqIconComponent = !isFaqCustom ? ((LucideIcons as any)[faqIcon] || HelpCircle) : null;
+  const EditIconComponent = !isEditCustom ? ((LucideIcons as any)[editIcon] || Edit3) : null;
+  const StopIconComponent = !isStopCustom ? ((LucideIcons as any)[stopIcon] || Square) : null;
 
   const handleEnrichirClick = () => {
     if (isEditMode) {
@@ -54,7 +59,11 @@ export function Header({ onOpenLogin }: HeaderProps) {
           to="/" 
           className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
         >
-          <GuideIconComponent className="w-5 h-5 text-primary" />
+          {isGuideCustom ? (
+            <img src={guideIcon} alt="Guide" className="w-5 h-5 object-contain" />
+          ) : (
+            GuideIconComponent && <GuideIconComponent className="w-5 h-5 text-primary" />
+          )}
           <span className="font-semibold text-foreground">GUIDE</span>
         </Link>
         
@@ -63,7 +72,11 @@ export function Header({ onOpenLogin }: HeaderProps) {
             to={`/category/${faqCategory.slug}`}
             className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
           >
-            <FaqIconComponent className="w-5 h-5 text-primary" />
+            {isFaqCustom ? (
+              <img src={faqIcon} alt="FAQ" className="w-5 h-5 object-contain" />
+            ) : (
+              FaqIconComponent && <FaqIconComponent className="w-5 h-5 text-primary" />
+            )}
             <span className="font-semibold text-foreground">FAQ</span>
           </Link>
         )}
@@ -75,12 +88,20 @@ export function Header({ onOpenLogin }: HeaderProps) {
         >
           {isEditMode ? (
             <>
-              <StopIconComponent className="w-5 h-5 text-destructive" />
+              {isStopCustom ? (
+                <img src={stopIcon} alt="Stop" className="w-5 h-5 object-contain" />
+              ) : (
+                StopIconComponent && <StopIconComponent className="w-5 h-5 text-destructive" />
+              )}
               <span className="font-semibold text-foreground">STOP</span>
             </>
           ) : (
             <>
-              <EditIconComponent className="w-5 h-5 text-primary" />
+              {isEditCustom ? (
+                <img src={editIcon} alt="Enrichir" className="w-5 h-5 object-contain" />
+              ) : (
+                EditIconComponent && <EditIconComponent className="w-5 h-5 text-primary" />
+              )}
               <span className="font-semibold text-foreground">ENRICHIR</span>
             </>
           )}
@@ -144,16 +165,21 @@ export function Header({ onOpenLogin }: HeaderProps) {
             <div className="space-y-3">
               <h3 className="text-sm font-medium">Icônes des catégories</h3>
               {blocks.filter(b => b.type === 'category').map((category) => {
-                const CategoryIcon = (LucideIcons as any)[category.icon] || Circle;
+                const isCustomCat = category.icon?.startsWith('data:image/') || category.icon?.startsWith('http');
+                const CategoryIcon = !isCustomCat ? ((LucideIcons as any)[category.icon || ''] || Circle) : null;
                 
                 return (
                   <div key={category.id} className="space-y-2">
                     <label className="text-sm text-muted-foreground flex items-center gap-2">
-                      <CategoryIcon className="w-4 h-4" />
+                      {isCustomCat ? (
+                        <img src={category.icon} alt={category.title} className="w-4 h-4 object-contain" />
+                      ) : (
+                        CategoryIcon && <CategoryIcon className="w-4 h-4" />
+                      )}
                       {category.title}
                     </label>
                     <IconPicker 
-                      value={category.icon || 'Circle'} 
+                      value={category.icon || ''} 
                       onChange={(icon) => updateBlock(category.id, { icon })}
                     />
                   </div>
