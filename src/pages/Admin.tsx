@@ -29,9 +29,10 @@ export default function Admin() {
     'fondamentaux'
   ]);
   const [content, setContent] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
 
   // Charger les catégories existantes
   useEffect(() => {
@@ -71,74 +72,174 @@ export default function Admin() {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
+    const selectedFiles = Array.from(e.target.files || []);
+    if (selectedFiles.length === 0) return;
 
-    setFile(selectedFile);
-    setIsParsing(true);
+    setFiles(selectedFiles);
     
-    const fileType = selectedFile.type;
-    const fileName = selectedFile.name.toLowerCase();
-    
-    // Extraire le nom comme titre si pas déjà renseigné
-    if (!title) {
-      setTitle(selectedFile.name.replace(/\.[^/.]+$/, ""));
-    }
+    // Si plusieurs fichiers, on les traite tous
+    if (selectedFiles.length > 1) {
+      await handleBatchUpload(selectedFiles);
+    } else {
+      // Un seul fichier : comportement classique
+      const selectedFile = selectedFiles[0];
+      setIsParsing(true);
+      
+      const fileType = selectedFile.type;
+      const fileName = selectedFile.name.toLowerCase();
+      
+      // Extraire le nom comme titre si pas déjà renseigné
+      if (!title) {
+        setTitle(selectedFile.name.replace(/\.[^/.]+$/, ""));
+      }
 
-    try {
-      // PDFs et images : nécessitent un parsing spécial
-      if (fileType === 'application/pdf' || fileName.endsWith('.pdf') || 
-          fileType.startsWith('image/') || 
-          ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.endsWith(ext))) {
-        
+      try {
+        // PDFs et images : nécessitent un parsing spécial
+        if (fileType === 'application/pdf' || fileName.endsWith('.pdf') || 
+            fileType.startsWith('image/') || 
+            ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.endsWith(ext))) {
+          
+          toast({
+            title: 'Traitement en cours...',
+            description: 'Extraction du contenu du document (peut prendre jusqu\'à 1 minute)',
+          });
+
+          // Créer un FormData pour envoyer le fichier
+          const formData = new FormData();
+          formData.append('file', selectedFile);
+
+          // Envoyer au backend pour parsing
+          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-document`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error('Erreur lors du parsing du document');
+          }
+
+          const result = await response.json();
+          setContent(result.content || 'Impossible d\'extraire le contenu');
+          
+          toast({
+            title: 'Document traité',
+            description: 'Le contenu a été extrait avec succès',
+          });
+        } else {
+          // Fichiers texte : lecture simple
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const text = event.target?.result as string;
+            setContent(text);
+          };
+          reader.readAsText(selectedFile);
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
         toast({
-          title: 'Traitement en cours...',
-          description: 'Extraction du contenu du document (peut prendre jusqu\'à 1 minute)',
+          title: 'Erreur',
+          description: 'Impossible de traiter ce fichier. Essayez de copier-coller le contenu manuellement.',
+          variant: 'destructive',
         });
+      } finally {
+        setIsParsing(false);
+      }
+    }
+  };
 
-        // Créer un FormData pour envoyer le fichier
-        const formData = new FormData();
-        formData.append('file', selectedFile);
+  const handleBatchUpload = async (selectedFiles: File[]) => {
+    setIsLoading(true);
+    setUploadProgress({ current: 0, total: selectedFiles.length });
 
-        // Envoyer au backend pour parsing
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-document`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: formData,
-        });
+    let successCount = 0;
+    let errorCount = 0;
 
-        if (!response.ok) {
-          throw new Error('Erreur lors du parsing du document');
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      setUploadProgress({ current: i + 1, total: selectedFiles.length });
+
+      try {
+        const fileType = file.type;
+        const fileName = file.name.toLowerCase();
+        let extractedContent = '';
+
+        // Déterminer la catégorie automatiquement basée sur le nom du fichier
+        let autoCategory = 'manuel';
+        if (fileName.includes('api')) autoCategory = 'api';
+        else if (fileName.includes('tarif')) autoCategory = 'tarifs';
+        else if (fileName.includes('tuto') || fileName.includes('guide')) autoCategory = 'tutoriel';
+        else if (fileName.includes('apporteur')) autoCategory = 'apporteurs';
+        else if (fileName.includes('devis')) autoCategory = 'devis';
+        else if (fileName.includes('fondament')) autoCategory = 'fondamentaux';
+
+        // Parse le fichier
+        if (fileType === 'application/pdf' || fileName.endsWith('.pdf') || 
+            fileType.startsWith('image/') || 
+            ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.endsWith(ext))) {
+          
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-document`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: formData,
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            extractedContent = result.content || 'Contenu non extrait';
+          } else {
+            extractedContent = `[Fichier ${file.name}] - Contenu à extraire manuellement`;
+          }
+        } else {
+          // Fichier texte
+          const text = await file.text();
+          extractedContent = text;
         }
 
-        const result = await response.json();
-        setContent(result.content || 'Impossible d\'extraire le contenu');
-        
-        toast({
-          title: 'Document traité',
-          description: 'Le contenu a été extrait avec succès',
-        });
-      } else {
-        // Fichiers texte : lecture simple
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const text = event.target?.result as string;
-          setContent(text);
-        };
-        reader.readAsText(selectedFile);
+        // Insérer dans la base
+        const { error } = await supabase
+          .from('knowledge_base')
+          .insert({
+            title: file.name.replace(/\.[^/.]+$/, ""),
+            category: autoCategory,
+            content: extractedContent,
+            metadata: {
+              originalFileName: file.name,
+              fileSize: file.size,
+              fileType: file.type,
+              uploadedAt: new Date().toISOString(),
+            }
+          });
+
+        if (error) throw error;
+        successCount++;
+
+      } catch (error) {
+        console.error(`Erreur pour ${file.name}:`, error);
+        errorCount++;
       }
-    } catch (error) {
-      console.error('Erreur:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de traiter ce fichier. Essayez de copier-coller le contenu manuellement.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsParsing(false);
     }
+
+    setIsLoading(false);
+    setUploadProgress({ current: 0, total: 0 });
+
+    toast({
+      title: 'Import terminé',
+      description: `${successCount} document(s) importé(s) avec succès${errorCount > 0 ? `, ${errorCount} erreur(s)` : ''}`,
+    });
+
+    // Réinitialiser
+    setFiles([]);
+    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+    loadCategories();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -157,9 +258,9 @@ export default function Admin() {
           category: finalCategory,
           content,
           metadata: {
-            originalFileName: file?.name,
-            fileSize: file?.size,
-            fileType: file?.type,
+            originalFileName: files[0]?.name,
+            fileSize: files[0]?.size,
+            fileType: files[0]?.type,
             uploadedAt: new Date().toISOString(),
           }
         });
@@ -174,7 +275,7 @@ export default function Admin() {
       // Réinitialiser le formulaire
       setTitle('');
       setContent('');
-      setFile(null);
+      setFiles([]);
       setCategory('manuel');
       setCustomCategory('');
       setShowCustomCategory(false);
@@ -233,16 +334,24 @@ export default function Admin() {
                     accept=".txt,.html,.csv,.json,.md,.pdf,.jpg,.jpeg,.png,.webp"
                     onChange={handleFileUpload}
                     className="flex-1"
-                    disabled={isParsing}
+                    disabled={isParsing || isLoading}
+                    multiple
                   />
                   <Upload className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Formats acceptés : .txt, .html, .csv, .json, .md, .pdf, .jpg, .jpeg, .png, .webp
+                  <br />
+                  💡 Sélectionnez plusieurs fichiers pour un import en batch
                 </p>
                 {isParsing && (
                   <p className="text-sm text-primary font-medium">
                     ⏳ Extraction du contenu en cours...
+                  </p>
+                )}
+                {uploadProgress.total > 0 && (
+                  <p className="text-sm text-primary font-medium">
+                    📤 Import en cours : {uploadProgress.current} / {uploadProgress.total}
                   </p>
                 )}
               </div>
@@ -331,7 +440,7 @@ export default function Admin() {
                   onClick={() => {
                     setTitle('');
                     setContent('');
-                    setFile(null);
+                    setFiles([]);
                     const fileInput = document.getElementById('file-upload') as HTMLInputElement;
                     if (fileInput) fileInput.value = '';
                   }}
