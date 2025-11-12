@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEditor } from '@/contexts/EditorContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import chatIcon from '@/assets/icone_chat.png';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -50,17 +51,19 @@ export function Chatbot() {
   };
 
   const renderMessageWithLinks = (content: string) => {
-    const parts = content.split(/(\[Voir:[^\]]+\]\([^)]+\))/g);
+    // Split on markdown links [text](url) and preserve them
+    const parts = content.split(/(\[[^\]]+\]\([^)]+\))/g);
     
     return parts.map((part, index) => {
-      const linkMatch = part.match(/\[Voir:([^\]]+)\]\(([^)]+)\)/);
+      // Check for markdown link format [text](url)
+      const linkMatch = part.match(/\[([^\]]+)\]\(([^)]+)\)/);
       if (linkMatch) {
         const [, text, url] = linkMatch;
         return (
           <button
             key={index}
             onClick={() => handleLinkClick(url)}
-            className="text-primary hover:underline font-medium inline-flex items-center gap-1"
+            className="text-primary hover:underline font-medium inline-flex items-center gap-1 mx-1"
           >
             👉 {text.trim()}
           </button>
@@ -170,13 +173,12 @@ export function Chatbot() {
     <>
       {/* Floating button */}
       {!isOpen && (
-        <Button
+        <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
-          size="icon"
+          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-50 hover:scale-110 transition-transform"
         >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
+          <img src={chatIcon} alt="Chat" className="w-full h-full" />
+        </button>
       )}
 
       {/* Chat window */}
@@ -185,7 +187,7 @@ export function Chatbot() {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
             <div className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-primary" />
+              <img src={chatIcon} alt="Chat" className="h-8 w-8" />
               <h3 className="font-semibold">Assistant Guide</h3>
             </div>
             <Button onClick={() => setIsOpen(false)} variant="ghost" size="icon">
