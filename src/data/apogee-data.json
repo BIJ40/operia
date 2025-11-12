@@ -16,8 +16,8 @@
       "type": "section",
       "parentId": "cat-1",
       "title": "1. Introduction & principes",
-      "content": "<p>Ce manuel décrit le fonctionnement réel du CRM Apogee dans l'entreprise, du premier contact client jusqu'au dossier clos et facturé. Il suit le parcours logique : Client → Dossier → Rendez-vous → Application technicien → Relevé technique / Travaux → Devis → Commandes → Facturation → Paiements → Clôture.</p><p>Les écrans, boutons et statuts sont expliqués avec les impacts métiers associés. Aucune règle imaginaire n'est ajoutée : tout ce qui figure ici correspond aux usages décrits.</p><div style='background:#eff6ff;padding:12px;border-radius:8px;margin:12px 0'><strong>💡 Principes clés :</strong> éviter les doublons, partir du dossier pour créer les éléments, respecter les statuts automatiques, utiliser les sous-statuts pour classer sans casser le workflow.</div>",
-      "colorPreset": "blue",
+      "content": "<p>Ce manuel décrit le fonctionnement réel du CRM Apogee dans l'entreprise, du premier contact client jusqu'au dossier clos et facturé. Il suit le parcours logique : Client → Dossier → Rendez-vous → Application technicien → Relevé technique / Travaux → Devis → Commandes → Facturation → Paiements → Clôture.</p><p>Les écrans, boutons et statuts sont expliqués avec les impacts métiers associés. Aucune règle imaginaire n'est ajoutée : tout ce qui figure ici correspond aux usages décrits.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><div style='font-size:14px;line-height:1.4'><strong>💡</strong> Principes clés : éviter les doublons, partir du dossier pour créer les éléments, respecter les statuts automatiques, utiliser les sous-statuts pour classer sans casser le workflow.</div></div>",
+      "colorPreset": "white",
       "order": 0,
       "slug": "intro-1",
       "attachments": []
@@ -38,7 +38,7 @@
       "type": "section",
       "parentId": "cat-2",
       "title": "2.1 Rôle du module Client",
-      "content": "<p>Le module <strong>Client</strong> est le point d'entrée de toute relation gérée dans Apogee. Chaque dossier, chaque rendez-vous, chaque devis, chaque facture repose sur une fiche client fiable. Avant de penser dossier, devis ou facture, il faut s'assurer que le client existe, est correctement identifié et qu'il n'est pas dupliqué.</p><p>Apogee ne doit pas être une simple liste de noms ; c'est un référentiel unique qui sécurise les envois, garantit les bons destinataires, alimente les exports et permet un reporting propre au niveau du réseau HELPCONFORT.</p><div style='background:#dbeafe;padding:12px;border-radius:8px;margin:12px 0'><strong>💡 Adoptez le réflexe :</strong> \"Pas de dossier sans fiche client vérifiée\". Cette discipline conditionne la fiabilité de toute la chaîne Client → Dossier → Rendez-vous → Devis → Facture.</div>",
+      "content": "<p>Le module <b>Client</b> est le point d'entrée de toute relation gérée dans Apogee. Chaque dossier, chaque rendez-vous, chaque devis, chaque facture repose sur une fiche client fiable. Avant de penser dossier, devis ou facture, il faut s'assurer que le client existe, est correctement identifié et qu'il n'est pas dupliqué.</p><p>Apogee ne doit pas être une simple liste de noms ; c'est un référentiel unique qui sécurise les envois, garantit les bons destinataires, alimente les exports et permet un reporting propre au niveau du réseau HELPCONFORT.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Adoptez le réflexe : \"Pas de dossier sans fiche client vérifiée\". Cette discipline conditionne la fiabilité de toute la chaîne Client → Dossier → Rendez-vous → Devis → Facture.</div>",
       "colorPreset": "white",
       "order": 0,
       "slug": "client-role",
@@ -49,7 +49,7 @@
       "type": "section",
       "parentId": "cat-2",
       "title": "2.2 Accéder aux clients & sécuriser l'absence de doublons",
-      "content": "<p>Depuis le menu principal, ouvrez <strong>Client > Client</strong>. Vous accédez à une vue structurée listant l'ensemble des clients connus de votre agence. La zone de recherche permet de filtrer immédiatement par nom, raison sociale, téléphone ou email selon les informations disponibles.</p><p>Avant toute création, saisissez au minimum les premières lettres du nom de famille ou de la raison sociale. Si nécessaire, essayez une variante (majuscules, minuscules, séparateurs) pour vérifier qu'un enregistrement n'existe pas déjà. En cas de doute, ouvrez la fiche la plus proche pour confirmer l'adresse, le téléphone ou l'apporteur associé.</p><div style='background:#fee2e2;padding:12px;border-radius:8px;margin:12px 0'><strong>⚠️ La création de doublons</strong> entraîne des dossiers éparpillés, des historiques tronqués et des erreurs de facturation. Ne validez jamais un nouveau client sans avoir cherché sérieusement.</div>",
+      "content": "<p>Depuis le menu principal, ouvrez <b>Client > Client</b>. Vous accédez à une vue structurée listant l'ensemble des clients connus de votre agence. La zone de recherche permet de filtrer immédiatement par nom, raison sociale, téléphone ou email selon les informations disponibles.</p><p>Avant toute création, saisissez au minimum les premières lettres du nom de famille ou de la raison sociale. Si nécessaire, essayez une variante (majuscules, minuscules, séparateurs) pour vérifier qu'un enregistrement n'existe pas déjà. En cas de doute, ouvrez la fiche la plus proche pour confirmer l'adresse, le téléphone ou l'apporteur associé.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️</strong> La création de doublons entraîne des dossiers éparpillés, des historiques tronqués et des erreurs de facturation. Ne validez jamais un nouveau client sans avoir cherché sérieusement.</div>",
       "colorPreset": "white",
       "order": 1,
       "slug": "client-anti-doublons",
@@ -60,10 +60,98 @@
       "type": "section",
       "parentId": "cat-2",
       "title": "2.3 Créer un client Particulier",
-      "content": "<p>Si, après vérification, le client n'existe pas, cliquez sur <strong>\"Ajouter un client\"</strong>. Sélectionnez le type <strong>Particulier</strong> puis complétez les champs avec soin. Le nom, le prénom, au moins un numéro de téléphone actif et l'adresse complète sont essentiels. L'email doit être renseigné dès que possible, car il servira à l'envoi des devis, factures et comptes rendus.</p><p>Lorsque l'adresse d'intervention diffère de l'adresse de facturation, précisez-le clairement. La bonne structuration des adresses facilite le travail des techniciens sur le terrain et la compréhension des documents par le client. Cette fiche deviendra le socle de tous les futurs dossiers ouverts pour ce foyer.</p><div style='background:#dcfce7;padding:12px;border-radius:8px;margin:12px 0'><strong>✅ Renseignez toujours une information de contact exploitable</strong> (mobile ou email). Un client sans moyen de contact fiable complique les plannings et retarde les validations.</div>",
+      "content": "<p>Si, après vérification, le client n'existe pas, cliquez sur <b>\"Ajouter un client\"</b>. Sélectionnez le type <b>Particulier</b> puis complétez les champs avec soin. Le nom, le prénom, au moins un numéro de téléphone actif et l'adresse complète sont essentiels. L'email doit être renseigné dès que possible, car il servira à l'envoi des devis, factures et comptes rendus.</p><p>Lorsque l'adresse d'intervention diffère de l'adresse de facturation, précisez-le clairement. La bonne structuration des adresses facilite le travail des techniciens sur le terrain et la compréhension des documents par le client. Cette fiche deviendra le socle de tous les futurs dossiers ouverts pour ce foyer.</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Renseignez toujours une information de contact exploitable (mobile ou email). Un client sans moyen de contact fiable complique les plannings et retarde les validations.</div>",
       "colorPreset": "white",
       "order": 2,
       "slug": "client-particulier",
+      "attachments": []
+    },
+    {
+      "id": "sec-2-4",
+      "type": "section",
+      "parentId": "cat-2",
+      "title": "2.4 Créer un client Professionnel",
+      "content": "<p>Pour un bailleur, un syndic, une régie, une société, un assureur ou tout autre donneur d'ordre, créez un <b>client Professionnel</b>. Renseignez la raison sociale complète, le SIREN ou identifiant connu si vous l'avez, l'adresse de facturation officielle, le standard et les emails de contact génériques ou dédiés.</p><p>C'est à ce niveau que vous préparez la future utilisation en tant qu'apporteur potentiel. La qualité de ces informations simplifie ensuite le choix des destinataires sur les devis et factures et limite les erreurs sur les plateformes partenaires.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Lorsqu'un professionnel vous mandate régulièrement, soignez immédiatement sa fiche : vous gagnerez du temps sur chaque dossier suivant.</div>",
+      "colorPreset": "white",
+      "order": 3,
+      "slug": "client-professionnel",
+      "attachments": []
+    },
+    {
+      "id": "sec-2-5",
+      "type": "section",
+      "parentId": "cat-2",
+      "title": "2.5 Informations supplémentaires, propriétaire & contexte",
+      "content": "<p>Le bloc <b>Informations supplémentaires</b> permet d'ajouter les données contextuelles indispensables à une bonne lecture du dossier : mention du propriétaire lorsque votre interlocuteur est un locataire, précisions sur l'immeuble, codes d'accès, étage, porte, particularités de stationnement, consignes internes, etc.</p><p>Ces informations sont valorisées dans les documents lorsque c'est pertinent, et surtout consultées par le back-office et les techniciens pour préparer leurs interventions. Elles évitent les aller-retours téléphoniques inutiles et fiabilisent l'expérience client.</p><p>Lorsqu'un client vous a contacté mais aucun dossier n'est encore créé, il peut être considéré comme un prospect. Dès qu'un premier dossier est ouvert depuis cette fiche, il entre dans le flux opérationnel standard du CRM.</p>",
+      "colorPreset": "white",
+      "order": 4,
+      "slug": "client-infos-supplementaires",
+      "attachments": []
+    },
+    {
+      "id": "sec-2-6",
+      "type": "section",
+      "parentId": "cat-2",
+      "title": "2.6 Comprendre l'Apporteur et le Client bénéficiaire",
+      "content": "<p>Dans Apogee, un <b>apporteur</b> est un client particulier ou professionnel qui joue le rôle de donneur d'ordre : il mandate, finance ou encadre l'intervention. Le <b>bénéficiaire</b> est celui chez qui les travaux sont réalisés (occupant, propriétaire, locataire).</p><p>Un même acteur peut être apporteur sur certains dossiers et simple client sur d'autres. Le module Client permet cette souplesse : vous partez d'une fiche unique, puis vous activez ou non les fonctionnalités d'apporteur selon le rôle réel dans vos dossiers.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️</strong> Ne dupliquez pas un client pour le transformer en apporteur. Activez le rôle d'apporteur dans la fiche existante lorsque c'est justifié.</div>",
+      "colorPreset": "white",
+      "order": 5,
+      "slug": "client-apporteur-beneficiaire",
+      "attachments": []
+    },
+    {
+      "id": "sec-2-7",
+      "type": "section",
+      "parentId": "cat-2",
+      "title": "2.7 Transformer un client en Apporteur",
+      "content": "<p>Pour déclarer un apporteur à partir d'un client existant, ouvrez sa fiche puis accédez à la zone de configuration avancée. Cochez le statut ou le champ correspondant au rôle d'apporteur. Le client pourra alors être sélectionné comme donneur d'ordre lors de la création d'un dossier.</p><p>Cette approche garantit l'unicité des données et l'historique complet des dossiers liés à cet acteur, qu'il intervienne comme payeur, gestionnaire ou simple contact référent.</p>",
+      "colorPreset": "white",
+      "order": 6,
+      "slug": "client-transformer-apporteur",
+      "attachments": []
+    },
+    {
+      "id": "sec-2-8",
+      "type": "section",
+      "parentId": "cat-2",
+      "title": "2.8 Paramétrage détaillé d'un Apporteur",
+      "content": "<p>L'onglet ou bloc de <b>configuration apporteur</b> permet d'appliquer les règles spécifiques propres à chaque partenaire sans les ressaisir à chaque dossier. Vous pouvez notamment :</p><p>définir le barème associé lorsque l'apporteur fonctionne avec une grille tarifaire dédiée, paramétrer le schéma de facturation (facturer l'apporteur, le bénéficiaire, ou alterner selon le cas), préciser les documents obligatoires avant ou après travaux (ordre de mission, PV de réception, attestation d'assurance, photos, formulaires spécifiques), et indiquer les références internes telles que numéros de prestataire ou identifiants de portail.</p><p>Ces paramètres influencent ensuite la génération des devis, des factures et de certains documents produits automatiquement par Apogee, afin de coller aux attentes du donneur d'ordre sans multiplier les manipulations.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Lors de l'intégration d'un nouveau partenaire, prenez le temps de renseigner intégralement la fiche apporteur avant d'ouvrir les premiers dossiers. Vous sécurisez ainsi tout le flux à venir.</div><p><span style='color:red;'>En cas de partenariat structuré réseau, il est recommandé d'harmoniser ces configurations au niveau national pour éviter les divergences entre agences.</span></p>",
+      "colorPreset": "white",
+      "order": 7,
+      "slug": "apporteur-parametrage",
+      "attachments": []
+    },
+    {
+      "id": "sec-2-9",
+      "type": "section",
+      "parentId": "cat-2",
+      "title": "2.9 Contacts liés à l'Apporteur",
+      "content": "<p>L'onglet <b>Contacts</b> d'un apporteur permet de créer les interlocuteurs opérationnels : gestionnaires de patrimoine, chargés d'indemnisation, référents régionaux, etc. Pour chacun, renseignez nom, fonction, téléphone direct et email.</p><p>Lors de l'envoi d'un devis ou d'une facture, vous pourrez sélectionner précisément le bon contact, ce qui limite les pertes d'informations et les relances inutiles.</p>",
+      "colorPreset": "white",
+      "order": 8,
+      "slug": "apporteur-contacts",
+      "attachments": []
+    },
+    {
+      "id": "sec-2-10",
+      "type": "section",
+      "parentId": "cat-2",
+      "title": "2.10 Vue synthétique & historique de la fiche client",
+      "content": "<p>Sur la droite de la fiche client, Apogee affiche une synthèse des éléments rattachés : dossiers, rendez-vous, devis, factures. Un simple clic sur \"Voir plus\" ouvre la liste détaillée filtrée automatiquement sur ce client.</p><p>Cette vue sert d'historique instantané : vous visualisez en quelques secondes si le client a déjà fait appel à l'agence, si des dossiers sont en cours, si des factures restent impayées ou si des devis sont en attente de réponse.</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Avant de répondre à une demande entrante, ouvrez la fiche client et consultez cet historique. Vous replacez immédiatement la situation dans son contexte.</div>",
+      "colorPreset": "white",
+      "order": 9,
+      "slug": "client-historique",
+      "attachments": []
+    },
+    {
+      "id": "sec-2-11",
+      "type": "section",
+      "parentId": "cat-2",
+      "title": "2.11 Créations directes depuis la fiche client : à utiliser avec prudence",
+      "content": "<p>Depuis une fiche client, il est possible de créer directement un devis, un dossier ou une facture. Techniquement, l'option existe, mais le process recommandé dans Apogee est clair : les éléments doivent être créés <b>depuis le dossier</b>, afin de garantir un enchaînement propre et une traçabilité complète.</p><p>Réservez les créations directes aux cas exceptionnels, maîtrisés par le responsable d'agence, lorsque le contexte est parfaitement identifié et documenté.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️</strong> Un devis ou une facture créé hors dossier peut rompre le lien avec le workflow standard et compliquer le suivi dans les tableaux de pilotage.</div><p><span style='color:red;'>Si cette fonctionnalité reste disponible, il est conseillé de la réserver à certains profils (ex. direction / back-office confirmé) via la gestion des droits.</span></p>",
+      "colorPreset": "white",
+      "order": 10,
+      "slug": "client-creations-directes",
       "attachments": []
     },
     {
@@ -82,10 +170,98 @@
       "type": "section",
       "parentId": "cat-3",
       "title": "3.1 Le rôle central du dossier",
-      "content": "<p>Le <strong>dossier</strong> (ou <strong>projet</strong>) est le cœur du CRM Apogee. C'est l'unité de travail principale : il regroupe toutes les informations liées à un client, un apporteur, une mission, des rendez-vous, des devis, des documents et des factures. Chaque action du CRM doit partir ou revenir vers ce dossier pour maintenir la cohérence du flux.</p><p>Un dossier peut être ouvert à la suite d'un appel, d'un mail, d'un ordre de mission ou d'une demande d'un apporteur. Il matérialise le suivi de bout en bout : depuis la réception du besoin jusqu'à la clôture administrative.</p><div style='background:#dbeafe;padding:12px;border-radius:8px;margin:12px 0'><strong>💡 Dans Apogee,</strong> le dossier n'est pas un simple conteneur : il automatise la liaison entre client, rendez-vous, devis et facture. C'est ce lien qui permet le reporting et les statistiques fiables du réseau.</div>",
+      "content": "<p>Le <b>dossier</b> (ou <b>projet</b>) est le cœur du CRM Apogee. C'est l'unité de travail principale : il regroupe toutes les informations liées à un client, un apporteur, une mission, des rendez-vous, des devis, des documents et des factures. Chaque action du CRM doit partir ou revenir vers ce dossier pour maintenir la cohérence du flux.</p><p>Un dossier peut être ouvert à la suite d'un appel, d'un mail, d'un ordre de mission ou d'une demande d'un apporteur. Il matérialise le suivi de bout en bout : depuis la réception du besoin jusqu'à la clôture administrative.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Dans Apogee, le dossier n'est pas un simple conteneur : il automatise la liaison entre client, rendez-vous, devis et facture. C'est ce lien qui permet le reporting et les statistiques fiables du réseau.</div>",
       "colorPreset": "white",
       "order": 0,
       "slug": "dossier-role",
+      "attachments": []
+    },
+    {
+      "id": "sec-3-2",
+      "type": "section",
+      "parentId": "cat-3",
+      "title": "3.2 Liste des dossiers et filtres de vue",
+      "content": "<p>Le menu <b>Dossier > Dossier</b> affiche tous les projets ouverts de votre agence. La liste peut être personnalisée pour afficher les colonnes utiles : référence, client, ville, univers, apporteur, statut, date du dernier changement, technicien, etc. Un clic sur un en-tête trie la colonne, et les filtres à gauche permettent de limiter la vue à un apporteur, un statut ou une période.</p><p>Les onglets colorés en haut de page représentent les statuts principaux : <i>À planifier</i>, <i>Planifié</i>, <i>Devis à faire</i>, <i>Travaux</i>, <i>Facturé</i>, <i>Clos</i>… Chaque onglet affiche le nombre de dossiers correspondants.</p><p>Pour alléger la vue, vous pouvez masquer certains statuts rarement utilisés (Annulés, Clos, NRP…). Cette préférence reste propre à votre session et à votre appareil.</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Utilisez la barre de recherche rapide pour retrouver un dossier par référence apporteur, par adresse ou par mot-clé du champ <i>Ordre de mission</i>.</div>",
+      "colorPreset": "white",
+      "order": 1,
+      "slug": "dossier-liste",
+      "attachments": []
+    },
+    {
+      "id": "sec-3-3",
+      "type": "section",
+      "parentId": "cat-3",
+      "title": "3.3 Créer un dossier à partir d'un PDF de missionnement",
+      "content": "<p>Lorsqu'un apporteur vous envoie un ordre de mission, vous pouvez créer le dossier directement à partir du document PDF. Cliquez sur <b>Ajouter un dossier</b> puis, dans la fenêtre <b>Initier un dossier</b>, glissez-déposez le PDF. Apogee analyse automatiquement le contenu et préremplit les champs connus : client, adresse, apporteur, référence, objet.</p><p>Relisez attentivement ces informations avant de valider la création. Le fichier original est automatiquement visible dans la zone \"Ordre de mission\" et archivé dans la médiathèque du dossier.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Pour les apporteurs récurrents, Apogee peut reconnaître la structure du PDF et remplir encore plus de champs. <span style='color:red;'>Cette reconnaissance automatique dépend du format et sera améliorée dans les prochaines versions.</span></div>",
+      "colorPreset": "white",
+      "order": 2,
+      "slug": "dossier-creation-pdf",
+      "attachments": []
+    },
+    {
+      "id": "sec-3-4",
+      "type": "section",
+      "parentId": "cat-3",
+      "title": "3.4 Création manuelle d'un dossier",
+      "content": "<p>Si vous ne disposez pas d'un fichier de mission, vous pouvez créer un dossier manuellement :</p><ol><li>Recherchez d'abord le client dans la base. En cas d'absence, créez-le (voir section 2).</li><li>Sélectionnez un ou plusieurs univers correspondant au métier concerné : menuiserie, plomberie, vitrerie, etc.</li><li>Choisissez l'apporteur si la mission est mandatée.</li><li>Saisissez un <b>libellé court</b> décrivant clairement l'objet : ex. \"Réparation volet roulant cuisine\".</li><li>Collez le texte de l'ordre de mission ou le résumé du besoin dans la zone prévue.</li><li>Ajoutez un commentaire interne pour les techniciens (consignes d'accès, contraintes horaires, etc.).</li></ol><p>Une fois validé, le dossier reçoit un identifiant unique et devient accessible depuis tous les modules liés.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️</strong> Ne créez jamais plusieurs dossiers pour un même sinistre sans raison justifiée. Utilisez plutôt les <b>rendez-vous multiples</b> ou les <b>compléments de relevé technique</b>.</div>",
+      "colorPreset": "white",
+      "order": 3,
+      "slug": "dossier-creation-manuelle",
+      "attachments": []
+    },
+    {
+      "id": "sec-3-5",
+      "type": "section",
+      "parentId": "cat-3",
+      "title": "3.5 Pavé \"Divers\" et pavé \"Financier\"",
+      "content": "<p>Dans la partie droite du dossier, le pavé <b>Divers</b> permet d'associer un pictogramme et des indicateurs visuels. Ces pictos (définis dans les listes internes) facilitent le repérage : urgence, attente client, sinistre, etc.</p><p>Le pavé <b>Financier</b> regroupe toutes les informations économiques : apporteur, montant de franchise, acomptes, règlements reçus, reste à percevoir et TVA appliquée. Ce pavé se met à jour automatiquement à chaque création ou validation de devis et de facture.</p><p><span style='color:red;'>Dans une prochaine évolution, le pavé financier pourra afficher une marge prévisionnelle calculée sur les prix d'achat saisis.</span></p>",
+      "colorPreset": "white",
+      "order": 4,
+      "slug": "dossier-paves",
+      "attachments": []
+    },
+    {
+      "id": "sec-3-6",
+      "type": "section",
+      "parentId": "cat-3",
+      "title": "3.6 L'interface d'un dossier une fois créé",
+      "content": "<p>L'écran du dossier se décompose en trois zones :</p><ul><li><b>Zone centrale</b> : journal des actions et messages internes.</li><li><b>Panneau latéral droit</b> : onglets pour les rendez-vous, devis, commandes, documents, factures, règlements.</li><li><b>Barre supérieure</b> : flèches de workflow (statuts) et options d'impression.</li></ul><p>Depuis le dossier, les boutons <b>+</b> permettent de créer directement les éléments associés (rendez-vous, devis, commande, facture). C'est la seule méthode officiellement recommandée pour garantir la cohérence du suivi.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Former toutes les équipes à \"commencer depuis le dossier\" élimine la majorité des erreurs de lien et de doublon.</div>",
+      "colorPreset": "white",
+      "order": 5,
+      "slug": "dossier-interface",
+      "attachments": []
+    },
+    {
+      "id": "sec-3-7",
+      "type": "section",
+      "parentId": "cat-3",
+      "title": "3.7 Journal et historique",
+      "content": "<p>Le <b>journal</b> conserve la trace chronologique de toutes les actions : création du dossier, échanges internes, validation de devis, réception de paiement, signatures électroniques, changements de statut, etc.</p><p>Un menu de filtres permet d'afficher uniquement certaines catégories d'événements : <i>messages</i>, <i>workflow</i>, <i>NRP</i> (non réalisé par), <i>facturation</i>… Cette fonction est utile pour clarifier la lecture lors de la reprise d'un dossier ancien.</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Avant tout appel client, relisez le journal du dossier. Vous saurez instantanément où en est le traitement sans consulter plusieurs modules.</div>",
+      "colorPreset": "white",
+      "order": 6,
+      "slug": "dossier-journal",
+      "attachments": []
+    },
+    {
+      "id": "sec-3-8",
+      "type": "section",
+      "parentId": "cat-3",
+      "title": "3.8 Gestion des statuts du dossier",
+      "content": "<p>Chaque dossier évolue à travers un cycle de statuts automatiques : <i>À planifier → Planifié → RT en cours → Devis à faire → Commandé → Travaux planifiés → À facturer → Facturé → Clos</i>. Les transitions se déclenchent selon les actions effectuées (validation de RT, acceptation de devis, création de facture, etc.).</p><p>Vous pouvez également appliquer un sous-statut personnalisé (attente client, attente matériel…) pour affiner le suivi. Ces sous-statuts sont gérés dans Gestion des listes.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️</strong> Utilisez les flèches de statut avec prudence. Forcer manuellement un statut peut bloquer des automatismes ou fausser le reporting.</div>",
+      "colorPreset": "white",
+      "order": 7,
+      "slug": "dossier-statuts",
+      "attachments": []
+    },
+    {
+      "id": "sec-3-9",
+      "type": "section",
+      "parentId": "cat-3",
+      "title": "3.9 Clôture et archivage",
+      "content": "<p>Lorsqu'un dossier est facturé et que tous les règlements sont enregistrés, il passe automatiquement en statut <b>Clos</b>. Il devient alors consultable uniquement en lecture ; aucune modification n'est possible, sauf déverrouillage exceptionnel par un administrateur.</p><p>Tous les documents associés (RT, devis, factures, photos, PV, signatures) restent accessibles dans la médiathèque. Les filtres du tableau de bord permettent de retrouver les dossiers clos par période ou par technicien.</p><p><span style='color:red;'>Une fonction d'archivage physique automatique (export ZIP du dossier complet) est envisagée pour les audits ou migrations.</span></p>",
+      "colorPreset": "white",
+      "order": 8,
+      "slug": "dossier-cloture",
       "attachments": []
     },
     {
@@ -100,6 +276,105 @@
       "attachments": []
     },
     {
+      "id": "sec-4-1",
+      "type": "section",
+      "parentId": "cat-4",
+      "title": "4.1 Objectif du module Rendez-vous",
+      "content": "<p>Le module <b>Rendez-vous</b> d'Apogee permet de planifier, suivre et valider toutes les interventions techniciennes, qu'il s'agisse de relevés techniques, de dépannages ou de travaux. C'est l'outil de coordination entre le bureau et le terrain.</p><p>Chaque rendez-vous (ou <b>RDV</b>) est toujours rattaché à un dossier. Il contient toutes les informations nécessaires à l'intervention : adresse, client, technicien, apporteur, type de mission, documents à remettre et commentaires internes.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Un dossier peut comporter plusieurs rendez-vous successifs : un pour le relevé technique, un pour la réalisation des travaux, un pour une reprise ou une vérification.</div>",
+      "colorPreset": "white",
+      "order": 0,
+      "slug": "rdv-objectif",
+      "attachments": []
+    },
+    {
+      "id": "sec-4-2",
+      "type": "section",
+      "parentId": "cat-4",
+      "title": "4.2 Créer un rendez-vous depuis le dossier",
+      "content": "<p>Depuis le pavé <b>Rendez-vous</b> d'un dossier, cliquez sur le bouton <b>+</b> pour planifier une intervention. C'est la méthode recommandée, car elle maintient le lien direct avec le projet et les documents associés.</p><p>Une fenêtre s'ouvre : choisissez le <b>type de rendez-vous</b>. Les types disponibles dépendent du paramétrage agence :</p><ul><li><b>A définir</b> : RDV générique que le technicien pourra préciser sur place (relevé, dépannage, etc.).</li><li><b>Relevé technique</b> : pour les visites de chiffrage avant devis.</li><li><b>Travaux</b> : pour l'exécution d'un devis accepté.</li><li><b>Recherche de fuite</b> ou autre spécialité selon l'apporteur.</li></ul><p>Indiquez ensuite la <b>date</b>, l'<b>heure de départ</b>, la <b>durée estimée</b>, le ou les <b>techniciens concernés</b> et complétez le champ <b>Infos pour techniciens</b> (accès, codes, remarques).</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Si un technicien est déjà occupé à ce créneau, Apogee affiche une alerte. Vous pouvez forcer la planification si nécessaire, mais notez-le dans les commentaires.</div><p>Lors de la sauvegarde, le dossier peut automatiquement passer au statut <b>Planifié</b>.</p>",
+      "colorPreset": "white",
+      "order": 1,
+      "slug": "rdv-creation-dossier",
+      "attachments": []
+    },
+    {
+      "id": "sec-4-3",
+      "type": "section",
+      "parentId": "cat-4",
+      "title": "4.3 Créer un rendez-vous depuis le planning",
+      "content": "<p>Il est également possible de créer un RDV directement depuis la vue <b>Planning</b>. Ouvrez le planning, cliquez sur le créneau souhaité et choisissez <b>Ajouter un rendez-vous</b>.</p><p>Sélectionnez le type d'intervention, recherchez le client ou le dossier concerné, puis complétez les mêmes informations que dans la méthode précédente. Le rendez-vous sera automatiquement rattaché au bon dossier.</p><p>Vous pouvez déplacer un rendez-vous par simple glisser-déposer. En cas de chevauchement, Apogee propose une confirmation avant validation.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Cette méthode est pratique pour organiser rapidement plusieurs interventions sur la même journée, notamment pour un même technicien ou une même zone géographique.</div>",
+      "colorPreset": "white",
+      "order": 2,
+      "slug": "rdv-creation-planning",
+      "attachments": []
+    },
+    {
+      "id": "sec-4-4",
+      "type": "section",
+      "parentId": "cat-4",
+      "title": "4.4 Paramétrage du planning",
+      "content": "<p>Le menu de configuration du planning (icône ⚙️) vous permet d'adapter l'affichage et les filtres selon votre besoin :</p><ul><li>Afficher un ou plusieurs techniciens simultanément.</li><li>Filtrer par univers, apporteur, chargé d'affaires ou département.</li><li>Afficher ou masquer les week-ends et pauses repas.</li><li>Modifier la granularité (créneaux de 15, 30 ou 60 minutes).</li><li>Choisir les couleurs de fond (par technicien ou par type de RDV).</li><li>Activer la carte des interventions pour repérer les zones géographiques.</li><li>Afficher ou non les tâches logistiques (préparations, livraisons, etc.).</li><li>Rafraîchissement automatique pour un suivi en temps réel.</li></ul><p>Les vues disponibles incluent : <i>Mois</i>, <i>Semaine</i>, <i>Jour</i>, <i>Jour par technicien</i>, et <i>Semaine par technicien</i>.</p><p><span style='color:red;'>Une future évolution du planning proposera un mode \"vue carte + planification glissée\" pour optimiser les tournées.</span></p>",
+      "colorPreset": "white",
+      "order": 3,
+      "slug": "planning-parametrage",
+      "attachments": []
+    },
+    {
+      "id": "sec-4-5",
+      "type": "section",
+      "parentId": "cat-4",
+      "title": "4.5 Statuts et transitions d'un rendez-vous",
+      "content": "<p>Un rendez-vous évolue automatiquement selon les actions du technicien et du back-office. Voici les principaux statuts :</p><ul><li><b>Planifié</b> : le RDV est fixé et validé.</li><li><b>Réalisé</b> : le technicien a terminé et validé la fin de mission.</li><li><b>RT en cours</b> : relevé technique commencé mais non finalisé.</li><li><b>A reprogrammer</b> : mission non réalisée (client absent, imprévu technique…).</li></ul><p>Lorsqu'un RDV est mis en <i>A reprogrammer</i>, il doit être traité rapidement : soit replanifié, soit annulé. Ne laissez pas ces statuts \"en attente\" trop longtemps.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️</strong> \"A reprogrammer\" ne signifie pas \"travaux partiellement faits\". Utilisez ce statut uniquement pour les interventions non commencées.</div>",
+      "colorPreset": "white",
+      "order": 4,
+      "slug": "rdv-statuts",
+      "attachments": []
+    },
+    {
+      "id": "sec-4-6",
+      "type": "section",
+      "parentId": "cat-4",
+      "title": "4.6 Gestion multi-techniciens",
+      "content": "<p>Apogee permet d'affecter plusieurs techniciens sur le même rendez-vous. Dans ce cas, chaque technicien voit le RDV sur son application, avec les mêmes données. Le premier à commencer déclenche le statut \"En cours\".</p><p>Lorsque le dernier technicien valide la fin, le RDV passe en \"Réalisé\". Cette logique garantit la synchronisation entre terrain et bureau.</p><p><span style='color:red;'>Une amélioration à venir permettra de suivre les temps individuels par technicien.</span></p>",
+      "colorPreset": "white",
+      "order": 5,
+      "slug": "rdv-multi-tech",
+      "attachments": []
+    },
+    {
+      "id": "sec-4-7",
+      "type": "section",
+      "parentId": "cat-4",
+      "title": "4.7 Bonnes pratiques de planification",
+      "content": "<ul><li>Vérifiez toujours que le dossier est prêt (client validé, adresse complète, documents présents).</li><li>Planifiez selon les compétences : ne confiez pas un RDV de menuiserie à un plombier.</li><li>Évitez les RDV le jour même sauf urgence réelle.</li><li>Conservez une visibilité sur au moins 48h d'avance dans le planning.</li><li>Notez dans \"Infos technicien\" les précisions d'accès ou codes nécessaires.</li></ul><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Une bonne planification réduit le nombre de \"A reprogrammer\" et améliore le taux de transformation des dossiers.</div>",
+      "colorPreset": "white",
+      "order": 6,
+      "slug": "rdv-bonnes-pratiques",
+      "attachments": []
+    },
+    {
+      "id": "sec-4-8",
+      "type": "section",
+      "parentId": "cat-4",
+      "title": "4.8 Lien entre planning et application technicien",
+      "content": "<p>Chaque RDV planifié apparaît instantanément dans l'application mobile du technicien. Le technicien peut le consulter, y accéder via carte, et le démarrer via le bouton <b>Je commence</b>.</p><p>Lorsqu'il le termine, les données (constatations, photos, relevé technique ou rapport) remontent automatiquement dans le dossier correspondant. Ce lien bidirectionnel assure la mise à jour en temps réel du CRM.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Si une modification est faite côté bureau (changement de date, de technicien, ajout de document), l'application se met à jour automatiquement après synchronisation.</div>",
+      "colorPreset": "white",
+      "order": 7,
+      "slug": "rdv-sync-app",
+      "attachments": []
+    },
+    {
+      "id": "sec-4-9",
+      "type": "section",
+      "parentId": "cat-4",
+      "title": "4.9 Suivi et export du planning",
+      "content": "<p>Le planning peut être exporté en PDF ou Excel pour des besoins de suivi hebdomadaire. L'export liste les techniciens, les horaires, les types d'intervention et les durées totales par jour.</p><p><span style='color:red;'>Une version évoluée de cet export intégrera prochainement le taux de réalisation et les retards cumulés.</span></p>",
+      "colorPreset": "white",
+      "order": 8,
+      "slug": "planning-export",
+      "attachments": []
+    },
+    {
       "id": "cat-5",
       "type": "category",
       "title": "Application Technicien",
@@ -108,6 +383,72 @@
       "colorPreset": "green",
       "order": 4,
       "slug": "application-technicien",
+      "attachments": []
+    },
+    {
+      "id": "sec-5-1",
+      "type": "section",
+      "parentId": "cat-5",
+      "title": "5.1 Rôle de l'application mobile",
+      "content": "<p>L'application <b>Technicien</b> est la passerelle entre le bureau et le terrain. Elle permet à chaque intervenant d'accéder à ses rendez-vous, de réaliser ses relevés techniques, d'ajouter des photos, de saisir les travaux effectués et de faire signer les clients directement sur place. Toutes les informations saisies sont automatiquement synchronisées avec le dossier concerné dans le CRM Apogee.</p><p>Chaque technicien dispose de ses propres identifiants et ne voit que ses rendez-vous planifiés, ses relevés en cours et son historique récent.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> L'application fonctionne même hors connexion : les données se synchronisent dès le retour du réseau.</div>",
+      "colorPreset": "white",
+      "order": 0,
+      "slug": "app-tech-role",
+      "attachments": []
+    },
+    {
+      "id": "sec-5-2",
+      "type": "section",
+      "parentId": "cat-5",
+      "title": "5.2 Accès et authentification",
+      "content": "<p>Le technicien se connecte via son identifiant personnel. Dès l'ouverture, l'écran d'accueil affiche la liste de ses rendez-vous du jour, triés par heure.</p><p>Chaque carte de rendez-vous présente les informations clés : nom du client, adresse, type d'intervention, numéro de dossier et icône d'état (planifié, en cours, terminé).</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Les techniciens doivent vérifier chaque matin la synchronisation complète de leur planning avant de partir sur le terrain.</div>",
+      "colorPreset": "white",
+      "order": 1,
+      "slug": "app-tech-acces",
+      "attachments": []
+    },
+    {
+      "id": "sec-5-3",
+      "type": "section",
+      "parentId": "cat-5",
+      "title": "5.3 Détail d'un rendez-vous sur mobile",
+      "content": "<p>En ouvrant un rendez-vous, le technicien accède à une fiche détaillée reprenant :</p><ul><li>Le type de rendez-vous (RT, Travaux, Dépannage, Assurance…).</li><li>Le nom et les coordonnées du client.</li><li>Le nom de l'apporteur et la référence de mission.</li><li>L'adresse complète avec lien GPS (navigation intégrée).</li><li>Le texte de l'ordre de mission transmis par le bureau.</li><li>Les documents joints (missionnement, devis, photos antérieures).</li></ul><p>Depuis cette fiche, le technicien peut choisir : <b>\"Je commence\"</b> pour lancer son intervention ou <b>\"Je ne peux pas\"</b> pour signaler une impossibilité.</p>",
+      "colorPreset": "white",
+      "order": 2,
+      "slug": "app-tech-detail-rdv",
+      "attachments": []
+    },
+    {
+      "id": "sec-5-4",
+      "type": "section",
+      "parentId": "cat-5",
+      "title": "5.4 Cas \"Je ne peux pas\"",
+      "content": "<p>Si le technicien ne peut pas réaliser le rendez-vous (client absent, problème d'accès, panne de matériel…), il clique sur <b>\"Je ne peux pas\"</b> et sélectionne la cause appropriée dans la liste déroulante. L'information remonte immédiatement au bureau : le dossier passe en statut <b>À statuer</b> et une note apparaît dans le journal du dossier.</p><p>Le back-office peut ensuite décider de reprogrammer le rendez-vous ou de clore la mission.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️</strong> Cette action ne doit être utilisée qu'en cas d'impossibilité réelle. Trop de \"Je ne peux pas\" faussent les statistiques et masquent les vrais retards.</div>",
+      "colorPreset": "white",
+      "order": 3,
+      "slug": "app-tech-je-ne-peux-pas",
+      "attachments": []
+    },
+    {
+      "id": "sec-5-5",
+      "type": "section",
+      "parentId": "cat-5",
+      "title": "5.5 Relevé technique (RT)",
+      "content": "<p>Le <b>relevé technique</b> est le module de saisie le plus complet de l'application. Il permet de décrire avec précision les travaux à chiffrer et de préparer le futur devis.</p><p>Lorsqu'un rendez-vous de type \"RT\" ou \"A définir\" est lancé, le technicien accède à un formulaire structuré en plusieurs blocs :</p><ul><li><b>Type de chiffrage</b> : standard, assurance, modèle pré-construit, etc.</li><li><b>Pièce concernée</b> (ex. : cuisine, salle de bain, façade).</li><li><b>Surface totale / endommagée / non endommagée</b> pour les sinistres.</li><li><b>Description</b> détaillée des travaux à prévoir.</li><li><b>Matériaux</b> et <b>fournitures</b> nécessaires.</li><li><b>Photos avant intervention</b> avec possibilité d'annotations.</li><li><b>Temps estimé</b> et <b>nombre de techniciens requis</b>.</li></ul><p>Une fois la saisie terminée, le technicien peut :</p><ul><li>Cliquer sur <b>\"Terminer\"</b> : le RT est généré en PDF et envoyé automatiquement dans la médiathèque.</li><li>Ou cliquer sur <b>\"Non terminé\"</b> : le RT reste en statut <b>RT en cours</b> et peut être repris plus tard.</li></ul><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Avant de quitter un RT, vérifiez que toutes les photos et mesures sont enregistrées. Une fois validé, le formulaire ne peut plus être modifié sans intervention du bureau.</div><p><span style='color:red;'>Une prochaine mise à jour intégrera la dictée vocale et la saisie semi-automatique des pièces à partir de modèles prédéfinis.</span></p>",
+      "colorPreset": "white",
+      "order": 4,
+      "slug": "app-tech-rt",
+      "attachments": []
+    },
+    {
+      "id": "sec-5-6",
+      "type": "section",
+      "parentId": "cat-5",
+      "title": "5.6 Intervention de dépannage",
+      "content": "<p>En mode <b>\"Je dépanne\"</b>, le technicien saisit directement les constats et les réparations effectuées :</p><ul><li>Motif de la panne ou de la demande.</li><li>Constatations avant intervention.</li><li>Photos avant.</li><li>Travaux réalisés et pièces remplacées.</li><li>Photos après intervention.</li><li>Heure d'arrivée, heure de départ et durée totale.</li></ul><p>Le dossier passe automatiquement en statut <b>À facturer</b> lorsque le technicien valide la fin de mission. En cas d'imprévu ou d'intervention incomplète, il peut choisir <b>À statuer</b> pour signaler au bureau qu'une suite est nécessaire.</p>",
+      "colorPreset": "white",
+      "order": 5,
+      "slug": "app-tech-depannage",
       "attachments": []
     },
     {
@@ -122,6 +463,28 @@
       "attachments": []
     },
     {
+      "id": "sec-6-1",
+      "type": "section",
+      "parentId": "cat-6",
+      "title": "6.1 Génération des devis",
+      "content": "<p>Les devis sont générés depuis le dossier, à partir des relevés techniques validés ou en création directe pour les interventions simples. Chaque devis peut être envoyé par email au client, avec suivi des ouvertures et acceptations.</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅ Bonnes pratiques :</strong> Vérifiez toujours les montants et les articles avant envoi. Un devis envoyé engage l'entreprise.</div>",
+      "colorPreset": "white",
+      "order": 0,
+      "slug": "devis-generation",
+      "attachments": []
+    },
+    {
+      "id": "sec-6-2",
+      "type": "section",
+      "parentId": "cat-6",
+      "title": "6.2 Gestion des commandes",
+      "content": "<p>Une fois le devis accepté, créez les commandes fournisseurs associées pour planifier l'approvisionnement et les travaux.</p>",
+      "colorPreset": "white",
+      "order": 1,
+      "slug": "commandes-gestion",
+      "attachments": []
+    },
+    {
       "id": "cat-7",
       "type": "category",
       "title": "Facturation & Paiements",
@@ -130,6 +493,17 @@
       "colorPreset": "red",
       "order": 6,
       "slug": "facturation-paiements",
+      "attachments": []
+    },
+    {
+      "id": "sec-7-1",
+      "type": "section",
+      "parentId": "cat-7",
+      "title": "7.1 Émission des factures",
+      "content": "<p>Les factures sont générées depuis le dossier une fois les travaux terminés et validés. Elles reprennent automatiquement les informations du devis accepté. Le suivi des paiements est intégré : acomptes, franchises, règlements partiels ou complets.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️ Attention :</strong> Une facture émise ne peut plus être modifiée. Vérifiez tous les montants avant validation finale.</div>",
+      "colorPreset": "white",
+      "order": 0,
+      "slug": "facturation-emission",
       "attachments": []
     },
     {
@@ -163,6 +537,17 @@
       "colorPreset": "yellow",
       "order": 9,
       "slug": "workflow-statuts",
+      "attachments": []
+    },
+    {
+      "id": "sec-10-1",
+      "type": "section",
+      "parentId": "cat-10",
+      "title": "10.1 Cycle de vie d'un dossier",
+      "content": "<p>Chaque dossier évolue à travers un cycle de statuts automatiques : <i>À planifier → Planifié → RT en cours → Devis à faire → Commandé → Travaux planifiés → À facturer → Facturé → Clos</i>.</p><p>Les transitions se déclenchent selon les actions effectuées. Vous pouvez également appliquer un sous-statut personnalisé pour affiner le suivi.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️ Utilisez les flèches de statut avec prudence.</strong> Forcer manuellement un statut peut bloquer des automatismes ou fausser le reporting.</div>",
+      "colorPreset": "white",
+      "order": 0,
+      "slug": "workflow-cycle",
       "attachments": []
     },
     {
@@ -200,5 +585,5 @@
     }
   ],
   "version": "1.0",
-  "lastModified": 1234567890
+  "lastModified": 1734567890
 }
