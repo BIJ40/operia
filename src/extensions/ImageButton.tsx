@@ -6,7 +6,8 @@ export interface ImageButtonOptions {
 
 export const ImageButton = Node.create<ImageButtonOptions>({
   name: 'imageButton',
-  group: 'block',
+  group: 'inline',
+  inline: true,
   atom: true,
   
   addAttributes() {
