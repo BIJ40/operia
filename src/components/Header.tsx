@@ -51,25 +51,23 @@ export function Header({ onOpenLogin }: HeaderProps) {
           </Link>
         )}
 
-        {isAuthenticated && (
-          <Button
-            onClick={handleEnrichirClick}
-            variant="ghost"
-            className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-          >
-            {isEditMode ? (
-              <>
-                <Square className="w-5 h-5 text-destructive" />
-                <span className="font-semibold text-foreground">STOP</span>
-              </>
-            ) : (
-              <>
-                <Edit3 className="w-5 h-5 text-primary" />
-                <span className="font-semibold text-foreground">ENRICHIR</span>
-              </>
-            )}
-          </Button>
-        )}
+        <Button
+          onClick={handleEnrichirClick}
+          variant="ghost"
+          className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+        >
+          {isEditMode ? (
+            <>
+              <Square className="w-5 h-5 text-destructive" />
+              <span className="font-semibold text-foreground">STOP</span>
+            </>
+          ) : (
+            <>
+              <Edit3 className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-foreground">ENRICHIR</span>
+            </>
+          )}
+        </Button>
 
         {isAuthenticated && (
           <Link
