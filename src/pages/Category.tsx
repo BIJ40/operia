@@ -119,7 +119,7 @@ export default function Category() {
                   {sections.map((section) => (
                     <SidebarMenuItem key={section.id}>
                       <SidebarMenuButton asChild>
-                        <a href={`#${section.id}`} className="text-sm">
+                        <a href={`#${section.id}`} className="text-sm whitespace-normal leading-snug py-2 h-auto min-h-[2.5rem]">
                           {section.title}
                         </a>
                       </SidebarMenuButton>
@@ -205,7 +205,7 @@ export default function Category() {
                       )}
                     </div>
                     <div
-                      className="prose prose-sm max-w-none"
+                      className="prose prose-sm max-w-none break-words overflow-visible"
                       dangerouslySetInnerHTML={{ __html: section.content }}
                     />
                   </>
