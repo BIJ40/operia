@@ -17,7 +17,7 @@ import {
   SidebarHeader,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronRight, Home, Upload, FileText } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import logoApogee from '@/assets/logo_helpogee.png';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -55,29 +55,12 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r" collapsible="icon">
       <SidebarHeader className="p-4 border-b">
-        <Link to="/">
-          <img src={logoApogee} alt="Apogée CRM" className="w-full h-auto" />
+        <Link to="/" className="block">
+          <img src={logoApogee} alt="Apogée CRM" className="w-full h-auto cursor-pointer" />
         </Link>
       </SidebarHeader>
       
       <SidebarContent>
-        {/* Navigation principale */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={currentPath === '/'}>
-                  <Link to="/">
-                    <Home className="w-4 h-4" />
-                    <span>Accueil</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         {/* Sommaire des catégories */}
         <SidebarGroup>
           <SidebarGroupLabel>Sommaire</SidebarGroupLabel>
