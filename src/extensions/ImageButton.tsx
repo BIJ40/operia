@@ -75,17 +75,18 @@ export const ImageButton = Node.create<ImageButtonOptions>({
       { 
         'data-image-button': '',
         'data-src': src,
-        style: 'margin: 16px 0;'
+        style: 'display: inline-block; margin: 4px 8px;'
       },
       [
         'button',
         {
           'data-image-modal': src,
           type: 'button',
-          style: 'display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: #3b82f6; color: white; border-radius: 6px; border: none; cursor: pointer; font-weight: 500;'
+          class: 'image-preview-btn',
+          style: 'display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: transparent; color: #3b82f6; border: 1px solid #e5e7eb; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease;'
         },
-        ['span', { style: 'font-size: 18px;' }, '👁️'],
-        ' Voir l\'image'
+        ['span', { style: 'font-size: 14px;' }, '👁️'],
+        ' Voir'
       ]
     ];
   },
