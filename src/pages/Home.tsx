@@ -27,8 +27,10 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
+  SidebarHeader,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import logoApogee from '@/assets/logo_chat.png';
 
 export default function Home() {
   const { blocks, loading, isEditMode, updateBlock, addBlock, deleteBlock } = useEditor();
@@ -112,6 +114,9 @@ export default function Home() {
       <div className="min-h-screen w-full flex bg-background">
         {/* Sidebar avec le sommaire complet */}
         <Sidebar className="border-r" collapsible="icon">
+          <SidebarHeader className="p-4 border-b">
+            <img src={logoApogee} alt="Apogée CRM" className="w-full h-auto" />
+          </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupLabel>Sommaire</SidebarGroupLabel>
