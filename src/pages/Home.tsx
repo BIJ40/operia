@@ -8,6 +8,7 @@ import { LoginDialog } from '@/components/LoginDialog';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Header } from '@/components/Header';
 
 export default function Home() {
   const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, resetToDefault, loading } = useEditor();
@@ -65,20 +66,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Manuel CRM Apogee</h1>
-            <p className="text-sm text-muted-foreground">Guide d'utilisation complet</p>
-          </div>
-          {!isAuthenticated && (
-            <Button onClick={() => setLoginOpen(true)} variant="outline">
+      <Header />
+      
+      {!isAuthenticated && (
+        <div className="border-b bg-muted/30">
+          <div className="container mx-auto px-4 py-3 flex justify-end">
+            <Button onClick={() => setLoginOpen(true)} variant="outline" size="sm">
               <LogIn className="w-4 h-4 mr-2" />
               Connexion Admin
             </Button>
-          )}
+          </div>
         </div>
-      </header>
+      )}
 
       <EditorToolbar />
 

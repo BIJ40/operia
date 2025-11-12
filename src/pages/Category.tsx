@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Header } from '@/components/Header';
 
 export default function Category() {
   const { slug } = useParams();
@@ -80,8 +81,10 @@ export default function Category() {
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+    <>
+      <Header />
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
         <Sidebar className="w-64 border-r">
           <SidebarContent>
             <div className="p-4 border-b">
@@ -199,7 +202,8 @@ export default function Category() {
             ))}
           </div>
         </main>
-      </div>
-    </SidebarProvider>
+        </div>
+      </SidebarProvider>
+    </>
   );
 }
