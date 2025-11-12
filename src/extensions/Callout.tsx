@@ -1,5 +1,5 @@
 import { Node, mergeAttributes } from '@tiptap/core';
-import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react';
+import { ReactNodeViewRenderer, NodeViewWrapper, NodeViewContent } from '@tiptap/react';
 import { NodeViewProps } from '@tiptap/core';
 
 export interface CalloutOptions {
@@ -48,14 +48,12 @@ const CalloutComponent = ({ node, deleteNode }: NodeViewProps) => {
 
   return (
     <NodeViewWrapper>
-      <div className={`${style.bg} ${style.border} border-l-4 p-4 rounded-lg my-4 relative`}>
-        <p className="font-bold mb-2">
+      <div className={`${style.bg} ${style.border} border-l-4 p-4 rounded-lg my-4 relative group`}>
+        <div className="font-bold mb-2">
           <span className="mr-2">{style.icon}</span>
           {style.label}
-        </p>
-        <p className="text-sm">
-          {node.textContent || 'Votre texte ici...'}
-        </p>
+        </div>
+        <NodeViewContent as="div" className="text-sm text-gray-800 [&>p]:my-1" />
       </div>
     </NodeViewWrapper>
   );
@@ -64,7 +62,7 @@ const CalloutComponent = ({ node, deleteNode }: NodeViewProps) => {
 export const Callout = Node.create<CalloutOptions>({
   name: 'callout',
   group: 'block',
-  content: 'text*',
+  content: 'block+',
   
   addAttributes() {
     return {
@@ -106,8 +104,13 @@ export const Callout = Node.create<CalloutOptions>({
             attrs: { type },
             content: [
               {
-                type: 'text',
-                text: 'Votre texte ici...',
+                type: 'paragraph',
+                content: [
+                  {
+                    type: 'text',
+                    text: 'Votre texte ici...',
+                  },
+                ],
               },
             ],
           });
