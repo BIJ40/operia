@@ -167,11 +167,9 @@ export function createMentionSuggestion(
   return {
     char: prefix,
     items: ({ query }) => {
-      return items
-        .filter(item =>
-          item.label.toLowerCase().includes(query.toLowerCase())
-        )
-        .slice(0, 10);
+      return items.filter(item =>
+        item.label.toLowerCase().includes(query.toLowerCase())
+      );
     },
     render: () => {
       let component: ReactRenderer<any>;
