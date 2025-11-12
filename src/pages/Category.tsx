@@ -6,9 +6,10 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu
 import { NavLink } from '@/components/NavLink';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Header } from '@/components/Header';
+import { RichTextEditor } from '@/components/RichTextEditor';
+import { ImageModal } from '@/components/ImageModal';
 
 export default function Category() {
   const { slug } = useParams();
@@ -156,11 +157,9 @@ export default function Category() {
                         <SelectItem value="blue">Bleu (info)</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Textarea
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      rows={12}
-                      className="font-mono text-sm"
+                    <RichTextEditor
+                      content={editContent}
+                      onChange={setEditContent}
                     />
                     <div className="flex gap-2">
                       <Button onClick={handleSave}>Enregistrer</Button>
@@ -204,6 +203,7 @@ export default function Category() {
         </main>
         </div>
       </SidebarProvider>
+      <ImageModal />
     </>
   );
 }
