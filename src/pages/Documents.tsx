@@ -70,12 +70,13 @@ export default function Documents() {
       
       if (error) throw error;
       
+      // Mettre à jour immédiatement la liste locale
+      setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== id));
+      
       toast({
         title: 'Document supprimé',
         description: `"${title}" a été supprimé.`,
       });
-      
-      loadDocuments();
     } catch (error) {
       console.error('Erreur suppression:', error);
       toast({
@@ -83,6 +84,61 @@ export default function Documents() {
         description: 'Impossible de supprimer le document',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleDeleteDuplicates = async () => {
+    if (!confirm('Supprimer tous les documents en double ? Seule la version la plus récente sera conservée.')) return;
+    
+    setIsLoading(true);
+    try {
+      // Grouper par titre et identifier les doublons
+      const titleMap = new Map<string, Document[]>();
+      documents.forEach(doc => {
+        if (!titleMap.has(doc.title)) {
+          titleMap.set(doc.title, []);
+        }
+        titleMap.get(doc.title)!.push(doc);
+      });
+      
+      let deletedCount = 0;
+      
+      // Pour chaque groupe de doublons, garder le plus récent
+      for (const [title, docs] of titleMap.entries()) {
+        if (docs.length > 1) {
+          // Trier par date (plus récent en premier)
+          docs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          
+          // Supprimer tous sauf le premier
+          for (let i = 1; i < docs.length; i++) {
+            const { error } = await supabase
+              .from('knowledge_base')
+              .delete()
+              .eq('id', docs[i].id);
+            
+            if (!error) {
+              deletedCount++;
+            }
+          }
+        }
+      }
+      
+      toast({
+        title: 'Nettoyage terminé',
+        description: `${deletedCount} doublon(s) supprimé(s)`,
+      });
+      
+      // Recharger la liste
+      await loadDocuments();
+    } catch (error) {
+      console.error('Erreur nettoyage doublons:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de nettoyer les doublons',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -149,8 +205,20 @@ export default function Documents() {
           <Button variant="ghost" onClick={() => navigate('/admin')}>
             ← Retour à l'import
           </Button>
-          <div className="text-sm text-muted-foreground">
-            {documents.length} document(s) total
+          <div className="flex items-center gap-4">
+            {documents.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={handleDeleteDuplicates}
+                disabled={isLoading}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Nettoyer les doublons
+              </Button>
+            )}
+            <div className="text-sm text-muted-foreground">
+              {documents.length} document(s) total
+            </div>
           </div>
         </div>
 
