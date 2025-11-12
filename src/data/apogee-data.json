@@ -477,11 +477,44 @@
       "id": "sec-6-2",
       "type": "section",
       "parentId": "cat-6",
-      "title": "6.2 Gestion des commandes",
-      "content": "<p>Une fois le devis accepté, créez les commandes fournisseurs associées pour planifier l'approvisionnement et les travaux.</p>",
+      "title": "6.2 Structure d'un devis",
+      "content": "<p>Chaque devis contient : en-tête avec logos et coordonnées, informations client et apporteur, référence du dossier et date d'émission, lignes de prestation détaillées avec quantités et prix unitaires, total HT, TVA et TTC, conditions de paiement et modalités d'acceptation, et date de validité.</p><p>Vous pouvez personnaliser les modèles de devis selon les apporteurs : certains exigent des mentions spécifiques, des références de marché ou des clauses particulières.</p>",
       "colorPreset": "white",
       "order": 1,
+      "slug": "devis-structure",
+      "attachments": []
+    },
+    {
+      "id": "sec-6-3",
+      "type": "section",
+      "parentId": "cat-6",
+      "title": "6.3 Validation et signature de devis",
+      "content": "<p>Le client peut accepter le devis de trois manières : signature électronique sur tablette ou smartphone, retour du PDF signé par email, ou validation orale confirmée par note interne au dossier.</p><p>Dès acceptation, le dossier passe automatiquement en statut <b>Commandé</b> ou <b>Travaux à planifier</b>. Le devis devient alors un document contractuel engageant les deux parties.</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Archivez toujours la preuve d'acceptation du devis dans la médiathèque du dossier.</div>",
+      "colorPreset": "white",
+      "order": 2,
+      "slug": "devis-validation",
+      "attachments": []
+    },
+    {
+      "id": "sec-6-4",
+      "type": "section",
+      "parentId": "cat-6",
+      "title": "6.4 Gestion des commandes fournisseurs",
+      "content": "<p>Une fois le devis accepté, créez les <b>commandes fournisseurs</b> pour commander le matériel nécessaire. Depuis le dossier, cliquez sur l'onglet Commandes puis sur le bouton <b>+</b>.</p><p>Renseignez le fournisseur, la date de commande, la date de livraison prévue, et ajoutez les articles commandés. Vous pouvez joindre le bon de commande PDF ou l'email de confirmation.</p><p>Le suivi des commandes permet de visualiser l'état d'avancement : <i>En attente</i>, <i>Commandé</i>, <i>Livré</i>, <i>Partiellement livré</i>. Cette information est essentielle pour planifier les travaux au bon moment.</p>",
+      "colorPreset": "white",
+      "order": 3,
       "slug": "commandes-gestion",
+      "attachments": []
+    },
+    {
+      "id": "sec-6-5",
+      "type": "section",
+      "parentId": "cat-6",
+      "title": "6.5 Suivi des délais et relances",
+      "content": "<p>Apogee vous alerte automatiquement lorsqu'une commande dépasse la date de livraison prévue ou qu'un devis envoyé n'a pas reçu de réponse après 7 jours.</p><p>Vous pouvez relancer le client ou le fournisseur directement depuis le dossier via l'envoi d'un email pré-rédigé.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️</strong> Ne laissez pas un devis sans réponse pendant plus de 15 jours : relancez systématiquement ou classez-le en \"Refusé\" pour libérer le dossier.</div>",
+      "colorPreset": "white",
+      "order": 4,
+      "slug": "devis-relances",
       "attachments": []
     },
     {
@@ -507,6 +540,50 @@
       "attachments": []
     },
     {
+      "id": "sec-7-2",
+      "type": "section",
+      "parentId": "cat-7",
+      "title": "7.2 Types de factures",
+      "content": "<p>Apogee gère plusieurs types de factures selon le contexte :</p><ul><li><b>Facture standard</b> : pour les travaux réalisés après devis accepté.</li><li><b>Facture de dépannage</b> : intervention sans devis préalable, chiffrée après réalisation.</li><li><b>Acompte</b> : demande de versement partiel avant démarrage des travaux.</li><li><b>Facture d'avoir</b> : annulation ou correction d'une facture erronée.</li><li><b>Facture de solde</b> : complément après versement d'acomptes.</li></ul><p>Chaque type de facture suit un schéma de numérotation spécifique défini dans les paramètres agence.</p>",
+      "colorPreset": "white",
+      "order": 1,
+      "slug": "facturation-types",
+      "attachments": []
+    },
+    {
+      "id": "sec-7-3",
+      "type": "section",
+      "parentId": "cat-7",
+      "title": "7.3 Envoi et suivi des factures",
+      "content": "<p>Les factures peuvent être envoyées par email directement depuis Apogee. Le système enregistre la date d'envoi et les ouvertures du PDF par le destinataire.</p><p>Vous pouvez également générer un lien de paiement en ligne (si l'option est activée) pour faciliter le règlement immédiat par carte bancaire.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Activez les relances automatiques pour les factures impayées après 30, 45 et 60 jours.</div>",
+      "colorPreset": "white",
+      "order": 2,
+      "slug": "facturation-envoi",
+      "attachments": []
+    },
+    {
+      "id": "sec-7-4",
+      "type": "section",
+      "parentId": "cat-7",
+      "title": "7.4 Enregistrement des paiements",
+      "content": "<p>Lorsqu'un paiement est reçu, enregistrez-le dans le dossier via l'onglet <b>Règlements</b>. Précisez le mode de paiement (chèque, virement, espèces, carte), la date de réception, le montant et la référence bancaire si disponible.</p><p>Le pavé financier du dossier se met à jour automatiquement. Lorsque le solde atteint zéro, le dossier passe en statut <b>Clos</b>.</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Rapprochez vos relevés bancaires chaque semaine pour détecter les écarts et les oublis d'enregistrement.</div>",
+      "colorPreset": "white",
+      "order": 3,
+      "slug": "paiements-enregistrement",
+      "attachments": []
+    },
+    {
+      "id": "sec-7-5",
+      "type": "section",
+      "parentId": "cat-7",
+      "title": "7.5 Gestion des impayés",
+      "content": "<p>Le tableau de bord des impayés liste toutes les factures non réglées au-delà de leur échéance. Vous pouvez filtrer par ancienneté, par apporteur ou par montant.</p><p>Pour chaque facture impayée, vous disposez de plusieurs actions : envoi d'une relance, mise en demeure automatique, blocage de nouveaux dossiers pour ce client, ou passage en contentieux avec export vers votre logiciel juridique.</p><p><span style='color:red;'>Une intégration avec des plateformes de recouvrement automatisé est prévue prochainement.</span></p>",
+      "colorPreset": "white",
+      "order": 4,
+      "slug": "paiements-impayes",
+      "attachments": []
+    },
+    {
       "id": "cat-8",
       "type": "category",
       "title": "Comptabilité & Articles",
@@ -518,6 +595,50 @@
       "attachments": []
     },
     {
+      "id": "sec-8-1",
+      "type": "section",
+      "parentId": "cat-8",
+      "title": "8.1 Catalogue d'articles",
+      "content": "<p>Le catalogue d'articles est la base de données de tous les produits, fournitures et services proposés par l'entreprise. Chaque article dispose d'un code unique, d'une désignation, d'un prix de vente HT, d'un taux de TVA et optionnellement d'un prix d'achat pour le calcul de marge.</p><p>Les articles sont organisés par familles (menuiserie, plomberie, électricité, etc.) et peuvent être liés à un ou plusieurs univers métiers.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Maintenez votre catalogue à jour : un article mal référencé génère des erreurs de facturation et fausse vos statistiques de marge.</div>",
+      "colorPreset": "white",
+      "order": 0,
+      "slug": "comptabilite-catalogue",
+      "attachments": []
+    },
+    {
+      "id": "sec-8-2",
+      "type": "section",
+      "parentId": "cat-8",
+      "title": "8.2 Gestion des tarifs et barèmes",
+      "content": "<p>Apogee permet de définir plusieurs barèmes tarifaires selon les apporteurs ou types de clients. Vous pouvez appliquer des coefficients multiplicateurs, des remises globales ou des prix spécifiques par article.</p><p>Lorsqu'un devis est généré, le système applique automatiquement le bon barème en fonction de l'apporteur sélectionné dans le dossier.</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Créez un barème de référence \"standard\" avant de paramétrer les tarifs spécifiques apporteurs.</div>",
+      "colorPreset": "white",
+      "order": 1,
+      "slug": "comptabilite-tarifs",
+      "attachments": []
+    },
+    {
+      "id": "sec-8-3",
+      "type": "section",
+      "parentId": "cat-8",
+      "title": "8.3 Exports comptables",
+      "content": "<p>Le module comptabilité permet d'exporter les factures, paiements et écritures vers votre logiciel de comptabilité (Cegid, Sage, QuadraExpert, etc.). Les exports respectent les formats standards : FEC, CSV ou XML selon votre besoin.</p><p>Vous pouvez filtrer les exports par période, par statut de paiement ou par apporteur. Chaque export génère un fichier téléchargeable et conserve une trace dans l'historique des exports.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️</strong> Ne réexportez pas les mêmes factures plusieurs fois : cela créerait des doublons en comptabilité.</div>",
+      "colorPreset": "white",
+      "order": 2,
+      "slug": "comptabilite-exports",
+      "attachments": []
+    },
+    {
+      "id": "sec-8-4",
+      "type": "section",
+      "parentId": "cat-8",
+      "title": "8.4 TVA et régimes fiscaux",
+      "content": "<p>Paramétrez les taux de TVA applicables selon la nature des travaux : taux normal, taux réduit, TVA à 5,5% pour la rénovation énergétique, ou franchise de TVA pour les micro-entreprises.</p><p>Le taux de TVA peut être défini au niveau de l'article ou au niveau du dossier selon le contexte (client particulier, professionnel, localisation des travaux).</p>",
+      "colorPreset": "white",
+      "order": 3,
+      "slug": "comptabilite-tva",
+      "attachments": []
+    },
+    {
       "id": "cat-9",
       "type": "category",
       "title": "Documents & Médiathèque",
@@ -526,6 +647,61 @@
       "colorPreset": "blue",
       "order": 8,
       "slug": "documents-mediatheque",
+      "attachments": []
+    },
+    {
+      "id": "sec-9-1",
+      "type": "section",
+      "parentId": "cat-9",
+      "title": "9.1 Rôle de la médiathèque",
+      "content": "<p>La <b>médiathèque</b> d'Apogee centralise tous les documents liés à un dossier : ordres de mission, relevés techniques, photos, devis, factures, PV de réception, attestations d'assurance, etc. Chaque document est horodaté, tracé et accessible en un clic depuis le dossier concerné.</p><p>Cette centralisation garantit la conformité documentaire, facilite les audits et sécurise les échanges avec les apporteurs et clients.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Un dossier sans documents est un dossier incomplet : prenez le réflexe de vérifier la médiathèque avant toute clôture.</div>",
+      "colorPreset": "white",
+      "order": 0,
+      "slug": "mediatheque-role",
+      "attachments": []
+    },
+    {
+      "id": "sec-9-2",
+      "type": "section",
+      "parentId": "cat-9",
+      "title": "9.2 Types de documents gérés",
+      "content": "<p>Apogee accepte tous les formats courants : PDF, JPEG, PNG, DOCX, XLSX, etc. Les documents peuvent être :</p><ul><li><b>Téléversés manuellement</b> depuis le bureau ou l'application mobile.</li><li><b>Générés automatiquement</b> : relevés techniques, devis, factures, bordereaux de livraison.</li><li><b>Reçus par email</b> et rattachés automatiquement au bon dossier via reconnaissance intelligente.</li><li><b>Signés électroniquement</b> par le client sur tablette ou smartphone.</li></ul><p>Chaque document peut être classé dans une catégorie (administratif, technique, financier, photos) et renommé pour faciliter la recherche.</p>",
+      "colorPreset": "white",
+      "order": 1,
+      "slug": "mediatheque-types",
+      "attachments": []
+    },
+    {
+      "id": "sec-9-3",
+      "type": "section",
+      "parentId": "cat-9",
+      "title": "9.3 Gestion des photos",
+      "content": "<p>Les photos prises par les techniciens sur le terrain sont automatiquement synchronisées dans la médiathèque du dossier. Elles peuvent être annotées, horodatées et géolocalisées.</p><p>Vous pouvez organiser les photos par album (avant travaux, pendant, après) et les exporter en lot pour envoi aux apporteurs ou intégration dans les rapports.</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Formez vos techniciens à prendre des photos nettes et pertinentes : elles constituent la preuve de réalisation et facilitent le traitement des litiges.</div>",
+      "colorPreset": "white",
+      "order": 2,
+      "slug": "mediatheque-photos",
+      "attachments": []
+    },
+    {
+      "id": "sec-9-4",
+      "type": "section",
+      "parentId": "cat-9",
+      "title": "9.4 Signature électronique",
+      "content": "<p>La signature électronique permet au client de valider directement sur place les documents suivants : bon d'intervention, relevé technique, PV de réception, devis, facture.</p><p>Le document signé est immédiatement archivé dans la médiathèque avec cachet horodaté et adresse IP. Il a la même valeur juridique qu'une signature manuscrite scannée.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️</strong> Une signature ne peut être annulée une fois validée. Vérifiez toujours le contenu du document avant de le faire signer.</div>",
+      "colorPreset": "white",
+      "order": 3,
+      "slug": "mediatheque-signature",
+      "attachments": []
+    },
+    {
+      "id": "sec-9-5",
+      "type": "section",
+      "parentId": "cat-9",
+      "title": "9.5 Partage et envoi de documents",
+      "content": "<p>Depuis la médiathèque, vous pouvez sélectionner un ou plusieurs documents et les envoyer par email au client, à l'apporteur ou à un contact tiers. L'envoi est tracé dans le journal du dossier.</p><p>Vous pouvez également générer un lien de partage sécurisé valable pendant une durée limitée (7, 15 ou 30 jours).</p><p><span style='color:red;'>Une future évolution permettra de créer un portail client où les bénéficiaires pourront consulter directement leurs documents.</span></p>",
+      "colorPreset": "white",
+      "order": 4,
+      "slug": "mediatheque-partage",
       "attachments": []
     },
     {
@@ -551,6 +727,39 @@
       "attachments": []
     },
     {
+      "id": "sec-10-2",
+      "type": "section",
+      "parentId": "cat-10",
+      "title": "10.2 Statuts détaillés",
+      "content": "<p>Voici la description complète des statuts principaux :</p><ul><li><b>À planifier</b> : dossier créé, en attente d'affectation d'un rendez-vous.</li><li><b>Planifié</b> : rendez-vous confirmé avec date, heure et technicien.</li><li><b>RT en cours</b> : relevé technique commencé mais non finalisé.</li><li><b>Devis à faire</b> : relevé validé, en attente de chiffrage.</li><li><b>Devis envoyé</b> : devis transmis au client, en attente de réponse.</li><li><b>Commandé</b> : devis accepté, commandes fournisseurs en cours.</li><li><b>Travaux planifiés</b> : matériel reçu, intervention programmée.</li><li><b>À facturer</b> : travaux terminés, facture à émettre.</li><li><b>Facturé</b> : facture émise, en attente de paiement.</li><li><b>Clos</b> : dossier soldé et archivé.</li></ul>",
+      "colorPreset": "white",
+      "order": 1,
+      "slug": "workflow-statuts-detail",
+      "attachments": []
+    },
+    {
+      "id": "sec-10-3",
+      "type": "section",
+      "parentId": "cat-10",
+      "title": "10.3 Transitions automatiques",
+      "content": "<p>Les transitions de statuts sont déclenchées automatiquement par les actions suivantes :</p><ul><li>Création d'un rendez-vous : passe en <b>Planifié</b>.</li><li>Début d'un RT : passe en <b>RT en cours</b>.</li><li>Validation du RT : passe en <b>Devis à faire</b>.</li><li>Envoi du devis : passe en <b>Devis envoyé</b>.</li><li>Acceptation du devis : passe en <b>Commandé</b>.</li><li>Réception de commande : passe en <b>Travaux planifiés</b>.</li><li>Fin d'intervention : passe en <b>À facturer</b>.</li><li>Émission de facture : passe en <b>Facturé</b>.</li><li>Réception du paiement : passe en <b>Clos</b>.</li></ul><p>Ces automatismes garantissent la cohérence du suivi et limitent les erreurs humaines.</p>",
+      "colorPreset": "white",
+      "order": 2,
+      "slug": "workflow-transitions",
+      "attachments": []
+    },
+    {
+      "id": "sec-10-4",
+      "type": "section",
+      "parentId": "cat-10",
+      "title": "10.4 Personnalisation du workflow",
+      "content": "<p>Selon votre type d'activité, vous pouvez activer ou désactiver certains statuts intermédiaires. Par exemple, si vous ne faites jamais de relevés techniques, vous pouvez masquer les statuts <i>RT en cours</i> et <i>Devis à faire</i> pour simplifier le parcours.</p><p>Cette personnalisation s'effectue dans les Paramètres > Workflow de l'agence. Toute modification impacte uniquement les nouveaux dossiers créés après la sauvegarde.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Avant de personnaliser, consultez le support pour valider que votre configuration respecte les bonnes pratiques du réseau.</div>",
+      "colorPreset": "white",
+      "order": 3,
+      "slug": "workflow-personnalisation",
+      "attachments": []
+    },
+    {
       "id": "cat-11",
       "type": "category",
       "title": "Gestion des listes & pictos",
@@ -559,6 +768,61 @@
       "colorPreset": "blue",
       "order": 10,
       "slug": "gestion-listes-pictos",
+      "attachments": []
+    },
+    {
+      "id": "sec-11-1",
+      "type": "section",
+      "parentId": "cat-11",
+      "title": "11.1 Rôle des listes de référence",
+      "content": "<p>Apogee s'appuie sur des <b>listes de référence</b> pour normaliser la saisie et garantir la cohérence des données : univers métiers, types de rendez-vous, causes de NRP (Non Réalisé Par), pictogrammes de dossiers, sous-statuts personnalisés, etc.</p><p>Ces listes sont paramétrables par l'administrateur de l'agence et peuvent être adaptées aux spécificités locales ou aux exigences des apporteurs.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Une liste bien structurée accélère la saisie, limite les erreurs et facilite le reporting.</div>",
+      "colorPreset": "white",
+      "order": 0,
+      "slug": "listes-role",
+      "attachments": []
+    },
+    {
+      "id": "sec-11-2",
+      "type": "section",
+      "parentId": "cat-11",
+      "title": "11.2 Univers métiers",
+      "content": "<p>Les <b>univers</b> correspondent aux domaines d'activité de l'entreprise : menuiserie, plomberie, serrurerie, vitrerie, électricité, chauffage, etc. Chaque dossier peut être associé à un ou plusieurs univers.</p><p>Cette classification permet de filtrer les dossiers par métier, d'affecter les techniciens compétents et de générer des statistiques par secteur d'activité.</p>",
+      "colorPreset": "white",
+      "order": 1,
+      "slug": "listes-univers",
+      "attachments": []
+    },
+    {
+      "id": "sec-11-3",
+      "type": "section",
+      "parentId": "cat-11",
+      "title": "11.3 Types de rendez-vous",
+      "content": "<p>Définissez les types de rendez-vous utilisés par votre agence : <i>Relevé technique</i>, <i>Dépannage</i>, <i>Travaux</i>, <i>Recherche de fuite</i>, <i>Expertise</i>, etc.</p><p>Chaque type peut être associé à des formulaires spécifiques dans l'application technicien et à des modèles de documents automatiques.</p>",
+      "colorPreset": "white",
+      "order": 2,
+      "slug": "listes-types-rdv",
+      "attachments": []
+    },
+    {
+      "id": "sec-11-4",
+      "type": "section",
+      "parentId": "cat-11",
+      "title": "11.4 Pictogrammes de dossiers",
+      "content": "<p>Les <b>pictogrammes</b> (ou <b>pictos</b>) sont des icônes visuelles permettant de signaler rapidement un dossier particulier : urgence, attente client, litige, sinistre complexe, etc.</p><p>Chaque picto peut être associé à une couleur et un libellé. Ils apparaissent dans les listes de dossiers et sur le planning, facilitant la priorisation.</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Limitez le nombre de pictos actifs pour éviter la surcharge visuelle. 5 à 7 pictos suffisent généralement.</div>",
+      "colorPreset": "white",
+      "order": 3,
+      "slug": "listes-pictos",
+      "attachments": []
+    },
+    {
+      "id": "sec-11-5",
+      "type": "section",
+      "parentId": "cat-11",
+      "title": "11.5 Sous-statuts personnalisés",
+      "content": "<p>Les <b>sous-statuts</b> complètent les statuts automatiques du workflow pour affiner le suivi : <i>Attente validation client</i>, <i>Attente commande fournisseur</i>, <i>En cours de livraison</i>, <i>Attente paiement</i>, etc.</p><p>Ils n'interrompent pas le cycle de vie du dossier mais permettent une classification plus précise dans les tableaux de bord et les exports.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️</strong> N'utilisez pas les sous-statuts pour contourner le workflow standard : ils sont complémentaires, pas substitutifs.</div>",
+      "colorPreset": "white",
+      "order": 4,
+      "slug": "listes-sous-statuts",
       "attachments": []
     },
     {
@@ -573,6 +837,50 @@
       "attachments": []
     },
     {
+      "id": "sec-12-1",
+      "type": "section",
+      "parentId": "cat-12",
+      "title": "12.1 Tableaux de bord",
+      "content": "<p>Apogee propose plusieurs <b>tableaux de bord</b> préconfigurés pour piloter l'activité de votre agence en temps réel : vue d'ensemble de l'activité, suivi des dossiers par statut, performance techniciens, taux de transformation devis/factures, délais moyens de traitement, etc.</p><p>Chaque tableau peut être filtré par période, technicien, apporteur ou univers. Les indicateurs clés (KPI) sont actualisés automatiquement.</p><div style='background:#dbeafe;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bfdbfe'><strong>💡</strong> Consultez vos tableaux de bord au moins une fois par semaine pour détecter les dossiers bloqués et les dérives de planning.</div>",
+      "colorPreset": "white",
+      "order": 0,
+      "slug": "reporting-tableaux",
+      "attachments": []
+    },
+    {
+      "id": "sec-12-2",
+      "type": "section",
+      "parentId": "cat-12",
+      "title": "12.2 Indicateurs de performance",
+      "content": "<p>Les principaux indicateurs suivis dans Apogee incluent :</p><ul><li><b>Nombre de dossiers ouverts / clos</b> par période.</li><li><b>Taux de transformation</b> : dossiers avec devis accepté / total dossiers.</li><li><b>Délai moyen de traitement</b> : de la création du dossier à la clôture.</li><li><b>CA facturé</b> et <b>reste à facturer</b>.</li><li><b>Taux de NRP</b> (non réalisé par) par technicien.</li><li><b>Délai moyen de paiement</b> par apporteur.</li></ul><p>Ces indicateurs peuvent être exportés en PDF ou Excel pour vos réunions de pilotage.</p>",
+      "colorPreset": "white",
+      "order": 1,
+      "slug": "reporting-kpi",
+      "attachments": []
+    },
+    {
+      "id": "sec-12-3",
+      "type": "section",
+      "parentId": "cat-12",
+      "title": "12.3 Exports et rapports personnalisés",
+      "content": "<p>Vous pouvez créer des <b>exports personnalisés</b> en sélectionnant les colonnes et filtres de votre choix : liste des dossiers en attente client, factures impayées depuis plus de 30 jours, interventions à reprogrammer, etc.</p><p>Ces exports sont disponibles en CSV ou Excel et peuvent être programmés pour envoi automatique par email (quotidien, hebdomadaire, mensuel).</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Partagez régulièrement vos rapports avec votre équipe pour maintenir la transparence et la motivation.</div>",
+      "colorPreset": "white",
+      "order": 2,
+      "slug": "reporting-exports",
+      "attachments": []
+    },
+    {
+      "id": "sec-12-4",
+      "type": "section",
+      "parentId": "cat-12",
+      "title": "12.4 Suivi des objectifs",
+      "content": "<p>Définissez des <b>objectifs mensuels</b> par technicien, par univers ou par agence : nombre de dossiers traités, CA facturé, taux de satisfaction client, etc.</p><p>Le tableau de bord affiche l'avancement en temps réel par rapport à ces objectifs, avec un code couleur (vert, orange, rouge) pour visualiser les écarts.</p><p><span style='color:red;'>Une future évolution permettra de créer des alertes automatiques lorsqu'un objectif risque de ne pas être atteint.</span></p>",
+      "colorPreset": "white",
+      "order": 3,
+      "slug": "reporting-objectifs",
+      "attachments": []
+    },
+    {
       "id": "cat-13",
       "type": "category",
       "title": "FAQ globale structurée",
@@ -581,6 +889,50 @@
       "colorPreset": "blue",
       "order": 12,
       "slug": "faq-globale",
+      "attachments": []
+    },
+    {
+      "id": "sec-13-1",
+      "type": "section",
+      "parentId": "cat-13",
+      "title": "13.1 Questions générales",
+      "content": "<p><b>Comment réinitialiser mon mot de passe ?</b><br/>Cliquez sur \"Mot de passe oublié\" depuis l'écran de connexion et suivez les instructions envoyées par email.</p><p><b>Puis-je utiliser Apogee sur tablette ?</b><br/>Oui, l'interface web s'adapte aux tablettes. L'application technicien est disponible sur iOS et Android.</p><p><b>Comment ajouter un nouvel utilisateur ?</b><br/>Allez dans Paramètres > Utilisateurs et cliquez sur \"Ajouter un utilisateur\". Définissez son rôle et ses droits d'accès.</p>",
+      "colorPreset": "white",
+      "order": 0,
+      "slug": "faq-general",
+      "attachments": []
+    },
+    {
+      "id": "sec-13-2",
+      "type": "section",
+      "parentId": "cat-13",
+      "title": "13.2 Problèmes fréquents",
+      "content": "<p><b>Un dossier n'apparaît pas dans le planning</b><br/>Vérifiez que le rendez-vous est bien planifié et que le technicien est assigné. Actualisez la page.</p><p><b>Le relevé technique ne se synchronise pas</b><br/>Assurez-vous que le technicien a une connexion internet active. Relancez la synchronisation depuis l'application.</p><p><b>Une facture a été envoyée avec une erreur</b><br/>Contactez immédiatement le client pour l'informer. Générez une facture d'avoir puis une nouvelle facture corrigée.</p><div style='background:#fee2e2;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #fecaca'><strong>⚠️</strong> En cas de blocage persistant, contactez le support technique avec la référence du dossier concerné.</div>",
+      "colorPreset": "white",
+      "order": 1,
+      "slug": "faq-problemes",
+      "attachments": []
+    },
+    {
+      "id": "sec-13-3",
+      "type": "section",
+      "parentId": "cat-13",
+      "title": "13.3 Bonnes pratiques recommandées",
+      "content": "<p><b>Éviter les doublons clients</b><br/>Toujours rechercher le client avant de le créer. Utilisez les filtres par téléphone ou email pour vérifier l'existence.</p><p><b>Créer les éléments depuis le dossier</b><br/>Ne créez jamais un devis, une facture ou un rendez-vous hors du contexte du dossier. Cela garantit la traçabilité.</p><p><b>Renseigner les informations complètes</b><br/>Un champ vide aujourd'hui peut bloquer un processus demain. Prenez le temps de saisir toutes les données disponibles.</p><p><b>Former régulièrement les équipes</b><br/>Organisez des sessions de formation trimestrielles pour maintenir un niveau de maîtrise homogène du CRM.</p><div style='background:#dcfce7;padding:10px;border-radius:8px;margin:10px 0;border:1px solid #bbf7d0'><strong>✅</strong> Un CRM bien utilisé est un CRM qui fait gagner du temps, pas qui en fait perdre. Investissez dans la formation et le paramétrage initial.</div>",
+      "colorPreset": "white",
+      "order": 2,
+      "slug": "faq-bonnes-pratiques",
+      "attachments": []
+    },
+    {
+      "id": "sec-13-4",
+      "type": "section",
+      "parentId": "cat-13",
+      "title": "13.4 Support et assistance",
+      "content": "<p><b>Comment contacter le support ?</b><br/>Utilisez le bouton \"Aide\" dans le menu principal ou envoyez un email à support@apogeecrm.fr. Précisez toujours votre agence et la référence du dossier concerné.</p><p><b>Existe-t-il des tutoriels vidéo ?</b><br/>Oui, une bibliothèque de vidéos est disponible dans la section Formation du CRM. Elles couvrent tous les modules principaux.</p><p><b>Puis-je proposer une amélioration ?</b><br/>Absolument ! Utilisez le formulaire de suggestion dans Paramètres > Feedback. Toutes les idées sont étudiées par l'équipe produit.</p><p><span style='color:red;'>Une base de connaissances enrichie et un chatbot d'assistance sont en cours de développement.</span></p>",
+      "colorPreset": "white",
+      "order": 3,
+      "slug": "faq-support",
       "attachments": []
     }
   ],
