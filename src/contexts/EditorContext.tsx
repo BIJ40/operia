@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { Block, AppData } from '@/types/block';
 import { loadAppData, saveAppData } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import apogeeData from '@/data/apogee-data.json';
 
 interface EditorContextType {
@@ -26,6 +27,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
 
   // Load data on mount
   useEffect(() => {
@@ -60,6 +62,10 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   }, [blocks, loading]);
 
   const addBlock = useCallback((block: Omit<Block, 'id' | 'order'>) => {
+    if (!isAdmin) {
+      toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent ajouter du contenu', variant: 'destructive' });
+      return;
+    }
     const newBlock: Block = {
       ...block,
       id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -67,22 +73,34 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     };
     setBlocks((prev) => [...prev, newBlock]);
     toast({ title: 'Bloc ajouté' });
-  }, [blocks.length, toast]);
+  }, [blocks.length, toast, isAdmin]);
 
   const updateBlock = useCallback((id: string, updates: Partial<Block>) => {
+    if (!isAdmin) {
+      toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent modifier le contenu', variant: 'destructive' });
+      return;
+    }
     setBlocks((prev) =>
       prev.map((block) => (block.id === id ? { ...block, ...updates } : block))
     );
-  }, []);
+  }, [isAdmin, toast]);
 
   const deleteBlock = useCallback((id: string) => {
+    if (!isAdmin) {
+      toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent supprimer du contenu', variant: 'destructive' });
+      return;
+    }
     setBlocks((prev) => prev.filter((block) => block.id !== id));
     toast({ title: 'Bloc supprimé' });
-  }, [toast]);
+  }, [toast, isAdmin]);
 
   const reorderBlocks = useCallback((newBlocks: Block[]) => {
+    if (!isAdmin) {
+      toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent réorganiser le contenu', variant: 'destructive' });
+      return;
+    }
     setBlocks(newBlocks.map((block, index) => ({ ...block, order: index })));
-  }, []);
+  }, [isAdmin, toast]);
 
   const exportDataFn = useCallback(async (): Promise<string> => {
     const appData: AppData = {
@@ -113,8 +131,12 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const toggleEditMode = useCallback(() => {
+    if (!isAdmin) {
+      toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent activer le mode édition', variant: 'destructive' });
+      return;
+    }
     setIsEditMode((prev) => !prev);
-  }, []);
+  }, [isAdmin, toast]);
 
   return (
     <EditorContext.Provider
