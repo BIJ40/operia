@@ -36,7 +36,12 @@ export default function Admin() {
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
+  const [uploadProgress, setUploadProgress] = useState({ 
+    current: 0, 
+    total: 0, 
+    currentFile: '',
+    status: '' as 'parsing' | 'uploading' | ''
+  });
 
   // Charger les catégories existantes
   useEffect(() => {
@@ -167,14 +172,25 @@ export default function Admin() {
 
   const handleBatchUpload = async (selectedFiles: File[]) => {
     setIsLoading(true);
-    setUploadProgress({ current: 0, total: selectedFiles.length });
+    setUploadProgress({ 
+      current: 0, 
+      total: selectedFiles.length, 
+      currentFile: '', 
+      status: '' 
+    });
 
     let successCount = 0;
     let errorCount = 0;
 
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i];
-      setUploadProgress({ current: i + 1, total: selectedFiles.length });
+      
+      setUploadProgress({ 
+        current: i + 1, 
+        total: selectedFiles.length,
+        currentFile: file.name,
+        status: 'parsing'
+      });
 
       try {
         const fileType = file.type;
@@ -214,6 +230,13 @@ export default function Admin() {
         }
 
         // Insérer dans la base
+        setUploadProgress({ 
+          current: i + 1, 
+          total: selectedFiles.length,
+          currentFile: file.name,
+          status: 'uploading'
+        });
+
         const { error } = await supabase
           .from('knowledge_base')
           .insert({
@@ -238,7 +261,7 @@ export default function Admin() {
     }
 
     setIsLoading(false);
-    setUploadProgress({ current: 0, total: 0 });
+    setUploadProgress({ current: 0, total: 0, currentFile: '', status: '' });
 
     toast({
       title: 'Import terminé',
@@ -360,9 +383,27 @@ export default function Admin() {
                   </p>
                 )}
                 {uploadProgress.total > 0 && (
-                  <p className="text-sm text-primary font-medium">
-                    📤 Import en cours : {uploadProgress.current} / {uploadProgress.total}
-                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-primary">
+                        {uploadProgress.status === 'parsing' ? '📄 Extraction...' : '📤 Envoi...'}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {uploadProgress.current} / {uploadProgress.total}
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="bg-primary h-full transition-all duration-300 ease-in-out"
+                        style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                      />
+                    </div>
+                    {uploadProgress.currentFile && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {uploadProgress.currentFile}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
 
