@@ -1,24 +1,35 @@
 import { Link } from 'react-router-dom';
-import { HelpCircle, Home, Edit3, Square, Database } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { MigrationDialog } from '@/components/MigrationDialog';
 import { useState } from 'react';
+import { IconPicker } from '@/components/IconPicker';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface HeaderProps {
   onOpenLogin?: () => void;
 }
 
 export function Header({ onOpenLogin }: HeaderProps) {
-  const { blocks, isEditMode, toggleEditMode } = useEditor();
-  const { isAuthenticated } = useAuth();
-  const [migrationOpen, setMigrationOpen] = useState(false);
+  const { blocks, isEditMode, toggleEditMode, updateBlock } = useEditor();
+  const { isAuthenticated, logout } = useAuth();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [guideIcon, setGuideIcon] = useState('Home');
+  const [faqIcon, setFaqIcon] = useState('HelpCircle');
+  const [editIcon, setEditIcon] = useState('Edit3');
+  const [stopIcon, setStopIcon] = useState('Square');
   
   // Find FAQ category
   const faqCategory = blocks.find(
     b => b.type === 'category' && b.title.toLowerCase().includes('faq')
   );
+
+  const GuideIconComponent = (Icons as any)[guideIcon] || Icons.Home;
+  const FaqIconComponent = (Icons as any)[faqIcon] || Icons.HelpCircle;
+  const EditIconComponent = (Icons as any)[editIcon] || Icons.Edit3;
+  const StopIconComponent = (Icons as any)[stopIcon] || Icons.Square;
 
   const handleEnrichirClick = () => {
     if (isEditMode) {
@@ -40,7 +51,7 @@ export function Header({ onOpenLogin }: HeaderProps) {
           to="/" 
           className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
         >
-          <Home className="w-5 h-5 text-primary" />
+          <GuideIconComponent className="w-5 h-5 text-primary" />
           <span className="font-semibold text-foreground">GUIDE</span>
         </Link>
         
@@ -49,7 +60,7 @@ export function Header({ onOpenLogin }: HeaderProps) {
             to={`/category/${faqCategory.slug}`}
             className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
           >
-            <HelpCircle className="w-5 h-5 text-primary" />
+            <FaqIconComponent className="w-5 h-5 text-primary" />
             <span className="font-semibold text-foreground">FAQ</span>
           </Link>
         )}
@@ -61,30 +72,94 @@ export function Header({ onOpenLogin }: HeaderProps) {
         >
           {isEditMode ? (
             <>
-              <Square className="w-5 h-5 text-destructive" />
+              <StopIconComponent className="w-5 h-5 text-destructive" />
               <span className="font-semibold text-foreground">STOP</span>
             </>
           ) : (
             <>
-              <Edit3 className="w-5 h-5 text-primary" />
+              <EditIconComponent className="w-5 h-5 text-primary" />
               <span className="font-semibold text-foreground">ENRICHIR</span>
             </>
           )}
         </Button>
 
         {isAuthenticated && (
-          <Button
-            onClick={() => setMigrationOpen(true)}
-            variant="ghost"
-            className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-          >
-            <Database className="w-5 h-5 text-green-600" />
-            <span className="font-semibold text-foreground">MIGRER</span>
-          </Button>
+          <>
+            <Button
+              onClick={() => setSettingsOpen(true)}
+              variant="ghost"
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+            >
+              <Icons.Settings className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-foreground">PARAMÈTRES</span>
+            </Button>
+
+            <Button
+              onClick={logout}
+              variant="ghost"
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all ml-auto"
+            >
+              <Icons.LogOut className="w-5 h-5 text-muted-foreground" />
+              <span className="font-semibold text-foreground">QUITTER</span>
+            </Button>
+          </>
         )}
       </div>
 
-      <MigrationDialog open={migrationOpen} onOpenChange={setMigrationOpen} />
+      {/* Settings Dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Paramètres de l'interface</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium">Icônes du header</h3>
+              
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">Icône GUIDE</label>
+                <IconPicker value={guideIcon} onChange={setGuideIcon} />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">Icône FAQ</label>
+                <IconPicker value={faqIcon} onChange={setFaqIcon} />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">Icône ENRICHIR</label>
+                <IconPicker value={editIcon} onChange={setEditIcon} />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">Icône STOP</label>
+                <IconPicker value={stopIcon} onChange={setStopIcon} />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium">Icônes des catégories</h3>
+              {blocks.filter(b => b.type === 'category').map((category) => {
+                const CategoryIcon = (Icons as any)[category.icon || 'Circle'] || Icons.Circle;
+                
+                return (
+                  <div key={category.id} className="space-y-2">
+                    <label className="text-sm text-muted-foreground flex items-center gap-2">
+                      <CategoryIcon className="w-4 h-4" />
+                      {category.title}
+                    </label>
+                    <IconPicker 
+                      value={category.icon || 'Circle'} 
+                      onChange={(icon) => updateBlock(category.id, { icon })}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }

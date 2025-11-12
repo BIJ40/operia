@@ -103,3 +103,53 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* TipTap Editor Styles - Fix cursor visibility */
+.ProseMirror {
+  min-height: 200px;
+  outline: none;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  height: 0;
+}
+
+/* Force cursor visibility */
+.ProseMirror-focused {
+  outline: none;
+}
+
+.ProseMirror .ProseMirror-gapcursor {
+  display: block;
+  position: relative;
+  pointer-events: none;
+}
+
+.ProseMirror .ProseMirror-gapcursor:after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -2px;
+  width: 20px;
+  border-top: 1px solid hsl(var(--foreground));
+  animation: ProseMirror-cursor-blink 1.1s steps(2, start) infinite;
+}
+
+@keyframes ProseMirror-cursor-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* Ensure cursor is always visible at line breaks */
+.ProseMirror br {
+  display: inline;
+}
+
+.ProseMirror br::after {
+  content: '\200B';
+}
