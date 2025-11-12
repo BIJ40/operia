@@ -55,8 +55,13 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r" collapsible="icon">
       <SidebarHeader className="p-4 border-b">
-        <Link to="/" className="block">
-          <img src={logoApogee} alt="Apogée CRM" className="w-full h-auto cursor-pointer" />
+        <Link to="/" className="block" onClick={(e) => e.stopPropagation()}>
+          <img 
+            src={logoApogee} 
+            alt="Apogée CRM - Retour à l'accueil" 
+            className="w-full h-auto cursor-pointer hover:opacity-80 transition-opacity"
+            draggable={false}
+          />
         </Link>
       </SidebarHeader>
       
