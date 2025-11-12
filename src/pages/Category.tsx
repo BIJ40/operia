@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { ColorPreset } from '@/types/block';
 
 export default function Category() {
   const { slug } = useParams();
+  const location = useLocation();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isAuthenticated } = useAuth();
   
@@ -26,8 +27,8 @@ export default function Category() {
 
   // Scroll to section if hash is present - MUST be before any early return
   useEffect(() => {
-    if (window.location.hash) {
-      const sectionId = window.location.hash.substring(1);
+    if (location.hash) {
+      const sectionId = location.hash.substring(1);
       setTimeout(() => {
         const element = document.getElementById(sectionId);
         if (element) {
@@ -35,7 +36,7 @@ export default function Category() {
         }
       }, 300);
     }
-  }, []);
+  }, [location.hash]); // Se déclenche à chaque changement de hash
 
   if (!category) {
     return (
