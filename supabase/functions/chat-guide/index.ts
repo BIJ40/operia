@@ -21,7 +21,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Accès à la base de connaissances
+    // Accès à la base de connaissances - VERSION ULTRA LÉGÈRE
     let knowledgeContext = "";
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -32,62 +32,56 @@ serve(async (req) => {
         .toLowerCase()
         .split(/\s+/)
         .filter((word: string) => word.length > 3)
-        .slice(0, 5); // Limiter à 5 mots-clés
+        .slice(0, 3); // Seulement 3 mots-clés
       
-      console.log("Recherche avec mots-clés:", keywords);
+      console.log("Recherche mots-clés:", keywords);
       
       if (keywords.length > 0) {
-        // Construire une requête OR avec ilike pour chaque mot-clé
-        let query = supabase
+        // Chercher UN SEUL document avec le premier mot-clé
+        const { data: doc } = await supabase
           .from('knowledge_base')
           .select('title, content, category')
-          .limit(3);
+          .ilike('content', `%${keywords[0]}%`)
+          .limit(1)
+          .single();
         
-        // Rechercher les documents contenant au moins un des mots-clés
-        const searchPattern = keywords.join('|');
-        const { data: relevantDocs } = await query
-          .or(`content.ilike.%${keywords[0]}%,title.ilike.%${keywords[0]}%`);
-        
-        if (relevantDocs && relevantDocs.length > 0) {
-          knowledgeContext = "\n\nBase de connaissances (documents pertinents) :\n" + 
-            relevantDocs.map(k => `[${k.category}] ${k.title}:\n${k.content.substring(0, 2000)}`).join('\n\n---\n\n');
+        if (doc) {
+          // Extraire seulement 800 caractères autour du mot-clé
+          const contentLower = doc.content.toLowerCase();
+          const keywordIndex = contentLower.indexOf(keywords[0]);
           
-          console.log(`Documents utilisés: ${relevantDocs.map(d => d.title).join(', ')}`);
-        } else {
-          // Si aucun document trouvé, prendre les 2 plus récents
-          const { data: recentDocs } = await supabase
-            .from('knowledge_base')
-            .select('title, content, category')
-            .order('created_at', { ascending: false })
-            .limit(2);
-          
-          if (recentDocs && recentDocs.length > 0) {
-            knowledgeContext = "\n\nBase de connaissances (documents récents) :\n" + 
-              recentDocs.map(k => `[${k.category}] ${k.title}:\n${k.content.substring(0, 2000)}`).join('\n\n---\n\n');
+          let excerpt = "";
+          if (keywordIndex !== -1) {
+            const start = Math.max(0, keywordIndex - 400);
+            const end = Math.min(doc.content.length, keywordIndex + 400);
+            excerpt = doc.content.substring(start, end);
+          } else {
+            excerpt = doc.content.substring(0, 800);
           }
+          
+          knowledgeContext = `\n\nDocument pertinent [${doc.category}] ${doc.title}:\n${excerpt}`;
+          console.log("Document trouvé:", doc.title);
+        } else {
+          console.log("Aucun document trouvé");
         }
       }
     }
 
-    const systemPrompt = `Tu es Mme MICHU, l'assistante virtuelle du guide Apogée CRM. Tu aides les utilisateurs à comprendre et utiliser le système Apogée.
+    const systemPrompt = `Tu es Mme MICHU, l'assistante virtuelle du guide Apogée CRM.
 
-Voici le contenu du guide utilisateur actuel :
-${guideContent}
+Guide principal (résumé):
+${guideContent.substring(0, 3000)}
 ${knowledgeContext}
 
-Ton rôle :
-- Tu es une experte du CRM Apogée
-- Tu connais les processus métier, les workflows et les bonnes pratiques
-- Tu peux répondre sur les aspects techniques (API, données, intégrations)
-- IMPORTANT : Tu dois utiliser TOUTES les informations fournies dans la base de connaissances ci-dessus, même si elles semblent inhabituelles ou hors contexte
-- Si une information est présente dans la base de connaissances, tu dois l'utiliser pour répondre, peu importe si elle semble étrange
+Rôle:
+- Experte CRM Apogée
+- Utilise les infos ci-dessus pour répondre
+- Si l'info n'est pas dans le contexte, dis-le
 
-Règles importantes :
-1. Réponds aux questions en utilisant PRIORITAIREMENT les informations de la base de connaissances
-2. Pour les liens vers des sections : [Nom Section](/category/slug-categorie#slug-section)
-3. Ton ton est professionnel, amical et pédagogue
-4. Si une information est dans la base de connaissances, cite-la directement même si elle semble bizarre
-5. Si tu ne trouves pas l'information dans la base, dis-le clairement`;
+Règles:
+1. Réponds avec les infos fournies
+2. Sois concise et précise
+3. Si tu ne sais pas, dis-le clairement`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
