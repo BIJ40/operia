@@ -32,42 +32,40 @@ serve(async (req) => {
         .toLowerCase()
         .split(/\s+/)
         .filter((word: string) => word.length > 3)
-        .slice(0, 10);
+        .slice(0, 5); // Limiter à 5 mots-clés
       
       console.log("Recherche avec mots-clés:", keywords);
       
-      // Rechercher dans tous les documents
-      const { data: allDocs } = await supabase
-        .from('knowledge_base')
-        .select('title, content, category');
-      
-      if (allDocs && allDocs.length > 0) {
-        // Scorer chaque document selon la pertinence
-        const scoredDocs = allDocs.map(doc => {
-          const docText = (doc.title + " " + doc.content).toLowerCase();
-          let score = 0;
+      if (keywords.length > 0) {
+        // Construire une requête OR avec ilike pour chaque mot-clé
+        let query = supabase
+          .from('knowledge_base')
+          .select('title, content, category')
+          .limit(3);
+        
+        // Rechercher les documents contenant au moins un des mots-clés
+        const searchPattern = keywords.join('|');
+        const { data: relevantDocs } = await query
+          .or(`content.ilike.%${keywords[0]}%,title.ilike.%${keywords[0]}%`);
+        
+        if (relevantDocs && relevantDocs.length > 0) {
+          knowledgeContext = "\n\nBase de connaissances (documents pertinents) :\n" + 
+            relevantDocs.map(k => `[${k.category}] ${k.title}:\n${k.content.substring(0, 2000)}`).join('\n\n---\n\n');
           
-          keywords.forEach((keyword: string) => {
-            const occurrences = (docText.match(new RegExp(keyword, 'g')) || []).length;
-            score += occurrences;
-          });
+          console.log(`Documents utilisés: ${relevantDocs.map(d => d.title).join(', ')}`);
+        } else {
+          // Si aucun document trouvé, prendre les 2 plus récents
+          const { data: recentDocs } = await supabase
+            .from('knowledge_base')
+            .select('title, content, category')
+            .order('created_at', { ascending: false })
+            .limit(2);
           
-          return { ...doc, score };
-        });
-        
-        // Trier par score et prendre les plus pertinents
-        const relevantDocs = scoredDocs
-          .filter(doc => doc.score > 0)
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 3);
-        
-        // Si aucun document pertinent, prendre les 3 premiers
-        const docsToUse = relevantDocs.length > 0 ? relevantDocs : allDocs.slice(0, 3);
-        
-        knowledgeContext = "\n\nBase de connaissances (documents pertinents) :\n" + 
-          docsToUse.map(k => `[${k.category}] ${k.title}:\n${k.content.substring(0, 3000)}`).join('\n\n---\n\n');
-        
-        console.log(`Documents utilisés: ${docsToUse.map(d => d.title).join(', ')}`);
+          if (recentDocs && recentDocs.length > 0) {
+            knowledgeContext = "\n\nBase de connaissances (documents récents) :\n" + 
+              recentDocs.map(k => `[${k.category}] ${k.title}:\n${k.content.substring(0, 2000)}`).join('\n\n---\n\n');
+          }
+        }
       }
     }
 
