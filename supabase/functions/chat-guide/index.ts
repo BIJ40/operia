@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,26 +14,50 @@ serve(async (req) => {
   try {
     const { messages, guideContent } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Tu es l'assistant virtuel du guide Apogée. Tu aides les utilisateurs à trouver des informations dans le guide.
+    // Accès à la base de connaissances
+    let knowledgeContext = "";
+    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      
+      // Récupérer quelques entrées pertinentes de la base de connaissances
+      const { data: knowledgeData } = await supabase
+        .from('knowledge_base')
+        .select('title, content, category')
+        .limit(5);
+      
+      if (knowledgeData && knowledgeData.length > 0) {
+        knowledgeContext = "\n\nBase de connaissances additionnelle :\n" + 
+          knowledgeData.map(k => `[${k.category}] ${k.title}:\n${k.content.substring(0, 1000)}...`).join('\n\n');
+      }
+    }
 
-Voici le contenu complet du guide :
+    const systemPrompt = `Tu es Mme MICHU, l'assistante virtuelle du guide Apogée CRM. Tu aides les utilisateurs à comprendre et utiliser le système Apogée.
+
+Voici le contenu du guide utilisateur actuel :
 ${guideContent}
+${knowledgeContext}
 
-Tes règles :
-1. Réponds uniquement aux questions liées au contenu du guide
-2. Sois précis et concis
-3. Si la réponse nécessite de consulter une section, suggère un lien avec ce format exact : [Voir: Nom de la Section](#slug-de-la-section)
-4. Si tu ne trouves pas l'information, dis-le clairement
-5. Utilise un ton professionnel mais amical
+Ton rôle :
+- Tu es une experte du CRM Apogée
+- Tu connais les processus métier, les workflows et les bonnes pratiques
+- Tu peux répondre sur les aspects techniques (API, données, intégrations)
+- Tu réponds de manière **générale** sans jamais citer de données confidentielles spécifiques (clients, tarifs réels)
+- Tu utilises des exemples génériques si nécessaire
 
-Format des liens :
-- Pour une catégorie : [Voir: Nom Catégorie](/category/slug-categorie)
-- Pour une section dans une catégorie : [Voir: Nom Section](/category/slug-categorie#slug-section)`;
+Règles importantes :
+1. Réponds aux questions sur Apogée avec expertise et pédagogie
+2. Pour les liens vers des sections : [Nom Section](/category/slug-categorie#slug-section)
+3. Ton ton est professionnel, amical et pédagogue
+4. Si tu ne sais pas, dis-le clairement
+5. Ne cite JAMAIS de données clients, tarifs ou informations confidentielles
+6. Parle des concepts de manière générale et éducative`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

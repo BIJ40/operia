@@ -1,0 +1,4536 @@
+[Mise à jour du Manuel CRM – Session n°1]
+**Thème détecté :** Client
+**Version globale :** v1.0
+**Corrélations ajoutées :** (#client, #apporteur, #client_professionnel, #client_particulier, #config_apporteur, #corrélation_auto:dossier_devis_facture)
+
+---
+
+### Introduction du thème
+
+Le module **Client** constitue la porte d’entrée du CRM. Il permet la gestion complète des fiches clients et des apporteurs, qu’ils soient particuliers ou professionnels.
+C’est ici que débute le parcours administratif : toute intervention, tout devis et toute facture repose sur une fiche client correctement renseignée.
+
+---
+
+### Déroulement fonctionnel
+
+1. **Accès au module :**
+   Depuis le menu principal, cliquer sur **Client**, puis sur le sous-menu **Client**.
+
+2. **Vérification d’existence :**
+   Avant toute création, rechercher le client dans le champ *Nom*.
+   Si le client n’existe pas, poursuivre avec **Ajouter un client**.
+
+3. **Création d’un client :**
+
+   * Cliquer sur **Ajouter**.
+   * Renseigner les champs :
+
+     * Civilité (M., Mme, etc.)
+     * Nom
+     * Type : *Particulier* ou *Professionnel*
+     * Adresse complète
+     * Téléphone
+     * Email
+   * Cliquer sur **Enregistrer**.
+
+4. **Informations supplémentaires :**
+
+   * **Nom du propriétaire :** utile dans le cas d’une intervention sur un bien locatif.
+   * **Indice :** permet d’ajouter une mention spécifique visible sur devis et factures (ex. : “Résidence Les Pins – Lot 3”).
+   * **Origine d’acquisition :** indiquer comment le client a été obtenu (prospection, apporteur, plateforme, etc.).
+
+5. **Création ou conversion en apporteur :**
+
+   * Un **apporteur** peut être :
+
+     * Régulier (ex. : agence, bailleur, syndic)
+     * Unique (ex. : client ponctuel qui recommande un autre client)
+   * Un **client existant** peut devenir apporteur :
+
+     * Ouvrir la fiche client.
+     * Dans l’onglet **Caractéristiques**, cocher *Apporteur*.
+     * Le client conserve son rôle initial tout en devenant apporteur pour d’autres dossiers.
+
+6. **Création d’un apporteur professionnel :**
+
+   * Créer une nouvelle fiche client.
+   * Définir le type comme **Professionnel**.
+   * Sélectionner avec précision la **catégorie** (assureur, gestionnaire, plateforme, etc.).
+   * Cocher *Apporteur* dans les caractéristiques.
+   * Accéder à l’onglet **Config Apporteur**.
+
+7. **Configuration de l’apporteur :**
+
+   * **Apporteur identifié :** s’il figure dans la liste, le sélectionner pour le lier à ses documents et barèmes.
+   * **Barème :** sélectionner le barème de référence si existant.
+   * **Adresse de devis/factures :** définir si les documents doivent être établis :
+
+     * Au nom de l’apporteur, ou
+     * Au nom du client final.
+   * **Pourcentage d’acompte :** paramétrer le taux à appliquer automatiquement aux devis.
+   * **Documents à signer :** sélectionner les modèles à faire signer :
+
+     * *Avant travaux* (ordre d’intervention, mandat, etc.)
+     * *Après travaux* (PV de réception, attestation, etc.)
+   * Si l’apporteur ne fournit pas ses propres documents, cocher **On intervention** pour utiliser les documents standard de l’entreprise.
+
+---
+
+### Corrélations et dépendances
+
+* #client ↔ #dossier : chaque dossier est lié à un client unique.
+* #client ↔ #devis : un devis ne peut être créé sans fiche client.
+* #apporteur ↔ #tarif : le barème de l’apporteur impacte la génération des devis et commandes.
+* #config_apporteur ↔ #documents : les documents pré/post travaux dépendent du paramétrage apporteur.
+* #corrélation_auto : lors de la création d’un dossier ou devis, le système détecte automatiquement si un apporteur est associé au client.
+
+---
+
+### Astuces & points d’attention
+
+* Toujours vérifier la présence d’un client avant d’en créer un nouveau pour éviter les doublons.
+* Bien distinguer le **client final** (bénéficiaire des travaux) de l’**apporteur** (source du dossier).
+* Le champ **Indice** est crucial pour les chantiers multi-lots ou les résidences collectives.
+* Lors du paramétrage d’un apporteur, la cohérence entre *catégorie* et *barème* conditionne la bonne génération des devis.
+
+---
+
+### FAQ du thème
+
+**Q : Quelle différence entre client particulier et professionnel ?**
+R : Le particulier correspond à une personne physique. Le professionnel correspond à une entreprise ou un organisme, souvent apporteur ou gestionnaire.
+
+**Q : Puis-je avoir un client à la fois particulier et apporteur ?**
+R : Oui, en cochant l’option *Apporteur* sur une fiche client existante.
+
+**Q : Comment lier un client à un apporteur ?**
+R : Depuis le dossier client, sélectionner dans le champ *Apporteur associé* l’apporteur souhaité.
+
+**Q : Puis-je modifier le barème d’un apporteur après création ?**
+R : Oui, mais toute modification impactera les devis futurs, pas les devis déjà émis.
+
+---
+
+### Synthèse narrative
+
+Le module Client constitue la fondation du CRM.
+Il structure la relation entre les particuliers, les professionnels et les apporteurs.
+Son bon paramétrage garantit la fiabilité des devis, la cohérence des documents et la fluidité du parcours administratif.
+Il assure la traçabilité entre le donneur d’ordre, le bénéficiaire et les éventuels intermédiaires.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.0
+3. (à venir) Dossier / Projet
+4. (à venir) Rendez-vous / Interventions
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. (à venir) Workflow & Statuts
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°2]
+**Thème détecté :** Client (sous-catégorie Apporteur et Prospection)
+**Version globale :** v1.1
+**Corrélations ajoutées :** (#prospect, #client_apporteur, #infosup_apporteur, #export_excel, #fiche_client, #corrélation_auto:dossier_devis_facture_rendezvous)
+
+---
+
+### Introduction du thème
+
+Le module **Client** s’enrichit de deux volets essentiels : la **prospection** et la **gestion approfondie des apporteurs**.
+Il permet de suivre un contact avant même qu’il ne devienne client, puis de piloter ses interactions et relations commerciales via la fiche client enrichie.
+Ce fonctionnement assure une vision 360° sur le parcours du contact, du statut de **prospect** jusqu’à celui d’**apporteur régulier**.
+
+---
+
+### Déroulement fonctionnel
+
+1. **Gestion des prospects :**
+
+   * Un **client sans dossier** est considéré comme un **prospect**.
+   * Dans la fiche client, rubrique **Caractéristiques**, définir le **type = PROSPECT** si aucun dossier n’est encore associé.
+   * Lorsqu’un **dossier** est créé à partir de cette fiche, le statut passe automatiquement en **Client** ou **Apporteur** selon le cas.
+   * Ce mécanisme évite la duplication de fiches entre phase commerciale et phase opérationnelle.
+
+2. **Exportation des clients :**
+
+   * À droite du bouton **Ajouter un client**, une petite flèche permet d’**exporter la liste complète des clients** au format **Excel (.xlsx)**.
+   * Cet export reprend les informations principales : identifiant, nom, type, catégorie, contact, apporteur associé et nombre de dossiers.
+
+3. **Filtrage des apporteurs :**
+
+   * Sous la barre de recherche, le bouton **Apporteur** permet d’afficher uniquement les fiches clients caractérisées comme apporteurs.
+   * Pratique pour un accès rapide aux gestionnaires, plateformes ou partenaires récurrents.
+
+4. **Fiche client enrichie :**
+
+   * Dans la fiche client, plusieurs blocs d’informations se construisent automatiquement à droite :
+
+     * **Informations d’import** (provenance, date, source).
+     * **Liste des dossiers liés**, avec indicateur visuel de statut sous forme de **camembert**.
+     * **Historique des rendez-vous** liés au client.
+     * **Devis et factures** associées.
+   * Lorsque plus de 4 éléments sont présents, un bouton **Voir plus** s’affiche.
+
+     * Cliquer dessus redirige vers la page du module correspondant (**Rendez-vous**, **Dossier**, **Devis**, **Factures**) avec les filtres déjà appliqués au nom du client.
+     * Ce comportement garantit une navigation contextuelle fluide et sans perte d’information.
+
+5. **Gestion des apporteurs :**
+
+   * Dans une fiche apporteur, un onglet **Contacts** est disponible :
+
+     * Ajouter des **contacts secondaires** (ex. : gestionnaire, responsable technique, comptable).
+     * Attribuer à chaque contact un **rôle**, un **téléphone** et un **email**.
+   * Par l’onglet **Informations supplémentaires**, on peut :
+
+     * Attribuer une **TVA par défaut** qui s’appliquera automatiquement sur tous les devis et factures liés à cet apporteur.
+     * Cliquer sur **Modifier** pour :
+
+       * Ajouter le **logo** de l’apporteur.
+       * Renseigner des **informations libres** via le bouton **+** (texte libre).
+       * Ajouter des **documents rattachés** (contrat-cadre, CGV, charte).
+       * Indiquer l’**URL de l’extranet** de l’apporteur si disponible.
+       * Saisir le **numéro de prestataire** ou identifiant interne attribué par l’apporteur dans la section **InfoSup**.
+
+---
+
+### Corrélations et dépendances
+
+* #prospect ↔ #client : la transition se fait automatiquement lors de la création d’un dossier.
+* #fiche_client ↔ #rendezvous / #devis / #facture : les liens sont dynamiques et filtrés.
+* #client_apporteur ↔ #config_apporteur : les informations de TVA, logo et extranet influent sur la mise en page des documents.
+* #export_excel ↔ #reporting : les exports servent de base aux analyses clients.
+* #infosup_apporteur ↔ #workflow : certaines informations d’apporteur peuvent être exploitées dans les automatisations (TVA, documents à signer, extranet).
+* #corrélation_auto : tous les liens de navigation directe “voir plus” conservent le filtre client actif sur la page cible.
+
+---
+
+### Astuces & points d’attention
+
+* Ne pas confondre **prospect** et **client inactif** : un prospect n’a jamais eu de dossier, un client inactif en a eu au moins un.
+* Lors de la conversion d’un prospect en client, vérifier que les informations de contact (adresse, email, téléphone) soient à jour.
+* Toujours vérifier la TVA appliquée à l’apporteur : elle prime sur la TVA standard de l’entreprise.
+* L’onglet **Contacts** des apporteurs est essentiel pour éviter les erreurs d’envoi de documents (devis, PV, factures).
+
+---
+
+### FAQ du thème
+
+**Q : Puis-je revenir en arrière d’un client vers un prospect ?**
+R : Non, dès qu’un dossier est créé, le client conserve ce statut.
+
+**Q : À quoi sert le bouton “Voir plus” sur la fiche client ?**
+R : Il ouvre directement le module correspondant (Rendez-vous, Dossier, Devis, Factures) avec le filtre client actif.
+
+**Q : Où renseigner le logo et l’extranet de l’apporteur ?**
+R : Dans **Informations supplémentaires**, en mode **Modifier**, ajouter le logo et l’URL.
+
+**Q : Puis-je exporter uniquement les apporteurs ?**
+R : Oui, en filtrant sur *Apporteur* avant d’utiliser la flèche d’export Excel.
+
+---
+
+### Synthèse narrative
+
+La gestion des clients et apporteurs dans le CRM forme un écosystème connecté.
+Un contact débute en **prospect**, devient **client** à la création de son premier dossier, et peut évoluer en **apporteur** selon la relation commerciale.
+Chaque fiche concentre l’historique complet : dossiers, rendez-vous, devis et factures, pour une lecture immédiate et une navigation intelligente.
+Les fonctions d’export et de filtrage apportent une souplesse d’analyse essentielle à la gestion quotidienne.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+
+   * 2.1 Création et gestion des clients
+   * 2.2 Gestion des apporteurs
+   * 2.3 Statut Prospect
+   * 2.4 Export et filtres
+   * 2.5 Informations supplémentaires et contacts
+3. (à venir) Dossier / Projet
+4. (à venir) Rendez-vous / Interventions
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. (à venir) Workflow & Statuts
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°3]
+**Thème détecté :** Dossier / Projet
+**Version globale :** v2.0
+**Corrélations ajoutées :** (#dossier, #creation_dossier, #preferences_affichage, #filtres_dossiers, #vue_dossier, #corrélation_auto:client_devis_facture)
+
+---
+
+### Introduction du thème
+
+Le module **Dossier / Projet** est le cœur opérationnel du CRM.
+Il regroupe toutes les informations techniques, commerciales et administratives liées à une intervention ou un chantier.
+Chaque dossier est lié à un **client** (et éventuellement un **apporteur**) et constitue le point de départ de la création des **devis**, **interventions** et **factures**.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Rappel préalable depuis le module Client
+
+Depuis une **fiche client**, il est techniquement possible de créer un **dossier**, un **devis** ou une **facture** via le bouton **+ bleu**.
+Cependant, cette méthode est **déconseillée**, car elle contourne le processus logique du CRM.
+Elle risque d’engendrer :
+
+* des incohérences de rattachement entre dossiers et devis,
+* une perte du lien entre apporteur, barème et documents,
+* et des erreurs de statut dans les automatisations.
+
+> La création doit toujours se faire depuis le **module Dossier**.
+
+---
+
+#### 2. Accès au module Dossier
+
+* Dans le menu latéral, cliquer sur **Dossier**.
+* L’interface principale affiche la **liste des dossiers existants**, avec leurs informations clés et leurs statuts.
+
+---
+
+#### 3. Préférences d’affichage
+
+Avant toute utilisation, il est recommandé de configurer les **préférences d’affichage** pour optimiser la lecture.
+
+**Paramètres recommandés :**
+
+* Cocher **Ville** à la place de l’adresse complète (gain de lisibilité).
+* Afficher la **Référence apporteur** plutôt que la référence interne du dossier.
+* Activer les **Libellés avec univers et pictogrammes** pour identifier rapidement le type de prestation.
+* Afficher les **Dates** importantes (création, dernière modification, dernier changement de statut).
+* Afficher le **Statut du dossier** avec ses **sous-statuts**.
+* Activer **Afficher le nombre par statut** pour visualiser le volume de dossiers par catégorie.
+
+**Masquage des boutons inutiles :**
+
+* Masquer : *Annulés*, *Devis envoyés*, *Clos* et *NRP (Non Réalisés Par)*.
+* Selon le profil utilisateur, il est aussi possible de masquer *Facturés* et *Planifiés* si la visibilité n’est pas nécessaire.
+
+**Fonctionnalités supplémentaires :**
+
+* L’icône **œil barré** permet d’activer une **prévisualisation latérale** à droite.
+
+  * Quand l’œil est activé → aperçu instantané sans quitter la liste.
+  * Quand il est désactivé → un simple clic sur un dossier l’ouvre entièrement.
+
+Ces réglages améliorent la productivité et évitent les ouvertures inutiles de fiches.
+
+---
+
+#### 4. Création d’un dossier
+
+* Cliquer sur le grand bouton bleu **Ajouter un dossier**.
+* Une nouvelle fiche dossier vierge s’ouvre.
+  (Le détail du processus de création — client, adresse d’intervention, apporteur, statut initial, etc. — sera décrit dans le sous-thème suivant.)
+
+---
+
+### Corrélations et dépendances
+
+* #dossier ↔ #client : chaque dossier appartient à un client unique.
+* #dossier ↔ #devis : le dossier est la source obligatoire de création d’un devis.
+* #dossier ↔ #facture : une facture ne peut exister sans dossier associé.
+* #preferences_affichage ↔ #reporting : les filtres et masquages impactent les vues statistiques.
+* #vue_dossier ↔ #interventions : la prévisualisation latérale permet un accès rapide aux rendez-vous et aux statuts.
+* #corrélation_auto : la logique de hiérarchie (client > dossier > devis > facture) est activée pour la cohérence du parcours CRM.
+
+---
+
+### Astuces & points d’attention
+
+* Toujours créer le dossier depuis le **module Dossier**, jamais depuis la fiche client.
+* Utiliser les **préférences d’affichage** pour dégager les informations inutiles et éviter la surcharge visuelle.
+* Le masquage dynamique des statuts (ex. : annulés, clos) aide à se concentrer sur les dossiers actifs.
+* Le mode **prévisualisation** est idéal pour la consultation rapide en mode multi-écran.
+
+---
+
+### FAQ du thème
+
+**Q : Pourquoi ne pas créer un dossier directement depuis la fiche client ?**
+R : Cela contourne les règles logiques du CRM et empêche la traçabilité complète entre client, apporteur et devis.
+
+**Q : Les préférences d’affichage sont-elles propres à chaque utilisateur ?**
+R : Oui, elles se sauvegardent individuellement par profil et navigateur.
+
+**Q : Que signifie NRP ?**
+R : “Non Réalisé Par” — dossier abandonné ou repris par un autre intervenant.
+
+**Q : Puis-je personnaliser les pictogrammes des univers ?**
+R : Oui, ils sont liés à la nomenclature univers-produits et peuvent être adaptés dans le module configuration.
+
+---
+
+### Synthèse narrative
+
+Le module Dossier est la pierre angulaire du CRM.
+Il structure le travail des équipes et garantit une cohérence totale entre les données clients, les devis, les interventions et la facturation.
+Une configuration claire des préférences d’affichage permet une vision rapide des statuts, des volumes et des priorités.
+La méthode de création directe depuis le module Dossier assure un parcours fluide, conforme et sans erreur.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+
+   * 2.1 Création et gestion des clients
+   * 2.2 Gestion des apporteurs
+   * 2.3 Statut Prospect
+   * 2.4 Export et filtres
+   * 2.5 Informations supplémentaires et contacts
+3. **Dossier / Projet** – v2.0
+
+   * 3.1 Introduction et logique de rattachement
+   * 3.2 Préférences d’affichage
+   * 3.3 Création d’un dossier (introduction)
+4. (à venir) Rendez-vous / Interventions
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. (à venir) Workflow & Statuts
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°4]
+**Thème détecté :** Dossier / Projet – Sous-thème *Préférences d’affichage*
+**Version globale :** v2.1
+**Corrélations ajoutées :** (#preferences_affichage_utilisateur, #preferences_affichage_environnement, #corrélation_auto:utilisateur_terminaux)
+
+---
+
+### Introduction du thème
+
+Les **préférences d’affichage** constituent un outil de personnalisation visuelle du module **Dossier**.
+Elles permettent à chaque utilisateur d’adapter l’interface selon ses besoins, mais leur portée est strictement **locale**.
+Chaque poste, navigateur ou appareil conserve sa propre configuration indépendante.
+
+---
+
+### Déroulement fonctionnel (complément)
+
+Les préférences d’affichage ne sont pas seulement liées au profil utilisateur, mais également à l’environnement de connexion.
+Ainsi :
+
+* Les réglages effectués sur un **ordinateur de bureau** ne sont pas répliqués sur une **tablette** ou un **autre poste**.
+* En cas de changement d’appareil, de navigateur, ou de nettoyage de cache, les préférences sont **réinitialisées** et doivent être configurées à nouveau.
+
+Exemples d’environnement distincts :
+
+* Ordinateur du bureau
+* Tablette de terrain
+* Smartphone de supervision
+* Session web sur navigateur privé ou différent (Chrome, Safari, Edge…)
+
+Cette conception garantit la stabilité du paramétrage local sans interférer avec les préférences d’autres utilisateurs ou supports.
+
+---
+
+### Corrélations et dépendances
+
+* #preferences_affichage_utilisateur ↔ #profil : la configuration est enregistrée au niveau de l’utilisateur connecté.
+* #preferences_affichage_environnement ↔ #terminal : chaque environnement stocke localement sa version.
+* #corrélation_auto : lors d’un changement d’appareil, le CRM recharge la configuration par défaut de l’interface dossier.
+
+---
+
+### Astuces & points d’attention
+
+* Lorsqu’on utilise plusieurs supports (ordinateur + tablette), configurer les préférences sur chacun d’eux.
+* Exporter ou noter les réglages visuels préférés pour les rétablir rapidement en cas de réinitialisation.
+* Si un utilisateur signale une “perte de préférences”, vérifier s’il s’est connecté depuis un autre environnement.
+
+---
+
+### FAQ du thème
+
+**Q : Pourquoi mes préférences ont disparu quand je me connecte depuis la tablette ?**
+R : Les préférences sont enregistrées localement sur chaque appareil. La tablette ne récupère pas les paramètres du poste principal.
+
+**Q : Peut-on synchroniser les préférences entre appareils ?**
+R : Non, elles sont indépendantes pour éviter les conflits d’affichage entre environnements différents.
+
+**Q : Que faire après un nettoyage de navigateur ?**
+R : Reconfigurer les préférences depuis le module Dossier > Préférences d’affichage.
+
+---
+
+### Synthèse narrative
+
+Le système de préférences d’affichage combine **souplesse individuelle** et **isolation environnementale**.
+Chaque utilisateur adapte sa vue selon son poste, sans impacter celle des autres.
+Cette indépendance garantit la cohérence visuelle et fonctionnelle du CRM sur tous les terminaux, au prix d’une reconfiguration simple lors d’un changement de support.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+
+   * 2.1 Création et gestion des clients
+   * 2.2 Gestion des apporteurs
+   * 2.3 Statut Prospect
+   * 2.4 Export et filtres
+   * 2.5 Informations supplémentaires et contacts
+3. **Dossier / Projet** – v2.1
+
+   * 3.1 Introduction et logique de rattachement
+   * 3.2 Préférences d’affichage
+
+     * 3.2.1 Portée utilisateur
+     * 3.2.2 Portée environnementale
+   * 3.3 Création d’un dossier (introduction)
+4. (à venir) Rendez-vous / Interventions
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. (à venir) Workflow & Statuts
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°5]
+**Thème détecté :** Dossier / Projet – Sous-thème *Création d’un dossier*
+**Version globale :** v2.2
+**Corrélations ajoutées :** (#initier_dossier, #pdf_missionnement, #lecture_automatique, #univers_dossier, #apporteur_selection, #corrélation_auto:client_creation)
+
+---
+
+### Introduction du thème
+
+La création d’un dossier marque le point de départ du traitement opérationnel.
+Le CRM propose deux méthodes : **import intelligent du PDF de missionnement** ou **création manuelle** à partir d’un client existant ou nouveau.
+L’étape d’initialisation, nommée *“Initier un dossier”*, permet de poser la structure du dossier avant d’y rattacher devis, rendez-vous et factures.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Ouverture de la page “Initier un dossier”
+
+Depuis le module **Dossier**, cliquer sur le bouton **Ajouter un dossier**.
+L’interface “Initier un dossier” s’affiche avec deux modes de création disponibles.
+
+---
+
+#### 2. Mode 1 – Import du PDF de missionnement
+
+* Glisser le **PDF de missionnement** dans la zone “Portail de mission”.
+* Le CRM analyse automatiquement le document.
+
+  * Il identifie les données clés (nom, adresse, apporteur, référence, univers, etc.).
+  * Il remplit automatiquement les champs correspondants dans la fiche de création.
+* Une fois le préremplissage terminé, **vérifier et valider chaque champ**.
+* Enregistrer pour accéder à la **page finale du dossier**, prête à l’usage.
+
+> Ce mode est recommandé lorsqu’on reçoit un ordre de mission structuré provenant d’un apporteur ou d’un système partenaire.
+
+---
+
+#### 3. Mode 2 – Création manuelle
+
+Si aucun PDF n’est disponible, la création manuelle suit un processus séquentiel.
+
+##### Étape 1 : Sélection ou création du client
+
+* Rechercher le **client** dans le champ prévu à cet effet.
+
+  * Le moteur de recherche accepte un **nom de famille + espace**, mais ne supporte pas la saisie de **deux mots successifs** (limitation technique du moteur).
+* Si le client existe → le **sélectionner directement**.
+* Si le client n’existe pas → cliquer sur le **bouton bleu “Créer un client”**, qui ouvre la **fiche de création client**.
+
+  * Une fois la fiche client enregistrée, le système revient automatiquement sur la page d’initialisation du dossier avec le client sélectionné.
+
+##### Étape 2 : Choix des univers
+
+* Sélectionner un ou plusieurs **univers** correspondant à la nature du besoin (ex. : vitrerie, plomberie, électricité…).
+* Ces univers pourront être **modifiés ultérieurement** en fonction de l’évolution du dossier.
+* Cliquer sur **Suivant** pour passer à la fenêtre principale de création.
+
+##### Étape 3 : Sélection de l’apporteur
+
+* Si le dossier provient d’un **client direct**, laisser le champ *Apporteur* vide.
+* Si le dossier est lié à un **apporteur**, le sélectionner dans la liste déroulante.
+
+  * Ce choix déclenche l’apparition du champ **Référence apporteur**, permettant de renseigner la référence mission associée.
+  * Le CRM charge automatiquement les **paramètres apporteur** (barème, documents à signer, taux d’acompte, TVA, etc.).
+
+##### Étape 4 : Renseignement du libellé
+
+* Saisir un **libellé court et précis** décrivant la mission (ex. : “Remplacement vitrage cuisine” ou “Dépannage fuite SDB”).
+* Le libellé permet un repérage rapide dans les listes et exports.
+* En général, le texte est un **copier-coller du missionnement** figurant sur le document source.
+
+---
+
+### Corrélations et dépendances
+
+* #initier_dossier ↔ #client : vérification ou création obligatoire avant toute initialisation.
+* #pdf_missionnement ↔ #lecture_automatique : déclenchement du remplissage intelligent par OCR et reconnaissance structurée.
+* #univers_dossier ↔ #workflow : les univers déterminent les règles et formulaires techniques associés au dossier.
+* #apporteur_selection ↔ #barème : sélection automatique des paramètres tarifaires et documentaires.
+* #corrélation_auto : tout dossier créé hérite des informations du client et de l’apporteur pour garantir la traçabilité.
+
+---
+
+### Astuces & points d’attention
+
+* Privilégier le **glisser-déposer du PDF** pour gagner du temps et réduire les erreurs manuelles.
+* Toujours vérifier la **cohérence des données préremplies** avant validation.
+* En cas de recherche client infructueuse, créer la fiche immédiatement depuis la page d’initialisation.
+* Le **libellé du dossier** est utilisé dans les exports, listes et vues globales : le rédiger avec soin.
+* Si le champ “Référence apporteur” ne se charge pas, vérifier que l’apporteur est correctement configuré dans sa fiche.
+
+---
+
+### FAQ du thème
+
+**Q : Que faire si le PDF de missionnement ne se lit pas correctement ?**
+R : Contrôler la qualité du fichier (lisible, non scanné en image pure). Le CRM ne peut lire que les PDF comportant du texte exploitable.
+
+**Q : Puis-je modifier les univers après création ?**
+R : Oui, à tout moment depuis la fiche dossier tant que celui-ci n’est pas clôturé.
+
+**Q : Pourquoi la recherche client bloque-t-elle après deux mots ?**
+R : Limitation du moteur de recherche interne, conçu pour accélérer la recherche sur un seul terme + espace.
+
+**Q : Dois-je toujours indiquer un apporteur ?**
+R : Non. Si le dossier est client direct, laisser le champ vide.
+
+---
+
+### Synthèse narrative
+
+La page *Initier un dossier* structure la création du parcours opérationnel.
+Deux entrées sont possibles : **import automatique** via un PDF missionné ou **création manuelle** après sélection client.
+L’architecture de cette étape garantit que chaque dossier repose sur une base fiable — client identifié, univers défini, apporteur lié — avant d’alimenter les processus suivants : devis, rendez-vous et facturation.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+
+   * 2.1 Création et gestion des clients
+   * 2.2 Gestion des apporteurs
+   * 2.3 Statut Prospect
+   * 2.4 Export et filtres
+   * 2.5 Informations supplémentaires et contacts
+3. **Dossier / Projet** – v2.2
+
+   * 3.1 Introduction et logique de rattachement
+   * 3.2 Préférences d’affichage
+
+     * 3.2.1 Portée utilisateur
+     * 3.2.2 Portée environnementale
+   * 3.3 Création d’un dossier
+
+     * 3.3.1 Mode import PDF de missionnement
+     * 3.3.2 Mode création manuelle
+     * 3.3.3 Sélection client et apporteur
+     * 3.3.4 Libellé du dossier
+4. (à venir) Rendez-vous / Interventions
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. (à venir) Workflow & Statuts
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°6]
+**Thème détecté :** Dossier / Projet – Sous-thèmes *Journal, Commentaires internes et Statuts*
+**Version globale :** v2.3
+**Corrélations ajoutées :** (#commentaires_internes, #import_pdf_missionnement, #pave_divers, #pave_financier, #journal_dossier, #preferences_journal, #statut_dossier, #sous_statut, #corrélation_auto:mediatheque_listes_parametres)
+
+---
+
+### Introduction du thème
+
+Une fois un dossier enregistré, l’interface se transforme et affiche sa structure complète :
+
+* un **journal central**,
+* un **pavé latéral d’informations**,
+* et divers blocs complémentaires (ordre de mission, commentaires internes, pavé financier, etc.).
+  Ces zones regroupent toutes les données utiles au suivi, à la communication interne et à la gestion du cycle de vie du dossier.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Champ des commentaires internes
+
+* Ce champ sert à inscrire une **information visible par tous les utilisateurs** du dossier :
+
+  * Techniciens
+  * Chargés d’affaires
+  * Administratifs
+* Il s’agit d’un espace de **communication transversale**, actif pendant toute la durée de vie du dossier.
+* Son contenu reste affiché et consultable par tous sans filtrage, garantissant un partage rapide d’informations critiques ou permanentes (ex. : consignes client, accès site, codes portails, contraintes de planning).
+
+---
+
+#### 2. Import du PDF de missionnement
+
+Sous l’ordre de mission se trouvent deux boutons :
+
+* **Flèche verte** : import direct du PDF missionnement depuis un fichier local.
+* **Bouton bleu** : import via un autre canal (dossier ou flux lié).
+
+Lorsque le PDF est ajouté :
+
+* Il apparaît en **miniature sous l’ordre de mission**, confirmant son intégration.
+* Il est automatiquement enregistré dans la **médiathèque du dossier**, accessible dans la **barre d’état inférieure gauche**.
+  Cette médiathèque centralise tous les documents rattachés au dossier (voir chapitre “Documents & Médias”).
+
+---
+
+#### 3. Pavé Divers
+
+Le **pavé Divers** permet notamment la sélection d’un **pictogramme** pour identifier visuellement la nature du dossier.
+Les pictogrammes sont configurés dans la **Gestion des listes** du thème **Paramètres** (#corrélation_auto:listes_parametres).
+Ce pictogramme s’affiche ensuite dans les listes de dossiers et dans certaines vues synthétiques.
+
+---
+
+#### 4. Pavé Financier
+
+Le **pavé Financier** regroupe les **informations de facturation** associées au dossier :
+
+* Montants prévisionnels et engagés
+* Solde à facturer
+* Liens directs vers devis et factures associées
+* Statuts financiers (acompte, solde, relance, etc.)
+
+Cette zone devient un outil central pour le service administratif une fois les devis émis.
+
+---
+
+#### 5. Journal du dossier
+
+Le **journal** est un fil d’activité centralisant tout l’historique du dossier :
+
+* Messages internes
+* Actions du flux de travail
+* Éditions et modifications
+* Interventions et statuts automatiques
+* Notifications (NRP, clôture, replanification…)
+
+##### Préférences d’affichage du journal
+
+Un **bouton de préférences** permet de filtrer les éléments visibles :
+
+* **Tout afficher** ou sélectionner uniquement certains types :
+
+  * *Messages internes*
+  * *Éditions de tâches*
+  * *Flux de travail*
+  * *NRP (ne répond pas)*
+
+> Objectif : alléger la lecture quand le dossier devient dense.
+> Les filtres sont enregistrés temporairement pour la session en cours.
+
+---
+
+#### 6. Gestion des statuts et sous-statuts
+
+Les **statuts principaux** du dossier évoluent automatiquement selon le flux logique du CRM.
+Exemples : *Créé → À planifier → En cours → Terminé → Clos / Facturé*
+
+* Les **flèches rouges et vertes** (navigation manuelle de statut) ne doivent **jamais être utilisées sans raison** :
+
+  * Elles forcent une transition manuelle, risquant de casser la logique automatique du workflow.
+  * Leur usage doit être réservé à un administrateur ou à un cas de correction exceptionnel.
+
+##### Sous-statuts
+
+* À droite de la flèche verte se trouve le champ **Sous-statut**.
+* Il permet d’ajouter une **nuance au statut principal** sans briser le flux automatique.
+  Exemples :
+
+  * Dossier *À planifier* → sous-statut *NRP (Ne répond pas)*
+  * Dossier *En cours* → sous-statut *Attente devis complémentaire*
+
+Les **sous-statuts** sont **personnalisables** depuis le module **Gestion des listes** du thème Paramètres.
+
+---
+
+### Corrélations et dépendances
+
+* #commentaires_internes ↔ #journal_dossier : les messages internes peuvent être repris dans le journal selon le paramétrage.
+* #import_pdf_missionnement ↔ #mediatheque : le fichier est automatiquement dupliqué dans la médiathèque du dossier.
+* #pave_divers ↔ #listes_parametres : les pictogrammes proviennent du référentiel global des paramètres.
+* #statut_dossier ↔ #workflow : le changement de statut est géré automatiquement par le moteur d’état du CRM.
+* #sous_statut ↔ #listes_parametres : les sous-statuts sont créés et modifiés dans la configuration des listes.
+* #corrélation_auto : l’ensemble des informations latérales du dossier (financier, documents, journal) sont synchronisées entre elles.
+
+---
+
+### Astuces & points d’attention
+
+* Utiliser le champ **Commentaires internes** comme canal de communication permanente pour éviter la perte d’informations entre services.
+* Importer le **PDF missionnement** systématiquement dès la création pour assurer sa traçabilité documentaire.
+* Ne pas modifier manuellement les statuts principaux. Utiliser uniquement les **sous-statuts** pour marquer les situations intermédiaires.
+* Alléger régulièrement le journal via les préférences pour faciliter la lecture et la recherche d’actions clés.
+
+---
+
+### FAQ du thème
+
+**Q : Puis-je supprimer un PDF missionnement après l’import ?**
+R : Non, il est archivé dans la médiathèque pour la traçabilité. Il peut être remplacé mais pas supprimé.
+
+**Q : Les sous-statuts ont-ils un impact sur le workflow ?**
+R : Non, ils sont purement informatifs mais facilitent le suivi opérationnel.
+
+**Q : Que faire si le journal devient illisible ?**
+R : Utiliser le filtre des préférences pour n’afficher que les catégories utiles.
+
+**Q : Peut-on filtrer le journal par utilisateur ?**
+R : Oui, dans certaines configurations, un champ de recherche utilisateur est disponible pour cibler les actions d’un intervenant.
+
+---
+
+### Synthèse narrative
+
+La phase post-création d’un dossier introduit la dimension vivante du CRM : échanges internes, journal d’activité, statuts et documents intégrés.
+Chaque pavé joue un rôle précis — **communication, documentation, suivi financier ou workflow** — garantissant la traçabilité totale du cycle de vie du dossier.
+Une utilisation disciplinée des outils (journal, sous-statuts, imports) préserve la cohérence du flux et la qualité du reporting global.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+
+   * 2.1 Création et gestion des clients
+   * 2.2 Gestion des apporteurs
+   * 2.3 Statut Prospect
+   * 2.4 Export et filtres
+   * 2.5 Informations supplémentaires et contacts
+3. **Dossier / Projet** – v2.3
+
+   * 3.1 Introduction et logique de rattachement
+   * 3.2 Préférences d’affichage
+
+     * 3.2.1 Portée utilisateur
+     * 3.2.2 Portée environnementale
+   * 3.3 Création d’un dossier
+
+     * 3.3.1 Mode import PDF de missionnement
+     * 3.3.2 Mode création manuelle
+     * 3.3.3 Sélection client et apporteur
+     * 3.3.4 Libellé du dossier
+   * 3.4 Post-création : structure du dossier
+
+     * 3.4.1 Commentaires internes
+     * 3.4.2 Import PDF et médiathèque
+     * 3.4.3 Pavé Divers et pictogrammes
+     * 3.4.4 Pavé Financier
+     * 3.4.5 Journal du dossier et filtres
+     * 3.4.6 Gestion des statuts et sous-statuts
+4. (à venir) Rendez-vous / Interventions
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. (à venir) Workflow & Statuts
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°7]
+**Thème détecté :** Dossier / Projet – Sous-thèmes *Rendez-vous, Médiathèque et actions associées*
+**Version globale :** v2.4
+**Corrélations ajoutées :** (#creation_rendezvous, #creation_commande_facture, #creation_tache, #mediatheque_dossier, #mediatheque_rendezvous, #corrélation_auto:interventions_documents_facturation)
+
+---
+
+### Introduction du thème
+
+L’interface principale du **dossier** ne se limite pas à la consultation d’informations : elle agit comme un **centre de pilotage**.
+Depuis cette vue, l’utilisateur peut planifier des interventions, générer des documents, ou encore gérer les fichiers liés via la médiathèque.
+Chaque action est contextualisée et automatiquement rattachée au dossier courant pour préserver la cohérence du flux.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Création d’un rendez-vous
+
+* Cliquer sur le **“+” bleu** situé à droite du bloc **Rendez-vous**.
+* Cette action ouvre la **fenêtre de gestion des rendez-vous**, où il est possible de :
+
+  * Choisir un **technicien** ou un **groupe d’intervention**,
+  * Définir une **date**, une **plage horaire**, et un **type d’intervention**,
+  * Ajouter un **commentaire interne ou une consigne d’accès**,
+  * Joindre éventuellement un **document** ou une **photo de repérage**.
+* Le rendez-vous créé apparaît immédiatement dans la **liste des rendez-vous du dossier** et sera visible sur le **planning global** de l’entreprise.
+
+> Chaque rendez-vous appartient à un dossier unique, garantissant la traçabilité complète du cycle d’intervention.
+
+---
+
+#### 2. Création d’une commande ou d’une facture
+
+Depuis le dossier, il est également possible de :
+
+* **Créer une commande** (approvisionnement ou sous-traitance).
+* **Créer une facture**, si le dossier contient déjà un devis validé.
+
+> Bien que ces boutons soient accessibles depuis le dossier, la bonne pratique reste de passer par le module **Devis & Commandes** ou **Facturation**, afin de bénéficier de la logique comptable complète (numérotation, contrôles, rapprochements).
+> L’accès direct depuis le dossier reste une solution de **gain de temps ponctuelle**, non recommandée pour les flux standardisés.
+
+---
+
+#### 3. Création d’une tâche
+
+Un dossier permet aussi d’assigner des **tâches internes** :
+
+* Cliquer sur **“+ tâche”** pour créer une action à effectuer par un collaborateur ou par soi-même.
+* Exemple de tâches :
+
+  * “Envoyer le devis à l’apporteur”
+  * “Appeler le client pour planification”
+  * “Vérifier la réception du matériel”
+* Ces tâches apparaissent dans le **journal du dossier** et dans la **liste des tâches globales** de l’utilisateur.
+
+---
+
+#### 4. Accès à la médiathèque du dossier
+
+En bas à gauche de la fiche dossier se trouve le **bouton bleu Médiathèque**.
+Il ouvre la **médiathèque principale du dossier**, espace documentaire centralisé contenant :
+
+* les fichiers PDF importés (ex. : ordre de mission, devis, photos, plans),
+* les images (avant/après intervention, pièces justificatives),
+* les pièces jointes diverses (courriels, attestations, etc.).
+
+Lorsqu’un dossier comprend plusieurs médiathèques (ex. : médiathèque de rendez-vous, de devis, ou de factures) :
+
+* Une **barre supérieure** permet de naviguer entre elles.
+* Les médiathèques s’ouvrent dans des **onglets parallèles**, facilitant la comparaison ou le transfert de documents entre elles.
+* Exemple :
+
+  * Onglet 1 : *Médiathèque dossier principal*
+  * Onglet 2 : *Médiathèque rendez-vous*
+  * Onglet 3 : *Médiathèque facture*
+
+Chaque médiathèque conserve ses **métadonnées** (type, date, auteur, contexte).
+
+---
+
+#### 5. Ajout manuel de documents
+
+Il est possible, à tout moment, d’ajouter :
+
+* des **PDF**,
+* des **images**,
+* ou tout autre **document numérique** (plans, bons, courriers…).
+
+Les fichiers ajoutés sont instantanément :
+
+1. Enregistrés dans la **médiathèque du dossier**,
+2. Rattachés à l’historique du dossier (visible dans le journal),
+3. Accessibles depuis n’importe quelle médiathèque liée.
+
+---
+
+### Corrélations et dépendances
+
+* #creation_rendezvous ↔ #planning : chaque rendez-vous est automatiquement intégré au planning global.
+* #creation_commande_facture ↔ #workflow : déclenche les flux administratifs associés.
+* #creation_tache ↔ #journal_dossier : les tâches sont enregistrées dans le fil d’activité.
+* #mediatheque_dossier ↔ #documents : stockage centralisé des fichiers du dossier.
+* #mediatheque_rendezvous ↔ #interventions : synchronisation automatique entre les rendez-vous et leurs médias.
+* #corrélation_auto : les médiathèques partagent une structure commune pour assurer la cohérence documentaire globale.
+
+---
+
+### Astuces & points d’attention
+
+* Toujours rattacher les **documents d’intervention** à la médiathèque correspondante pour simplifier les recherches futures.
+* Lorsqu’on jongle entre plusieurs médiathèques, vérifier la **barre d’onglets active** avant tout ajout.
+* Les **rendez-vous créés depuis le dossier** héritent automatiquement des informations du client et de l’adresse d’intervention.
+* Les **tâches** permettent un suivi interne sans perturber le statut du dossier : à privilégier pour le travail collaboratif.
+
+---
+
+### FAQ du thème
+
+**Q : Puis-je déplacer un document d’une médiathèque à une autre ?**
+R : Oui, via la barre supérieure, en sélectionnant le fichier puis la médiathèque cible.
+
+**Q : Quelle différence entre une tâche et un commentaire interne ?**
+R : Une tâche est une action planifiée avec un responsable. Un commentaire est une note visible par tous sans échéance.
+
+**Q : Puis-je supprimer un fichier d’une médiathèque ?**
+R : Non, seules les personnes disposant des droits administrateurs peuvent le faire pour raison de traçabilité.
+
+**Q : Les rendez-vous créés depuis le dossier apparaissent-ils dans le calendrier global ?**
+R : Oui, immédiatement après validation.
+
+---
+
+### Synthèse narrative
+
+L’interface du dossier centralise la **planification opérationnelle**, la **communication interne** et la **gestion documentaire**.
+Elle offre à chaque utilisateur la possibilité d’agir directement sur le cycle de vie du dossier — créer un rendez-vous, une tâche, ou enrichir la médiathèque — sans quitter l’espace principal.
+La logique d’onglets documentaires et d’intégration automatique garantit une continuité d’information fluide et traçable.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+
+   * 2.1 Création et gestion des clients
+   * 2.2 Gestion des apporteurs
+   * 2.3 Statut Prospect
+   * 2.4 Export et filtres
+   * 2.5 Informations supplémentaires et contacts
+3. **Dossier / Projet** – v2.4
+
+   * 3.1 Introduction et logique de rattachement
+   * 3.2 Préférences d’affichage
+
+     * 3.2.1 Portée utilisateur
+     * 3.2.2 Portée environnementale
+   * 3.3 Création d’un dossier
+
+     * 3.3.1 Mode import PDF de missionnement
+     * 3.3.2 Mode création manuelle
+     * 3.3.3 Sélection client et apporteur
+     * 3.3.4 Libellé du dossier
+   * 3.4 Post-création : structure du dossier
+
+     * 3.4.1 Commentaires internes
+     * 3.4.2 Import PDF et médiathèque
+     * 3.4.3 Pavé Divers et pictogrammes
+     * 3.4.4 Pavé Financier
+     * 3.4.5 Journal du dossier et filtres
+     * 3.4.6 Gestion des statuts et sous-statuts
+   * 3.5 Actions disponibles dans le dossier
+
+     * 3.5.1 Création de rendez-vous
+     * 3.5.2 Création de commande ou facture
+     * 3.5.3 Création de tâche
+     * 3.5.4 Accès à la médiathèque
+     * 3.5.5 Navigation multi-médiathèques et ajout de documents
+4. (à venir) Rendez-vous / Interventions
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. (à venir) Workflow & Statuts
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°8]
+**Thème détecté :** Dossier / Projet – Médiathèque (correction et approfondissement)
+**Version globale :** v2.5
+**Corrélations ajoutées :** (#mediatheque_dossier, #mediatheque_rdv, #navigation_onglets_mediatheque, #annotation_photos, #selection_multiple, #telechargement_zip, #corrélation_auto:documents_non_transferables)
+
+---
+
+### Introduction du thème
+
+La **médiathèque** d’un dossier est un espace de stockage et de consultation des pièces jointes liées au dossier et à ses rendez-vous.
+Chaque contexte (dossier, rendez-vous, facture, etc.) dispose de sa **propre médiathèque**, accessible par onglets, sans transfert direct de fichiers entre elles.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Accès et navigation entre médiathèques
+
+Depuis le dossier :
+
+* Le **bouton bleu Médiathèque** (en bas à gauche) ouvre la **médiathèque du dossier**.
+* En haut de cette interface apparaissent les **onglets de contexte**, par exemple :
+
+  * **Dossier**
+  * **RVV – [date et heure du rendez-vous]**
+* Cliquer sur un onglet permet de basculer vers la médiathèque correspondante et d’afficher uniquement :
+
+  * les photos,
+  * PDF,
+  * documents liés à ce contexte précis.
+
+Important :
+
+* Les médiathèques sont **distinctes**.
+* On peut **consulter** l’une ou l’autre, mais **pas déplacer un document** d’une médiathèque vers une autre.
+
+---
+
+#### 2. Consultation d’un document
+
+Dans une médiathèque (Dossier ou RVV) :
+
+* Cliquer sur une **vignette** pour accéder aux actions.
+* Bouton **œil vert** (en haut à droite) :
+
+  * Ouvre la photo ou le document **en grand**.
+  * Cliquer à côté referme l’aperçu.
+* Bouton **flèche bleue** :
+
+  * Télécharge le fichier au format d’origine (image, PDF, etc.).
+* Bouton **suppression** :
+
+  * Permet de supprimer un élément de la médiathèque, selon les droits de l’utilisateur.
+
+---
+
+#### 3. Annotations sur les photos
+
+Pour annoter une image :
+
+* Cliquer sur le **“+”** depuis la vignette.
+* Un **éditeur de photos** s’ouvre :
+
+  * Ajout de marques, textes, flèches, surlignages.
+* Une fois l’annotation terminée :
+
+  * Enregistrer pour conserver la version annotée dans la **médiathèque du même contexte**.
+
+Les annotations sont utiles pour :
+
+* localiser un sinistre,
+* préciser une zone à traiter,
+* documenter un élément technique pour le devis ou le technicien.
+
+---
+
+#### 4. Sélection multiple et export global
+
+Lorsque la médiathèque contient un grand nombre d’éléments :
+
+1. Activer la **sélection multiple** :
+
+   * Cliquer sur la petite **coche** “Sélection multiple sur vol”.
+2. Tout sélectionner :
+
+   * Cliquer ensuite sur **“Tout sélectionner”** (icône des deux coches).
+3. Export :
+
+   * Cliquer sur la **flèche bleue** pour télécharger l’ensemble des éléments sélectionnés au **format ZIP**.
+   * Décompresser localement le fichier ZIP pour récupérer tous les documents.
+
+Ce mécanisme permet :
+
+* de remettre un dossier complet à un tiers,
+* d’archiver l’intégralité des preuves et documents d’un dossier ou d’un rendez-vous.
+
+---
+
+### Corrélations et dépendances
+
+* #mediatheque_dossier ↔ #dossier : centralise les documents généraux liés au dossier.
+* #mediatheque_rdv ↔ #rendezvous : stocke les médias opérationnels pris sur site.
+* #navigation_onglets_mediatheque ↔ #ux_dossier : garantit une séparation claire des contextes.
+* #annotation_photos ↔ #application_technicien : exploitable par le terrain pour préciser les besoins.
+* #selection_multiple / #telechargement_zip ↔ #documents & #reporting : facilite les exports de preuves pour assurances, bailleurs, litiges.
+* #corrélation_auto : aucun déplacement inter-médiathèque n’est autorisé, seule la consultation contextuelle via onglets est possible.
+
+---
+
+### Astuces & points d’attention
+
+* Vérifier l’onglet actif (**Dossier** vs **RVV date**) avant d’ajouter ou annoter un document.
+* Utiliser les annotations pour éviter des allers-retours techniques inutiles.
+* Exploiter le ZIP pour transférer un dossier complet à un expert, un assureur ou un client exigeant des preuves.
+* En cas d’erreur de dépôt (mauvaise médiathèque), il faut supprimer au mauvais endroit et réimporter au bon, faute de fonction de transfert.
+
+---
+
+### FAQ du thème (corrigée)
+
+**Q : Puis-je déplacer un document d’une médiathèque à une autre (ex. du RVV vers le Dossier) ?**
+R : Non. Le déplacement direct entre médiathèques n’est pas possible. Il faut, si nécessaire, télécharger le document puis le réimporter dans la médiathèque cible.
+
+**Q : Puis-je consulter plusieurs médiathèques d’un même dossier ?**
+R : Oui. Les onglets en haut de la médiathèque permettent de basculer entre Dossier, RVV et autres contextes liés.
+
+**Q : Puis-je télécharger toutes les pièces d’un dossier en une seule fois ?**
+R : Oui. Via la sélection multiple, “Tout sélectionner”, puis téléchargement ZIP.
+
+**Q : Les annotations modifient-elles l’original ?**
+R : Selon la configuration, l’annotation peut créer une version dérivée ou écraser l’original. La règle interne doit être définie dans les procédures d’exploitation.
+
+---
+
+### Synthèse narrative
+
+La médiathèque est un hub documentaire structuré par contexte : elle ne mélange pas les fichiers, elle les organise.
+L’utilisateur navigue par onglets entre dossier et rendez-vous, annote, télécharge et exporte en masse sans casser la logique de rattachement.
+L’absence de transfert direct entre médiathèques renforce la traçabilité et oblige à une discipline documentaire maîtrisée.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+
+   * 2.1 Création et gestion des clients
+   * 2.2 Gestion des apporteurs
+   * 2.3 Statut Prospect
+   * 2.4 Export et filtres
+   * 2.5 Informations supplémentaires et contacts
+3. **Dossier / Projet** – v2.5
+
+   * 3.1 Introduction et logique de rattachement
+   * 3.2 Préférences d’affichage
+
+     * 3.2.1 Portée utilisateur
+     * 3.2.2 Portée environnementale
+   * 3.3 Création d’un dossier
+
+     * 3.3.1 Mode import PDF de missionnement
+     * 3.3.2 Mode création manuelle
+     * 3.3.3 Sélection client et apporteur
+     * 3.3.4 Libellé du dossier
+   * 3.4 Post-création : structure du dossier
+
+     * 3.4.1 Commentaires internes
+     * 3.4.2 Import PDF et médiathèque
+     * 3.4.3 Pavé Divers et pictogrammes
+     * 3.4.4 Pavé Financier
+     * 3.4.5 Journal du dossier et filtres
+     * 3.4.6 Gestion des statuts et sous-statuts
+   * 3.5 Actions disponibles dans le dossier
+
+     * 3.5.1 Création de rendez-vous
+     * 3.5.2 Création de commande ou facture
+     * 3.5.3 Création de tâche
+     * 3.5.4 Accès à la médiathèque
+     * 3.5.5 Navigation multi-médiathèques, annotations et export ZIP
+4. (à venir) Rendez-vous / Interventions
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. (à venir) Workflow & Statuts
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°9]
+**Thème détecté :** Rendez-vous / Interventions – Sous-thème *Prise de rendez-vous depuis un dossier*
+**Version globale :** v3.0
+**Corrélations ajoutées :** (#prise_rendezvous, #type_rendezvous, #planning_technicien, #info_technicien, #picto_rdv, #corrélation_auto:dossier_intervention_listes_parametres)
+
+---
+
+### Introduction du thème
+
+La **prise de rendez-vous** est l’étape opérationnelle qui relie le dossier au terrain.
+Elle permet de planifier une intervention avec un ou plusieurs techniciens, en définissant son type, sa durée et ses particularités.
+Cette action s’effectue directement depuis la fiche dossier, garantissant une liaison automatique entre le client, l’adresse, et le planning des équipes.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Accès à la création de rendez-vous
+
+Depuis le **pavé Rendez-vous** situé à droite de la fiche dossier :
+
+* Cliquer sur le bouton **“+”** pour ouvrir la fenêtre de gestion des rendez-vous.
+* Le CRM propose immédiatement de **choisir un type de rendez-vous** avant d’accéder à la planification détaillée.
+
+---
+
+#### 2. Choix du type de rendez-vous
+
+Le **type de rendez-vous** conditionne les outils disponibles pour le technicien et le contenu du formulaire qu’il verra sur son interface mobile.
+
+| Type de rendez-vous    | Utilisation principale                                                                                         | Effet sur l’application technicien                                 |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **À définir**          | Cas standard ou indéterminé. Permet au technicien de choisir entre “devis”, “relevé technique” ou “dépannage”. | Affiche toutes les options de saisie.                              |
+| **Recherche de fuite** | Interventions mandatées spécifiquement pour la détection d’origine de sinistre.                                | Active le formulaire de *recherche de fuite* et masque les autres. |
+| **Travaux**            | Interventions faisant suite à un devis validé.                                                                 | Charge les champs liés à l’exécution et la clôture des travaux.    |
+| **Relevé technique**   | Visite de chiffrage ou de préparation avant devis.                                                             | Affiche uniquement le relevé technique, sans champ d’intervention. |
+
+> **Recommandation :** en cas d’incertitude sur la nature exacte du rendez-vous, choisir **“À définir”** afin de laisser le technicien adapter sa saisie sur place.
+
+---
+
+#### 3. Fenêtre de planification
+
+Une fois le type sélectionné, la fenêtre de planification s’ouvre.
+
+Champs à renseigner :
+
+* **Date du rendez-vous**
+* **Heure de début**
+* **Durée théorique** (utile pour l’occupation du planning)
+* **Technicien(s)** affecté(s)
+
+> Si un technicien est déjà planifié sur un créneau, le système affiche un **message d’erreur ou d’alerte**.
+> Il est toutefois possible de **forcer la planification** dans le cas où les interventions s’enchaînent sur un même secteur ou site.
+> L’utilisateur reste alors responsable du double-emploi.
+
+---
+
+#### 4. Informations complémentaires
+
+* **Pavé “Infos pour Techniciens”** :
+  Sert à décrire le contexte de l’intervention, les consignes d’accès, les éléments à vérifier, ou les particularités du chantier.
+  Ces informations s’affichent dans la fiche mobile du technicien au moment de la mission.
+
+* **Pictogramme du rendez-vous** :
+  Il est possible d’attribuer un **picto spécifique au rendez-vous** (indépendant du pictogramme du dossier).
+  Exemple : picto “fuite”, “urgence”, “travaux programmés”, etc.
+  Ces pictos sont configurés dans la **Gestion des listes** du thème **Paramètres** (#corrélation_auto:listes_parametres).
+
+* **Commentaires internes** :
+  Le champ des **commentaires internes** du dossier reste visible dans la fenêtre du rendez-vous.
+  Cela permet au planificateur et au technicien de disposer des informations contextuelles générales tout en restant sur la mission spécifique.
+
+---
+
+### Corrélations et dépendances
+
+* #prise_rendezvous ↔ #dossier : tout rendez-vous appartient à un dossier unique.
+* #type_rendezvous ↔ #application_technicien : détermine le formulaire mobile affiché au technicien.
+* #planning_technicien ↔ #workflow : alimente le calendrier global et déclenche la synchronisation des interventions.
+* #info_technicien ↔ #mobile_app : champs affichés sur le terminal de chaque intervenant.
+* #picto_rdv ↔ #listes_parametres : les pictogrammes sont gérés dans le référentiel commun.
+* #corrélation_auto : la création d’un rendez-vous depuis un dossier établit un lien automatique entre le dossier, la planification et les médias futurs (photos, PV, etc.).
+
+---
+
+### Astuces & points d’attention
+
+* En cas de doute, utiliser **“À définir”** pour ne pas restreindre les fonctionnalités du technicien.
+* Ne pas oublier de préciser la **durée estimée** pour une visibilité correcte sur le planning collectif.
+* Le **pavé Info pour Techniciens** est crucial : un manque d’information génère des pertes de temps sur site.
+* Vérifier systématiquement les conflits de planning avant validation, même si la POG permet le double créneau.
+* Pour les rendez-vous de **Travaux**, toujours s’assurer que le devis correspondant est bien validé.
+
+---
+
+### FAQ du thème
+
+**Q : Que se passe-t-il si le technicien est déjà planifié sur ce créneau ?**
+R : Le CRM affiche un message d’alerte. Il est possible de valider malgré tout, mais cela doit rester exceptionnel.
+
+**Q : Le type de rendez-vous peut-il être modifié après création ?**
+R : Oui, tant que l’intervention n’a pas été commencée par le technicien.
+
+**Q : Les pictos du dossier et du rendez-vous sont-ils liés ?**
+R : Non, ils sont indépendants. Le dossier conserve son pictogramme principal, le rendez-vous peut avoir un picto contextuel.
+
+**Q : Que voit le technicien sur son application ?**
+R : L’ensemble des informations saisies dans le pavé “Info pour Techniciens”, les commentaires internes du dossier, et les formulaires correspondant au type sélectionné.
+
+---
+
+### Synthèse narrative
+
+La planification d’un rendez-vous depuis le dossier est une opération structurée et stratégique.
+Le type de rendez-vous pilote le comportement de l’application technicien, le choix du planning influence la logistique, et les informations associées garantissent une exécution fluide.
+Une planification rigoureuse et bien documentée réduit les erreurs terrain et améliore la réactivité du service.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+
+   * 2.1 Création et gestion des clients
+   * 2.2 Gestion des apporteurs
+   * 2.3 Statut Prospect
+   * 2.4 Export et filtres
+   * 2.5 Informations supplémentaires et contacts
+3. **Dossier / Projet** – v2.5
+
+   * 3.1 Introduction et logique de rattachement
+   * 3.2 Préférences d’affichage
+
+     * 3.2.1 Portée utilisateur
+     * 3.2.2 Portée environnementale
+   * 3.3 Création d’un dossier
+
+     * 3.3.1 Mode import PDF de missionnement
+     * 3.3.2 Mode création manuelle
+     * 3.3.3 Sélection client et apporteur
+     * 3.3.4 Libellé du dossier
+   * 3.4 Post-création : structure du dossier
+
+     * 3.4.1 Commentaires internes
+     * 3.4.2 Import PDF et médiathèque
+     * 3.4.3 Pavé Divers et pictogrammes
+     * 3.4.4 Pavé Financier
+     * 3.4.5 Journal du dossier et filtres
+     * 3.4.6 Gestion des statuts et sous-statuts
+   * 3.5 Actions disponibles dans le dossier
+
+     * 3.5.1 Création de rendez-vous
+     * 3.5.2 Création de commande ou facture
+     * 3.5.3 Création de tâche
+     * 3.5.4 Accès à la médiathèque
+     * 3.5.5 Navigation multi-médiathèques, annotations et export ZIP
+4. **Rendez-vous / Interventions** – v3.0
+
+   * 4.1 Prise de rendez-vous depuis un dossier
+   * 4.2 (à venir) Modification et gestion du planning
+   * 4.3 (à venir) Statuts et comptes rendus d’intervention
+   * 4.4 (à venir) Médiathèque du rendez-vous et synchronisation mobile
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. (à venir) Workflow & Statuts
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°10]
+**Thème détecté :** Rendez-vous / Interventions – Sous-thème *Validation et planification sur le calendrier*
+**Version globale :** v3.1
+**Corrélations ajoutées :** (#validation_rendezvous, #statut_planifie, #creation_depuis_planning, #deplacement_rendezvous, #corrélation_auto:dossier_workflow_planning)
+
+---
+
+### Introduction du thème
+
+Une fois le rendez-vous créé, le processus de **validation** et de **synchronisation avec le planning** s’enclenche.
+L’objectif est d’assurer la cohérence entre le statut du dossier, le statut du rendez-vous et la visibilité dans le calendrier global de l’entreprise.
+Deux méthodes principales existent pour planifier un rendez-vous : depuis le **dossier** ou directement depuis le **planning**.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Validation d’un rendez-vous depuis un dossier
+
+Après avoir renseigné tous les éléments du rendez-vous :
+
+* Cliquer sur **Sauvegarder**.
+* Une **fenêtre de confirmation** s’affiche immédiatement :
+  *« Voulez-vous passer au statut Planifié ? »*
+* Cliquer sur **Oui** pour confirmer.
+
+Résultat :
+
+* Le **statut du dossier** passe automatiquement à **Planifié**.
+* Le rendez-vous est désormais visible dans le **planning général** et dans la **fiche du technicien concerné**.
+* Les notifications éventuelles (selon paramétrage) sont déclenchées : email, push ou alerte interne.
+
+> Cette confirmation de statut est essentielle : elle enclenche le flux de travail lié à l’intervention (préparation, déplacement, exécution, clôture).
+
+---
+
+#### 2. Création d’un rendez-vous depuis le planning
+
+La seconde méthode consiste à **créer directement l’intervention sur le planning** :
+
+Étapes :
+
+1. Ouvrir le **module Planning**.
+2. Sélectionner le **jour** souhaité.
+3. Faire un **clic gauche** à l’emplacement horaire désiré.
+4. Une fenêtre s’ouvre, demandant :
+
+   * Le **type de rendez-vous** (à définir, travaux, relevé, etc.).
+   * La **recherche du client**.
+   * La **sélection du dossier** correspondant.
+5. Une fois ces champs renseignés, la même **fenêtre de prise de rendez-vous** s’affiche, déjà **pré-remplie** avec :
+
+   * Le **jour**,
+   * L’**heure**,
+   * Le(s) **technicien(s)** sélectionné(s).
+
+Finaliser :
+
+* Cliquer sur **Sauvegarder**.
+* Valider le passage au **statut Planifié**.
+* Le rendez-vous s’ajoute immédiatement à la vue du planning, relié à son dossier d’origine.
+
+> Cette méthode est idéale pour une planification rapide ou en cas de gestion multi-techniciens.
+
+---
+
+#### 3. Déplacement d’un rendez-vous
+
+Depuis le planning :
+
+* Cliquer sur le rendez-vous à déplacer.
+* **Maintenir le clic gauche** et **faire glisser** le rendez-vous à la nouvelle date ou plage horaire.
+* Une **alerte de confirmation** s’affiche :
+  *« Souhaitez-vous valider le changement de planning ? »*
+* Cliquer sur **Oui** pour appliquer la modification.
+
+Effets :
+
+* Le rendez-vous est automatiquement **recalé** à la nouvelle position horaire.
+* Le technicien concerné est notifié selon le paramétrage du système (alerte ou email).
+* Le journal du dossier enregistre l’action de déplacement avec l’heure, l’auteur et la nouvelle date d’intervention.
+
+> Cette fonctionnalité offre une flexibilité totale tout en préservant la traçabilité des modifications.
+
+---
+
+### Corrélations et dépendances
+
+* #validation_rendezvous ↔ #statut_planifie : passage automatique du dossier en état “Planifié”.
+* #creation_depuis_planning ↔ #planning_technicien : insertion directe dans le calendrier global.
+* #deplacement_rendezvous ↔ #journal_dossier : chaque modification temporelle est historisée.
+* #corrélation_auto : le lien bidirectionnel dossier ↔ planning est maintenu quelle que soit la méthode de création.
+
+---
+
+### Astuces & points d’attention
+
+* Toujours valider le passage au **statut Planifié** pour déclencher les flux automatiques.
+* Lors de la création depuis le planning, vérifier que le **dossier client** sélectionné est le bon : un rendez-vous mal rattaché génère des incohérences dans les rapports.
+* En cas de chevauchement de rendez-vous, ajuster la durée plutôt que forcer la double planification.
+* Le déplacement d’un rendez-vous met à jour **le planning**, mais pas automatiquement les **notifications externes** (SMS, email client) si elles ont déjà été envoyées.
+
+---
+
+### FAQ du thème
+
+**Q : Que se passe-t-il si je ne valide pas le passage au statut Planifié ?**
+R : Le rendez-vous sera enregistré, mais le dossier restera au statut précédent. Le technicien ne verra pas l’intervention dans son application.
+
+**Q : Peut-on créer plusieurs rendez-vous sur un même dossier ?**
+R : Oui, chaque dossier peut comporter plusieurs rendez-vous distincts, selon son évolution (relevé, travaux, SAV, etc.).
+
+**Q : Puis-je déplacer un rendez-vous d’un technicien à un autre ?**
+R : Oui, en glissant le rendez-vous sur la ligne du technicien cible dans le planning. Une alerte demandera confirmation.
+
+**Q : Les déplacements sont-ils enregistrés ?**
+R : Oui, toute modification est inscrite dans le journal du dossier avec la date, l’heure et l’utilisateur.
+
+---
+
+### Synthèse narrative
+
+La planification des rendez-vous repose sur un double point d’entrée — **dossier** ou **planning** — permettant de s’adapter à tous les cas d’usage.
+Chaque validation déclenche la mise à jour du **statut planifié** et assure la visibilité sur le calendrier des techniciens.
+Le système de **glisser-déposer** offre une souplesse maximale, tout en conservant un suivi rigoureux via le journal et les alertes de confirmation.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+
+   * 2.1 Création et gestion des clients
+   * 2.2 Gestion des apporteurs
+   * 2.3 Statut Prospect
+   * 2.4 Export et filtres
+   * 2.5 Informations supplémentaires et contacts
+3. **Dossier / Projet** – v2.5
+
+   * 3.1 Introduction et logique de rattachement
+   * 3.2 Préférences d’affichage
+
+     * 3.2.1 Portée utilisateur
+     * 3.2.2 Portée environnementale
+   * 3.3 Création d’un dossier
+
+     * 3.3.1 Mode import PDF de missionnement
+     * 3.3.2 Mode création manuelle
+     * 3.3.3 Sélection client et apporteur
+     * 3.3.4 Libellé du dossier
+   * 3.4 Post-création : structure du dossier
+
+     * 3.4.1 Commentaires internes
+     * 3.4.2 Import PDF et médiathèque
+     * 3.4.3 Pavé Divers et pictogrammes
+     * 3.4.4 Pavé Financier
+     * 3.4.5 Journal du dossier et filtres
+     * 3.4.6 Gestion des statuts et sous-statuts
+   * 3.5 Actions disponibles dans le dossier
+
+     * 3.5.1 Création de rendez-vous
+     * 3.5.2 Création de commande ou facture
+     * 3.5.3 Création de tâche
+     * 3.5.4 Accès à la médiathèque
+     * 3.5.5 Navigation multi-médiathèques, annotations et export ZIP
+4. **Rendez-vous / Interventions** – v3.1
+
+   * 4.1 Prise de rendez-vous depuis un dossier
+   * 4.2 Validation et passage au statut planifié
+   * 4.3 Création directe depuis le planning
+   * 4.4 Déplacement et modification d’un rendez-vous
+   * 4.5 (à venir) Statuts et comptes rendus d’intervention
+   * 4.6 (à venir) Médiathèque du rendez-vous et synchronisation mobile
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. (à venir) Workflow & Statuts
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+système de **glisser-déposer** offre une souplesse maximale, tout en conservant un suivi rigoureux via le journal et les alertes de confirmation.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+
+   * 2.1 Création et gestion des clients
+   * 2.2 Gestion des apporteurs
+   * 2.3 Statut Prospect
+   * 2.4 Export et filtres
+   * 2.5 Informations supplémentaires et contacts
+3. **Dossier / Projet** – v2.5
+
+   * 3.1 Introduction et logique de rattachement
+   * 3.2 Préférences d’affichage
+
+     * 3.2.1 Portée utilisateur
+     * 3.2.2 Portée environnementale
+   * 3.3 Création d’un dossier
+
+     * 3.3.1 Mode import PDF de missionnement
+     * 3.3.2 Mode création manuelle
+     * 3.3.3 Sélection client et apporteur
+     * 3.3.4 Libellé du dossier
+   * 3.4 Post-création : structure du dossier
+
+     * 3.4.1 Commentaires internes
+     * 3.4.2 Import PDF et médiathèque
+     * 3.4.3 Pavé Divers et pictogrammes
+     * 3.4.4 Pavé Financier
+     * 3.4.5 Journal du dossier et filtres
+     * 3.4.6 Gestion des statuts et sous-statuts
+   * 3.5 Actions disponibles dans le dossier
+
+     * 3.5.1 Création de rendez-vous
+     * 3.5.2 Création de commande ou facture
+     * 3.5.3 Création de tâche
+     * 3.5.4 Accès à la médiathèque
+     * 3.5.5 Navigation multi-médiathèques, annotations et export ZIP
+4. **Rendez-vous / Interventions** – v3.1
+
+   * 4.1 Prise de rendez-vous depuis un dossier
+   * 4.2 Validation et passage au statut planifié
+   * 4.3 Création directe depuis le planning
+   * 4.4 Déplacement et modification d’un rendez-vous
+   * 4.5 (à venir) Statuts et comptes rendus d’intervention
+   * 4.6 (à venir) Médiathèque du rendez-vous et synchronisation mobile
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. (à venir) Workflow & Statuts
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°11]
+**Thème détecté :** Rendez-vous / Interventions – Sous-thème *Statuts et gestion des rendez-vous*
+**Version globale :** v3.2
+**Corrélations ajoutées :** (#statut_rendezvous, #realise, #rt_en_cours, #a_reprogrammer, #corrélation_auto:dossier_sync_statuts_technicien)
+
+---
+
+### Introduction du thème
+
+Les **statuts de rendez-vous** assurent le suivi précis du cycle d’intervention entre la planification, l’exécution et la clôture.
+Ils pilotent la progression du dossier et synchronisent l’état des travaux entre le **bureau** et le **technicien mobile**.
+Chaque statut reflète une situation opérationnelle claire et influence le **statut global du dossier**.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Statut *Planifié*
+
+* Lors de la création ou la validation d’un rendez-vous, celui-ci passe automatiquement en **Planifié**.
+* Il reste à ce statut **jusqu’à ce qu’une action soit effectuée par le technicien** sur son application mobile (démarrage, compte rendu, photo, etc.).
+* Ce statut signifie :
+
+  > “Le rendez-vous est positionné dans le planning, mais non encore exécuté.”
+
+---
+
+#### 2. Statut *Réalisé*
+
+* À la fin de l’intervention, le technicien clôture le rendez-vous depuis son application.
+* Le statut passe alors en **Réalisé**, ce qui indique que :
+
+  * La mission a été effectuée,
+  * Le compte rendu est complet,
+  * Les éléments (RT, devis, travaux, dépannage) sont validés.
+
+Effet :
+
+* Le dossier concerné reste actif, mais marqué comme **intervention effectuée**.
+* Ce statut déclenche généralement les workflows suivants :
+
+  * Transmission pour validation ou facturation,
+  * Archivage des médias liés (photos, relevés, signatures).
+
+> Un rendez-vous “Réalisé” est une condition essentielle avant toute facturation ou clôture de dossier.
+
+---
+
+#### 3. Statut *RT en cours* (Relevé Technique en cours)
+
+Ce statut est une **étape intermédiaire**, utilisée lorsque le technicien a commencé un **relevé technique** mais ne peut pas le finaliser immédiatement sur site.
+
+* Le technicien passe alors manuellement le rendez-vous en **RT en cours**.
+* Cela a deux effets :
+
+  1. Le rendez-vous est marqué comme partiellement traité.
+  2. Le **dossier** passe également en **statut RT en cours** automatiquement.
+
+> Ce lien entre rendez-vous et dossier facilite la détection des dossiers nécessitant un traitement complémentaire ou un devis en attente.
+
+Le technicien ou le chargé d’affaires pourra ensuite reprendre le relevé technique, le compléter et finaliser le dossier.
+
+---
+
+#### 4. Statut *À reprogrammer*
+
+Le statut **À reprogrammer** signale qu’une intervention **n’a pas pu être réalisée**.
+
+Cas typiques :
+
+* Le client était absent.
+* Le technicien n’a pas pu se rendre sur site (retard, urgence prioritaire, incident logistique).
+
+Ce statut **ne doit pas être utilisé** si le technicien s’est déplacé et a rencontré le client : dans ce cas, le rendez-vous doit rester **Réalisé** ou **RT en cours** selon la situation.
+
+Comportement dans le dossier :
+
+* Le rendez-vous apparaît avec un **camembert rouge** dans le pavé “Rendez-vous”.
+* Ce rendez-vous devient **réutilisable** :
+
+  * Cliquer dessus pour **le modifier** (nouvelle date, technicien, créneau).
+  * Puis **le réutiliser** pour planifier une nouvelle intervention.
+
+Si l’on ne souhaite pas le réutiliser :
+
+* Ouvrir le menu **“⋮” (trois points)** à droite du rendez-vous.
+* Cliquer sur **Supprimer** pour éviter de conserver un rendez-vous inactif.
+
+> Les rendez-vous *À reprogrammer* doivent être **soit réutilisés, soit supprimés**.
+> Laisser un rendez-vous dans cet état crée des anomalies dans le suivi du dossier.
+
+---
+
+### Corrélations et dépendances
+
+* #statut_rendezvous ↔ #workflow : pilote l’évolution du flux opérationnel.
+* #realise ↔ #facturation : condition préalable à la facturation.
+* #rt_en_cours ↔ #dossier : synchronisation automatique du statut “RT en cours”.
+* #a_reprogrammer ↔ #planning : permet de replanifier sans recréer un nouveau rendez-vous.
+* #corrélation_auto : la mise à jour d’un statut sur mobile répercute instantanément le changement sur le dossier central.
+
+---
+
+### Astuces & points d’attention
+
+* **Toujours** vérifier le statut des rendez-vous avant de clôturer un dossier.
+* Ne jamais utiliser *À reprogrammer* pour un rendez-vous partiellement réalisé.
+* Le passage en *RT en cours* est un outil précieux pour prioriser les dossiers à reprendre.
+* Lorsqu’un rendez-vous est réutilisé, les pièces jointes précédentes (photos, notes) sont conservées pour assurer la continuité d’information.
+* Les camemberts colorés dans le pavé Rendez-vous permettent une lecture visuelle rapide :
+
+  * **Vert** = Réalisé
+  * **Orange** = RT en cours
+  * **Rouge** = À reprogrammer
+  * **Bleu** = Planifié
+
+---
+
+### FAQ du thème
+
+**Q : Le technicien peut-il changer le statut depuis son application ?**
+R : Oui, selon ses droits. Il peut passer le rendez-vous en “Réalisé” ou “RT en cours”.
+
+**Q : Le passage en “RT en cours” met-il automatiquement à jour le dossier ?**
+R : Oui, le dossier prend le même statut pour permettre le suivi administratif.
+
+**Q : Peut-on reprogrammer directement un rendez-vous depuis le statut “À reprogrammer” ?**
+R : Oui, il suffit de le modifier et de sauvegarder une nouvelle date.
+
+**Q : Faut-il supprimer les rendez-vous non utilisés ?**
+R : Oui. Un rendez-vous laissé “À reprogrammer” sans action ultérieure perturbe les statistiques et le suivi.
+
+---
+
+### Synthèse narrative
+
+Le suivi des statuts de rendez-vous est le cœur du workflow terrain.
+Chaque changement reflète une action réelle : **Planifié → Réalisé → Clôturé**, ou, dans certains cas, **RT en cours → Réalisé**.
+Les statuts “À reprogrammer” servent uniquement à différer une intervention non réalisée et doivent être traités rapidement pour garantir la fiabilité du planning et du reporting.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v3.2
+
+   * 4.1 Prise de rendez-vous depuis un dossier
+   * 4.2 Validation et passage au statut planifié
+   * 4.3 Création directe depuis le planning
+   * 4.4 Déplacement et modification d’un rendez-vous
+   * 4.5 Statuts des rendez-vous
+
+     * 4.5.1 Planifié
+     * 4.5.2 Réalisé
+     * 4.5.3 RT en cours
+     * 4.5.4 À reprogrammer
+   * 4.6 (à venir) Comptes rendus et suivi post-intervention
+   * 4.7 (à venir) Médiathèque du rendez-vous et synchronisation mobile
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. (à venir) Workflow & Statuts
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°12]
+**Thème détecté :** Workflow & Statuts – Sous-thème *Statuts des dossiers*
+**Version globale :** v4.0
+**Corrélations ajoutées :** (#statuts_dossier, #workflow_dossier, #a_statuer, #sous_statuts, #corrélation_auto:rendezvous_facturation_commandes)
+
+---
+
+### Introduction du thème
+
+Les **statuts de dossier** structurent la vie d’un dossier depuis sa création jusqu’à sa clôture.
+Ils reflètent son **état d’avancement administratif, technique et financier** et garantissent la cohérence entre les modules *Rendez-vous*, *Devis*, *Commandes* et *Facturation*.
+Chaque statut a une signification précise et déclenche des comportements automatiques dans le CRM (verrouillage, visibilité, notifications, synchronisations).
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. **Annulé**
+
+Statut réservé aux dossiers abandonnés ou annulés par le client, l’apporteur ou l’entreprise.
+
+* Le passage à **Annulé** supprime la validité de tous les éléments du dossier :
+
+  * Rendez-vous, devis, commandes, factures sont également **annulés**.
+* Le dossier devient **inactif** et ne doit plus être modifié.
+
+> Ce statut doit être utilisé avec prudence car il purge les éléments liés.
+
+---
+
+#### 2. **À planifier**
+
+Statut **initial** d’un dossier tout juste créé.
+
+* Aucune intervention n’est encore programmée.
+* C’est l’état **d’attente de première planification**.
+* À ce stade, seules les informations administratives et client sont enregistrées.
+
+> Le passage à “Planifié” se fera dès qu’un premier rendez-vous est confirmé.
+
+---
+
+#### 3. **Planifié**
+
+Statut actif dès qu’un premier **rendez-vous** est fixé.
+
+* Le technicien s’y rend pour un **relevé technique** ou un **dépannage**.
+* Ce statut reste en place tant que le résultat de l’intervention n’est pas connu.
+* Il marque la **phase terrain initiale** du dossier.
+
+> Une fois le rendez-vous réalisé, deux cas se présentent :
+>
+> * Si un devis est nécessaire → le dossier passe en **Devis à faire**.
+> * Si l’intervention a été directement facturable → le dossier passe en **À facturer**.
+
+---
+
+#### 4. **Devis à faire**
+
+Statut appliqué lorsque le technicien a effectué un **relevé technique** nécessitant un **chiffrage** par le bureau.
+
+* Le service administratif ou commercial établit alors le devis.
+* Ce statut permet d’identifier les dossiers en attente de devis et de prioriser le travail du bureau.
+
+> Le dossier reste dans ce statut jusqu’à ce que le devis soit créé.
+
+---
+
+#### 5. **Devis envoyé**
+
+Statut déclenché automatiquement dès qu’un **devis est généré et transmis** au client ou à l’apporteur.
+
+* Le dossier est désormais en **attente de validation du devis**.
+* Les relances clients sont souvent gérées depuis ce statut.
+
+> Ce statut précède “Commandé” et marque la phase de décision du client.
+
+---
+
+#### 6. **Commandé**
+
+Le dossier passe en **Commandé** dès qu’un devis a été **accepté et validé**.
+
+* Le devis devient un **ordre de travaux**.
+* Le bureau peut maintenant créer une ou plusieurs **commandes fournisseurs** si du matériel est nécessaire.
+
+> C’est le statut pivot entre la phase commerciale et la phase d’exécution.
+
+---
+
+#### 7. **Attente matériel**
+
+Une fois les **commandes fournisseurs créées**, le dossier bascule en **Attente matériel**.
+
+* Le chantier ne peut pas être planifié tant que le matériel n’est pas reçu.
+* Ce statut sert à suivre les dossiers bloqués en logistique.
+
+> Dès que le matériel est réceptionné, le dossier peut être préparé pour la planification des travaux.
+
+---
+
+#### 8. **À planifier travaux**
+
+Statut de transition entre la réception du matériel et la planification de la pose.
+
+* Tous les éléments sont prêts : devis validé, matériel reçu, technicien disponible.
+* Le bureau peut maintenant créer un rendez-vous de **type “Travaux”**.
+
+> Dès la planification des travaux, le dossier passe à **Planifié Travaux**.
+
+---
+
+#### 9. **Planifié travaux**
+
+Statut équivalent à **Planifié**, mais réservé aux **travaux post-devis validé**.
+
+* Il signale que les interventions de réalisation sont prévues.
+* Le suivi de ce statut permet de distinguer les chantiers techniques des simples dépannages.
+
+> Le dossier reste dans cet état jusqu’à la fin des travaux.
+
+---
+
+#### 10. **À facturer**
+
+Statut atteint lorsque les **travaux ou interventions sont terminés**.
+
+* Le technicien a clôturé son intervention en *Réalisé*.
+* Le dossier est transmis à l’administration pour émission de la **facture**.
+
+> C’est un statut clé du circuit financier : il détermine la charge de travail du service facturation.
+
+---
+
+#### 11. **Facturé**
+
+Statut obtenu dès que la **facture a été émise et envoyée**.
+
+* Le dossier est considéré comme **terminé côté opérationnel**, mais reste **ouvert côté comptable** jusqu’au paiement.
+* Les relances et rapprochements bancaires s’effectuent sur cette base.
+
+> Ce statut se ferme automatiquement lors du passage à “Clos”.
+
+---
+
+#### 12. **Clos**
+
+Statut final d’un dossier entièrement traité.
+
+* La facture est **payée**,
+* Le dossier ne fait plus l’objet d’aucune action administrative.
+* Il devient **archivé** mais reste consultable à tout moment.
+
+> Ce statut confirme la fin du cycle de vie du dossier.
+
+---
+
+#### 13. **À statuer**
+
+Statut spécial permettant une **intervention manuelle** en cas d’anomalie dans le flux automatique.
+Deux cas d’usage :
+
+1. **Depuis le bureau** :
+
+   * En cas d’erreur ou de situation non prévue par le flux standard.
+   * Cliquer sur le **libellé du dossier**, choisir **“À statuer”**, puis utiliser la **flèche verte** pour sélectionner le statut à rétablir.
+
+2. **Depuis l’application technicien** :
+
+   * Le technicien peut, selon l’action choisie sur mobile, **faire passer le dossier en “À statuer”**.
+   * Cela bloque temporairement le dossier en attente d’une décision humaine (replanification, devis complémentaire, correction, etc.).
+
+> Ce statut agit comme un “verrou d’attente” et garantit que le dossier ne progresse pas sans validation du bureau.
+
+---
+
+#### 14. **Sous-statuts**
+
+* Les sous-statuts apportent une **granularité complémentaire** à chaque statut principal.
+* Ils sont **entièrement paramétrables** dans la **Gestion des listes** (thème Paramètres).
+* Exemples :
+
+  * “NRP (ne répond pas)” sur un dossier à planifier.
+  * “Attente retour client” sur un devis envoyé.
+  * “Travaux reportés” sur un dossier planifié travaux.
+
+> Leur usage est facultatif mais fortement recommandé pour le reporting et la priorisation des actions.
+
+---
+
+### Corrélations et dépendances
+
+* #statuts_dossier ↔ #rendezvous : les changements de statut peuvent être déclenchés automatiquement selon les actions du technicien.
+* #workflow_dossier ↔ #facturation : les statuts “À facturer” et “Facturé” pilotent la comptabilité.
+* #a_statuer ↔ #supervision_bureau : gestion manuelle des exceptions de flux.
+* #sous_statuts ↔ #listes_parametres : configuration libre adaptée aux besoins internes.
+* #corrélation_auto : chaque statut est associé à un jeu d’autorisations et d’actions possibles dans le CRM.
+
+---
+
+### Astuces & points d’attention
+
+* **Ne jamais** repasser un dossier en “Annulé” sans en mesurer les impacts : tout le contenu sera désactivé.
+* “À statuer” ne doit être utilisé que pour corriger un flux bloqué, jamais comme statut temporaire.
+* Un dossier “À facturer” doit être traité rapidement pour éviter un blocage administratif.
+* Utiliser les **sous-statuts** pour affiner le suivi opérationnel sans dénaturer la logique du workflow.
+* Les transitions automatiques (RT en cours → Devis à faire → Devis envoyé → Commandé → Attente matériel…) doivent être respectées pour garantir la fiabilité des indicateurs.
+
+---
+
+### FAQ du thème
+
+**Q : Puis-je modifier un statut manuellement ?**
+R : Oui, via “À statuer” uniquement. Les changements directs sont interdits pour préserver la cohérence du flux.
+
+**Q : Que devient un dossier annulé ?**
+R : Il est définitivement inactif. Tous les éléments liés sont également désactivés.
+
+**Q : À quel moment un dossier devient clos ?**
+R : Dès le paiement complet de la facture associée.
+
+**Q : Les sous-statuts apparaissent-ils dans les exports ?**
+R : Oui, ils sont visibles dans les rapports et filtres, et permettent des analyses détaillées.
+
+---
+
+### Synthèse narrative
+
+Les statuts de dossier forment la **colonne vertébrale du CRM**.
+Ils traduisent les transitions naturelles du cycle de vie : **création → planification → exécution → facturation → clôture**.
+Ce système d’états garantit une vision claire, un suivi fluide et une automatisation fiable.
+Les sous-statuts, eux, offrent une finesse de lecture adaptée à chaque métier.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v3.2
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. **Workflow & Statuts** – v4.0
+
+* 10.1 Statuts des dossiers
+
+  * Annulé
+  * À planifier
+  * Planifié
+  * Devis à faire
+  * Devis envoyé
+  * Commandé
+  * Attente matériel
+  * À planifier travaux
+  * Planifié travaux
+  * À facturer
+  * Facturé
+  * Clos
+  * À statuer
+  * Sous-statuts
+
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°13]
+**Thème détecté :** Workflow & Statuts – Sous-thème *Statut Stand-by et sous-statuts associés*
+**Version globale :** v4.1
+**Corrélations ajoutées :** (#standby, #sous_statuts_standby, #classification_attente, #corrélation_auto:workflow_reporting)
+
+---
+
+### Introduction du thème
+
+Le **statut Stand-by** sert à regrouper tous les dossiers **temporairement en attente**.
+Il s’agit d’un état intermédiaire entre le flux opérationnel actif (planifié, à facturer, etc.) et les statuts de clôture.
+Ce statut permet au bureau de **geler temporairement** un dossier sans le sortir du circuit de suivi, tout en précisant la **raison de l’attente** à l’aide de sous-statuts personnalisés.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Fonction du statut *Stand-by*
+
+Un dossier peut être placé en **Stand-by** lorsqu’il n’avance plus pour des raisons extérieures ou internes.
+Cela permet :
+
+* de **suspendre temporairement son traitement**,
+* de **ne pas le confondre** avec un dossier annulé,
+* et de **le garder visible** dans les filtres et tableaux de bord de suivi.
+
+Exemples d’utilisation :
+
+* Attente d’un retour client ou d’un devis complémentaire.
+* Travaux reportés par le client.
+* Dossier bloqué administrativement (attente de validation, document manquant).
+* Dossier gelé par l’apporteur ou par le service facturation.
+
+---
+
+#### 2. Création et gestion des sous-statuts
+
+Le **statut Stand-by** tire toute sa puissance de ses **sous-statuts configurables**.
+Ces sous-catégories permettent d’identifier **la cause précise de l’attente**, rendant la supervision et le reporting bien plus précis.
+
+Exemples de sous-statuts recommandés :
+
+| Catégorie         | Sous-statut exemple          | Description                                            |
+| ----------------- | ---------------------------- | ------------------------------------------------------ |
+| **Client**        | Attente retour client        | Le client doit valider un devis ou confirmer une date. |
+| **Apporteur**     | Attente retour apporteur     | L’apporteur doit statuer sur la suite des travaux.     |
+| **Technique**     | Travaux reportés             | Intervention repoussée pour cause d’imprévu technique. |
+| **Administratif** | Attente document / signature | Document manquant, dossier incomplet.                  |
+| **Commercial**    | En négociation               | Offre soumise, attente de validation budgétaire.       |
+| **Logistique**    | Retard fournisseur           | Matériel non disponible ou commande bloquée.           |
+
+> Ces sous-statuts se créent et se gèrent depuis **Paramètres → Gestion des listes → Statuts et sous-statuts** (#sous_statuts_standby).
+
+---
+
+#### 3. Utilisation pratique
+
+* Lorsqu’un dossier doit être mis en attente :
+
+  1. Ouvrir la fiche dossier.
+  2. Cliquer sur le **libellé du statut actuel**.
+  3. Sélectionner **Stand-by**.
+  4. Choisir un **sous-statut** correspondant à la cause d’attente.
+  5. Valider avec la **flèche verte**.
+
+Le dossier apparaîtra alors :
+
+* dans les listes et tableaux comme “Stand-by”,
+* avec le sous-statut affiché en complément (ex. : *Stand-by – Attente retour client*).
+
+> Cela permet d’exclure ces dossiers des flux actifs tout en les gardant sous contrôle.
+
+---
+
+#### 4. Exploitation des statuts Stand-by dans le suivi
+
+L’utilisation de sous-statuts Stand-by facilite :
+
+* le **reporting par motif d’attente**,
+* la **relance ciblée** (ex. : tous les dossiers en “Attente retour client”),
+* le **tri rapide** par service ou cause,
+* la **détection des blocages récurrents** (logistique, client, administratif…).
+
+Ces informations peuvent être utilisées dans les **tableaux de bord** et les exports statistiques du CRM pour optimiser les processus.
+
+---
+
+### Corrélations et dépendances
+
+* #standby ↔ #workflow_dossier : statut d’attente hors flux opérationnel.
+* #sous_statuts_standby ↔ #reporting : permet des filtres et regroupements analytiques.
+* #classification_attente ↔ #gestion_des_listes : paramétrage personnalisé selon les besoins métier.
+* #corrélation_auto : le passage en Stand-by gèle temporairement les automatisations liées aux rendez-vous et à la facturation.
+
+---
+
+### Astuces & points d’attention
+
+* Utiliser **Stand-by** plutôt que “À statuer” pour les dossiers simplement en pause et non bloqués.
+* Ne jamais confondre **Stand-by** et **Annulé** : le premier est temporaire, le second définitif.
+* Le sous-statut doit être **renseigné systématiquement** pour garder un suivi exploitable.
+* Une **revue périodique** des dossiers en Stand-by est recommandée (ex. : hebdomadaire) pour éviter l’enlisement.
+
+---
+
+### FAQ du thème
+
+**Q : Quelle différence entre Stand-by et À statuer ?**
+R : *À statuer* nécessite une intervention humaine pour corriger ou trancher. *Stand-by* signifie simplement “en attente temporaire”, sans anomalie.
+
+**Q : Le dossier Stand-by est-il visible dans les listes de travail ?**
+R : Oui, mais il peut être filtré à part grâce à son statut spécifique et ses sous-statuts.
+
+**Q : Peut-on automatiser la relance des dossiers Stand-by ?**
+R : Oui, en configurant des alertes ou filtres automatiques selon les sous-statuts (ex. : relance après 7 jours en attente client).
+
+**Q : Les sous-statuts Stand-by sont-ils communs aux autres statuts ?**
+R : Non, ils sont spécifiques à cette catégorie et gérés séparément dans la configuration des listes.
+
+---
+
+### Synthèse narrative
+
+Le **statut Stand-by** agit comme une zone tampon dans la vie du dossier.
+Il permet de suspendre temporairement un processus tout en gardant la maîtrise du suivi.
+Les sous-statuts associés offrent un outil de pilotage fin, capable de qualifier les causes d’attente et d’améliorer la réactivité globale.
+Bien paramétré, ce statut devient un levier d’organisation et de priorisation incontournable.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v3.2
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. (à venir) Application Technicien
+10. **Workflow & Statuts** – v4.1
+
+* 10.1 Statuts des dossiers
+
+  * Annulé
+  * À planifier
+  * Planifié
+  * Devis à faire
+  * Devis envoyé
+  * Commandé
+  * Attente matériel
+  * À planifier travaux
+  * Planifié travaux
+  * À facturer
+  * Facturé
+  * Clos
+  * À statuer
+  * **Stand-by et sous-statuts**
+  * Sous-statuts généraux
+
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°14]
+**Thème détecté :** Application Technicien – Sous-thème *Intervention sur rendez-vous et gestion des formulaires*
+**Version globale :** v5.0
+**Corrélations ajoutées :** (#application_technicien, #intervention_technicien, #formulaires_dépannage, #formulaires_assurance, #signature_client, #pdf_automatique, #corrélation_auto:rendezvous_dossier_statut)
+
+---
+
+### Introduction du thème
+
+L’**interface Technicien** est le cœur opérationnel du CRM côté terrain.
+Chaque technicien y retrouve ses **rendez-vous planifiés** et agit directement sur ceux qui lui sont attribués.
+Ses actions déterminent l’évolution du **statut du rendez-vous** et du **dossier associé**, garantissant la synchronisation entre le terrain et le bureau.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Accès au rendez-vous
+
+Le technicien ouvre un rendez-vous **planifié** qui lui est attribué.
+Sur la page principale de son interface :
+
+* Il visualise :
+
+  * L’**apporteur** s’il existe,
+  * La **référence dossier**,
+  * Les **coordonnées du client**,
+  * L’**adresse complète** du lieu d’intervention,
+  * Les **détails du rendez-vous**,
+  * L’**ordre de mission** et les **documents associés**.
+
+> Ces informations sont affichées **uniquement pour le premier rendez-vous** du dossier afin d’éviter la redondance sur les suivants.
+
+---
+
+#### 2. Deux choix initiaux : *Je commence* ou *Je ne peux pas*
+
+Au lancement de l’intervention, le technicien doit choisir entre :
+
+##### a. **Je ne peux pas**
+
+Si l’intervention ne peut être effectuée :
+
+1. Le technicien sélectionne une **cause** :
+
+   * *Client absent*
+   * *Problème d’accès*
+   * *Autre cause libre*
+2. Il confirme son choix.
+3. Le **rendez-vous** et le **dossier** passent alors automatiquement en **statut “À statuer”**.
+4. La **cause renseignée** est inscrite dans le **journal du dossier**, permettant au bureau de comprendre la situation et de réorienter le dossier.
+
+> Ce processus évite les blocages invisibles et permet un traitement manuel rapide par le bureau.
+
+##### b. **Je commence**
+
+Le technicien confirme qu’il peut intervenir et clique sur **“Je commence”**.
+Il doit alors choisir le **type d’intervention** :
+
+* *Je dépanne*
+* *Je réalise un relevé technique*
+* *J’interviens pour une assurance*
+
+---
+
+#### 3. Cas n°1 : Intervention “Je dépanne”
+
+Une fois le choix validé :
+
+* Le technicien accède à un **formulaire dynamique** adapté au **type de client** (assuré, locataire, propriétaire, etc.).
+* Les champs et sections visibles varient selon le contexte.
+
+##### a. Formulaire de dépannage
+
+Champs standard :
+
+* **Constatations initiales**
+* **Photo avant travaux**
+* **Travaux réalisés**
+* **Photo après travaux**
+* **Fournitures utilisées** (sélection via le **“+ jaune”**)
+
+  * Recherche ou ajout de fournitures utilisées sur site.
+* **Durée d’intervention** : heure d’arrivée, heure de départ, temps total, main-d’œuvre.
+* **Commentaire** : notes complémentaires visibles dans le journal du dossier.
+
+Le technicien peut ensuite :
+
+* Cliquer sur **“J’ai terminé”** → le dossier passe à **“À facturer”**.
+* Cliquer sur **“Je n’ai pas terminé”** → le dossier passe à **“À statuer”**.
+
+> Ce choix impacte directement le flux administratif et la visibilité dans les filtres du bureau.
+
+---
+
+#### 4. Cas n°2 : Intervention pour une assurance
+
+Lorsqu’il s’agit d’une mission mandatée par une **assurance**, le flux change.
+
+##### a. Spécificités du mode “Assurance”
+
+* Le technicien sélectionne le **type d’assurance** concernée.
+* En fonction du choix, un **pavé supplémentaire** s’affiche automatiquement,
+  correspondant au **formulaire d’assurance spécifique**.
+* Ce pavé contient des champs obligatoires définis par chaque assureur (mesures, observations, causes du sinistre, etc.).
+
+##### b. Remplissage et génération du PDF
+
+Étapes :
+
+1. Le technicien remplit tous les champs requis.
+2. Il ajoute les **photos avant/après**.
+3. Il clique sur **“Terminer l’intervention”**.
+4. Le système génère automatiquement le **PDF d’assurance**.
+5. Le technicien fait défiler la page jusqu’au **pavé signature**.
+6. Le client signe directement sur le terminal.
+7. Le technicien clique sur :
+
+   * **“J’ai pris connaissance du document”**, puis
+   * **“Générer le document signé”**.
+
+Résultat :
+
+* Le **PDF signé** est automatiquement créé et **stocké dans le dossier**,
+  visible dans le **pavé Documents associés** à droite.
+* Le dossier passe au statut correspondant selon la configuration (souvent **À facturer** ou **RT en cours** selon l’assurance).
+
+> Chaque assurance ayant ses propres exigences, les champs et formats PDF sont **paramétrables individuellement** dans la configuration du CRM.
+
+---
+
+#### 5. Cas n°3 : Intervention “Relevé technique”
+
+Lorsque le technicien choisit “Relevé technique” :
+
+* Seuls les champs nécessaires à la **préparation du devis** sont affichés :
+
+  * Pièce concernée, surface, métrés, photos, commentaires.
+* Le dossier passe ensuite automatiquement en **“Devis à faire”** à la validation.
+
+---
+
+### Corrélations et dépendances
+
+* #application_technicien ↔ #rendezvous : interaction directe avec les rendez-vous planifiés.
+* #intervention_technicien ↔ #workflow_dossier : chaque action modifie automatiquement le statut du dossier.
+* #formulaires_dépannage ↔ #catalogue_fournitures : sélection des fournitures consommées sur site.
+* #formulaires_assurance ↔ #documents : génération automatique du PDF spécifique à l’apporteur.
+* #signature_client ↔ #mediatheque_dossier : stockage automatique du document signé dans la médiathèque.
+* #pdf_automatique ↔ #facturation : le document d’assurance signé peut déclencher la phase de facturation.
+* #corrélation_auto : le journal du dossier conserve l’historique complet de chaque étape terrain.
+
+---
+
+### Astuces & points d’attention
+
+* Le choix entre *Je dépanne*, *Relevé technique* ou *Assurance* conditionne le type de formulaire affiché.
+* Les formulaires d’assurance étant spécifiques, **ne jamais modifier l’ordre des champs** sans validation du service administratif.
+* Les **photos avant/après** sont obligatoires pour tous les types d’intervention.
+* Si le technicien clique sur “Je ne peux pas”, il doit obligatoirement **renseigner une cause** pour éviter un dossier bloqué.
+* La **signature client** est indispensable pour valider le PDF d’assurance.
+
+---
+
+### FAQ du thème
+
+**Q : Que se passe-t-il si le technicien oublie de signer un document d’assurance ?**
+R : Le PDF généré ne sera pas considéré comme valide. Le bureau devra forcer une signature manuelle ou retourner le document au client.
+
+**Q : Où trouver le PDF signé ?**
+R : Dans la fiche dossier, pavé “Documents associés” à droite. Il est également visible dans la médiathèque.
+
+**Q : Le technicien peut-il corriger une erreur après génération du PDF ?**
+R : Non. Il doit contacter le bureau pour régénérer un nouveau document.
+
+**Q : Si le client est absent, le technicien peut-il simplement clôturer ?**
+R : Non. Il doit sélectionner la cause “Client absent” et valider, ce qui fera passer le dossier en “À statuer”.
+
+---
+
+### Synthèse narrative
+
+L’interface technicien est le prolongement terrain du CRM.
+Chaque action effectuée sur mobile — qu’il s’agisse d’un dépannage, d’un relevé technique ou d’une mission d’assurance — alimente automatiquement le dossier, le journal et les documents associés.
+Grâce à la génération automatique des PDF et au stockage des signatures, le flux terrain-bureau reste fluide, fiable et entièrement traçable.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v3.2
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. **Application Technicien** – v5.0
+
+   * 9.1 Interface du technicien
+   * 9.2 Gestion d’un rendez-vous attribué
+   * 9.3 Actions disponibles : *Je commence / Je ne peux pas*
+   * 9.4 Formulaire de dépannage
+   * 9.5 Formulaire d’assurance
+   * 9.6 Formulaire de relevé technique
+   * 9.7 Génération et stockage du PDF signé
+10. **Workflow & Statuts** – v4.1
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°15]
+**Thème détecté :** Application Technicien – Sous-thème *Relevé technique et types de chiffrage*
+**Version globale :** v5.1
+**Corrélations ajoutées :** (#releve_technique, #type_chiffrage, #produits_base, #validation_rt, #corrélation_auto:dossier_devis_parametres)
+
+---
+
+### Introduction du thème
+
+Le **relevé technique (RT)** est l’étape de transition entre le terrain et le chiffrage.
+Il permet au technicien de **décrire les travaux à prévoir**, de **sélectionner les fournitures nécessaires**, et de **remonter toutes les informations techniques** qui serviront à la création du devis par le bureau.
+Chaque relevé technique est associé à un **type de chiffrage**, paramétrable selon les besoins de l’entreprise.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Accès au relevé technique
+
+Depuis un **rendez-vous de type “À définir”**, le technicien :
+
+1. Clique sur **“Je commence”**.
+2. Sélectionne l’option **“RT”** (Relevé technique).
+3. L’application ouvre alors la **fenêtre de saisie du relevé**.
+
+> Cette logique s’applique également aux rendez-vous spécifiquement créés avec le type “Relevé technique”.
+
+---
+
+#### 2. Sélection du type de chiffrage
+
+Le technicien doit choisir un **type de chiffrage** parmi une liste prédéfinie.
+Ces types sont configurables dans le menu **Paramètres → Gestion des listes → Types de chiffrage**.
+
+##### a. Fonction des types de chiffrage
+
+Ils déterminent la **structure** et le **niveau de détail** du relevé technique :
+
+* **Relevé technique standard** :
+  Mode par défaut, adapté aux cas simples.
+  Permet uniquement de renseigner une **description des travaux à prévoir** et la **liste des fournitures**.
+* **Types personnalisés** :
+  Selon la configuration interne, il est possible d’avoir des modèles spécifiques :
+
+  * RT Salle de bain
+  * RT Électricité
+  * RT Menuiserie
+  * RT Plomberie / fuite
+  * RT Assurance (version spécifique pour sinistre)
+
+> Ces modèles personnalisés peuvent inclure des champs additionnels : dimensions, surfaces, métrés, état du support, observations complémentaires, etc.
+
+---
+
+#### 3. Saisie du relevé technique standard
+
+Le technicien renseigne les champs suivants :
+
+* **Description des travaux à prévoir** : texte libre décrivant les interventions nécessaires.
+* **Fournitures à prévoir** : ajout manuel ou via le **bouton “+ jaune”**.
+
+  * Le “+ jaune” ouvre la **base Produits** interne du CRM.
+  * Les fournitures sélectionnées sont automatiquement ajoutées à la liste.
+* **Main-d’œuvre** :
+
+  * Nombre de **techniciens nécessaires**,
+  * **Durée estimée** pour l’intervention.
+* **Commentaires internes** : zone optionnelle visible au bureau.
+
+> Le relevé technique peut être enrichi de photos avant/après si l’apporteur ou le type de dossier le requiert.
+
+---
+
+#### 4. Validation du relevé technique
+
+Une fois tous les champs complétés :
+
+* Le technicien clique sur **“Valider le relevé technique”**.
+* L’application vérifie la complétude du formulaire (tous les champs obligatoires remplis).
+* Le relevé est enregistré et transmis automatiquement au dossier.
+
+Effets :
+
+* Le **rendez-vous** passe en **“Réalisé”**.
+* Le **dossier** passe en **“Devis à faire”**, déclenchant la tâche de chiffrage pour le bureau.
+* Le **journal du dossier** enregistre la création du RT avec la date, l’heure et l’auteur.
+* Les **fournitures sélectionnées** deviennent des **éléments préliminaires** du futur devis.
+
+---
+
+#### 5. Gestion et personnalisation des types de chiffrage
+
+Les administrateurs peuvent configurer les types de chiffrage :
+
+* Ajouter, modifier ou supprimer des modèles depuis la **Gestion des listes**.
+* Associer à chaque type :
+
+  * Des **champs obligatoires**,
+  * Des **catégories de produits**,
+  * Des **formulaires dédiés**.
+
+> Cette modularité permet d’adapter la saisie terrain à la diversité des métiers (plomberie, vitrerie, électricité, etc.).
+
+---
+
+### Corrélations et dépendances
+
+* #releve_technique ↔ #rendezvous : le RT est toujours lié à un rendez-vous spécifique.
+* #type_chiffrage ↔ #parametres : les modèles sont paramétrables via la gestion des listes.
+* #produits_base ↔ #catalogue : le RT puise ses fournitures dans la base produits commune aux devis.
+* #validation_rt ↔ #workflow_dossier : la validation d’un RT fait passer le dossier en “Devis à faire”.
+* #corrélation_auto : toutes les informations du RT alimentent automatiquement la préparation du devis.
+
+---
+
+### Astuces & points d’attention
+
+* Toujours choisir le **type de chiffrage adapté** à la nature de l’intervention.
+* Si un type spécifique n’existe pas encore, le signaler à l’administrateur pour création.
+* Le **relevé technique standard** reste la référence pour les chantiers simples.
+* Les **fournitures ajoutées** dans le RT seront reprises telles quelles dans le devis : vigilance sur les quantités et désignations.
+* Si plusieurs techniciens interviennent, indiquer correctement le **nombre total** et la **durée cumulée**.
+
+---
+
+### FAQ du thème
+
+**Q : Le technicien peut-il modifier un RT après validation ?**
+R : Non, il devient verrouillé. Seul le bureau peut le rouvrir ou le corriger.
+
+**Q : Où retrouver le relevé technique validé ?**
+R : Dans le dossier, sous le pavé “Documents associés” et dans la médiathèque du rendez-vous.
+
+**Q : Peut-on personnaliser les champs visibles dans un RT ?**
+R : Oui, via la gestion des listes → Types de chiffrage.
+
+**Q : Le RT génère-t-il automatiquement un devis ?**
+R : Non. Il crée une base de données technique que le bureau utilisera pour rédiger le devis.
+
+---
+
+### Synthèse narrative
+
+Le **relevé technique** est la passerelle entre le terrain et le chiffrage.
+Le technicien, grâce à une interface structurée et paramétrable, fournit les données essentielles pour la création du devis.
+Le lien direct avec la base produits garantit la cohérence des articles utilisés et la continuité du flux entre le relevé, le devis et la facturation.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v3.2
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. **Application Technicien** – v5.1
+
+   * 9.1 Interface du technicien
+   * 9.2 Gestion d’un rendez-vous attribué
+   * 9.3 Actions disponibles : *Je commence / Je ne peux pas*
+   * 9.4 Formulaire de dépannage
+   * 9.5 Formulaire d’assurance
+   * 9.6 Formulaire de relevé technique
+   * 9.7 **Types de chiffrage et relevé technique standard**
+   * 9.8 Validation du relevé technique et passage à “Devis à faire”
+   * 9.9 Génération et stockage automatique dans le dossier
+10. **Workflow & Statuts** – v4.1
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°16]
+**Thème détecté :** Application Technicien – Sous-thème *Relevé technique avancé et rendez-vous travaux*
+**Version globale :** v5.2
+**Corrélations ajoutées :** (#pdf_rt_auto, #postes_chiffrage, #rt_en_cours, #travaux_technicien, #pdf_travaux, #corrélation_auto:dossier_documents_facturation)
+
+---
+
+### Introduction du thème
+
+L’application technicien gère plusieurs typologies de rendez-vous : **Relevé technique**, **Dépannage**, **Assurance** et **Travaux**.
+Chaque type déclenche des formulaires, statuts et documents spécifiques.
+Ce chapitre détaille le **relevé technique multi-postes**, la **création automatique du PDF** associé, ainsi que la **logique du rendez-vous travaux**, étape finale du cycle d’exécution.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Validation et génération automatique du PDF de relevé technique
+
+Lorsque le technicien valide son **relevé technique**, le CRM génère **automatiquement un fichier PDF** en arrière-plan :
+
+* Ce **PDF du relevé technique** est ajouté dans le pavé **Documents associés** du dossier.
+* Le document est immédiatement accessible au **bureau**, facilitant sa transformation en **devis**.
+* Le fichier reprend :
+
+  * Les postes créés,
+  * Les descriptions et fournitures saisies,
+  * Les temps de main-d’œuvre estimés,
+  * Le technicien, la date et le lieu d’intervention.
+
+> Ce flux automatique évite au bureau toute ressaisie manuelle et garantit la traçabilité complète du relevé terrain.
+
+---
+
+#### 2. Relevé technique multi-postes
+
+Lors de la saisie du RT, la colonne de gauche permet de **gérer plusieurs postes** de chiffrage dans un même relevé.
+
+* Bouton **“+”** : permet d’ajouter un nouveau poste.
+* Chaque poste correspond à un **ensemble cohérent de travaux** ou à un **univers spécifique** :
+
+  * Exemple :
+
+    * Poste 1 → Relevé standard (préparation générale)
+    * Poste 2 → Vitrage
+    * Poste 3 → Chauffe-eau électrique
+
+Chaque poste possède ses propres :
+
+* **Description**,
+* **Liste de fournitures**,
+* **Main-d’œuvre**,
+* **Commentaires techniques**.
+
+> Cette approche modulaire permet au technicien de réaliser un relevé complet couvrant plusieurs corps de métier ou zones d’intervention sans multiplier les rendez-vous.
+
+---
+
+#### 3. Gestion du relevé non terminé
+
+Si le technicien ne finalise pas son RT :
+
+* Il clique sur **“Non terminé”**.
+* Le **rendez-vous** passe automatiquement en **RT en cours**.
+* Le **dossier** prend le même statut.
+
+Dans ce cas :
+
+* Le technicien retrouve ses dossiers partiellement renseignés dans son **tableau de bord “RT en cours”**.
+* Il peut rouvrir son relevé technique ultérieurement pour le compléter et le valider.
+
+> Ce système de sauvegarde intermédiaire évite la perte de données en cas d’interruption ou de manque d’informations sur site.
+
+---
+
+#### 4. Rendez-vous de type “Travaux”
+
+Le **rendez-vous travaux** est exclusivement déclenché après la **validation d’un devis**.
+Il représente la phase d’exécution des travaux prévus et validés.
+
+##### a. Démarrage du rendez-vous
+
+Le technicien a deux choix :
+
+* **Je ne peux pas** → il renseigne une cause, et le dossier passe en **À statuer**.
+* **Je commence** → il est redirigé directement sur la **page Travaux**.
+
+> Dans ce cas, aucun autre choix n’est proposé : l’intervention est cadrée par le devis validé.
+
+##### b. Réalisation des travaux
+
+Sur la page Travaux :
+
+* Le technicien remplit le **formulaire correspondant à l’apporteur** (chaque apporteur pouvant avoir son propre modèle).
+* Il saisit :
+
+  * **Travaux réalisés**,
+  * **Heure d’arrivée** et **heure de départ**,
+  * **Photos après travaux**,
+  * **Commentaires éventuels**.
+
+> La **photo avant** étant déjà présente dans le relevé technique, elle n’est pas redemandée.
+
+Le technicien doit :
+
+* Respecter le **contenu du devis validé**.
+* S’il a dû s’en écarter, il doit **justifier la modification** dans le champ “Commentaires”.
+
+---
+
+#### 5. Génération du document de travaux et signature
+
+À la fin de l’intervention :
+
+1. Le technicien clique sur **“Terminer l’intervention”**.
+2. Le système génère automatiquement un **PDF de travaux** à faire signer au client.
+3. Le client signe directement sur le terminal.
+4. Le technicien clique sur :
+
+   * **“J’ai pris connaissance du document”**, puis
+   * **“Générer le document signé”**.
+
+Le **PDF signé** est alors :
+
+* Ajouté au pavé **Documents associés** du dossier,
+* Horodaté et sécurisé,
+* Et déclenche le passage du **dossier à “À facturer”**.
+
+> Ce document signé constitue la preuve d’exécution et la base légale pour la facturation.
+
+---
+
+### Corrélations et dépendances
+
+* #pdf_rt_auto ↔ #dossier : le PDF de RT est automatiquement rattaché au dossier concerné.
+* #postes_chiffrage ↔ #types_chiffrage : chaque poste respecte la logique de chiffrage paramétrée dans les listes.
+* #rt_en_cours ↔ #workflow_dossier : synchronisation des statuts rendez-vous et dossier.
+* #travaux_technicien ↔ #devis : le rendez-vous travaux découle toujours d’un devis validé.
+* #pdf_travaux ↔ #documents : stockage automatique des documents signés de fin d’intervention.
+* #corrélation_auto : les validations RT ou travaux alimentent directement le pavé “Documents associés” et le module facturation.
+
+---
+
+### Astuces & points d’attention
+
+* Lors d’un RT multi-postes, chaque poste doit être **validé individuellement** avant la validation finale.
+* Le PDF généré reprend **l’ensemble des postes du relevé** dans un seul document.
+* Pour les travaux, toujours vérifier que le **devis source est bien validé** avant d’intervenir.
+* En cas d’écart entre travaux réalisés et devis, une note explicative est obligatoire.
+* Le **PDF signé** des travaux déclenche systématiquement la **facturation**.
+
+---
+
+### FAQ du thème
+
+**Q : Peut-on ajouter des postes après validation du RT ?**
+R : Non, le relevé devient verrouillé. Il faut créer un nouveau rendez-vous si un complément est nécessaire.
+
+**Q : Le technicien peut-il corriger un RT en cours ?**
+R : Oui, tant qu’il n’a pas validé. Les modifications sont possibles depuis le tableau “RT en cours”.
+
+**Q : Le rendez-vous travaux peut-il contenir plusieurs formulaires ?**
+R : Oui, selon l’apporteur. Chaque formulaire correspond à un document ou un format PDF différent.
+
+**Q : Où trouver les documents générés ?**
+R : Tous les PDF (RT, travaux, assurance) sont stockés dans le pavé **Documents associés** du dossier et dans la médiathèque correspondante.
+
+---
+
+### Synthèse narrative
+
+L’application technicien unifie les opérations terrain : relevés, dépannages et travaux.
+Le **relevé technique multi-postes** offre une granularité complète des chiffrages, tandis que les **rendez-vous travaux** assurent une exécution fidèle aux devis.
+Les **PDF automatiques**, signatures et synchronisations en arrière-plan rendent le suivi fluide et immédiat pour le bureau, tout en garantissant une conformité totale du workflow.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v3.2
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. **Application Technicien** – v5.2
+
+   * 9.1 Interface du technicien
+   * 9.2 Gestion d’un rendez-vous attribué
+   * 9.3 Actions disponibles : *Je commence / Je ne peux pas*
+   * 9.4 Formulaire de dépannage
+   * 9.5 Formulaire d’assurance
+   * 9.6 Formulaire de relevé technique
+   * 9.7 Types de chiffrage et RT standard
+   * 9.8 **PDF automatique du RT et relevé multi-postes**
+   * 9.9 Reprise et statut “RT en cours”
+   * 9.10 **Rendez-vous travaux et génération du PDF signé**
+10. **Workflow & Statuts** – v4.1
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°17]
+**Thème détecté :** Rendez-vous / Interventions – Sous-thème *Planning et préférences d’affichage*
+**Version globale :** v5.3
+**Corrélations ajoutées :** (#planning, #filtres_techniciens, #preferences_affichage, #types_rendezvous, #taches_planning, #amplitude_horaire, #vues_planning, #corrélation_auto:application_bureau_technicien)
+
+---
+
+### Introduction du thème
+
+Le **planning** est l’outil central de coordination entre le bureau et les techniciens.
+Il permet de **visualiser, filtrer et planifier les rendez-vous et les tâches** sur différentes échelles de temps.
+Son paramétrage précis garantit une lisibilité optimale et évite les erreurs de planification.
+Chaque utilisateur peut ajuster ses préférences pour adapter la vue à son usage.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Accès aux paramètres du planning
+
+Depuis l’interface principale du planning, cliquer sur le **symbole déployé “affiché colonne RDV”**.
+Cette action ouvre le panneau de **paramétrage des colonnes et préférences**.
+
+---
+
+#### 2. Filtrage des techniciens
+
+* **Filtrer les techniciens** : permet d’afficher un ou plusieurs techniciens spécifiques ou **tous les techniciens** en simultané.
+
+  * Pratique pour une supervision par secteur ou par métier.
+  * Les techniciens filtrés apparaissent en colonnes distinctes dans le planning.
+
+> Ce filtre est mémorisé par utilisateur, mais peut être réinitialisé à tout moment.
+
+---
+
+#### 3. Préférences d’affichage principales
+
+Les **préférences d’affichage** permettent d’adapter la présentation du planning à ses besoins.
+
+**Carte des rendez-vous**
+
+* Active ou masque l’affichage des cartes de rendez-vous dans les colonnes.
+
+**Couleur des cartes**
+
+* Il est conseillé de laisser **“Technicien”** comme référence couleur,
+  garantissant une distinction claire entre les intervenants.
+
+**Transparence des interventions non confirmées**
+
+* À **activer impérativement** : les rendez-vous non confirmés apparaissent légèrement translucides.
+  Cela permet de distinguer les créneaux fermes des interventions à valider.
+
+**Icône de statut des rendez-vous**
+
+* Active l’affichage du **statut visuel** via un pictogramme :
+
+  * 🔵 **Camembert vert à moitié plein** → Rendez-vous *Planifié*.
+  * 🟢 **Vert plein** → Rendez-vous *Réalisé*.
+  * 🔴 **Rouge plein** → Rendez-vous *À reprogrammer*.
+
+---
+
+#### 4. Informations complémentaires à afficher
+
+Les éléments ci-dessous peuvent être activés, mais ils alourdissent visuellement le planning :
+
+* **Univers** : affiche le domaine d’intervention (ex. : vitrerie, plomberie).
+* **Apporteur** : montre le donneur d’ordre du dossier.
+* **Chargé de dossier** : utile pour la coordination interne.
+* **Département** : pertinent uniquement pour les structures multi-sites.
+
+> Recommandation : activer seulement les champs nécessaires au poste de l’utilisateur.
+
+---
+
+#### 5. Filtres par type de rendez-vous
+
+Il est possible de n’afficher que certains **types de rendez-vous** :
+
+* *Travaux*
+* *SAV / Dépannage*
+* *Relevés techniques*
+* *Assurance*
+
+> Très utile pour préparer les tournées ou isoler les chantiers à suivre.
+> La sélection multiple est autorisée.
+
+---
+
+#### 6. Gestion des tâches dans le planning
+
+Les **tâches** sont visibles sur le planning au même titre que les rendez-vous.
+Par défaut, elles sont affichées, mais il est possible de les désactiver.
+
+⚠️ **Attention :** désactiver les tâches peut entraîner des oublis, notamment si celles-ci servent à :
+
+* faire passer un technicien **chez un fournisseur**,
+* **récupérer du matériel** ou **des clés**,
+* effectuer un **passage en déchetterie**, etc.
+
+Options de présentation :
+
+* Afficher les tâches **par technicien**.
+* Coloriser les tâches **par importance** (selon leur niveau de priorité).
+
+---
+
+#### 7. Structure horaire du planning
+
+Plusieurs paramètres permettent d’ajuster la lecture du temps :
+
+* **Afficher ou non les week-ends**.
+* **Amplitude horaire** personnalisable :
+
+  * Par défaut : **8h à 18h**.
+  * Recommandé : **7h à 19h** pour une vision élargie.
+* **Granulation des créneaux** :
+
+  * Par défaut : **30 minutes**.
+  * Possible : **15, 45 ou 60 minutes** selon les besoins.
+
+> Ces réglages modifient la densité et la précision de l’affichage.
+
+---
+
+#### 8. Options techniques de planification
+
+* **Désactiver la tête des techniciens** : masque la ligne d’identification en haut de chaque colonne.
+* **Afficher les pauses** : bloque la période méridienne pour éviter la planification entre 12h et 14h.
+* **Confirmation avant modification** :
+
+  * Toujours laissée **activée** pour éviter toute erreur de déplacement ou suppression.
+* **Rafraîchissement automatique** :
+
+  * Permet au planning de se mettre à jour en temps réel.
+* **Autoriser les chevauchements** :
+
+  * Autorise la superposition visuelle de plusieurs rendez-vous pour un même technicien.
+  * À n’utiliser que si nécessaire, car cela peut rendre la lecture confuse.
+
+---
+
+#### 9. Navigation rapide dans le planning
+
+En haut du planning, plusieurs **icônes de navigation** facilitent la gestion du temps :
+
+| Icône | Fonction                                                           |
+| ----- | ------------------------------------------------------------------ |
+| 🔁    | **Rafraîchissement instantané** du planning                        |
+| ⬅️➡️  | **Changer de jour / semaine** selon la vue                         |
+| 📅    | **Afficher la semaine en cours**                                   |
+| 🗓️   | **Mini-calendrier** pour accéder directement à une date spécifique |
+
+---
+
+#### 10. Modes de vue disponibles
+
+Sur la partie droite de la barre d’outils, différentes **vues du planning** sont disponibles :
+
+| Icône | Vue                                                         | Description                                                |
+| ----- | ----------------------------------------------------------- | ---------------------------------------------------------- |
+| ①     | **Mois complet**                                            | Vue globale sur 30 jours                                   |
+| ②     | **Semaine**                                                 | Vue par semaine classique                                  |
+| ③     | **Jour**                                                    | Détail d’une seule journée                                 |
+| ④     | **Liste jour**                                              | Liste chronologique des rendez-vous d’un jour              |
+| ⑤     | **Jour par technicien**                                     | Vue détaillée technicien par technicien                    |
+| ⑥     | **Semaine horizontale par technicien**                      | Vue en ligne par intervenant                               |
+| ⑦     | **Mois horizontal**                                         | Vue mensuelle condensée                                    |
+| ⑧     | **Deux jours – Techniciens en lignes / Heures en colonnes** | Vue mixte très utile pour les urgences ou tournées rapides |
+
+> Les vues peuvent être changées à la volée, sans perte de filtre ni de sélection.
+
+---
+
+### Corrélations et dépendances
+
+* #planning ↔ #rendezvous : affichage dynamique des rendez-vous planifiés.
+* #filtres_techniciens ↔ #application_technicien : synchronisation entre la vue bureau et mobile.
+* #preferences_affichage ↔ #utilisateur : préférences sauvegardées par profil.
+* #types_rendezvous ↔ #workflow : visibilité conditionnée par le type d’intervention.
+* #taches_planning ↔ #journal_dossier : les tâches planifiées sont enregistrées comme actions de suivi.
+* #corrélation_auto : tout changement d’affichage n’altère pas les données, uniquement la vue.
+
+---
+
+### Astuces & points d’attention
+
+* Toujours activer la **confirmation avant modification** pour éviter un déplacement accidentel.
+* Éviter d’afficher trop d’informations à la fois (univers, apporteurs, départements) pour garder une vue claire.
+* En cas d’oubli de tâches invisibles, vérifier que **l’affichage des tâches** est bien activé.
+* Le **mode “Semaine par technicien”** est le plus adapté pour les coordinations multi-sites.
+* Le **rafraîchissement automatique** est essentiel pour le suivi en temps réel des interventions.
+
+---
+
+### FAQ du thème
+
+**Q : Mes rendez-vous disparaissent du planning, pourquoi ?**
+R : Vérifiez les filtres actifs (type de rendez-vous, technicien, semaine affichée).
+
+**Q : Peut-on afficher le planning d’un seul technicien ?**
+R : Oui, en filtrant par technicien dans la colonne RDV.
+
+**Q : Les tâches planifiées apparaissent-elles dans l’application technicien ?**
+R : Non, seules les interventions y sont visibles. Les tâches sont destinées au suivi interne.
+
+**Q : Comment distinguer visuellement un rendez-vous planifié d’un réalisé ?**
+R : Grâce à l’icône de statut : vert plein = réalisé, vert clair = planifié, rouge = à reprogrammer.
+
+---
+
+### Synthèse narrative
+
+Le **planning** constitue l’interface de contrôle centralisée du CRM.
+Grâce à son haut niveau de personnalisation, il s’adapte aux besoins de chaque service — supervision, planification, logistique ou coordination technique.
+Ses filtres précis, sa navigation rapide et ses vues multiples assurent un pilotage fluide et fiable de l’activité quotidienne.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v5.3
+
+   * 4.1 Prise de rendez-vous depuis un dossier
+   * 4.2 Validation et passage au statut planifié
+   * 4.3 Création directe depuis le planning
+   * 4.4 Déplacement et modification d’un rendez-vous
+   * 4.5 Statuts des rendez-vous
+   * 4.6 Application Technicien
+
+     * RT, dépannage, travaux, assurance
+   * 4.7 **Planning et préférences d’affichage**
+5. (à venir) Devis & Commandes
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. **Application Technicien** – v5.2
+10. **Workflow & Statuts** – v4.1
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°18]
+**Thème détecté :** Devis & Commandes – Sous-thème *Création d’un devis à partir du relevé technique*
+**Version globale :** v6.0
+**Corrélations ajoutées :** (#creation_devis, #releve_technique_source, #documents_associes, #apporteur_facturation, #barème_tarifaire, #articles_catalogue, #rentabilite_devis, #corrélation_auto:dossier_vers_devis)
+
+---
+
+### Introduction du thème
+
+Le **devis** constitue la traduction chiffrée et contractuelle du **relevé technique** effectué par le technicien.
+Sa création repose sur les données remontées du terrain, qu’il est possible de consulter via le **PDF du relevé technique** ou directement dans le **rendez-vous “Relevé technique”**.
+La précision du devis dépend donc directement de la qualité des informations saisies par le technicien.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Récupération du relevé technique
+
+Deux méthodes sont possibles pour accéder aux informations du relevé technique :
+
+1. **Depuis les documents associés**
+
+   * Le PDF du **relevé technique du technicien** est automatiquement généré lors de sa validation.
+   * Ce document se trouve dans le pavé **Documents associés** du dossier.
+   * C’est la méthode la plus rapide pour visualiser l’ensemble des informations.
+
+2. **Depuis le rendez-vous du technicien**
+
+   * Ouvrir le pavé **Rendez-vous** du dossier.
+   * Cliquer sur le rendez-vous intitulé **“Relevé technique”**.
+   * Accéder à l’onglet **Relevé technique** pour consulter les données directement dans le CRM.
+
+> Recommandation : travailler en **double écran** pour afficher d’un côté le relevé technique et de l’autre le devis en cours de création.
+
+---
+
+#### 2. Création d’un nouveau devis
+
+Dans le pavé **Devis** à droite du dossier :
+
+* Cliquer sur le **bouton bleu “+”** pour **ajouter un nouveau devis**.
+* Une **fenêtre de création** s’ouvre.
+
+##### a. Page “Générale”
+
+Cette page sert au **paramétrage du devis** :
+
+* **Adresse du devis** : choisir si le devis doit être adressé à **l’apporteur** ou au **client final**.
+
+  * Ce paramètre peut être préconfiguré dans la fiche de l’apporteur.
+* **Date du devis** et **date de validité** : modifiables selon les usages (ex. : validité 30 jours).
+* **Titre du devis** : renseigner un libellé clair (ex. “Remplacement vitrage chambre parentale”).
+* **Commentaires internes** : visibles uniquement en interne, ne s’impriment pas sur le devis.
+* **Informations supplémentaires** : pour des notes administratives invisibles sur le document final.
+
+---
+
+#### 3. Ajout des articles au devis
+
+Cliquer sur l’onglet **Contenu**.
+
+Plusieurs méthodes existent pour ajouter des articles :
+
+##### a. Saisie directe
+
+* Cliquer dans la **barre de recherche** en haut du tableau des lignes.
+* Par défaut, seuls les **produits liés à l’apporteur du dossier** s’affichent :
+
+  * **Barème de l’apporteur** (tarif contractuel).
+  * **Produits d’agence** (tarif interne).
+* Naviguer dans le menu déroulant et sélectionner les **libellés** souhaités.
+
+##### b. Recherche par mot-clé
+
+* Taper un mot-clé (ex. : “vitrage”, “robinet”, “peinture”) pour retrouver rapidement un article précis.
+
+##### c. Sélection multiple via le caddie jaune
+
+* Cliquer sur l’icône **🛒 (caddie jaune)**.
+* Ouvre la **gestion des articles** complète.
+* Sélectionner plusieurs lignes à la fois puis cliquer sur **“Ajouter les articles”**.
+* Tous les articles apparaissent d’un coup sur le devis.
+
+> Les quantités peuvent ensuite être ajustées ligne par ligne.
+
+---
+
+#### 4. Paramètres financiers du devis
+
+* **TVA** :
+
+  * Ajustable via l’icône de réglage ⚙️.
+  * Modification possible pour **l’ensemble du devis** ou **par ligne**.
+* **Remises** :
+
+  * En **€** ou en **%**, applicables globalement ou sur une ligne.
+* **Acompte** :
+
+  * Défini en **€** ou en **%** du total HT, selon les conditions négociées avec l’apporteur.
+
+---
+
+#### 5. Rentabilité et coût de revient
+
+Cliquer sur **“Afficher la rentabilité”** pour activer la colonne **PA** (prix d’achat).
+
+* Les **prix d’achat** doivent être renseignés soit :
+
+  * Dans la **fiche produit**, soit
+  * Directement dans la colonne **PA** du devis.
+* Le système calcule automatiquement :
+
+  * Le **coût total d’achat**,
+  * Le **montant total HT**,
+  * Et la **marge brute**.
+
+> Pour la main-d’œuvre, il est conseillé de renseigner un **coût de revient horaire** standard.
+
+---
+
+#### 6. Calculatrice intégrée
+
+L’icône de **calculatrice** permet d’effectuer des calculs rapides :
+
+* Surfaces, volumes, linéaires, conversions, etc.
+* Le résultat est directement injecté dans la colonne **quantité** de la ligne active.
+
+---
+
+### Corrélations et dépendances
+
+* #creation_devis ↔ #releve_technique : le devis prend pour base les informations du RT.
+* #releve_technique_source ↔ #documents_associes : le PDF du RT est stocké automatiquement dans le dossier.
+* #apporteur_facturation ↔ #barème_tarifaire : les tarifs affichés dépendent du barème lié à l’apporteur.
+* #articles_catalogue ↔ #produits_base : le devis s’alimente directement dans la base produit commune.
+* #rentabilite_devis ↔ #comptabilite : les marges calculées peuvent alimenter les rapports de performance.
+* #corrélation_auto : la création du devis met à jour le statut du dossier vers “Devis en cours”.
+
+---
+
+### Astuces & points d’attention
+
+* Toujours vérifier que le **devis est adressé à la bonne entité** (apporteur ou client).
+* En cas de barème spécifique, contrôler que l’apporteur est bien lié dans le dossier avant création.
+* Utiliser le **caddie jaune** pour gagner du temps lors de la saisie multi-lignes.
+* Ne pas oublier de renseigner les **prix d’achat** pour une analyse de rentabilité fiable.
+* Les **commentaires internes** servent à communiquer entre les membres du bureau, sans apparaître sur le devis client.
+
+---
+
+### FAQ du thème
+
+**Q : Puis-je modifier un devis après validation ?**
+R : Oui, tant qu’il n’a pas été envoyé. Une fois envoyé, il devient verrouillé.
+
+**Q : Comment retrouver un produit non visible dans la liste ?**
+R : Vérifiez le barème lié à l’apporteur ou élargissez la recherche à la base “produits agence”.
+
+**Q : Où apparaissent les documents du devis ?**
+R : Dans le pavé **Documents associés** du dossier, au même niveau que le relevé technique.
+
+**Q : Le devis reprend-il automatiquement les fournitures du relevé technique ?**
+R : Non, elles doivent être ajoutées manuellement en s’appuyant sur le relevé.
+
+---
+
+### Synthèse narrative
+
+La création du devis est l’étape clé de la transformation du relevé technique en proposition commerciale.
+Le CRM centralise les données du technicien, le barème de l’apporteur et les catalogues produits pour simplifier la saisie et fiabiliser la marge.
+Grâce à la liaison entre le relevé technique, le devis et les documents associés, le flux reste cohérent du terrain jusqu’à la facturation.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v5.3
+5. **Devis & Commandes** – v6.0
+
+   * 5.1 Création d’un devis à partir du relevé technique
+   * 5.2 Paramètres du devis : apporteur, dates et adresses
+   * 5.3 Ajout et gestion des articles
+   * 5.4 Rentabilité, remises et acomptes
+   * 5.5 Calculatrice intégrée et ajustement des quantités
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. **Application Technicien** – v5.2
+10. **Workflow & Statuts** – v4.1
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°19]
+**Thème détecté :** Devis & Commandes – Sous-thèmes *Outils de composition du devis et cycle de validation / commandes*
+**Version globale :** v6.2
+**Corrélations ajoutées :** (#outils_devis, #ajout_texte, #ouvrages, #medias_devis, #saut_de_page, #annexes, #envoi_devis, #validation_devis, #commandes, #statut_commande, #corrélation_auto:dossier_flux_devis_commande)
+
+---
+
+### Introduction du thème
+
+Une fois le contenu du devis constitué, le CRM met à disposition plusieurs **outils d’édition avancée** pour structurer et enrichir la présentation du document.
+Ces fonctionnalités permettent d’ajouter des titres, textes, photos, ouvrages et annexes pour produire un document professionnel et complet.
+Après validation, le devis suit un cycle automatisé de génération, d’envoi, de signature, puis de transformation en **commande**.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Outils à droite de la barre de sélection d’articles
+
+Chaque bouton dispose d’une fonction spécifique facilitant la mise en forme du devis.
+
+| Icône               | Fonction             | Description                                                                                                               |
+| ------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 🛒 **Caddie jaune** | Sélection d’articles | Permet d’ajouter plusieurs lignes depuis la base d’articles.                                                              |
+| 📘 **Ouvrage**      | Ouvrages complets    | Ouvre la liste des **ouvrages configurés dans la gestion des articles** (ensembles pré-définis de postes et fournitures). |
+| **AA**              | Texte libre          | Ajoute une ligne de **texte descriptif** non chiffré dans le devis.                                                       |
+| **H1**              | Titre                | Ajoute un **titre principal** au devis (chapitre ou catégorie).                                                           |
+| **H2**              | Sous-titre           | Permet d’insérer un **sous-chapitre** dans la même logique hiérarchique.                                                  |
+| 🖼️ **MÉDIAS**      | Photo ou image       | Ajoute une **photo sur une ligne** pour illustrer un poste ou un produit.                                                 |
+| ↩️ **Saut de page** | Mise en page         | Insère un **saut de page manuel** dans le PDF généré.                                                                     |
+
+> Ces outils permettent d’organiser les devis complexes par zones, lots ou univers, tout en conservant une présentation claire et hiérarchisée.
+
+---
+
+#### 2. Ajout de commentaires et descriptifs
+
+Deux zones supplémentaires permettent d’enrichir le devis :
+
+* **Descriptif du devis (haut)** : pour présenter le contexte, les objectifs ou les conditions générales du projet.
+* **Commentaire de bas de page** : pour indiquer des remarques finales, notes ou précisions particulières.
+
+> Ces zones apparaissent sur le PDF client, contrairement aux **commentaires internes** visibles uniquement en interne.
+
+---
+
+#### 3. Enregistrement et génération du devis
+
+Une fois le contenu finalisé :
+
+1. Cliquer sur **Enregistrer**.
+2. Cliquer ensuite sur **Impression**.
+3. Sélectionner **Générer un document** → le **PDF du devis** est alors automatiquement créé.
+4. Le fichier apparaît dans le **pavé Documents associés** du dossier.
+
+---
+
+#### 4. Envoi, signature et suppression
+
+Depuis la fenêtre de visualisation du devis généré :
+
+* **✉️ Envoyer par mail** : via l’outil *ArrowBaz*, envoi direct au destinataire sélectionné.
+* **⬇️ Télécharger** : enregistre localement le PDF.
+* **🟡 Faire signer** : ouvre l’interface de **signature électronique** intégrée.
+* **🗑️ Supprimer** : retire le document du dossier.
+
+> Le CRM enregistre automatiquement la date d’envoi ou de signature et met à jour le statut du devis.
+
+---
+
+#### 5. Les différents onglets du module devis
+
+##### a. **Général**
+
+Déjà présenté précédemment, contient l’adresse, la date, les conditions et les paramètres financiers du devis.
+
+##### b. **Contenu**
+
+Permet de gérer toutes les lignes, ouvrages, textes et éléments visuels du devis.
+
+##### c. **Annexes**
+
+* Permet d’ajouter des **PDF complémentaires** à la suite du devis principal (plans, schémas, certificats, etc.).
+* Les **Conditions Générales de Vente (CGV)** sont **ajoutées automatiquement**.
+* L’ordre des annexes peut être ajusté avant génération.
+
+##### d. **Compléments**
+
+* Sert à détailler les **conditions de règlement** :
+
+  * Délais de paiement,
+  * Mode de règlement (virement, chèque, mandat, etc.).
+* Ces informations figurent sur le devis client.
+
+> Les onglets **RDV** et **Facturation** ne doivent pas être utilisés dans le processus standard.
+
+---
+
+#### 6. Statuts du devis
+
+* **En cours** : devis en rédaction, non envoyé.
+* **Envoyé** :
+
+  * Automatique lorsqu’un devis est envoyé par mail depuis le CRM.
+  * Doit être **forcé manuellement** si le devis est déposé sur un extranet ou envoyé par courrier (via la **flèche verte du statut**).
+* **Accepté** :
+
+  * Lorsqu’un devis est signé ou validé par le client.
+  * Le **dossier** passe alors automatiquement en **statut “Commandé”**.
+
+---
+
+#### 7. Création d’une commande
+
+Depuis le dossier, dans le pavé **Commandes** :
+
+* Cliquer sur le **bouton bleu “+”** pour **ajouter une commande**.
+* Une **fenêtre de gestion des commandes** s’ouvre.
+
+##### a. Informations générales
+
+* **Libellé** : court résumé du contenu de la commande.
+* **Date de commande** : se remplit automatiquement.
+* **Date de livraison estimée** : à renseigner manuellement.
+* **Articles commandés** : sélectionner les produits concernés (issus du devis accepté).
+* Modifier le **statut des articles** en *Commande*.
+
+##### b. Suivi de la commande
+
+1. Passer l’état général de la commande en **“En cours”**.
+
+   * Le dossier passe alors en **statut “Attente matériel”**.
+2. À réception du matériel :
+
+   * Ouvrir la commande.
+   * Passer chaque article en **“Reçu”**.
+   * Une **pop-up** s’affiche :
+
+     > “Souhaitez-vous passer la commande en état reçu ?”
+   * Cliquer sur **OK**.
+   * La commande passe en **statut Reçu** et le dossier passe automatiquement à **“Planifier travaux”**.
+
+> Le module Commandes est en évolution et pourra être amené à intégrer des fonctionnalités avancées de gestion de stock et de suivi fournisseur.
+
+---
+
+### Corrélations et dépendances
+
+* #outils_devis ↔ #articles_catalogue : les ouvrages et articles dépendent de la base articles.
+* #ajout_texte ↔ #pdf_generation : le texte libre est intégré dans la mise en page du devis.
+* #ouvrages ↔ #gestion_articles : la liste des ouvrages provient du module articles.
+* #medias_devis ↔ #documents : les images ajoutées sont stockées dans la médiathèque du dossier.
+* #validation_devis ↔ #workflow_dossier : validation du devis = dossier “Commandé”.
+* #commandes ↔ #dossier : chaque commande est liée à un dossier unique.
+* #statut_commande ↔ #planning : réception du matériel déclenche la planification des travaux.
+* #corrélation_auto : tous les documents générés (devis, commandes, annexes) alimentent le pavé “Documents associés”.
+
+---
+
+### Astuces & points d’attention
+
+* Les **ouvrages** sont des combinaisons d’articles récurrentes, utiles pour standardiser les devis.
+* Toujours vérifier que les **annexes** (plans, CGV, fiches produit) sont bien rattachées avant génération du PDF.
+* Si le devis est déposé manuellement sur un extranet, penser à forcer le statut en *Envoyé*.
+* Lors de la création de commande, ne pas oublier de **changer l’état de chaque article** en *Reçu* pour faire progresser le dossier.
+* Le bouton **Faire signer** est prioritaire pour les donneurs d’ordre externes ou les clients finaux.
+
+---
+
+### FAQ du thème
+
+**Q : Les ouvrages peuvent-ils être modifiés directement depuis un devis ?**
+R : Non, ils doivent être configurés dans la gestion des articles avant utilisation.
+
+**Q : Puis-je ajouter une photo sur plusieurs lignes du devis ?**
+R : Oui, chaque ligne peut comporter un média distinct.
+
+**Q : Que se passe-t-il si je n’envoie pas le devis depuis le CRM ?**
+R : Il restera au statut “En cours”. Vous devrez le passer manuellement en “Envoyé”.
+
+**Q : Est-ce que la commande se crée automatiquement après validation du devis ?**
+R : Non, elle doit être créée manuellement depuis le pavé “Commandes”.
+
+---
+
+### Synthèse narrative
+
+Le module **Devis & Commandes** est la charnière entre l’analyse technique et la mise en œuvre opérationnelle.
+Grâce à ses outils d’édition (ouvrages, textes, médias, annexes), il permet de produire des documents clairs et complets.
+Son intégration fluide avec le relevé technique, la signature électronique et la gestion des commandes assure un **workflow continu**, du chiffrage à la planification des travaux.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v5.3
+5. **Devis & Commandes** – v6.2
+
+   * 5.1 Création d’un devis à partir du relevé technique
+   * 5.2 Paramètres du devis : apporteur, dates et adresses
+   * 5.3 Ajout et gestion des articles
+   * 5.4 Outils de mise en forme du devis (ouvrages, textes, images, sauts de page)
+   * 5.5 Annexes, CGV et compléments
+   * 5.6 Envoi, signature et mise à jour du statut
+   * 5.7 Validation du devis et passage à “Commandé”
+   * 5.8 **Création, suivi et réception de commandes**
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. **Application Technicien** – v5.2
+10. **Workflow & Statuts** – v4.1
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°20]
+**Thème détecté :** Workflow & Statuts – Sous-thème *Gestion des listes : sous-statuts et pictogrammes*
+**Version globale :** v6.3
+**Corrélations ajoutées :** (#gestion_listes, #sous_statuts, #pictogrammes, #slug, #icons_fontawesome, #parametrage_dossier, #corrélation_auto:workflow_personnalisation)
+
+---
+
+### Introduction du thème
+
+La **gestion des listes** est un module de paramétrage avancé du CRM.
+Elle permet de créer, modifier ou dupliquer des **sous-statuts**, des **pictogrammes d’intervention**, et d’autres éléments liés aux workflows.
+Ces listes structurent la classification des dossiers, améliorent la lisibilité du planning et permettent de **personnaliser visuellement** les statuts selon la logique interne de l’entreprise.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Accès à la gestion des listes
+
+* Ouvrir le menu latéral.
+* Cliquer sur **« Gestion des listes »**.
+* En haut à droite, un **menu déroulant** permet de choisir la liste à afficher ou modifier.
+
+Les listes principales concernées sont :
+
+* **Sous-statuts** (workflow des dossiers)
+* **Pictogrammes d’intervention**
+
+---
+
+#### 2. Création d’un sous-statut
+
+Les **sous-statuts** permettent d’affiner le suivi d’un dossier au sein d’un statut principal (ex. : “À planifier” → “NRP”, “En attente retour client”, “Pause météo”, etc.).
+
+##### Étapes de création :
+
+1. Cliquer sur le **bouton bleu “+”**.
+2. Remplir les champs :
+
+   * **Nom** : titre du sous-statut (ex. : “Client injoignable”).
+   * **Type d’objet cible** : choisir **“Dossier”** (valeur la plus utilisée).
+   * **Statut principal** : sélectionner le **statut maître** auquel il sera rattaché.
+   * **Slug** : identifiant unique et parlant (ex. : `wf_project_injoignable`).
+
+     * Laisser le préfixe `wf_`.
+     * Utiliser un nom explicite (ex. : `wf_project_meteo`).
+   * **Icône** : personnalisation visuelle (voir étape suivante).
+   * **Couleur** et **fond** : permettent de coloriser l’affichage pour repérage rapide.
+3. Cliquer sur **Enregistrer** pour valider le sous-statut.
+
+> Chaque sous-statut créé apparaît ensuite dans la liste déroulante des statuts de dossier.
+
+---
+
+#### 3. Choix et personnalisation des icônes
+
+Pour attribuer une icône à un sous-statut ou un pictogramme :
+
+1. Cliquer sur **“Voir la liste”** à côté du champ d’icône.
+2. Le lien ouvre le site [**Font Awesome**](https://fontawesome.com/icons).
+3. Rechercher une icône représentative (ex. : “clock”, “cloud-sun”, “phone-slash”).
+4. Cliquer sur l’icône choisie puis copier la classe **`i class`** affichée.
+   Exemple :
+
+   ```
+   <i class="fas fa-cloud-sun"></i>
+   ```
+5. Coller cette classe dans le champ **icône** du CRM.
+6. Sélectionner une **couleur d’icône** et une **couleur de fond**.
+
+   * Exemple : gris clair pour “Pause météo”, rouge pour “Urgent”, bleu pour “NRP”.
+
+> L’icône et les couleurs apparaîtront ensuite dans le planning et dans le pavé “Statut” des dossiers.
+
+---
+
+#### 4. Duplication d’un sous-statut
+
+Pour gagner du temps lors de la création de plusieurs variantes :
+
+* Sélectionner un sous-statut existant.
+* Cliquer sur **“Dupliquer”**.
+* Modifier uniquement :
+
+  * Le **nom**,
+  * Le **slug**,
+  * Éventuellement la couleur ou l’icône.
+* Enregistrer.
+
+> Cette méthode permet de créer rapidement des familles de sous-statuts cohérents.
+
+---
+
+#### 5. Création d’un pictogramme d’intervention
+
+Les **pictogrammes d’intervention** permettent d’identifier visuellement certaines situations dans le **planning** ou sur les **rendez-vous techniciens**.
+
+Exemples d’usage :
+
+* ⛅ **En attente météo**
+* ⚙️ **Maintenance en cours**
+* 🧭 **Zone spécifique**
+* ⚡ **Urgence prioritaire**
+
+##### Étapes :
+
+1. Même procédure que pour les sous-statuts : cliquer sur **“+”**.
+2. Choisir le **type d’objet cible** selon l’usage (souvent “Rendez-vous”).
+3. Copier l’icône depuis Font Awesome.
+4. Paramétrer la **couleur d’icône** et de **fond**.
+5. Enregistrer.
+
+> Ces pictogrammes peuvent ensuite être attribués directement depuis le dossier ou le planning technicien.
+
+---
+
+#### 6. Autres listes disponibles
+
+D’autres catégories existent dans le module **Gestion des listes** :
+
+* Types de chiffrage
+* Types de rendez-vous
+* Statuts de facture
+* Univers métiers
+* Sources d’acquisition client
+
+Cependant, la création ou modification de ces listes nécessite une bonne compréhension du workflow global, car elles impactent directement les modules **Technicien**, **Devis** et **Facturation**.
+
+> Pour les utilisateurs standard, seules les listes *Sous-statuts* et *Pictogrammes d’intervention* sont à modifier librement.
+
+---
+
+### Corrélations et dépendances
+
+* #gestion_listes ↔ #workflow_dossier : les sous-statuts personnalisent la progression des dossiers.
+* #sous_statuts ↔ #planning : visibles dans les vues par technicien.
+* #pictogrammes ↔ #rendezvous : affichage contextuel dans les interventions.
+* #slug ↔ #base_donnees : identifiant interne des statuts et pictos.
+* #icons_fontawesome ↔ #interface_utilisateur : standardisation des symboles.
+* #corrélation_auto : tout changement de liste est instantanément appliqué au CRM.
+
+---
+
+### Astuces & points d’attention
+
+* Choisir des **icônes simples et parlantes** pour une lecture rapide.
+* Le **slug** ne doit contenir ni espace ni accent.
+* Éviter d’utiliser la même couleur pour plusieurs statuts similaires.
+* Lorsqu’un dossier est reclassé, le sous-statut précédent reste enregistré dans l’historique du journal.
+* Les pictogrammes d’intervention peuvent être utilisés pour créer des **alertes visuelles internes**.
+
+---
+
+### FAQ du thème
+
+**Q : Peut-on supprimer un sous-statut déjà utilisé ?**
+R : Non, il est conseillé de le désactiver ou de le renommer pour éviter les ruptures de lien.
+
+**Q : Les pictogrammes apparaissent-ils sur l’application technicien ?**
+R : Oui, si leur type d’objet cible est configuré sur “Rendez-vous”.
+
+**Q : Est-il possible de modifier l’ordre des sous-statuts ?**
+R : Non, ils sont affichés selon l’ordre de création, mais peuvent être renommés pour ajuster la hiérarchie.
+
+**Q : Peut-on appliquer plusieurs pictogrammes à un même dossier ?**
+R : Non, un seul picto est affiché à la fois par dossier.
+
+---
+
+### Synthèse narrative
+
+Le module **Gestion des listes** offre une grande flexibilité dans la personnalisation du CRM.
+Les **sous-statuts** permettent un suivi précis des dossiers selon la réalité opérationnelle, tandis que les **pictogrammes** facilitent la lecture visuelle du planning.
+Une configuration maîtrisée de ces éléments garantit un système homogène, intuitif et adapté aux besoins de chaque agence.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v5.3
+5. **Devis & Commandes** – v6.2
+6. (à venir) Facturation & Paiements
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. **Application Technicien** – v5.2
+10. **Workflow & Statuts** – v6.3
+
+* 10.1 Statuts de dossier
+* 10.2 Sous-statuts et icônes
+* 10.3 **Gestion des listes et pictogrammes**
+
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°21]
+**Thème détecté :** Facturation & Paiements – Sous-thème *Gestion et encaissement des franchises*
+**Version globale :** v6.4
+**Corrélations ajoutées :** (#franchise, #reglement, #pave_financier, #encaissement_technicien, #somme_a_reclamer, #paiement_cbcheck, #corrélation_auto:facture_flux_financier)
+
+---
+
+### Introduction du thème
+
+Le module **Franchise** gère les participations financières dues par les clients assurés ou par les apporteurs d’affaires, selon les conventions de gestion.
+La saisie correcte du **montant de franchise** dans le dossier permet au technicien ou au bureau de **collecter le paiement**, de **tracer la transaction**, et d’assurer le **report automatique sur la facture finale**.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Saisie de la franchise
+
+Lors de la **création d’un dossier** ou ultérieurement :
+
+* Ouvrir le dossier concerné.
+* Dans le **pavé Financier**, renseigner le **montant de la franchise** à percevoir.
+* Enregistrer le dossier.
+
+Effet immédiat :
+
+* Le champ “**Somme à percevoir**” dans le pavé financier prend la valeur du montant de franchise.
+* Ce montant devient visible pour le **technicien** dans son application.
+
+> Exemple : pour une intervention avec franchise de 120 €, la somme à percevoir sera automatiquement affichée sur le rendez-vous du technicien.
+
+---
+
+#### 2. Indication côté technicien
+
+Lorsqu’un rendez-vous est attribué au technicien :
+
+1. Il clique sur **“Je commence”** pour démarrer son intervention.
+2. L’application lui affiche la mention :
+   **“Franchise à récupérer”**.
+3. Lors de la **signature du document**, un pavé intitulé **“Somme à réclamer”** apparaît avec le montant de la franchise.
+4. Le technicien clique sur **“Perçu”**.
+
+---
+
+#### 3. Enregistrement du paiement par le technicien
+
+En cliquant sur **“Perçu”**, une **fenêtre de saisie** s’ouvre :
+
+* **Mode de règlement** :
+
+  * Sélection parmi :
+
+    * `CBCheck` (carte ou chèque)
+    * `SPS` (solution de paiement sécurisée)
+* **Montant** :
+
+  * Prérempli automatiquement avec la somme de la franchise.
+* **Justificatif** :
+
+  * Le technicien doit **prendre une photo** du paiement (ex. : terminal, chèque, reçu).
+  * Ajouter la photo directement dans la fenêtre.
+* **Validation** :
+
+  * Cliquer sur **Enregistrer**.
+
+Résultat :
+
+* Le paiement apparaît immédiatement dans la **liste des règlements** du pavé financier du dossier.
+* Une **coche verte** indique que le montant a bien été encaissé.
+* La **somme à percevoir** passe à **0 €**.
+* Le dossier affiche alors “Franchise réglée”.
+
+> Ce flux garantit la traçabilité du paiement et le lien automatique avec la facturation.
+
+---
+
+#### 4. Enregistrement d’un règlement par le bureau
+
+La franchise peut également être encaissée **directement par le bureau**, par exemple :
+
+* Si le client se présente à l’agence.
+* Si le paiement est reçu par virement.
+
+Procédure :
+
+1. Dans le dossier, aller dans le **pavé Financier**.
+2. Cliquer sur le **bouton bleu “+”** dans la section **Règlements**.
+3. Saisir :
+
+   * Le **montant** encaissé.
+   * Le **mode de paiement**.
+   * Un **commentaire** si nécessaire (ex. : “Franchise reçue en agence”).
+4. Enregistrer.
+
+Effet :
+
+* Le règlement est ajouté à la liste des paiements.
+* Le dossier est mis à jour automatiquement.
+* La franchise est marquée comme **perçue**.
+
+---
+
+#### 5. Report automatique sur la facture
+
+Une fois le devis transformé en facture :
+
+* Le **montant de la franchise** déjà encaissé est automatiquement **reporté sur la facture**.
+* Le système indique que la franchise a été réglée, sans nécessiter de ressaisie.
+* La facture reflète le solde exact à percevoir (si solde restant).
+
+> Le bureau n’a donc **aucune action supplémentaire** à effectuer à ce stade.
+
+---
+
+### Corrélations et dépendances
+
+* #franchise ↔ #pave_financier : saisie du montant à percevoir.
+* #encaissement_technicien ↔ #rendezvous : intégration automatique du paiement à la fin de l’intervention.
+* #somme_a_reclamer ↔ #signature_document : visible au moment de la validation client.
+* #paiement_cbcheck ↔ #facturation : flux de paiement traçable jusqu’à la facture finale.
+* #reglement ↔ #workflow_dossier : le passage en “Franchise réglée” met à jour l’état du dossier.
+* #corrélation_auto : les paiements enregistrés sont automatiquement inclus dans la facturation et les exports comptables.
+
+---
+
+### Astuces & points d’attention
+
+* Toujours vérifier que la **franchise est renseignée** avant d’attribuer le rendez-vous au technicien.
+* Le **technicien doit impérativement joindre une photo du justificatif** pour validation comptable.
+* Le **mode de règlement** choisi par le technicien doit correspondre à un moyen réel (CB, chèque, SPS).
+* En cas de franchise non perçue, le dossier reste signalé avec une **somme à percevoir > 0 €**.
+* Les franchises perçues apparaissent dans les **rapports financiers et journaux d’encaissement**.
+
+---
+
+### FAQ du thème
+
+**Q : Que faire si le technicien oublie de percevoir la franchise ?**
+R : Le bureau peut l’enregistrer manuellement dans le pavé financier.
+
+**Q : Peut-on encaisser une franchise partiellement ?**
+R : Oui, il suffit d’enregistrer plusieurs règlements pour atteindre le montant total.
+
+**Q : Comment vérifier qu’une franchise a été bien transmise à la facture ?**
+R : Ouvrir la facture dans le dossier : le montant apparaît automatiquement en ligne de règlement déjà reçu.
+
+**Q : Le technicien peut-il supprimer un règlement de franchise ?**
+R : Non, seule l’administration peut le supprimer ou le corriger.
+
+---
+
+### Synthèse narrative
+
+Le traitement des **franchises** assure la continuité entre l’intervention terrain, la comptabilité et la facturation.
+Grâce à la synchronisation entre le **pavé financier**, l’**application technicien** et le **module facturation**, chaque encaissement est tracé, justifié et reporté automatiquement.
+Le système garantit ainsi une gestion fluide et conforme des paiements partiels dus à la charge du client.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v5.3
+5. **Devis & Commandes** – v6.2
+6. **Facturation & Paiements** – v6.4
+
+   * 6.1 **Gestion et encaissement des franchises**
+   * (à venir) Création, envoi et suivi de facture
+   * (à venir) Gestion des règlements multiples et relances
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. **Application Technicien** – v5.2
+10. **Workflow & Statuts** – v6.3
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°22]
+**Thème détecté :** Facturation & Paiements – Sous-thème *Gestion et facturation des acomptes*
+**Version globale :** v6.5
+**Corrélations ajoutées :** (#acompte, #reglement_bureau, #facture_acompte, #facture_prestation, #report_facture, #corrélation_auto:financier_facturation)
+
+---
+
+### Introduction du thème
+
+L’**acompte** fonctionne selon la même logique que la **franchise** : il s’agit d’un montant perçu avant la réalisation complète d’une prestation.
+Sa saisie correcte dans le dossier permet de garantir un **report automatique sur la facture finale**, sans doublon ni déséquilibre dans les règlements.
+Le module gère à la fois les **acomptes enregistrés manuellement** et la **création de factures d’acompte** officielles.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Enregistrement d’un acompte
+
+Un acompte peut être encaissé :
+
+* **Avant le début des travaux**, lors de l’acceptation du devis.
+* **Entre deux interventions**, pour garantir la poursuite du chantier.
+
+Procédure :
+
+1. Ouvrir le dossier concerné.
+2. Accéder au **pavé Financier**.
+3. Cliquer sur le **bouton bleu “+”** dans la section **Règlements**.
+4. Renseigner :
+
+   * **Montant** de l’acompte perçu.
+   * **Mode de règlement** (CB, virement, chèque).
+   * **Commentaire** si nécessaire (ex. : “Acompte de 30 % sur devis validé”).
+5. Enregistrer.
+
+Résultat :
+
+* Le règlement apparaît dans la liste des paiements.
+* Le montant perçu est automatiquement pris en compte dans le **solde du dossier**.
+* L’acompte sera ensuite **répercuté automatiquement** sur la facture finale.
+
+> Cette méthode est la plus courante pour les acomptes gérés par le **bureau**.
+
+---
+
+#### 2. Création d’une facture d’acompte
+
+Le CRM permet d’éditer une **facture d’acompte** officielle, rattachée au dossier.
+
+##### Étapes :
+
+1. Cliquer sur le **bouton “+ Facture”** dans le pavé **Factures** du dossier.
+2. Une fenêtre s’ouvre avec deux choix :
+
+   * **Facture d’acompte**
+   * **Facture de prestation complète**
+3. Sélectionner **“Facture d’acompte”**.
+4. Le système propose automatiquement :
+
+   * Les informations du **client ou de l’apporteur**,
+   * Le **montant de l’acompte** (à saisir ou à confirmer).
+5. Cliquer sur **Enregistrer et générer le document**.
+
+Résultat :
+
+* Un **PDF de facture d’acompte** est généré.
+* Il apparaît dans le pavé **Documents associés**.
+* Le dossier enregistre un règlement correspondant au montant facturé.
+
+> La facture d’acompte peut être envoyée directement depuis le CRM, au même titre qu’une facture classique.
+
+---
+
+#### 3. Intégration de l’acompte dans la facture finale
+
+Lorsqu’une **facture complète** est ensuite générée :
+
+* Le CRM détecte automatiquement les **acomptes déjà enregistrés** sur le dossier.
+* Ces acomptes apparaissent dans la section **“Règlements déjà perçus”**.
+* Le **solde restant dû** est calculé automatiquement :
+
+  ```
+  Total facture - Montant acompte = Solde à payer
+  ```
+* Aucun doublon de facturation n’est créé.
+
+> Cela garantit la justesse des montants facturés et encaissés, tout en assurant la traçabilité comptable.
+
+---
+
+#### 4. Cas particuliers
+
+* Si un **acompte a été perçu mais non facturé**, il peut être ajouté **manuellement** comme règlement, sans facture d’acompte.
+* Si une **facture d’acompte** a été créée mais **aucun règlement reçu**, le solde du dossier restera en attente jusqu’à l’encaissement effectif.
+
+> La cohérence entre les **factures d’acompte** et les **règlements enregistrés** doit être vérifiée avant la clôture du dossier.
+
+---
+
+### Corrélations et dépendances
+
+* #acompte ↔ #facture_acompte : un acompte peut être enregistré seul ou via une facture dédiée.
+* #reglement_bureau ↔ #pave_financier : les acomptes sont saisis depuis le pavé financier du dossier.
+* #facture_prestation ↔ #facturation : les acomptes s’imputent automatiquement sur la facture finale.
+* #report_facture ↔ #documents_associes : les factures d’acompte sont visibles dans les documents du dossier.
+* #corrélation_auto : les montants encaissés sont liés au suivi comptable et déduits lors de la facturation complète.
+
+---
+
+### Astuces & points d’attention
+
+* Il est conseillé de facturer l’acompte pour les donneurs d’ordre institutionnels ou les assurances.
+* Pour les clients particuliers, un simple **règlement d’acompte** peut suffire, sans facture spécifique.
+* Le **montant de l’acompte** doit être cohérent avec les conditions du devis (ex. : 30 % à la commande).
+* Ne pas oublier de **lier la facture d’acompte** au dossier pour le suivi automatique.
+* Si plusieurs acomptes sont encaissés, le CRM les additionne avant génération de la facture finale.
+
+---
+
+### FAQ du thème
+
+**Q : Peut-on créer plusieurs factures d’acompte pour un même dossier ?**
+R : Oui, il suffit de répéter la création de facture d’acompte. Chacune sera déduite du montant final.
+
+**Q : Est-il possible d’encaisser un acompte avant validation du devis ?**
+R : Oui, mais cela doit être validé par la direction. Le montant sera visible dans le pavé financier dès la création du dossier.
+
+**Q : Que se passe-t-il si l’acompte est supérieur au total final ?**
+R : Le CRM affichera un solde créditeur et le bureau devra effectuer un remboursement manuel.
+
+**Q : L’acompte apparaît-il dans les exports comptables ?**
+R : Oui, chaque acompte facturé est intégré dans les journaux de vente et les règlements correspondants dans les journaux de banque.
+
+---
+
+### Synthèse narrative
+
+Le système d’**acomptes** assure un suivi transparent entre les paiements anticipés et la facturation finale.
+En enregistrant les acomptes dans le pavé financier ou via des **factures d’acompte**, le CRM garantit la cohérence entre les règlements perçus et les factures émises.
+Ce processus réduit les écarts comptables et simplifie la gestion des flux financiers liés aux travaux étalés dans le temps.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v5.3
+5. **Devis & Commandes** – v6.2
+6. **Facturation & Paiements** – v6.5
+
+   * 6.1 Gestion et encaissement des franchises
+   * 6.2 **Gestion et facturation des acomptes**
+   * (à venir) Création, envoi et suivi de facture
+   * (à venir) Gestion des règlements multiples et relances
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. **Application Technicien** – v5.2
+10. **Workflow & Statuts** – v6.3
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°23]
+**Thème détecté :** Facturation & Paiements – Sous-thème *Facturation d’un devis validé*
+**Version globale :** v6.6
+**Corrélations ajoutées :** (#facturation, #devis_valide, #facture_proforma, #facture_validee, #envoi_facture, #attente_paiement, #facture_payee, #corrélation_auto:workflow_financier)
+
+---
+
+### Introduction du thème
+
+La **facturation d’un devis validé** marque la transition entre la phase commerciale et la phase comptable du dossier.
+Le CRM permet de générer automatiquement la facture à partir du devis accepté, d’en vérifier le contenu, puis d’en assurer le suivi jusqu’au **paiement complet et la clôture du dossier**.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Passage du devis en facturation
+
+Sur un dossier comportant un **devis accepté**, la méthode la plus directe consiste à :
+
+1. Ouvrir le **devis concerné**.
+2. Changer son **statut** en cliquant sur la **flèche verte** à droite.
+3. Sélectionner **“Facturer”**.
+
+L’outil affiche une fenêtre de confirmation :
+
+> “Souhaitez-vous créer une facture ?”
+> Cliquer sur **Créer**.
+
+Une nouvelle fenêtre propose deux options :
+
+* **Devis complet** (la plus courante)
+* **Facture d’acompte** (si applicable)
+
+Sélectionner **Devis complet**.
+
+---
+
+#### 2. Création et vérification du contenu
+
+Après validation :
+
+* Le système crée une **facture proforma** (brouillon).
+* Cliquer sur l’onglet **Contenu** pour vérifier les lignes du devis transférées.
+* Vérifier :
+
+  * Quantités et montants HT/TTC
+  * TVA appliquée
+  * Adresse de facturation (client ou apporteur)
+
+> ⚠️ L’adresse de facturation dépend du paramétrage du dossier.
+> Elle peut être forcée via la **fiche apporteur** (option : “Facture au nom de l’apporteur”).
+
+Si tout est conforme :
+
+* Cliquer sur la **flèche verte** en haut à droite.
+* Sélectionner **Valider**.
+  La facture devient alors **définitive** (non modifiable).
+
+---
+
+#### 3. Génération et envoi de la facture
+
+Une fois la facture validée :
+
+1. Cliquer sur **Impression → Facture**.
+
+2. Cochez, si besoin, l’option **“Inclure les références articles”**, recommandée pour :
+
+   * Les apporteurs de type **Assurance**.
+   * Les barèmes comportant des codes produits.
+
+3. Cliquer sur **Générer le document**.
+
+4. Le PDF s’affiche :
+
+   * Cliquer sur le **bouton bleu** pour **télécharger** le fichier (extranet).
+   * Cliquer sur l’**@** pour **envoyer par e-mail** directement au client ou à l’apporteur.
+
+> Si la facture est envoyée par e-mail depuis le CRM, le statut passe automatiquement en **“En attente paiement”**.
+> Si elle est déposée manuellement (extranet, courrier), il faut forcer ce statut manuellement via la flèche verte.
+
+---
+
+#### 4. Gestion du paiement
+
+Dans l’onglet **Paiement** de la facture :
+
+* Le CRM affiche automatiquement :
+
+  * Les **franchises** encaissées.
+  * Les **acomptes** enregistrés.
+* Le **reste à payer** est calculé automatiquement.
+
+Dès réception du solde :
+
+1. Aller dans **Commercial → Facturation**.
+2. Rechercher la facture concernée.
+3. Ouvrir l’onglet **Paiement**.
+4. Cliquer sur le **“+” bleu**.
+5. Renseigner :
+
+   * Le **montant reçu**,
+   * Le **mode de règlement**,
+   * Un **commentaire** si nécessaire.
+6. Cliquer sur **Enregistrer**, puis à nouveau sur **Enregistrer** pour valider.
+
+La facture passe alors automatiquement en **Payée**.
+
+> Le dossier rattaché passe en **Clos**, marquant la fin du cycle de traitement.
+
+---
+
+### Corrélations et dépendances
+
+* #devis_valide ↔ #facturation : un devis accepté déclenche la création de la facture.
+* #facture_proforma ↔ #facture_validee : transition du brouillon vers le document officiel.
+* #envoi_facture ↔ #attente_paiement : changement de statut automatique après envoi.
+* #facture_payee ↔ #workflow_dossier : passage automatique du dossier en “Clos”.
+* #corrélation_auto : intégration des acomptes et franchises dans le solde final.
+
+---
+
+### Astuces & points d’attention
+
+* Toujours vérifier le **destinataire de facturation** avant validation (apporteur ou client).
+* Une facture **validée** ne peut plus être modifiée : relire avant d’appuyer sur la flèche verte.
+* L’**envoi direct depuis le CRM** permet une meilleure traçabilité et un suivi automatique.
+* Pour les **factures d’assurances**, ne pas oublier d’activer l’option “références articles”.
+* Si le paiement n’est pas reçu sous délai, le dossier apparaîtra dans la liste **“En attente paiement”** pour relance.
+
+---
+
+### FAQ du thème
+
+**Q : Peut-on modifier une facture validée ?**
+R : Non, il faut créer un avoir, puis une nouvelle facture corrigée.
+
+**Q : Que faire si le devis comporte plusieurs tranches ?**
+R : Créer plusieurs factures partielles, chacune sur la base du devis complet en sélectionnant les lignes à facturer.
+
+**Q : Le statut du dossier passe-t-il automatiquement à “Clos” ?**
+R : Oui, une fois la facture marquée “Payée”.
+
+**Q : Peut-on facturer un devis non validé ?**
+R : Non, le devis doit d’abord passer en statut “Accepté”.
+
+---
+
+### Synthèse narrative
+
+La facturation d’un devis validé est un processus automatisé et fluide.
+Le CRM gère l’ensemble des transitions : **devis → facture → envoi → paiement → clôture**.
+En respectant la séquence correcte (validation, contrôle, envoi, règlement), la traçabilité financière reste complète et conforme.
+Le système relie automatiquement les éléments financiers du dossier, éliminant toute ressaisie et réduisant les risques d’erreurs comptables.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v5.3
+5. **Devis & Commandes** – v6.2
+6. **Facturation & Paiements** – v6.6
+
+   * 6.1 Gestion et encaissement des franchises
+   * 6.2 Gestion et facturation des acomptes
+   * 6.3 **Facturation d’un devis validé**
+   * (à venir) Gestion des avoirs et relances
+7. (à venir) Comptabilité & Articles
+8. (à venir) Documents & Médias
+9. **Application Technicien** – v5.2
+10. **Workflow & Statuts** – v6.3
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°24]
+**Thème détecté :** Comptabilité & Articles – Sous-thème *Gestion et création d’articles / ouvrages*
+**Version globale :** v7.0
+**Corrélations ajoutées :** (#articles, #produits, #prestations, #deplacement, #sous_traitance, #ouvrage, #barème_apporteur, #univers, #tarifs_agence, #corrélation_auto:catalogue_commercial)
+
+---
+
+### Introduction du thème
+
+Le module **Gestion des articles** centralise l’ensemble des références utilisées pour les devis, commandes et factures.
+Il s’appuie sur une **base unifiée** intégrant les **barèmes des apporteurs**, les **produits fournisseurs**, et les **tarifs agence internes**.
+Chaque entreprise peut y ajouter, modifier ou regrouper ses propres articles afin de disposer d’un catalogue cohérent et exploitable dans l’ensemble du CRM.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Accès à la gestion des articles
+
+Depuis le menu principal :
+
+* Ouvrir **Commercial → Gestion des articles**.
+* Cliquer sur le bouton **“+ Article”** en vert pour créer une nouvelle fiche article.
+
+---
+
+#### 2. Création d’un article
+
+Lors de la création, le système demande de définir le **type d’article** :
+
+* **Produit** : matériel ou pièce spécifique.
+* **Prestation** : main-d’œuvre, service ou intervention.
+* **Déplacement** : frais kilométriques ou déplacement technique.
+* **Sous-traitance** : prestations externes refacturées.
+
+Renseigner ensuite les champs principaux :
+
+* **Désignation** : libellé clair de l’article.
+* **Référence fournisseur** : code ou SKU.
+* **Fournisseur** : entité associée.
+* **Commentaire** (facultatif).
+* **Univers** : rattachement à un univers métier (menuiserie, plomberie, vitrerie, etc.).
+* **En stock** : cocher si l’article est physiquement géré en stock.
+
+> Astuce : toujours bien sélectionner l’univers pour faciliter le classement et les filtres dans les devis.
+
+---
+
+#### 3. Paramétrage commercial
+
+Dans l’onglet **Commercial**, compléter :
+
+* **Prix de vente HT**
+* **Prix d’achat HT** (coût de revient estimé)
+* **TVA par défaut**
+* **Compte de vente** (si non défini globalement)
+
+Enregistrer ensuite l’article.
+Il sera automatiquement rattaché à la **famille de produits** sélectionnée.
+
+> Le rattachement familial est essentiel : il détermine la hiérarchie de l’article dans le catalogue (Famille → Sous-famille → Univers).
+
+---
+
+#### 4. Navigation et duplication
+
+Il est possible de :
+
+* **Déployer le menu latéral** pour atteindre la famille cible et y enregistrer un article directement.
+* **Naviguer via les icônes d’univers** (en haut de l’écran) pour filtrer l’affichage.
+* **Dupliquer un article existant** pour en créer un nouveau plus rapidement :
+
+  * Sélectionner un produit modèle.
+  * Cliquer sur **Dupliquer**.
+  * Modifier uniquement la désignation, le prix ou la référence.
+  * Enregistrer.
+
+> Cette méthode évite les erreurs de paramétrage sur les comptes ou la TVA.
+
+---
+
+#### 5. Création d’un ouvrage
+
+Les **ouvrages** permettent de regrouper plusieurs articles ou prestations en un seul bloc réutilisable.
+
+Procédure :
+
+1. Cliquer sur le bouton **Ouvrage**.
+2. Donner un **nom explicite** à l’ouvrage (ex. : “Remplacement vitrage 4/16/4”).
+3. Sélectionner un **univers**.
+4. Ajouter ensuite :
+
+   * Des **articles** (produits).
+   * Des **prestations** (main-d’œuvre).
+   * Des **déplacements** ou frais associés.
+
+Enregistrer l’ouvrage.
+Il sera alors disponible dans les devis et factures : un seul clic insère automatiquement **tous les éléments associés** dans le document.
+
+> Les ouvrages permettent de normaliser les chiffrages, d’accélérer la rédaction des devis et d’assurer la cohérence tarifaire.
+
+---
+
+### Corrélations et dépendances
+
+* #articles ↔ #produits : chaque article appartient à une famille et un univers.
+* #barème_apporteur ↔ #tarifs_agence : base tarifaire commune.
+* #ouvrage ↔ #devis : insertion rapide de groupes d’articles prédéfinis.
+* #sous_traitance ↔ #commandes : lien avec la gestion fournisseur.
+* #corrélation_auto : tout article ou ouvrage ajouté devient disponible dans les modules de devis, factures et commandes.
+
+---
+
+### Astuces & points d’attention
+
+* Les prix d’achat doivent être **tenus à jour** pour garantir des marges précises dans les devis.
+* Les ouvrages sont particulièrement utiles pour les **interventions répétitives** (ex. : changement de serrure, pose de chauffe-eau).
+* Il est conseillé d’utiliser un **préfixe logique** dans les références produits (ex. : “MEN_”, “PLO_”, “ELE_”).
+* Pour un usage optimal, chaque univers doit avoir son **ensemble d’articles de base** avant utilisation par les techniciens.
+* Les articles du **barème apporteur** ne doivent pas être modifiés, mais peuvent être dupliqués pour ajustement.
+
+---
+
+### FAQ du thème
+
+**Q : Puis-je modifier un article provenant du barème d’un apporteur ?**
+R : Non, il est recommandé de le dupliquer pour éviter les conflits de synchronisation.
+
+**Q : Quelle est la différence entre un article et un ouvrage ?**
+R : Un article est une ligne unique, un ouvrage regroupe plusieurs lignes (produits, main-d’œuvre, frais).
+
+**Q : Puis-je créer un article sans univers ?**
+R : Oui, mais il ne sera pas classé dans le catalogue et sera plus difficile à retrouver.
+
+**Q : Les ouvrages apparaissent-ils dans la recherche rapide des devis ?**
+R : Oui, ils sont accessibles via le bouton “Ouvrage” à droite de la barre de sélection d’articles.
+
+---
+
+### Synthèse narrative
+
+La **gestion des articles** constitue le socle du chiffrage et de la facturation dans Apogée.
+Elle centralise les produits, prestations et ouvrages nécessaires à la construction des devis et factures.
+Grâce à une structure hiérarchique claire (univers, familles, types d’articles) et à la possibilité de dupliquer ou regrouper des éléments, chaque entreprise peut adapter la base à ses besoins tout en conservant une cohérence tarifaire globale.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v5.3
+5. **Devis & Commandes** – v6.2
+6. **Facturation & Paiements** – v6.6
+7. **Comptabilité & Articles** – v7.0
+
+   * 7.1 **Gestion et création d’articles / ouvrages**
+8. (à venir) Documents & Médias
+9. **Application Technicien** – v5.2
+10. **Workflow & Statuts** – v6.3
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
+[Mise à jour du Manuel CRM – Session n°25]
+**Thème détecté :** Facturation & Paiements – Sous-thème *Création d’une facture sans devis préalable*
+**Version globale :** v6.7
+**Corrélations ajoutées :** (#facture_sans_devis, #facture_proforma, #facture_validee, #pave_facture, #corrélation_auto:facturation_directe)
+
+---
+
+### Introduction du thème
+
+Il est parfois nécessaire de **facturer directement un dossier**, sans passer par l’étape de devis.
+Ce cas s’applique notamment aux **interventions urgentes**, **petits dépannages** ou **prestations forfaitaires** réalisées sans chiffrage préalable.
+Le CRM permet de créer et valider une **facture directe** avec la même rigueur que pour un devis transformé.
+
+---
+
+### Déroulement fonctionnel
+
+#### 1. Accès à la création de facture
+
+Depuis le dossier concerné :
+
+1. Ouvrir le dossier.
+2. Dans le **pavé Factures**, cliquer sur le **bouton bleu “+”**.
+3. La fenêtre de **création de facture** s’ouvre automatiquement.
+
+---
+
+#### 2. Paramétrage général
+
+Dans l’onglet **Général**, vérifier les informations suivantes :
+
+* **Adresse de facturation** : client ou apporteur selon le cas.
+* **Date de la facture** et **date de validité** (modifiables).
+* **Commentaires internes** (non visibles sur le document).
+* **Délai de paiement** et **conditions générales**, si non renseignés automatiquement.
+
+> Astuce : pour les dossiers d’assurance, s’assurer que la facturation est bien paramétrée **au nom de l’apporteur**.
+
+Une fois les informations vérifiées, passer à l’onglet **Contenu**.
+
+---
+
+#### 3. Construction du contenu
+
+L’onglet **Contenu** permet d’ajouter les lignes de la facture :
+
+* Cliquer dans la **barre de recherche** pour afficher les familles de produits.
+* Rechercher les **articles** ou **prestations** à facturer.
+* Ajouter les lignes nécessaires à l’aide du **caddie jaune** ou du menu déroulant.
+* Ajuster les **quantités**, **prix unitaires**, et **TVA** si besoin.
+
+> Les mêmes outils sont disponibles que pour les devis : ajout de texte, titres, sous-titres, médias, ou sauts de page.
+
+Une fois la facture complète :
+
+* Cliquer sur **Enregistrer**.
+
+---
+
+#### 4. Validation de la facture
+
+Après enregistrement :
+
+1. La facture apparaît d’abord en **statut “Proforma”** (brouillon).
+2. Vérifier une dernière fois les montants et le contenu.
+3. Cliquer sur la **flèche verte** en haut à droite du document.
+4. Sélectionner **“Valider”**.
+
+La facture devient alors **définitive**.
+Elle n’est plus modifiable et peut être envoyée ou comptabilisée.
+
+---
+
+#### 5. Envoi et suivi
+
+* Cliquer sur **Impression → Facture** pour générer le PDF.
+* Envoyer la facture par e-mail via le symbole **@** ou la télécharger via le **bouton bleu**.
+* Si l’envoi est fait depuis le CRM, la facture passe automatiquement en **Attente paiement**.
+* En cas de dépôt manuel (extranet, courrier), modifier manuellement le statut avant d’enregistrer.
+
+---
+
+### Corrélations et dépendances
+
+* #facture_sans_devis ↔ #pave_facture : création directe dans le dossier.
+* #facture_proforma ↔ #facture_validee : même processus de validation que pour une facture issue d’un devis.
+* #corrélation_auto : l’ajout de produits dans la facture directe suit la même logique que le module devis.
+
+---
+
+### Astuces & points d’attention
+
+* Toujours vérifier la **TVA et le compte de vente** si la facture est créée sans devis (aucune reprise automatique).
+* En cas d’erreur de saisie après validation, il faut passer par une **note d’avoir**.
+* Cette méthode est idéale pour les **interventions express** sans formalisation préalable.
+* Les **documents liés (PDF, photos, relevés)** restent accessibles depuis la **médiathèque du dossier**.
+* Si un acompte ou une franchise a déjà été perçu, ils seront automatiquement **déduits du montant à facturer**.
+
+---
+
+### FAQ du thème
+
+**Q : Peut-on créer plusieurs factures directes sur un même dossier ?**
+R : Oui, tant que le dossier n’est pas clos. Chaque facture sera indépendante.
+
+**Q : Une facture directe impacte-t-elle le statut du dossier ?**
+R : Oui, elle le fait passer automatiquement en **Facturé**, puis en **Clos** une fois le paiement enregistré.
+
+**Q : La rentabilité est-elle calculée sur les factures sans devis ?**
+R : Oui, si les prix d’achat sont renseignés sur les articles utilisés.
+
+**Q : Faut-il un ordre de mission pour créer une facture directe ?**
+R : Non, mais il est conseillé de rattacher le dossier à un rendez-vous pour assurer la traçabilité.
+
+---
+
+### Synthèse narrative
+
+La **facturation directe** simplifie le traitement des interventions rapides ou urgentes sans devis.
+Elle conserve la même structure que la facturation classique : saisie, vérification, validation et envoi.
+Grâce à la cohérence du module, tous les éléments financiers (acomptes, franchises, règlements) s’intègrent automatiquement dans le flux comptable du dossier, garantissant une gestion homogène et rapide.
+
+---
+
+### Sommaire global mis à jour
+
+1. **Initialisation globale** – v0.1
+2. **Client** – v1.1
+3. **Dossier / Projet** – v2.5
+4. **Rendez-vous / Interventions** – v5.3
+5. **Devis & Commandes** – v6.2
+6. **Facturation & Paiements** – v6.7
+
+   * 6.1 Gestion et encaissement des franchises
+   * 6.2 Gestion et facturation des acomptes
+   * 6.3 Facturation d’un devis validé
+   * 6.4 **Création d’une facture sans devis préalable**
+7. **Comptabilité & Articles** – v7.0
+8. (à venir) Documents & Médias
+9. **Application Technicien** – v5.2
+10. **Workflow & Statuts** – v6.3
+11. (à venir) Reporting / Suivi
+
+[Fin de la mise à jour]
