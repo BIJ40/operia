@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, Search } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
 import { 
   SidebarProvider, 
@@ -40,6 +40,7 @@ export default function Home() {
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('');
   const [editColor, setEditColor] = useState<ColorPreset>('white');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const categories = blocks
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
@@ -165,9 +166,18 @@ export default function Home() {
         <div className="flex-1 flex flex-col min-h-screen">
           <Header onOpenLogin={() => setLoginOpen(true)} />
           
-          <div className="flex items-center gap-2 px-4 py-2 border-b bg-background/95 backdrop-blur">
+          <div className="flex items-center gap-2 px-4 py-3 border-b bg-background/95 backdrop-blur">
             <SidebarTrigger />
-            <span className="text-sm text-muted-foreground">Menu</span>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Rechercher dans Mme MICHU..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-9"
+              />
+            </div>
           </div>
 
           <main className="flex-1 px-4 py-8 max-w-7xl mx-auto w-full">
