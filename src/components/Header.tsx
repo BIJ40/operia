@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { IconPicker } from '@/components/IconPicker';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // Import all available icons for dynamic mapping
 import * as LucideIcons from 'lucide-react';
@@ -19,10 +19,41 @@ export function Header({ onOpenLogin }: HeaderProps) {
   const { blocks, isEditMode, toggleEditMode, updateBlock } = useEditor();
   const { isAuthenticated, logout } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [guideIcon, setGuideIcon] = useState('Home');
-  const [faqIcon, setFaqIcon] = useState('HelpCircle');
-  const [editIcon, setEditIcon] = useState('Edit3');
-  const [stopIcon, setStopIcon] = useState('Square');
+  
+  // Load icons from localStorage or use defaults
+  const [guideIcon, setGuideIcon] = useState(() => 
+    localStorage.getItem('guideIcon') || 'Home'
+  );
+  const [faqIcon, setFaqIcon] = useState(() => 
+    localStorage.getItem('faqIcon') || 'HelpCircle'
+  );
+  const [editIcon, setEditIcon] = useState(() => 
+    localStorage.getItem('editIcon') || 'Edit3'
+  );
+  const [stopIcon, setStopIcon] = useState(() => 
+    localStorage.getItem('stopIcon') || 'Square'
+  );
+
+  // Save to localStorage when icons change
+  const handleGuideIconChange = (icon: string) => {
+    setGuideIcon(icon);
+    localStorage.setItem('guideIcon', icon);
+  };
+
+  const handleFaqIconChange = (icon: string) => {
+    setFaqIcon(icon);
+    localStorage.setItem('faqIcon', icon);
+  };
+
+  const handleEditIconChange = (icon: string) => {
+    setEditIcon(icon);
+    localStorage.setItem('editIcon', icon);
+  };
+
+  const handleStopIconChange = (icon: string) => {
+    setStopIcon(icon);
+    localStorage.setItem('stopIcon', icon);
+  };
   
   // Find FAQ category
   const faqCategory = blocks.find(
@@ -135,6 +166,9 @@ export function Header({ onOpenLogin }: HeaderProps) {
         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Paramètres de l'interface</DialogTitle>
+            <DialogDescription>
+              Personnalisez les icônes de votre guide en important vos propres images
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 overflow-y-auto flex-1 pr-2">
@@ -143,22 +177,22 @@ export function Header({ onOpenLogin }: HeaderProps) {
               
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">Icône GUIDE</label>
-                <IconPicker value={guideIcon} onChange={setGuideIcon} />
+                <IconPicker value={guideIcon} onChange={handleGuideIconChange} />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">Icône FAQ</label>
-                <IconPicker value={faqIcon} onChange={setFaqIcon} />
+                <IconPicker value={faqIcon} onChange={handleFaqIconChange} />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">Icône ENRICHIR</label>
-                <IconPicker value={editIcon} onChange={setEditIcon} />
+                <IconPicker value={editIcon} onChange={handleEditIconChange} />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">Icône STOP</label>
-                <IconPicker value={stopIcon} onChange={setStopIcon} />
+                <IconPicker value={stopIcon} onChange={handleStopIconChange} />
               </div>
             </div>
 

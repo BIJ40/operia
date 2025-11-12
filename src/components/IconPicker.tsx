@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Upload, X } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
@@ -56,6 +56,9 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Personnaliser l'icône</DialogTitle>
+            <DialogDescription>
+              Importez votre propre image ou consultez l'icône actuelle
+            </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="upload" className="w-full">
