@@ -7,13 +7,25 @@ export function ImageModal() {
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const button = target.closest('[data-image-modal]') as HTMLElement;
       
+      // Gestion des boutons avec data-image-modal
+      const button = target.closest('[data-image-modal]') as HTMLElement;
       if (button) {
         e.preventDefault();
         const url = button.getAttribute('data-image-modal');
         if (url) {
           setImageUrl(url);
+        }
+        return;
+      }
+      
+      // Gestion des images directes (inline)
+      if (target.tagName === 'IMG') {
+        const img = target as HTMLImageElement;
+        // Ne pas ouvrir les petites icônes (favicon, etc.)
+        if (img.naturalWidth > 100 && img.naturalHeight > 100) {
+          e.preventDefault();
+          setImageUrl(img.src);
         }
       }
     };

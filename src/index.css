@@ -182,3 +182,8 @@ div[data-callout] .font-bold {
 div[data-callout] p {
   @apply text-sm text-gray-800 my-1;
 }
+
+/* Make images in content clickable with cursor pointer */
+.prose img {
+  @apply cursor-pointer transition-opacity hover:opacity-80;
+}
