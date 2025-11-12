@@ -34,9 +34,18 @@ export function getAllMentionSuggestions(blocks: Block[]): MentionSuggestion[] {
         categorySlug: parentCategory.slug,
         type: 'section',
       });
+    } else {
+      // If no parent found, still add the section
+      suggestions.push({
+        id: section.id,
+        label: section.title,
+        slug: section.slug || section.id,
+        type: 'section',
+      });
     }
   });
 
+  console.log('Mention suggestions:', suggestions.length, suggestions);
   return suggestions;
 }
 
