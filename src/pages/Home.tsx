@@ -1,41 +1,18 @@
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
-import { LoginDialog } from '@/components/LoginDialog';
-import { Chatbot } from '@/components/Chatbot';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
-import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, ChevronRight, Search } from 'lucide-react';
+import { Plus, Trash2, Search } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
-import { 
-  SidebarProvider, 
-  Sidebar, 
-  SidebarContent, 
-  SidebarGroup, 
-  SidebarGroupContent, 
-  SidebarGroupLabel,
-  SidebarMenu, 
-  SidebarMenuItem, 
-  SidebarMenuButton,
-  SidebarTrigger,
-  useSidebar,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
-  SidebarHeader,
-} from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import logoApogee from '@/assets/logo_helpogee.png';
 
 export default function Home() {
   const { blocks, loading, isEditMode, updateBlock, addBlock, deleteBlock } = useEditor();
   const { isAuthenticated } = useAuth();
-  const [loginOpen, setLoginOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('');
@@ -111,76 +88,7 @@ export default function Home() {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen w-full flex bg-background">
-        {/* Sidebar avec le sommaire complet */}
-        <Sidebar className="border-r" collapsible="icon">
-          <SidebarHeader className="p-4 border-b">
-            <img src={logoApogee} alt="Apogée CRM" className="w-full h-auto" />
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Sommaire</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {categories.map((category) => {
-                    const Icon = IconComponent(category.icon || 'BookOpen');
-                    const sections = blocks
-                      .filter(b => b.type === 'section' && b.parentId === category.id)
-                      .sort((a, b) => a.order - b.order);
-
-                    return (
-                      <Collapsible key={category.id} className="group/collapsible">
-                        <SidebarMenuItem>
-                          <CollapsibleTrigger asChild>
-                            <SidebarMenuButton className="w-full">
-                              <Icon className="w-4 h-4" />
-                              <span className="flex-1 text-left">{category.title}</span>
-                              <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                            </SidebarMenuButton>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent>
-                            <SidebarMenuSub>
-                              {sections.map((section) => (
-                                <SidebarMenuSubItem key={section.id}>
-                                  <SidebarMenuSubButton asChild>
-                                    <Link to={`/category/${category.slug}#${section.id}`}>
-                                      <span className="text-sm">{section.title}</span>
-                                    </Link>
-                                  </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                              ))}
-                            </SidebarMenuSub>
-                          </CollapsibleContent>
-                        </SidebarMenuItem>
-                      </Collapsible>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
-
-        {/* Contenu principal */}
-        <div className="flex-1 flex flex-col min-h-screen">
-          <Header onOpenLogin={() => setLoginOpen(true)} />
-          
-          <div className="flex items-center gap-2 px-4 py-3 border-b bg-background/95 backdrop-blur">
-            <SidebarTrigger />
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Rechercher avec Mme MICHU..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-9"
-              />
-            </div>
-          </div>
-
-          <main className="flex-1 px-4 py-8 max-w-7xl mx-auto w-full">
+    <div className="px-4 py-8 max-w-7xl mx-auto w-full">
             {isEditMode && isAuthenticated && (
               <div className="mb-6 flex justify-end">
                 <Button onClick={handleAddCategory}>
@@ -282,12 +190,6 @@ export default function Home() {
                 )}
               </div>
             )}
-          </main>
-        </div>
-      </div>
-
-      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-      <Chatbot />
-    </SidebarProvider>
+    </div>
   );
 }

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -235,10 +234,7 @@ export default function Documents() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
         <div className="mb-6 flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate('/admin')}>
             ← Retour à l'import
@@ -432,7 +428,6 @@ export default function Documents() {
             </div>
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }
