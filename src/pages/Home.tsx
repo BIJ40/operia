@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { IconPicker } from '@/components/IconPicker';
 import { ColorPreset } from '@/types/block';
-import { Edit2, Check, X, LogIn } from 'lucide-react';
-import { toast } from 'sonner';
+import { Edit2, Check, X } from 'lucide-react';
 
 interface HomeCard {
   id: string;
@@ -48,16 +47,13 @@ const defaultCards: HomeCard[] = [
 
 export default function Home() {
   const { isEditMode } = useEditor();
-  const { login, isAuthenticated, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const [cards, setCards] = useState<HomeCard[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
   const [editColor, setEditColor] = useState<ColorPreset>('blue');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     const savedCards = localStorage.getItem('homeCards');
@@ -111,26 +107,6 @@ export default function Home() {
 
   const IconComponent = (iconName: string) => {
     return (Icons as any)[iconName] || Icons.BookOpen;
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoggingIn(true);
-    
-    try {
-      const { error } = await login(email, password);
-      if (error) {
-        toast.error('Identifiants incorrects');
-      } else {
-        toast.success('Connexion réussie');
-        setEmail('');
-        setPassword('');
-      }
-    } catch (err) {
-      toast.error('Erreur de connexion');
-    } finally {
-      setIsLoggingIn(false);
-    }
   };
 
   return (
@@ -234,35 +210,6 @@ export default function Home() {
           );
         })}
       </div>
-
-      {/* Formulaire de connexion administrateur en pied de page */}
-      {!isAuthenticated && (
-        <footer className="mt-16 pt-8 border-t">
-          <div className="max-w-md mx-auto">
-            <h3 className="text-lg font-semibold text-center mb-4">Accès Administrateur</h3>
-            <form onSubmit={handleLogin} className="space-y-3">
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <Input
-                type="password"
-                placeholder="Mot de passe"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <Button type="submit" className="w-full" disabled={isLoggingIn}>
-                <LogIn className="w-4 h-4 mr-2" />
-                {isLoggingIn ? 'Connexion...' : 'Se connecter'}
-              </Button>
-            </form>
-          </div>
-        </footer>
-      )}
     </div>
   );
 }
