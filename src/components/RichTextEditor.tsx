@@ -365,6 +365,16 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
+                onClick={() => editor.chain().focus().setColor('#06b6d4').run()}
+                title="Cyan"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#06b6d4', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
                 onClick={() => editor.chain().focus().setColor('#16a34a').run()}
                 title="Vert"
                 className="p-2"
