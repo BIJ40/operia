@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { ColorPreset } from '@/types/block';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SectionEditFormProps {
   initialTitle: string;
@@ -27,13 +27,60 @@ export function SectionEditForm({
   onSave,
   onCancel,
 }: SectionEditFormProps) {
-  const [title, setTitle] = useState(initialTitle);
-  const [content, setContent] = useState(initialContent);
-  const [color, setColor] = useState<ColorPreset>(initialColor);
-  const [hideFromSidebar, setHideFromSidebar] = useState(initialHideFromSidebar);
+  // Générer une clé unique pour cette session d'édition
+  const storageKey = `edit-draft-${initialTitle}-${Date.now()}`;
+  
+  // Charger l'état sauvegardé ou utiliser les valeurs initiales
+  const [title, setTitle] = useState(() => {
+    const saved = sessionStorage.getItem(`${storageKey}-title`);
+    return saved || initialTitle;
+  });
+  const [content, setContent] = useState(() => {
+    const saved = sessionStorage.getItem(`${storageKey}-content`);
+    return saved || initialContent;
+  });
+  const [color, setColor] = useState<ColorPreset>(() => {
+    const saved = sessionStorage.getItem(`${storageKey}-color`);
+    return (saved as ColorPreset) || initialColor;
+  });
+  const [hideFromSidebar, setHideFromSidebar] = useState(() => {
+    const saved = sessionStorage.getItem(`${storageKey}-hide`);
+    return saved ? saved === 'true' : initialHideFromSidebar;
+  });
+
+  // Sauvegarder automatiquement l'état lors des modifications
+  useEffect(() => {
+    sessionStorage.setItem(`${storageKey}-title`, title);
+  }, [title, storageKey]);
+
+  useEffect(() => {
+    sessionStorage.setItem(`${storageKey}-content`, content);
+  }, [content, storageKey]);
+
+  useEffect(() => {
+    sessionStorage.setItem(`${storageKey}-color`, color);
+  }, [color, storageKey]);
+
+  useEffect(() => {
+    sessionStorage.setItem(`${storageKey}-hide`, hideFromSidebar.toString());
+  }, [hideFromSidebar, storageKey]);
+
+  // Nettoyer le stockage lors de la sauvegarde ou de l'annulation
+  const clearStorage = () => {
+    sessionStorage.removeItem(`${storageKey}-title`);
+    sessionStorage.removeItem(`${storageKey}-content`);
+    sessionStorage.removeItem(`${storageKey}-color`);
+    sessionStorage.removeItem(`${storageKey}-hide`);
+  };
 
   const handleSave = () => {
     onSave({ title, content, colorPreset: color, hideFromSidebar });
+    clearStorage();
+  };
+
+  const handleCancel = () => {
+    clearStorage();
+    onCancel();
   };
 
   return (
@@ -95,7 +142,7 @@ export function SectionEditForm({
       />
       <div className="flex gap-2">
         <Button onClick={handleSave}>Enregistrer</Button>
-        <Button variant="outline" onClick={onCancel}>
+        <Button variant="outline" onClick={handleCancel}>
           Annuler
         </Button>
       </div>
