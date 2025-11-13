@@ -657,7 +657,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
               }).run();
             }
           }}
-          disabled={!editor.isActive('table')}
+          disabled={!editor.isActive('tableCell') && !editor.isActive('tableHeader') && !editor.isActive('table')}
           title="Afficher/masquer les bordures du tableau"
         >
           <TableProperties className="w-4 h-4" />
