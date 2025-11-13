@@ -53,9 +53,6 @@ export default function Category() {
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   
-  // Catégorie test pour accordéon
-  const isAccordionCategory = slug === 'categorie-1763038012317';
-  
   // Mémoriser sections pour éviter les recalculs qui causent des scrolls
   const sections = useMemo(() => 
     blocks
@@ -348,7 +345,7 @@ export default function Category() {
             items={sections.map(s => s.id)}
             strategy={verticalListSortingStrategy}
           >
-            {isAccordionCategory && !isEditMode ? (
+            {!isEditMode ? (
               <Accordion type="multiple" className="w-full">
                 {sections.map((section) => (
                   <AccordionItem key={section.id} value={section.id} className="mb-4">
