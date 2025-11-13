@@ -188,9 +188,7 @@ export default function Category() {
         ref={setNodeRef}
         style={style}
         id={section.id}
-        className={`mb-8 p-6 rounded-lg ${getColorClass(section.colorPreset)} ${
-          isEditMode && !editingId ? 'cursor-move' : ''
-        }`}
+        className={`mb-8 p-6 rounded-lg ${getColorClass(section.colorPreset)}`}
       >
         {editingId === section.id ? (
           <div className="space-y-4">
@@ -259,16 +257,18 @@ export default function Category() {
         ) : (
           <>
             <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-2 flex-1">
-                {isEditMode && isAuthenticated && !editingId && (
-                  <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-                    <GripVertical className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                )}
-                <h2 className="text-2xl font-semibold">{section.title}</h2>
-              </div>
+              <h2 className="text-2xl font-semibold">{section.title}</h2>
               {isEditMode && isAuthenticated && (
                 <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing"
+                  >
+                    <GripVertical className="w-4 h-4" />
+                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"
