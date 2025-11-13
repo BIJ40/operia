@@ -143,7 +143,15 @@ export default function Category() {
       setTimeout(() => {
         const element = document.getElementById(sectionId);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Calculer la position avec offset pour le header (120px pour le header + un peu d'espace)
+          const headerOffset = 140;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
         }
       }, 400);
     }
