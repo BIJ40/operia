@@ -66,7 +66,7 @@ export default function Category() {
 
   // Scroll to section if hash is present - MUST be before any early return
   useEffect(() => {
-    if (location.hash) {
+    if (location.hash && !editingId) {
       const sectionId = location.hash.substring(1);
       setTimeout(() => {
         const element = document.getElementById(sectionId);
@@ -75,7 +75,7 @@ export default function Category() {
         }
       }, 300);
     }
-  }, [location.hash]); // Se déclenche à chaque changement de hash
+  }, [location.hash]); // Ne se déclenche que quand le hash change
 
   if (!category) {
     return (
