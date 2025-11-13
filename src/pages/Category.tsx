@@ -4,7 +4,7 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/RichTextEditor';
@@ -65,11 +65,15 @@ export default function Category() {
   );
 
   // Scroll to section if hash is present - MUST be before any early return
+  const hasScrolled = useRef(false);
+  
   useEffect(() => {
     // Ne JAMAIS scroller si on est en train d'éditer
     if (editingId) return;
     
-    if (location.hash) {
+    // Ne scroller qu'une seule fois au chargement initial
+    if (location.hash && !hasScrolled.current) {
+      hasScrolled.current = true;
       const sectionId = location.hash.substring(1);
       setTimeout(() => {
         const element = document.getElementById(sectionId);
@@ -78,7 +82,7 @@ export default function Category() {
         }
       }, 300);
     }
-  }, [location.hash, editingId]); // Dépend aussi de editingId
+  }, []);
 
   if (!category) {
     return (
