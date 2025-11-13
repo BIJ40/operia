@@ -212,10 +212,25 @@ export default function ApporteursNationaux() {
 
   useEffect(() => {
     const savedData = localStorage.getItem('apporteursNationauxData');
+    let shouldSaveDefaults = false;
+    
     if (savedData) {
-      const data = JSON.parse(savedData);
-      setCategories(data.categories || []);
+      try {
+        const data = JSON.parse(savedData);
+        // Si les catégories existent mais sont vides, ou n'existent pas, on utilise les défauts
+        if (!data.categories || data.categories.length === 0) {
+          shouldSaveDefaults = true;
+        } else {
+          setCategories(data.categories);
+        }
+      } catch (e) {
+        shouldSaveDefaults = true;
+      }
     } else {
+      shouldSaveDefaults = true;
+    }
+    
+    if (shouldSaveDefaults) {
       // Données par défaut pour les apporteurs nationaux (12 apporteurs)
       const defaultCategories = [
         { id: 'ap-1', type: 'category', title: 'VIAREN', icon: 'Building2', colorPreset: 'blue', order: 0, slug: 'viaren' },
