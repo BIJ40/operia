@@ -233,9 +233,14 @@ export function Chatbot() {
         <button
           onClick={() => setIsOpen(true)}
           data-chatbot-trigger
-          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-50 hover:scale-110 transition-transform"
+          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-50 hover:scale-110 transition-transform overflow-hidden bg-white"
         >
-          <img src={chatIcon} alt="Chat" className="w-full h-full" />
+          <img 
+            src={chatIcon} 
+            alt="Chat" 
+            className="w-full h-full pointer-events-none select-none" 
+            draggable="false"
+          />
         </button>
       )}
 
