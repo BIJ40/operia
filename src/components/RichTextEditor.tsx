@@ -10,7 +10,7 @@ import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { FontSize } from '@/extensions/FontSize';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip, ChevronDown, Table as TableIcon, TableProperties, Plus, Minus } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip, ChevronDown, Table as TableIcon, Plus, Minus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -74,18 +74,8 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       }),
       Table.configure({
         resizable: true,
-        allowTableNodeSelection: false,
         HTMLAttributes: {
           class: 'table-auto border-collapse my-4',
-        },
-      }).extend({
-        addAttributes() {
-          return {
-            ...this.parent?.(),
-            'data-no-borders': {
-              default: null,
-            },
-          };
         },
       }),
       TableRow,
@@ -633,38 +623,6 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           title="Supprimer la ligne"
         >
           <Minus className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            const { state } = editor;
-            const { selection } = state;
-            const { $anchor } = selection;
-            
-            // Find table node
-            for (let d = $anchor.depth; d > 0; d--) {
-              const node = $anchor.node(d);
-              if (node.type.name === 'table') {
-                const pos = $anchor.before(d);
-                const tr = state.tr;
-                const currentBorders = node.attrs['data-no-borders'];
-                
-                tr.setNodeMarkup(pos, null, {
-                  ...node.attrs,
-                  'data-no-borders': currentBorders ? null : 'true'
-                });
-                
-                editor.view.dispatch(tr);
-                return;
-              }
-            }
-          }}
-          disabled={false}
-          title="Afficher/masquer les bordures du tableau"
-        >
-          <TableProperties className="w-4 h-4" />
         </Button>
 
         <div className="w-px h-6 bg-border mx-1" />
