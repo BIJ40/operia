@@ -201,7 +201,7 @@ const SortableCategory = ({
   );
 };
 
-export default function Home() {
+export default function GuideApogee() {
   const { blocks, loading, isEditMode, updateBlock, addBlock, deleteBlock } = useEditor();
   const { isAuthenticated } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -225,6 +225,11 @@ export default function Home() {
   const categories = blocks
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
     .sort((a, b) => a.order - b.order);
+  
+  // Trouver la catégorie FAQ
+  const faqCategory = blocks.find(
+    b => b.type === 'category' && b.title.toLowerCase().includes('faq')
+  );
 
   // Sensors pour le drag and drop
   const sensors = useSensors(
@@ -377,6 +382,19 @@ export default function Home() {
   return (
     <>
       <div className="px-4 py-8 max-w-7xl mx-auto w-full">
+        {/* Lien FAQ */}
+        {faqCategory && (
+          <div className="mb-6">
+            <Link 
+              to={`/guide-apogee/category/${faqCategory.slug}`}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-accent border-2 rounded-lg hover:shadow-md transition-all"
+            >
+              <Icons.HelpCircle className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-foreground">FAQ Apogée</span>
+            </Link>
+          </div>
+        )}
+
       <div className="mb-6 flex items-center gap-4">
         <form onSubmit={handleSearchSubmit} className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -405,8 +423,8 @@ export default function Home() {
                     : IconComponent(result.parentCategory?.icon || 'BookOpen');
                   
                   const targetUrl = result.type === 'category'
-                    ? `/category/${result.block.slug}`
-                    : `/category/${result.parentCategory?.slug}#${result.block.id}`;
+                    ? `/guide-apogee/category/${result.block.slug}`
+                    : `/guide-apogee/category/${result.parentCategory?.slug}#${result.block.id}`;
 
                   return (
                     <Link 
@@ -488,12 +506,12 @@ export default function Home() {
                   {categories.map((category) => {
                     const Icon = IconComponent(category.icon || 'BookOpen');
                     
-                    return (
-                      <Link
-                        key={category.id}
-                        to={`/category/${category.slug}`}
-                        className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(category.colorPreset)}`}
-                      >
+                  return (
+                    <Link
+                      key={category.id}
+                      to={`/guide-apogee/category/${category.slug}`}
+                      className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(category.colorPreset)}`}
+                    >
                         <div className="flex items-start gap-4 group-hover:scale-[1.02] transition-transform">
                           <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-primary/10">
                             <Icon className="w-6 h-6 text-primary" />
