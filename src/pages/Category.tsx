@@ -114,7 +114,9 @@ export default function Category() {
     setEditingId(null);
   };
 
-  const handleAddSection = () => {
+  const handleAddSection = (position: 'top' | 'bottom' = 'bottom') => {
+    const newBlockId = `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     addBlock({
       type: 'section',
       title: 'Nouvelle sous-section',
@@ -125,13 +127,24 @@ export default function Category() {
       attachments: [],
     });
     
-    // Ouvrir automatiquement en mode édition
+    // Définir l'ordre correct et ouvrir en mode édition
     setTimeout(() => {
-      const latestSection = [...sections].sort((a, b) => b.order - a.order)[0];
-      if (latestSection) {
-        setEditingId(latestSection.id);
+      const allSections = blocks
+        .filter(b => b.type === 'section' && b.parentId === category?.id)
+        .sort((a, b) => a.order - b.order);
+      
+      const targetSection = allSections[allSections.length - 1]; // La nouvelle section (dernière ajoutée)
+      
+      if (targetSection) {
+        // Définir le bon order selon la position
+        const newOrder = position === 'top' 
+          ? (sections[0]?.order ?? 0) - 1
+          : (sections[sections.length - 1]?.order ?? 0) + 1;
+        
+        updateBlock(targetSection.id, { order: newOrder });
+        setEditingId(targetSection.id);
       }
-    }, 200);
+    }, 100);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -268,10 +281,11 @@ export default function Category() {
           <h1 className="text-3xl font-bold">{category.title}</h1>
           {isEditMode && isAuthenticated && (
             <Button 
-              onClick={handleAddSection} 
+              onClick={() => handleAddSection('top')} 
               size="sm"
               variant="ghost"
               className="ml-4"
+              title="Ajouter une section en haut"
             >
               <Plus className="w-4 h-4" />
             </Button>
@@ -296,9 +310,10 @@ export default function Category() {
         {isEditMode && isAuthenticated && (
           <div className="mt-8 flex justify-center">
             <Button 
-              onClick={handleAddSection} 
+              onClick={() => handleAddSection('bottom')} 
               size="sm"
               variant="ghost"
+              title="Ajouter une section en bas"
             >
               <Plus className="w-4 h-4" />
             </Button>
