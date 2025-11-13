@@ -40,7 +40,7 @@ export function Chatbot() {
         setIsOpen(true);
         setMessages([{
           role: 'assistant',
-          content: 'Bonjour ! 👋 Je suis Mme MICHU, votre assistante pour le guide Apogée. Comment puis-je vous aider aujourd\'hui ?'
+          content: 'Youhouuuuuu c\'est Madame Michu, je peux vous aider ?'
         }]);
       }
     }, 10000); // 10 secondes
