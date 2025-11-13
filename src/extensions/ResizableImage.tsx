@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 
 const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNodeViewProps) => {
   const [isResizing, setIsResizing] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: node.attrs.width || 300,
     height: node.attrs.height || 200,
@@ -22,8 +23,10 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
         if (img.naturalWidth && img.naturalHeight) {
           const aspectRatio = img.naturalWidth / img.naturalHeight;
           aspectRatioRef.current = aspectRatio;
-          setDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-          updateAttributes({ width: img.naturalWidth, height: img.naturalHeight });
+          const newWidth = img.naturalWidth;
+          const newHeight = img.naturalHeight;
+          setDimensions({ width: newWidth, height: newHeight });
+          updateAttributes({ width: newWidth, height: newHeight });
         }
       };
 
@@ -37,7 +40,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
       aspectRatioRef.current = node.attrs.width / node.attrs.height;
       setDimensions({ width: node.attrs.width, height: node.attrs.height });
     }
-  }, [node.attrs.src, node.attrs.width, node.attrs.height, updateAttributes]);
+  }, [node.attrs.src, node.attrs.width, node.attrs.height]);
 
   const handleMouseDown = (e: React.MouseEvent, corner: string) => {
     e.preventDefault();
@@ -102,16 +105,29 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
         className={`relative inline-block group ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''}`}
         style={{ width: dimensions.width, height: dimensions.height, display: 'inline-block' }}
       >
-        <img
-          ref={imageRef}
-          src={node.attrs.src}
-          alt={node.attrs.alt || ''}
-          title={node.attrs.title || ''}
-          className="max-w-full h-auto rounded-lg block"
-          style={{ width: dimensions.width, height: dimensions.height }}
-          draggable={false}
-          data-no-modal="true"
-        />
+        {hasError ? (
+          <div 
+            className="flex items-center justify-center bg-muted text-muted-foreground rounded-lg"
+            style={{ width: dimensions.width, height: dimensions.height }}
+          >
+            <div className="text-center p-4">
+              <span className="text-2xl mb-2">⚠️</span>
+              <p className="text-sm">Image non disponible</p>
+            </div>
+          </div>
+        ) : (
+          <img
+            ref={imageRef}
+            src={node.attrs.src}
+            alt={node.attrs.alt || ''}
+            title={node.attrs.title || ''}
+            className="max-w-full h-auto rounded-lg block"
+            style={{ width: dimensions.width, height: dimensions.height }}
+            draggable={false}
+            data-no-modal="true"
+            onError={() => setHasError(true)}
+          />
+        )}
         
         {/* Bouton "Voir l'image" qui apparaît au survol */}
         <button
