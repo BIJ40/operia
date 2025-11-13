@@ -59,6 +59,10 @@ export default function Category() {
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   
+  if (!category) {
+    return <div className="container max-w-4xl mx-auto p-8">Catégorie non trouvée</div>;
+  }
+  
   // Liste des catégories disponibles (exclure FAQ)
   const availableCategories = useMemo(() =>
     blocks
@@ -350,7 +354,7 @@ export default function Category() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-background border shadow-md z-50">
                       {availableCategories
-                        .filter(cat => cat.id !== category.id)
+                        .filter(cat => cat.id !== category?.id)
                         .map((cat) => (
                           <DropdownMenuItem
                             key={cat.id}
