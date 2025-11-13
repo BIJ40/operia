@@ -1,6 +1,6 @@
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,83 +8,34 @@ import { Input } from '@/components/ui/input';
 import { IconPicker } from '@/components/IconPicker';
 import { ColorPreset } from '@/types/block';
 import { Edit2, Check, X } from 'lucide-react';
-
-interface HomeCard {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  colorPreset: ColorPreset;
-  link: string;
-}
-
-const defaultCards: HomeCard[] = [
-  {
-    id: 'card-1',
-    title: "GUIDE d'utilisation Apogée",
-    description: "Consultez le guide complet d'utilisation du CRM Apogée",
-    icon: 'BookOpen',
-    colorPreset: 'blue',
-    link: '/guide-apogee'
-  },
-  {
-    id: 'card-2',
-    title: "Guide des apporteurs nationaux",
-    description: "Informations sur les apporteurs nationaux",
-    icon: 'Users',
-    colorPreset: 'green',
-    link: '/apporteurs-nationaux'
-  },
-  {
-    id: 'card-3',
-    title: "Informations utiles",
-    description: "Ressources et informations complémentaires",
-    icon: 'Info',
-    colorPreset: 'orange',
-    link: '/informations-utiles'
-  }
-];
+import { useHomeCards } from '@/hooks/useHomeCards';
 
 export default function Home() {
   const { isEditMode } = useEditor();
   const { isAdmin } = useAuth();
-  const [cards, setCards] = useState<HomeCard[]>([]);
+  const { cards, loading, updateCard } = useHomeCards();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
   const [editColor, setEditColor] = useState<ColorPreset>('blue');
 
-  useEffect(() => {
-    const savedCards = localStorage.getItem('homeCards');
-    if (savedCards) {
-      setCards(JSON.parse(savedCards));
-    } else {
-      setCards(defaultCards);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (cards.length > 0) {
-      localStorage.setItem('homeCards', JSON.stringify(cards));
-    }
-  }, [cards]);
-
-  const handleEdit = (card: HomeCard) => {
+  const handleEdit = (card: any) => {
     setEditingId(card.id);
     setEditTitle(card.title);
     setEditDescription(card.description);
     setEditIcon(card.icon);
-    setEditColor(card.colorPreset);
+    setEditColor(card.color_preset);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (editingId) {
-      setCards(cards.map(card =>
-        card.id === editingId
-          ? { ...card, title: editTitle, description: editDescription, icon: editIcon, colorPreset: editColor }
-          : card
-      ));
+      await updateCard(editingId, {
+        title: editTitle,
+        description: editDescription,
+        icon: editIcon,
+        color_preset: editColor
+      });
       setEditingId(null);
     }
   };
@@ -93,7 +44,7 @@ export default function Home() {
     setEditingId(null);
   };
 
-  const getColorClass = (color?: ColorPreset) => {
+  const getColorClass = (color?: string) => {
     switch (color) {
       case 'blue': return 'border-blue-200 bg-blue-50';
       case 'green': return 'border-green-200 bg-green-50';
@@ -111,24 +62,30 @@ export default function Home() {
 
   return (
     <div className="container max-w-6xl mx-auto p-8">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-foreground mb-4">
-          Bienvenue sur le portail HELPCONFORT
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Accédez à toutes les ressources et guides dont vous avez besoin
-        </p>
-      </div>
+      {loading ? (
+        <div className="text-center py-12">
+          <p className="text-lg text-muted-foreground">Chargement...</p>
+        </div>
+      ) : (
+        <>
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
+              Bienvenue sur le portail HELPCONFORT
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Accédez à toutes les ressources et guides dont vous avez besoin
+            </p>
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {cards.map((card) => {
-          const Icon = IconComponent(card.icon);
-          
-          return (
-            <div
-              key={card.id}
-              className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(card.colorPreset)}`}
-            >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {cards.map((card) => {
+              const Icon = IconComponent(card.icon);
+              
+              return (
+                <div
+                  key={card.id}
+                  className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(card.color_preset)}`}
+                >
               {editingId === card.id ? (
                 <div className="space-y-4">
                   <Input
@@ -210,6 +167,8 @@ export default function Home() {
           );
         })}
       </div>
+        </>
+      )}
     </div>
   );
 }
