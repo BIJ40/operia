@@ -129,7 +129,19 @@ export default function Category() {
   return (
     <>
       <div className="container max-w-4xl mx-auto p-8">
-        <h1 className="text-3xl font-bold mb-8">{category.title}</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold">{category.title}</h1>
+          {isEditMode && isAuthenticated && (
+            <Button 
+              onClick={handleAddSection} 
+              size="sm"
+              variant="ghost"
+              className="ml-4"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
 
         {sections.map((section) => (
               <div
@@ -234,10 +246,13 @@ export default function Category() {
             ))}
 
         {isEditMode && isAuthenticated && (
-          <div className="mt-8">
-            <Button onClick={handleAddSection} className="w-full">
-              <Plus className="w-4 h-4 mr-2" />
-              Ajouter une section
+          <div className="mt-8 flex justify-center">
+            <Button 
+              onClick={handleAddSection} 
+              size="sm"
+              variant="ghost"
+            >
+              <Plus className="w-4 h-4" />
             </Button>
           </div>
         )}
