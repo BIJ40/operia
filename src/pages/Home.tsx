@@ -23,32 +23,30 @@ export default function Home() {
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
     .sort((a, b) => a.order - b.order);
 
-  // Filtrer les catégories selon la recherche - chercher dans catégories ET sections
-  const filteredCategories = searchQuery.trim()
-    ? categories.filter(cat => {
-        const searchLower = searchQuery.toLowerCase();
-        
-        // Chercher dans le titre et contenu de la catégorie
-        const categoryMatch = 
-          cat.title.toLowerCase().includes(searchLower) ||
-          cat.content.toLowerCase().includes(searchLower);
-        
-        if (categoryMatch) return true;
-        
-        // Chercher dans les sections de cette catégorie
-        const sections = blocks.filter(b => 
-          b.type === 'section' && 
-          b.parentId === cat.id
-        );
-        
-        const sectionMatch = sections.some(section =>
-          section.title.toLowerCase().includes(searchLower) ||
-          section.content.toLowerCase().includes(searchLower)
-        );
-        
-        return sectionMatch;
-      })
-    : categories;
+  // Recherche dans les sections et catégories
+  const searchResults = searchQuery.trim() ? (() => {
+    const searchLower = searchQuery.toLowerCase();
+    const results: Array<{ type: 'category' | 'section', block: any, parentCategory?: any }> = [];
+
+    categories.forEach(cat => {
+      // Chercher dans la catégorie
+      if (cat.title.toLowerCase().includes(searchLower) || 
+          cat.content.toLowerCase().includes(searchLower)) {
+        results.push({ type: 'category', block: cat });
+      }
+
+      // Chercher dans les sections de cette catégorie
+      const sections = blocks.filter(b => b.type === 'section' && b.parentId === cat.id);
+      sections.forEach(section => {
+        if (section.title.toLowerCase().includes(searchLower) || 
+            section.content.toLowerCase().includes(searchLower)) {
+          results.push({ type: 'section', block: section, parentCategory: cat });
+        }
+      });
+    });
+
+    return results;
+  })() : [];
 
   const IconComponent = (iconName: string) => {
     const Icon = (Icons as any)[iconName] || Icons.BookOpen;
@@ -150,93 +148,138 @@ export default function Home() {
         )}
       </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCategories.map((category) => {
-                const Icon = IconComponent(category.icon || 'BookOpen');
-                
-                return (
-                  <div
-                    key={category.id}
-                    className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(category.colorPreset)}`}
-                  >
-                    {editingId === category.id ? (
-                      <div className="space-y-3">
-                        <Input
-                          value={editTitle}
-                          onChange={(e) => setEditTitle(e.target.value)}
-                          placeholder="Titre de la catégorie"
-                        />
-                        <IconPicker
-                          value={editIcon}
-                          onChange={setEditIcon}
-                        />
-                        <Select value={editColor} onValueChange={(v: ColorPreset) => setEditColor(v)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="white">Blanc (par défaut)</SelectItem>
-                            <SelectItem value="green">Vert</SelectItem>
-                            <SelectItem value="yellow">Jaune</SelectItem>
-                            <SelectItem value="red">Rouge</SelectItem>
-                            <SelectItem value="blue">Bleu</SelectItem>
-                            <SelectItem value="purple">Violet</SelectItem>
-                            <SelectItem value="pink">Rose</SelectItem>
-                            <SelectItem value="orange">Orange</SelectItem>
-                            <SelectItem value="cyan">Cyan</SelectItem>
-                            <SelectItem value="indigo">Indigo</SelectItem>
-                            <SelectItem value="teal">Sarcelle</SelectItem>
-                            <SelectItem value="rose">Rose foncé</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={handleSave}>Enregistrer</Button>
-                          <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>
-                            Annuler
-                          </Button>
+            {searchQuery.trim() ? (
+              // Afficher les résultats de recherche
+              <div className="space-y-4">
+                {searchResults.map((result, idx) => {
+                  const Icon = result.type === 'category' 
+                    ? IconComponent(result.block.icon || 'BookOpen')
+                    : IconComponent(result.parentCategory?.icon || 'BookOpen');
+                  
+                  const targetUrl = result.type === 'category'
+                    ? `/category/${result.block.slug}`
+                    : `/category/${result.parentCategory?.slug}#${result.block.id}`;
+
+                  return (
+                    <Link 
+                      key={`${result.type}-${result.block.id}-${idx}`}
+                      to={targetUrl}
+                      className="block border-2 rounded-lg p-4 hover:shadow-lg transition-all bg-card border-border hover:bg-accent"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-6 h-6 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            {result.type === 'section' && (
+                              <span className="text-xs text-muted-foreground">
+                                {result.parentCategory?.title} →
+                              </span>
+                            )}
+                            <h3 className="font-semibold text-lg">{result.block.title}</h3>
+                          </div>
+                          {result.block.content && (
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {result.block.content.replace(/<[^>]*>/g, '').substring(0, 150)}
+                              {result.block.content.length > 150 && '...'}
+                            </p>
+                          )}
                         </div>
                       </div>
-                    ) : (
-                      <>
-                        <Link to={`/category/${category.slug}`}>
-                          <div className="flex flex-col items-center text-center space-y-4">
-                            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Icon className="w-8 h-8 text-primary" />
-                            </div>
-                            <h3 className="font-semibold text-lg">{category.title}</h3>
-                          </div>
-                        </Link>
-                        {isEditMode && isAuthenticated && (
-                          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEdit(category.id)}
-                            >
-                              ✏️
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => deleteBlock(category.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </>
-                    )}
+                    </Link>
+                  );
+                })}
+                {searchResults.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground mb-4">Aucun résultat trouvé pour "{searchQuery}"</p>
+                    <Button onClick={() => setSearchQuery('')} variant="outline">
+                      Effacer la recherche
+                    </Button>
                   </div>
-                );
-              })}
-            </div>
-
-            {filteredCategories.length === 0 && searchQuery.trim() && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground mb-4">Aucune catégorie trouvée pour "{searchQuery}"</p>
-                <Button onClick={() => setSearchQuery('')} variant="outline">
-                  Effacer la recherche
-                </Button>
+                )}
+              </div>
+            ) : (
+              // Afficher les catégories normalement
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {categories.map((category) => {
+                  const Icon = IconComponent(category.icon || 'BookOpen');
+                  
+                  return (
+                    <div
+                      key={category.id}
+                      className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(category.colorPreset)}`}
+                    >
+                      {editingId === category.id ? (
+                        <div className="space-y-3">
+                          <Input
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            placeholder="Titre de la catégorie"
+                          />
+                          <IconPicker
+                            value={editIcon}
+                            onChange={setEditIcon}
+                          />
+                          <Select value={editColor} onValueChange={(v: ColorPreset) => setEditColor(v)}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="white">Blanc (par défaut)</SelectItem>
+                              <SelectItem value="green">Vert</SelectItem>
+                              <SelectItem value="yellow">Jaune</SelectItem>
+                              <SelectItem value="red">Rouge</SelectItem>
+                              <SelectItem value="blue">Bleu</SelectItem>
+                              <SelectItem value="purple">Violet</SelectItem>
+                              <SelectItem value="pink">Rose</SelectItem>
+                              <SelectItem value="orange">Orange</SelectItem>
+                              <SelectItem value="cyan">Cyan</SelectItem>
+                              <SelectItem value="indigo">Indigo</SelectItem>
+                              <SelectItem value="teal">Sarcelle</SelectItem>
+                              <SelectItem value="rose">Rose foncé</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={handleSave}>Enregistrer</Button>
+                            <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>
+                              Annuler
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <Link to={`/category/${category.slug}`}>
+                            <div className="flex flex-col items-center text-center space-y-4">
+                              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Icon className="w-8 h-8 text-primary" />
+                              </div>
+                              <h3 className="font-semibold text-lg">{category.title}</h3>
+                            </div>
+                          </Link>
+                          {isEditMode && isAuthenticated && (
+                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEdit(category.id)}
+                              >
+                                ✏️
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => deleteBlock(category.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
