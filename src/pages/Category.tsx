@@ -3,13 +3,19 @@ import { useParams, useLocation } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit2, Trash2, GripVertical, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   DndContext,
   closestCenter,
@@ -160,34 +166,28 @@ export default function Category() {
     content: string;
     colorPreset: ColorPreset;
     hideFromSidebar: boolean;
-    parentId?: string;
   }) => {
     if (editingId) {
-      const updates: any = {
-        title: data.title,
-        content: data.content,
-        colorPreset: data.colorPreset,
-        hideFromSidebar: data.hideFromSidebar,
-      };
-      
-      // Si la catégorie parent change
-      if (data.parentId && data.parentId !== category.id) {
-        updates.parentId = data.parentId;
-        
-        // Récupérer les sections de la nouvelle catégorie pour calculer le nouvel ordre
-        const newCategorySections = blocks
-          .filter(b => b.type === 'section' && b.parentId === data.parentId)
-          .sort((a, b) => a.order - b.order);
-        
-        // Placer la section en haut de la nouvelle catégorie
-        updates.order = newCategorySections.length > 0 
-          ? newCategorySections[0].order - 1 
-          : 0;
-      }
-      
-      updateBlock(editingId, updates);
+      updateBlock(editingId, data);
       setEditingId(null);
     }
+  };
+
+  const handleMoveToCategory = (sectionId: string, newCategoryId: string) => {
+    // Récupérer les sections de la nouvelle catégorie
+    const newCategorySections = blocks
+      .filter(b => b.type === 'section' && b.parentId === newCategoryId)
+      .sort((a, b) => a.order - b.order);
+    
+    // Placer la section en haut de la nouvelle catégorie
+    const newOrder = newCategorySections.length > 0 
+      ? newCategorySections[0].order - 1 
+      : 0;
+    
+    updateBlock(sectionId, {
+      parentId: newCategoryId,
+      order: newOrder
+    });
   };
 
   const handleCancel = () => {
@@ -310,8 +310,6 @@ export default function Category() {
             initialContent={section.content}
             initialColor={section.colorPreset || 'red'}
             initialHideFromSidebar={section.hideFromSidebar || false}
-            categories={availableCategories}
-            currentCategoryId={category.id}
             onSave={handleSave}
             onCancel={handleCancel}
           />
@@ -332,6 +330,29 @@ export default function Category() {
                   >
                     <GripVertical className="w-4 h-4" />
                   </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title="Changer de catégorie"
+                      >
+                        <FolderInput className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-background border shadow-md z-50">
+                      {availableCategories
+                        .filter(cat => cat.id !== category.id)
+                        .map((cat) => (
+                          <DropdownMenuItem
+                            key={cat.id}
+                            onClick={() => handleMoveToCategory(section.id, cat.id)}
+                          >
+                            {cat.title}
+                          </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <Button
                     size="sm"
                     variant="ghost"
