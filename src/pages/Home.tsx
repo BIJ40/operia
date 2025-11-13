@@ -9,6 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ColorPreset } from '@/types/block';
 import { Plus, Trash2, Search } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function Home() {
   const { blocks, loading, isEditMode, updateBlock, addBlock, deleteBlock } = useEditor();
@@ -18,6 +28,8 @@ export default function Home() {
   const [editIcon, setEditIcon] = useState('');
   const [editColor, setEditColor] = useState<ColorPreset>('white');
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
   const categories = blocks
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
@@ -86,6 +98,19 @@ export default function Home() {
     });
   };
 
+  const handleDeleteClick = (categoryId: string) => {
+    setCategoryToDelete(categoryId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (categoryToDelete) {
+      deleteBlock(categoryToDelete);
+      setCategoryToDelete(null);
+    }
+    setDeleteDialogOpen(false);
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -131,7 +156,8 @@ export default function Home() {
   }
 
   return (
-    <div className="px-4 py-8 max-w-7xl mx-auto w-full">
+    <>
+      <div className="px-4 py-8 max-w-7xl mx-auto w-full">
       <div className="mb-6 flex items-center gap-4">
         <form onSubmit={handleSearchSubmit} className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -285,7 +311,7 @@ export default function Home() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => deleteBlock(category.id)}
+                                onClick={() => handleDeleteClick(category.id)}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -310,6 +336,24 @@ export default function Home() {
                 )}
               </div>
             )}
-    </div>
+      </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer cette catégorie et toutes ses sections ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

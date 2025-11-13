@@ -9,6 +9,16 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { ColorPreset } from '@/types/block';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function Category() {
   const { slug } = useParams();
@@ -25,6 +35,8 @@ export default function Category() {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editColor, setEditColor] = useState<ColorPreset>('white');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
 
   // Scroll to section if hash is present - MUST be before any early return
   useEffect(() => {
@@ -77,6 +89,19 @@ export default function Category() {
     });
   };
 
+  const handleDeleteClick = (sectionId: string) => {
+    setSectionToDelete(sectionId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (sectionToDelete) {
+      deleteBlock(sectionToDelete);
+      setSectionToDelete(null);
+    }
+    setDeleteDialogOpen(false);
+  };
+
   const getColorClass = (color?: string) => {
     switch (color) {
       case 'green': return 'bg-green-50 border-l-4 border-l-green-500';
@@ -98,10 +123,11 @@ export default function Category() {
   };
 
   return (
-    <div className="container max-w-4xl mx-auto p-8">
-            <h1 className="text-3xl font-bold mb-8">{category.title}</h1>
+    <>
+      <div className="container max-w-4xl mx-auto p-8">
+        <h1 className="text-3xl font-bold mb-8">{category.title}</h1>
 
-            {sections.map((section) => (
+        {sections.map((section) => (
               <div
                 key={section.id}
                 id={section.id}
@@ -174,7 +200,7 @@ export default function Category() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => deleteBlock(section.id)}
+                            onClick={() => handleDeleteClick(section.id)}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -188,7 +214,25 @@ export default function Category() {
                   </>
                 )}
               </div>
-              ))}
-        </div>
+            ))}
+      </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer cette section ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
