@@ -56,6 +56,7 @@ export default function Category() {
   const [hideFromSidebar, setHideFromSidebar] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
+  const [hasScrolledOnMount, setHasScrolledOnMount] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -68,19 +69,20 @@ export default function Category() {
     })
   );
 
-  // Scroll to section if hash is present - MUST be before any early return
-  // IMPORTANT: Ne pas scroller si on est en mode édition pour éviter le bug de scroll pendant la saisie
+  // Scroll to section if hash is present UNIQUEMENT au chargement initial
+  // Ne se déclenche qu'UNE SEULE FOIS pour éviter les scrolls intempestifs pendant l'édition
   useEffect(() => {
-    if (location.hash && !editingId) {
+    if (location.hash && !hasScrolledOnMount) {
       const sectionId = location.hash.substring(1);
       setTimeout(() => {
         const element = document.getElementById(sectionId);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setHasScrolledOnMount(true);
         }
       }, 300);
     }
-  }, [location.hash, editingId]); // Ajout de editingId pour empêcher le scroll pendant l'édition
+  }, []); // Tableau vide = s'exécute UNE SEULE FOIS au montage
 
   if (!category) {
     return (
@@ -96,6 +98,14 @@ export default function Category() {
     setEditContent(block.content);
     setEditColor(block.colorPreset || 'red');
     setHideFromSidebar(block.hideFromSidebar || false);
+    
+    // Scroll vers la section en mode édition (une seule fois)
+    setTimeout(() => {
+      const element = document.getElementById(block.id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
   };
 
   const handleSave = () => {
@@ -121,8 +131,7 @@ export default function Category() {
       attachments: [],
     });
     
-    // Ouvrir automatiquement en mode édition SANS scroll automatique
-    // Le scroll automatique causait le bug de remontée en haut pendant l'édition
+    // Ouvrir automatiquement en mode édition et scroller vers la nouvelle section
     setTimeout(() => {
       // Trouver la section la plus récente (celle avec l'order le plus élevé)
       const latestSection = [...sections].sort((a, b) => b.order - a.order)[0];
@@ -132,6 +141,14 @@ export default function Category() {
         setEditContent(latestSection.content);
         setEditColor(latestSection.colorPreset || 'red');
         setHideFromSidebar(latestSection.hideFromSidebar || false);
+        
+        // Scroll vers la nouvelle section (une seule fois, pas de re-trigger)
+        setTimeout(() => {
+          const element = document.getElementById(latestSection.id);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
       }
     }, 200);
   };
