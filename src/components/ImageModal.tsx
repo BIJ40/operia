@@ -27,6 +27,10 @@ export function ImageModal() {
         if (img.hasAttribute('data-no-modal')) {
           return;
         }
+        // Ignorer les images dans un conteneur de redimensionnement (mode édition)
+        if (img.closest('.resizable-image-wrapper')) {
+          return;
+        }
         // Ne pas ouvrir les petites icônes (favicon, etc.)
         if (img.naturalWidth > 100 && img.naturalHeight > 100) {
           e.preventDefault();
