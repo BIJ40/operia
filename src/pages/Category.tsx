@@ -1,3 +1,4 @@
+// Force update - color fix for blanc/white
 import { useParams, useLocation } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
