@@ -629,6 +629,11 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           size="sm"
           variant="ghost"
           onClick={() => {
+            console.log('=== Border Toggle Debug ===');
+            console.log('isActive table:', editor.isActive('table'));
+            console.log('isActive tableCell:', editor.isActive('tableCell'));
+            console.log('isActive tableHeader:', editor.isActive('tableHeader'));
+            
             // Toggle border class on the current table
             const { state } = editor;
             const { $from } = state.selection;
@@ -637,8 +642,11 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
             let tableNode = null;
             let depth = $from.depth;
             
+            console.log('Starting depth:', depth);
+            
             while (depth > 0) {
               const node = $from.node(depth);
+              console.log(`Depth ${depth}: node type = ${node.type.name}`);
               if (node.type.name === 'table') {
                 tableNode = node;
                 break;
@@ -650,11 +658,16 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
               const currentClass = tableNode.attrs.class || '';
               const hasNoBorders = currentClass.includes('table-no-borders');
               
+              console.log('Found table, current class:', currentClass);
+              console.log('Has no borders:', hasNoBorders);
+              
               editor.chain().focus().updateAttributes('table', {
                 class: hasNoBorders 
                   ? currentClass.replace('table-no-borders', '').trim()
                   : `${currentClass} table-no-borders`.trim()
               }).run();
+            } else {
+              console.log('No table node found!');
             }
           }}
           disabled={!editor.isActive('tableCell') && !editor.isActive('tableHeader') && !editor.isActive('table')}
