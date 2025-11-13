@@ -56,6 +56,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
       // Use the larger delta to maintain aspect ratio
       const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
       
+      // Correct direction: dragging right/down increases size
       const newWidth = Math.max(50, startPosRef.current.width + delta);
       const newHeight = newWidth / aspectRatioRef.current;
 
@@ -100,6 +101,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
           className="max-w-full h-auto rounded-lg block"
           style={{ width: dimensions.width, height: dimensions.height }}
           draggable={false}
+          data-no-modal="true"
         />
         
         {/* Bouton "Voir l'image" qui apparaît au survol */}
