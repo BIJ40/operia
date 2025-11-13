@@ -191,39 +191,53 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
       
-      // Pour les grandes images, les compresser
-      if (file.size > 500000) { // Si > 500KB
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          
-          // Réduire si trop grand
-          const maxDimension = 1920;
-          if (width > maxDimension || height > maxDimension) {
-            if (width > height) {
-              height = (height / width) * maxDimension;
-              width = maxDimension;
-            } else {
-              width = (width / height) * maxDimension;
-              height = maxDimension;
-            }
+      // TOUJOURS compresser les images pour éviter les crashes
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Limiter à 1200px max pour les screenshots
+        const maxDimension = 1200;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = (height / width) * maxDimension;
+            width = maxDimension;
+          } else {
+            width = (width / height) * maxDimension;
+            height = maxDimension;
           }
-          
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-          
-          // Compression JPEG pour réduire la taille
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          setImageUrl(compressedDataUrl);
-        };
-        img.src = dataUrl;
-      } else {
-        setImageUrl(dataUrl);
-      }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          alert('Erreur lors du traitement de l\'image');
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Compression JPEG agressive pour screenshots
+        const quality = file.size > 1000000 ? 0.7 : 0.85;
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+        
+        // Vérifier la taille du data URL final (limite à 2MB en base64)
+        if (compressedDataUrl.length > 2000000) {
+          alert('Image trop volumineuse même après compression. Veuillez réduire la résolution ou choisir une autre image.');
+          return;
+        }
+        
+        setImageUrl(compressedDataUrl);
+      };
+      
+      img.onerror = () => {
+        alert('Erreur lors du chargement de l\'image');
+      };
+      
+      img.src = dataUrl;
     };
     reader.readAsDataURL(file);
   };
