@@ -632,10 +632,21 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
             // Toggle border class on the current table
             const { state } = editor;
             const { $from } = state.selection;
-            const tableNode = $from.node(-1);
             
-            if (tableNode && tableNode.type.name === 'table') {
-              const pos = $from.before(-1);
+            // Find the table node by traversing up the tree
+            let tableNode = null;
+            let depth = $from.depth;
+            
+            while (depth > 0) {
+              const node = $from.node(depth);
+              if (node.type.name === 'table') {
+                tableNode = node;
+                break;
+              }
+              depth--;
+            }
+            
+            if (tableNode) {
               const currentClass = tableNode.attrs.class || '';
               const hasNoBorders = currentClass.includes('table-no-borders');
               
