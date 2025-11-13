@@ -645,25 +645,31 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           size="sm"
           variant="ghost"
           onClick={() => {
+            console.log('Toggle borders clicked');
             const { state } = editor;
             const { selection } = state;
             const { $anchor } = selection;
             
+            console.log('Depth:', $anchor.depth);
+            
             for (let d = $anchor.depth; d > 0; d--) {
               const node = $anchor.node(d);
+              console.log(`Depth ${d}: ${node.type.name}`);
               if (node.type.name === 'table') {
                 const pos = $anchor.before(d);
                 const currentValue = node.attrs['data-hide-borders'];
+                console.log('Found table, current value:', currentValue);
                 const tr = state.tr.setNodeMarkup(pos, null, {
                   ...node.attrs,
                   'data-hide-borders': currentValue ? null : 'true'
                 });
+                console.log('Dispatching transaction');
                 editor.view.dispatch(tr);
                 break;
               }
             }
           }}
-          disabled={!editor.isActive('table')}
+          disabled={false}
           title="Masquer/Afficher les bordures"
         >
           <Grid3x3 className="w-4 h-4" />
