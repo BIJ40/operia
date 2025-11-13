@@ -76,10 +76,19 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       }),
     ],
     content,
+    autofocus: false,
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm max-w-none focus:outline-none',
+      },
+      // Empêcher le scroll automatique causé par l'éditeur
+      scrollMargin: 0,
+      scrollThreshold: 0,
+    },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
-  }); // Retiré [blocks] pour éviter de recréer l'éditeur à chaque changement
+  });
 
   useEffect(() => {
     if (!editor) return;
