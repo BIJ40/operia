@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { ColorPreset } from '@/types/block';
 import { useState, useEffect } from 'react';
+import { Save, X } from 'lucide-react';
 
 interface SectionEditFormProps {
   sectionId: string;
@@ -94,7 +95,28 @@ export function SectionEditForm({
         className="font-semibold text-xl"
       />
       <div className="space-y-2">
-        <label className="text-sm font-medium">Couleur</label>
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium">Couleur</label>
+          <div className="flex gap-2">
+            <Button 
+              type="button"
+              size="icon"
+              onClick={handleSave}
+              title="Enregistrer"
+            >
+              <Save className="h-4 w-4" />
+            </Button>
+            <Button 
+              type="button"
+              size="icon"
+              variant="outline"
+              onClick={handleCancel}
+              title="Annuler"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
         <div className="flex flex-wrap gap-2">
           {[
             { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
