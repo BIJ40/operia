@@ -648,6 +648,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           size="sm"
           variant="ghost"
           onClick={() => {
+            console.log('=== Toggle borders clicked ===');
             const { state } = editor;
             const { $from } = state.selection;
             
@@ -656,11 +657,15 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
             let tablePos = null;
             let depth = $from.depth;
             
+            console.log('Start depth:', depth);
+            
             while (depth > 0) {
               const node = $from.node(depth);
+              console.log(`Depth ${depth}: ${node.type.name}`);
               if (node.type.name === 'table') {
                 tableNode = node;
                 tablePos = $from.before(depth);
+                console.log('Found table at pos:', tablePos);
                 break;
               }
               depth--;
@@ -668,14 +673,24 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
             
             if (tableNode && tablePos !== null) {
               const currentNoBorders = tableNode.attrs['data-no-borders'];
+              console.log('Current data-no-borders:', currentNoBorders);
+              console.log('Current attrs:', tableNode.attrs);
+              
+              const newAttrs = {
+                ...tableNode.attrs,
+                'data-no-borders': currentNoBorders ? null : 'true'
+              };
+              
+              console.log('New attrs:', newAttrs);
               
               // Use setNodeMarkup to update the table node directly
               editor.view.dispatch(
-                editor.state.tr.setNodeMarkup(tablePos, undefined, {
-                  ...tableNode.attrs,
-                  'data-no-borders': currentNoBorders ? null : 'true'
-                })
+                editor.state.tr.setNodeMarkup(tablePos, undefined, newAttrs)
               );
+              
+              console.log('Dispatched transaction');
+            } else {
+              console.log('No table found!');
             }
           }}
           disabled={false}
