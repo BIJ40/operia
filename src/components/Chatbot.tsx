@@ -18,6 +18,7 @@ export function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { blocks } = useEditor();
   const { toast } = useToast();
@@ -30,6 +31,22 @@ export function Chatbot() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Ouverture automatique après 10 secondes avec message de bienvenue
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!hasAutoOpened) {
+        setHasAutoOpened(true);
+        setIsOpen(true);
+        setMessages([{
+          role: 'assistant',
+          content: 'Bonjour ! 👋 Je suis Mme MICHU, votre assistante pour le guide Apogée. Comment puis-je vous aider aujourd\'hui ?'
+        }]);
+      }
+    }, 10000); // 10 secondes
+
+    return () => clearTimeout(timer);
+  }, [hasAutoOpened]);
 
   // Écouter l'événement de question depuis la recherche
   useEffect(() => {
