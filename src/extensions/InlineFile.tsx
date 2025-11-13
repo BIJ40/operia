@@ -1,4 +1,7 @@
 import { Node, mergeAttributes } from '@tiptap/core';
+import { ReactNodeViewRenderer } from '@tiptap/react';
+import { NodeViewWrapper } from '@tiptap/react';
+import { FilePreview } from '@/components/FilePreview';
 
 export interface InlineFileOptions {
   HTMLAttributes: Record<string, any>;
@@ -80,5 +83,15 @@ export const InlineFile = Node.create<InlineFileOptions>({
           });
         },
     };
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(({ node }) => {
+      return (
+        <NodeViewWrapper className="inline-block my-4">
+          <FilePreview src={node.attrs.src} filename={node.attrs.filename} />
+        </NodeViewWrapper>
+      );
+    });
   },
 });
