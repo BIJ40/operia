@@ -89,7 +89,8 @@ export default function Category() {
       case 'indigo': return 'bg-indigo-50 border-l-4 border-l-indigo-500';
       case 'teal': return 'bg-teal-50 border-l-4 border-l-teal-500';
       case 'rose': return 'bg-rose-50 border-l-4 border-l-rose-500';
-      case 'white': return 'bg-white dark:bg-background border-l-4 border-l-border';
+      case 'blanc': return 'bg-white dark:bg-background border-l-4 border-l-border';
+      case 'white': return 'bg-red-50 border-l-4 border-l-red-500'; // White ancien = rouge
       default: return 'bg-red-50 border-l-4 border-l-red-500'; // Rouge par défaut
     }
   };
@@ -117,10 +118,10 @@ export default function Category() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="white">Blanc</SelectItem>
+                        <SelectItem value="red">Rouge (attention)</SelectItem>
+                        <SelectItem value="blanc">Blanc</SelectItem>
                         <SelectItem value="green">Vert (bonnes pratiques)</SelectItem>
                         <SelectItem value="yellow">Jaune (astuces)</SelectItem>
-                        <SelectItem value="red">Rouge (attention)</SelectItem>
                         <SelectItem value="blue">Bleu (info)</SelectItem>
                         <SelectItem value="purple">Violet</SelectItem>
                         <SelectItem value="pink">Rose</SelectItem>
