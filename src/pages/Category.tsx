@@ -21,7 +21,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/RichTextEditor';
@@ -59,7 +59,7 @@ export default function Category() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const [hasScrolledOnMount, setHasScrolledOnMount] = useState(false);
-  const [scrollPosition, setScrollPosition] = useState<number>(0);
+  const savedScrollPositionRef = useRef<number>(0);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -74,16 +74,16 @@ export default function Category() {
 
   // Préserver la position de scroll lors des changements d'onglet
   useEffect(() => {
-    let savedPosition = 0;
-    
     const handleVisibilityChange = () => {
       if (document.hidden) {
         // Sauvegarder la position avant de quitter
-        savedPosition = window.scrollY;
+        savedScrollPositionRef.current = window.scrollY;
       } else {
         // Restaurer la position au retour
         setTimeout(() => {
-          window.scrollTo({ top: savedPosition, behavior: 'instant' });
+          if (savedScrollPositionRef.current > 0) {
+            window.scrollTo({ top: savedScrollPositionRef.current, behavior: 'instant' });
+          }
         }, 50);
       }
     };
@@ -91,6 +91,18 @@ export default function Category() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
+
+  // Sauvegarder la position de scroll périodiquement pour éviter les pertes
+  useEffect(() => {
+    const saveScrollPosition = () => {
+      if (editingId) {
+        savedScrollPositionRef.current = window.scrollY;
+      }
+    };
+
+    const intervalId = setInterval(saveScrollPosition, 1000);
+    return () => clearInterval(intervalId);
+  }, [editingId]);
 
   // Scroll to section if hash is present UNIQUEMENT au chargement initial
   // Ne se déclenche qu'UNE SEULE FOIS pour éviter les scrolls intempestifs pendant l'édition
