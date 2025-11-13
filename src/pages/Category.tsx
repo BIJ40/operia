@@ -69,8 +69,9 @@ export default function Category() {
   );
 
   // Scroll to section if hash is present - MUST be before any early return
+  // IMPORTANT: Ne pas scroller si on est en mode édition pour éviter le bug de scroll pendant la saisie
   useEffect(() => {
-    if (location.hash) {
+    if (location.hash && !editingId) {
       const sectionId = location.hash.substring(1);
       setTimeout(() => {
         const element = document.getElementById(sectionId);
@@ -79,7 +80,7 @@ export default function Category() {
         }
       }, 300);
     }
-  }, [location.hash]); // Se déclenche à chaque changement de hash
+  }, [location.hash, editingId]); // Ajout de editingId pour empêcher le scroll pendant l'édition
 
   if (!category) {
     return (
@@ -120,7 +121,8 @@ export default function Category() {
       attachments: [],
     });
     
-    // Ouvrir automatiquement en mode édition et scroller SEULEMENT à la création
+    // Ouvrir automatiquement en mode édition SANS scroll automatique
+    // Le scroll automatique causait le bug de remontée en haut pendant l'édition
     setTimeout(() => {
       // Trouver la section la plus récente (celle avec l'order le plus élevé)
       const latestSection = [...sections].sort((a, b) => b.order - a.order)[0];
@@ -130,12 +132,6 @@ export default function Category() {
         setEditContent(latestSection.content);
         setEditColor(latestSection.colorPreset || 'red');
         setHideFromSidebar(latestSection.hideFromSidebar || false);
-        
-        // Scroll vers la nouvelle section
-        const element = document.getElementById(latestSection.id);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
       }
     }, 200);
   };
