@@ -1,8 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Edit3, Square } from 'lucide-react';
+import { LogOut, Edit3, Square, LogIn } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { toast } from 'sonner';
+import { useState } from 'react';
 import logoHelpconfort from '@/assets/logo-helpconfort-banner.jpg';
 
 interface HeaderProps {
@@ -11,8 +15,12 @@ interface HeaderProps {
 
 export function Header({ onOpenLogin }: HeaderProps) {
   const { isEditMode, toggleEditMode } = useEditor();
-  const { isAuthenticated, isAdmin, logout } = useAuth();
+  const { isAuthenticated, isAdmin, logout, login } = useAuth();
   const location = useLocation();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginPopoverOpen, setLoginPopoverOpen] = useState(false);
 
   const handleEnrichirClick = () => {
     if (!isAdmin) {
@@ -21,6 +29,27 @@ export function Header({ onOpenLogin }: HeaderProps) {
       toggleEditMode();
     } else {
       toggleEditMode();
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    
+    try {
+      const { error } = await login(email, password);
+      if (error) {
+        toast.error('Identifiants incorrects');
+      } else {
+        toast.success('Connexion réussie');
+        setEmail('');
+        setPassword('');
+        setLoginPopoverOpen(false);
+      }
+    } catch (error) {
+      toast.error('Erreur lors de la connexion');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -79,6 +108,47 @@ export function Header({ onOpenLogin }: HeaderProps) {
         </Link>
 
         <div className="ml-auto flex items-center gap-4">
+          {!isAuthenticated && (
+            <Popover open={loginPopoverOpen} onOpenChange={setLoginPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex items-center justify-center w-10 h-10"
+                >
+                  <LogIn className="w-5 h-5 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">Authentification Admin</h4>
+                    <p className="text-xs text-muted-foreground">Connectez-vous pour accéder au mode édition</p>
+                  </div>
+                  <div className="space-y-3">
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                    <Input
+                      type="password"
+                      placeholder="Mot de passe"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                    <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                      {isLoggingIn ? 'Connexion...' : 'Se connecter'}
+                    </Button>
+                  </div>
+                </form>
+              </PopoverContent>
+            </Popover>
+          )}
+
           {isAdmin && (
             <Button
               onClick={handleEnrichirClick}
