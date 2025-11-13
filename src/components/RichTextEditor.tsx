@@ -10,7 +10,7 @@ import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { FontSize } from '@/extensions/FontSize';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip, ChevronDown, Table as TableIcon, Plus, Minus, Grid3x3 } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip, ChevronDown, Table as TableIcon, Plus, Minus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -76,22 +76,6 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         resizable: true,
         HTMLAttributes: {
           class: 'table-auto border-collapse my-4',
-        },
-      }).extend({
-        addAttributes() {
-          return {
-            ...this.parent?.(),
-            'data-hide-borders': {
-              default: null,
-              parseHTML: element => element.getAttribute('data-hide-borders'),
-              renderHTML: attributes => {
-                if (attributes['data-hide-borders']) {
-                  return { 'data-hide-borders': 'true' };
-                }
-                return {};
-              },
-            },
-          };
         },
       }),
       TableRow,
@@ -639,40 +623,6 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           title="Supprimer la ligne"
         >
           <Minus className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            console.log('Toggle borders clicked');
-            const { state } = editor;
-            const { selection } = state;
-            const { $anchor } = selection;
-            
-            console.log('Depth:', $anchor.depth);
-            
-            for (let d = $anchor.depth; d > 0; d--) {
-              const node = $anchor.node(d);
-              console.log(`Depth ${d}: ${node.type.name}`);
-              if (node.type.name === 'table') {
-                const pos = $anchor.before(d);
-                const currentValue = node.attrs['data-hide-borders'];
-                console.log('Found table, current value:', currentValue);
-                const tr = state.tr.setNodeMarkup(pos, null, {
-                  ...node.attrs,
-                  'data-hide-borders': currentValue ? null : 'true'
-                });
-                console.log('Dispatching transaction');
-                editor.view.dispatch(tr);
-                break;
-              }
-            }
-          }}
-          disabled={false}
-          title="Masquer/Afficher les bordures"
-        >
-          <Grid3x3 className="w-4 h-4" />
         </Button>
 
         <div className="w-px h-6 bg-border mx-1" />
