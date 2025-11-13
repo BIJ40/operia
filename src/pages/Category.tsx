@@ -209,8 +209,13 @@ export default function Category() {
 
     const style = {
       transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.5 : 1,
+      transition: transition || 'transform 200ms ease',
+      opacity: isDragging ? 0.8 : 1,
+      zIndex: isDragging ? 50 : 'auto',
+      cursor: isDragging ? 'grabbing' : 'default',
+      // Préserver la largeur pendant le drag
+      width: isDragging ? '100%' : 'auto',
+      maxWidth: isDragging ? 'calc(100% - 4rem)' : 'none',
     };
 
     return (
@@ -219,7 +224,9 @@ export default function Category() {
         style={style}
         id={section.id}
         tabIndex={-1}
-        className={`mb-8 p-6 rounded-lg ${getColorClass(section.colorPreset)} focus:outline-none`}
+        className={`mb-8 p-6 rounded-lg transition-all duration-200 ${getColorClass(section.colorPreset)} focus:outline-none ${
+          isDragging ? 'shadow-2xl scale-[1.02] ring-2 ring-primary bg-opacity-95' : ''
+        }`}
       >
         {editingId === section.id ? (
           <SectionEditForm
