@@ -39,7 +39,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
     }
   }, [node.attrs.src, node.attrs.width, node.attrs.height, updateAttributes]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = (e: React.MouseEvent, corner: string) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -55,14 +55,21 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
       const deltaX = moveEvent.clientX - startPosRef.current.x;
       const deltaY = moveEvent.clientY - startPosRef.current.y;
       
-      // Use the larger delta to maintain aspect ratio
-      const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
+      // Calculate delta based on corner
+      let delta = 0;
+      if (corner === 'bottom-right') {
+        delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
+      } else if (corner === 'bottom-left') {
+        delta = Math.abs(deltaX) > Math.abs(deltaY) ? -deltaX : deltaY;
+      } else if (corner === 'top-right') {
+        delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : -deltaY;
+      } else if (corner === 'top-left') {
+        delta = Math.abs(deltaX) > Math.abs(deltaY) ? -deltaX : -deltaY;
+      }
       
-      // Correct direction: add delta to increase size when dragging outward
       const newWidth = Math.max(50, startPosRef.current.width + delta);
       const newHeight = newWidth / aspectRatioRef.current;
 
-      // Store in ref for immediate access
       currentDimensionsRef.current = { width: newWidth, height: newHeight };
       setDimensions({ width: newWidth, height: newHeight });
     };
@@ -122,22 +129,22 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
             <div
               className="absolute bottom-0 right-0 w-4 h-4 bg-primary rounded-full cursor-se-resize border-2 border-background shadow-md"
               style={{ transform: 'translate(50%, 50%)' }}
-              onMouseDown={handleMouseDown}
+              onMouseDown={(e) => handleMouseDown(e, 'bottom-right')}
             />
             <div
               className="absolute top-0 right-0 w-4 h-4 bg-primary rounded-full cursor-ne-resize border-2 border-background shadow-md"
               style={{ transform: 'translate(50%, -50%)' }}
-              onMouseDown={handleMouseDown}
+              onMouseDown={(e) => handleMouseDown(e, 'top-right')}
             />
             <div
               className="absolute bottom-0 left-0 w-4 h-4 bg-primary rounded-full cursor-sw-resize border-2 border-background shadow-md"
               style={{ transform: 'translate(-50%, 50%)' }}
-              onMouseDown={handleMouseDown}
+              onMouseDown={(e) => handleMouseDown(e, 'bottom-left')}
             />
             <div
               className="absolute top-0 left-0 w-4 h-4 bg-primary rounded-full cursor-nw-resize border-2 border-background shadow-md"
               style={{ transform: 'translate(-50%, -50%)' }}
-              onMouseDown={handleMouseDown}
+              onMouseDown={(e) => handleMouseDown(e, 'top-left')}
             />
           </>
         )}
