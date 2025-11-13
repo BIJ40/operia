@@ -216,7 +216,23 @@ export default function ApporteursNationaux() {
       const data = JSON.parse(savedData);
       setCategories(data.categories || []);
     } else {
-      setCategories([]);
+      // Données par défaut pour les apporteurs nationaux (12 apporteurs)
+      const defaultCategories = [
+        { id: 'ap-1', type: 'category', title: 'VIAREN', icon: 'Building2', colorPreset: 'blue', order: 0, slug: 'viaren' },
+        { id: 'ap-2', type: 'category', title: 'PRO MULT TRAVAUX', icon: 'Wrench', colorPreset: 'green', order: 1, slug: 'pro-mult-travaux' },
+        { id: 'ap-3', type: 'category', title: 'DOMUS', icon: 'Home', colorPreset: 'orange', order: 2, slug: 'domus' },
+        { id: 'ap-4', type: 'category', title: 'DYNAREN', icon: 'Zap', colorPreset: 'purple', order: 3, slug: 'dynaren' },
+        { id: 'ap-5', type: 'category', title: 'HOMESERVE', icon: 'Shield', colorPreset: 'blue', order: 4, slug: 'homeserve' },
+        { id: 'ap-6', type: 'category', title: 'AXA ASSISTANCE', icon: 'HeartHandshake', colorPreset: 'red', order: 5, slug: 'axa-assistance' },
+        { id: 'ap-7', type: 'category', title: 'FMB', icon: 'Building', colorPreset: 'yellow', order: 6, slug: 'fmb' },
+        { id: 'ap-8', type: 'category', title: 'IMH', icon: 'Landmark', colorPreset: 'green', order: 7, slug: 'imh' },
+        { id: 'ap-9', type: 'category', title: 'AFEDIM', icon: 'Users', colorPreset: 'orange', order: 8, slug: 'afedim' },
+        { id: 'ap-10', type: 'category', title: 'CREA MAINTENANCE', icon: 'Settings', colorPreset: 'purple', order: 9, slug: 'crea-maintenance' },
+        { id: 'ap-11', type: 'category', title: 'FACILIANCE', icon: 'Star', colorPreset: 'blue', order: 10, slug: 'faciliance' },
+        { id: 'ap-12', type: 'category', title: 'AUTRES', icon: 'MoreHorizontal', colorPreset: 'blanc', order: 11, slug: 'autres' },
+      ];
+      setCategories(defaultCategories);
+      localStorage.setItem('apporteursNationauxData', JSON.stringify({ categories: defaultCategories }));
     }
   }, []);
 
