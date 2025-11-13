@@ -211,15 +211,32 @@ All colors MUST be HSL.
 .prose th {
   padding: 0.5rem;
   min-width: 100px;
-}
-
-.prose table[data-show-borders="true"] td,
-.prose table[data-show-borders="true"] th {
   border: 1px solid hsl(var(--border));
 }
 
-.prose table[data-show-borders="false"] td,
-.prose table[data-show-borders="false"] th {
+/* Tables without borders */
+.prose table.table-no-borders td,
+.prose table.table-no-borders th {
+  border: none;
+}
+
+.ProseMirror table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ProseMirror td,
+.ProseMirror th {
+  padding: 0.5rem;
+  min-width: 100px;
+  border: 1px solid hsl(var(--border));
+}
+
+/* Tables without borders in editor */
+.ProseMirror table.table-no-borders td,
+.ProseMirror table.table-no-borders th {
   border: none;
 }
 

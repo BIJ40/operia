@@ -49,7 +49,6 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   const [fileLabel, setFileLabel] = useState('Voir');
   const [filename, setFilename] = useState('');
   const [showFileDialog, setShowFileDialog] = useState(false);
-  const [showTableBorders, setShowTableBorders] = useState(true);
   const { blocks } = useEditorContext();
   
   // Load mentions immediately
@@ -75,6 +74,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       }),
       Table.configure({
         resizable: true,
+        allowTableNodeSelection: true,
         HTMLAttributes: {
           class: 'table-auto border-collapse my-4',
         },
@@ -610,7 +610,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           size="sm"
           variant="ghost"
           onClick={() => editor.chain().focus().addRowAfter().run()}
-          disabled={!editor.isActive('table')}
+          disabled={!editor.can().addRowAfter()}
           title="Ajouter une ligne"
         >
           <Plus className="w-4 h-4" />
@@ -620,7 +620,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           size="sm"
           variant="ghost"
           onClick={() => editor.chain().focus().deleteRow().run()}
-          disabled={!editor.isActive('table')}
+          disabled={!editor.can().deleteRow()}
           title="Supprimer la ligne"
         >
           <Minus className="w-4 h-4" />
@@ -629,9 +629,26 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => setShowTableBorders(!showTableBorders)}
-          className={showTableBorders ? 'bg-accent' : ''}
-          title="Afficher/masquer les bordures"
+          onClick={() => {
+            // Toggle border class on the current table
+            const { state } = editor;
+            const { $from } = state.selection;
+            const tableNode = $from.node(-1);
+            
+            if (tableNode && tableNode.type.name === 'table') {
+              const pos = $from.before(-1);
+              const currentClass = tableNode.attrs.class || '';
+              const hasNoBorders = currentClass.includes('table-no-borders');
+              
+              editor.chain().focus().updateAttributes('table', {
+                class: hasNoBorders 
+                  ? currentClass.replace('table-no-borders', '').trim()
+                  : `${currentClass} table-no-borders`.trim()
+              }).run();
+            }
+          }}
+          disabled={!editor.can().deleteRow()}
+          title="Afficher/masquer les bordures du tableau"
         >
           <TableProperties className="w-4 h-4" />
         </Button>
@@ -886,10 +903,8 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:my-2 [&_h3]:block
           [&_p]:text-base [&_p]:my-2 [&_p]:block
           [&_table]:w-full [&_table]:my-4
-          ${showTableBorders ? 
-            '[&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:p-2 [&_th]:border [&_th]:border-border [&_th]:p-2' : 
-            '[&_table]:border-collapse [&_td]:border-0 [&_td]:p-2 [&_th]:border-0 [&_th]:p-2'
-          }`}
+          [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:p-2 [&_th]:border [&_th]:border-border [&_th]:p-2
+          [&_table.table-no-borders]:border-0 [&_table.table-no-borders_td]:border-0 [&_table.table-no-borders_th]:border-0`}
       />
       <div className="text-xs text-muted-foreground px-4 pb-2">
         💡 Tapez @ pour créer des liens vers d&apos;autres sections
