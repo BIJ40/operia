@@ -4,9 +4,13 @@ import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
 import { FontSize } from '@/extensions/FontSize';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip, ChevronDown } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip, ChevronDown, Table as TableIcon, TableProperties, Plus, Minus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -45,6 +49,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   const [fileLabel, setFileLabel] = useState('Voir');
   const [filename, setFilename] = useState('');
   const [showFileDialog, setShowFileDialog] = useState(false);
+  const [showTableBorders, setShowTableBorders] = useState(true);
   const { blocks } = useEditorContext();
   
   // Load mentions immediately
@@ -67,6 +72,19 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       }),
       Highlight.configure({
         multicolor: true,
+      }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'table-auto border-collapse my-4',
+        },
+      }),
+      TableRow,
+      TableHeader,
+      TableCell.configure({
+        HTMLAttributes: {
+          class: 'border border-border p-2 min-w-[100px]',
+        },
       }),
       Mention.configure({
         HTMLAttributes: {
@@ -577,6 +595,49 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
 
         <div className="w-px h-6 bg-border mx-1" />
 
+        {/* Tableaux */}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().insertTable({ rows: 2, cols: 2, withHeaderRow: false }).run()}
+          title="Insérer un tableau (2 colonnes)"
+        >
+          <TableIcon className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().addRowAfter().run()}
+          disabled={!editor.isActive('table')}
+          title="Ajouter une ligne"
+        >
+          <Plus className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().deleteRow().run()}
+          disabled={!editor.isActive('table')}
+          title="Supprimer la ligne"
+        >
+          <Minus className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => setShowTableBorders(!showTableBorders)}
+          className={showTableBorders ? 'bg-accent' : ''}
+          title="Afficher/masquer les bordures"
+        >
+          <TableProperties className="w-4 h-4" />
+        </Button>
+
+        <div className="w-px h-6 bg-border mx-1" />
+
         {/* Encadrés */}
         <Button
           type="button"
@@ -815,7 +876,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
 
       <EditorContent 
         editor={editor} 
-        className="p-4 min-h-[300px] focus:outline-none 
+        className={`p-4 min-h-[300px] focus:outline-none 
           [&_.mention]:cursor-pointer [&_.mention]:text-primary [&_.mention]:font-medium [&_.mention]:hover:underline
           [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:my-2
           [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:my-2
@@ -823,7 +884,12 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:my-4 [&_h1]:block
           [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:my-3 [&_h2]:block
           [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:my-2 [&_h3]:block
-          [&_p]:text-base [&_p]:my-2 [&_p]:block"
+          [&_p]:text-base [&_p]:my-2 [&_p]:block
+          [&_table]:w-full [&_table]:my-4
+          ${showTableBorders ? 
+            '[&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:p-2 [&_th]:border [&_th]:border-border [&_th]:p-2' : 
+            '[&_table]:border-collapse [&_td]:border-0 [&_td]:p-2 [&_th]:border-0 [&_th]:p-2'
+          }`}
       />
       <div className="text-xs text-muted-foreground px-4 pb-2">
         💡 Tapez @ pour créer des liens vers d&apos;autres sections
