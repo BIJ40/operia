@@ -74,21 +74,23 @@ export default function Category() {
 
   // Préserver la position de scroll lors des changements d'onglet
   useEffect(() => {
+    let savedPosition = 0;
+    
     const handleVisibilityChange = () => {
       if (document.hidden) {
         // Sauvegarder la position avant de quitter
-        setScrollPosition(window.scrollY);
+        savedPosition = window.scrollY;
       } else {
         // Restaurer la position au retour
         setTimeout(() => {
-          window.scrollTo({ top: scrollPosition, behavior: 'instant' });
-        }, 0);
+          window.scrollTo({ top: savedPosition, behavior: 'instant' });
+        }, 50);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [scrollPosition]);
+  }, []);
 
   // Scroll to section if hash is present UNIQUEMENT au chargement initial
   // Ne se déclenche qu'UNE SEULE FOIS pour éviter les scrolls intempestifs pendant l'édition
@@ -249,6 +251,7 @@ export default function Category() {
       >
         {editingId === section.id ? (
           <SectionEditForm
+            sectionId={section.id}
             initialTitle={section.title}
             initialContent={section.content}
             initialColor={section.colorPreset || 'red'}
