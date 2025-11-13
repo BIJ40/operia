@@ -115,26 +115,38 @@ export default function Category() {
                       placeholder="Titre"
                       className="font-semibold text-xl"
                     />
-                    <Select value={editColor} onValueChange={(v: ColorPreset) => setEditColor(v)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="red">Rouge (attention)</SelectItem>
-                        <SelectItem value="blanc">Blanc</SelectItem>
-                        <SelectItem value="gray">Gris clair</SelectItem>
-                        <SelectItem value="green">Vert (bonnes pratiques)</SelectItem>
-                        <SelectItem value="yellow">Jaune (astuces)</SelectItem>
-                        <SelectItem value="blue">Bleu (info)</SelectItem>
-                        <SelectItem value="purple">Violet</SelectItem>
-                        <SelectItem value="pink">Rose</SelectItem>
-                        <SelectItem value="orange">Orange</SelectItem>
-                        <SelectItem value="cyan">Cyan</SelectItem>
-                        <SelectItem value="indigo">Indigo</SelectItem>
-                        <SelectItem value="teal">Sarcelle</SelectItem>
-                        <SelectItem value="rose">Rose foncé</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Couleur</label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { value: 'red', color: 'bg-red-500', label: 'Rouge' },
+                          { value: 'blanc', color: 'bg-white border-2 border-gray-300', label: 'Blanc' },
+                          { value: 'gray', color: 'bg-gray-400', label: 'Gris' },
+                          { value: 'green', color: 'bg-green-500', label: 'Vert' },
+                          { value: 'yellow', color: 'bg-yellow-500', label: 'Jaune' },
+                          { value: 'blue', color: 'bg-blue-500', label: 'Bleu' },
+                          { value: 'purple', color: 'bg-purple-500', label: 'Violet' },
+                          { value: 'pink', color: 'bg-pink-500', label: 'Rose' },
+                          { value: 'orange', color: 'bg-orange-500', label: 'Orange' },
+                          { value: 'cyan', color: 'bg-cyan-500', label: 'Cyan' },
+                          { value: 'indigo', color: 'bg-indigo-500', label: 'Indigo' },
+                          { value: 'teal', color: 'bg-teal-500', label: 'Sarcelle' },
+                          { value: 'rose', color: 'bg-rose-500', label: 'Rose foncé' },
+                        ].map((colorOption) => (
+                          <button
+                            key={colorOption.value}
+                            type="button"
+                            onClick={() => setEditColor(colorOption.value as ColorPreset)}
+                            className={`w-8 h-8 rounded-full ${colorOption.color} transition-all hover:scale-110 ${
+                              editColor === colorOption.value 
+                                ? 'ring-4 ring-primary ring-offset-2' 
+                                : 'ring-2 ring-gray-200'
+                            }`}
+                            title={colorOption.label}
+                          />
+                        ))}
+                      </div>
+                    </div>
                     <RichTextEditor
                       content={editContent}
                       onChange={setEditContent}
