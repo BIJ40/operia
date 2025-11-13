@@ -1,5 +1,5 @@
 export type ColorPreset = "white" | "blanc" | "gray" | "green" | "yellow" | "red" | "blue" | "purple" | "pink" | "orange" | "cyan" | "indigo" | "teal" | "rose";
-export type BlockType = "category" | "section";
+export type BlockType = "category" | "section" | "guide";
 
 export interface Attachment {
   id: string;
@@ -18,6 +18,7 @@ export interface Block {
   order: number;
   slug: string;
   parentId?: string;
+  guideId?: string;
   attachments: Attachment[];
   hideFromSidebar?: boolean;
 }
