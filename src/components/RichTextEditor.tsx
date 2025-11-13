@@ -4,7 +4,7 @@ import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
-import FontFamily from '@tiptap/extension-font-family';
+import { FontSize } from '@/extensions/FontSize';
 import { Button } from '@/components/ui/button';
 import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -59,7 +59,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       InlineFile,
       TextStyle,
       Color,
-      FontFamily,
+      FontSize,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
         alignments: ['left', 'center', 'right'],
@@ -238,7 +238,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => editor.chain().focus().setMark('textStyle', { fontSize: '0.75rem' }).run()}
+          onClick={() => editor.chain().focus().setFontSize('0.75rem').run()}
           title="Petit texte"
           className="text-xs"
         >
@@ -248,7 +248,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => editor.chain().focus().setMark('textStyle', { fontSize: '1rem' }).run()}
+          onClick={() => editor.chain().focus().setFontSize('1rem').run()}
           title="Texte normal"
           className="text-sm"
         >
@@ -258,7 +258,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => editor.chain().focus().setMark('textStyle', { fontSize: '1.25rem' }).run()}
+          onClick={() => editor.chain().focus().setFontSize('1.25rem').run()}
           title="Grand texte"
           className="text-base"
         >
@@ -268,7 +268,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => editor.chain().focus().setMark('textStyle', { fontSize: '1.5rem' }).run()}
+          onClick={() => editor.chain().focus().setFontSize('1.5rem').run()}
           title="Très grand texte"
           className="text-lg"
         >
