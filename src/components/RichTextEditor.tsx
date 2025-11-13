@@ -604,8 +604,13 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => editor.chain().focus().addRowAfter().run()}
-          disabled={!editor.isActive('table')}
+          onClick={() => {
+            console.log('Add row clicked');
+            console.log('isActive table:', editor.isActive('table'));
+            console.log('can addRowAfter:', editor.can().addRowAfter());
+            editor.chain().focus().addRowAfter().run();
+          }}
+          disabled={!editor.can().addRowAfter()}
           title="Ajouter une ligne"
         >
           <Plus className="w-4 h-4" />
@@ -614,8 +619,13 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => editor.chain().focus().deleteRow().run()}
-          disabled={!editor.isActive('table')}
+          onClick={() => {
+            console.log('Delete row clicked');
+            console.log('isActive table:', editor.isActive('table'));
+            console.log('can deleteRow:', editor.can().deleteRow());
+            editor.chain().focus().deleteRow().run();
+          }}
+          disabled={!editor.can().deleteRow()}
           title="Supprimer la ligne"
         >
           <Minus className="w-4 h-4" />
