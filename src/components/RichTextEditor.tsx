@@ -74,7 +74,6 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       }),
       Table.configure({
         resizable: true,
-        allowTableNodeSelection: true,
         HTMLAttributes: {
           class: 'table-auto border-collapse my-4',
         },
@@ -609,13 +608,8 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => {
-            console.log('Add row clicked');
-            console.log('isActive table:', editor.isActive('table'));
-            console.log('can addRowAfter:', editor.can().addRowAfter());
-            editor.chain().focus().addRowAfter().run();
-          }}
-          disabled={!editor.can().addRowAfter()}
+          onClick={() => editor.chain().focus().addRowAfter().run()}
+          disabled={!editor.isActive('table')}
           title="Ajouter une ligne"
         >
           <Plus className="w-4 h-4" />
@@ -624,13 +618,8 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => {
-            console.log('Delete row clicked');
-            console.log('isActive table:', editor.isActive('table'));
-            console.log('can deleteRow:', editor.can().deleteRow());
-            editor.chain().focus().deleteRow().run();
-          }}
-          disabled={!editor.can().deleteRow()}
+          onClick={() => editor.chain().focus().deleteRow().run()}
+          disabled={!editor.isActive('table')}
           title="Supprimer la ligne"
         >
           <Minus className="w-4 h-4" />
