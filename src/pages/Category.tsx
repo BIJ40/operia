@@ -53,6 +53,14 @@ export default function Category() {
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   
+  // Liste des catégories disponibles (exclure FAQ)
+  const availableCategories = useMemo(() =>
+    blocks
+      .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
+      .sort((a, b) => a.order - b.order),
+    [blocks]
+  );
+  
   // Mémoriser sections pour éviter les recalculs qui causent des scrolls
   const sections = useMemo(() => 
     blocks
@@ -152,9 +160,32 @@ export default function Category() {
     content: string;
     colorPreset: ColorPreset;
     hideFromSidebar: boolean;
+    parentId?: string;
   }) => {
     if (editingId) {
-      updateBlock(editingId, data);
+      const updates: any = {
+        title: data.title,
+        content: data.content,
+        colorPreset: data.colorPreset,
+        hideFromSidebar: data.hideFromSidebar,
+      };
+      
+      // Si la catégorie parent change
+      if (data.parentId && data.parentId !== category.id) {
+        updates.parentId = data.parentId;
+        
+        // Récupérer les sections de la nouvelle catégorie pour calculer le nouvel ordre
+        const newCategorySections = blocks
+          .filter(b => b.type === 'section' && b.parentId === data.parentId)
+          .sort((a, b) => a.order - b.order);
+        
+        // Placer la section en haut de la nouvelle catégorie
+        updates.order = newCategorySections.length > 0 
+          ? newCategorySections[0].order - 1 
+          : 0;
+      }
+      
+      updateBlock(editingId, updates);
       setEditingId(null);
     }
   };
@@ -279,6 +310,8 @@ export default function Category() {
             initialContent={section.content}
             initialColor={section.colorPreset || 'red'}
             initialHideFromSidebar={section.hideFromSidebar || false}
+            categories={availableCategories}
+            currentCategoryId={category.id}
             onSave={handleSave}
             onCancel={handleCancel}
           />

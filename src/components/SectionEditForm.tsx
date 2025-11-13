@@ -2,9 +2,15 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RichTextEditor } from '@/components/RichTextEditor';
-import { ColorPreset } from '@/types/block';
+import { ColorPreset, Block } from '@/types/block';
 import { useState, useEffect } from 'react';
-import { Save, X } from 'lucide-react';
+import { Save, X, FolderInput } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface SectionEditFormProps {
   sectionId: string;
@@ -12,11 +18,14 @@ interface SectionEditFormProps {
   initialContent: string;
   initialColor: ColorPreset;
   initialHideFromSidebar: boolean;
+  categories?: Block[];
+  currentCategoryId?: string;
   onSave: (data: {
     title: string;
     content: string;
     colorPreset: ColorPreset;
     hideFromSidebar: boolean;
+    parentId?: string;
   }) => void;
   onCancel: () => void;
 }
@@ -27,6 +36,8 @@ export function SectionEditForm({
   initialContent,
   initialColor,
   initialHideFromSidebar,
+  categories = [],
+  currentCategoryId,
   onSave,
   onCancel,
 }: SectionEditFormProps) {
@@ -50,6 +61,7 @@ export function SectionEditForm({
     const saved = sessionStorage.getItem(`${storageKey}-hide`);
     return saved ? saved === 'true' : initialHideFromSidebar;
   });
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(currentCategoryId);
 
   // Sauvegarder automatiquement l'état lors des modifications
   useEffect(() => {
@@ -77,7 +89,14 @@ export function SectionEditForm({
   };
 
   const handleSave = () => {
-    onSave({ title, content, colorPreset: color, hideFromSidebar });
+    const saveData: any = { title, content, colorPreset: color, hideFromSidebar };
+    
+    // Si une nouvelle catégorie est sélectionnée et différente de l'actuelle
+    if (selectedCategoryId && selectedCategoryId !== currentCategoryId) {
+      saveData.parentId = selectedCategoryId;
+    }
+    
+    onSave(saveData);
     clearStorage();
   };
 
@@ -98,6 +117,33 @@ export function SectionEditForm({
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium">Couleur</label>
           <div className="flex gap-2">
+            {categories.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    title="Changer de catégorie"
+                    className="h-9 w-9"
+                  >
+                    <FolderInput className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {categories.map((cat) => (
+                    <DropdownMenuItem
+                      key={cat.id}
+                      onClick={() => setSelectedCategoryId(cat.id)}
+                      className={selectedCategoryId === cat.id ? "bg-accent" : ""}
+                    >
+                      {cat.title}
+                      {selectedCategoryId === cat.id && " ✓"}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Button 
               type="button"
               size="icon"
