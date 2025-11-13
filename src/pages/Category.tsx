@@ -232,6 +232,15 @@ export default function Category() {
                 )}
               </div>
             ))}
+
+        {isEditMode && isAuthenticated && (
+          <div className="mt-8">
+            <Button onClick={handleAddSection} className="w-full">
+              <Plus className="w-4 h-4 mr-2" />
+              Ajouter une section
+            </Button>
+          </div>
+        )}
       </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
