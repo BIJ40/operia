@@ -106,7 +106,7 @@ export default function Category() {
   };
 
   const handleAddSection = () => {
-    addBlock({
+    const newId = addBlock({
       type: 'section',
       title: 'Nouvelle sous-section',
       content: '<p>Contenu de la sous-section...</p>',
@@ -115,6 +115,23 @@ export default function Category() {
       slug: `${category.slug}-section-${Date.now()}`,
       attachments: [],
     });
+    
+    if (newId) {
+      // Ouvrir immédiatement en mode édition
+      setTimeout(() => {
+        setEditingId(newId);
+        setEditTitle('Nouvelle sous-section');
+        setEditContent('<p>Contenu de la sous-section...</p>');
+        setEditColor('red');
+        setHideFromSidebar(false);
+        
+        // Scroller vers la nouvelle section
+        const element = document.getElementById(newId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
   };
 
   const handleDeleteClick = (sectionId: string) => {
@@ -262,9 +279,11 @@ export default function Category() {
         ) : (
           <>
             <div className="flex items-start justify-between mb-4">
-              <h2 className="text-2xl font-semibold">{section.title}</h2>
+              {!section.hideFromSidebar && (
+                <h2 className="text-2xl font-semibold">{section.title}</h2>
+              )}
               {isEditMode && isAuthenticated && (
-                <div className="flex gap-2">
+                <div className={`flex gap-2 ${section.hideFromSidebar ? 'ml-auto' : ''}`}>
                   <Button
                     type="button"
                     size="sm"
