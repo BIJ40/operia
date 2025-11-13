@@ -81,9 +81,8 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none',
       },
-      // Empêcher le scroll automatique causé par l'éditeur
-      scrollMargin: 0,
-      scrollThreshold: 0,
+      // CRITIQUE : Désactiver complètement le scroll automatique de ProseMirror
+      handleScrollToSelection: () => false,
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
