@@ -40,6 +40,167 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+// Composant pour les catégories triables - défini en dehors pour éviter les recréations
+interface SortableCategoryProps {
+  category: any;
+  editingId: string | null;
+  editTitle: string;
+  editIcon: string;
+  editColor: ColorPreset;
+  isEditMode: boolean;
+  onEditTitleChange: (value: string) => void;
+  onEditIconChange: (value: string) => void;
+  onEditColorChange: (value: ColorPreset) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  getColorClass: (color?: ColorPreset) => string;
+  IconComponent: (iconName: string) => any;
+}
+
+const SortableCategory = ({
+  category,
+  editingId,
+  editTitle,
+  editIcon,
+  editColor,
+  isEditMode,
+  onEditTitleChange,
+  onEditIconChange,
+  onEditColorChange,
+  onSave,
+  onCancel,
+  onEdit,
+  onDelete,
+  getColorClass,
+  IconComponent,
+}: SortableCategoryProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const Icon = IconComponent(category.icon || 'BookOpen');
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(category.colorPreset)}`}
+    >
+      {isEditMode && (
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute top-2 left-2 cursor-grab active:cursor-grabbing z-10"
+        >
+          <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
+        </div>
+      )}
+      
+      {editingId === category.id ? (
+        <div className="space-y-3">
+          <Input
+            value={editTitle}
+            onChange={(e) => onEditTitleChange(e.target.value)}
+            placeholder="Titre de la catégorie"
+            autoFocus
+          />
+          <IconPicker
+            value={editIcon}
+            onChange={onEditIconChange}
+          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Couleur</label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
+                { value: 'blanc', color: 'bg-white border-2 border-gray-300', label: 'Blanc' },
+                { value: 'gray', color: 'bg-gray-50 border-2 border-gray-200', label: 'Gris' },
+                { value: 'green', color: 'bg-green-50 border-2 border-green-200', label: 'Vert' },
+                { value: 'yellow', color: 'bg-yellow-50 border-2 border-yellow-200', label: 'Jaune' },
+                { value: 'blue', color: 'bg-blue-50 border-2 border-blue-200', label: 'Bleu' },
+                { value: 'purple', color: 'bg-purple-50 border-2 border-purple-200', label: 'Violet' },
+                { value: 'pink', color: 'bg-pink-50 border-2 border-pink-200', label: 'Rose' },
+                { value: 'orange', color: 'bg-orange-50 border-2 border-orange-200', label: 'Orange' },
+                { value: 'cyan', color: 'bg-cyan-50 border-2 border-cyan-200', label: 'Cyan' },
+                { value: 'indigo', color: 'bg-indigo-50 border-2 border-indigo-200', label: 'Indigo' },
+                { value: 'teal', color: 'bg-teal-50 border-2 border-teal-200', label: 'Sarcelle' },
+                { value: 'rose', color: 'bg-rose-50 border-2 border-rose-200', label: 'Rose foncé' },
+              ].map((colorOption) => (
+                <button
+                  key={colorOption.value}
+                  type="button"
+                  onClick={() => onEditColorChange(colorOption.value as ColorPreset)}
+                  className={`w-8 h-8 rounded-full ${colorOption.color} transition-all hover:scale-110 ${
+                    editColor === colorOption.value 
+                      ? 'ring-4 ring-primary ring-offset-2' 
+                      : ''
+                  }`}
+                  title={colorOption.label}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={onSave} size="sm">Enregistrer</Button>
+            <Button onClick={onCancel} variant="outline" size="sm">Annuler</Button>
+          </div>
+        </div>
+      ) : (
+        <Link
+          to={`/category/${category.slug}`}
+          className="flex items-start gap-4 group-hover:scale-[1.02] transition-transform"
+        >
+          <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-primary/10">
+            <Icon className="w-6 h-6 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-bold mb-2">{category.title}</h3>
+            {category.content && (
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {category.content}
+              </p>
+            )}
+          </div>
+        </Link>
+      )}
+      
+      {isEditMode && editingId !== category.id && (
+        <div className="absolute top-2 right-2 flex gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onEdit(category.id)}
+            className="h-8 w-8"
+          >
+            <Icons.Edit2 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onDelete(category.id)}
+            className="h-8 w-8 text-destructive hover:text-destructive"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function Home() {
   const { blocks, loading, isEditMode, updateBlock, addBlock, deleteBlock } = useEditor();
   const { isAuthenticated } = useAuth();
@@ -213,132 +374,6 @@ export default function Home() {
     );
   }
 
-  // Composant pour les catégories triables
-  const SortableCategory = ({ category }: { category: any }) => {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-      isDragging,
-    } = useSortable({ id: category.id });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.5 : 1,
-    };
-
-    const Icon = IconComponent(category.icon || 'BookOpen');
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(category.colorPreset)}`}
-      >
-        {isEditMode && (
-          <div
-            {...attributes}
-            {...listeners}
-            className="absolute top-2 left-2 cursor-grab active:cursor-grabbing z-10"
-          >
-            <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
-          </div>
-        )}
-        
-        {editingId === category.id ? (
-          <div className="space-y-3">
-            <Input
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              placeholder="Titre de la catégorie"
-            />
-            <IconPicker
-              value={editIcon}
-              onChange={setEditIcon}
-            />
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Couleur</label>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
-                  { value: 'blanc', color: 'bg-white border-2 border-gray-300', label: 'Blanc' },
-                  { value: 'gray', color: 'bg-gray-50 border-2 border-gray-200', label: 'Gris' },
-                  { value: 'green', color: 'bg-green-50 border-2 border-green-200', label: 'Vert' },
-                  { value: 'yellow', color: 'bg-yellow-50 border-2 border-yellow-200', label: 'Jaune' },
-                  { value: 'blue', color: 'bg-blue-50 border-2 border-blue-200', label: 'Bleu' },
-                  { value: 'purple', color: 'bg-purple-50 border-2 border-purple-200', label: 'Violet' },
-                  { value: 'pink', color: 'bg-pink-50 border-2 border-pink-200', label: 'Rose' },
-                  { value: 'orange', color: 'bg-orange-50 border-2 border-orange-200', label: 'Orange' },
-                  { value: 'cyan', color: 'bg-cyan-50 border-2 border-cyan-200', label: 'Cyan' },
-                  { value: 'indigo', color: 'bg-indigo-50 border-2 border-indigo-200', label: 'Indigo' },
-                  { value: 'teal', color: 'bg-teal-50 border-2 border-teal-200', label: 'Sarcelle' },
-                  { value: 'rose', color: 'bg-rose-50 border-2 border-rose-200', label: 'Rose foncé' },
-                ].map((colorOption) => (
-                  <button
-                    key={colorOption.value}
-                    type="button"
-                    onClick={() => setEditColor(colorOption.value as ColorPreset)}
-                    className={`w-8 h-8 rounded-full ${colorOption.color} transition-all hover:scale-110 ${
-                      editColor === colorOption.value 
-                        ? 'ring-4 ring-primary ring-offset-2' 
-                        : ''
-                    }`}
-                    title={colorOption.label}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={handleSave} size="sm">Enregistrer</Button>
-              <Button onClick={() => setEditingId(null)} variant="outline" size="sm">Annuler</Button>
-            </div>
-          </div>
-        ) : (
-          <Link
-            to={`/category/${category.slug}`}
-            className="flex items-start gap-4 group-hover:scale-[1.02] transition-transform"
-          >
-            <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-primary/10">
-              <Icon className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold mb-2">{category.title}</h3>
-              {category.content && (
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {category.content}
-                </p>
-              )}
-            </div>
-          </Link>
-        )}
-        
-        {isEditMode && editingId !== category.id && (
-          <div className="absolute top-2 right-2 flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleEdit(category.id)}
-              className="h-8 w-8"
-            >
-              <Icons.Edit2 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleDeleteClick(category.id)}
-              className="h-8 w-8 text-destructive hover:text-destructive"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <>
       <div className="px-4 py-8 max-w-7xl mx-auto w-full">
@@ -426,7 +461,24 @@ export default function Home() {
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {categories.map((category) => (
-                        <SortableCategory key={category.id} category={category} />
+                        <SortableCategory 
+                          key={category.id} 
+                          category={category}
+                          editingId={editingId}
+                          editTitle={editTitle}
+                          editIcon={editIcon}
+                          editColor={editColor}
+                          isEditMode={isEditMode}
+                          onEditTitleChange={setEditTitle}
+                          onEditIconChange={setEditIcon}
+                          onEditColorChange={setEditColor}
+                          onSave={handleSave}
+                          onCancel={() => setEditingId(null)}
+                          onEdit={handleEdit}
+                          onDelete={handleDeleteClick}
+                          getColorClass={getColorClass}
+                          IconComponent={IconComponent}
+                        />
                       ))}
                     </div>
                   </SortableContext>
