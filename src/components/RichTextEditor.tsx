@@ -5,7 +5,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,8 @@ import { Mention, createMentionSuggestion } from '@/extensions/Mention';
 import { ResizableImage } from '@/extensions/ResizableImage';
 import { Callout } from '@/extensions/Callout';
 import { ImageButton } from '@/extensions/ImageButton';
+import { FileButton } from '@/extensions/FileButton';
+import { InlineFile } from '@/extensions/InlineFile';
 import { getAllMentionSuggestions, navigateToMention, MentionSuggestion } from '@/lib/mentions';
 import { useEditor as useEditorContext } from '@/contexts/EditorContext';
 import 'tippy.js/dist/tippy.css';
@@ -36,6 +38,11 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   const [imageType, setImageType] = useState<'inline' | 'modal'>('inline');
   const [imageLabel, setImageLabel] = useState('Voir');
   const [showImageDialog, setShowImageDialog] = useState(false);
+  const [fileUrl, setFileUrl] = useState('');
+  const [fileType, setFileType] = useState<'inline' | 'button'>('inline');
+  const [fileLabel, setFileLabel] = useState('Voir');
+  const [filename, setFilename] = useState('');
+  const [showFileDialog, setShowFileDialog] = useState(false);
   const { blocks } = useEditorContext();
   
   // Load mentions immediately
@@ -47,6 +54,8 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       ResizableImage,
       Callout,
       ImageButton,
+      FileButton,
+      InlineFile,
       TextStyle,
       Color,
       TextAlign.configure({
@@ -136,6 +145,41 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
       setImageUrl(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileInsert = () => {
+    if (!fileUrl) return;
+
+    if (fileType === 'inline') {
+      editor?.chain().focus().setInlineFile({
+        src: fileUrl,
+        filename: filename || 'fichier',
+      }).run();
+    } else {
+      editor?.chain().focus().setFileButton({
+        src: fileUrl,
+        label: fileLabel,
+        filename: filename || 'fichier',
+      }).run();
+    }
+
+    setFileUrl('');
+    setFileLabel('Voir');
+    setFilename('');
+    setShowFileDialog(false);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFilename(file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setFileUrl(dataUrl);
     };
     reader.readAsDataURL(file);
   };
@@ -495,6 +539,100 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
 
               <Button onClick={handleImageInsert} disabled={!imageUrl} className="w-full">
                 Insérer l&apos;image
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showFileDialog} onOpenChange={setShowFileDialog}>
+          <DialogTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              title="Insérer un fichier"
+            >
+              <Paperclip className="w-4 h-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Insérer un fichier</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="file-upload">Télécharger un fichier</Label>
+                <Input
+                  id="file-upload"
+                  type="file"
+                  onChange={handleFileUpload}
+                  className="mt-2"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="file-url">Ou coller une URL</Label>
+                <Input
+                  id="file-url"
+                  type="url"
+                  placeholder="https://exemple.com/fichier.pdf"
+                  value={fileUrl}
+                  onChange={(e) => setFileUrl(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+
+              {fileUrl && (
+                <div>
+                  <Label htmlFor="filename">Nom du fichier</Label>
+                  <Input
+                    id="filename"
+                    type="text"
+                    placeholder="document.pdf"
+                    value={filename}
+                    onChange={(e) => setFilename(e.target.value)}
+                    className="mt-2"
+                  />
+                </div>
+              )}
+
+              <div>
+                <Label>Type d&apos;affichage</Label>
+                <RadioGroup value={fileType} onValueChange={(v) => setFileType(v as 'inline' | 'button')} className="mt-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="inline" id="file-inline" />
+                    <Label htmlFor="file-inline" className="font-normal cursor-pointer">
+                      Miniature (afficher une carte avec l&apos;icône du fichier)
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="button" id="file-button" />
+                    <Label htmlFor="file-button" className="font-normal cursor-pointer">
+                      Bouton (afficher seulement un bouton cliquable)
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {fileType === 'button' && (
+                <div>
+                  <Label htmlFor="file-label">Texte du bouton</Label>
+                  <Input
+                    id="file-label"
+                    type="text"
+                    placeholder="Voir"
+                    value={fileLabel}
+                    onChange={(e) => setFileLabel(e.target.value)}
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Par exemple : "Télécharger le PDF", "Voir le document", "Ouvrir le fichier"
+                  </p>
+                </div>
+              )}
+
+              <Button onClick={handleFileInsert} disabled={!fileUrl} className="w-full">
+                Insérer le fichier
               </Button>
             </div>
           </DialogContent>

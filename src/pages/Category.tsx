@@ -119,19 +119,19 @@ export default function Category() {
                       <label className="text-sm font-medium">Couleur</label>
                       <div className="flex flex-wrap gap-2">
                         {[
-                          { value: 'red', color: 'bg-red-500', label: 'Rouge' },
+                          { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
                           { value: 'blanc', color: 'bg-white border-2 border-gray-300', label: 'Blanc' },
-                          { value: 'gray', color: 'bg-gray-400', label: 'Gris' },
-                          { value: 'green', color: 'bg-green-500', label: 'Vert' },
-                          { value: 'yellow', color: 'bg-yellow-500', label: 'Jaune' },
-                          { value: 'blue', color: 'bg-blue-500', label: 'Bleu' },
-                          { value: 'purple', color: 'bg-purple-500', label: 'Violet' },
-                          { value: 'pink', color: 'bg-pink-500', label: 'Rose' },
-                          { value: 'orange', color: 'bg-orange-500', label: 'Orange' },
-                          { value: 'cyan', color: 'bg-cyan-500', label: 'Cyan' },
-                          { value: 'indigo', color: 'bg-indigo-500', label: 'Indigo' },
-                          { value: 'teal', color: 'bg-teal-500', label: 'Sarcelle' },
-                          { value: 'rose', color: 'bg-rose-500', label: 'Rose foncé' },
+                          { value: 'gray', color: 'bg-gray-50 border-2 border-gray-200', label: 'Gris' },
+                          { value: 'green', color: 'bg-green-50 border-2 border-green-200', label: 'Vert' },
+                          { value: 'yellow', color: 'bg-yellow-50 border-2 border-yellow-200', label: 'Jaune' },
+                          { value: 'blue', color: 'bg-blue-50 border-2 border-blue-200', label: 'Bleu' },
+                          { value: 'purple', color: 'bg-purple-50 border-2 border-purple-200', label: 'Violet' },
+                          { value: 'pink', color: 'bg-pink-50 border-2 border-pink-200', label: 'Rose' },
+                          { value: 'orange', color: 'bg-orange-50 border-2 border-orange-200', label: 'Orange' },
+                          { value: 'cyan', color: 'bg-cyan-50 border-2 border-cyan-200', label: 'Cyan' },
+                          { value: 'indigo', color: 'bg-indigo-50 border-2 border-indigo-200', label: 'Indigo' },
+                          { value: 'teal', color: 'bg-teal-50 border-2 border-teal-200', label: 'Sarcelle' },
+                          { value: 'rose', color: 'bg-rose-50 border-2 border-rose-200', label: 'Rose foncé' },
                         ].map((colorOption) => (
                           <button
                             key={colorOption.value}
@@ -140,7 +140,7 @@ export default function Category() {
                             className={`w-8 h-8 rounded-full ${colorOption.color} transition-all hover:scale-110 ${
                               editColor === colorOption.value 
                                 ? 'ring-4 ring-primary ring-offset-2' 
-                                : 'ring-2 ring-gray-200'
+                                : ''
                             }`}
                             title={colorOption.label}
                           />
