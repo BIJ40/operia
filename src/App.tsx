@@ -9,6 +9,7 @@ import ApporteursNationaux from "./pages/ApporteursNationaux";
 import InformationsUtiles from "./pages/InformationsUtiles";
 import Category from "./pages/Category";
 import NotFound from "./pages/NotFound";
+import DataBackup from "./pages/DataBackup";
 import { AuthProvider } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
 import { Layout } from "./components/Layout";
@@ -31,6 +32,7 @@ const App = () => (
               <Route path="/apporteurs-nationaux/category/:slug" element={<Layout showHeader showSidebar={true} sidebarScope="apporteurs-nationaux"><Category /></Layout>} />
               <Route path="/informations-utiles" element={<Layout showHeader showSidebar={true} sidebarScope="informations-utiles"><InformationsUtiles /></Layout>} />
               <Route path="/informations-utiles/category/:slug" element={<Layout showHeader showSidebar={true} sidebarScope="informations-utiles"><Category /></Layout>} />
+              <Route path="/data-backup" element={<Layout showHeader showSidebar={false}><DataBackup /></Layout>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
