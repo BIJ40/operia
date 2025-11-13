@@ -1,10 +1,10 @@
-// Force update - toolbar reorganization and list fix v2
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
+import FontFamily from '@tiptap/extension-font-family';
 import { Button } from '@/components/ui/button';
 import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -59,6 +59,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       InlineFile,
       TextStyle,
       Color,
+      FontFamily,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
         alignments: ['left', 'center', 'right'],
@@ -188,14 +189,14 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   return (
     <div className="border rounded-lg overflow-hidden">
       <div className="bg-muted p-2 border-b flex flex-wrap gap-1">
-        {/* Titres et texte */}
+        {/* Titres de bloc (affectent tout le paragraphe) */}
         <Button
           type="button"
           size="sm"
           variant="ghost"
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
           className={editor.isActive('heading', { level: 1 }) ? 'bg-accent' : ''}
-          title="Titre 1"
+          title="Titre 1 (bloc entier)"
         >
           <Heading1 className="w-4 h-4" />
         </Button>
@@ -205,7 +206,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           variant="ghost"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           className={editor.isActive('heading', { level: 2 }) ? 'bg-accent' : ''}
-          title="Titre 2"
+          title="Titre 2 (bloc entier)"
         >
           <Heading2 className="w-4 h-4" />
         </Button>
@@ -215,7 +216,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           variant="ghost"
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           className={editor.isActive('heading', { level: 3 }) ? 'bg-accent' : ''}
-          title="Titre 3"
+          title="Titre 3 (bloc entier)"
         >
           <Heading3 className="w-4 h-4" />
         </Button>
@@ -228,6 +229,50 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           title="Texte normal"
         >
           <Type className="w-4 h-4" />
+        </Button>
+
+        <div className="w-px h-6 bg-border mx-1" />
+
+        {/* Taille de texte inline (sélection uniquement) */}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().setMark('textStyle', { fontSize: '0.75rem' }).run()}
+          title="Petit texte"
+          className="text-xs"
+        >
+          A
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().setMark('textStyle', { fontSize: '1rem' }).run()}
+          title="Texte normal"
+          className="text-sm"
+        >
+          A
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().setMark('textStyle', { fontSize: '1.25rem' }).run()}
+          title="Grand texte"
+          className="text-base"
+        >
+          A
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().setMark('textStyle', { fontSize: '1.5rem' }).run()}
+          title="Très grand texte"
+          className="text-lg"
+        >
+          A
         </Button>
 
         <div className="w-px h-6 bg-border mx-1" />
