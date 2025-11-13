@@ -200,6 +200,29 @@ All colors MUST be HSL.
   margin-bottom: 0.25rem;
 }
 
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.prose td,
+.prose th {
+  padding: 0.5rem;
+  min-width: 100px;
+}
+
+.prose table[data-show-borders="true"] td,
+.prose table[data-show-borders="true"] th {
+  border: 1px solid hsl(var(--border));
+}
+
+.prose table[data-show-borders="false"] td,
+.prose table[data-show-borders="false"] th {
+  border: none;
+}
+
 .ProseMirror ul {
   list-style-type: disc;
   margin-left: 1.5rem;
