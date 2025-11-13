@@ -1,8 +1,10 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -44,6 +46,8 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       ResizableImage,
       Callout,
       ImageButton,
+      TextStyle,
+      Color,
       Highlight.configure({
         multicolor: true,
       }),
@@ -94,7 +98,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     return null;
   }
 
-  const insertCallout = (type: 'warning' | 'info' | 'tip' | 'danger') => {
+  const insertCallout = (type: 'warning' | 'info' | 'tip' | 'danger' | 'white') => {
     editor?.chain().focus().setCallout(type).run();
   };
 
@@ -169,6 +173,99 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           className={editor.isActive('orderedList') ? 'bg-accent' : ''}
         >
           <ListOrdered className="w-4 h-4" />
+        </Button>
+
+        <div className="w-px h-6 bg-border mx-1" />
+
+        {/* Heading controls */}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          className={editor.isActive('heading', { level: 1 }) ? 'bg-accent' : ''}
+          title="Titre 1"
+        >
+          <Heading1 className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          className={editor.isActive('heading', { level: 2 }) ? 'bg-accent' : ''}
+          title="Titre 2"
+        >
+          <Heading2 className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          className={editor.isActive('heading', { level: 3 }) ? 'bg-accent' : ''}
+          title="Titre 3"
+        >
+          <Heading3 className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().setParagraph().run()}
+          className={editor.isActive('paragraph') ? 'bg-accent' : ''}
+          title="Texte normal"
+        >
+          <Type className="w-4 h-4" />
+        </Button>
+
+        <div className="w-px h-6 bg-border mx-1" />
+
+        {/* Text color controls */}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().setColor('#000000').run()}
+          title="Texte noir"
+        >
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#000000', border: '1px solid #ccc' }} />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().setColor('#dc2626').run()}
+          title="Texte rouge"
+        >
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#dc2626', border: '1px solid #ccc' }} />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().setColor('#2563eb').run()}
+          title="Texte bleu"
+        >
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#2563eb', border: '1px solid #ccc' }} />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().setColor('#16a34a').run()}
+          title="Texte vert"
+        >
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#16a34a', border: '1px solid #ccc' }} />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().unsetColor().run()}
+          title="Couleur par défaut"
+        >
+          <Type className="w-4 h-4" />
         </Button>
 
         <div className="w-px h-6 bg-border mx-1" />
@@ -261,6 +358,15 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           title="Encadré danger"
         >
           <AlertCircle className="w-4 h-4 text-red-600" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => insertCallout('white')}
+          title="Encadré blanc"
+        >
+          <FileText className="w-4 h-4" />
         </Button>
 
         <div className="w-px h-6 bg-border mx-1" />

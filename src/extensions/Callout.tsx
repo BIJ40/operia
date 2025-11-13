@@ -9,13 +9,13 @@ export interface CalloutOptions {
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     callout: {
-      setCallout: (type: 'warning' | 'info' | 'tip' | 'danger') => ReturnType;
+      setCallout: (type: 'warning' | 'info' | 'tip' | 'danger' | 'white') => ReturnType;
     };
   }
 }
 
 const CalloutComponent = ({ node, deleteNode }: NodeViewProps) => {
-  const type = node.attrs.type as 'warning' | 'info' | 'tip' | 'danger';
+  const type = node.attrs.type as 'warning' | 'info' | 'tip' | 'danger' | 'white';
   
   const styles = {
     warning: {
@@ -41,6 +41,12 @@ const CalloutComponent = ({ node, deleteNode }: NodeViewProps) => {
       border: 'border-l-red-500',
       icon: '🚨',
       label: 'Danger',
+    },
+    white: {
+      bg: 'bg-white dark:bg-background',
+      border: 'border-l-border',
+      icon: '📄',
+      label: 'Note',
     },
   };
 
@@ -107,6 +113,9 @@ export const Callout = Node.create<CalloutOptions>({
           }
           if (classList.includes('bg-red-50') || classList.includes('border-l-red-500')) {
             return { type: 'danger' };
+          }
+          if (classList.includes('bg-white') || classList.includes('dark:bg-background')) {
+            return { type: 'white' };
           }
           
           return false;
