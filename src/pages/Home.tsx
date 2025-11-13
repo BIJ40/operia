@@ -66,7 +66,9 @@ export default function Home() {
       case 'indigo': return 'bg-indigo-50 border-indigo-200 hover:bg-indigo-100';
       case 'teal': return 'bg-teal-50 border-teal-200 hover:bg-teal-100';
       case 'rose': return 'bg-rose-50 border-rose-200 hover:bg-rose-100';
-      default: return 'bg-card border-border hover:bg-accent';
+      case 'blanc': return 'bg-card border-border hover:bg-accent';
+      case 'white': return 'bg-red-50 border-red-200 hover:bg-red-100'; // White ancien = rouge
+      default: return 'bg-red-50 border-red-200 hover:bg-red-100'; // Rouge par défaut
     }
   };
 
@@ -76,7 +78,7 @@ export default function Home() {
       type: 'category',
       title: 'Nouvelle catégorie',
       content: '',
-      colorPreset: 'white',
+      colorPreset: 'red',
       icon: 'BookOpen',
       slug: `categorie-${Date.now()}`,
       attachments: [],
@@ -104,7 +106,7 @@ export default function Home() {
       setEditingId(id);
       setEditTitle(cat.title);
       setEditIcon(cat.icon || 'BookOpen');
-      setEditColor(cat.colorPreset || 'white');
+      setEditColor(cat.colorPreset || 'red');
     }
   };
 
@@ -226,10 +228,10 @@ export default function Home() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="white">Blanc (par défaut)</SelectItem>
+                              <SelectItem value="red">Rouge (par défaut)</SelectItem>
+                              <SelectItem value="blanc">Blanc</SelectItem>
                               <SelectItem value="green">Vert</SelectItem>
                               <SelectItem value="yellow">Jaune</SelectItem>
-                              <SelectItem value="red">Rouge</SelectItem>
                               <SelectItem value="blue">Bleu</SelectItem>
                               <SelectItem value="purple">Violet</SelectItem>
                               <SelectItem value="pink">Rose</SelectItem>

@@ -1,4 +1,4 @@
-export type ColorPreset = "white" | "green" | "yellow" | "red" | "blue" | "purple" | "pink" | "orange" | "cyan" | "indigo" | "teal" | "rose";
+export type ColorPreset = "white" | "blanc" | "green" | "yellow" | "red" | "blue" | "purple" | "pink" | "orange" | "cyan" | "indigo" | "teal" | "rose";
 export type BlockType = "category" | "section";
 
 export interface Attachment {
