@@ -4,6 +4,7 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical } from 'lucide-react';
+import { memo } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -219,8 +220,8 @@ export default function Category() {
     }
   };
 
-  // Composant de section triable
-  const SortableSection = ({ section }: { section: typeof sections[0] }) => {
+  // Composant de section triable - Mémorisé pour éviter les re-renders
+  const SortableSection = memo(({ section }: { section: typeof sections[0] }) => {
     const {
       attributes,
       listeners,
@@ -241,7 +242,8 @@ export default function Category() {
         ref={setNodeRef}
         style={style}
         id={section.id}
-        className={`mb-8 p-6 rounded-lg ${getColorClass(section.colorPreset)}`}
+        tabIndex={-1}
+        className={`mb-8 p-6 rounded-lg ${getColorClass(section.colorPreset)} focus:outline-none`}
       >
         {editingId === section.id ? (
           <div className="space-y-4">
@@ -349,7 +351,7 @@ export default function Category() {
         )}
       </div>
     );
-  };
+  });
 
   return (
     <>
