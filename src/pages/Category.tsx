@@ -25,6 +25,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { SectionEditForm } from '@/components/SectionEditForm';
 import { ColorPreset } from '@/types/block';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -55,10 +56,6 @@ export default function Category() {
   );
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editContent, setEditContent] = useState('');
-  const [editColor, setEditColor] = useState<ColorPreset>('white');
-  const [hideFromSidebar, setHideFromSidebar] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const [hasScrolledOnMount, setHasScrolledOnMount] = useState(false);
@@ -99,22 +96,22 @@ export default function Category() {
 
   const handleEdit = (block: typeof sections[0]) => {
     setEditingId(block.id);
-    setEditTitle(block.title);
-    setEditContent(block.content);
-    setEditColor(block.colorPreset || 'red');
-    setHideFromSidebar(block.hideFromSidebar || false);
   };
 
-  const handleSave = () => {
+  const handleSave = (data: {
+    title: string;
+    content: string;
+    colorPreset: ColorPreset;
+    hideFromSidebar: boolean;
+  }) => {
     if (editingId) {
-      updateBlock(editingId, {
-        title: editTitle,
-        content: editContent,
-        colorPreset: editColor,
-        hideFromSidebar: hideFromSidebar,
-      });
+      updateBlock(editingId, data);
       setEditingId(null);
     }
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
   };
 
   const handleAddSection = () => {
@@ -128,15 +125,11 @@ export default function Category() {
       attachments: [],
     });
     
-    // Ouvrir automatiquement en mode édition SANS scroll
+    // Ouvrir automatiquement en mode édition
     setTimeout(() => {
       const latestSection = [...sections].sort((a, b) => b.order - a.order)[0];
       if (latestSection) {
         setEditingId(latestSection.id);
-        setEditTitle(latestSection.title);
-        setEditContent(latestSection.content);
-        setEditColor(latestSection.colorPreset || 'red');
-        setHideFromSidebar(latestSection.hideFromSidebar || false);
       }
     }, 200);
   };
@@ -216,69 +209,14 @@ export default function Category() {
         className={`mb-8 p-6 rounded-lg ${getColorClass(section.colorPreset)} focus:outline-none`}
       >
         {editingId === section.id ? (
-          <div className="space-y-4">
-            <Input
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              placeholder="Titre"
-              className="font-semibold text-xl"
-            />
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Couleur</label>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
-                  { value: 'blanc', color: 'bg-white border-2 border-gray-300', label: 'Blanc' },
-                  { value: 'gray', color: 'bg-gray-50 border-2 border-gray-200', label: 'Gris' },
-                  { value: 'green', color: 'bg-green-50 border-2 border-green-200', label: 'Vert' },
-                  { value: 'yellow', color: 'bg-yellow-50 border-2 border-yellow-200', label: 'Jaune' },
-                  { value: 'blue', color: 'bg-blue-50 border-2 border-blue-200', label: 'Bleu' },
-                  { value: 'purple', color: 'bg-purple-50 border-2 border-purple-200', label: 'Violet' },
-                  { value: 'pink', color: 'bg-pink-50 border-2 border-pink-200', label: 'Rose' },
-                  { value: 'orange', color: 'bg-orange-50 border-2 border-orange-200', label: 'Orange' },
-                  { value: 'cyan', color: 'bg-cyan-50 border-2 border-cyan-200', label: 'Cyan' },
-                  { value: 'indigo', color: 'bg-indigo-50 border-2 border-indigo-200', label: 'Indigo' },
-                  { value: 'teal', color: 'bg-teal-50 border-2 border-teal-200', label: 'Sarcelle' },
-                  { value: 'rose', color: 'bg-rose-50 border-2 border-rose-200', label: 'Rose foncé' },
-                ].map((colorOption) => (
-                  <button
-                    key={colorOption.value}
-                    type="button"
-                    onClick={() => setEditColor(colorOption.value as ColorPreset)}
-                    className={`w-8 h-8 rounded-full ${colorOption.color} transition-all hover:scale-110 ${
-                      editColor === colorOption.value 
-                        ? 'ring-4 ring-primary ring-offset-2' 
-                        : ''
-                    }`}
-                    title={colorOption.label}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 py-2">
-              <Checkbox 
-                id="hideFromSidebar" 
-                checked={hideFromSidebar}
-                onCheckedChange={(checked) => setHideFromSidebar(checked as boolean)}
-              />
-              <label 
-                htmlFor="hideFromSidebar" 
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-              >
-                Masquer du sommaire (Tips/Encart)
-              </label>
-            </div>
-            <RichTextEditor
-              content={editContent}
-              onChange={setEditContent}
-            />
-            <div className="flex gap-2">
-              <Button onClick={handleSave}>Enregistrer</Button>
-              <Button variant="outline" onClick={() => setEditingId(null)}>
-                Annuler
-              </Button>
-            </div>
-          </div>
+          <SectionEditForm
+            initialTitle={section.title}
+            initialContent={section.content}
+            initialColor={section.colorPreset || 'red'}
+            initialHideFromSidebar={section.hideFromSidebar || false}
+            onSave={handleSave}
+            onCancel={handleCancel}
+          />
         ) : (
           <>
             <div className="flex items-start justify-between mb-4">
