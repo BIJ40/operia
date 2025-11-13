@@ -181,6 +181,11 @@ export default function Category() {
       transform: CSS.Transform.toString(transform),
       transition,
       opacity: isDragging ? 0.5 : 1,
+      width: '100%',
+      ...(isDragging && {
+        position: 'relative' as const,
+        zIndex: 50,
+      }),
     };
 
     return (
@@ -248,8 +253,8 @@ export default function Category() {
               onChange={setEditContent}
             />
             <div className="flex gap-2">
-              <Button onClick={handleSave}>Enregistrer</Button>
-              <Button variant="outline" onClick={() => setEditingId(null)}>
+              <Button type="button" onClick={handleSave}>Enregistrer</Button>
+              <Button type="button" variant="outline" onClick={() => setEditingId(null)}>
                 Annuler
               </Button>
             </div>
@@ -261,25 +266,35 @@ export default function Category() {
               {isEditMode && isAuthenticated && (
                 <div className="flex gap-2">
                   <Button
+                    type="button"
                     size="sm"
                     variant="ghost"
                     {...attributes}
                     {...listeners}
-                    className="cursor-grab active:cursor-grabbing"
+                    className="cursor-grab active:cursor-grabbing touch-none"
+                    onClick={(e) => e.preventDefault()}
                   >
                     <GripVertical className="w-4 h-4" />
                   </Button>
                   <Button
+                    type="button"
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleEdit(section)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleEdit(section);
+                    }}
                   >
                     <Edit2 className="w-4 h-4" />
                   </Button>
                   <Button
+                    type="button"
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleDeleteClick(section.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDeleteClick(section.id);
+                    }}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -303,6 +318,7 @@ export default function Category() {
           <h1 className="text-3xl font-bold">{category.title}</h1>
           {isEditMode && isAuthenticated && (
             <Button 
+              type="button"
               onClick={handleAddSection} 
               size="sm"
               variant="ghost"
@@ -331,6 +347,7 @@ export default function Category() {
         {isEditMode && isAuthenticated && (
           <div className="mt-8 flex justify-center">
             <Button 
+              type="button"
               onClick={handleAddSection} 
               size="sm"
               variant="ghost"
