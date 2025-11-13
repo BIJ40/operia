@@ -6,9 +6,10 @@ import { Color } from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
 import { FontSize } from '@/extensions/FontSize';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip, ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -302,82 +303,196 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         <div className="w-px h-6 bg-border mx-1" />
 
         {/* Couleurs de texte */}
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().setColor('#000000').run()}
-          title="Texte noir"
-        >
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#000000', border: '1px solid #ccc' }} />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().setColor('#dc2626').run()}
-          title="Texte rouge"
-        >
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#dc2626', border: '1px solid #ccc' }} />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().setColor('#2563eb').run()}
-          title="Texte bleu"
-        >
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#2563eb', border: '1px solid #ccc' }} />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().setColor('#16a34a').run()}
-          title="Texte vert"
-        >
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#16a34a', border: '1px solid #ccc' }} />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().unsetColor().run()}
-          title="Couleur par défaut"
-        >
-          <Type className="w-4 h-4" />
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              title="Couleur du texte"
+              className="gap-1"
+            >
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#000000', border: '1px solid #ccc' }} />
+              <ChevronDown className="w-3 h-3" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-2 bg-background border-border z-50" align="start">
+            <div className="grid grid-cols-4 gap-1">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().setColor('#000000').run()}
+                title="Noir"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#000000', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().setColor('#dc2626').run()}
+                title="Rouge"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#dc2626', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().setColor('#2563eb').run()}
+                title="Bleu"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#2563eb', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().setColor('#16a34a').run()}
+                title="Vert"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#16a34a', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().setColor('#ea580c').run()}
+                title="Orange"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#ea580c', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().setColor('#9333ea').run()}
+                title="Violet"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#9333ea', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().setColor('#ec4899').run()}
+                title="Rose"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#ec4899', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().unsetColor().run()}
+                title="Par défaut"
+                className="p-2"
+              >
+                <Type className="w-4 h-4" />
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         <div className="w-px h-6 bg-border mx-1" />
 
         {/* Surlignage */}
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().toggleHighlight({ color: '#fef08a' }).run()}
-          title="Surligner en jaune"
-        >
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fef08a', border: '1px solid #ccc' }} />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().toggleHighlight({ color: '#bbf7d0' }).run()}
-          title="Surligner en vert"
-        >
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#bbf7d0', border: '1px solid #ccc' }} />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().unsetHighlight().run()}
-          title="Enlever le surlignage"
-        >
-          <Highlighter className="w-4 h-4" />
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              title="Surligner le texte"
+              className="gap-1"
+            >
+              <Highlighter className="w-4 h-4" />
+              <ChevronDown className="w-3 h-3" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-2 bg-background border-border z-50" align="start">
+            <div className="grid grid-cols-4 gap-1">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().toggleHighlight({ color: '#fef08a' }).run()}
+                title="Jaune"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#fef08a', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().toggleHighlight({ color: '#bbf7d0' }).run()}
+                title="Vert"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#bbf7d0', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().toggleHighlight({ color: '#fed7aa' }).run()}
+                title="Orange"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#fed7aa', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().toggleHighlight({ color: '#fecaca' }).run()}
+                title="Rose"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#fecaca', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().toggleHighlight({ color: '#bfdbfe' }).run()}
+                title="Bleu"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#bfdbfe', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().toggleHighlight({ color: '#e9d5ff' }).run()}
+                title="Violet"
+                className="p-2"
+              >
+                <div className="w-6 h-6 rounded" style={{ backgroundColor: '#e9d5ff', border: '1px solid #ccc' }} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => editor.chain().focus().unsetHighlight().run()}
+                title="Enlever"
+                className="p-2"
+              >
+                <Highlighter className="w-4 h-4" />
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         <div className="w-px h-6 bg-border mx-1" />
 
