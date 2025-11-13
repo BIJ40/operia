@@ -45,7 +45,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Auto-save
+  // Auto-save - DÉSACTIVÉ pendant l'édition
   useEffect(() => {
     if (!loading) {
       const timer = setTimeout(() => {
@@ -55,7 +55,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           lastModified: Date.now(),
         };
         saveAppData(appData);
-      }, 1000);
+      }, 2000); // Augmenté à 2 secondes
 
       return () => clearTimeout(timer);
     }

@@ -4,7 +4,7 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/RichTextEditor';
@@ -45,9 +45,13 @@ export default function Category() {
   const { isAuthenticated } = useAuth();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
-  const sections = blocks
-    .filter(b => b.type === 'section' && b.parentId === category?.id)
-    .sort((a, b) => a.order - b.order);
+  
+  // Mémoriser les sections pour éviter les re-renders inutiles
+  const sections = useMemo(() => {
+    return blocks
+      .filter(b => b.type === 'section' && b.parentId === category?.id)
+      .sort((a, b) => a.order - b.order);
+  }, [blocks, category?.id]);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
