@@ -67,6 +67,11 @@ export default function Category() {
   const savedScrollPositionRef = useRef<number>(0);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
 
+  // Réinitialiser les accordéons ouverts quand on passe en mode édition/normal
+  useEffect(() => {
+    setOpenAccordions([]);
+  }, [isEditMode]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {

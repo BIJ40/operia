@@ -74,13 +74,18 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       }),
       Table.configure({
         resizable: true,
+        allowTableNodeSelection: true,
         HTMLAttributes: {
           class: 'table-auto border-collapse my-4',
         },
       }),
       TableRow,
       TableHeader,
-      TableCell,
+      TableCell.configure({
+        HTMLAttributes: {
+          class: 'border border-border p-2 min-w-[100px]',
+        },
+      }),
       Mention.configure({
         HTMLAttributes: {
           class: 'mention cursor-pointer text-primary font-medium hover:underline',
