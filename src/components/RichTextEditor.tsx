@@ -79,7 +79,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
-  }, [blocks]);
+  }); // Retiré [blocks] pour éviter de recréer l'éditeur à chaque changement
 
   useEffect(() => {
     if (!editor) return;

@@ -4,7 +4,6 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical } from 'lucide-react';
-import { memo } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -22,7 +21,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/RichTextEditor';
@@ -46,9 +45,14 @@ export default function Category() {
   const { isAuthenticated } = useAuth();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
-  const sections = blocks
-    .filter(b => b.type === 'section' && b.parentId === category?.id)
-    .sort((a, b) => a.order - b.order);
+  
+  // Mémoriser sections pour éviter les recalculs qui causent des scrolls
+  const sections = useMemo(() => 
+    blocks
+      .filter(b => b.type === 'section' && b.parentId === category?.id)
+      .sort((a, b) => a.order - b.order),
+    [blocks, category?.id]
+  );
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -58,23 +62,6 @@ export default function Category() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const [hasScrolledOnMount, setHasScrolledOnMount] = useState(false);
-  
-  // Préserver la position de scroll pendant l'édition
-  const scrollPosRef = useRef({ x: 0, y: 0 });
-
-  // Sauvegarder la position de scroll avant le re-render
-  useLayoutEffect(() => {
-    if (editingId) {
-      scrollPosRef.current = { x: window.scrollX, y: window.scrollY };
-    }
-  });
-
-  // Restaurer la position de scroll après le re-render
-  useLayoutEffect(() => {
-    if (editingId) {
-      window.scrollTo(scrollPosRef.current.x, scrollPosRef.current.y);
-    }
-  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -116,14 +103,6 @@ export default function Category() {
     setEditContent(block.content);
     setEditColor(block.colorPreset || 'red');
     setHideFromSidebar(block.hideFromSidebar || false);
-    
-    // Scroll vers la section en mode édition (une seule fois)
-    setTimeout(() => {
-      const element = document.getElementById(block.id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
   };
 
   const handleSave = () => {
@@ -149,9 +128,8 @@ export default function Category() {
       attachments: [],
     });
     
-    // Ouvrir automatiquement en mode édition et scroller vers la nouvelle section
+    // Ouvrir automatiquement en mode édition SANS scroll
     setTimeout(() => {
-      // Trouver la section la plus récente (celle avec l'order le plus élevé)
       const latestSection = [...sections].sort((a, b) => b.order - a.order)[0];
       if (latestSection) {
         setEditingId(latestSection.id);
@@ -159,14 +137,6 @@ export default function Category() {
         setEditContent(latestSection.content);
         setEditColor(latestSection.colorPreset || 'red');
         setHideFromSidebar(latestSection.hideFromSidebar || false);
-        
-        // Scroll vers la nouvelle section (une seule fois, pas de re-trigger)
-        setTimeout(() => {
-          const element = document.getElementById(latestSection.id);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 100);
       }
     }, 200);
   };
@@ -220,8 +190,8 @@ export default function Category() {
     }
   };
 
-  // Composant de section triable - Mémorisé pour éviter les re-renders
-  const SortableSection = memo(({ section }: { section: typeof sections[0] }) => {
+  // Composant de section triable
+  const SortableSection = ({ section }: { section: typeof sections[0] }) => {
     const {
       attributes,
       listeners,
@@ -351,7 +321,7 @@ export default function Category() {
         )}
       </div>
     );
-  });
+  };
 
   return (
     <>
