@@ -58,8 +58,8 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
       // Use the larger delta to maintain aspect ratio
       const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
       
-      // Fix inverted direction: subtract delta instead of adding it
-      const newWidth = Math.max(50, startPosRef.current.width - delta);
+      // Correct direction: add delta to increase size when dragging outward
+      const newWidth = Math.max(50, startPosRef.current.width + delta);
       const newHeight = newWidth / aspectRatioRef.current;
 
       // Store in ref for immediate access
