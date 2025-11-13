@@ -74,18 +74,13 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       }),
       Table.configure({
         resizable: true,
-        allowTableNodeSelection: true,
         HTMLAttributes: {
           class: 'table-auto border-collapse my-4',
         },
       }),
       TableRow,
       TableHeader,
-      TableCell.configure({
-        HTMLAttributes: {
-          class: 'border border-border p-2 min-w-[100px]',
-        },
-      }),
+      TableCell,
       Mention.configure({
         HTMLAttributes: {
           class: 'mention cursor-pointer text-primary font-medium hover:underline',
@@ -610,7 +605,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           size="sm"
           variant="ghost"
           onClick={() => editor.chain().focus().addRowAfter().run()}
-          disabled={!editor.isActive('tableCell') && !editor.isActive('tableHeader')}
+          disabled={!editor.isActive('table')}
           title="Ajouter une ligne"
         >
           <Plus className="w-4 h-4" />
@@ -620,7 +615,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           size="sm"
           variant="ghost"
           onClick={() => editor.chain().focus().deleteRow().run()}
-          disabled={!editor.isActive('tableCell') && !editor.isActive('tableHeader')}
+          disabled={!editor.isActive('table')}
           title="Supprimer la ligne"
         >
           <Minus className="w-4 h-4" />
@@ -647,7 +642,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
               }).run();
             }
           }}
-          disabled={!editor.isActive('tableCell') && !editor.isActive('tableHeader')}
+          disabled={!editor.isActive('table')}
           title="Afficher/masquer les bordures du tableau"
         >
           <TableProperties className="w-4 h-4" />
