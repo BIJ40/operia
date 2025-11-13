@@ -214,12 +214,6 @@ All colors MUST be HSL.
   border: 1px solid hsl(var(--border));
 }
 
-/* Masquer les bordures des tableaux */
-.prose table[data-hide-borders="true"] td,
-.prose table[data-hide-borders="true"] th {
-  border: none !important;
-}
-
 .ProseMirror table {
   width: 100%;
   border-collapse: collapse;
@@ -232,12 +226,6 @@ All colors MUST be HSL.
   padding: 0.5rem;
   min-width: 100px;
   border: 1px solid hsl(var(--border));
-}
-
-/* Masquer les bordures des tableaux dans l'éditeur */
-.ProseMirror table[data-hide-borders="true"] td,
-.ProseMirror table[data-hide-borders="true"] th {
-  border: none !important;
 }
 
 .ProseMirror ul {
