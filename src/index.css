@@ -214,12 +214,6 @@ All colors MUST be HSL.
   border: 1px solid hsl(var(--border));
 }
 
-/* Tables without borders */
-.prose table[data-no-borders] td,
-.prose table[data-no-borders] th {
-  border: none;
-}
-
 .ProseMirror table {
   width: 100%;
   border-collapse: collapse;
@@ -232,12 +226,6 @@ All colors MUST be HSL.
   padding: 0.5rem;
   min-width: 100px;
   border: 1px solid hsl(var(--border));
-}
-
-/* Tables without borders in editor */
-.ProseMirror table[data-no-borders] td,
-.ProseMirror table[data-no-borders] th {
-  border: none;
 }
 
 .ProseMirror ul {
