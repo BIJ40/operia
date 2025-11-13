@@ -58,7 +58,6 @@ export default function Category() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
-  const [hasScrolledOnMount, setHasScrolledOnMount] = useState(false);
   const savedScrollPositionRef = useRef<number>(0);
 
   const sensors = useSensors(
@@ -104,20 +103,18 @@ export default function Category() {
     return () => clearInterval(intervalId);
   }, [editingId]);
 
-  // Scroll to section if hash is present UNIQUEMENT au chargement initial
-  // Ne se déclenche qu'UNE SEULE FOIS pour éviter les scrolls intempestifs pendant l'édition
+  // Scroll to section if hash is present
   useEffect(() => {
-    if (location.hash && !hasScrolledOnMount) {
+    if (location.hash && !editingId) {
       const sectionId = location.hash.substring(1);
       setTimeout(() => {
         const element = document.getElementById(sectionId);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          setHasScrolledOnMount(true);
         }
-      }, 300);
+      }, 100);
     }
-  }, []); // Tableau vide = s'exécute UNE SEULE FOIS au montage
+  }, [location.hash, editingId]);
 
   if (!category) {
     return (
