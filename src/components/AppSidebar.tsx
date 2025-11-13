@@ -27,27 +27,8 @@ export function AppSidebar() {
   const { isAdmin } = useAuth();
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
   
-  // Extraire le guideSlug de l'URL si on est sur /guide/:guideSlug ou /category/:slug
-  const currentPath = location.pathname;
-  const guideMatch = currentPath.match(/^\/guide\/([^\/]+)/);
-  const guideSlug = guideMatch ? guideMatch[1] : null;
-  
-  // Si on est sur une page category, trouver le guide parent
-  const categoryMatch = currentPath.match(/^\/category\/([^\/]+)/);
-  let currentGuideId = null;
-  
-  if (guideSlug) {
-    const guide = blocks.find(b => b.type === 'guide' && b.slug === guideSlug);
-    currentGuideId = guide?.id || null;
-  } else if (categoryMatch) {
-    const categorySlug = categoryMatch[1];
-    const category = blocks.find(b => b.type === 'category' && b.slug === categorySlug);
-    currentGuideId = category?.guideId || null;
-  }
-  
-  // Filtrer les catégories selon le guide actuel
   const categories = blocks
-    .filter(b => b.type === 'category' && b.guideId === currentGuideId)
+    .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
     .sort((a, b) => a.order - b.order);
 
   const IconComponent = (iconName: string) => {
@@ -56,6 +37,7 @@ export function AppSidebar() {
   };
 
   // Déterminer quelle catégorie doit être ouverte selon la route actuelle
+  const currentPath = location.pathname;
   const currentCategory = categories.find(cat => currentPath.includes(`/category/${cat.slug}`));
 
   // Ouvrir automatiquement la catégorie correspondant à la page actuelle
