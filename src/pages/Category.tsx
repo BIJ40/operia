@@ -65,6 +65,7 @@ export default function Category() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const savedScrollPositionRef = useRef<number>(0);
+  const [openAccordions, setOpenAccordions] = useState<string[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -109,16 +110,23 @@ export default function Category() {
     return () => clearInterval(intervalId);
   }, [editingId]);
 
-  // Scroll to section if hash is present
+  // Scroll to section if hash is present and open its accordion
   useEffect(() => {
     if (location.hash && !editingId) {
       const sectionId = location.hash.substring(1);
+      
+      // Ouvrir l'accordéon de cette section
+      if (!openAccordions.includes(sectionId)) {
+        setOpenAccordions(prev => [...prev, sectionId]);
+      }
+      
+      // Attendre que l'accordéon s'ouvre puis scroller
       setTimeout(() => {
         const element = document.getElementById(sectionId);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 100);
+      }, 200);
     }
   }, [location.hash, editingId]);
 
@@ -346,7 +354,12 @@ export default function Category() {
             strategy={verticalListSortingStrategy}
           >
             {!isEditMode ? (
-              <Accordion type="multiple" className="w-full">
+              <Accordion 
+                type="multiple" 
+                className="w-full"
+                value={openAccordions}
+                onValueChange={setOpenAccordions}
+              >
                 {sections.map((section) => (
                   <AccordionItem key={section.id} value={section.id} className="mb-4">
                     <div className={`rounded-lg ${getColorClass(section.colorPreset)}`}>
