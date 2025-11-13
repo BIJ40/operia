@@ -361,7 +361,7 @@ export default function Category() {
                 onValueChange={setOpenAccordions}
               >
                 {sections.map((section) => (
-                  <AccordionItem key={section.id} value={section.id} className="mb-4">
+                  <AccordionItem key={section.id} value={section.id} id={section.id} className="mb-4">
                     <div className={`rounded-lg ${getColorClass(section.colorPreset)}`}>
                       <AccordionTrigger className="px-6 py-4 hover:no-underline">
                         <div className="flex items-center gap-3 w-full">
