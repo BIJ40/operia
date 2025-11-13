@@ -1,7 +1,4 @@
 import { Node, mergeAttributes } from '@tiptap/core';
-import { ReactNodeViewRenderer } from '@tiptap/react';
-import { NodeViewWrapper } from '@tiptap/react';
-import { FilePreview } from '@/components/FilePreview';
 
 export interface InlineFileOptions {
   HTMLAttributes: Record<string, any>;
@@ -39,6 +36,39 @@ export const InlineFile = Node.create<InlineFileOptions>({
     ];
   },
 
+  renderHTML({ HTMLAttributes }) {
+    const fileExtension = HTMLAttributes.filename?.split('.').pop()?.toUpperCase() || 'FILE';
+    
+    return [
+      'div',
+      mergeAttributes(this.options.HTMLAttributes, {
+        'data-inline-file': '',
+        class: 'inline-block my-4',
+      }),
+      [
+        'a',
+        {
+          href: HTMLAttributes.src,
+          download: HTMLAttributes.filename,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'flex flex-col items-center gap-2 p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-accent transition-all max-w-xs',
+        },
+        [
+          'div',
+          { class: 'w-16 h-16 bg-primary/10 rounded flex items-center justify-center' },
+          ['span', { class: 'text-2xl font-bold text-primary' }, '📎'],
+        ],
+        [
+          'div',
+          { class: 'text-center' },
+          ['div', { class: 'text-xs font-medium text-primary' }, fileExtension],
+          ['div', { class: 'text-sm text-muted-foreground truncate max-w-[200px]' }, HTMLAttributes.filename],
+        ],
+      ],
+    ];
+  },
+
   addCommands() {
     return {
       setInlineFile:
@@ -50,15 +80,5 @@ export const InlineFile = Node.create<InlineFileOptions>({
           });
         },
     };
-  },
-
-  addNodeView() {
-    return ReactNodeViewRenderer(({ node }) => {
-      return (
-        <NodeViewWrapper className="inline-block my-4">
-          <FilePreview src={node.attrs.src} filename={node.attrs.filename} />
-        </NodeViewWrapper>
-      );
-    });
   },
 });
