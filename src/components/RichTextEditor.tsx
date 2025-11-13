@@ -128,24 +128,29 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   };
 
   const handleImageInsert = () => {
-    if (!imageUrl) return;
+    if (!imageUrl || !editor) return;
 
-    if (imageType === 'inline') {
-      editor?.chain().focus().insertContent({
-        type: 'resizableImage',
-        attrs: { src: imageUrl },
-      }).run();
-    } else {
-      // Insérer un bouton d'image modal via l'extension
-      editor?.chain().focus().insertContent({
-        type: 'imageButton',
-        attrs: { src: imageUrl, label: imageLabel },
-      }).run();
+    try {
+      if (imageType === 'inline') {
+        editor.chain().focus().insertContent({
+          type: 'resizableImage',
+          attrs: { src: imageUrl },
+        }).run();
+      } else {
+        // Insérer un bouton d'image modal via l'extension
+        editor.chain().focus().insertContent({
+          type: 'imageButton',
+          attrs: { src: imageUrl, label: imageLabel },
+        }).run();
+      }
+
+      setImageUrl('');
+      setImageLabel('Voir');
+      setShowImageDialog(false);
+    } catch (error) {
+      console.error('Erreur lors de l\'insertion de l\'image:', error);
+      // Ne pas fermer le dialogue si erreur
     }
-
-    setImageUrl('');
-    setImageLabel('Voir');
-    setShowImageDialog(false);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

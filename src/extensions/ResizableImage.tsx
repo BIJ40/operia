@@ -18,24 +18,26 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
     if (imageRef.current && !node.attrs.width) {
       // Get natural dimensions on first load
       const img = imageRef.current;
-      if (img.complete) {
-        const aspectRatio = img.naturalWidth / img.naturalHeight;
-        aspectRatioRef.current = aspectRatio;
-        setDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-        updateAttributes({ width: img.naturalWidth, height: img.naturalHeight });
-      } else {
-        img.onload = () => {
+      const loadHandler = () => {
+        if (img.naturalWidth && img.naturalHeight) {
           const aspectRatio = img.naturalWidth / img.naturalHeight;
           aspectRatioRef.current = aspectRatio;
           setDimensions({ width: img.naturalWidth, height: img.naturalHeight });
           updateAttributes({ width: img.naturalWidth, height: img.naturalHeight });
-        };
+        }
+      };
+
+      if (img.complete && img.naturalWidth) {
+        loadHandler();
+      } else {
+        img.addEventListener('load', loadHandler);
+        return () => img.removeEventListener('load', loadHandler);
       }
     } else if (node.attrs.width && node.attrs.height) {
       aspectRatioRef.current = node.attrs.width / node.attrs.height;
       setDimensions({ width: node.attrs.width, height: node.attrs.height });
     }
-  }, [node.attrs.src]);
+  }, [node.attrs.src, node.attrs.width, node.attrs.height, updateAttributes]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
