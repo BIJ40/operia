@@ -10,7 +10,7 @@ interface EditorContextType {
   isEditMode: boolean;
   setIsEditMode: (mode: boolean) => void;
   toggleEditMode: () => void;
-  addBlock: (block: Omit<Block, 'id' | 'order'>) => void;
+  addBlock: (block: Omit<Block, 'id' | 'order'>) => string;
   updateBlock: (id: string, updates: Partial<Block>) => void;
   deleteBlock: (id: string) => void;
   reorderBlocks: (blocks: Block[]) => void;
@@ -61,10 +61,10 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     }
   }, [blocks, loading]);
 
-  const addBlock = useCallback((block: Omit<Block, 'id' | 'order'>) => {
+  const addBlock = useCallback((block: Omit<Block, 'id' | 'order'>): string => {
     if (!isAdmin) {
       toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent ajouter du contenu', variant: 'destructive' });
-      return;
+      return '';
     }
     const newBlock: Block = {
       ...block,
@@ -73,6 +73,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     };
     setBlocks((prev) => [...prev, newBlock]);
     toast({ title: 'Bloc ajouté' });
+    return newBlock.id;
   }, [blocks.length, toast, isAdmin]);
 
   const updateBlock = useCallback((id: string, updates: Partial<Block>) => {

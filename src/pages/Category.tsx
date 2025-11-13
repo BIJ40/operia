@@ -164,9 +164,15 @@ export default function Category() {
   };
 
   const handleAddSection = (position: 'top' | 'bottom' = 'bottom') => {
-    const newBlockId = `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    if (!category) return;
     
-    addBlock({
+    // Calculer l'ordre AVANT d'ajouter la section
+    const newOrder = position === 'top' 
+      ? (sections[0]?.order ?? 0) - 1
+      : (sections[sections.length - 1]?.order ?? 0) + 1;
+    
+    // addBlock retourne maintenant l'ID du nouveau block
+    const newBlockId = addBlock({
       type: 'section',
       title: 'Nouvelle sous-section',
       content: '<p>Contenu de la sous-section...</p>',
@@ -176,24 +182,13 @@ export default function Category() {
       attachments: [],
     });
     
-    // Définir l'ordre correct et ouvrir en mode édition
-    setTimeout(() => {
-      const allSections = blocks
-        .filter(b => b.type === 'section' && b.parentId === category?.id)
-        .sort((a, b) => a.order - b.order);
-      
-      const targetSection = allSections[allSections.length - 1]; // La nouvelle section (dernière ajoutée)
-      
-      if (targetSection) {
-        // Définir le bon order selon la position
-        const newOrder = position === 'top' 
-          ? (sections[0]?.order ?? 0) - 1
-          : (sections[sections.length - 1]?.order ?? 0) + 1;
-        
-        updateBlock(targetSection.id, { order: newOrder });
-        setEditingId(targetSection.id);
-      }
-    }, 100);
+    if (newBlockId) {
+      // Mettre à jour l'ordre et ouvrir en mode édition
+      setTimeout(() => {
+        updateBlock(newBlockId, { order: newOrder });
+        setEditingId(newBlockId);
+      }, 50);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
