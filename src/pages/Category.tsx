@@ -66,7 +66,10 @@ export default function Category() {
 
   // Scroll to section if hash is present - MUST be before any early return
   useEffect(() => {
-    if (location.hash && !editingId) {
+    // Ne JAMAIS scroller si on est en train d'éditer
+    if (editingId) return;
+    
+    if (location.hash) {
       const sectionId = location.hash.substring(1);
       setTimeout(() => {
         const element = document.getElementById(sectionId);
@@ -75,7 +78,7 @@ export default function Category() {
         }
       }, 300);
     }
-  }, [location.hash]); // Ne se déclenche que quand le hash change
+  }, [location.hash, editingId]); // Dépend aussi de editingId
 
   if (!category) {
     return (
@@ -209,7 +212,7 @@ export default function Category() {
       <div
         ref={setNodeRef}
         style={style}
-        id={section.id}
+        {...(editingId !== section.id && { id: section.id })}
         className={`mb-8 p-6 rounded-lg ${getColorClass(section.colorPreset)}`}
       >
         {editingId === section.id ? (
