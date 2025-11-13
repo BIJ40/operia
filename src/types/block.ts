@@ -19,6 +19,7 @@ export interface Block {
   slug: string;
   parentId?: string;
   attachments: Attachment[];
+  hideFromSidebar?: boolean;
 }
 
 export interface AppData {

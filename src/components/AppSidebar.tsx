@@ -75,7 +75,7 @@ export function AppSidebar() {
               {categories.map((category) => {
                 const Icon = IconComponent(category.icon || 'BookOpen');
                 const sections = blocks
-                  .filter(b => b.type === 'section' && b.parentId === category.id)
+                  .filter(b => b.type === 'section' && b.parentId === category.id && !b.hideFromSidebar)
                   .sort((a, b) => a.order - b.order);
 
                 const isOpen = openCategoryId === category.id;

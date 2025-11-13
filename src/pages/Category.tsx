@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { ColorPreset } from '@/types/block';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +36,7 @@ export default function Category() {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editColor, setEditColor] = useState<ColorPreset>('white');
+  const [hideFromSidebar, setHideFromSidebar] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
 
@@ -64,6 +66,7 @@ export default function Category() {
     setEditTitle(block.title);
     setEditContent(block.content);
     setEditColor(block.colorPreset || 'red');
+    setHideFromSidebar(block.hideFromSidebar || false);
   };
 
   const handleSave = () => {
@@ -72,6 +75,7 @@ export default function Category() {
         title: editTitle,
         content: editContent,
         colorPreset: editColor,
+        hideFromSidebar: hideFromSidebar,
       });
       setEditingId(null);
     }
@@ -172,6 +176,19 @@ export default function Category() {
                           />
                         ))}
                       </div>
+                    </div>
+                    <div className="flex items-center space-x-2 py-2">
+                      <Checkbox 
+                        id="hideFromSidebar" 
+                        checked={hideFromSidebar}
+                        onCheckedChange={(checked) => setHideFromSidebar(checked as boolean)}
+                      />
+                      <label 
+                        htmlFor="hideFromSidebar" 
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Masquer du sommaire (Tips/Encart)
+                      </label>
                     </div>
                     <RichTextEditor
                       content={editContent}
