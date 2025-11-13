@@ -120,13 +120,13 @@ export default function Category() {
         setOpenAccordions(prev => [...prev, sectionId]);
       }
       
-      // Attendre que l'accordéon s'ouvre puis scroller
+      // Attendre que l'accordéon s'ouvre complètement puis scroller
       setTimeout(() => {
         const element = document.getElementById(sectionId);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 200);
+      }, 400);
     }
   }, [location.hash, editingId]);
 
