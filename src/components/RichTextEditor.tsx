@@ -629,48 +629,41 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           size="sm"
           variant="ghost"
           onClick={() => {
-            console.log('=== Border Toggle Debug ===');
-            console.log('isActive table:', editor.isActive('table'));
-            console.log('isActive tableCell:', editor.isActive('tableCell'));
-            console.log('isActive tableHeader:', editor.isActive('tableHeader'));
-            
-            // Toggle border class on the current table
             const { state } = editor;
             const { $from } = state.selection;
             
             // Find the table node by traversing up the tree
             let tableNode = null;
+            let tablePos = null;
             let depth = $from.depth;
-            
-            console.log('Starting depth:', depth);
             
             while (depth > 0) {
               const node = $from.node(depth);
-              console.log(`Depth ${depth}: node type = ${node.type.name}`);
               if (node.type.name === 'table') {
                 tableNode = node;
+                tablePos = $from.before(depth);
                 break;
               }
               depth--;
             }
             
-            if (tableNode) {
+            if (tableNode && tablePos !== null) {
               const currentClass = tableNode.attrs.class || '';
               const hasNoBorders = currentClass.includes('table-no-borders');
+              const newClass = hasNoBorders 
+                ? currentClass.replace('table-no-borders', '').trim()
+                : `${currentClass} table-no-borders`.trim();
               
-              console.log('Found table, current class:', currentClass);
-              console.log('Has no borders:', hasNoBorders);
-              
-              editor.chain().focus().updateAttributes('table', {
-                class: hasNoBorders 
-                  ? currentClass.replace('table-no-borders', '').trim()
-                  : `${currentClass} table-no-borders`.trim()
-              }).run();
-            } else {
-              console.log('No table node found!');
+              // Use setNodeMarkup to update the table node directly
+              editor.view.dispatch(
+                editor.state.tr.setNodeMarkup(tablePos, undefined, {
+                  ...tableNode.attrs,
+                  class: newClass
+                })
+              );
             }
           }}
-          disabled={false}
+          disabled={!editor.isActive('tableCell') && !editor.isActive('tableHeader') && !editor.isActive('table')}
           title="Afficher/masquer les bordures du tableau"
         >
           <TableProperties className="w-4 h-4" />
