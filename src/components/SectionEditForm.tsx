@@ -6,6 +6,7 @@ import { ColorPreset } from '@/types/block';
 import { useState, useEffect } from 'react';
 
 interface SectionEditFormProps {
+  sectionId: string;
   initialTitle: string;
   initialContent: string;
   initialColor: ColorPreset;
@@ -20,6 +21,7 @@ interface SectionEditFormProps {
 }
 
 export function SectionEditForm({
+  sectionId,
   initialTitle,
   initialContent,
   initialColor,
@@ -27,8 +29,8 @@ export function SectionEditForm({
   onSave,
   onCancel,
 }: SectionEditFormProps) {
-  // Générer une clé unique pour cette session d'édition
-  const storageKey = `edit-draft-${initialTitle}-${Date.now()}`;
+  // Clé stable basée sur l'ID de la section
+  const storageKey = `edit-draft-${sectionId}`;
   
   // Charger l'état sauvegardé ou utiliser les valeurs initiales
   const [title, setTitle] = useState(() => {
