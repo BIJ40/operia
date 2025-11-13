@@ -10,7 +10,7 @@ interface EditorContextType {
   isEditMode: boolean;
   setIsEditMode: (mode: boolean) => void;
   toggleEditMode: () => void;
-  addBlock: (block: Omit<Block, 'id' | 'order'>) => string | null;
+  addBlock: (block: Omit<Block, 'id' | 'order'>) => void;
   updateBlock: (id: string, updates: Partial<Block>) => void;
   deleteBlock: (id: string) => void;
   reorderBlocks: (blocks: Block[]) => void;
@@ -45,7 +45,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Auto-save - DÉSACTIVÉ pendant l'édition
+  // Auto-save
   useEffect(() => {
     if (!loading) {
       const timer = setTimeout(() => {
@@ -55,7 +55,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           lastModified: Date.now(),
         };
         saveAppData(appData);
-      }, 2000); // Augmenté à 2 secondes
+      }, 1000);
 
       return () => clearTimeout(timer);
     }
@@ -64,7 +64,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const addBlock = useCallback((block: Omit<Block, 'id' | 'order'>) => {
     if (!isAdmin) {
       toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent ajouter du contenu', variant: 'destructive' });
-      return null;
+      return;
     }
     const newBlock: Block = {
       ...block,
@@ -73,7 +73,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     };
     setBlocks((prev) => [...prev, newBlock]);
     toast({ title: 'Bloc ajouté' });
-    return newBlock.id;
   }, [blocks.length, toast, isAdmin]);
 
   const updateBlock = useCallback((id: string, updates: Partial<Block>) => {
