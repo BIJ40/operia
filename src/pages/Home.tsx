@@ -66,6 +66,7 @@ export default function Home() {
       case 'indigo': return 'bg-indigo-50 border-indigo-200 hover:bg-indigo-100';
       case 'teal': return 'bg-teal-50 border-teal-200 hover:bg-teal-100';
       case 'rose': return 'bg-rose-50 border-rose-200 hover:bg-rose-100';
+      case 'gray': return 'bg-gray-50 border-gray-200 hover:bg-gray-100';
       case 'blanc': return 'bg-card border-border hover:bg-accent';
       case 'white': return 'bg-red-50 border-red-200 hover:bg-red-100'; // White ancien = rouge
       default: return 'bg-red-50 border-red-200 hover:bg-red-100'; // Rouge par défaut
@@ -230,6 +231,7 @@ export default function Home() {
                             <SelectContent>
                               <SelectItem value="red">Rouge (par défaut)</SelectItem>
                               <SelectItem value="blanc">Blanc</SelectItem>
+                              <SelectItem value="gray">Gris clair</SelectItem>
                               <SelectItem value="green">Vert</SelectItem>
                               <SelectItem value="yellow">Jaune</SelectItem>
                               <SelectItem value="blue">Bleu</SelectItem>
