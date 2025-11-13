@@ -21,7 +21,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/RichTextEditor';
@@ -57,6 +57,23 @@ export default function Category() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const [hasScrolledOnMount, setHasScrolledOnMount] = useState(false);
+  
+  // Préserver la position de scroll pendant l'édition
+  const scrollPosRef = useRef({ x: 0, y: 0 });
+
+  // Sauvegarder la position de scroll avant le re-render
+  useLayoutEffect(() => {
+    if (editingId) {
+      scrollPosRef.current = { x: window.scrollX, y: window.scrollY };
+    }
+  });
+
+  // Restaurer la position de scroll après le re-render
+  useLayoutEffect(() => {
+    if (editingId) {
+      window.scrollTo(scrollPosRef.current.x, scrollPosRef.current.y);
+    }
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
