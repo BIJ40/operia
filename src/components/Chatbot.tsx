@@ -106,7 +106,11 @@ export function Chatbot() {
   }, [blocks, toast]);
 
   const prepareGuideContent = () => {
-    return blocks
+    let content = '';
+    
+    // Guide Apogée (depuis blocks)
+    content += '# Guide d\'utilisation Apogée\n\n';
+    content += blocks
       .map((block) => {
         if (block.type === 'category') {
           return `## ${block.title} (slug: ${block.slug})\n${block.content || ''}`;
@@ -116,7 +120,38 @@ export function Chatbot() {
         }
         return '';
       })
+      .filter(Boolean)
       .join('\n\n');
+    
+    // Apporteurs Nationaux (depuis localStorage)
+    const apporteursData = localStorage.getItem('apporteursNationauxData');
+    if (apporteursData) {
+      try {
+        const data = JSON.parse(apporteursData);
+        content += '\n\n# Guide des apporteurs nationaux\n\n';
+        content += (data.categories || [])
+          .map((cat: any) => `## ${cat.title}\n${cat.content || ''}`)
+          .join('\n\n');
+      } catch (e) {
+        console.error('Error parsing apporteurs data:', e);
+      }
+    }
+    
+    // Informations Utiles (depuis localStorage)
+    const infosData = localStorage.getItem('informationsUtilesData');
+    if (infosData) {
+      try {
+        const data = JSON.parse(infosData);
+        content += '\n\n# Informations utiles\n\n';
+        content += (data.categories || [])
+          .map((cat: any) => `## ${cat.title}\n${cat.content || ''}`)
+          .join('\n\n');
+      } catch (e) {
+        console.error('Error parsing infos data:', e);
+      }
+    }
+    
+    return content;
   };
 
   const handleLinkClick = (url: string) => {

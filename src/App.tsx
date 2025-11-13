@@ -8,9 +8,6 @@ import GuideApogee from "./pages/GuideApogee";
 import ApporteursNationaux from "./pages/ApporteursNationaux";
 import InformationsUtiles from "./pages/InformationsUtiles";
 import Category from "./pages/Category";
-import Admin from "./pages/Admin";
-import Documents from "./pages/Documents";
-import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
@@ -27,16 +24,13 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Layout showHeader><Home /></Layout>} />
-              <Route path="/guide-apogee" element={<Layout showHeader><GuideApogee /></Layout>} />
-              <Route path="/guide-apogee/category/:slug" element={<Layout showHeader><Category /></Layout>} />
-              <Route path="/apporteurs-nationaux" element={<Layout showHeader><ApporteursNationaux /></Layout>} />
-              <Route path="/apporteurs-nationaux/category/:slug" element={<Layout showHeader><Category /></Layout>} />
-              <Route path="/informations-utiles" element={<Layout showHeader><InformationsUtiles /></Layout>} />
-              <Route path="/informations-utiles/category/:slug" element={<Layout showHeader><Category /></Layout>} />
-              <Route path="/admin" element={<Layout showHeader><Admin /></Layout>} />
-              <Route path="/documents" element={<Layout showHeader><Documents /></Layout>} />
-              <Route path="/auth" element={<Auth />} />
+              <Route path="/" element={<Layout showHeader showSidebar={false}><Home /></Layout>} />
+              <Route path="/guide-apogee" element={<Layout showHeader showSidebar={true} sidebarScope="guide-apogee"><GuideApogee /></Layout>} />
+              <Route path="/guide-apogee/category/:slug" element={<Layout showHeader showSidebar={true} sidebarScope="guide-apogee"><Category /></Layout>} />
+              <Route path="/apporteurs-nationaux" element={<Layout showHeader showSidebar={true} sidebarScope="apporteurs-nationaux"><ApporteursNationaux /></Layout>} />
+              <Route path="/apporteurs-nationaux/category/:slug" element={<Layout showHeader showSidebar={true} sidebarScope="apporteurs-nationaux"><Category /></Layout>} />
+              <Route path="/informations-utiles" element={<Layout showHeader showSidebar={true} sidebarScope="informations-utiles"><InformationsUtiles /></Layout>} />
+              <Route path="/informations-utiles/category/:slug" element={<Layout showHeader showSidebar={true} sidebarScope="informations-utiles"><Category /></Layout>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
