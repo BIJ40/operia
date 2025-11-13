@@ -356,7 +356,9 @@ export default function Category() {
                       <AccordionTrigger className="px-6 py-4 hover:no-underline">
                         <div className="flex items-center gap-3 w-full">
                           <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
-                          <h2 className="text-xl font-semibold text-left">{section.title}</h2>
+                          <h2 className="text-xl font-semibold text-left">
+                            {section.hideFromSidebar ? "💡 Info / Astuce" : section.title}
+                          </h2>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="px-6 pb-6">
