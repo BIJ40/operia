@@ -1,3 +1,4 @@
+// Force update - toolbar reorganization and list fix v2
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
@@ -187,46 +188,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   return (
     <div className="border rounded-lg overflow-hidden">
       <div className="bg-muted p-2 border-b flex flex-wrap gap-1">
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={editor.isActive('bold') ? 'bg-accent' : ''}
-        >
-          <Bold className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={editor.isActive('italic') ? 'bg-accent' : ''}
-        >
-          <Italic className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={editor.isActive('bulletList') ? 'bg-accent' : ''}
-        >
-          <List className="w-4 h-4" />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={editor.isActive('orderedList') ? 'bg-accent' : ''}
-        >
-          <ListOrdered className="w-4 h-4" />
-        </Button>
-
-        <div className="w-px h-6 bg-border mx-1" />
-
-        {/* Heading controls */}
+        {/* Titres et texte */}
         <Button
           type="button"
           size="sm"
@@ -270,7 +232,31 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
 
         <div className="w-px h-6 bg-border mx-1" />
 
-        {/* Text color controls */}
+        {/* Mise en forme de texte */}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={editor.isActive('bold') ? 'bg-accent' : ''}
+          title="Gras"
+        >
+          <Bold className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={editor.isActive('italic') ? 'bg-accent' : ''}
+          title="Italique"
+        >
+          <Italic className="w-4 h-4" />
+        </Button>
+
+        <div className="w-px h-6 bg-border mx-1" />
+
+        {/* Couleurs de texte */}
         <Button
           type="button"
           size="sm"
@@ -319,7 +305,38 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
 
         <div className="w-px h-6 bg-border mx-1" />
 
-        {/* Text alignment controls */}
+        {/* Surlignage */}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().toggleHighlight({ color: '#fef08a' }).run()}
+          title="Surligner en jaune"
+        >
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fef08a', border: '1px solid #ccc' }} />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().toggleHighlight({ color: '#bbf7d0' }).run()}
+          title="Surligner en vert"
+        >
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#bbf7d0', border: '1px solid #ccc' }} />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().unsetHighlight().run()}
+          title="Enlever le surlignage"
+        >
+          <Highlighter className="w-4 h-4" />
+        </Button>
+
+        <div className="w-px h-6 bg-border mx-1" />
+
+        {/* Alignement */}
         <Button
           type="button"
           size="sm"
@@ -353,59 +370,40 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
 
         <div className="w-px h-6 bg-border mx-1" />
 
-        {/* Highlight buttons for selected text */}
+        {/* Listes */}
         <Button
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => editor.chain().focus().toggleHighlight({ color: '#fef3c7' }).run()}
-          className={editor.isActive('highlight', { color: '#fef3c7' }) ? 'bg-accent' : ''}
-          title="Surligner en jaune"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={editor.isActive('bulletList') ? 'bg-accent' : ''}
+          title="Liste à puces"
         >
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fef3c7', border: '1px solid #ccc' }} />
+          <List className="w-4 h-4" />
         </Button>
         <Button
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => editor.chain().focus().toggleHighlight({ color: '#d1fae5' }).run()}
-          className={editor.isActive('highlight', { color: '#d1fae5' }) ? 'bg-accent' : ''}
-          title="Surligner en vert"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={editor.isActive('orderedList') ? 'bg-accent' : ''}
+          title="Liste numérotée"
         >
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#d1fae5', border: '1px solid #ccc' }} />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().toggleHighlight({ color: '#dbeafe' }).run()}
-          className={editor.isActive('highlight', { color: '#dbeafe' }) ? 'bg-accent' : ''}
-          title="Surligner en bleu"
-        >
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#dbeafe', border: '1px solid #ccc' }} />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().toggleHighlight({ color: '#fee2e2' }).run()}
-          className={editor.isActive('highlight', { color: '#fee2e2' }) ? 'bg-accent' : ''}
-          title="Surligner en rouge"
-        >
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#fee2e2', border: '1px solid #ccc' }} />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => editor.chain().focus().unsetHighlight().run()}
-          title="Enlever le surlignage"
-        >
-          <Highlighter className="w-4 h-4" />
+          <ListOrdered className="w-4 h-4" />
         </Button>
 
         <div className="w-px h-6 bg-border mx-1" />
 
+        {/* Encadrés */}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => insertCallout('danger')}
+          title="Encadré danger"
+        >
+          <AlertCircle className="w-4 h-4 text-red-600" />
+        </Button>
         <Button
           type="button"
           size="sm"
@@ -437,15 +435,6 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => insertCallout('danger')}
-          title="Encadré danger"
-        >
-          <AlertCircle className="w-4 h-4 text-red-600" />
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
           onClick={() => insertCallout('white')}
           title="Encadré blanc"
         >
@@ -454,6 +443,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
 
         <div className="w-px h-6 bg-border mx-1" />
 
+        {/* Liens et médias */}
         <Button
           type="button"
           size="sm"
@@ -463,8 +453,6 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         >
           <AtSign className="w-4 h-4 text-primary" />
         </Button>
-
-        <div className="w-px h-6 bg-border mx-1" />
 
         <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
           <DialogTrigger asChild>
@@ -505,20 +493,23 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                 />
               </div>
 
-              <RadioGroup value={imageType} onValueChange={(v) => setImageType(v as 'inline' | 'modal')}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="inline" id="inline" />
-                  <Label htmlFor="inline" className="cursor-pointer">
-                    Afficher dans le texte (petites images, icônes)
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="modal" id="modal" />
-                  <Label htmlFor="modal" className="cursor-pointer">
-                    Bouton "Voir" avec œil 👁️ (captures d&apos;écran, tutoriels)
-                  </Label>
-                </div>
-              </RadioGroup>
+              <div>
+                <Label>Type d&apos;affichage</Label>
+                <RadioGroup value={imageType} onValueChange={(v) => setImageType(v as 'inline' | 'modal')} className="mt-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="inline" id="inline" />
+                    <Label htmlFor="inline" className="font-normal cursor-pointer">
+                      Inline (afficher directement dans le texte)
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="modal" id="modal" />
+                    <Label htmlFor="modal" className="font-normal cursor-pointer">
+                      Bouton (afficher seulement un bouton cliquable)
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
 
               {imageType === 'modal' && (
                 <div>
@@ -641,7 +632,11 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
 
       <EditorContent 
         editor={editor} 
-        className="prose prose-sm max-w-none p-4 min-h-[300px] focus:outline-none [&_.mention]:cursor-pointer [&_.mention]:text-primary [&_.mention]:font-medium [&_.mention]:hover:underline"
+        className="prose prose-sm max-w-none p-4 min-h-[300px] focus:outline-none 
+          [&_.mention]:cursor-pointer [&_.mention]:text-primary [&_.mention]:font-medium [&_.mention]:hover:underline
+          [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:my-2
+          [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:my-2
+          [&_li]:my-1"
       />
       <div className="text-xs text-muted-foreground px-4 pb-2">
         💡 Tapez @ pour créer des liens vers d&apos;autres sections
