@@ -3,7 +3,13 @@ import { useParams, useLocation } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit2, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, ChevronDown } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import {
   DndContext,
   closestCenter,
@@ -46,6 +52,9 @@ export default function Category() {
   const { isAuthenticated } = useAuth();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
+  
+  // Catégorie test pour accordéon
+  const isAccordionCategory = slug === 'categorie-1763038012317';
   
   // Mémoriser sections pour éviter les recalculs qui causent des scrolls
   const sections = useMemo(() => 
@@ -339,9 +348,32 @@ export default function Category() {
             items={sections.map(s => s.id)}
             strategy={verticalListSortingStrategy}
           >
-            {sections.map((section) => (
-              <SortableSection key={section.id} section={section} />
-            ))}
+            {isAccordionCategory && !isEditMode ? (
+              <Accordion type="multiple" className="w-full">
+                {sections.map((section) => (
+                  <AccordionItem key={section.id} value={section.id} className="mb-4">
+                    <div className={`rounded-lg ${getColorClass(section.colorPreset)}`}>
+                      <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                        <div className="flex items-center gap-3 w-full">
+                          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+                          <h2 className="text-xl font-semibold text-left">{section.title}</h2>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-6 pb-6">
+                        <div
+                          className="prose prose-sm max-w-none break-words overflow-visible"
+                          dangerouslySetInnerHTML={{ __html: section.content }}
+                        />
+                      </AccordionContent>
+                    </div>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            ) : (
+              sections.map((section) => (
+                <SortableSection key={section.id} section={section} />
+              ))
+            )}
           </SortableContext>
         </DndContext>
 
