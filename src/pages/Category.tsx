@@ -59,6 +59,7 @@ export default function Category() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const [hasScrolledOnMount, setHasScrolledOnMount] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState<number>(0);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -70,6 +71,24 @@ export default function Category() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Préserver la position de scroll lors des changements d'onglet
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Sauvegarder la position avant de quitter
+        setScrollPosition(window.scrollY);
+      } else {
+        // Restaurer la position au retour
+        setTimeout(() => {
+          window.scrollTo({ top: scrollPosition, behavior: 'instant' });
+        }, 0);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [scrollPosition]);
 
   // Scroll to section if hash is present UNIQUEMENT au chargement initial
   // Ne se déclenche qu'UNE SEULE FOIS pour éviter les scrolls intempestifs pendant l'édition
