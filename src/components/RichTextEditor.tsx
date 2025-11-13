@@ -84,15 +84,6 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
             ...this.parent?.(),
             'data-no-borders': {
               default: null,
-              parseHTML: element => element.getAttribute('data-no-borders'),
-              renderHTML: attributes => {
-                if (!attributes['data-no-borders']) {
-                  return {};
-                }
-                return {
-                  'data-no-borders': attributes['data-no-borders']
-                };
-              },
             },
           };
         },
@@ -648,49 +639,26 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           size="sm"
           variant="ghost"
           onClick={() => {
-            console.log('=== Toggle borders clicked ===');
             const { state } = editor;
-            const { $from } = state.selection;
+            const { selection } = state;
+            const { $anchor } = selection;
             
-            // Find the table node by traversing up the tree
-            let tableNode = null;
-            let tablePos = null;
-            let depth = $from.depth;
-            
-            console.log('Start depth:', depth);
-            
-            while (depth > 0) {
-              const node = $from.node(depth);
-              console.log(`Depth ${depth}: ${node.type.name}`);
+            // Find table node
+            for (let d = $anchor.depth; d > 0; d--) {
+              const node = $anchor.node(d);
               if (node.type.name === 'table') {
-                tableNode = node;
-                tablePos = $from.before(depth);
-                console.log('Found table at pos:', tablePos);
-                break;
+                const pos = $anchor.before(d);
+                const tr = state.tr;
+                const currentBorders = node.attrs['data-no-borders'];
+                
+                tr.setNodeMarkup(pos, null, {
+                  ...node.attrs,
+                  'data-no-borders': currentBorders ? null : 'true'
+                });
+                
+                editor.view.dispatch(tr);
+                return;
               }
-              depth--;
-            }
-            
-            if (tableNode && tablePos !== null) {
-              const currentNoBorders = tableNode.attrs['data-no-borders'];
-              console.log('Current data-no-borders:', currentNoBorders);
-              console.log('Current attrs:', tableNode.attrs);
-              
-              const newAttrs = {
-                ...tableNode.attrs,
-                'data-no-borders': currentNoBorders ? null : 'true'
-              };
-              
-              console.log('New attrs:', newAttrs);
-              
-              // Use setNodeMarkup to update the table node directly
-              editor.view.dispatch(
-                editor.state.tr.setNodeMarkup(tablePos, undefined, newAttrs)
-              );
-              
-              console.log('Dispatched transaction');
-            } else {
-              console.log('No table found!');
             }
           }}
           disabled={false}
