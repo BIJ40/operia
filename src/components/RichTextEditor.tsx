@@ -74,8 +74,27 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       }),
       Table.configure({
         resizable: true,
+        allowTableNodeSelection: false,
         HTMLAttributes: {
           class: 'table-auto border-collapse my-4',
+        },
+      }).extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            'data-no-borders': {
+              default: null,
+              parseHTML: element => element.getAttribute('data-no-borders'),
+              renderHTML: attributes => {
+                if (!attributes['data-no-borders']) {
+                  return {};
+                }
+                return {
+                  'data-no-borders': attributes['data-no-borders']
+                };
+              },
+            },
+          };
         },
       }),
       TableRow,
@@ -648,17 +667,13 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
             }
             
             if (tableNode && tablePos !== null) {
-              const currentClass = tableNode.attrs.class || '';
-              const hasNoBorders = currentClass.includes('table-no-borders');
-              const newClass = hasNoBorders 
-                ? currentClass.replace('table-no-borders', '').trim()
-                : `${currentClass} table-no-borders`.trim();
+              const currentNoBorders = tableNode.attrs['data-no-borders'];
               
               // Use setNodeMarkup to update the table node directly
               editor.view.dispatch(
                 editor.state.tr.setNodeMarkup(tablePos, undefined, {
                   ...tableNode.attrs,
-                  class: newClass
+                  'data-no-borders': currentNoBorders ? null : 'true'
                 })
               );
             }
