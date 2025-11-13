@@ -632,15 +632,15 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
 
       <EditorContent 
         editor={editor} 
-        className="prose prose-sm max-w-none p-4 min-h-[300px] focus:outline-none 
+        className="p-4 min-h-[300px] focus:outline-none 
           [&_.mention]:cursor-pointer [&_.mention]:text-primary [&_.mention]:font-medium [&_.mention]:hover:underline
           [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:my-2
           [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:my-2
           [&_li]:my-1
-          [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:my-4
-          [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:my-3
-          [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:my-2
-          [&_p]:my-2"
+          [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:my-4 [&_h1]:block
+          [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:my-3 [&_h2]:block
+          [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:my-2 [&_h3]:block
+          [&_p]:text-base [&_p]:my-2 [&_p]:block"
       />
       <div className="text-xs text-muted-foreground px-4 pb-2">
         💡 Tapez @ pour créer des liens vers d&apos;autres sections
