@@ -1,6 +1,6 @@
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ColorPreset } from '@/types/block';
 import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
+import { loadAppData } from '@/lib/db';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import {
   DndContext,
   closestCenter,
@@ -47,6 +50,16 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [lastModified, setLastModified] = useState<number | null>(null);
+
+  // Charger la date de dernière modification
+  useEffect(() => {
+    loadAppData().then((data) => {
+      if (data?.lastModified) {
+        setLastModified(data.lastModified);
+      }
+    });
+  }, [blocks]); // Se met à jour quand les blocks changent
 
   const categories = blocks
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
@@ -460,6 +473,16 @@ export default function Home() {
                 )}
               </div>
             )}
+       
+        {/* Footer avec informations du guide */}
+        <div className="mt-16 pt-8 border-t text-center">
+          <p className="text-xs text-muted-foreground">
+            Guide créé par Jérôme Ducourneau le 22/09/2025
+            {lastModified && (
+              <> et mis à jour le {format(new Date(lastModified), 'dd/MM/yyyy', { locale: fr })}</>
+            )}
+          </p>
+        </div>
       </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
