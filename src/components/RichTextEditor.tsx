@@ -610,7 +610,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           size="sm"
           variant="ghost"
           onClick={() => editor.chain().focus().addRowAfter().run()}
-          disabled={!editor.can().addRowAfter()}
+          disabled={!editor.isActive('tableCell') && !editor.isActive('tableHeader')}
           title="Ajouter une ligne"
         >
           <Plus className="w-4 h-4" />
@@ -620,7 +620,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           size="sm"
           variant="ghost"
           onClick={() => editor.chain().focus().deleteRow().run()}
-          disabled={!editor.can().deleteRow()}
+          disabled={!editor.isActive('tableCell') && !editor.isActive('tableHeader')}
           title="Supprimer la ligne"
         >
           <Minus className="w-4 h-4" />
@@ -647,7 +647,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
               }).run();
             }
           }}
-          disabled={!editor.can().deleteRow()}
+          disabled={!editor.isActive('tableCell') && !editor.isActive('tableHeader')}
           title="Afficher/masquer les bordures du tableau"
         >
           <TableProperties className="w-4 h-4" />
