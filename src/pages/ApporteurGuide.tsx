@@ -170,7 +170,7 @@ const SortableCategory = ({
           </div>
           {editIcon.startsWith('http') && (
             <div className="p-2 bg-muted rounded-lg">
-              <img src={editIcon} alt="Icône perso" className="w-12 h-12 object-contain mx-auto" />
+              <img src={editIcon} alt="Icône perso" className="w-20 h-20 object-contain mx-auto" />
             </div>
           )}
           <div className="space-y-2">
@@ -209,9 +209,9 @@ const SortableCategory = ({
             <div className="flex items-center gap-4 mb-2">
               <div className="p-3 bg-background/50 rounded-lg">
                 {isCustomImage ? (
-                  <img src={category.icon} alt={category.title} className="w-8 h-8 object-contain" />
+                  <img src={category.icon} alt={category.title} className="w-16 h-16 object-contain" />
                 ) : (
-                  <Icon className="w-8 h-8 text-primary" />
+                  <Icon className="w-16 h-16 text-primary" />
                 )}
               </div>
               <h3 className="text-xl font-semibold text-foreground flex-1">
