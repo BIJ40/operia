@@ -164,12 +164,7 @@ export function SectionEditForm({
         content={content}
         onChange={setContent}
       />
-      <div className="flex gap-2">
-        <Button onClick={handleSave}>Enregistrer</Button>
-        <Button variant="outline" onClick={handleCancel}>
-          Annuler
-        </Button>
-      </div>
+      {/* Boutons supprimés - on utilise uniquement les icônes en haut */}
     </div>
   );
 }
