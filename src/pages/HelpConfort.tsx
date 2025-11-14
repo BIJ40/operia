@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEditor } from '@/contexts/EditorContext';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -49,8 +50,8 @@ const SCOPE = 'informations-utiles';
 
 export default function HelpConfort() {
   const { isAuthenticated } = useAuth();
+  const { isEditMode } = useEditor();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
@@ -193,8 +194,8 @@ export default function HelpConfort() {
 
   return (
     <div className="container max-w-6xl mx-auto p-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
+      <div className="mb-8">
+        <div className="text-center">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Help Confort
           </h1>
@@ -202,11 +203,6 @@ export default function HelpConfort() {
             Centre d'aide et ressources Help Confort Services
           </p>
         </div>
-        {isAuthenticated && (
-          <Button onClick={() => setIsEditMode(!isEditMode)} variant={isEditMode ? 'default' : 'outline'}>
-            {isEditMode ? 'Terminer' : 'Modifier'}
-          </Button>
-        )}
       </div>
 
       <DndContext
@@ -347,28 +343,50 @@ const SortableCategory = ({
             autoFocus
           />
           <IconPicker value={editIcon} onChange={onEditIconChange} />
-          <div className="flex gap-2 mt-4">
-            <Button onClick={onSave} size="sm" className="flex-1">Sauvegarder</Button>
-            <Button onClick={onCancel} size="sm" variant="outline" className="flex-1">Annuler</Button>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Couleur</label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
+                { value: 'blanc', color: 'bg-white border-2 border-gray-300', label: 'Blanc' },
+                { value: 'blue', color: 'bg-blue-50 border-2 border-blue-200', label: 'Bleu' },
+                { value: 'green', color: 'bg-green-50 border-2 border-green-200', label: 'Vert' },
+                { value: 'yellow', color: 'bg-yellow-50 border-2 border-yellow-200', label: 'Jaune' },
+                { value: 'purple', color: 'bg-purple-50 border-2 border-purple-200', label: 'Violet' },
+                { value: 'orange', color: 'bg-orange-50 border-2 border-orange-200', label: 'Orange' },
+              ].map((preset) => (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => onEditColorChange(preset.value as ColorPreset)}
+                  className={`${preset.color} px-3 py-1.5 rounded text-xs font-medium ${
+                    editColor === preset.value ? 'ring-2 ring-primary' : ''
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={onSave} size="sm">Enregistrer</Button>
+            <Button onClick={onCancel} size="sm" variant="outline">Annuler</Button>
           </div>
         </div>
       ) : (
         <>
           <Link to={`/help-confort/category/${category.id}`} className="block">
-            <div className="flex items-center gap-3 mb-3">
-              <Icon className="w-8 h-8 text-primary" />
-              <h3 className="text-xl font-semibold">{category.title}</h3>
-            </div>
+            <Icon className="w-12 h-12 mb-4 text-primary" />
+            <h2 className="text-xl font-bold mb-2">{category.title}</h2>
           </Link>
           {isEditMode && (
-            <div className="flex gap-2 mt-4">
+            <div className="flex gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 onClick={() => onEdit(category)}
                 size="sm"
                 variant="outline"
-                className="flex-1"
               >
-                Éditer
+                Modifier
               </Button>
               <Button
                 onClick={() => onDelete(category.id)}
