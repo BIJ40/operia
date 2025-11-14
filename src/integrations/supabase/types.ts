@@ -14,6 +14,131 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocks: {
+        Row: {
+          attachments: Json | null
+          color_preset: string
+          content: string
+          created_at: string
+          hide_from_sidebar: boolean | null
+          icon: string | null
+          id: string
+          order: number
+          parent_id: string | null
+          slug: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          color_preset?: string
+          content?: string
+          created_at?: string
+          hide_from_sidebar?: boolean | null
+          icon?: string | null
+          id?: string
+          order?: number
+          parent_id?: string | null
+          slug: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          color_preset?: string
+          content?: string
+          created_at?: string
+          hide_from_sidebar?: boolean | null
+          icon?: string | null
+          id?: string
+          order?: number
+          parent_id?: string | null
+          slug?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocks_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          color_preset: string
+          created_at: string
+          display_order: number
+          icon: string
+          id: string
+          scope: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color_preset?: string
+          created_at?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          scope: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color_preset?: string
+          created_at?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          scope?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      home_cards: {
+        Row: {
+          color_preset: string
+          created_at: string
+          description: string
+          display_order: number
+          icon: string
+          id: string
+          link: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color_preset?: string
+          created_at?: string
+          description: string
+          display_order?: number
+          icon?: string
+          id?: string
+          link: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color_preset?: string
+          created_at?: string
+          description?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          link?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       knowledge_base: {
         Row: {
           category: string
@@ -43,6 +168,44 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      sections: {
+        Row: {
+          category_id: string
+          content: Json
+          created_at: string
+          display_order: number
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          content?: Json
+          created_at?: string
+          display_order?: number
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          content?: Json
+          created_at?: string
+          display_order?: number
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sections_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
