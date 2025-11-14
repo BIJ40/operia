@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import backupData from '@/data/backup-apogee-data-2.json';
+import backupData from '@/data/apogee-data.json';
 import { toast } from 'sonner';
 
 export async function importBackupData() {
