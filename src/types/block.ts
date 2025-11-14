@@ -20,6 +20,8 @@ export interface Block {
   parentId?: string;
   attachments: Attachment[];
   hideFromSidebar?: boolean;
+  showTitleOnCard?: boolean;
+  showTitleInMenu?: boolean;
 }
 
 export interface AppData {

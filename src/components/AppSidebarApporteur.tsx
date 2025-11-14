@@ -24,6 +24,7 @@ interface BlockCategory {
   title: string;
   slug: string;
   icon?: string;
+  showTitleInMenu?: boolean;
 }
 
 interface BlockSection {
@@ -50,7 +51,8 @@ export function AppSidebarApporteur() {
         id: b.id,
         title: b.title,
         slug: b.slug,
-        icon: b.icon
+        icon: b.icon,
+        showTitleInMenu: b.showTitleInMenu
       }));
     
     setBlockCategories(cats);
@@ -100,6 +102,8 @@ export function AppSidebarApporteur() {
 
   const IconComponent = (iconName?: string) => {
     if (!iconName) return Icons.BookOpen;
+    // Si c'est une URL d'image, retourner null pour afficher l'image
+    if (iconName.startsWith('http')) return null;
     const Icon = (Icons as any)[iconName];
     return Icon || Icons.BookOpen;
   };
@@ -140,8 +144,14 @@ export function AppSidebarApporteur() {
                         <SidebarMenuButton
                           className={`w-full ${isActive ? 'bg-accent text-accent-foreground' : ''}`}
                         >
-                          <Icon className="w-4 h-4 mr-2" />
-                          <span className="flex-1 text-left">{category.title}</span>
+                          {Icon ? (
+                            <Icon className="w-4 h-4 mr-2" />
+                          ) : category.icon?.startsWith('http') ? (
+                            <img src={category.icon} alt="" className="w-4 h-4 mr-2 object-contain" />
+                          ) : null}
+                          {(category.showTitleInMenu !== false) && (
+                            <span className="flex-1 text-left">{category.title}</span>
+                          )}
                           {categorySections.length > 0 && (
                             <ChevronRight 
                               className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-90' : ''}`} 
