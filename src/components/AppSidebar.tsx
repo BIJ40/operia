@@ -214,10 +214,7 @@ export function AppSidebar() {
                             {categorySections.map((section) => (
                               <SidebarMenuSubItem key={section.id}>
                                 <SidebarMenuSubButton
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    handleSectionClick(section.id, category.slug);
-                                  }}
+                                  onClick={() => handleSectionClick(section.id, category.slug)}
                                   className="cursor-pointer hover:bg-accent"
                                 >
                                   <span className="text-sm">{section.title}</span>

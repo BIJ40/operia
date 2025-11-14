@@ -97,14 +97,20 @@ export default function Category() {
         return prev;
       });
       
-      // Scroller vers la section après un délai
+      // Scroller vers la section après un délai pour laisser l'accordéon s'ouvrir
       setTimeout(() => {
         const element = document.getElementById(hash);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          window.scrollBy(0, -100);
+          const headerOffset = 140;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
         }
-      }, 300);
+      }, 400);
     }
   }, [location.hash, sections]);
 
@@ -156,33 +162,6 @@ export default function Category() {
     return () => clearInterval(intervalId);
   }, [editingId]);
 
-  // Scroll to section if hash is present and open its accordion
-  useEffect(() => {
-    if (location.hash && !editingId) {
-      const sectionId = location.hash.substring(1);
-      
-      // Ouvrir l'accordéon de cette section
-      if (!openAccordions.includes(sectionId)) {
-        setOpenAccordions(prev => [...prev, sectionId]);
-      }
-      
-      // Attendre que l'accordéon s'ouvre complètement puis scroller
-      setTimeout(() => {
-        const element = document.getElementById(sectionId);
-        if (element) {
-          // Calculer la position avec offset pour le header (120px pour le header + un peu d'espace)
-          const headerOffset = 140;
-          const elementPosition = element.getBoundingClientRect().top;
-          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-          window.scrollTo({
-            top: offsetPosition,
-            behavior: 'smooth'
-          });
-        }
-      }, 400);
-    }
-  }, [location.hash, editingId]);
 
   if (!category) {
     return (
