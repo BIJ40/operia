@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { 
   Sidebar, 
@@ -54,6 +54,7 @@ interface BlockSection {
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { blocks } = useEditor();
   const [categories, setCategories] = useState<Category[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
@@ -155,12 +156,12 @@ export function AppSidebar() {
     // Pour Apogée: categoryIdentifier est un slug
     // Pour les autres: categoryIdentifier est un ID
     if (isApogee) {
-      window.location.href = `/apogee/category/${categoryIdentifier}#${sectionId}`;
+      navigate(`/apogee/category/${categoryIdentifier}#${sectionId}`);
     } else {
       const path = scope === 'apporteurs-nationaux' 
         ? '/guide-apporteurs' 
         : '/help-confort';
-      window.location.href = `${path}/category/${categoryIdentifier}#${sectionId}`;
+      navigate(`${path}/category/${categoryIdentifier}#${sectionId}`);
     }
   };
 
