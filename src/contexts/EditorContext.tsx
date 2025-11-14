@@ -69,21 +69,28 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     initData();
   }, []);
 
-  // Auto-save DÉSACTIVÉ temporairement pour éviter la perte de données
-  // useEffect(() => {
-  //   if (!loading) {
-  //     const timer = setTimeout(() => {
-  //       const appData: AppData = {
-  //         blocks,
-  //         version: '1.0',
-  //         lastModified: Date.now(),
-  //       };
-  //       saveAppData(appData);
-  //     }, 1000);
+  // Auto-save SÉCURISÉ - réactivé avec protection
+  useEffect(() => {
+    if (!loading && blocks.length > 0) {
+      const timer = setTimeout(() => {
+        const appData: AppData = {
+          blocks,
+          version: '1.0',
+          lastModified: Date.now(),
+        };
+        saveAppData(appData).catch(err => {
+          console.error('Erreur auto-save:', err);
+          toast({ 
+            title: 'Erreur de sauvegarde', 
+            description: 'Vos modifications n\'ont pas pu être sauvegardées automatiquement',
+            variant: 'destructive' 
+          });
+        });
+      }, 2000); // 2 secondes au lieu de 1
 
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [blocks, loading]);
+      return () => clearTimeout(timer);
+    }
+  }, [blocks, loading, toast]);
 
   const addBlock = useCallback((block: Omit<Block, 'id' | 'order'>): string => {
     if (!isAdmin) {
