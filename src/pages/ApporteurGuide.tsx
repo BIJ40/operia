@@ -241,11 +241,11 @@ const SortableCategory = ({
         <>
           <Link to={`/apporteurs/category/${category.slug}`} className="block">
             <div className="flex items-center gap-4 mb-2">
-              <div className="p-3 bg-background/50 rounded-lg">
+              <div className="p-3 bg-background/50 rounded-lg flex items-center justify-center">
                 {isCustomImage ? (
-                  <img src={category.icon} alt={category.title} className="w-8 h-8 object-contain" />
+                  <img src={category.icon} alt={category.title} className="w-[30px] h-[30px] object-contain" />
                 ) : (
-                  <Icon className="w-8 h-8 text-primary" />
+                  <Icon className="w-[30px] h-[30px] text-primary" />
                 )}
               </div>
               {(category.showTitleOnCard !== false) && (
