@@ -71,24 +71,6 @@ export function AppSidebar() {
       </SidebarHeader>
       
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {faqCategory && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={location.pathname === `/apogee/category/${faqCategory.slug}`}>
-                    <Link to={`/apogee/category/${faqCategory.slug}`}>
-                      <Icons.HelpCircle className="w-4 h-4" />
-                      <span>FAQ</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         {/* Sommaire des catégories */}
         <SidebarGroup>
           <SidebarGroupLabel>Sommaire</SidebarGroupLabel>
@@ -137,6 +119,24 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* FAQ en bas */}
+        {faqCategory && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === `/apogee/category/${faqCategory.slug}`}>
+                    <Link to={`/apogee/category/${faqCategory.slug}`}>
+                      <Icons.HelpCircle className="w-4 h-4" />
+                      <span>FAQ</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   );

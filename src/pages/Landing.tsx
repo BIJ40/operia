@@ -9,6 +9,8 @@ import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
+const supabaseAny = supabase as any;
 import {
   DndContext,
   closestCenter,
@@ -242,20 +244,24 @@ export default function Landing() {
   }, []);
 
   const loadCards = async () => {
-    const { data, error } = await supabase
-      .from('home_cards')
-      .select('*')
-      .order('display_order', { ascending: true });
+    try {
+      const { data, error } = await supabaseAny
+        .from('home_cards')
+        .select('*')
+        .order('display_order', { ascending: true });
 
-    if (error) {
-      console.error('Error loading cards:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les cartes',
-        variant: 'destructive',
-      });
-    } else {
-      setHomeCards(data || []);
+      if (error) {
+        console.error('Error loading cards:', error);
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de charger les cartes',
+          variant: 'destructive',
+        });
+      } else {
+        setHomeCards(data || []);
+      }
+    } catch (e) {
+      console.error('Exception loading cards:', e);
     }
   };
 
@@ -291,7 +297,7 @@ export default function Landing() {
 
   const handleSave = async () => {
     if (editingId) {
-      const { error } = await supabase
+      const { error } = await supabaseAny
         .from('home_cards')
         .update({
           title: editTitle,
@@ -330,7 +336,7 @@ export default function Landing() {
 
   const confirmDelete = async () => {
     if (cardToDelete) {
-      const { error } = await supabase
+      const { error } = await supabaseAny
         .from('home_cards')
         .delete()
         .eq('id', cardToDelete);
@@ -358,7 +364,7 @@ export default function Landing() {
       ? Math.max(...homeCards.map(c => c.display_order))
       : -1;
 
-    const { error } = await supabase
+    const { error } = await supabaseAny
       .from('home_cards')
       .insert({
         title: 'Nouvelle section',
@@ -395,7 +401,7 @@ export default function Landing() {
       setHomeCards(reorderedCards);
       
       for (let i = 0; i < reorderedCards.length; i++) {
-        await supabase
+        await supabaseAny
           .from('home_cards')
           .update({ display_order: i })
           .eq('id', reorderedCards[i].id);
