@@ -30,6 +30,10 @@ export function AppSidebar() {
   const categories = blocks
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
     .sort((a, b) => a.order - b.order);
+  
+  const faqCategory = blocks.find(
+    b => b.type === 'category' && b.title.toLowerCase().includes('faq')
+  );
 
   const IconComponent = (iconName: string) => {
     const Icon = (Icons as any)[iconName] || Icons.BookOpen;
@@ -38,7 +42,7 @@ export function AppSidebar() {
 
   // Déterminer quelle catégorie doit être ouverte selon la route actuelle
   const currentPath = location.pathname;
-  const currentCategory = categories.find(cat => currentPath.includes(`/category/${cat.slug}`));
+  const currentCategory = categories.find(cat => currentPath.includes(`/apogee/category/${cat.slug}`));
 
   // Ouvrir automatiquement la catégorie correspondant à la page actuelle
   useEffect(() => {
@@ -55,10 +59,10 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r" collapsible="icon">
       <SidebarHeader className="p-4 border-b">
-        <Link to="/" className="block" onClick={(e) => e.stopPropagation()}>
+        <Link to="/apogee" className="block" onClick={(e) => e.stopPropagation()}>
           <img 
             src={logoApogee} 
-            alt="Apogée CRM - Retour à l'accueil" 
+            alt="Apogée CRM - Guide Apogée" 
             className="w-full h-auto cursor-pointer hover:opacity-80 transition-opacity"
             draggable={false}
             data-no-modal="true"
@@ -67,6 +71,24 @@ export function AppSidebar() {
       </SidebarHeader>
       
       <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {faqCategory && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === `/apogee/category/${faqCategory.slug}`}>
+                    <Link to={`/apogee/category/${faqCategory.slug}`}>
+                      <Icons.HelpCircle className="w-4 h-4" />
+                      <span>FAQ</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         {/* Sommaire des catégories */}
         <SidebarGroup>
           <SidebarGroupLabel>Sommaire</SidebarGroupLabel>
@@ -100,7 +122,7 @@ export function AppSidebar() {
                           {sections.map((section) => (
                             <SidebarMenuSubItem key={section.id}>
                               <SidebarMenuSubButton asChild>
-                                <Link to={`/category/${category.slug}#${section.id}`}>
+                                <Link to={`/apogee/category/${category.slug}#${section.id}`}>
                                   <span className="text-sm">{section.title}</span>
                                 </Link>
                               </SidebarMenuSubButton>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { LogOut, Home, HelpCircle, Edit3, Square, Database, LogIn } from 'lucide-react';
+import { LogOut, Home, Edit3, Square, LogIn } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -7,14 +7,9 @@ import { LoginDialog } from '@/components/LoginDialog';
 import { useState } from 'react';
 
 export function Header() {
-  const { blocks, isEditMode, toggleEditMode } = useEditor();
+  const { isEditMode, toggleEditMode } = useEditor();
   const { isAuthenticated, isAdmin, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
-  
-  // Find FAQ category
-  const faqCategory = blocks.find(
-    b => b.type === 'category' && b.title.toLowerCase().includes('faq')
-  );
 
   const handleEnrichirClick = () => {
     if (!isAdmin) {
@@ -35,18 +30,8 @@ export function Header() {
             className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
           >
             <Home className="w-5 h-5 text-primary" />
-            <span className="font-semibold text-foreground">GUIDE</span>
+            <span className="font-semibold text-foreground">ACCUEIL</span>
           </Link>
-          
-          {faqCategory && (
-            <Link 
-              to={`/category/${faqCategory.slug}`}
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-            >
-              <HelpCircle className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-foreground">FAQ</span>
-            </Link>
-          )}
 
           {isAdmin && (
             <Button
@@ -66,16 +51,6 @@ export function Header() {
                 </>
               )}
             </Button>
-          )}
-
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-            >
-              <Database className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-foreground">ADMIN</span>
-            </Link>
           )}
 
           <div className="ml-auto flex items-center gap-2">
