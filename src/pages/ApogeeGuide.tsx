@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ColorPreset } from '@/types/block';
 import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
+import { DataMigrationButton } from '@/components/DataMigrationButton';
 import {
   DndContext,
   closestCenter,
@@ -325,6 +326,12 @@ export default function ApogeeGuide() {
             Tout ce que vous devez savoir sur l'utilisation d'Apogée
           </p>
         </div>
+
+        {isAdmin && (
+          <div className="mb-8 max-w-2xl mx-auto">
+            <DataMigrationButton />
+          </div>
+        )}
 
         {!isEditMode && (
           <div className="mb-6 max-w-md mx-auto">
