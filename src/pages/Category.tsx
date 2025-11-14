@@ -307,75 +307,78 @@ export default function Category() {
       <div ref={setNodeRef} style={style}>
         <AccordionItem value={section.id} id={section.id} className="mb-4">
           <div className={`rounded-lg relative ${getColorClass(section.colorPreset)}`}>
-            {isEditMode && isAuthenticated && (
-              <div 
-                className="absolute top-4 right-6 flex gap-2 z-[100] bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm"
-                onClick={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-              >
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="cursor-move"
-                  {...attributes}
-                  {...listeners}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <GripVertical className="w-4 h-4" />
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      title="Changer de catégorie"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <FolderInput className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-background border shadow-md z-[200]">
-                    {availableCategories
-                      .filter(cat => cat.id !== category?.id)
-                      .map((cat) => (
-                        <DropdownMenuItem
-                          key={cat.id}
-                          onClick={() => handleMoveToCategory(section.id, cat.id)}
-                        >
-                          {cat.title}
-                        </DropdownMenuItem>
-                      ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEdit(section);
-                  }}
-                >
-                  <Edit2 className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteClick(section.id);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-            <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <div className="flex items-center gap-3 flex-1">
+            <AccordionTrigger className="px-6 py-4 hover:no-underline [&>div]:pointer-events-none">
+              <div className="flex items-center gap-3 flex-1 pointer-events-auto">
                 <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
                 <h2 className="text-xl font-semibold text-left">
                   {section.hideFromSidebar ? "💡 Info / Astuce" : section.title}
                 </h2>
               </div>
+              {isEditMode && isAuthenticated && (
+                <div 
+                  className="flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm pointer-events-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="cursor-move"
+                    {...attributes}
+                    {...listeners}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <GripVertical className="w-4 h-4" />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        title="Changer de catégorie"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <FolderInput className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-background border shadow-md z-[200]">
+                      {availableCategories
+                        .filter(cat => cat.id !== category?.id)
+                        .map((cat) => (
+                          <DropdownMenuItem
+                            key={cat.id}
+                            onClick={() => handleMoveToCategory(section.id, cat.id)}
+                          >
+                            {cat.title}
+                          </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(section);
+                    }}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteClick(section.id);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-6">
               {editingId === section.id ? (
