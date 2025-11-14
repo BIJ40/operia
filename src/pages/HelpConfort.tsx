@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEditor } from '@/contexts/EditorContext';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -48,7 +47,6 @@ interface Category {
 
 const SCOPE = 'informations-utiles';
 
-// Composant pour les catégories triables
 interface SortableCategoryProps {
   category: Category;
   editingId: string | null;
@@ -140,62 +138,63 @@ const SortableCategory = ({
                 { value: 'yellow', color: 'bg-yellow-50 border-2 border-yellow-200', label: 'Jaune' },
                 { value: 'purple', color: 'bg-purple-50 border-2 border-purple-200', label: 'Violet' },
                 { value: 'orange', color: 'bg-orange-50 border-2 border-orange-200', label: 'Orange' },
-              ].map((preset) => (
+              ].map((color) => (
                 <button
-                  key={preset.value}
-                  type="button"
-                  onClick={() => onEditColorChange(preset.value as ColorPreset)}
-                  className={`${preset.color} px-3 py-1.5 rounded text-xs font-medium ${
-                    editColor === preset.value ? 'ring-2 ring-primary' : ''
+                  key={color.value}
+                  onClick={() => onEditColorChange(color.value as ColorPreset)}
+                  className={`${color.color} rounded-lg px-3 py-1 text-xs font-medium ${
+                    editColor === color.value ? 'ring-2 ring-primary' : ''
                   }`}
                 >
-                  {preset.label}
+                  {color.label}
                 </button>
               ))}
             </div>
           </div>
           <div className="flex gap-2">
-            <Button onClick={onSave} size="sm">
-              Enregistrer
-            </Button>
-            <Button onClick={onCancel} size="sm" variant="outline">
-              Annuler
-            </Button>
+            <Button onClick={onSave} size="sm">Enregistrer</Button>
+            <Button onClick={onCancel} variant="outline" size="sm">Annuler</Button>
           </div>
         </div>
       ) : (
-        <>
-          <Link to={`/help-confort/category/${category.id}`} className="block">
-            <Icon className="w-12 h-12 mb-4 text-primary" />
-            <h2 className="text-xl font-bold mb-2">{category.title}</h2>
-          </Link>
-          {isEditMode && (
-            <div className="flex gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                onClick={() => onEdit(category.id)}
-                size="sm"
-                variant="outline"
-              >
-                Modifier
-              </Button>
-              <Button
-                onClick={() => onDelete(category.id)}
-                size="sm"
-                variant="destructive"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+        <Link to={`/category/${category.id}`} className="block">
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-lg bg-white/50">
+              <Icon className="w-6 h-6" />
             </div>
-          )}
-        </>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-semibold mb-1 group-hover:text-primary transition-colors">
+                {category.title}
+              </h3>
+            </div>
+          </div>
+        </Link>
+      )}
+      
+      {isEditMode && editingId !== category.id && (
+        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEdit(category.id)}
+          >
+            Modifier
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDelete(category.id)}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
       )}
     </div>
   );
 };
 
 export default function HelpConfort() {
-  const { isEditMode } = useEditor();
-  const { isAdmin } = useAuth();
+  const { isEditMode, isAdmin } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
