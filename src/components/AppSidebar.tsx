@@ -1,7 +1,6 @@
-import { useEditor } from '@/contexts/EditorContext';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import * as Icons from 'lucide-react';
-import { useState, useEffect } from 'react';
 import { 
   Sidebar, 
   SidebarContent, 
@@ -19,50 +18,91 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronRight } from 'lucide-react';
 import logoApogee from '@/assets/logo_helpogee.png';
-import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { NavLink } from '@/components/NavLink';
+
+interface Category {
+  id: string;
+  title: string;
+  icon: string;
+  color_preset: string;
+  scope: string;
+  display_order: number;
+}
+
+interface Section {
+  id: string;
+  title: string;
+  category_id: string;
+  display_order: number;
+}
 
 export function AppSidebar() {
-  const { blocks } = useEditor();
   const location = useLocation();
-  const { isAdmin } = useAuth();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
   
-  const categories = blocks
-    .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
-    .sort((a, b) => a.order - b.order);
-  
-  const faqCategory = blocks.find(
-    b => b.type === 'category' && b.title.toLowerCase().includes('faq')
-  );
+  // Déterminer le scope selon la route
+  const getScope = () => {
+    const path = location.pathname;
+    if (path.startsWith('/apogee')) return 'guide-apogee';
+    if (path.startsWith('/guide-apporteurs')) return 'apporteurs-nationaux';
+    if (path.startsWith('/help-confort')) return 'informations-utiles';
+    return null;
+  };
+
+  const scope = getScope();
+
+  useEffect(() => {
+    if (!scope) return;
+
+    // Charger les catégories et sections pour ce scope
+    const loadData = async () => {
+      const { data: cats } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('scope', scope)
+        .order('display_order');
+      
+      if (cats) {
+        setCategories(cats);
+        
+        // Charger toutes les sections pour ces catégories
+        const categoryIds = cats.map(c => c.id);
+        if (categoryIds.length > 0) {
+          const { data: secs } = await supabase
+            .from('sections')
+            .select('*')
+            .in('category_id', categoryIds)
+            .order('display_order');
+          
+          if (secs) setSections(secs);
+        }
+      }
+    };
+
+    loadData();
+  }, [scope]);
 
   const IconComponent = (iconName: string) => {
     const Icon = (Icons as any)[iconName] || Icons.BookOpen;
     return Icon;
   };
 
-  // Déterminer quelle catégorie doit être ouverte selon la route actuelle
-  const currentPath = location.pathname;
-  const currentCategory = categories.find(cat => currentPath.includes(`/apogee/category/${cat.slug}`));
-
-  // Ouvrir automatiquement la catégorie correspondant à la page actuelle
-  useEffect(() => {
-    if (currentCategory) {
-      setOpenCategoryId(currentCategory.id);
-    }
-  }, [currentCategory?.id]);
-
-  // Gérer l'ouverture/fermeture des catégories (une seule à la fois)
   const handleToggleCategory = (categoryId: string) => {
     setOpenCategoryId(prev => prev === categoryId ? null : categoryId);
   };
 
+  if (!scope) return null;
+
   return (
     <Sidebar className="border-r" collapsible="icon">
       <SidebarHeader className="p-4 border-b">
-        <Link to="/apogee" className="block" onClick={(e) => e.stopPropagation()}>
+        <Link to="/" className="block" onClick={(e) => e.stopPropagation()}>
           <img 
             src={logoApogee} 
-            alt="Apogée CRM - Guide Apogée" 
+            alt="Helpogee" 
             className="w-full h-auto cursor-pointer hover:opacity-80 transition-opacity"
             draggable={false}
             data-no-modal="true"
@@ -71,17 +111,13 @@ export function AppSidebar() {
       </SidebarHeader>
       
       <SidebarContent>
-        {/* Sommaire des catégories */}
         <SidebarGroup>
           <SidebarGroupLabel>Sommaire</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {categories.map((category) => {
-                const Icon = IconComponent(category.icon || 'BookOpen');
-                const sections = blocks
-                  .filter(b => b.type === 'section' && b.parentId === category.id && !b.hideFromSidebar)
-                  .sort((a, b) => a.order - b.order);
-
+                const Icon = IconComponent(category.icon);
+                const categorySections = sections.filter(s => s.category_id === category.id);
                 const isOpen = openCategoryId === category.id;
 
                 return (
@@ -101,12 +137,16 @@ export function AppSidebar() {
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                          {sections.map((section) => (
+                          {categorySections.map((section) => (
                             <SidebarMenuSubItem key={section.id}>
                               <SidebarMenuSubButton asChild>
-                                <Link to={`/apogee/category/${category.slug}#${section.id}`}>
-                                  <span className="text-sm">{section.title}</span>
-                                </Link>
+                                <NavLink 
+                                  to={`#${section.id}`}
+                                  className="hover:bg-muted/50"
+                                  activeClassName="bg-muted text-primary font-medium"
+                                >
+                                  {section.title}
+                                </NavLink>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                           ))}
@@ -120,17 +160,21 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* FAQ en bas */}
-        {faqCategory && (
-          <SidebarGroup>
+        {/* FAQ en bas (uniquement pour Apogée) */}
+        {scope === 'guide-apogee' && (
+          <SidebarGroup className="mt-auto">
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={location.pathname === `/apogee/category/${faqCategory.slug}`}>
-                    <Link to={`/apogee/category/${faqCategory.slug}`}>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to="#faq"
+                      className="hover:bg-muted/50"
+                      activeClassName="bg-muted text-primary font-medium"
+                    >
                       <Icons.HelpCircle className="w-4 h-4" />
                       <span>FAQ</span>
-                    </Link>
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
