@@ -11,7 +11,6 @@ import Category from "./pages/Category";
 import CategoryView from "./pages/CategoryView";
 import Documents from "./pages/Documents";
 import NotFound from "./pages/NotFound";
-import ImportData from "./pages/ImportData";
 import { AuthProvider } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
 import { Layout } from "./components/Layout";
@@ -35,7 +34,6 @@ const App = () => (
               <Route path="/help-confort" element={<Layout showHeader showSidebar={true}><HelpConfort /></Layout>} />
               <Route path="/help-confort/category/:id" element={<Layout showHeader showSidebar={true}><CategoryView /></Layout>} />
               <Route path="/documents" element={<Layout showHeader showSidebar={false}><Documents /></Layout>} />
-              <Route path="/import-data" element={<Layout showHeader showSidebar={false}><ImportData /></Layout>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
