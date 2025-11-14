@@ -32,20 +32,26 @@ export function Chatbot() {
     scrollToBottom();
   }, [messages]);
 
-  // Ouverture automatique après 10 secondes avec message de bienvenue
+  // Ouverture automatique après 30 secondes avec message de bienvenue (une fois par session)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!hasAutoOpened) {
-        setHasAutoOpened(true);
-        setIsOpen(true);
-        setMessages([{
-          role: 'assistant',
-          content: 'Youhouuuuuu c\'est Madame Michu, je peux vous aider ?'
-        }]);
-      }
-    }, 10000); // 10 secondes
+    // Vérifier si déjà ouvert dans cette session
+    const hasOpenedInSession = sessionStorage.getItem('chatbot-auto-opened');
+    
+    if (!hasOpenedInSession) {
+      const timer = setTimeout(() => {
+        if (!hasAutoOpened) {
+          setHasAutoOpened(true);
+          setIsOpen(true);
+          sessionStorage.setItem('chatbot-auto-opened', 'true');
+          setMessages([{
+            role: 'assistant',
+            content: 'Youhouuuuuu c\'est Madame Michu, je peux vous aider ?'
+          }]);
+        }
+      }, 30000); // 30 secondes
 
-    return () => clearTimeout(timer);
+      return () => clearTimeout(timer);
+    }
   }, [hasAutoOpened]);
 
   // Écouter l'événement de question depuis la recherche
@@ -263,12 +269,12 @@ export function Chatbot() {
 
       {/* Chat window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-card border-2 rounded-lg shadow-xl flex flex-col z-50">
+        <div className="fixed bottom-6 right-6 w-80 h-[400px] bg-card border-2 rounded-lg shadow-xl flex flex-col z-50">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between p-3 border-b">
             <div className="flex items-center gap-2">
-              <img src={chatIcon} alt="Chat" className="h-8 w-8" />
-              <h3 className="font-semibold">Mme MICHU</h3>
+              <img src={chatIcon} alt="Chat" className="h-6 w-6" />
+              <h3 className="font-semibold text-sm">Mme MICHU</h3>
             </div>
             <Button onClick={() => setIsOpen(false)} variant="ghost" size="icon">
               <X className="h-4 w-4" />
