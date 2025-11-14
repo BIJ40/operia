@@ -6,7 +6,7 @@ import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -49,7 +49,7 @@ interface Category {
 const SCOPE = 'informations-utiles';
 
 export default function HelpConfort() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const { isEditMode } = useEditor();
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -58,6 +58,7 @@ export default function HelpConfort() {
   const [editColor, setEditColor] = useState<ColorPreset>('blue');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -137,6 +138,8 @@ export default function HelpConfort() {
     setDeleteDialogOpen(true);
   };
 
+  const handleDelete = handleDeleteClick;
+
   const confirmDelete = async () => {
     if (!categoryToDelete) return;
 
@@ -192,73 +195,115 @@ export default function HelpConfort() {
     return Icon;
   };
 
+  const filteredCategories = searchTerm 
+    ? categories.filter(cat => 
+        cat.title.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : categories;
+
   return (
-    <div className="container max-w-6xl mx-auto p-8">
-      <div className="mb-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Help Confort
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+      <div className="container max-w-6xl mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Help Confort Services
           </h1>
           <p className="text-lg text-muted-foreground">
             Centre d'aide et ressources Help Confort Services
           </p>
         </div>
-      </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={categories.map(c => c.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.map((category) => (
-              <SortableCategory
-                key={category.id}
-                category={category}
-                editingId={editingId}
-                editTitle={editTitle}
-                editIcon={editIcon}
-                editColor={editColor}
-                isEditMode={isEditMode}
-                onEditTitleChange={setEditTitle}
-                onEditIconChange={setEditIcon}
-                onEditColorChange={setEditColor}
-                onSave={handleSave}
-                onCancel={handleCancel}
-                onEdit={handleEdit}
-                onDelete={handleDeleteClick}
-                getColorClass={getColorClass}
-                IconComponent={IconComponent}
+        {!isEditMode && (
+          <div className="mb-6 max-w-md mx-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Rechercher..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
               />
-            ))}
+            </div>
           </div>
-        </SortableContext>
-      </DndContext>
+        )}
 
-      {isEditMode && isAuthenticated && (
-        <div className="mt-8">
-          <Button onClick={handleAddCategory} className="w-full" variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter une catégorie
-          </Button>
-        </div>
-      )}
+        {isEditMode && isAdmin ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={filteredCategories.map(c => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                {filteredCategories.map(category => (
+                  <SortableCategory
+                    key={category.id}
+                    category={category}
+                    editingId={editingId}
+                    editTitle={editTitle}
+                    editIcon={editIcon}
+                    editColor={editColor}
+                    isEditMode={isEditMode}
+                    onEditTitleChange={setEditTitle}
+                    onEditIconChange={setEditIcon}
+                    onEditColorChange={setEditColor}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    getColorClass={getColorClass}
+                    IconComponent={IconComponent}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCategories.map(category => {
+              const Icon = IconComponent(category.icon || 'BookOpen');
+              return (
+                <Link
+                  key={category.id}
+                  to={`/help-confort/category/${category.id}`}
+                  className={`group relative border-2 rounded-lg p-6 hover:shadow-xl transition-all ${getColorClass(category.color_preset as ColorPreset)}`}
+                >
+                  <Icon className="w-12 h-12 mb-4 text-primary group-hover:scale-110 transition-transform" />
+                  <h2 className="text-xl font-bold text-foreground">{category.title}</h2>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
+        {isEditMode && isAdmin && (
+          <div className="flex justify-center mt-8">
+            <Button onClick={handleAddCategory} size="lg">
+              <Plus className="w-5 h-5 mr-2" />
+              Ajouter une catégorie
+            </Button>
+          </div>
+        )}
+
+      </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer cette catégorie ?
+              Êtes-vous sûr de vouloir supprimer cette catégorie ? Toutes les sections associées seront également supprimées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Supprimer</AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Supprimer
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
