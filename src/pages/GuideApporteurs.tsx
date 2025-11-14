@@ -48,9 +48,154 @@ interface Category {
 
 const SCOPE = 'apporteurs-nationaux';
 
+// Composant pour les catégories triables
+interface SortableCategoryProps {
+  category: Category;
+  editingId: string | null;
+  editTitle: string;
+  editIcon: string;
+  editColor: ColorPreset;
+  isEditMode: boolean;
+  onEditTitleChange: (value: string) => void;
+  onEditIconChange: (value: string) => void;
+  onEditColorChange: (value: ColorPreset) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  getColorClass: (color?: ColorPreset) => string;
+  IconComponent: (iconName: string) => any;
+}
+
+const SortableCategory = ({
+  category,
+  editingId,
+  editTitle,
+  editIcon,
+  editColor,
+  isEditMode,
+  onEditTitleChange,
+  onEditIconChange,
+  onEditColorChange,
+  onSave,
+  onCancel,
+  onEdit,
+  onDelete,
+  getColorClass,
+  IconComponent,
+}: SortableCategoryProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const Icon = IconComponent(category.icon || 'BookOpen');
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(category.color_preset as ColorPreset)}`}
+    >
+      {isEditMode && (
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute top-2 left-2 cursor-grab active:cursor-grabbing z-10"
+        >
+          <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
+        </div>
+      )}
+      
+      {editingId === category.id ? (
+        <div className="space-y-3">
+          <Input
+            value={editTitle}
+            onChange={(e) => onEditTitleChange(e.target.value)}
+            placeholder="Titre de la catégorie"
+            autoFocus
+          />
+          <IconPicker
+            value={editIcon}
+            onChange={onEditIconChange}
+          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Couleur</label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
+                { value: 'blanc', color: 'bg-white border-2 border-gray-300', label: 'Blanc' },
+                { value: 'blue', color: 'bg-blue-50 border-2 border-blue-200', label: 'Bleu' },
+                { value: 'green', color: 'bg-green-50 border-2 border-green-200', label: 'Vert' },
+                { value: 'yellow', color: 'bg-yellow-50 border-2 border-yellow-200', label: 'Jaune' },
+                { value: 'purple', color: 'bg-purple-50 border-2 border-purple-200', label: 'Violet' },
+                { value: 'orange', color: 'bg-orange-50 border-2 border-orange-200', label: 'Orange' },
+              ].map((preset) => (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => onEditColorChange(preset.value as ColorPreset)}
+                  className={`${preset.color} px-3 py-1.5 rounded text-xs font-medium ${
+                    editColor === preset.value ? 'ring-2 ring-primary' : ''
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={onSave} size="sm">
+              Enregistrer
+            </Button>
+            <Button onClick={onCancel} size="sm" variant="outline">
+              Annuler
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <Link to={`/guide-apporteurs/category/${category.id}`} className="block">
+            <Icon className="w-12 h-12 mb-4 text-primary" />
+            <h2 className="text-xl font-bold mb-2">{category.title}</h2>
+          </Link>
+          {isEditMode && (
+            <div className="flex gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                onClick={() => onEdit(category.id)}
+                size="sm"
+                variant="outline"
+              >
+                Modifier
+              </Button>
+              <Button
+                onClick={() => onDelete(category.id)}
+                size="sm"
+                variant="destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
 export default function GuideApporteurs() {
-  const { isAuthenticated, isAdmin } = useAuth();
   const { isEditMode } = useEditor();
+  const { isAdmin } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -62,7 +207,9 @@ export default function GuideApporteurs() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
+      activationConstraint: {
+        distance: 8,
+      },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -84,30 +231,32 @@ export default function GuideApporteurs() {
     if (data) setCategories(data);
   };
 
-  const handleAddCategory = async () => {
-    const maxOrder = categories.length > 0 
-      ? Math.max(...categories.map(c => c.display_order)) + 1 
-      : 0;
-
-    const supabaseAny = supabase as any;
-    const { error } = await supabaseAny
-      .from('categories')
-      .insert({
-        title: 'Nouvelle catégorie',
-        icon: 'BookOpen',
-        color_preset: 'blue',
-        scope: SCOPE,
-        display_order: maxOrder,
-      });
-
-    if (!error) loadCategories();
+  const getColorClass = (color?: ColorPreset) => {
+    const colors = {
+      red: 'bg-red-50 border-red-200 hover:border-red-300',
+      blanc: 'bg-white border-gray-300 hover:border-gray-400',
+      blue: 'bg-blue-50 border-blue-200 hover:border-blue-300',
+      green: 'bg-green-50 border-green-200 hover:border-green-300',
+      yellow: 'bg-yellow-50 border-yellow-200 hover:border-yellow-300',
+      purple: 'bg-purple-50 border-purple-200 hover:border-purple-300',
+      orange: 'bg-orange-50 border-orange-200 hover:border-orange-300',
+    };
+    return colors[color || 'blue'] || colors.blue;
   };
 
-  const handleEdit = (category: Category) => {
-    setEditingId(category.id);
-    setEditTitle(category.title);
-    setEditIcon(category.icon);
-    setEditColor(category.color_preset as ColorPreset);
+  const IconComponent = (iconName: string) => {
+    const Icon = (Icons as any)[iconName] || Icons.BookOpen;
+    return Icon;
+  };
+
+  const handleEdit = (id: string) => {
+    const category = categories.find(c => c.id === id);
+    if (category) {
+      setEditingId(id);
+      setEditTitle(category.title);
+      setEditIcon(category.icon || 'BookOpen');
+      setEditColor(category.color_preset as ColorPreset || 'blue');
+    }
   };
 
   const handleSave = async () => {
@@ -133,12 +282,10 @@ export default function GuideApporteurs() {
     setEditingId(null);
   };
 
-  const handleDeleteClick = (id: string) => {
+  const handleDelete = (id: string) => {
     setCategoryToDelete(id);
     setDeleteDialogOpen(true);
   };
-
-  const handleDelete = handleDeleteClick;
 
   const confirmDelete = async () => {
     if (!categoryToDelete) return;
@@ -154,6 +301,25 @@ export default function GuideApporteurs() {
       setDeleteDialogOpen(false);
       loadCategories();
     }
+  };
+
+  const handleAddCategory = async () => {
+    const maxOrder = categories.length > 0 
+      ? Math.max(...categories.map(c => c.display_order)) + 1 
+      : 0;
+
+    const supabaseAny = supabase as any;
+    const { error } = await supabaseAny
+      .from('categories')
+      .insert({
+        title: 'Nouvelle catégorie',
+        icon: 'BookOpen',
+        color_preset: 'blue',
+        scope: SCOPE,
+        display_order: maxOrder,
+      });
+
+    if (!error) loadCategories();
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -177,24 +343,6 @@ export default function GuideApporteurs() {
     }
   };
 
-  const getColorClass = (color?: ColorPreset) => {
-    const colorMap = {
-      red: 'bg-red-50 border-red-200 hover:border-red-300',
-      blanc: 'bg-white border-gray-300 hover:border-gray-400',
-      blue: 'bg-blue-50 border-blue-200 hover:border-blue-300',
-      green: 'bg-green-50 border-green-200 hover:border-green-300',
-      yellow: 'bg-yellow-50 border-yellow-200 hover:border-yellow-300',
-      purple: 'bg-purple-50 border-purple-200 hover:border-purple-300',
-      orange: 'bg-orange-50 border-orange-200 hover:border-orange-300',
-    };
-    return colorMap[color || 'blue'];
-  };
-
-  const IconComponent = (iconName: string) => {
-    const Icon = (Icons as any)[iconName] || Icons.BookOpen;
-    return Icon;
-  };
-
   const filteredCategories = searchTerm 
     ? categories.filter(cat => 
         cat.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -209,7 +357,7 @@ export default function GuideApporteurs() {
             Guide des Apporteurs Nationaux
           </h1>
           <p className="text-lg text-muted-foreground">
-            Toutes les informations pour les apporteurs d'affaires
+            Ressources et informations pour les apporteurs nationaux
           </p>
         </div>
 
