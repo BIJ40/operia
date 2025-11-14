@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEditor } from '@/contexts/EditorContext';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -194,7 +195,8 @@ const SortableCategory = ({
 };
 
 export default function HelpConfort() {
-  const { isEditMode, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
+  const { isEditMode } = useEditor();
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
