@@ -151,10 +151,17 @@ export function AppSidebar() {
     });
   };
 
-  const handleSectionClick = (sectionId: string, categoryId: string) => {
-    // Naviguer vers la page avec le hash
-    const currentPath = window.location.pathname;
-    window.location.hash = sectionId;
+  const handleSectionClick = (sectionId: string, categoryIdentifier: string) => {
+    // Pour Apogée: categoryIdentifier est un slug
+    // Pour les autres: categoryIdentifier est un ID
+    if (isApogee) {
+      window.location.href = `/apogee/category/${categoryIdentifier}#${sectionId}`;
+    } else {
+      const path = scope === 'apporteurs-nationaux' 
+        ? '/guide-apporteurs' 
+        : '/help-confort';
+      window.location.href = `${path}/category/${categoryIdentifier}#${sectionId}`;
+    }
   };
 
   if (!scope) return null;
@@ -208,7 +215,7 @@ export function AppSidebar() {
                                 <SidebarMenuSubButton
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    handleSectionClick(section.id, category.id);
+                                    handleSectionClick(section.id, category.slug);
                                   }}
                                   className="cursor-pointer hover:bg-accent"
                                 >
