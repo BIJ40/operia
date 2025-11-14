@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { LogOut, Home, Edit3, Square, LogIn } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
+import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { LoginDialog } from '@/components/LoginDialog';
@@ -8,12 +9,15 @@ import { useState } from 'react';
 
 export function Header() {
   const location = useLocation();
-  const { isEditMode, toggleEditMode } = useEditor();
+  const editorContext = useEditor();
+  const apporteurContext = useApporteurEditor();
   const { isAuthenticated, isAdmin, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   
-  // Le bouton admin n'apparaît que sur la page d'accueil
-  const showAdminButton = location.pathname === '/';
+  // Déterminer quel contexte utiliser selon la page
+  const isApporteurPage = location.pathname.startsWith('/apporteurs');
+  const currentContext = isApporteurPage ? apporteurContext : editorContext;
+  const { isEditMode, toggleEditMode } = currentContext;
 
   const handleEnrichirClick = () => {
     if (!isAdmin) {
@@ -37,7 +41,7 @@ export function Header() {
             <span className="font-semibold text-foreground">ACCUEIL</span>
           </Link>
 
-          {isAdmin && showAdminButton && (
+          {isAdmin && (
             <Button
               onClick={handleEnrichirClick}
               variant="ghost"
