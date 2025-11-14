@@ -59,7 +59,8 @@ export function AppSidebar() {
 
     // Charger les catégories et sections pour ce scope
     const loadData = async () => {
-      const { data: cats } = await supabase
+      const supabaseAny = supabase as any;
+      const { data: cats } = await supabaseAny
         .from('categories')
         .select('*')
         .eq('scope', scope)
@@ -69,9 +70,9 @@ export function AppSidebar() {
         setCategories(cats);
         
         // Charger toutes les sections pour ces catégories
-        const categoryIds = cats.map(c => c.id);
+        const categoryIds = cats.map((c: Category) => c.id);
         if (categoryIds.length > 0) {
-          const { data: secs } = await supabase
+          const { data: secs } = await supabaseAny
             .from('sections')
             .select('*')
             .in('category_id', categoryIds)
