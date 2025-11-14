@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      apporteur_blocks: {
+        Row: {
+          attachments: Json | null
+          color_preset: string
+          content: string
+          created_at: string
+          hide_from_sidebar: boolean | null
+          icon: string | null
+          id: string
+          order: number
+          parent_id: string | null
+          slug: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          color_preset?: string
+          content?: string
+          created_at?: string
+          hide_from_sidebar?: boolean | null
+          icon?: string | null
+          id?: string
+          order?: number
+          parent_id?: string | null
+          slug: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          color_preset?: string
+          content?: string
+          created_at?: string
+          hide_from_sidebar?: boolean | null
+          icon?: string | null
+          id?: string
+          order?: number
+          parent_id?: string | null
+          slug?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blocks: {
         Row: {
           attachments: Json | null
