@@ -40,21 +40,21 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Auto-save
-  useEffect(() => {
-    if (!loading) {
-      const timer = setTimeout(() => {
-        const appData: AppData = {
-          blocks,
-          version: '1.0',
-          lastModified: Date.now(),
-        };
-        saveAppData(appData);
-      }, 1000);
+  // Auto-save DÉSACTIVÉ temporairement pour éviter la perte de données
+  // useEffect(() => {
+  //   if (!loading) {
+  //     const timer = setTimeout(() => {
+  //       const appData: AppData = {
+  //         blocks,
+  //         version: '1.0',
+  //         lastModified: Date.now(),
+  //       };
+  //       saveAppData(appData);
+  //     }, 1000);
 
-      return () => clearTimeout(timer);
-    }
-  }, [blocks, loading]);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [blocks, loading]);
 
   const addBlock = useCallback((block: Omit<Block, 'id' | 'order'>): string => {
     if (!isAdmin) {
