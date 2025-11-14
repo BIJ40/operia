@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, Check, AlertCircle } from 'lucide-react';
-import backupData from '@/data/backup-restore.json';
+import backupData from '@/data/backup-apogee-data-2.json';
 
 export function DataMigrationButton() {
   const [importing, setImporting] = useState(false);
