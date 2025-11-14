@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { FileText, Search, Trash2, Edit, Save, X } from 'lucide-react';
+import { DataMigrationButton } from '@/components/DataMigrationButton';
 
 interface Document {
   id: string;
@@ -235,7 +236,9 @@ export default function Documents() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
+        <DataMigrationButton />
+        
+        <div className="mb-6 flex items-center justify-between mt-6">
           <Button variant="ghost" onClick={() => navigate('/admin')}>
             ← Retour à l'import
           </Button>
