@@ -85,6 +85,29 @@ export default function Category() {
   const savedScrollPositionRef = useRef<number>(0);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
 
+  // Ouvrir automatiquement la section depuis l'URL hash
+  useEffect(() => {
+    const hash = location.hash.replace('#', '');
+    if (hash && sections.some(s => s.id === hash)) {
+      // Ouvrir l'accordéon de cette section
+      setOpenAccordions(prev => {
+        if (!prev.includes(hash)) {
+          return [...prev, hash];
+        }
+        return prev;
+      });
+      
+      // Scroller vers la section après un délai
+      setTimeout(() => {
+        const element = document.getElementById(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          window.scrollBy(0, -100);
+        }
+      }, 300);
+    }
+  }, [location.hash, sections]);
+
   // Réinitialiser les accordéons ouverts quand on passe en mode édition/normal
   useEffect(() => {
     setOpenAccordions([]);
