@@ -101,6 +101,29 @@ export default function CategoryView() {
     setOpenAccordions([]);
   }, [isEditMode]);
 
+  // Ouvrir automatiquement la section depuis l'URL hash
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash && sections.some(s => s.id === hash)) {
+      // Ouvrir l'accordéon de cette section
+      setOpenAccordions(prev => {
+        if (!prev.includes(hash)) {
+          return [...prev, hash];
+        }
+        return prev;
+      });
+      
+      // Scroller vers la section après un délai
+      setTimeout(() => {
+        const element = document.getElementById(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          window.scrollBy(0, -100);
+        }
+      }, 300);
+    }
+  }, [window.location.hash, sections]);
+
   // Préserver la position de scroll lors des changements d'onglet
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -516,11 +539,10 @@ export default function CategoryView() {
           strategy={verticalListSortingStrategy}
         >
           <Accordion
-            type="single"
-            collapsible
+            type="multiple"
             className="space-y-2"
-            value={openAccordions[0]}
-            onValueChange={(value) => setOpenAccordions(value ? [value] : [])}
+            value={openAccordions}
+            onValueChange={setOpenAccordions}
           >
             {sections.map(section => (
               <SortableAccordionItem key={section.id} section={section} />
