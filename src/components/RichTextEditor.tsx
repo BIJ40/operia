@@ -278,8 +278,8 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   };
 
   return (
-    <div className="border rounded-lg">
-      <div className="sticky top-0 z-10 bg-muted p-2 border-b flex flex-wrap gap-1 shadow-md rounded-t-lg">
+    <div className="border rounded-lg relative">
+      <div className="sticky top-0 z-50 bg-muted/95 backdrop-blur-sm p-2 border-b flex flex-wrap gap-1 shadow-md">
         {/* Titres de bloc (affectent tout le paragraphe) */}
         <Button
           type="button"
