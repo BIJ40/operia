@@ -304,72 +304,9 @@ export default function Category() {
     };
 
     return (
-      <div ref={setNodeRef} style={style}>
+      <div ref={setNodeRef} style={style} className="relative">
         <AccordionItem value={section.id} id={section.id} className="mb-4">
-          <div className={`rounded-lg relative ${getColorClass(section.colorPreset)}`}>
-          {isEditMode && isAuthenticated && (
-            <div 
-              className="absolute top-4 right-6 flex gap-2 z-[60] bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm"
-              onMouseDown={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Button
-                size="sm"
-                variant="ghost"
-                className="cursor-move"
-                {...attributes}
-                {...listeners}
-              >
-                <GripVertical className="w-4 h-4" />
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    title="Changer de catégorie"
-                  >
-                    <FolderInput className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-background border shadow-md z-[100]">
-                  {availableCategories
-                    .filter(cat => cat.id !== category?.id)
-                    .map((cat) => (
-                      <DropdownMenuItem
-                        key={cat.id}
-                        onClick={() => handleMoveToCategory(section.id, cat.id)}
-                      >
-                        {cat.title}
-                      </DropdownMenuItem>
-                    ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  handleEdit(section);
-                }}
-              >
-                <Edit2 className="w-4 h-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  handleDeleteClick(section.id);
-                }}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
+          <div className={`rounded-lg ${getColorClass(section.colorPreset)}`}>
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
               <div className="flex items-center gap-3 flex-1">
                 <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
@@ -398,6 +335,71 @@ export default function Category() {
             </AccordionContent>
           </div>
         </AccordionItem>
+        {isEditMode && isAuthenticated && (
+          <div 
+            className="absolute top-4 right-6 flex gap-2 z-[60] bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm pointer-events-auto"
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <Button
+              size="sm"
+              variant="ghost"
+              className="cursor-move pointer-events-auto"
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical className="w-4 h-4" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Changer de catégorie"
+                  className="pointer-events-auto"
+                >
+                  <FolderInput className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-background border shadow-md z-[100]">
+                {availableCategories
+                  .filter(cat => cat.id !== category?.id)
+                  .map((cat) => (
+                    <DropdownMenuItem
+                      key={cat.id}
+                      onClick={() => handleMoveToCategory(section.id, cat.id)}
+                    >
+                      {cat.title}
+                    </DropdownMenuItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="pointer-events-auto"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                handleEdit(section);
+              }}
+            >
+              <Edit2 className="w-4 h-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="pointer-events-auto"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                handleDeleteClick(section.id);
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </div>
     );
   };
