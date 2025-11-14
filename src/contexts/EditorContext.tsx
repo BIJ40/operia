@@ -31,13 +31,23 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   // Load data on mount
   useEffect(() => {
-    loadAppData().then((data) => {
-      // Charger directement depuis Supabase sans vérification de nombre de catégories
-      if (data && data.blocks && data.blocks.length > 0) {
+    const initData = async () => {
+      const data = await loadAppData();
+      
+      // Si pas de données en base, charger depuis le JSON de backup
+      if (!data || !data.blocks || data.blocks.length === 0) {
+        const apogeeData = await import('../data/apogee-data.json');
+        if (apogeeData.default && apogeeData.default.blocks) {
+          setBlocks(apogeeData.default.blocks as Block[]);
+          console.log('📁 Données chargées depuis backup JSON');
+        }
+      } else {
         setBlocks(data.blocks);
       }
       setLoading(false);
-    });
+    };
+    
+    initData();
   }, []);
 
   // Auto-save DÉSACTIVÉ temporairement pour éviter la perte de données
