@@ -45,7 +45,7 @@ export default function HelpConfort() {
   const { isAuthenticated } = useAuth();
   
   const sections = blocks
-    .filter(b => b.type === 'section' && b.parentId === 'help-confort')
+    .filter(b => b.type === 'section' && b.parentId === 'help-confort-cat')
     .sort((a, b) => a.order - b.order);
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -74,7 +74,7 @@ export default function HelpConfort() {
       title: 'Nouvelle section',
       content: '',
       slug: `section-${Date.now()}`,
-      parentId: 'help-confort',
+      parentId: 'help-confort-cat',
       colorPreset: 'blue',
       attachments: [],
     });

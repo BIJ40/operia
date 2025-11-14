@@ -45,7 +45,7 @@ export default function GuideApporteurs() {
   const { isAuthenticated } = useAuth();
   
   const sections = blocks
-    .filter(b => b.type === 'section' && b.parentId === 'guide-apporteurs')
+    .filter(b => b.type === 'section' && b.parentId === 'guide-apporteurs-cat')
     .sort((a, b) => a.order - b.order);
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -74,7 +74,7 @@ export default function GuideApporteurs() {
       title: 'Nouvelle section',
       content: '',
       slug: `section-${Date.now()}`,
-      parentId: 'guide-apporteurs',
+      parentId: 'guide-apporteurs-cat',
       colorPreset: 'blue',
       attachments: [],
     });
