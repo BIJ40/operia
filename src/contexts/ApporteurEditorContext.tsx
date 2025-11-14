@@ -116,7 +116,14 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
 
   const toggleEditMode = useCallback(() => {
     if (!isAdmin) return;
-    setIsEditMode(prev => !prev);
+    setIsEditMode(prev => {
+      const newValue = !prev;
+      // Synchroniser avec localStorage
+      localStorage.setItem('editMode', String(newValue));
+      // Émettre un événement personnalisé
+      window.dispatchEvent(new Event('editModeChange'));
+      return newValue;
+    });
   }, [isAdmin]);
 
   return (
