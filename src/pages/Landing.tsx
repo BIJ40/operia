@@ -1,13 +1,14 @@
-import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState } from 'react';
+import { useEditor } from '@/contexts/EditorContext';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
-import { ColorPreset } from '@/types/block';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import {
   DndContext,
   closestCenter,
@@ -36,15 +37,29 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+type ColorPreset = 'red' | 'blanc' | 'blue' | 'green' | 'yellow' | 'purple' | 'orange';
+
+interface HomeCard {
+  id: string;
+  title: string;
+  description: string;
+  link: string;
+  icon: string;
+  color_preset: ColorPreset;
+  display_order: number;
+}
+
 interface SortableCardProps {
-  card: any;
+  card: HomeCard;
   editingId: string | null;
   editTitle: string;
+  editDescription: string;
   editLink: string;
   editIcon: string;
   editColor: ColorPreset;
   isEditMode: boolean;
   onEditTitleChange: (value: string) => void;
+  onEditDescriptionChange: (value: string) => void;
   onEditLinkChange: (value: string) => void;
   onEditIconChange: (value: string) => void;
   onEditColorChange: (value: ColorPreset) => void;
@@ -60,11 +75,13 @@ const SortableCard = ({
   card,
   editingId,
   editTitle,
+  editDescription,
   editLink,
   editIcon,
   editColor,
   isEditMode,
   onEditTitleChange,
+  onEditDescriptionChange,
   onEditLinkChange,
   onEditIconChange,
   onEditColorChange,
@@ -96,7 +113,7 @@ const SortableCard = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(card.colorPreset)}`}
+      className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(card.color_preset)}`}
     >
       {isEditMode && (
         <div
@@ -115,6 +132,11 @@ const SortableCard = ({
             onChange={(e) => onEditTitleChange(e.target.value)}
             placeholder="Titre de la carte"
             autoFocus
+          />
+          <Input
+            value={editDescription}
+            onChange={(e) => onEditDescriptionChange(e.target.value)}
+            placeholder="Description"
           />
           <Input
             value={editLink}
@@ -161,9 +183,10 @@ const SortableCard = ({
         </div>
       ) : (
         <>
-          <Link to={card.content} className="block">
+          <Link to={card.link} className="block">
             <Icon className="w-12 h-12 mb-4 text-primary" />
             <h2 className="text-xl font-bold mb-2">{card.title}</h2>
+            <p className="text-sm text-muted-foreground">{card.description}</p>
           </Link>
           {isEditMode && (
             <div className="flex gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -190,19 +213,18 @@ const SortableCard = ({
 };
 
 export default function Landing() {
-  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isAdmin } = useAuth();
+  const { isEditMode } = useEditor();
+  const { toast } = useToast();
+  const [homeCards, setHomeCards] = useState<HomeCard[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
   const [editLink, setEditLink] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
   const [editColor, setEditColor] = useState<ColorPreset>('blue');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<string | null>(null);
-
-  const homeCards = blocks
-    .filter(b => b.type === 'home_card')
-    .sort((a, b) => a.order - b.order);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -214,6 +236,28 @@ export default function Landing() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  useEffect(() => {
+    loadCards();
+  }, []);
+
+  const loadCards = async () => {
+    const { data, error } = await supabase
+      .from('home_cards')
+      .select('*')
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      console.error('Error loading cards:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les cartes',
+        variant: 'destructive',
+      });
+    } else {
+      setHomeCards(data || []);
+    }
+  };
 
   const getColorClass = (color?: ColorPreset) => {
     const colors = {
@@ -238,21 +282,40 @@ export default function Landing() {
     if (card) {
       setEditingId(id);
       setEditTitle(card.title);
-      setEditLink(card.content);
+      setEditDescription(card.description);
+      setEditLink(card.link);
       setEditIcon(card.icon || 'BookOpen');
-      setEditColor(card.colorPreset || 'blue');
+      setEditColor(card.color_preset || 'blue');
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (editingId) {
-      updateBlock(editingId, {
-        title: editTitle,
-        content: editLink,
-        icon: editIcon,
-        colorPreset: editColor,
-      });
-      setEditingId(null);
+      const { error } = await supabase
+        .from('home_cards')
+        .update({
+          title: editTitle,
+          description: editDescription,
+          link: editLink,
+          icon: editIcon,
+          color_preset: editColor,
+        })
+        .eq('id', editingId);
+
+      if (error) {
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de sauvegarder',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Succès',
+          description: 'Carte mise à jour',
+        });
+        loadCards();
+        setEditingId(null);
+      }
     }
   };
 
@@ -265,28 +328,63 @@ export default function Landing() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (cardToDelete) {
-      deleteBlock(cardToDelete);
+      const { error } = await supabase
+        .from('home_cards')
+        .delete()
+        .eq('id', cardToDelete);
+
+      if (error) {
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de supprimer',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Succès',
+          description: 'Carte supprimée',
+        });
+        loadCards();
+      }
       setCardToDelete(null);
     }
     setDeleteDialogOpen(false);
   };
 
-  const handleAddCard = () => {
-    addBlock({
-      type: 'home_card',
-      title: 'Nouvelle section',
-      content: '/',
-      icon: 'BookOpen',
-      colorPreset: 'blue',
-      slug: `card-${Date.now()}`,
-      parentId: null,
-      attachments: [],
-    });
+  const handleAddCard = async () => {
+    const maxOrder = homeCards.length > 0 
+      ? Math.max(...homeCards.map(c => c.display_order))
+      : -1;
+
+    const { error } = await supabase
+      .from('home_cards')
+      .insert({
+        title: 'Nouvelle section',
+        description: 'Description',
+        link: '/',
+        icon: 'BookOpen',
+        color_preset: 'blue',
+        display_order: maxOrder + 1,
+      });
+
+    if (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'ajouter',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Succès',
+        description: 'Carte ajoutée',
+      });
+      loadCards();
+    }
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
@@ -294,10 +392,14 @@ export default function Landing() {
       const newIndex = homeCards.findIndex(c => c.id === over.id);
       
       const reorderedCards = arrayMove(homeCards, oldIndex, newIndex);
+      setHomeCards(reorderedCards);
       
-      reorderedCards.forEach((card, index) => {
-        updateBlock(card.id, { order: index });
-      });
+      for (let i = 0; i < reorderedCards.length; i++) {
+        await supabase
+          .from('home_cards')
+          .update({ display_order: i })
+          .eq('id', reorderedCards[i].id);
+      }
     }
   };
 
@@ -330,11 +432,13 @@ export default function Landing() {
                     card={card}
                     editingId={editingId}
                     editTitle={editTitle}
+                    editDescription={editDescription}
                     editLink={editLink}
                     editIcon={editIcon}
                     editColor={editColor}
                     isEditMode={isEditMode}
                     onEditTitleChange={setEditTitle}
+                    onEditDescriptionChange={setEditDescription}
                     onEditLinkChange={setEditLink}
                     onEditIconChange={setEditIcon}
                     onEditColorChange={setEditColor}
@@ -356,11 +460,12 @@ export default function Landing() {
               return (
                 <Link
                   key={card.id}
-                  to={card.content}
-                  className={`group relative border-2 rounded-lg p-8 hover:shadow-xl transition-all ${getColorClass(card.colorPreset)}`}
+                  to={card.link}
+                  className={`group relative border-2 rounded-lg p-8 hover:shadow-xl transition-all ${getColorClass(card.color_preset)}`}
                 >
                   <Icon className="w-16 h-16 mb-4 text-primary group-hover:scale-110 transition-transform" />
-                  <h2 className="text-2xl font-bold text-foreground">{card.title}</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-2">{card.title}</h2>
+                  <p className="text-muted-foreground">{card.description}</p>
                 </Link>
               );
             })}
@@ -382,7 +487,7 @@ export default function Landing() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer cette carte ? Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer cette carte ?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
