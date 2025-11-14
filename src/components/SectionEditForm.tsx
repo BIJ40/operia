@@ -87,7 +87,7 @@ export function SectionEditForm({
   };
 
   return (
-    <div className="fixed top-20 right-8 w-[600px] max-h-[calc(100vh-120px)] overflow-y-auto bg-background border rounded-lg p-4 shadow-2xl space-y-4 z-50">
+    <div className="fixed top-20 right-8 w-[800px] max-h-[calc(100vh-120px)] overflow-y-auto bg-background border rounded-lg p-4 shadow-2xl space-y-4 z-50">
       <Input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
