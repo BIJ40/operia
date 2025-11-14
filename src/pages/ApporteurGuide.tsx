@@ -45,10 +45,14 @@ interface SortableCategoryProps {
   editTitle: string;
   editIcon: string;
   editColor: ColorPreset;
+  editShowTitleOnCard: boolean;
+  editShowTitleInMenu: boolean;
   isEditMode: boolean;
   onEditTitleChange: (value: string) => void;
   onEditIconChange: (value: string) => void;
   onEditColorChange: (value: ColorPreset) => void;
+  onShowTitleOnCardChange: (value: boolean) => void;
+  onShowTitleInMenuChange: (value: boolean) => void;
   onImageUpload: (file: File) => Promise<void>;
   onImageRemove: () => void;
   uploadingImage: boolean;
@@ -66,10 +70,14 @@ const SortableCategory = ({
   editTitle,
   editIcon,
   editColor,
+  editShowTitleOnCard,
+  editShowTitleInMenu,
   isEditMode,
   onEditTitleChange,
   onEditIconChange,
   onEditColorChange,
+  onShowTitleOnCardChange,
+  onShowTitleInMenuChange,
   onImageUpload,
   onImageRemove,
   uploadingImage,
@@ -173,25 +181,51 @@ const SortableCategory = ({
               <img src={editIcon} alt="Icône perso" className="w-24 h-24 object-contain mx-auto" />
             </div>
           )}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Couleur</label>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
-                { value: 'blanc', color: 'bg-white border-2 border-gray-300', label: 'Blanc' },
-                { value: 'blue', color: 'bg-blue-50 border-2 border-blue-200', label: 'Bleu' },
-                { value: 'green', color: 'bg-green-50 border-2 border-green-200', label: 'Vert' },
-                { value: 'yellow', color: 'bg-yellow-50 border-2 border-yellow-200', label: 'Jaune' },
-                { value: 'purple', color: 'bg-purple-50 border-2 border-purple-200', label: 'Violet' },
-                { value: 'orange', color: 'bg-orange-50 border-2 border-orange-200', label: 'Orange' },
-              ].map((c) => (
-                <button
-                  key={c.value}
-                  onClick={() => onEditColorChange(c.value as ColorPreset)}
-                  className={`w-12 h-12 rounded-md ${c.color} ${editColor === c.value ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-                  title={c.label}
-                />
-              ))}
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Affichage du titre</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editShowTitleOnCard}
+                    onChange={(e) => onShowTitleOnCardChange(e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Sur la carte</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editShowTitleInMenu}
+                    onChange={(e) => onShowTitleInMenuChange(e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Dans le menu</span>
+                </label>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Couleur</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
+                  { value: 'blanc', color: 'bg-white border-2 border-gray-300', label: 'Blanc' },
+                  { value: 'blue', color: 'bg-blue-50 border-2 border-blue-200', label: 'Bleu' },
+                  { value: 'green', color: 'bg-green-50 border-2 border-green-200', label: 'Vert' },
+                  { value: 'yellow', color: 'bg-yellow-50 border-2 border-yellow-200', label: 'Jaune' },
+                  { value: 'purple', color: 'bg-purple-50 border-2 border-purple-200', label: 'Violet' },
+                  { value: 'orange', color: 'bg-orange-50 border-2 border-orange-200', label: 'Orange' },
+                ].map((c) => (
+                  <button
+                    key={c.value}
+                    onClick={() => onEditColorChange(c.value as ColorPreset)}
+                    className={`w-12 h-12 rounded-md ${c.color} ${editColor === c.value ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                    title={c.label}
+                  />
+                ))}
+              </div>
             </div>
           </div>
           <div className="flex gap-2 justify-end">
@@ -214,9 +248,11 @@ const SortableCategory = ({
                   <Icon className="w-24 h-24 text-primary" />
                 )}
               </div>
-              <h3 className="text-xl font-semibold text-foreground">
-                {category.title}
-              </h3>
+              {(category.showTitleOnCard !== false) && (
+                <h3 className="text-xl font-semibold text-foreground">
+                  {category.title}
+                </h3>
+              )}
             </div>
           </Link>
 
@@ -252,6 +288,8 @@ export default function ApporteurGuide() {
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
   const [editColor, setEditColor] = useState<ColorPreset>('blue');
+  const [editShowTitleOnCard, setEditShowTitleOnCard] = useState(true);
+  const [editShowTitleInMenu, setEditShowTitleInMenu] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
@@ -297,6 +335,8 @@ export default function ApporteurGuide() {
       setEditTitle(category.title);
       setEditIcon(category.icon || 'BookOpen');
       setEditColor(category.colorPreset || 'blue');
+      setEditShowTitleOnCard(category.showTitleOnCard !== false);
+      setEditShowTitleInMenu(category.showTitleInMenu !== false);
     }
   };
 
@@ -343,6 +383,8 @@ export default function ApporteurGuide() {
         title: editTitle,
         icon: editIcon,
         colorPreset: editColor,
+        showTitleOnCard: editShowTitleOnCard,
+        showTitleInMenu: editShowTitleInMenu,
         slug: editTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       });
       setEditingId(null);
@@ -455,13 +497,17 @@ export default function ApporteurGuide() {
                   editTitle={editTitle}
                   editIcon={editIcon}
                   editColor={editColor}
+                  editShowTitleOnCard={editShowTitleOnCard}
+                  editShowTitleInMenu={editShowTitleInMenu}
                   isEditMode={isEditMode}
                   onEditTitleChange={setEditTitle}
-            onEditIconChange={setEditIcon}
-            onEditColorChange={setEditColor}
-            onImageUpload={handleImageUpload}
-            onImageRemove={handleImageRemove}
-            uploadingImage={uploadingImage}
+                  onEditIconChange={setEditIcon}
+                  onEditColorChange={setEditColor}
+                  onShowTitleOnCardChange={setEditShowTitleOnCard}
+                  onShowTitleInMenuChange={setEditShowTitleInMenu}
+                  onImageUpload={handleImageUpload}
+                  onImageRemove={handleImageRemove}
+                  uploadingImage={uploadingImage}
                   onSave={handleSave}
                   onCancel={handleCancel}
                   onEdit={handleEdit}

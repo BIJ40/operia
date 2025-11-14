@@ -25,6 +25,8 @@ export type Database = {
           id: string
           order: number
           parent_id: string | null
+          show_title_in_menu: boolean | null
+          show_title_on_card: boolean | null
           slug: string
           title: string
           type: string
@@ -40,6 +42,8 @@ export type Database = {
           id?: string
           order?: number
           parent_id?: string | null
+          show_title_in_menu?: boolean | null
+          show_title_on_card?: boolean | null
           slug: string
           title: string
           type: string
@@ -55,6 +59,8 @@ export type Database = {
           id?: string
           order?: number
           parent_id?: string | null
+          show_title_in_menu?: boolean | null
+          show_title_on_card?: boolean | null
           slug?: string
           title?: string
           type?: string
