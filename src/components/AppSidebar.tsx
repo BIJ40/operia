@@ -152,28 +152,9 @@ export function AppSidebar() {
   };
 
   const handleSectionClick = (sectionId: string, categoryId: string) => {
-    // Ouvrir la catégorie si elle est fermée
-    if (!openCategories.has(categoryId)) {
-      setOpenCategories(prev => new Set(prev).add(categoryId));
-    }
-
-    // Attendre un peu que l'accordéon s'ouvre, puis scroller
-    setTimeout(() => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        // Déclencher l'ouverture de l'accordéon en cliquant dessus
-        const trigger = element.querySelector('[data-state]');
-        if (trigger && trigger.getAttribute('data-state') === 'closed') {
-          (trigger as HTMLElement).click();
-        }
-        
-        // Scroller vers l'élément
-        setTimeout(() => {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          window.scrollBy(0, -100); // Ajuster pour le header
-        }, 100);
-      }
-    }, 100);
+    // Naviguer vers la page avec le hash
+    const currentPath = window.location.pathname;
+    window.location.hash = sectionId;
   };
 
   if (!scope) return null;
