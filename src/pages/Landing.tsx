@@ -1,5 +1,4 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useEditor } from '@/contexts/EditorContext';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
@@ -216,7 +215,6 @@ const SortableCard = ({
 
 export default function Landing() {
   const { isAdmin } = useAuth();
-  const { isEditMode } = useEditor();
   const { toast } = useToast();
   const [homeCards, setHomeCards] = useState<HomeCard[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -227,6 +225,7 @@ export default function Landing() {
   const [editColor, setEditColor] = useState<ColorPreset>('blue');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -241,6 +240,25 @@ export default function Landing() {
 
   useEffect(() => {
     loadCards();
+    
+    // Synchroniser isEditMode avec localStorage
+    const storedEditMode = localStorage.getItem('editMode') === 'true';
+    setIsEditMode(storedEditMode);
+    
+    // Écouter les changements de localStorage
+    const handleStorageChange = () => {
+      const newEditMode = localStorage.getItem('editMode') === 'true';
+      setIsEditMode(newEditMode);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    // Custom event pour les changements dans le même onglet
+    window.addEventListener('editModeChange', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('editModeChange', handleStorageChange);
+    };
   }, []);
 
   const loadCards = async () => {
