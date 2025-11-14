@@ -26,6 +26,12 @@ export default function Admin() {
     currentFile: '',
     status: '' as 'parsing' | 'uploading' | ''
   });
+  const [migrationStatus, setMigrationStatus] = useState<{
+    localCount: number;
+    serverCount: number;
+    isChecking: boolean;
+    isMigrating: boolean;
+  }>({ localCount: 0, serverCount: 0, isChecking: false, isMigrating: false });
 
   // Protection : rediriger si non admin
   if (!isAdmin) {
@@ -243,6 +249,99 @@ export default function Admin() {
     if (fileInput) fileInput.value = '';
   };
 
+  // Fonction pour vérifier le statut de la migration
+  const checkMigrationStatus = async () => {
+    setMigrationStatus(prev => ({ ...prev, isChecking: true }));
+    
+    try {
+      // Charger les données locales
+      const { openDB } = await import('idb');
+      const db = await openDB('apogee-guide-db', 1);
+      const localData = await db.get('appData', 'current');
+      const localCount = localData?.blocks?.length || 0;
+
+      // Charger les données du serveur
+      const { data: serverBlocks, error } = await supabase
+        .from('blocks' as any)
+        .select('id');
+      
+      const serverCount = serverBlocks?.length || 0;
+
+      setMigrationStatus({ 
+        localCount, 
+        serverCount, 
+        isChecking: false, 
+        isMigrating: false 
+      });
+    } catch (error) {
+      console.error('Erreur lors de la vérification:', error);
+      setMigrationStatus(prev => ({ ...prev, isChecking: false }));
+    }
+  };
+
+  // Fonction pour migrer les données
+  const migrateData = async () => {
+    setMigrationStatus(prev => ({ ...prev, isMigrating: true }));
+    
+    try {
+      // Charger depuis IndexedDB
+      const { openDB } = await import('idb');
+      const db = await openDB('apogee-guide-db', 1);
+      const localData = await db.get('appData', 'current');
+
+      if (!localData || !localData.blocks || localData.blocks.length === 0) {
+        toast({
+          title: 'Aucune donnée',
+          description: 'Aucune donnée à migrer depuis le cache local',
+          variant: 'destructive'
+        });
+        setMigrationStatus(prev => ({ ...prev, isMigrating: false }));
+        return;
+      }
+
+      console.log(`🔄 Migration de ${localData.blocks.length} blocs...`);
+
+      // Supprimer les données existantes
+      await supabase.from('blocks' as any).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+      // Insérer tous les blocs
+      const { error } = await supabase.from('blocks' as any).insert(
+        localData.blocks.map((block: any) => ({
+          id: block.id,
+          type: block.type,
+          title: block.title,
+          content: block.content,
+          icon: block.icon || null,
+          color_preset: block.colorPreset,
+          order: block.order,
+          slug: block.slug,
+          parent_id: block.parentId || null,
+          attachments: block.attachments || [],
+          hide_from_sidebar: block.hideFromSidebar || false,
+        }))
+      );
+
+      if (error) throw error;
+
+      console.log('✅ Migration réussie !');
+      
+      toast({
+        title: 'Migration réussie !',
+        description: `${localData.blocks.length} blocs migrés vers le serveur`,
+      });
+
+      await checkMigrationStatus();
+    } catch (error) {
+      console.error('❌ Erreur de migration:', error);
+      toast({
+        title: 'Erreur de migration',
+        description: error instanceof Error ? error.message : 'Une erreur est survenue',
+        variant: 'destructive'
+      });
+      setMigrationStatus(prev => ({ ...prev, isMigrating: false }));
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
         <div className="mb-6 flex items-center justify-between">
@@ -254,6 +353,80 @@ export default function Admin() {
             Gérer les documents
           </Button>
         </div>
+
+        {/* Carte de migration des données */}
+        <Card className="max-w-4xl mx-auto mb-6 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-6 w-6" />
+              Migration des données vers le serveur
+            </CardTitle>
+            <CardDescription>
+              Transférez vos données du cache local vers la base de données sécurisée
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 border rounded-lg bg-background">
+                <div className="text-sm text-muted-foreground mb-1">Cache Local (Mac)</div>
+                <div className="text-3xl font-bold">{migrationStatus.isChecking ? '...' : migrationStatus.localCount}</div>
+                <div className="text-xs text-muted-foreground">blocs</div>
+              </div>
+              
+              <div className="p-4 border rounded-lg bg-background">
+                <div className="text-sm text-muted-foreground mb-1">Serveur (Accessible partout)</div>
+                <div className="text-3xl font-bold text-primary">{migrationStatus.isChecking ? '...' : migrationStatus.serverCount}</div>
+                <div className="text-xs text-muted-foreground">blocs</div>
+              </div>
+            </div>
+
+            {migrationStatus.localCount > 0 && migrationStatus.serverCount === 0 && (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                <p className="text-sm font-medium text-yellow-600 dark:text-yellow-500">
+                  ⚠️ Vos données sont uniquement sur votre Mac. Migrez-les vers le serveur pour y accéder depuis n'importe quel appareil.
+                </p>
+              </div>
+            )}
+
+            {migrationStatus.serverCount > 0 && (
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                <p className="text-sm font-medium text-green-600 dark:text-green-500">
+                  ✅ Vos données sont sauvegardées sur le serveur et accessibles depuis n'importe quel appareil.
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Button 
+                onClick={checkMigrationStatus}
+                variant="outline"
+                disabled={migrationStatus.isChecking}
+                className="w-full"
+              >
+                {migrationStatus.isChecking ? 'Vérification...' : 'Vérifier le statut'}
+              </Button>
+              
+              <Button 
+                onClick={migrateData}
+                disabled={migrationStatus.isMigrating || migrationStatus.isChecking || migrationStatus.localCount === 0}
+                className="w-full"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {migrationStatus.isMigrating ? 'Migration en cours...' : 'Migrer vers le serveur'}
+              </Button>
+            </div>
+
+            <div className="text-sm text-muted-foreground space-y-1 pt-2 border-t">
+              <p><strong>Comment ça marche :</strong></p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Cliquez sur "Vérifier le statut" pour voir combien de blocs vous avez</li>
+                <li>Cliquez sur "Migrer" pour copier vos données vers le serveur</li>
+                <li>Une fois migrées, vos données seront accessibles depuis n'importe quel appareil</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
