@@ -151,11 +151,29 @@ export function AppSidebar() {
     });
   };
 
-  const handleSectionClick = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const handleSectionClick = (sectionId: string, categoryId: string) => {
+    // Ouvrir la catégorie si elle est fermée
+    if (!openCategories.has(categoryId)) {
+      setOpenCategories(prev => new Set(prev).add(categoryId));
     }
+
+    // Attendre un peu que l'accordéon s'ouvre, puis scroller
+    setTimeout(() => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        // Déclencher l'ouverture de l'accordéon en cliquant dessus
+        const trigger = element.querySelector('[data-state]');
+        if (trigger && trigger.getAttribute('data-state') === 'closed') {
+          (trigger as HTMLElement).click();
+        }
+        
+        // Scroller vers l'élément
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          window.scrollBy(0, -100); // Ajuster pour le header
+        }, 100);
+      }
+    }, 100);
   };
 
   if (!scope) return null;
@@ -209,7 +227,7 @@ export function AppSidebar() {
                                 <SidebarMenuSubButton
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    handleSectionClick(section.id);
+                                    handleSectionClick(section.id, category.id);
                                   }}
                                   className="cursor-pointer hover:bg-accent"
                                 >
@@ -253,7 +271,7 @@ export function AppSidebar() {
                                 <SidebarMenuSubButton
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    handleSectionClick(section.id);
+                                    handleSectionClick(section.id, category.id);
                                   }}
                                   className="cursor-pointer hover:bg-accent"
                                 >
