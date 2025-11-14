@@ -156,22 +156,30 @@ const SortableCategory = ({
       ) : (
         <>
           <Link to={`/apogee/category/${category.slug}`} className="block">
-            <Icon className="w-12 h-12 mb-4 text-primary" />
-            <h2 className="text-xl font-bold mb-2">{category.title}</h2>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="p-3 bg-background/50 rounded-lg">
+                <Icon className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground flex-1">
+                {category.title}
+              </h3>
+            </div>
           </Link>
+
           {isEditMode && (
-            <div className="flex gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex gap-2 mt-4">
               <Button
                 onClick={() => onEdit(category.id)}
-                size="sm"
                 variant="outline"
+                size="sm"
+                className="flex-1"
               >
                 Modifier
               </Button>
               <Button
                 onClick={() => onDelete(category.id)}
-                size="sm"
                 variant="destructive"
+                size="sm"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
