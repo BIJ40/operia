@@ -206,7 +206,7 @@ const SortableCategory = ({
       ) : (
         <>
           <Link to={`/apporteurs/category/${category.slug}`} className="block">
-            <div className="flex items-center gap-4 mb-2">
+            <div className="flex flex-col items-center text-center gap-4">
               <div className="p-3 bg-background/50 rounded-lg">
                 {isCustomImage ? (
                   <img src={category.icon} alt={category.title} className="w-24 h-24 object-contain" />
@@ -214,7 +214,7 @@ const SortableCategory = ({
                   <Icon className="w-24 h-24 text-primary" />
                 )}
               </div>
-              <h3 className="text-xl font-semibold text-foreground flex-1">
+              <h3 className="text-xl font-semibold text-foreground">
                 {category.title}
               </h3>
             </div>
