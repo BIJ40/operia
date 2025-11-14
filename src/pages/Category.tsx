@@ -173,6 +173,13 @@ export default function Category() {
 
   const handleEdit = (block: typeof sections[0]) => {
     setEditingId(block.id);
+    // Ouvrir l'accordéon de cette section
+    setOpenAccordions(prev => {
+      if (!prev.includes(block.id)) {
+        return [...prev, block.id];
+      }
+      return prev;
+    });
   };
 
   const handleSave = (data: {
