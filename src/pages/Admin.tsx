@@ -300,30 +300,57 @@ export default function Admin() {
       }
 
       console.log(`🔄 Migration de ${localData.blocks.length} blocs...`);
+      console.log('Premier bloc exemple:', localData.blocks[0]);
 
       // Supprimer les données existantes
-      await supabase.from('blocks' as any).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      const { error: deleteError } = await supabase
+        .from('blocks' as any)
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
 
-      // Insérer tous les blocs
-      const { error } = await supabase.from('blocks' as any).insert(
-        localData.blocks.map((block: any) => ({
+      if (deleteError) {
+        console.error('Erreur suppression:', deleteError);
+        throw new Error(`Suppression: ${deleteError.message}`);
+      }
+
+      // Préparer les blocs pour l'insertion
+      const blocksToInsert = localData.blocks.map((block: any) => {
+        const prepared = {
           id: block.id,
           type: block.type,
           title: block.title,
-          content: block.content,
+          content: block.content || '',
           icon: block.icon || null,
-          color_preset: block.colorPreset,
-          order: block.order,
+          color_preset: block.colorPreset || 'white',
+          order: block.order || 0,
           slug: block.slug,
           parent_id: block.parentId || null,
           attachments: block.attachments || [],
           hide_from_sidebar: block.hideFromSidebar || false,
-        }))
-      );
+        };
+        return prepared;
+      });
 
-      if (error) throw error;
+      console.log('Nombre de blocs à insérer:', blocksToInsert.length);
+      console.log('Premier bloc préparé:', blocksToInsert[0]);
 
-      console.log('✅ Migration réussie !');
+      // Insérer tous les blocs
+      const { data: insertedData, error: insertError } = await supabase
+        .from('blocks' as any)
+        .insert(blocksToInsert)
+        .select();
+
+      if (insertError) {
+        console.error('❌ Erreur insertion complète:', {
+          message: insertError.message,
+          code: insertError.code,
+          details: insertError.details,
+          hint: insertError.hint
+        });
+        throw new Error(`${insertError.message} (Code: ${insertError.code})`);
+      }
+
+      console.log('✅ Migration réussie !', insertedData?.length, 'blocs insérés');
       
       toast({
         title: 'Migration réussie !',
@@ -332,10 +359,11 @@ export default function Admin() {
 
       await checkMigrationStatus();
     } catch (error) {
-      console.error('❌ Erreur de migration:', error);
+      console.error('❌ Erreur complète de migration:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
       toast({
         title: 'Erreur de migration',
-        description: error instanceof Error ? error.message : 'Une erreur est survenue',
+        description: errorMessage,
         variant: 'destructive'
       });
       setMigrationStatus(prev => ({ ...prev, isMigrating: false }));
