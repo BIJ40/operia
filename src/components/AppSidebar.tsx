@@ -19,7 +19,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronRight } from 'lucide-react';
 import logoApogee from '@/assets/logo_helpogee.png';
 import { supabase } from '@/integrations/supabase/client';
-import { NavLink } from '@/components/NavLink';
 import { useEditor } from '@/contexts/EditorContext';
 
 interface Category {
@@ -60,7 +59,7 @@ export function AppSidebar() {
   const [sections, setSections] = useState<Section[]>([]);
   const [blockCategories, setBlockCategories] = useState<BlockCategory[]>([]);
   const [blockSections, setBlockSections] = useState<BlockSection[]>([]);
-  const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
+  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
   
   // Déterminer le scope selon la route
   const getScope = () => {
@@ -141,7 +140,22 @@ export function AppSidebar() {
   };
 
   const handleToggleCategory = (categoryId: string) => {
-    setOpenCategoryId(prev => prev === categoryId ? null : categoryId);
+    setOpenCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSectionClick = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   if (!scope) return null;
@@ -170,35 +184,36 @@ export function AppSidebar() {
                 blockCategories.map((category) => {
                   const Icon = IconComponent(category.icon || 'BookOpen');
                   const categorySections = blockSections.filter(s => s.parentId === category.id);
-                  const isOpen = openCategoryId === category.id;
+                  const isOpen = openCategories.has(category.id);
 
                   return (
                     <Collapsible 
                       key={category.id} 
-                      className="group/collapsible"
                       open={isOpen}
                       onOpenChange={() => handleToggleCategory(category.id)}
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton className="w-full">
-                            <Icon className="w-4 h-4" />
-                            <span className="flex-1 text-left">{category.title}</span>
-                            <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                          <SidebarMenuButton className="w-full hover:bg-accent">
+                            <Icon className="h-4 w-4 shrink-0" />
+                            <span className="flex-1 text-left truncate">{category.title}</span>
+                            <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200" 
+                              style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }} 
+                            />
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <SidebarMenuSub>
                             {categorySections.map((section) => (
                               <SidebarMenuSubItem key={section.id}>
-                                <SidebarMenuSubButton asChild>
-                                  <NavLink 
-                                    to={`#${section.id}`}
-                                    className="hover:bg-muted/50"
-                                    activeClassName="bg-muted text-primary font-medium"
-                                  >
-                                    {section.title}
-                                  </NavLink>
+                                <SidebarMenuSubButton
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleSectionClick(section.id);
+                                  }}
+                                  className="cursor-pointer hover:bg-accent"
+                                >
+                                  <span className="text-sm">{section.title}</span>
                                 </SidebarMenuSubButton>
                               </SidebarMenuSubItem>
                             ))}
@@ -213,35 +228,36 @@ export function AppSidebar() {
                 categories.map((category) => {
                   const Icon = IconComponent(category.icon);
                   const categorySections = sections.filter(s => s.category_id === category.id);
-                  const isOpen = openCategoryId === category.id;
+                  const isOpen = openCategories.has(category.id);
 
                   return (
                     <Collapsible 
                       key={category.id} 
-                      className="group/collapsible"
                       open={isOpen}
                       onOpenChange={() => handleToggleCategory(category.id)}
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton className="w-full">
-                            <Icon className="w-4 h-4" />
-                            <span className="flex-1 text-left">{category.title}</span>
-                            <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                          <SidebarMenuButton className="w-full hover:bg-accent">
+                            <Icon className="h-4 w-4 shrink-0" />
+                            <span className="flex-1 text-left truncate">{category.title}</span>
+                            <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200" 
+                              style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }} 
+                            />
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <SidebarMenuSub>
                             {categorySections.map((section) => (
                               <SidebarMenuSubItem key={section.id}>
-                                <SidebarMenuSubButton asChild>
-                                  <NavLink 
-                                    to={`#${section.id}`}
-                                    className="hover:bg-muted/50"
-                                    activeClassName="bg-muted text-primary font-medium"
-                                  >
-                                    {section.title}
-                                  </NavLink>
+                                <SidebarMenuSubButton
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleSectionClick(section.id);
+                                  }}
+                                  className="cursor-pointer hover:bg-accent"
+                                >
+                                  <span className="text-sm">{section.title}</span>
                                 </SidebarMenuSubButton>
                               </SidebarMenuSubItem>
                             ))}
@@ -256,21 +272,20 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* FAQ en bas (uniquement pour Apogée) */}
-        {scope === 'guide-apogee' && (
+        {/* Lien FAQ pour Apogée uniquement */}
+        {isApogee && (
           <SidebarGroup className="mt-auto">
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <NavLink 
-                      to="#faq"
-                      className="hover:bg-muted/50"
-                      activeClassName="bg-muted text-primary font-medium"
+                    <Link 
+                      to="/apogee/category/faq" 
+                      className="flex items-center gap-2"
                     >
-                      <Icons.HelpCircle className="w-4 h-4" />
+                      <Icons.HelpCircle className="h-4 w-4" />
                       <span>FAQ</span>
-                    </NavLink>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
