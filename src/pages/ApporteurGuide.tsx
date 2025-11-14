@@ -7,8 +7,10 @@ import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Search, GripVertical, Upload, X } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   DndContext,
   closestCenter,
@@ -47,6 +49,9 @@ interface SortableCategoryProps {
   onEditTitleChange: (value: string) => void;
   onEditIconChange: (value: string) => void;
   onEditColorChange: (value: ColorPreset) => void;
+  onImageUpload: (file: File) => Promise<void>;
+  onImageRemove: () => void;
+  uploadingImage: boolean;
   onSave: () => void;
   onCancel: () => void;
   onEdit: (id: string) => void;
@@ -65,6 +70,9 @@ const SortableCategory = ({
   onEditTitleChange,
   onEditIconChange,
   onEditColorChange,
+  onImageUpload,
+  onImageRemove,
+  uploadingImage,
   onSave,
   onCancel,
   onEdit,
@@ -88,6 +96,7 @@ const SortableCategory = ({
   };
 
   const Icon = IconComponent(category.icon || 'BookOpen');
+  const isCustomImage = category.icon?.startsWith('http');
 
   return (
     <div
@@ -113,10 +122,57 @@ const SortableCategory = ({
             placeholder="Titre de la catégorie"
             autoFocus
           />
-          <IconPicker
-            value={editIcon}
-            onChange={onEditIconChange}
-          />
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <IconPicker
+                value={editIcon.startsWith('http') ? 'BookOpen' : editIcon}
+                onChange={onEditIconChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) onImageUpload(file);
+                  }}
+                  disabled={uploadingImage}
+                  id="icon-upload"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('icon-upload')?.click()}
+                  disabled={uploadingImage}
+                  className="w-full"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {uploadingImage ? 'Upload...' : 'Image perso'}
+                </Button>
+              </label>
+              {editIcon.startsWith('http') && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={onImageRemove}
+                  className="w-full"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Retirer
+                </Button>
+              )}
+            </div>
+          </div>
+          {editIcon.startsWith('http') && (
+            <div className="p-2 bg-muted rounded-lg">
+              <img src={editIcon} alt="Icône perso" className="w-12 h-12 object-contain mx-auto" />
+            </div>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-medium">Couleur</label>
             <div className="flex flex-wrap gap-2">
@@ -152,7 +208,11 @@ const SortableCategory = ({
           <Link to={`/apporteurs/category/${category.slug}`} className="block">
             <div className="flex items-center gap-4 mb-2">
               <div className="p-3 bg-background/50 rounded-lg">
-                <Icon className="w-8 h-8 text-primary" />
+                {isCustomImage ? (
+                  <img src={category.icon} alt={category.title} className="w-8 h-8 object-contain" />
+                ) : (
+                  <Icon className="w-8 h-8 text-primary" />
+                )}
               </div>
               <h3 className="text-xl font-semibold text-foreground flex-1">
                 {category.title}
@@ -195,6 +255,7 @@ export default function ApporteurGuide() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const apporteurCategories = blocks
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
@@ -237,6 +298,43 @@ export default function ApporteurGuide() {
       setEditIcon(category.icon || 'BookOpen');
       setEditColor(category.colorPreset || 'blue');
     }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!editingId) return;
+    
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${editingId}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('category-icons')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('category-icons')
+        .getPublicUrl(filePath);
+
+      setEditIcon(publicUrl);
+      toast.success('Image uploadée avec succès');
+    } catch (error) {
+      console.error('Erreur upload:', error);
+      toast.error('Erreur lors de l\'upload de l\'image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleImageRemove = () => {
+    setEditIcon('BookOpen');
+    toast.success('Image retirée');
   };
 
   const handleSave = () => {
@@ -359,8 +457,11 @@ export default function ApporteurGuide() {
                   editColor={editColor}
                   isEditMode={isEditMode}
                   onEditTitleChange={setEditTitle}
-                  onEditIconChange={setEditIcon}
-                  onEditColorChange={setEditColor}
+            onEditIconChange={setEditIcon}
+            onEditColorChange={setEditColor}
+            onImageUpload={handleImageUpload}
+            onImageRemove={handleImageRemove}
+            uploadingImage={uploadingImage}
                   onSave={handleSave}
                   onCancel={handleCancel}
                   onEdit={handleEdit}
