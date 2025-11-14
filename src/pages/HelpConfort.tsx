@@ -72,7 +72,8 @@ export default function HelpConfort() {
   }, []);
 
   const loadCategories = async () => {
-    const { data } = await supabase
+    const supabaseAny = supabase as any;
+    const { data } = await supabaseAny
       .from('categories')
       .select('*')
       .eq('scope', SCOPE)
@@ -86,7 +87,8 @@ export default function HelpConfort() {
       ? Math.max(...categories.map(c => c.display_order)) + 1 
       : 0;
 
-    const { error } = await supabase
+    const supabaseAny = supabase as any;
+    const { error } = await supabaseAny
       .from('categories')
       .insert({
         title: 'Nouvelle catégorie',
@@ -109,7 +111,8 @@ export default function HelpConfort() {
   const handleSave = async () => {
     if (!editingId) return;
 
-    const { error } = await supabase
+    const supabaseAny = supabase as any;
+    const { error } = await supabaseAny
       .from('categories')
       .update({
         title: editTitle,
@@ -136,7 +139,8 @@ export default function HelpConfort() {
   const confirmDelete = async () => {
     if (!categoryToDelete) return;
 
-    const { error } = await supabase
+    const supabaseAny = supabase as any;
+    const { error } = await supabaseAny
       .from('categories')
       .delete()
       .eq('id', categoryToDelete);
@@ -159,8 +163,9 @@ export default function HelpConfort() {
       setCategories(reordered);
       
       // Update display_order in database
+      const supabaseAny = supabase as any;
       for (let i = 0; i < reordered.length; i++) {
-        await supabase
+        await supabaseAny
           .from('categories')
           .update({ display_order: i })
           .eq('id', reordered[i].id);
