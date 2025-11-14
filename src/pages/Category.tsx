@@ -2,6 +2,8 @@
 import { useParams, useLocation } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { saveAppData } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput } from 'lucide-react';
 import {
@@ -56,6 +58,7 @@ export default function Category() {
   const location = useLocation();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   
@@ -182,7 +185,7 @@ export default function Category() {
     });
   };
 
-  const handleSave = (data: {
+  const handleSave = async (data: {
     title: string;
     content: string;
     colorPreset: ColorPreset;
@@ -190,6 +193,19 @@ export default function Category() {
   }) => {
     if (editingId) {
       updateBlock(editingId, data);
+      
+      // Sauvegarder IMMÉDIATEMENT en base de données
+      const updatedBlocks = blocks.map(b => 
+        b.id === editingId ? { ...b, ...data } : b
+      );
+      
+      await saveAppData({
+        blocks: updatedBlocks,
+        version: '1.0',
+        lastModified: Date.now(),
+      });
+      
+      toast({ title: '✅ Sauvegardé', description: 'Modifications enregistrées en base de données' });
       setEditingId(null);
     }
   };
