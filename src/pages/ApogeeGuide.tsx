@@ -8,9 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical, Upload } from 'lucide-react';
+import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
-import { importBackupData } from '@/lib/import-backup';
 import {
   DndContext,
   closestCenter,
@@ -202,7 +201,6 @@ export default function ApogeeGuide() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [importing, setImporting] = useState(false);
 
   // Filtrer uniquement les catégories Apogée (exclure FAQ)
   const apogeeCategories = blocks
@@ -319,29 +317,6 @@ export default function ApogeeGuide() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-6xl mx-auto px-4 py-8">
-        {apogeeCategories.length === 0 && isAdmin && (
-          <div className="mb-8 max-w-md mx-auto bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6">
-            <h3 className="font-semibold mb-2">⚠️ Base de données vide</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Cliquez pour importer vos données sauvegardées
-            </p>
-            <Button
-              onClick={async () => {
-                setImporting(true);
-                await importBackupData();
-                setImporting(false);
-              }}
-              disabled={importing}
-              variant="default"
-              size="lg"
-              className="w-full"
-            >
-              <Upload className="w-5 h-5 mr-2" />
-              {importing ? 'IMPORT EN COURS...' : 'IMPORTER MES DONNÉES'}
-            </Button>
-          </div>
-        )}
-
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Guide d'utilisation Apogée
