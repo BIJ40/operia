@@ -3,6 +3,7 @@ import { Block, AppData } from '@/types/block';
 import { loadAppData, saveAppData } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import apogeeData from '@/data/apogee-data.json';
 
 interface EditorContextType {
@@ -32,18 +33,36 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   // Load data on mount
   useEffect(() => {
     const initData = async () => {
-      const data = await loadAppData();
+      console.log('🔄 Chargement des données...');
       
-      // Si pas de données en base, charger depuis le JSON de backup
-      if (!data || !data.blocks || data.blocks.length === 0) {
-        const apogeeData = await import('../data/apogee-data.json');
-        if (apogeeData.default && apogeeData.default.blocks) {
-          setBlocks(apogeeData.default.blocks as Block[]);
-          console.log('📁 Données chargées depuis backup JSON');
-        }
-      } else {
-        setBlocks(data.blocks);
+      // Importer et restaurer depuis le backup JSON
+      const apogeeData = await import('../data/apogee-data.json');
+      
+      if (apogeeData.default && apogeeData.default.blocks) {
+        const blocks = apogeeData.default.blocks as Block[];
+        
+        // Restaurer dans Supabase
+        await supabase.from('blocks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        
+        const blocksToInsert = blocks.map(block => ({
+          id: block.id,
+          type: block.type,
+          title: block.title,
+          content: block.content || '',
+          icon: block.icon || null,
+          color_preset: block.colorPreset || 'white',
+          order: block.order || 0,
+          slug: block.slug,
+          parent_id: block.parentId || null,
+          attachments: (block.attachments || []) as any,
+          hide_from_sidebar: block.hideFromSidebar || false,
+        }));
+        
+        await supabase.from('blocks').insert(blocksToInsert as any);
+        setBlocks(blocks);
+        console.log(`✅ ${blocks.length} blocks restaurés`);
       }
+      
       setLoading(false);
     };
     
