@@ -337,11 +337,11 @@ export default function Category() {
                   </h2>
                 </div>
                 {isEditMode && isAuthenticated && (
-                  <div className="flex gap-2 ml-auto" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex gap-2 ml-auto relative z-10" onClick={(e) => e.stopPropagation()}>
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="cursor-move"
+                      className="cursor-move relative z-10"
                       {...attributes}
                       {...listeners}
                       onClick={(e) => e.stopPropagation()}
@@ -353,13 +353,14 @@ export default function Category() {
                         <Button
                           size="sm"
                           variant="ghost"
+                          className="relative z-10"
                           title="Changer de catégorie"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <FolderInput className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-background border shadow-md z-50">
+                      <DropdownMenuContent align="end" className="bg-background border shadow-md z-[100]">
                         {availableCategories
                           .filter(cat => cat.id !== category?.id)
                           .map((cat) => (
@@ -375,6 +376,7 @@ export default function Category() {
                     <Button
                       size="sm"
                       variant="ghost"
+                      className="relative z-10"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleEdit(section);
@@ -385,6 +387,7 @@ export default function Category() {
                     <Button
                       size="sm"
                       variant="ghost"
+                      className="relative z-10"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteClick(section.id);
