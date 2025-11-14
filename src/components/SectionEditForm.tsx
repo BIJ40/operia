@@ -87,7 +87,7 @@ export function SectionEditForm({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="sticky top-0 z-20 bg-background border rounded-lg p-4 shadow-lg space-y-4">
       <Input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
