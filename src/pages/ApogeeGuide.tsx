@@ -8,9 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical, Upload } from 'lucide-react';
+import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
-import { importBackupData } from '@/lib/import-backup';
 import {
   DndContext,
   closestCenter,
@@ -202,7 +201,6 @@ export default function ApogeeGuide() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [importing, setImporting] = useState(false);
 
   // Filtrer uniquement les catégories Apogée (exclure FAQ)
   const apogeeCategories = blocks
@@ -327,25 +325,6 @@ export default function ApogeeGuide() {
             Tout ce que vous devez savoir sur l'utilisation d'Apogée
           </p>
         </div>
-
-        {isAdmin && (
-          <div className="mb-8 max-w-md mx-auto">
-            <Button
-              onClick={async () => {
-                setImporting(true);
-                await importBackupData();
-                setImporting(false);
-              }}
-              disabled={importing}
-              variant="destructive"
-              size="lg"
-              className="w-full"
-            >
-              <Upload className="w-5 h-5 mr-2" />
-              {importing ? 'RESTAURATION EN COURS...' : 'RESTAURER BACKUP COMPLET'}
-            </Button>
-          </div>
-        )}
 
         {!isEditMode && (
           <div className="mb-6 max-w-md mx-auto">
