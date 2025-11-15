@@ -382,29 +382,61 @@ export default function Landing() {
       ? Math.max(...homeCards.map(c => c.display_order))
       : -1;
 
-    const { error } = await supabaseAny
-      .from('home_cards')
-      .insert({
-        title: 'Nouvelle section',
-        description: 'Description',
-        link: '/',
-        icon: 'BookOpen',
-        color_preset: 'blue',
-        display_order: maxOrder + 1,
-      });
+    // Générer un slug unique pour la nouvelle catégorie
+    const timestamp = Date.now();
+    const slug = `categorie-${timestamp}`;
+    const categoryId = `block-${timestamp}-${Math.random().toString(36).substr(2, 9)}`;
 
-    if (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible d\'ajouter',
-        variant: 'destructive',
-      });
-    } else {
+    try {
+      // 1. Créer la catégorie dans blocks
+      const { error: blockError } = await supabaseAny
+        .from('blocks')
+        .insert({
+          id: categoryId,
+          title: 'Nouvelle section',
+          slug: slug,
+          type: 'category',
+          content: '',
+          parent_id: null,
+          order: maxOrder + 1,
+          color_preset: 'blue',
+          icon: 'BookOpen',
+          hide_from_sidebar: false,
+          attachments: [],
+        });
+
+      if (blockError) {
+        throw blockError;
+      }
+
+      // 2. Créer la carte d'accueil avec le lien vers la catégorie
+      const { error: cardError } = await supabaseAny
+        .from('home_cards')
+        .insert({
+          title: 'Nouvelle section',
+          description: 'Description',
+          link: `/apogee/category/${slug}`,
+          icon: 'BookOpen',
+          color_preset: 'blue',
+          display_order: maxOrder + 1,
+        });
+
+      if (cardError) {
+        throw cardError;
+      }
+
       toast({
         title: 'Succès',
-        description: 'Carte ajoutée',
+        description: 'Section créée avec succès',
       });
       loadCards();
+    } catch (error) {
+      console.error('Error adding card:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'ajouter la section',
+        variant: 'destructive',
+      });
     }
   };
 
