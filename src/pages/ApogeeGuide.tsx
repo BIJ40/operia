@@ -6,10 +6,13 @@ import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ColorPreset } from '@/types/block';
 import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
+import { ColorPicker } from '@/components/ColorPicker';
+import { ImageUploader } from '@/components/ImageUploader';
 import {
   DndContext,
   closestCenter,
@@ -45,10 +48,14 @@ interface SortableCategoryProps {
   editTitle: string;
   editIcon: string;
   editColor: ColorPreset;
+  editImageUrl: string | null;
+  editShowTitleOnCard: boolean;
   isEditMode: boolean;
   onEditTitleChange: (value: string) => void;
   onEditIconChange: (value: string) => void;
   onEditColorChange: (value: ColorPreset) => void;
+  onEditImageUrlChange: (value: string | null) => void;
+  onEditShowTitleOnCardChange: (value: boolean) => void;
   onSave: () => void;
   onCancel: () => void;
   onEdit: (id: string) => void;
@@ -63,10 +70,14 @@ const SortableCategory = ({
   editTitle,
   editIcon,
   editColor,
+  editImageUrl,
+  editShowTitleOnCard,
   isEditMode,
   onEditTitleChange,
   onEditIconChange,
   onEditColorChange,
+  onEditImageUrlChange,
+  onEditShowTitleOnCardChange,
   onSave,
   onCancel,
   onEdit,
@@ -90,6 +101,7 @@ const SortableCategory = ({
   };
 
   const Icon = IconComponent(category.icon || 'BookOpen');
+  const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
 
   return (
     <div
@@ -115,34 +127,32 @@ const SortableCategory = ({
             placeholder="Titre de la catégorie"
             autoFocus
           />
+          
+          <ImageUploader
+            currentImage={editImageUrl || undefined}
+            onImageChange={onEditImageUrlChange}
+            bucketName="category-images"
+          />
+          
           <IconPicker
             value={editIcon}
             onChange={onEditIconChange}
           />
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Couleur</label>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
-                { value: 'blanc', color: 'bg-white border-2 border-gray-300', label: 'Blanc' },
-                { value: 'blue', color: 'bg-blue-50 border-2 border-blue-200', label: 'Bleu' },
-                { value: 'green', color: 'bg-green-50 border-2 border-green-200', label: 'Vert' },
-                { value: 'yellow', color: 'bg-yellow-50 border-2 border-yellow-200', label: 'Jaune' },
-                { value: 'purple', color: 'bg-purple-50 border-2 border-purple-200', label: 'Violet' },
-                { value: 'orange', color: 'bg-orange-50 border-2 border-orange-200', label: 'Orange' },
-              ].map((preset) => (
-                <button
-                  key={preset.value}
-                  type="button"
-                  onClick={() => onEditColorChange(preset.value as ColorPreset)}
-                  className={`${preset.color} px-3 py-1.5 rounded text-xs font-medium ${
-                    editColor === preset.value ? 'ring-2 ring-primary' : ''
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
+          
+          <ColorPicker
+            value={editColor}
+            onChange={onEditColorChange}
+          />
+          
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="show-title-on-card"
+              checked={editShowTitleOnCard}
+              onCheckedChange={onEditShowTitleOnCardChange}
+            />
+            <label htmlFor="show-title-on-card" className="text-sm font-medium cursor-pointer">
+              Afficher le titre sur la carte
+            </label>
           </div>
           <div className="flex gap-2">
             <Button onClick={onSave} size="sm">
@@ -157,12 +167,22 @@ const SortableCategory = ({
         <>
           <Link to={`/apogee/category/${category.slug}`} className="block">
             <div className="flex items-center gap-4 mb-2">
-              <div className="p-3 bg-background/50 rounded-lg">
-                <Icon className="w-8 h-8 text-primary" />
+              <div className="p-3 bg-background/50 rounded-lg flex items-center justify-center">
+                {editImageUrl || (isCustomImage && category.icon) ? (
+                  <img 
+                    src={editImageUrl || category.icon} 
+                    alt={category.title} 
+                    className="w-[30px] h-[30px] object-contain" 
+                  />
+                ) : (
+                  <Icon className="w-[30px] h-[30px] text-primary" />
+                )}
               </div>
-              <h3 className="text-xl font-semibold text-foreground flex-1">
-                {category.title}
-              </h3>
+              {(category.showTitleOnCard !== false) && (
+                <h3 className="text-xl font-semibold text-foreground flex-1">
+                  {category.title}
+                </h3>
+              )}
             </div>
           </Link>
 
@@ -198,6 +218,8 @@ export default function ApogeeGuide() {
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
   const [editColor, setEditColor] = useState<ColorPreset>('blue');
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
+  const [editShowTitleOnCard, setEditShowTitleOnCard] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -245,6 +267,12 @@ export default function ApogeeGuide() {
       setEditTitle(category.title);
       setEditIcon(category.icon || 'BookOpen');
       setEditColor(category.colorPreset || 'blue');
+      
+      // Vérifier si l'icône est une URL d'image
+      const isImageUrl = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
+      setEditImageUrl(isImageUrl ? category.icon : null);
+      
+      setEditShowTitleOnCard(category.showTitleOnCard !== false);
     }
   };
 
@@ -252,11 +280,13 @@ export default function ApogeeGuide() {
     if (editingId) {
       updateBlock(editingId, {
         title: editTitle,
-        icon: editIcon,
+        icon: editImageUrl || editIcon,
         colorPreset: editColor,
         slug: editTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        showTitleOnCard: editShowTitleOnCard,
       });
       setEditingId(null);
+      setEditImageUrl(null);
     }
   };
 
@@ -360,10 +390,14 @@ export default function ApogeeGuide() {
                     editTitle={editTitle}
                     editIcon={editIcon}
                     editColor={editColor}
+                    editImageUrl={editImageUrl}
+                    editShowTitleOnCard={editShowTitleOnCard}
                     isEditMode={isEditMode}
                     onEditTitleChange={setEditTitle}
                     onEditIconChange={setEditIcon}
                     onEditColorChange={setEditColor}
+                    onEditImageUrlChange={setEditImageUrl}
+                    onEditShowTitleOnCardChange={setEditShowTitleOnCard}
                     onSave={handleSave}
                     onCancel={handleCancel}
                     onEdit={handleEdit}
