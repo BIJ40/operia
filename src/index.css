@@ -320,13 +320,54 @@ div[data-callout] p {
   @apply text-sm text-gray-800 my-1;
 }
 
-/* Make images in content clickable with cursor pointer */
+/* Make images in content clickable with cursor pointer and allow text wrapping */
 .prose img {
   @apply cursor-pointer transition-opacity hover:opacity-80;
   max-width: 100%;
   height: auto;
-  display: inline-block;
-  vertical-align: middle;
+}
+
+/* Images with float left - text wraps around on the right */
+.prose img[style*="float: left"],
+.prose img[style*="float:left"] {
+  float: left !important;
+  margin: 0 1rem 0.5rem 0 !important;
+  max-width: 60% !important;
+}
+
+/* Images with float right - text wraps around on the left */
+.prose img[style*="float: right"],
+.prose img[style*="float:right"] {
+  float: right !important;
+  margin: 0 0 0.5rem 1rem !important;
+  max-width: 60% !important;
+}
+
+/* Centered images with no float */
+.prose img[style*="float: none"],
+.prose img[style*="float:none"] {
+  float: none !important;
+  display: block !important;
+  margin: 1rem auto !important;
+  max-width: 100% !important;
+}
+
+/* Allow content to flow naturally around floated images */
+.prose p,
+.prose ul,
+.prose ol,
+.prose li,
+.prose h1,
+.prose h2,
+.prose h3 {
+  clear: none;
+}
+
+/* Clear floats at the end */
+.prose::after {
+  content: "";
+  display: table;
+  clear: both;
 }
 
 /* Make image modal buttons clickable in rendered content */
