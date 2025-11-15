@@ -88,9 +88,20 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
       if (typeof pos !== 'number') return;
 
       const editorView = editor.view;
+      const editorRect = editorView.dom.getBoundingClientRect();
+      
+      // Vérifier que le drop est bien dans l'éditeur
+      if (e.clientX < editorRect.left || 
+          e.clientX > editorRect.right || 
+          e.clientY < editorRect.top || 
+          e.clientY > editorRect.bottom) {
+        // Drop en dehors de l'éditeur - annuler
+        return;
+      }
+      
       const coords = editorView.posAtCoords({ left: e.clientX, top: e.clientY });
       
-      if (coords) {
+      if (coords && coords.pos >= 0 && coords.pos <= editorView.state.doc.content.size) {
         const { state, dispatch } = editorView;
         const nodeSize = node.nodeSize;
         const tr = state.tr;
@@ -102,8 +113,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
           newPos -= nodeSize;
         }
         
-        tr.insert(newPos, node);
-        dispatch(tr);
+        // Valider que la nouvelle position est valide
+        if (newPos >= 0 && newPos <= tr.doc.content.size) {
+          tr.insert(newPos, node);
+          dispatch(tr);
+        }
       }
     };
 
