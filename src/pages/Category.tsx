@@ -4,7 +4,6 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { saveAppData } from '@/lib/db';
-import { Block, ColorPreset } from '@/types/block';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput } from 'lucide-react';
 import {
@@ -41,6 +40,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { SectionEditForm } from '@/components/SectionEditForm';
+import { ColorPreset } from '@/types/block';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
@@ -52,12 +52,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 
 export default function Category() {
   const { slug } = useParams();
@@ -89,7 +83,6 @@ export default function Category() {
   );
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingSection, setEditingSection] = useState<Block | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const savedScrollPositionRef = useRef<number>(0);
@@ -198,12 +191,12 @@ export default function Category() {
     colorPreset: ColorPreset;
     hideFromSidebar: boolean;
   }) => {
-    if (editingSection) {
-      setEditingSection(null);
-      updateBlock(editingSection.id, data);
+    if (editingId) {
+      setEditingId(null);
+      updateBlock(editingId, data);
       
       const updatedBlocks = blocks.map(b => 
-        b.id === editingSection.id ? { ...b, ...data } : b
+        b.id === editingId ? { ...b, ...data } : b
       );
       
       saveAppData({
@@ -323,7 +316,7 @@ export default function Category() {
       transform,
       transition,
       isDragging,
-    } = useSortable({ id: section.id, disabled: editingSection !== null });
+    } = useSortable({ id: section.id, disabled: editingId !== null });
 
     const style = {
       transform: CSS.Transform.toString(transform),
@@ -335,78 +328,126 @@ export default function Category() {
     return (
       <div ref={setNodeRef} style={style}>
         <AccordionItem value={section.id} id={section.id} className="mb-4">
-          <div className={`rounded-lg ${getColorClass(section.colorPreset)}`}>
-            <div className="flex items-center gap-4 px-6 py-4">
-              <AccordionTrigger className="flex-1 hover:no-underline p-0 [&[data-state=open]>svg]:rotate-180">
-                <div className="flex items-center gap-3 w-full">
+          <div className={`rounded-lg relative ${getColorClass(section.colorPreset)}`}>
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-3 flex-1">
                   <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
                   <h2 className="text-xl font-semibold text-left">
                     {section.hideFromSidebar ? "💡 Info / Astuce" : section.title}
                   </h2>
                 </div>
-              </AccordionTrigger>
-              
-              {isEditMode && isAuthenticated && (
-                <div className="flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-md shrink-0">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    className="cursor-move"
-                    {...attributes}
-                    {...listeners}
+                {isEditMode && isAuthenticated && (
+                  <div 
+                    className="flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
                   >
-                    <GripVertical className="w-4 h-4" />
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        title="Changer de catégorie"
-                      >
-                        <FolderInput className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-background border shadow-md z-[200]">
-                      {availableCategories
-                        .filter(cat => cat.id !== category?.id)
-                        .map((cat) => (
-                          <DropdownMenuItem
-                            key={cat.id}
-                            onClick={() => handleMoveToCategory(section.id, cat.id)}
-                          >
-                            {cat.title}
-                          </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleEdit(section)}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDeleteClick(section.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-            
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="cursor-move"
+                      {...attributes}
+                      {...listeners}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                      }}
+                    >
+                      <GripVertical className="w-4 h-4" />
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          title="Changer de catégorie"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                          }}
+                        >
+                          <FolderInput className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-background border shadow-md z-[200]">
+                        {availableCategories
+                          .filter(cat => cat.id !== category?.id)
+                          .map((cat) => (
+                            <DropdownMenuItem
+                              key={cat.id}
+                              onClick={() => handleMoveToCategory(section.id, cat.id)}
+                            >
+                              {cat.title}
+                            </DropdownMenuItem>
+                          ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleEdit(section);
+                      }}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleDeleteClick(section.id);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </AccordionTrigger>
             <AccordionContent className="px-6 pb-6">
-              <div
-                className="prose prose-sm max-w-none break-words overflow-visible"
-                dangerouslySetInnerHTML={{ __html: section.content }}
-              />
+              {editingId === section.id ? (
+                <SectionEditForm
+                  sectionId={section.id}
+                  initialTitle={section.title}
+                  initialContent={section.content}
+                  initialColor={section.colorPreset || 'red'}
+                  initialHideFromSidebar={section.hideFromSidebar || false}
+                  onSave={handleSave}
+                  onCancel={handleCancel}
+                />
+              ) : (
+                <div
+                  className="prose prose-sm max-w-none break-words overflow-visible"
+                  dangerouslySetInnerHTML={{ __html: section.content }}
+                />
+              )}
             </AccordionContent>
           </div>
         </AccordionItem>
@@ -488,25 +529,6 @@ export default function Category() {
           </div>
         )}
       </div>
-
-      <Dialog open={!!editingSection} onOpenChange={(open) => !open && setEditingSection(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Éditer la section</DialogTitle>
-          </DialogHeader>
-          {editingSection && (
-            <SectionEditForm
-              sectionId={editingSection.id}
-              initialTitle={editingSection.title}
-              initialContent={editingSection.content}
-              initialColor={editingSection.colorPreset || 'red'}
-              initialHideFromSidebar={editingSection.hideFromSidebar || false}
-              onSave={handleSave}
-              onCancel={handleCancel}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
