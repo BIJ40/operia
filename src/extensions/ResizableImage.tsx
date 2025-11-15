@@ -1,6 +1,7 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer, NodeViewWrapper, ReactNodeViewProps } from '@tiptap/react';
 import { useState, useRef, useEffect } from 'react';
+import { Hand } from 'lucide-react';
 
 interface ExtendedNodeViewProps extends ReactNodeViewProps {
   editor: any;
@@ -11,6 +12,7 @@ interface ExtendedNodeViewProps extends ReactNodeViewProps {
 const ResizableImageComponent = ({ node, updateAttributes, selected, editor, getPos, deleteNode }: ExtendedNodeViewProps) => {
   const [isResizing, setIsResizing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [dragPreviewPos, setDragPreviewPos] = useState<{ top: number; left: number } | null>(null);
   const [hasError, setHasError] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: node.attrs.width || 300,
@@ -64,10 +66,14 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
     const handleDragMove = (e: MouseEvent) => {
       if (!isDragging) return;
       e.preventDefault();
+      
+      // Afficher un aperçu de la position où l'image sera insérée
+      setDragPreviewPos({ top: e.clientY, left: e.clientX });
     };
 
     const handleDragEnd = (e: MouseEvent) => {
       setIsDragging(false);
+      setDragPreviewPos(null);
       document.removeEventListener('mousemove', handleDragMove);
       document.removeEventListener('mouseup', handleDragEnd);
 
@@ -159,22 +165,23 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
   };
 
   return (
-    <NodeViewWrapper 
-      className={`resizable-image-wrapper ${isDragging ? 'opacity-50' : ''}`}
-      style={{ 
-        display: node.attrs.display || 'inline-block',
-        verticalAlign: 'middle',
-        margin: node.attrs.margin || '0 4px',
-        float: node.attrs.float || 'none',
-        cursor: isDragging ? 'grabbing' : (selected ? 'grab' : 'default')
-      }}
-    >
-      <div
-        ref={containerRef}
-        className={`relative inline-block group ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''}`}
-        style={{ width: dimensions.width, height: dimensions.height, display: 'inline-block' }}
-        onMouseDown={selected ? handleDragStart : undefined}
+    <>
+      <NodeViewWrapper 
+        className={`resizable-image-wrapper ${isDragging ? 'opacity-50' : ''}`}
+        style={{ 
+          display: node.attrs.display || 'inline-block',
+          verticalAlign: 'middle',
+          margin: node.attrs.margin || '0 4px',
+          float: node.attrs.float || 'none',
+          cursor: isDragging ? 'grabbing' : (selected ? 'grab' : 'default')
+        }}
       >
+        <div
+          ref={containerRef}
+          className={`relative inline-block group ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''}`}
+          style={{ width: dimensions.width, height: dimensions.height, display: 'inline-block' }}
+          onMouseDown={selected ? handleDragStart : undefined}
+        >
         {hasError ? (
           <div 
             className="flex items-center justify-center bg-muted text-muted-foreground rounded-lg"
@@ -251,9 +258,9 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
               </button>
             </div>
             
-            {/* Indication de déplacement - à droite */}
-            <div className="absolute -top-12 left-[180px] bg-background border border-border rounded-md shadow-lg px-3 py-1.5 text-xs text-muted-foreground whitespace-nowrap z-20">
-              ↔️ Glissez pour déplacer
+            {/* Indication de déplacement - icône main */}
+            <div className="absolute -top-12 left-[180px] bg-background border border-border rounded-md shadow-lg px-2 py-1.5 z-20">
+              <Hand size={16} className="text-muted-foreground" />
             </div>
             
             {/* Corner resize handles */}
@@ -293,6 +300,24 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         )}
       </div>
     </NodeViewWrapper>
+    
+    {/* Indicateur de position de drop pendant le drag */}
+    {isDragging && dragPreviewPos && (
+      <div
+        style={{
+          position: 'fixed',
+          top: dragPreviewPos.top - 10,
+          left: dragPreviewPos.left,
+          width: '2px',
+          height: '20px',
+          backgroundColor: 'hsl(var(--primary))',
+          pointerEvents: 'none',
+          zIndex: 9999,
+          boxShadow: '0 0 10px hsl(var(--primary))'
+        }}
+      />
+    )}
+  </>
   );
 };
 
