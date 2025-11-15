@@ -41,6 +41,27 @@ export function Header() {
             <span className="font-semibold text-foreground">ACCUEIL</span>
           </Link>
 
+          <Link 
+            to="/apogee" 
+            className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+          >
+            <span className="font-semibold text-foreground">APOGEE</span>
+          </Link>
+
+          <Link 
+            to="/apporteurs" 
+            className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+          >
+            <span className="font-semibold text-foreground">APPORTEURS</span>
+          </Link>
+
+          <Link 
+            to="/" 
+            className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+          >
+            <span className="font-semibold text-foreground">HELPCONFORT</span>
+          </Link>
+
           {isAdmin && (
             <Button
               onClick={handleEnrichirClick}
