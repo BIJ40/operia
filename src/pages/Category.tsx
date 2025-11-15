@@ -92,6 +92,11 @@ export default function Category() {
   const savedScrollPositionRef = useRef<number>(0);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
 
+  // Early return AFTER all hooks
+  if (!category) {
+    return <div className="container max-w-4xl mx-auto p-8">Catégorie non trouvée</div>;
+  }
+
   // Ouvrir automatiquement la section depuis l'URL hash
   useEffect(() => {
     const hash = location.hash.replace('#', '');
@@ -169,9 +174,13 @@ export default function Category() {
     return () => clearInterval(intervalId);
   }, [editingId]);
 
-  // Early return AFTER ALL hooks
+
   if (!category) {
-    return <div className="container max-w-4xl mx-auto p-8">Catégorie non trouvée</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">Catégorie introuvable</p>
+      </div>
+    );
   }
 
   const handleEdit = (block: typeof sections[0]) => {
