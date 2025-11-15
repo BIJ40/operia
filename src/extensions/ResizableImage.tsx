@@ -138,7 +138,12 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
   return (
     <NodeViewWrapper 
       className="resizable-image-wrapper" 
-      style={{ display: 'inline-block', verticalAlign: 'middle', margin: '0 4px' }}
+      style={{ 
+        display: node.attrs.display || 'inline-block',
+        verticalAlign: 'middle',
+        margin: node.attrs.margin || '0 4px',
+        float: node.attrs.float || 'none'
+      }}
     >
       <div
         ref={containerRef}
@@ -181,6 +186,31 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
         
         {selected && (
           <>
+            {/* Options de positionnement */}
+            <div className="absolute -top-12 left-0 bg-background border border-border rounded-md shadow-lg p-2 flex gap-2 z-20">
+              <button
+                onClick={() => updateAttributes({ float: 'left', margin: '0 1rem 1rem 0' })}
+                className="px-3 py-1 text-sm rounded hover:bg-accent"
+                title="Flottant à gauche"
+              >
+                ← Gauche
+              </button>
+              <button
+                onClick={() => updateAttributes({ float: 'none', margin: '1rem auto', display: 'block' })}
+                className="px-3 py-1 text-sm rounded hover:bg-accent"
+                title="Centré"
+              >
+                ⬌ Centre
+              </button>
+              <button
+                onClick={() => updateAttributes({ float: 'right', margin: '0 0 1rem 1rem' })}
+                className="px-3 py-1 text-sm rounded hover:bg-accent"
+                title="Flottant à droite"
+              >
+                Droite →
+              </button>
+            </div>
+            
             {/* Bordure de déplacement avec curseur move */}
             <div
               className="absolute inset-0 border-2 border-primary/50 rounded-lg cursor-move pointer-events-auto"
@@ -293,6 +323,30 @@ export const ResizableImage = Node.create({
             return {};
           }
           return { height: attributes.height };
+        },
+      },
+      float: {
+        default: 'none',
+        parseHTML: element => element.style.float || 'none',
+        renderHTML: attributes => {
+          if (!attributes.float || attributes.float === 'none') return {};
+          return { style: `float: ${attributes.float}` };
+        },
+      },
+      margin: {
+        default: '0 4px',
+        parseHTML: element => element.style.margin || '0 4px',
+        renderHTML: attributes => {
+          if (!attributes.margin) return {};
+          return { style: `margin: ${attributes.margin}` };
+        },
+      },
+      display: {
+        default: 'inline-block',
+        parseHTML: element => element.style.display || 'inline-block',
+        renderHTML: attributes => {
+          if (!attributes.display || attributes.display === 'inline-block') return {};
+          return { style: `display: ${attributes.display}` };
         },
       },
     };
