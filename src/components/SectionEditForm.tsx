@@ -90,6 +90,30 @@ export function SectionEditForm({
 
   return (
     <div className="fixed top-20 right-8 w-[800px] max-h-[calc(100vh-120px)] overflow-y-auto bg-background border rounded-lg p-4 shadow-2xl space-y-4 z-50">
+      {/* Boutons de sauvegarde en haut */}
+      <div className="flex items-center justify-between pb-2 border-b sticky top-0 bg-background z-10">
+        <h3 className="font-semibold text-lg">Édition</h3>
+        <div className="flex gap-2">
+          <Button 
+            type="button"
+            size="icon"
+            onClick={handleSave}
+            title="Enregistrer"
+          >
+            <Save className="h-5 w-5" />
+          </Button>
+          <Button 
+            type="button"
+            size="icon"
+            variant="outline"
+            onClick={handleCancel}
+            title="Annuler"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+      
       <Input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -97,28 +121,7 @@ export function SectionEditForm({
         className="font-semibold text-xl"
       />
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Couleur</label>
-          <div className="flex gap-2">
-            <Button 
-              type="button"
-              size="icon"
-              onClick={handleSave}
-              title="Enregistrer"
-            >
-              <Save className="h-4 w-4" />
-            </Button>
-            <Button 
-              type="button"
-              size="icon"
-              variant="outline"
-              onClick={handleCancel}
-              title="Annuler"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <label className="text-sm font-medium">Couleur</label>
         <div className="flex flex-wrap gap-2">
           {[
             { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
