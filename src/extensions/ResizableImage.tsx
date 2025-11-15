@@ -11,8 +11,6 @@ interface ExtendedNodeViewProps extends ReactNodeViewProps {
 
 const ResizableImageComponent = ({ node, updateAttributes, selected, editor, getPos, deleteNode }: ExtendedNodeViewProps) => {
   const [isResizing, setIsResizing] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragPreviewPos, setDragPreviewPos] = useState<{ top: number; left: number } | null>(null);
   const [hasError, setHasError] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: node.attrs.width || 300,
@@ -21,7 +19,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const startPosRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
-  const dragStartRef = useRef({ x: 0, y: 0 });
   const aspectRatioRef = useRef(1);
   const currentDimensionsRef = useRef({ width: 0, height: 0 });
 
@@ -51,75 +48,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
       setDimensions({ width: node.attrs.width, height: node.attrs.height });
     }
   }, [node.attrs.src, node.attrs.width, node.attrs.height]);
-
-  const handleDragStart = (e: React.MouseEvent) => {
-    if (isResizing) return;
-    e.preventDefault();
-    e.stopPropagation();
-    
-    setIsDragging(true);
-    dragStartRef.current = {
-      x: e.clientX,
-      y: e.clientY
-    };
-
-    const handleDragMove = (e: MouseEvent) => {
-      e.preventDefault();
-      
-      // Afficher un aperçu de la position où l'image sera insérée
-      const editorView = editor.view;
-      const editorRect = editorView.dom.getBoundingClientRect();
-      const coords = editorView.posAtCoords({ left: e.clientX, top: e.clientY });
-      
-      if (coords) {
-        // Calculer la position réelle dans l'éditeur en tenant compte du scroll
-        const scrollTop = editorView.dom.scrollTop || 0;
-        setDragPreviewPos({ 
-          top: e.clientY, 
-          left: editorRect.left + 20
-        });
-      }
-    };
-
-    const handleDragEnd = (e: MouseEvent) => {
-      setIsDragging(false);
-      setDragPreviewPos(null);
-      document.removeEventListener('mousemove', handleDragMove);
-      document.removeEventListener('mouseup', handleDragEnd);
-
-      // Trouver la position la plus proche dans l'éditeur
-      const pos = getPos();
-      if (typeof pos !== 'number') return;
-
-      const editorView = editor.view;
-      const coords = editorView.posAtCoords({ left: e.clientX, top: e.clientY });
-      
-      if (coords) {
-        const { state, dispatch } = editorView;
-        const nodeSize = node.nodeSize;
-        
-        // Créer une transaction pour déplacer l'image
-        const tr = state.tr;
-        
-        // Supprimer l'image de sa position actuelle
-        tr.delete(pos, pos + nodeSize);
-        
-        // Calculer la nouvelle position (en tenant compte de la suppression)
-        let newPos = coords.pos;
-        if (newPos > pos) {
-          newPos -= nodeSize;
-        }
-        
-        // Insérer l'image à la nouvelle position avec tous ses attributs
-        tr.insert(newPos, node);
-        
-        dispatch(tr);
-      }
-    };
-
-    document.addEventListener('mousemove', handleDragMove);
-    document.addEventListener('mouseup', handleDragEnd);
-  };
 
   const handleMouseDown = (e: React.MouseEvent, corner: string) => {
     e.preventDefault();
@@ -176,21 +104,20 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
 
   return (
     <>
-      <NodeViewWrapper 
-        className={`resizable-image-wrapper ${isDragging ? 'opacity-50' : ''}`}
-        style={{ 
-          display: node.attrs.display || 'inline-block',
-          verticalAlign: 'middle',
-          margin: node.attrs.margin || '0 4px',
-          float: node.attrs.float || 'none',
-          cursor: isDragging ? 'grabbing' : (selected ? 'grab' : 'default')
-        }}
+      <NodeViewWrapper
+        className="react-component"
+        data-drag-handle
       >
         <div
           ref={containerRef}
           className={`relative inline-block group ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''}`}
-          style={{ width: dimensions.width, height: dimensions.height, display: 'inline-block' }}
-          onMouseDown={selected ? handleDragStart : undefined}
+          style={{ 
+            width: dimensions.width, 
+            height: dimensions.height,
+            float: node.attrs.float || 'none',
+            margin: node.attrs.margin || '0 4px',
+            display: node.attrs.display || 'inline-block'
+          }}
         >
         {hasError ? (
           <div 
@@ -209,7 +136,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
             alt={node.attrs.alt || ''}
             title={node.attrs.title || ''}
             className="max-w-full h-auto rounded-lg block"
-            style={{ width: dimensions.width, height: dimensions.height }}
+            style={{ 
+              width: dimensions.width, 
+              height: dimensions.height,
+              maxWidth: '100%'
+            }}
             draggable={false}
             data-no-modal="true"
             onError={() => setHasError(true)}
@@ -234,9 +165,13 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  updateAttributes({ float: 'left', margin: '0 1rem 0.5rem 0', display: 'block' });
+                  updateAttributes({ 
+                    float: 'left', 
+                    margin: '0 1rem 0.5rem 0', 
+                    display: 'block' 
+                  });
                 }}
-                className="px-3 py-1 text-sm rounded hover:bg-accent"
+                className={`px-3 py-1 text-sm rounded hover:bg-accent ${node.attrs.float === 'left' ? 'bg-accent' : ''}`}
                 title="Flottant à gauche"
                 type="button"
               >
@@ -246,9 +181,13 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  updateAttributes({ float: 'none', margin: '1rem auto', display: 'block' });
+                  updateAttributes({ 
+                    float: 'none', 
+                    margin: '1rem auto', 
+                    display: 'block' 
+                  });
                 }}
-                className="px-3 py-1 text-sm rounded hover:bg-accent"
+                className={`px-3 py-1 text-sm rounded hover:bg-accent ${node.attrs.float === 'none' ? 'bg-accent' : ''}`}
                 title="Centré"
                 type="button"
               >
@@ -258,9 +197,13 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  updateAttributes({ float: 'right', margin: '0 0 0.5rem 1rem', display: 'block' });
+                  updateAttributes({ 
+                    float: 'right', 
+                    margin: '0 0 0.5rem 1rem', 
+                    display: 'block' 
+                  });
                 }}
-                className="px-3 py-1 text-sm rounded hover:bg-accent"
+                className={`px-3 py-1 text-sm rounded hover:bg-accent ${node.attrs.float === 'right' ? 'bg-accent' : ''}`}
                 title="Flottant à droite"
                 type="button"
               >
@@ -305,25 +248,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         )}
       </div>
     </NodeViewWrapper>
-    
-    {/* Indicateur de position de drop pendant le drag */}
-    {isDragging && dragPreviewPos && (
-      <div
-        style={{
-          position: 'fixed',
-          top: dragPreviewPos.top,
-          left: dragPreviewPos.left,
-          width: '3px',
-          height: '30px',
-          backgroundColor: 'hsl(var(--primary))',
-          pointerEvents: 'none',
-          zIndex: 9999,
-          transform: 'translateY(-15px)',
-          boxShadow: '0 0 10px hsl(var(--primary))',
-          borderRadius: '2px'
-        }}
-      />
-    )}
   </>
   );
 };
