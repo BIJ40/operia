@@ -5,6 +5,7 @@ import { AppSidebarApporteur } from '@/components/AppSidebarApporteur';
 import { Header } from '@/components/Header';
 import { Chatbot } from '@/components/Chatbot';
 import { ImageModal } from '@/components/ImageModal';
+import { Toaster } from '@/components/ui/toaster';
 
 interface LayoutProps {
   children: ReactNode;
@@ -32,6 +33,7 @@ export function Layout({ children, showHeader = true, showSidebar = true, sideba
 
       <ImageModal />
       <Chatbot />
+      <Toaster />
     </SidebarProvider>
   );
 }
