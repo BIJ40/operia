@@ -446,7 +446,6 @@ export default function Category() {
                 className="prose prose-sm max-w-none break-words overflow-visible"
                 dangerouslySetInnerHTML={{ __html: section.content }}
               />
-              <DocumentsList blockId={section.id} scope="apogee" />
             </AccordionContent>
           </div>
         </AccordionItem>
@@ -527,6 +526,8 @@ export default function Category() {
             </Button>
           </div>
         )}
+
+        <DocumentsList blockId={category.id} scope="apogee" />
       </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
