@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileText, Trash2, Download } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, Edit2 } from 'lucide-react';
 
 interface Block {
   id: string;
@@ -45,6 +45,10 @@ export default function AdminDocuments() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [editingDoc, setEditingDoc] = useState<Document | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editBlockId, setEditBlockId] = useState('');
 
   useEffect(() => {
     if (!isAdmin) {
@@ -192,6 +196,68 @@ export default function AdminDocuments() {
     }
   };
 
+  const startEditing = (doc: Document) => {
+    setEditingDoc(doc);
+    setEditTitle(doc.title);
+    setEditDescription(doc.description || '');
+    setEditBlockId(doc.scope === 'apogee' ? doc.block_id || '' : doc.apporteur_block_id || '');
+  };
+
+  const cancelEditing = () => {
+    setEditingDoc(null);
+    setEditTitle('');
+    setEditDescription('');
+    setEditBlockId('');
+  };
+
+  const saveEditing = async () => {
+    if (!editingDoc || !editTitle || !editBlockId) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez remplir tous les champs requis',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const updateData: any = {
+        title: editTitle,
+        description: editDescription || null,
+      };
+
+      if (editingDoc.scope === 'apogee') {
+        updateData.block_id = editBlockId;
+        updateData.apporteur_block_id = null;
+      } else {
+        updateData.apporteur_block_id = editBlockId;
+        updateData.block_id = null;
+      }
+
+      const { error } = await supabase
+        .from('documents')
+        .update(updateData)
+        .eq('id', editingDoc.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: 'Document modifié avec succès',
+      });
+
+      cancelEditing();
+      loadDocuments();
+    } catch (error) {
+      console.error('Error updating document:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de modifier le document',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getDownloadUrl = (filePath: string) => {
     const { data } = supabase.storage.from('documents').getPublicUrl(filePath);
     return data.publicUrl;
@@ -292,46 +358,101 @@ export default function AdminDocuments() {
           <div className="space-y-2 max-h-[600px] overflow-y-auto">
             {documents.map((doc) => (
               <Card key={doc.id} className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 flex-1">
-                    <FileText className="w-5 h-5 text-primary mt-1" />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate">{doc.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {getBlockTitle(doc)}
-                      </p>
-                      {doc.description && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {doc.description}
-                        </p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(doc.created_at).toLocaleDateString()}
-                      </p>
+                {editingDoc?.id === doc.id ? (
+                  // Edit mode
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="edit-title">Titre</Label>
+                      <Input
+                        id="edit-title"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-description">Description</Label>
+                      <Textarea
+                        id="edit-description"
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-block">Catégorie / Sous-catégorie</Label>
+                      <Select value={editBlockId} onValueChange={setEditBlockId}>
+                        <SelectTrigger id="edit-block">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {blocks.map((block) => (
+                            <SelectItem key={block.id} value={block.id}>
+                              {block.type === 'category' ? '📁 ' : '📂 '}
+                              {block.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button size="sm" variant="outline" onClick={cancelEditing}>
+                        Annuler
+                      </Button>
+                      <Button size="sm" onClick={saveEditing}>
+                        Enregistrer
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => window.open(getDownloadUrl(doc.file_path), '_blank')}
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(doc)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                ) : (
+                  // View mode
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3 flex-1">
+                      <FileText className="w-5 h-5 text-primary mt-1" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold truncate">{doc.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {getBlockTitle(doc)}
+                        </p>
+                        {doc.description && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {doc.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(doc.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(getDownloadUrl(doc.file_path), '_blank')}
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => startEditing(doc)}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(doc)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </Card>
             ))}
             {documents.length === 0 && (
               <Card className="p-8 text-center text-muted-foreground">
-                Aucun document pour cette section
+                Aucun document pour ce thème
               </Card>
             )}
           </div>
