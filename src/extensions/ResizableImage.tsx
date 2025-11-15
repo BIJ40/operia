@@ -264,25 +264,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         )}
       </div>
     </NodeViewWrapper>
-    
-    {/* Rectangle fantôme pendant le drag */}
-    {isDragging && dragPreviewPos && (
-      <div
-        style={{
-          position: 'fixed',
-          top: dragPreviewPos.y,
-          left: dragPreviewPos.x,
-          width: dimensions.width,
-          height: dimensions.height,
-          backgroundColor: 'hsl(var(--primary) / 0.15)',
-          border: '2px dashed hsl(var(--primary))',
-          borderRadius: '8px',
-          pointerEvents: 'none',
-          zIndex: 9999,
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-        }}
-      />
-    )}
   </>
   );
 };
