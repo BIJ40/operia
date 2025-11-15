@@ -64,11 +64,15 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
     };
 
     const handleDragMove = (e: MouseEvent) => {
-      if (!isDragging) return;
       e.preventDefault();
       
       // Afficher un aperçu de la position où l'image sera insérée
-      setDragPreviewPos({ top: e.clientY, left: e.clientX });
+      const editorView = editor.view;
+      const coords = editorView.posAtCoords({ left: e.clientX, top: e.clientY });
+      
+      if (coords) {
+        setDragPreviewPos({ top: e.clientY, left: e.clientX });
+      }
     };
 
     const handleDragEnd = (e: MouseEvent) => {
@@ -256,11 +260,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
               >
                 →
               </button>
-            </div>
-            
-            {/* Indication de déplacement - icône main */}
-            <div className="absolute -top-12 left-[180px] bg-background border border-border rounded-md shadow-lg px-2 py-1.5 z-20">
-              <Hand size={16} className="text-muted-foreground" />
             </div>
             
             {/* Corner resize handles */}
