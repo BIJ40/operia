@@ -323,22 +323,38 @@ div[data-callout] p {
 /* Make images in content clickable with cursor pointer and allow text wrapping */
 .prose img {
   @apply cursor-pointer transition-opacity hover:opacity-80;
+  max-width: 100%;
+  height: auto;
 }
 
 /* Allow text to wrap around images with float */
 .prose img[style*="float: left"],
 .prose img[style*="float:left"] {
-  @apply mr-4 mb-2;
   float: left !important;
+  margin-right: 1rem !important;
+  margin-bottom: 0.5rem !important;
+  max-width: 50% !important;
+  shape-outside: margin-box;
 }
 
 .prose img[style*="float: right"],
 .prose img[style*="float:right"] {
-  @apply ml-4 mb-2;
   float: right !important;
+  margin-left: 1rem !important;
+  margin-bottom: 0.5rem !important;
+  max-width: 50% !important;
+  shape-outside: margin-box;
 }
 
-/* Clear floats after images */
+/* Ensure paragraphs and lists don't clear the float */
+.prose p,
+.prose ul,
+.prose ol,
+.prose li {
+  clear: none !important;
+}
+
+/* Clear floats at the end of content blocks */
 .prose::after {
   content: "";
   display: table;
