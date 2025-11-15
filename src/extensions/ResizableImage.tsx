@@ -502,26 +502,9 @@ export const ResizableImage = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
+    // Ne pas appliquer les styles de positionnement ici
+    // Ils seront appliqués dans le composant React
     const styles: string[] = [];
-    
-    // Toujours réinitialiser le float d'abord
-    const floatValue = HTMLAttributes.float || 'none';
-    styles.push(`float: ${floatValue} !important`);
-    
-    // Ajouter margin selon le float
-    if (HTMLAttributes.margin) {
-      styles.push(`margin: ${HTMLAttributes.margin} !important`);
-    } else if (floatValue === 'left') {
-      styles.push('margin: 0 1rem 0.5rem 0 !important');
-    } else if (floatValue === 'right') {
-      styles.push('margin: 0 0 0.5rem 1rem !important');
-    } else {
-      styles.push('margin: 1rem auto !important');
-    }
-    
-    // Ajouter display
-    const displayValue = HTMLAttributes.display || (floatValue === 'none' ? 'block' : 'block');
-    styles.push(`display: ${displayValue} !important`);
     
     // Ajouter width et height si présents
     if (HTMLAttributes.width) {
@@ -531,17 +514,9 @@ export const ResizableImage = Node.create({
       styles.push(`height: ${HTMLAttributes.height}px`);
     }
     
-    // Max width pour les images flottantes
-    if (floatValue !== 'none') {
-      styles.push('max-width: 60%');
-    }
-    
-    // Autres styles
-    styles.push('vertical-align: middle');
-    
     return ['img', mergeAttributes(HTMLAttributes, { 
       class: 'rounded-lg',
-      style: styles.join('; ')
+      style: styles.length > 0 ? styles.join('; ') : undefined
     })];
   },
 
