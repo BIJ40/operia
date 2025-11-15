@@ -342,26 +342,44 @@ export const ResizableImage = Node.create({
       },
       float: {
         default: 'none',
-        parseHTML: element => element.style.float || 'none',
+        parseHTML: element => {
+          const float = element.style.float || element.getAttribute('data-float');
+          return float || 'none';
+        },
         renderHTML: attributes => {
           if (!attributes.float || attributes.float === 'none') return {};
-          return { style: `float: ${attributes.float}` };
+          return { 
+            'data-float': attributes.float,
+            style: `float: ${attributes.float}`
+          };
         },
       },
       margin: {
         default: '0 4px',
-        parseHTML: element => element.style.margin || '0 4px',
+        parseHTML: element => {
+          const margin = element.style.margin || element.getAttribute('data-margin');
+          return margin || '0 4px';
+        },
         renderHTML: attributes => {
           if (!attributes.margin) return {};
-          return { style: `margin: ${attributes.margin}` };
+          return { 
+            'data-margin': attributes.margin,
+            style: `margin: ${attributes.margin}`
+          };
         },
       },
       display: {
         default: 'inline-block',
-        parseHTML: element => element.style.display || 'inline-block',
+        parseHTML: element => {
+          const display = element.style.display || element.getAttribute('data-display');
+          return display || 'inline-block';
+        },
         renderHTML: attributes => {
           if (!attributes.display || attributes.display === 'inline-block') return {};
-          return { style: `display: ${attributes.display}` };
+          return { 
+            'data-display': attributes.display,
+            style: `display: ${attributes.display}`
+          };
         },
       },
     };
