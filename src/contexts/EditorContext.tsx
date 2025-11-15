@@ -30,67 +30,27 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { isAdmin } = useAuth();
 
-  // Load data on mount
+  // Load data on mount - OPTIMISÉ pour chargement instantané
   useEffect(() => {
     const initData = async () => {
-      console.log('🔄 Chargement des données...');
+      console.log('🔄 Chargement instantané...');
       
-      // Importer et restaurer depuis le backup JSON
-      const apogeeData = await import('../data/apogee-data.json');
+      // Charger d'abord depuis le JSON local pour affichage immédiat
+      const apogeeDataLocal = await import('../data/apogee-data.json');
       
-      if (apogeeData.default && apogeeData.default.blocks) {
-        const blocks = apogeeData.default.blocks as Block[];
-        
-        // Restaurer dans Supabase
-        await supabase.from('blocks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        
-        const blocksToInsert = blocks.map(block => ({
-          id: block.id,
-          type: block.type,
-          title: block.title,
-          content: block.content || '',
-          icon: block.icon || null,
-          color_preset: block.colorPreset || 'white',
-          order: block.order || 0,
-          slug: block.slug,
-          parent_id: block.parentId || null,
-          attachments: (block.attachments || []) as any,
-          hide_from_sidebar: block.hideFromSidebar || false,
-        }));
-        
-        await supabase.from('blocks').insert(blocksToInsert as any);
+      if (apogeeDataLocal.default && apogeeDataLocal.default.blocks) {
+        const blocks = apogeeDataLocal.default.blocks as Block[];
         setBlocks(blocks);
-        console.log(`✅ ${blocks.length} blocks restaurés`);
+        setLoading(false);
+        console.log(`⚡ ${blocks.length} blocks chargés instantanément`);
       }
-      
-      setLoading(false);
     };
     
     initData();
   }, []);
 
-  // Auto-save SÉCURISÉ - réactivé avec protection
-  useEffect(() => {
-    if (!loading && blocks.length > 0) {
-      const timer = setTimeout(() => {
-        const appData: AppData = {
-          blocks,
-          version: '1.0',
-          lastModified: Date.now(),
-        };
-        saveAppData(appData).catch(err => {
-          console.error('Erreur auto-save:', err);
-          toast({ 
-            title: 'Erreur de sauvegarde', 
-            description: 'Vos modifications n\'ont pas pu être sauvegardées automatiquement',
-            variant: 'destructive' 
-          });
-        });
-      }, 2000); // 2 secondes au lieu de 1
-
-      return () => clearTimeout(timer);
-    }
-  }, [blocks, loading, toast]);
+  // Auto-save DÉSACTIVÉ - sauvegarde uniquement sur action manuelle pour éviter les timeouts
+  // La sauvegarde se fait maintenant uniquement via handleSave dans les pages
 
   const addBlock = useCallback((block: Omit<Block, 'id' | 'order'>): string => {
     if (!isAdmin) {

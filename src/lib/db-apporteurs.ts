@@ -4,39 +4,64 @@ import { supabase } from '@/integrations/supabase/client';
 // Helpers DB spécifiques pour la table apporteur_blocks
 export async function saveApporteurData(data: AppData): Promise<void> {
   try {
-    // Sauvegarder dans Supabase (table apporteur_blocks)
-    const { error: deleteError } = await supabase
-      .from('apporteur_blocks' as any)
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
-
-    if (deleteError) throw deleteError;
-
-    if (data.blocks && data.blocks.length > 0) {
-      const { error: insertError } = await supabase
-        .from('apporteur_blocks' as any)
-        .insert(
-          data.blocks.map(block => ({
-            id: block.id,
-            type: block.type,
-            title: block.title,
-            content: block.content || '',
-            icon: block.icon || null,
-            color_preset: block.colorPreset || 'white',
-            order: block.order || 0,
-            slug: block.slug,
-            parent_id: block.parentId || null,
-            attachments: block.attachments || [],
-            hide_from_sidebar: block.hideFromSidebar || false,
-          }))
-        );
-
-      if (insertError) throw insertError;
+    if (!data.blocks || data.blocks.length === 0) {
+      console.warn('⚠️ Sauvegarde apporteurs annulée (0 blocks)');
+      return;
     }
 
-    console.log('✅ Données apporteurs sauvegardées sur le serveur');
+    console.log(`💾 Sauvegarde BATCH apporteurs: ${data.blocks.length} blocks...`);
+
+    const { data: existingBlocks } = await supabase
+      .from('apporteur_blocks' as any)
+      .select('id');
+    
+    const existingIds = new Set(existingBlocks?.map((b: any) => b.id) || []);
+    const newBlocks = data.blocks.filter(b => !existingIds.has(b.id));
+    const updateBlocks = data.blocks.filter(b => existingIds.has(b.id));
+
+    // Insert nouveaux
+    if (newBlocks.length > 0) {
+      const { error } = await supabase
+        .from('apporteur_blocks' as any)
+        .insert(newBlocks.map(block => ({
+          id: block.id,
+          type: block.type,
+          title: block.title,
+          content: block.content || '',
+          icon: block.icon || null,
+          color_preset: block.colorPreset || 'white',
+          order: block.order || 0,
+          slug: block.slug,
+          parent_id: block.parentId || null,
+          attachments: block.attachments || [],
+          hide_from_sidebar: block.hideFromSidebar || false,
+        })));
+      if (error) throw error;
+    }
+
+    // Update en batch avec upsert
+    if (updateBlocks.length > 0) {
+      const { error } = await supabase
+        .from('apporteur_blocks' as any)
+        .upsert(updateBlocks.map(block => ({
+          id: block.id,
+          type: block.type,
+          title: block.title,
+          content: block.content || '',
+          icon: block.icon || null,
+          color_preset: block.colorPreset || 'white',
+          order: block.order || 0,
+          slug: block.slug,
+          parent_id: block.parentId || null,
+          attachments: block.attachments || [],
+          hide_from_sidebar: block.hideFromSidebar || false,
+        })));
+      if (error) throw error;
+    }
+
+    console.log('✅ Apporteurs sauvegardés (BATCH optimisé)');
   } catch (error) {
-    console.error('❌ Erreur sauvegarde apporteurs Supabase:', error);
+    console.error('❌ Erreur sauvegarde apporteurs:', error);
     throw error;
   }
 }

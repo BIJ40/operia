@@ -31,11 +31,11 @@ export async function getDB(): Promise<IDBPDatabase<ApogeeDB>> {
 export async function saveAppData(data: AppData): Promise<void> {
   try {
     if (!data.blocks || data.blocks.length === 0) {
-      console.warn('⚠️ Tentative de sauvegarde avec 0 blocks - ANNULÉE pour éviter perte de données');
+      console.warn('⚠️ Tentative de sauvegarde avec 0 blocks - ANNULÉE');
       return;
     }
 
-    console.log(`💾 Sauvegarde de ${data.blocks.length} blocks...`);
+    console.log(`💾 Sauvegarde BATCH optimisée de ${data.blocks.length} blocks...`);
 
     // Récupérer les IDs existants
     const { data: existingBlocks } = await supabase
@@ -48,7 +48,7 @@ export async function saveAppData(data: AppData): Promise<void> {
     const blockIds = new Set(data.blocks.map(b => b.id));
     const toDelete = existingBlocks?.filter(b => !blockIds.has(b.id)) || [];
 
-    // 1. Insérer les nouveaux
+    // 1. Insérer les nouveaux EN BATCH
     if (newBlocks.length > 0) {
       const { error: insertError } = await supabase
         .from('blocks')
@@ -71,41 +71,43 @@ export async function saveAppData(data: AppData): Promise<void> {
       console.log(`✅ ${newBlocks.length} nouveaux blocks insérés`);
     }
 
-    // 2. Mettre à jour les existants UN PAR UN (plus sûr)
-    for (const block of updateBlocks) {
+    // 2. Mettre à jour EN BATCH avec upsert
+    if (updateBlocks.length > 0) {
       const { error: updateError } = await supabase
         .from('blocks')
-        .update({
-          type: block.type,
-          title: block.title,
-          content: block.content || '',
-          icon: block.icon || null,
-          color_preset: block.colorPreset || 'white',
-          order: block.order || 0,
-          slug: block.slug,
-          parent_id: block.parentId || null,
-          attachments: (block.attachments || []) as any,
-          hide_from_sidebar: block.hideFromSidebar || false,
-        } as any)
-        .eq('id', block.id);
-      
-      if (updateError) {
-        console.error(`❌ Erreur mise à jour block ${block.id}:`, updateError);
-      }
+        .upsert(
+          updateBlocks.map(block => ({
+            id: block.id,
+            type: block.type,
+            title: block.title,
+            content: block.content || '',
+            icon: block.icon || null,
+            color_preset: block.colorPreset || 'white',
+            order: block.order || 0,
+            slug: block.slug,
+            parent_id: block.parentId || null,
+            attachments: (block.attachments || []) as any,
+            hide_from_sidebar: block.hideFromSidebar || false,
+          })) as any
+        );
+      if (updateError) throw updateError;
+      console.log(`✅ ${updateBlocks.length} blocks mis à jour`);
     }
-    console.log(`✅ ${updateBlocks.length} blocks mis à jour`);
 
-    // 3. Supprimer UNIQUEMENT les blocks qui n'existent plus
+    // 3. Supprimer EN BATCH
     if (toDelete.length > 0) {
-      for (const block of toDelete) {
-        await supabase.from('blocks').delete().eq('id', block.id);
-      }
+      const idsToDelete = toDelete.map(b => b.id);
+      const { error: deleteError } = await supabase
+        .from('blocks')
+        .delete()
+        .in('id', idsToDelete);
+      if (deleteError) throw deleteError;
       console.log(`🗑️ ${toDelete.length} blocks supprimés`);
     }
 
-    console.log('✅ Sauvegarde complète réussie');
+    console.log('✅ Sauvegarde BATCH réussie');
   } catch (error) {
-    console.error('❌ Erreur sauvegarde Supabase:', error);
+    console.error('❌ Erreur sauvegarde:', error);
     throw error;
   }
 }
