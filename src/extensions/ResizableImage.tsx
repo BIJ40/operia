@@ -198,7 +198,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
                 title="Flottant à gauche"
                 type="button"
               >
-                ← Gauche
+                ←
               </button>
               <button
                 onClick={(e) => {
@@ -210,7 +210,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
                 title="Centré"
                 type="button"
               >
-                ⬌ Centre
+                ⬌
               </button>
               <button
                 onClick={(e) => {
@@ -222,7 +222,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
                 title="Flottant à droite"
                 type="button"
               >
-                Droite →
+                →
               </button>
             </div>
             
