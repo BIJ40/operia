@@ -161,20 +161,20 @@ function SortableSubcategory({
     <div ref={setNodeRef} style={style} className="group relative">
       <Link 
         to={`/apporteurs/category/${categorySlug}/sub/${subcategory.slug}`}
-        className={`block p-4 rounded-lg shadow-sm hover:shadow-md transition-all border ${colorClass}`}
+        className={`block p-3 rounded-lg shadow-sm hover:shadow-md transition-all border ${colorClass}`}
       >
-        <div className="flex flex-col items-center gap-3 p-2">
+        <div className="flex flex-col items-center gap-2 p-1">
           {subcategory.icon?.startsWith('http') ? (
             <img 
               src={subcategory.icon} 
               alt="" 
-              className="w-[90px] h-[90px] object-contain flex-shrink-0"
+              className="w-[70px] h-[70px] object-contain flex-shrink-0"
             />
           ) : LucideIcon ? (
-            <LucideIcon className="w-[90px] h-[90px] text-primary flex-shrink-0" />
+            <LucideIcon className="w-[70px] h-[70px] text-primary flex-shrink-0" />
           ) : null}
           {subcategory.showTitleOnCard !== false && (
-            <h3 className="text-base font-semibold text-center">{subcategory.title}</h3>
+            <h3 className="text-sm font-semibold text-center">{subcategory.title}</h3>
           )}
         </div>
       </Link>
