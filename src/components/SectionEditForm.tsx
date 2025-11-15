@@ -123,28 +123,35 @@ export function SectionEditForm({
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-lg">Édition</h3>
           <div className="flex gap-2">
-            <Button 
+            <button
               type="button"
-              size="icon"
               onClick={handleSave}
-              title="Enregistrer"
               disabled={isSaving}
-              key={isSaving ? 'saving' : 'idle'}
+              title="Enregistrer"
               style={{
-                backgroundColor: isSaving ? '#22c55e' : undefined,
-                color: isSaving ? '#ffffff' : undefined,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                borderRadius: '0.375rem',
+                border: isSaving ? 'none' : '1px solid hsl(var(--border))',
+                backgroundColor: isSaving ? '#22c55e' : 'transparent',
+                color: isSaving ? '#ffffff' : 'hsl(var(--foreground))',
                 transform: isSaving ? 'scale(1.3)' : 'scale(1)',
                 transition: 'all 0.3s ease',
-                boxShadow: isSaving ? '0 10px 25px -5px rgba(34, 197, 94, 0.5)' : undefined,
-                pointerEvents: isSaving ? 'none' : 'auto'
+                boxShadow: isSaving ? '0 10px 25px -5px rgba(34, 197, 94, 0.5)' : 'none',
+                cursor: isSaving ? 'not-allowed' : 'pointer',
+                pointerEvents: isSaving ? 'none' : 'auto',
+                opacity: isSaving ? 1 : 1,
               }}
             >
               {isSaving ? (
-                <Check className="h-5 w-5 animate-pulse" />
+                <Check className="h-5 w-5 animate-pulse" style={{ color: '#ffffff' }} />
               ) : (
                 <Save className="h-5 w-5" />
               )}
-            </Button>
+            </button>
             <Button 
               type="button"
               size="icon"
