@@ -439,6 +439,35 @@ export default function Landing() {
           </p>
         </div>
 
+        {/* Catégories principales */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <Link
+            to="/apogee"
+            className="group relative border-2 rounded-lg p-8 hover:shadow-xl transition-all bg-blue-50 border-blue-200 hover:border-blue-300"
+          >
+            <Icons.Home className="w-[120px] h-[120px] mx-auto mb-4 text-primary group-hover:scale-110 transition-transform" />
+            <h2 className="text-2xl font-bold text-foreground text-center">APOGEE</h2>
+          </Link>
+          <Link
+            to="/apporteurs"
+            className="group relative border-2 rounded-lg p-8 hover:shadow-xl transition-all bg-green-50 border-green-200 hover:border-green-300"
+          >
+            <Icons.Users className="w-[120px] h-[120px] mx-auto mb-4 text-primary group-hover:scale-110 transition-transform" />
+            <h2 className="text-2xl font-bold text-foreground text-center">APPORTEURS</h2>
+          </Link>
+          <Link
+            to="/"
+            className="group relative border-2 rounded-lg p-8 hover:shadow-xl transition-all bg-purple-50 border-purple-200 hover:border-purple-300"
+          >
+            <Icons.HeartHandshake className="w-[120px] h-[120px] mx-auto mb-4 text-primary group-hover:scale-110 transition-transform" />
+            <h2 className="text-2xl font-bold text-foreground text-center">HELPCONFORT</h2>
+          </Link>
+        </div>
+
+        <div className="border-t-2 pt-8 mb-8">
+          <h2 className="text-2xl font-semibold text-center mb-8">Accès rapides</h2>
+        </div>
+
         {isEditMode && isAdmin ? (
           <DndContext
             sensors={sensors}
