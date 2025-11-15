@@ -148,17 +148,12 @@ All colors MUST be HSL.
 .prose p {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
-  display: inline;
+  display: block;
   min-height: 1.5em;
 }
 
 .prose p:empty {
   min-height: 1.5em;
-  display: block;
-}
-
-.prose p:after {
-  content: "";
   display: block;
 }
 
@@ -325,59 +320,13 @@ div[data-callout] p {
   @apply text-sm text-gray-800 my-1;
 }
 
-/* Make images in content clickable with cursor pointer and allow text wrapping */
+/* Make images in content clickable with cursor pointer */
 .prose img {
   @apply cursor-pointer transition-opacity hover:opacity-80;
   max-width: 100%;
   height: auto;
-  display: inline;
-}
-
-/* Allow text to wrap around images with float */
-.prose img[style*="float: left"],
-.prose img[style*="float:left"] {
-  float: left !important;
-  margin-right: 1rem !important;
-  margin-bottom: 0.5rem !important;
-  margin-top: 0.25rem !important;
-  max-width: 50% !important;
-  shape-outside: margin-box;
-  display: block;
-}
-
-.prose img[style*="float: right"],
-.prose img[style*="float:right"] {
-  float: right !important;
-  margin-left: 1rem !important;
-  margin-bottom: 0.5rem !important;
-  margin-top: 0.25rem !important;
-  max-width: 50% !important;
-  shape-outside: margin-box;
-  display: block;
-}
-
-/* Force text content to flow around floated images */
-.prose {
-  overflow: auto;
-}
-
-/* Ensure paragraphs, lists flow around floated images */
-.prose p,
-.prose ul,
-.prose ol {
-  clear: none !important;
-  overflow: visible !important;
-}
-
-.prose li {
-  clear: none !important;
-}
-
-/* Clear floats at the end of content blocks */
-.prose::after {
-  content: "";
-  display: table;
-  clear: both;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 /* Make image modal buttons clickable in rendered content */

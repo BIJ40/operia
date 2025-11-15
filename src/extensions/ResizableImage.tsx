@@ -222,46 +222,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         
         {selected && (
           <>
-            {/* Options de positionnement */}
-            <div className="absolute -top-12 left-0 bg-background border border-border rounded-md shadow-lg p-2 flex gap-2 z-20">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  updateAttributes({ float: 'left', margin: '0 1rem 1rem 0', display: 'inline-block' });
-                }}
-                className="px-3 py-1 text-sm rounded hover:bg-accent"
-                title="Flottant à gauche"
-                type="button"
-              >
-                ←
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  updateAttributes({ float: 'none', margin: '1rem auto', display: 'block' });
-                }}
-                className="px-3 py-1 text-sm rounded hover:bg-accent"
-                title="Centré"
-                type="button"
-              >
-                ⬌
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  updateAttributes({ float: 'right', margin: '0 0 1rem 1rem', display: 'inline-block' });
-                }}
-                className="px-3 py-1 text-sm rounded hover:bg-accent"
-                title="Flottant à droite"
-                type="button"
-              >
-                →
-              </button>
-            </div>
-            
             {/* Corner resize handles */}
             <div
               className="absolute bottom-0 right-0 w-4 h-4 bg-primary rounded-full cursor-se-resize border-2 border-background shadow-md z-10"
