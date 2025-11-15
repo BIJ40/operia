@@ -355,9 +355,9 @@ export default function AdminDocuments() {
         {/* Documents list */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Documents uploadés</h2>
-          <div className="space-y-2 max-h-[600px] overflow-y-auto">
+          <div className="space-y-1 max-h-[600px] overflow-y-auto">
             {documents.map((doc) => (
-              <Card key={doc.id} className="p-4">
+              <Card key={doc.id} className="p-2">
                 {editingDoc?.id === doc.id ? (
                   // Edit mode
                   <div className="space-y-3">
@@ -404,46 +404,46 @@ export default function AdminDocuments() {
                     </div>
                   </div>
                 ) : (
-                  // View mode
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 flex-1">
-                      <FileText className="w-5 h-5 text-primary mt-1" />
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate">{doc.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {getBlockTitle(doc)}
-                        </p>
-                        {doc.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {doc.description}
-                          </p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(doc.created_at).toLocaleDateString()}
-                        </p>
+                  // View mode - compact single line
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <FileText className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                      <div className="flex items-center gap-2 flex-1 min-w-0 text-xs">
+                        <span className="font-medium truncate">{doc.title}</span>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-muted-foreground truncate">{getBlockTitle(doc)}</span>
+                        <span className="text-muted-foreground flex-shrink-0">
+                          {new Date(doc.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1 flex-shrink-0">
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
                         onClick={() => window.open(getDownloadUrl(doc.file_path), '_blank')}
+                        title="Télécharger"
                       >
-                        <Download className="w-4 h-4" />
+                        <Download className="w-3.5 h-3.5" />
                       </Button>
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
                         onClick={() => startEditing(doc)}
+                        title="Modifier"
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 className="w-3.5 h-3.5" />
                       </Button>
                       <Button
                         size="sm"
-                        variant="destructive"
+                        variant="ghost"
+                        className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                         onClick={() => handleDelete(doc)}
+                        title="Supprimer"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
