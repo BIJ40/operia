@@ -74,40 +74,20 @@ export function AppSidebar() {
   const scope = getScope();
   const isApogee = scope === 'guide-apogee';
 
-  // Extraire le slug de la catégorie actuelle depuis l'URL
-  const getCurrentCategorySlug = () => {
-    const match = location.pathname.match(/\/apogee\/category\/([^/]+)/);
-    return match ? match[1] : null;
-  };
-
-  const currentCategorySlug = getCurrentCategorySlug();
-  const currentCategory = blocks.find(b => b.type === 'category' && b.slug === currentCategorySlug);
-
   // Charger depuis blocks pour Apogée
   useEffect(() => {
     if (isApogee) {
-      // Si on est sur une page de catégorie spécifique, n'afficher que cette catégorie
-      if (currentCategorySlug && currentCategory) {
-        setBlockCategories([{
-          id: currentCategory.id,
-          title: currentCategory.title,
-          slug: currentCategory.slug,
-          icon: currentCategory.icon
-        }]);
-      } else {
-        // Sinon afficher toutes les catégories (pour la page d'accueil APOGEE)
-        const cats = blocks
-          .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
-          .sort((a, b) => a.order - b.order)
-          .map(b => ({
-            id: b.id,
-            title: b.title,
-            slug: b.slug,
-            icon: b.icon
-          }));
-        
-        setBlockCategories(cats);
-      }
+      const cats = blocks
+        .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
+        .sort((a, b) => a.order - b.order)
+        .map(b => ({
+          id: b.id,
+          title: b.title,
+          slug: b.slug,
+          icon: b.icon
+        }));
+      
+      setBlockCategories(cats);
       
       const secs = blocks
         .filter(b => b.type === 'section' && !b.hideFromSidebar)
@@ -122,7 +102,7 @@ export function AppSidebar() {
       
       setBlockSections(secs);
     }
-  }, [blocks, isApogee, currentCategorySlug, currentCategory]);
+  }, [blocks, isApogee]);
 
   // Charger depuis Supabase pour les autres pages
   useEffect(() => {
