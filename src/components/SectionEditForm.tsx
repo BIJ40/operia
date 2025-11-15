@@ -182,7 +182,7 @@ export function SectionEditForm({
           htmlFor="isSingleSection" 
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
         >
-          Section unique (pas de titre, toujours visible)
+          Section figée (pas de titre, toujours visible)
         </label>
       </div>
       <RichTextEditor

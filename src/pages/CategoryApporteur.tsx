@@ -11,6 +11,12 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -74,6 +80,7 @@ export default function CategoryApporteur() {
   );
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const savedScrollPositionRef = useRef<number>(0);
@@ -99,25 +106,19 @@ export default function CategoryApporteur() {
   }, [location.hash, sections]);
 
   const handleEdit = (id: string) => {
-    if (editingId) {
-      savedScrollPositionRef.current = window.scrollY;
-    }
     setEditingId(id);
+    setEditDialogOpen(true);
   };
 
   const handleSaveSection = (id: string, updates: any) => {
     updateBlock(id, updates);
     setEditingId(null);
-    setTimeout(() => {
-      window.scrollTo(0, savedScrollPositionRef.current);
-    }, 0);
+    setEditDialogOpen(false);
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
-    setTimeout(() => {
-      window.scrollTo(0, savedScrollPositionRef.current);
-    }, 0);
+    setEditDialogOpen(false);
   };
 
   const handleDelete = (id: string) => {
@@ -184,69 +185,79 @@ export default function CategoryApporteur() {
       transform,
       transition,
       isDragging,
-    } = useSortable({ id: section.id });
+    } = useSortable({ id: section.id, disabled: editingId !== null });
 
     const style = {
       transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.5 : 1,
+      transition: transition || 'transform 200ms ease',
+      opacity: isDragging ? 0.8 : 1,
+      zIndex: isDragging ? 50 : 'auto',
     };
 
-    // Si c'est une section unique, l'afficher sans accordéon
+    // Si c'est une section figée, l'afficher sans accordéon
     if (section.isSingleSection) {
       return (
-        <div ref={setNodeRef} style={style} className="bg-card border-2 rounded-lg p-6 shadow-sm">
-          {isEditMode && (
-            <div
-              {...attributes}
-              {...listeners}
-              className="float-left -ml-8 mr-2 cursor-grab active:cursor-grabbing"
-            >
-              <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
-            </div>
-          )}
-          {editingId === section.id ? (
-            <SectionEditForm
-              sectionId={section.id}
-              initialTitle={section.title}
-              initialContent={section.content}
-              initialColor={section.colorPreset}
-              initialHideFromSidebar={section.hideFromSidebar || false}
-              initialIsSingleSection={section.isSingleSection || false}
-              onSave={(data) => handleSaveSection(section.id, data)}
-              onCancel={handleCancelEdit}
+        <div ref={setNodeRef} style={style} className="mb-4">
+          <div className="rounded-lg relative bg-card border-2 p-6 shadow-sm">
+            {isEditMode && (
+              <div className="absolute top-2 right-2 flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="cursor-move"
+                  {...attributes}
+                  {...listeners}
+                >
+                  <GripVertical className="w-4 h-4" />
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      title="Changer de sous-catégorie"
+                    >
+                      <FolderInput className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-background border shadow-md z-[200]">
+                    {availableSubcategories
+                      .filter(sub => sub.id !== subcategory?.id)
+                      .map((sub) => (
+                        <DropdownMenuItem
+                          key={sub.id}
+                          onClick={() => updateBlock(section.id, { parentId: sub.id })}
+                        >
+                          {sub.title}
+                        </DropdownMenuItem>
+                      ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleEdit(section.id)}
+                >
+                  <Edit2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleDelete(section.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+            <div 
+              className="prose prose-sm max-w-none dark:prose-invert"
+              dangerouslySetInnerHTML={{ __html: section.content }}
             />
-          ) : (
-            <div>
-              <div 
-                className="prose prose-sm max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: section.content }}
-              />
-              
-              {isEditMode && (
-                <div className="flex gap-2 mt-4 pt-4 border-t">
-                  <Button
-                    onClick={() => handleEdit(section.id)}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    Modifier
-                  </Button>
-                  <Button
-                    onClick={() => handleDelete(section.id)}
-                    variant="destructive"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Supprimer
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
+          </div>
         </div>
       );
     }
@@ -254,123 +265,177 @@ export default function CategoryApporteur() {
     // Affichage normal avec accordéon
     return (
       <div ref={setNodeRef} style={style}>
-        <AccordionItem value={section.slug} id={section.slug}>
-          <div className="relative">
-            {isEditMode && (
-              <div
-                {...attributes}
-                {...listeners}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -ml-8 cursor-grab active:cursor-grabbing z-10"
-              >
-                <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
-              </div>
-            )}
-            <AccordionTrigger className="text-lg font-semibold hover:no-underline px-6 py-4 bg-muted/30 rounded-t-lg data-[state=open]:rounded-none">
-              {section.title}
-            </AccordionTrigger>
-          </div>
-          <AccordionContent className="px-6 py-4 bg-card border-x border-b rounded-b-lg">
-            {editingId === section.id ? (
-              <SectionEditForm
-                sectionId={section.id}
-                initialTitle={section.title}
-                initialContent={section.content}
-                initialColor={section.colorPreset}
-                initialHideFromSidebar={section.hideFromSidebar || false}
-                initialIsSingleSection={section.isSingleSection || false}
-                onSave={(data) => handleSaveSection(section.id, data)}
-                onCancel={handleCancelEdit}
-              />
-            ) : (
-              <div>
-                <div 
-                  className="prose prose-sm max-w-none dark:prose-invert"
-                  dangerouslySetInnerHTML={{ __html: section.content }}
-                />
-                
+        <AccordionItem value={section.slug} id={section.slug} className="mb-4">
+          <div className="rounded-lg relative bg-card border-2">
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-3 flex-1">
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+                  <h2 className="text-xl font-semibold text-left">
+                    {section.hideFromSidebar ? "💡 Info / Astuce" : section.title}
+                  </h2>
+                </div>
                 {isEditMode && (
-                  <div className="flex gap-2 mt-4 pt-4 border-t">
+                  <div 
+                    className="flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                  >
                     <Button
-                      onClick={() => handleEdit(section.id)}
-                      variant="outline"
+                      type="button"
                       size="sm"
-                      className="flex items-center gap-2"
+                      variant="ghost"
+                      className="cursor-move"
+                      {...attributes}
+                      {...listeners}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                      }}
+                    >
+                      <GripVertical className="w-4 h-4" />
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          title="Changer de sous-catégorie"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                          }}
+                        >
+                          <FolderInput className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-background border shadow-md z-[200]">
+                        {availableSubcategories
+                          .filter(sub => sub.id !== subcategory?.id)
+                          .map((sub) => (
+                            <DropdownMenuItem
+                              key={sub.id}
+                              onClick={() => updateBlock(section.id, { parentId: sub.id })}
+                            >
+                              {sub.title}
+                            </DropdownMenuItem>
+                          ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleEdit(section.id);
+                      }}
                     >
                       <Edit2 className="w-4 h-4" />
-                      Modifier
                     </Button>
                     <Button
-                      onClick={() => handleDelete(section.id)}
-                      variant="destructive"
+                      type="button"
                       size="sm"
-                      className="flex items-center gap-2"
+                      variant="ghost"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleDelete(section.id);
+                      }}
                     >
                       <Trash2 className="w-4 h-4" />
-                      Supprimer
                     </Button>
                   </div>
                 )}
               </div>
-            )}
-          </AccordionContent>
+            </AccordionTrigger>
+            <AccordionContent className="px-6 pb-6">
+              <div
+                className="prose prose-sm max-w-none break-words overflow-visible"
+                dangerouslySetInnerHTML={{ __html: section.content }}
+              />
+            </AccordionContent>
+          </div>
         </AccordionItem>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <div className="container max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-card border-2 rounded-lg p-6 mb-6 shadow-sm">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-            <span>{category.title}</span>
-            <span>/</span>
-            <span className="text-foreground font-semibold">{subcategory.title}</span>
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+        <div className="container max-w-4xl mx-auto px-4 py-8">
+          <div className="bg-card border-2 rounded-lg p-6 mb-6 shadow-sm">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+              <span>{category.title}</span>
+              <span>/</span>
+              <span className="text-foreground font-semibold">{subcategory.title}</span>
+            </div>
+            <h1 className="text-3xl font-bold text-foreground">{subcategory.title}</h1>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">{subcategory.title}</h1>
-        </div>
 
-        {isEditMode && (
-          <div className="mb-6">
-            <Button
-              onClick={handleAddSection}
-              className="w-full flex items-center justify-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Ajouter une section
-            </Button>
-          </div>
-        )}
+          {isEditMode && (
+            <div className="mb-6">
+              <Button
+                onClick={handleAddSection}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                Ajouter une section
+              </Button>
+            </div>
+          )}
 
-        <DndContext 
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext 
-            items={sections.map(s => s.id)}
-            strategy={verticalListSortingStrategy}
+          <DndContext 
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
           >
-            <Accordion 
-              type="multiple" 
-              value={openAccordions}
-              onValueChange={setOpenAccordions}
-              className="space-y-4"
+            <SortableContext 
+              items={sections.map(s => s.id)}
+              strategy={verticalListSortingStrategy}
             >
-              {sections.map((section, index) => (
-                <SortableSection key={section.id} section={section} index={index} />
-              ))}
-            </Accordion>
-          </SortableContext>
-        </DndContext>
+              <Accordion 
+                type="multiple" 
+                value={openAccordions}
+                onValueChange={setOpenAccordions}
+                className="space-y-4"
+              >
+                {sections.map((section, index) => (
+                  <SortableSection key={section.id} section={section} index={index} />
+                ))}
+              </Accordion>
+            </SortableContext>
+          </DndContext>
 
-        {sections.length === 0 && (
-          <div className="text-center py-12 bg-card border-2 rounded-lg">
-            <p className="text-muted-foreground text-lg">
-              Aucune section disponible pour cette catégorie
-            </p>
-          </div>
-        )}
+          {sections.length === 0 && (
+            <div className="text-center py-12 bg-card border-2 rounded-lg">
+              <p className="text-muted-foreground text-lg">
+                Aucune section disponible pour cette sous-catégorie
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -389,6 +454,29 @@ export default function CategoryApporteur() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Modifier la section</DialogTitle>
+          </DialogHeader>
+          {editingId && (
+            <SectionEditForm
+              sectionId={editingId}
+              initialTitle={sections.find(s => s.id === editingId)?.title || ''}
+              initialContent={sections.find(s => s.id === editingId)?.content || ''}
+              initialColor={sections.find(s => s.id === editingId)?.colorPreset || 'blue'}
+              initialHideFromSidebar={sections.find(s => s.id === editingId)?.hideFromSidebar || false}
+              initialIsSingleSection={sections.find(s => s.id === editingId)?.isSingleSection || false}
+              onSave={(data) => handleSaveSection(editingId, data)}
+              onCancel={() => {
+                setEditDialogOpen(false);
+                setEditingId(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
