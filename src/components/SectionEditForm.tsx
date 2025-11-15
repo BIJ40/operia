@@ -4,7 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { ColorPreset } from '@/types/block';
 import { useState, useEffect } from 'react';
-import { Save, X } from 'lucide-react';
+import { Save, X, Check } from 'lucide-react';
 
 interface SectionEditFormProps {
   sectionId: string;
@@ -50,6 +50,7 @@ export function SectionEditForm({
     const saved = sessionStorage.getItem(`${storageKey}-hide`);
     return saved ? saved === 'true' : initialHideFromSidebar;
   });
+  const [isSaving, setIsSaving] = useState(false);
 
   // Sauvegarder automatiquement l'état lors des modifications
   useEffect(() => {
@@ -76,9 +77,12 @@ export function SectionEditForm({
     sessionStorage.removeItem(`${storageKey}-hide`);
   };
 
-  const handleSave = () => {
-    onSave({ title, content, colorPreset: color, hideFromSidebar });
+  const handleSave = async () => {
+    setIsSaving(true);
+    await onSave({ title, content, colorPreset: color, hideFromSidebar });
     clearStorage();
+    // Petit délai pour montrer le feedback visuel
+    setTimeout(() => setIsSaving(false), 500);
   };
 
   const handleCancel = () => {
@@ -97,8 +101,10 @@ export function SectionEditForm({
             size="icon"
             onClick={handleSave}
             title="Enregistrer"
+            disabled={isSaving}
+            className={isSaving ? "bg-green-600 hover:bg-green-600" : ""}
           >
-            <Save className="h-5 w-5" />
+            {isSaving ? <Check className="h-5 w-5" /> : <Save className="h-5 w-5" />}
           </Button>
           <Button 
             type="button"

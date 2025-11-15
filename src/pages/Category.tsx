@@ -205,7 +205,11 @@ export default function Category() {
         lastModified: Date.now(),
       });
       
-      toast({ title: '✅ Sauvegardé', description: 'Modifications enregistrées en base de données' });
+      toast({ 
+        title: '✅ Sauvegardé', 
+        description: 'Modifications enregistrées',
+        duration: 2000 
+      });
       setEditingId(null);
     }
   };
