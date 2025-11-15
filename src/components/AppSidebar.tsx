@@ -168,8 +168,8 @@ export function AppSidebar() {
   if (!scope) return null;
 
   return (
-    <Sidebar className="bg-background" collapsible="icon">
-      <SidebarHeader className="p-4 border-b bg-background">
+    <Sidebar className="bg-background border-r sticky top-0 h-screen overflow-y-auto" collapsible="none">
+      <SidebarHeader className="p-4 border-b bg-background sticky top-0 z-10">
         <Link to="/" className="block" onClick={(e) => e.stopPropagation()}>
           <img 
             src={logoApogee} 
