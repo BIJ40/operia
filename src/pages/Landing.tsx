@@ -430,6 +430,9 @@ export default function Landing() {
         description: 'Section créée avec succès',
       });
       loadCards();
+      
+      // Recharger les blocks dans le contexte pour mettre à jour la sidebar
+      window.location.reload();
     } catch (error) {
       console.error('Error adding card:', error);
       toast({
