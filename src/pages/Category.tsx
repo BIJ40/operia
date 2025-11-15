@@ -210,6 +210,9 @@ export default function Category() {
         description: 'Modifications enregistrées',
         duration: 2000 
       });
+      
+      // Attendre 1 seconde avant de fermer le formulaire pour laisser voir le feedback visuel
+      await new Promise(resolve => setTimeout(resolve, 1000));
       setEditingId(null);
     }
   };

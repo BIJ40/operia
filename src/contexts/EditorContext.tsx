@@ -62,24 +62,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     initData();
   }, []);
 
-  // Auto-save silencieux en arrière-plan
-  useEffect(() => {
-    if (!loading && blocks.length > 0) {
-      const timer = setTimeout(() => {
-        const appData: AppData = {
-          blocks,
-          version: '1.0',
-          lastModified: Date.now(),
-        };
-        saveAppData(appData).catch(err => {
-          console.error('Erreur auto-save:', err);
-          // Pas de toast pour l'auto-save, seulement en cas de sauvegarde manuelle
-        });
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [blocks, loading]);
+  // Auto-save DÉSACTIVÉ - sauvegarde uniquement manuelle
+  // L'auto-save causait des sauvegardes incessantes et des notifications répétitives
 
   const addBlock = useCallback((block: Omit<Block, 'id' | 'order'>): string => {
     if (!isAdmin) {
