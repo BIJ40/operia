@@ -246,11 +246,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  updateAttributes({ 
-                    float: 'left', 
-                    margin: '0 1rem 0.5rem 0', 
-                    display: 'block' 
-                  });
+                  updateAttributes({ float: 'left' });
                 }}
                 className={`p-2 rounded hover:bg-accent ${node.attrs.float === 'left' ? 'bg-accent' : ''}`}
                 title="Flottant à gauche"
@@ -262,11 +258,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  updateAttributes({ 
-                    float: 'none', 
-                    margin: '1rem auto', 
-                    display: 'block' 
-                  });
+                  updateAttributes({ float: 'none' });
                 }}
                 className={`p-2 rounded hover:bg-accent ${node.attrs.float === 'none' || !node.attrs.float ? 'bg-accent' : ''}`}
                 title="Centré"
@@ -278,11 +270,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  updateAttributes({ 
-                    float: 'right', 
-                    margin: '0 0 0.5rem 1rem', 
-                    display: 'block' 
-                  });
+                  updateAttributes({ float: 'right' });
                 }}
                 className={`p-2 rounded hover:bg-accent ${node.attrs.float === 'right' ? 'bg-accent' : ''}`}
                 title="Flottant à droite"
