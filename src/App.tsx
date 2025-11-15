@@ -10,6 +10,7 @@ import ApporteurSubcategories from "./pages/ApporteurSubcategories";
 import Category from "./pages/Category";
 import CategoryApporteur from "./pages/CategoryApporteur";
 import Documents from "./pages/Documents";
+import AdminDocuments from "./pages/AdminDocuments";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
@@ -35,6 +36,7 @@ const App = () => (
                 <Route path="/apporteurs/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><ApporteurSubcategories /></Layout>} />
                 <Route path="/apporteurs/category/:slug/sub/:subslug" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><CategoryApporteur /></Layout>} />
                 <Route path="/documents" element={<Layout showHeader showSidebar={false}><Documents /></Layout>} />
+                <Route path="/admin/documents" element={<Layout showHeader showSidebar={false}><AdminDocuments /></Layout>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ApporteurEditorProvider>

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Home, Edit3, Square, LogIn } from 'lucide-react';
+import { LogOut, Home, Edit3, Square, LogIn, Settings } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -63,23 +63,33 @@ export function Header() {
           </Link>
 
           {isAdmin && (
-            <Button
-              onClick={handleEnrichirClick}
-              variant="ghost"
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-            >
-              {isEditMode ? (
-                <>
-                  <Square className="w-5 h-5 text-destructive" />
-                  <span className="font-semibold text-foreground">STOP</span>
-                </>
-              ) : (
-                <>
-                  <Edit3 className="w-5 h-5 text-primary" />
-                  <span className="font-semibold text-foreground">ENRICHIR</span>
-                </>
-              )}
-            </Button>
+            <>
+              <Button
+                onClick={handleEnrichirClick}
+                variant="ghost"
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+              >
+                {isEditMode ? (
+                  <>
+                    <Square className="w-5 h-5 text-destructive" />
+                    <span className="font-semibold text-foreground">STOP</span>
+                  </>
+                ) : (
+                  <>
+                    <Edit3 className="w-5 h-5 text-primary" />
+                    <span className="font-semibold text-foreground">ENRICHIR</span>
+                  </>
+                )}
+              </Button>
+
+              <Link
+                to="/admin/documents"
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+              >
+                <Settings className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-foreground">ADMIN</span>
+              </Link>
+            </>
           )}
 
           <div className="ml-auto flex items-center gap-2">
