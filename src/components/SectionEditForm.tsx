@@ -79,10 +79,22 @@ export function SectionEditForm({
 
   const handleSave = async () => {
     setIsSaving(true);
-    await onSave({ title, content, colorPreset: color, hideFromSidebar });
+    console.log('💾 Début sauvegarde...');
+    
+    try {
+      await onSave({ title, content, colorPreset: color, hideFromSidebar });
+      console.log('✅ Sauvegarde terminée');
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde:', error);
+    }
+    
     clearStorage();
-    // Petit délai pour montrer le feedback visuel
-    setTimeout(() => setIsSaving(false), 500);
+    
+    // Délai pour montrer le feedback visuel (icône verte)
+    setTimeout(() => {
+      console.log('🔄 Réinitialisation du bouton');
+      setIsSaving(false);
+    }, 1500);
   };
 
   const handleCancel = () => {
@@ -102,9 +114,13 @@ export function SectionEditForm({
             onClick={handleSave}
             title="Enregistrer"
             disabled={isSaving}
-            className={isSaving ? "bg-green-600 hover:bg-green-600" : ""}
+            className={isSaving ? "bg-green-500 hover:bg-green-500 text-white" : ""}
           >
-            {isSaving ? <Check className="h-5 w-5" /> : <Save className="h-5 w-5" />}
+            {isSaving ? (
+              <Check className="h-5 w-5 animate-in zoom-in duration-200" />
+            ) : (
+              <Save className="h-5 w-5" />
+            )}
           </Button>
           <Button 
             type="button"
