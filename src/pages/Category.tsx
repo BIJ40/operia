@@ -69,10 +69,6 @@ export default function Category() {
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   
-  if (!category) {
-    return <div className="container max-w-4xl mx-auto p-8">Catégorie non trouvée</div>;
-  }
-  
   // Liste des catégories disponibles (exclure FAQ)
   const availableCategories = useMemo(() =>
     blocks
@@ -95,6 +91,11 @@ export default function Category() {
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const savedScrollPositionRef = useRef<number>(0);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
+
+  // Early return AFTER all hooks
+  if (!category) {
+    return <div className="container max-w-4xl mx-auto p-8">Catégorie non trouvée</div>;
+  }
 
   // Ouvrir automatiquement la section depuis l'URL hash
   useEffect(() => {
