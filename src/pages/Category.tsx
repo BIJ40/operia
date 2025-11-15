@@ -337,14 +337,18 @@ export default function Category() {
         <AccordionItem value={section.id} id={section.id} className="mb-4">
           <div className={`rounded-lg relative ${getColorClass(section.colorPreset)}`}>
             {isEditMode && isAuthenticated && (
-              <div className="absolute top-2 right-2 z-10 flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm">
+              <div className="absolute top-2 right-2 z-50 flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-md pointer-events-auto"
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
                 <Button
                   type="button"
                   size="sm"
                   variant="ghost"
-                  className="cursor-move"
+                  className="cursor-move pointer-events-auto"
                   {...attributes}
                   {...listeners}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <GripVertical className="w-4 h-4" />
                 </Button>
@@ -355,6 +359,8 @@ export default function Category() {
                       size="sm"
                       variant="ghost"
                       title="Changer de catégorie"
+                      className="pointer-events-auto"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <FolderInput className="w-4 h-4" />
                     </Button>
@@ -365,7 +371,10 @@ export default function Category() {
                       .map((cat) => (
                         <DropdownMenuItem
                           key={cat.id}
-                          onClick={() => handleMoveToCategory(section.id, cat.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveToCategory(section.id, cat.id);
+                          }}
                         >
                           {cat.title}
                         </DropdownMenuItem>
@@ -376,7 +385,11 @@ export default function Category() {
                   type="button"
                   size="sm"
                   variant="ghost"
-                  onClick={() => handleEdit(section)}
+                  className="pointer-events-auto"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(section);
+                  }}
                 >
                   <Edit2 className="w-4 h-4" />
                 </Button>
@@ -384,7 +397,11 @@ export default function Category() {
                   type="button"
                   size="sm"
                   variant="ghost"
-                  onClick={() => handleDeleteClick(section.id)}
+                  className="pointer-events-auto"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick(section.id);
+                  }}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
