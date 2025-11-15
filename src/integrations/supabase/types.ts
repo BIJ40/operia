@@ -160,6 +160,63 @@ export type Database = {
         }
         Relationships: []
       }
+      documents: {
+        Row: {
+          apporteur_block_id: string | null
+          block_id: string | null
+          created_at: string
+          description: string | null
+          file_path: string
+          file_size: number | null
+          file_type: string
+          id: string
+          scope: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          apporteur_block_id?: string | null
+          block_id?: string | null
+          created_at?: string
+          description?: string | null
+          file_path: string
+          file_size?: number | null
+          file_type: string
+          id?: string
+          scope: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          apporteur_block_id?: string | null
+          block_id?: string | null
+          created_at?: string
+          description?: string | null
+          file_path?: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          scope?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_apporteur_block_id_fkey"
+            columns: ["apporteur_block_id"]
+            isOneToOne: false
+            referencedRelation: "apporteur_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       home_cards: {
         Row: {
           color_preset: string

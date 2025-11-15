@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { saveAppData } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput } from 'lucide-react';
+import { DocumentsList } from '@/components/DocumentsList';
 import {
   Accordion,
   AccordionContent,
@@ -445,6 +446,7 @@ export default function Category() {
                 className="prose prose-sm max-w-none break-words overflow-visible"
                 dangerouslySetInnerHTML={{ __html: section.content }}
               />
+              <DocumentsList blockId={section.id} scope="apogee" />
             </AccordionContent>
           </div>
         </AccordionItem>

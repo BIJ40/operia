@@ -4,6 +4,7 @@ import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput } from 'lucide-react';
+import { DocumentsList } from '@/components/DocumentsList';
 import {
   Accordion,
   AccordionContent,
@@ -380,6 +381,7 @@ export default function CategoryApporteur() {
                 className="prose prose-sm max-w-none break-words overflow-visible"
                 dangerouslySetInnerHTML={{ __html: section.content }}
               />
+              <DocumentsList blockId={section.id} scope="apporteur" />
             </AccordionContent>
           </div>
         </AccordionItem>
