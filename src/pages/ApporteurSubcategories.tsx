@@ -161,22 +161,20 @@ function SortableSubcategory({
     <div ref={setNodeRef} style={style} className="group relative">
       <Link 
         to={`/apporteurs/category/${categorySlug}/sub/${subcategory.slug}`}
-        className={`block p-3 rounded-lg shadow-sm hover:shadow-md transition-all border ${colorClass}`}
+        className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-sm hover:shadow-md transition-all border ${colorClass}`}
       >
-        <div className="flex flex-col items-center gap-2 p-1">
-          {subcategory.icon?.startsWith('http') ? (
-            <img 
-              src={subcategory.icon} 
-              alt="" 
-              className="w-[70px] h-[70px] object-contain flex-shrink-0"
-            />
-          ) : LucideIcon ? (
-            <LucideIcon className="w-[70px] h-[70px] text-primary flex-shrink-0" />
-          ) : null}
-          {subcategory.showTitleOnCard !== false && (
-            <h3 className="text-sm font-semibold text-center">{subcategory.title}</h3>
-          )}
-        </div>
+        {subcategory.icon?.startsWith('http') ? (
+          <img 
+            src={subcategory.icon} 
+            alt="" 
+            className="w-8 h-8 object-contain flex-shrink-0"
+          />
+        ) : LucideIcon ? (
+          <LucideIcon className="w-8 h-8 text-primary flex-shrink-0" />
+        ) : null}
+        {subcategory.showTitleOnCard !== false && (
+          <h3 className="text-sm font-semibold">{subcategory.title}</h3>
+        )}
       </Link>
 
       {isEditMode && (
