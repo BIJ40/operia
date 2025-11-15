@@ -99,14 +99,14 @@ export const ImageUploader = ({
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium">Image de la carte (30x30px recommandé)</label>
+      <label className="text-sm font-medium">Image de la carte (90x90px recommandé)</label>
       <div className="flex items-center gap-3">
         {previewUrl && (
           <div className="relative">
             <img 
               src={previewUrl} 
               alt="Preview" 
-              className="w-[30px] h-[30px] object-cover rounded border-2 border-border"
+              className="w-[90px] h-[90px] object-cover rounded border-2 border-border"
             />
             <button
               type="button"
