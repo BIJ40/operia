@@ -52,6 +52,14 @@ export function SectionEditForm({
   });
   const [isSaving, setIsSaving] = useState(false);
 
+  // Bloquer le scroll de la page derrière
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   // Sauvegarder automatiquement l'état lors des modifications
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}-title`, title);
@@ -99,7 +107,18 @@ export function SectionEditForm({
   };
 
   return (
-    <div className="fixed top-20 right-8 w-[800px] max-h-[calc(100vh-120px)] bg-background border rounded-lg shadow-2xl z-50 flex flex-col">
+    <>
+      {/* Backdrop pour bloquer les interactions avec la page derrière */}
+      <div 
+        className="fixed inset-0 bg-black/20 z-40"
+        onClick={handleCancel}
+      />
+      
+      {/* Fenêtre d'édition */}
+      <div 
+        className="fixed top-20 right-8 w-[800px] max-h-[calc(100vh-120px)] bg-background border rounded-lg shadow-2xl z-50 flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
       {/* Header FIXED au-dessus du scroll */}
       <div className="flex-shrink-0 bg-background px-4 pt-4 pb-3 border-b rounded-t-lg">
         <div className="flex items-center justify-between">
@@ -197,6 +216,7 @@ export function SectionEditForm({
         onChange={setContent}
       />
       </div>
-    </div>
+      </div>
+    </>
   );
 }
