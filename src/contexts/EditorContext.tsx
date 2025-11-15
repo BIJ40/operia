@@ -35,32 +35,25 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     const initData = async () => {
       console.log('🔄 Chargement des données...');
       
-      // Importer et restaurer depuis le backup JSON
-      const apogeeData = await import('../data/apogee-data.json');
-      
-      if (apogeeData.default && apogeeData.default.blocks) {
-        const blocks = apogeeData.default.blocks as Block[];
+      try {
+        // Charger depuis Supabase
+        const data = await loadAppData();
         
-        // Restaurer dans Supabase
-        await supabase.from('blocks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        
-        const blocksToInsert = blocks.map(block => ({
-          id: block.id,
-          type: block.type,
-          title: block.title,
-          content: block.content || '',
-          icon: block.icon || null,
-          color_preset: block.colorPreset || 'white',
-          order: block.order || 0,
-          slug: block.slug,
-          parent_id: block.parentId || null,
-          attachments: (block.attachments || []) as any,
-          hide_from_sidebar: block.hideFromSidebar || false,
-        }));
-        
-        await supabase.from('blocks').insert(blocksToInsert as any);
-        setBlocks(blocks);
-        console.log(`✅ ${blocks.length} blocks restaurés`);
+        if (data && data.blocks && data.blocks.length > 0) {
+          setBlocks(data.blocks);
+          console.log(`✅ ${data.blocks.length} blocks chargés depuis Supabase`);
+        } else {
+          console.log('⚠️ Aucune donnée en base, chargement du JSON par défaut');
+          const apogeeData = await import('../data/apogee-data.json');
+          
+          if (apogeeData.default && apogeeData.default.blocks) {
+            const blocks = apogeeData.default.blocks as Block[];
+            setBlocks(blocks);
+            console.log(`✅ ${blocks.length} blocks chargés depuis JSON`);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erreur chargement:', error);
       }
       
       setLoading(false);
