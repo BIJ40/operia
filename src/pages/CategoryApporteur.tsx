@@ -111,7 +111,12 @@ export default function CategoryApporteur() {
   };
 
   const handleSaveSection = (id: string, updates: any) => {
-    updateBlock(id, updates);
+    // S'assurer que isSingleSection est bien passé
+    const sectionUpdates = {
+      ...updates,
+      isSingleSection: updates.isSingleSection || false,
+    };
+    updateBlock(id, sectionUpdates);
     setEditingId(null);
     setEditDialogOpen(false);
   };
@@ -143,6 +148,7 @@ export default function CategoryApporteur() {
       slug: `section-${Date.now()}`,
       parentId: subcategory.id,
       attachments: [],
+      isSingleSection: false,
     });
   };
 
