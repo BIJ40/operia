@@ -324,17 +324,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
       </div>
     </NodeViewWrapper>
     
-    {/* Éditeur d'image Fabric.js */}
-    <ImageEditor
-      open={showEditor}
-      onClose={() => setShowEditor(false)}
-      imageUrl={node.attrs.src}
-      onSave={(newImageUrl) => {
-        updateAttributes({ src: newImageUrl });
-      }}
-    />
-    
-    
     {/* Rectangle fantôme pendant le drag */}
     {isDragging && dragPreviewPos && (
       <div
@@ -353,6 +342,16 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         }}
       />
     )}
+    
+    {/* Éditeur d'image Fabric.js - toujours rendu mais contrôlé par 'open' */}
+    <ImageEditor
+      open={showEditor}
+      onClose={() => setShowEditor(false)}
+      imageUrl={node.attrs.src}
+      onSave={(newImageUrl) => {
+        updateAttributes({ src: newImageUrl });
+      }}
+    />
   </>
   );
 };
