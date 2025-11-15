@@ -211,11 +211,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         
         {selected && (
           <>
-            {/* Indication de déplacement */}
-            <div className="absolute -top-16 left-0 bg-background border border-border rounded-md shadow-lg px-3 py-1.5 text-xs text-muted-foreground z-20">
-              Cliquez et glissez pour déplacer
-            </div>
-            
             {/* Options de positionnement */}
             <div className="absolute -top-12 left-0 bg-background border border-border rounded-md shadow-lg p-2 flex gap-2 z-20">
               <button
@@ -254,6 +249,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
               >
                 →
               </button>
+            </div>
+            
+            {/* Indication de déplacement - à droite */}
+            <div className="absolute -top-12 left-[180px] bg-background border border-border rounded-md shadow-lg px-3 py-1.5 text-xs text-muted-foreground whitespace-nowrap z-20">
+              ↔️ Glissez pour déplacer
             </div>
             
             {/* Corner resize handles */}
