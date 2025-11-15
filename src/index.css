@@ -332,6 +332,13 @@ div[data-callout] p {
   opacity: 0.8;
 }
 
+/* Clear floats */
+.prose::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
 /* Make image modal buttons clickable in rendered content */
 .prose button[data-image-modal],
 button[data-image-modal] {
