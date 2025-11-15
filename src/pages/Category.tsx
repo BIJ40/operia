@@ -335,19 +335,19 @@ export default function Category() {
     return (
       <div ref={setNodeRef} style={style}>
         <AccordionItem value={section.id} id={section.id} className="mb-4">
-          <div className={`rounded-lg relative ${getColorClass(section.colorPreset)}`}>
-            <div className="flex items-center px-6 py-4">
-              <AccordionTrigger className="flex-1 hover:no-underline py-0" asChild>
-                <button type="button" className="flex items-center gap-3 w-full text-left">
+          <div className={`rounded-lg ${getColorClass(section.colorPreset)}`}>
+            <div className="flex items-center gap-4 px-6 py-4">
+              <AccordionTrigger className="flex-1 hover:no-underline p-0 [&[data-state=open]>svg]:rotate-180">
+                <div className="flex items-center gap-3 w-full">
                   <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
-                  <h2 className="text-xl font-semibold">
+                  <h2 className="text-xl font-semibold text-left">
                     {section.hideFromSidebar ? "💡 Info / Astuce" : section.title}
                   </h2>
-                </button>
+                </div>
               </AccordionTrigger>
               
               {isEditMode && isAuthenticated && (
-                <div className="flex gap-2 ml-4 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-md">
+                <div className="flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-md shrink-0">
                   <Button
                     type="button"
                     size="sm"
