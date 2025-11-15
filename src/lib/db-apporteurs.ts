@@ -35,6 +35,9 @@ export async function saveApporteurData(data: AppData): Promise<void> {
           parent_id: block.parentId || null,
           attachments: block.attachments || [],
           hide_from_sidebar: block.hideFromSidebar || false,
+          show_title_on_card: block.showTitleOnCard !== false,
+          show_title_in_menu: block.showTitleInMenu !== false,
+          is_single_section: block.isSingleSection || false,
         })));
       if (error) throw error;
     }
@@ -55,6 +58,9 @@ export async function saveApporteurData(data: AppData): Promise<void> {
           parent_id: block.parentId || null,
           attachments: block.attachments || [],
           hide_from_sidebar: block.hideFromSidebar || false,
+          show_title_on_card: block.showTitleOnCard !== false,
+          show_title_in_menu: block.showTitleInMenu !== false,
+          is_single_section: block.isSingleSection || false,
         })));
       if (error) throw error;
     }
@@ -84,7 +90,7 @@ export async function loadApporteurData(): Promise<AppData | null> {
     const appData: AppData = {
       blocks: blocks.map((block: any) => ({
         id: block.id,
-        type: block.type as 'category' | 'section',
+        type: block.type as 'category' | 'subcategory' | 'section',
         title: block.title,
         content: block.content,
         icon: block.icon || undefined,
@@ -94,6 +100,9 @@ export async function loadApporteurData(): Promise<AppData | null> {
         parentId: block.parent_id || undefined,
         attachments: Array.isArray(block.attachments) ? block.attachments : [],
         hideFromSidebar: block.hide_from_sidebar || false,
+        showTitleOnCard: block.show_title_on_card !== false,
+        showTitleInMenu: block.show_title_in_menu !== false,
+        isSingleSection: block.is_single_section || false,
       })),
       version: '1.0',
       lastModified: Date.now(),
