@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { ColorPreset } from '@/types/block';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Save, X, Check } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface SectionEditFormProps {
   sectionId: string;
@@ -51,6 +52,7 @@ export function SectionEditForm({
     return saved ? saved === 'true' : initialHideFromSidebar;
   });
   const [isSaving, setIsSaving] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Bloquer le scroll de la page derrière
   useEffect(() => {
@@ -85,32 +87,43 @@ export function SectionEditForm({
     sessionStorage.removeItem(`${storageKey}-hide`);
   };
 
-  const handleSave = async (e: React.MouseEvent) => {
+  const handleSave = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Empêcher tout scroll
-    const scrollContainer = document.querySelector('.flex-1.overflow-y-auto');
-    const currentScrollTop = scrollContainer?.scrollTop || 0;
+    // Sauvegarder la position de scroll AVANT tout
+    const currentScroll = scrollContainerRef.current?.scrollTop || 0;
     
-    console.log('🔵 AVANT setIsSaving(true)');
     setIsSaving(true);
-    console.log('🟢 APRÈS setIsSaving(true) - isSaving devrait être true');
     
-    await onSave({ title, content, colorPreset: color, hideFromSidebar });
-    clearStorage();
-    
-    // Restaurer la position de scroll
-    if (scrollContainer) {
-      scrollContainer.scrollTop = currentScrollTop;
+    try {
+      await onSave({ title, content, colorPreset: color, hideFromSidebar });
+      clearStorage();
+      
+      // Toast de confirmation
+      toast({
+        title: "✓ Enregistré",
+        description: "Les modifications ont été sauvegardées",
+        duration: 2000,
+      });
+      
+      // Réinitialiser l'état après 2s
+      setTimeout(() => setIsSaving(false), 2000);
+    } catch (error) {
+      setIsSaving(false);
+      toast({
+        title: "✗ Erreur",
+        description: "Impossible de sauvegarder",
+        variant: "destructive",
+      });
     }
     
-    console.log('🟡 Sauvegarde terminée, attente avant reset');
-    // Réinitialiser après que Category.tsx ait fermé la fenêtre
+    // Restaurer la position de scroll APRÈS tout
     setTimeout(() => {
-      console.log('🔴 setIsSaving(false)');
-      setIsSaving(false);
-    }, 2000);
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = currentScroll;
+      }
+    }, 0);
   };
 
   const handleCancel = () => {
@@ -170,7 +183,7 @@ export function SectionEditForm({
       </div>
 
       {/* Contenu scrollable */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
       <Input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
