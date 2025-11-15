@@ -4,6 +4,7 @@ import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, X } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useState, useMemo } from 'react';
 import { ColorPicker } from '@/components/ColorPicker';
@@ -96,6 +97,11 @@ function SortableSubcategory({
   };
 
   const colorClass = `color-${subcategory.colorPreset}`;
+  
+  // Récupérer l'icône Lucide
+  const LucideIcon = subcategory.icon && !subcategory.icon.startsWith('http') 
+    ? (Icons as any)[subcategory.icon] || Icons.BookOpen
+    : null;
 
   if (isEditing) {
     return (
@@ -164,6 +170,8 @@ function SortableSubcategory({
               alt="" 
               className="w-[120px] h-[120px] object-contain flex-shrink-0"
             />
+          ) : LucideIcon ? (
+            <LucideIcon className="w-[120px] h-[120px] text-primary flex-shrink-0" />
           ) : null}
           {subcategory.showTitleOnCard !== false && (
             <h3 className="text-base font-semibold text-center">{subcategory.title}</h3>
