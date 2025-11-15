@@ -184,7 +184,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         className="react-component"
         data-drag-handle
         style={{
-          cursor: isDragging ? 'grabbing' : (selected ? 'grab' : 'default')
+          cursor: isDragging ? 'grabbing' : (selected ? 'grab' : 'default'),
+          float: node.attrs.float || 'none',
+          margin: node.attrs.margin || '0 4px',
+          display: node.attrs.display || 'inline-block',
+          maxWidth: (node.attrs.float && node.attrs.float !== 'none') ? '60%' : '100%'
         }}
       >
         <div
@@ -192,10 +196,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
           className={`relative inline-block group ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''} ${isDragging ? 'opacity-30' : ''}`}
           style={{ 
             width: dimensions.width, 
-            height: dimensions.height,
-            float: node.attrs.float || 'none',
-            margin: node.attrs.margin || '0 4px',
-            display: node.attrs.display || 'inline-block'
+            height: dimensions.height
           }}
           onMouseDown={selected ? handleDragStart : undefined}
         >
