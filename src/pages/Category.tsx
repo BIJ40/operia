@@ -323,7 +323,7 @@ export default function Category() {
       transform,
       transition,
       isDragging,
-    } = useSortable({ id: section.id, disabled: editingId !== null });
+    } = useSortable({ id: section.id, disabled: editingSection !== null });
 
     const style = {
       transform: CSS.Transform.toString(transform),
