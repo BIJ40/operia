@@ -1,8 +1,7 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer, NodeViewWrapper, ReactNodeViewProps } from '@tiptap/react';
 import { useState, useRef, useEffect } from 'react';
-import { Edit } from 'lucide-react';
-import { ImageEditor } from '@/components/ImageEditor';
+import { AlignLeft, AlignCenter, AlignRight, Layers, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface ExtendedNodeViewProps extends ReactNodeViewProps {
   editor: any;
@@ -15,7 +14,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
   const [isDragging, setIsDragging] = useState(false);
   const [dragPreviewPos, setDragPreviewPos] = useState<{ x: number; y: number } | null>(null);
   const [hasError, setHasError] = useState(false);
-  const [showEditor, setShowEditor] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: node.attrs.width || 300,
     height: node.attrs.height || 200,
@@ -230,22 +228,81 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
           />
         )}
         
-        {/* Bouton d'édition au survol */}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setShowEditor(true);
-          }}
-          className="absolute top-2 right-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity shadow-lg flex items-center gap-1"
-          type="button"
-        >
-          <Edit className="h-4 w-4" />
-          <span>Éditer</span>
-        </button>
-        
+        {/* Contrôles de positionnement */}
         {selected && (
           <>
+            <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-background border border-border rounded-lg shadow-lg p-2 flex gap-1 z-20">
+              {/* Alignement */}
+              <div className="flex gap-1 border-r border-border pr-2">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    updateAttributes({ float: 'left', margin: '0 16px 8px 0' });
+                  }}
+                  className={`p-2 rounded hover:bg-accent ${node.attrs.float === 'left' ? 'bg-accent' : ''}`}
+                  title="Texte à droite"
+                  type="button"
+                >
+                  <AlignLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    updateAttributes({ float: 'none', margin: '8px auto', display: 'block' });
+                  }}
+                  className={`p-2 rounded hover:bg-accent ${node.attrs.float === 'none' || !node.attrs.float ? 'bg-accent' : ''}`}
+                  title="Centré"
+                  type="button"
+                >
+                  <AlignCenter className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    updateAttributes({ float: 'right', margin: '0 0 8px 16px' });
+                  }}
+                  className={`p-2 rounded hover:bg-accent ${node.attrs.float === 'right' ? 'bg-accent' : ''}`}
+                  title="Texte à gauche"
+                  type="button"
+                >
+                  <AlignRight className="h-4 w-4" />
+                </button>
+              </div>
+              
+              {/* Z-index */}
+              <div className="flex gap-1 pl-2">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const currentZ = node.attrs.zIndex || 0;
+                    updateAttributes({ zIndex: currentZ + 1 });
+                  }}
+                  className="p-2 rounded hover:bg-accent"
+                  title="Mettre au premier plan"
+                  type="button"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const currentZ = node.attrs.zIndex || 0;
+                    updateAttributes({ zIndex: Math.max(0, currentZ - 1) });
+                  }}
+                  className="p-2 rounded hover:bg-accent"
+                  title="Mettre en arrière-plan"
+                  type="button"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            
             {/* Corner resize handles */}
             <div
               className="absolute bottom-0 right-0 w-4 h-4 bg-primary rounded-full cursor-se-resize border-2 border-background shadow-md z-10"
@@ -302,16 +359,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         }}
       />
     )}
-    
-    {/* Éditeur d'image Fabric.js - toujours rendu mais contrôlé par 'open' */}
-    <ImageEditor
-      open={showEditor}
-      onClose={() => setShowEditor(false)}
-      imageUrl={node.attrs.src}
-      onSave={(newImageUrl) => {
-        updateAttributes({ src: newImageUrl });
-      }}
-    />
   </>
   );
 };
@@ -407,6 +454,16 @@ export const ResizableImage = Node.create({
           return {};
         },
       },
+      zIndex: {
+        default: 0,
+        parseHTML: element => {
+          const zIndex = element.style.zIndex;
+          return zIndex ? parseInt(zIndex, 10) : 0;
+        },
+        renderHTML: attributes => {
+          return {};
+        },
+      },
     };
   },
 
@@ -442,6 +499,7 @@ export const ResizableImage = Node.create({
 
   renderHTML({ HTMLAttributes }) {
     const classes = ['rounded-lg'];
+    const styles: Record<string, string> = {};
     
     // Ajouter les classes de float
     if (HTMLAttributes.float === 'left') {
@@ -452,8 +510,15 @@ export const ResizableImage = Node.create({
       classes.push('image-center');
     }
     
+    // Ajouter z-index
+    if (HTMLAttributes.zIndex) {
+      styles['z-index'] = HTMLAttributes.zIndex;
+      styles['position'] = 'relative';
+    }
+    
     return ['img', mergeAttributes(HTMLAttributes, { 
-      class: classes.join(' ')
+      class: classes.join(' '),
+      style: Object.entries(styles).map(([k, v]) => `${k}:${v}`).join(';')
     })];
   },
 
