@@ -456,7 +456,7 @@ export default function ApporteurGuide() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
               type="text"
-              placeholder="Rechercher une catégorie..."
+              placeholder="Rechercher un apporteur..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-card border-2"
