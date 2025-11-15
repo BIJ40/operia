@@ -1,7 +1,8 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer, NodeViewWrapper, ReactNodeViewProps } from '@tiptap/react';
 import { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Minus, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Minus, ArrowRight, Edit } from 'lucide-react';
+import { ImageEditor } from '@/components/ImageEditor';
 
 interface ExtendedNodeViewProps extends ReactNodeViewProps {
   editor: any;
@@ -14,6 +15,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
   const [isDragging, setIsDragging] = useState(false);
   const [dragPreviewPos, setDragPreviewPos] = useState<{ x: number; y: number } | null>(null);
   const [hasError, setHasError] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: node.attrs.width || 300,
     height: node.attrs.height || 200,
@@ -228,14 +230,18 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
           />
         )}
         
-        {/* Bouton "Voir l'image" qui apparaît au survol */}
+        {/* Bouton d'édition au survol */}
         <button
-          data-image-modal={node.attrs.src}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setShowEditor(true);
+          }}
           className="absolute top-2 right-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity shadow-lg flex items-center gap-1"
           type="button"
         >
-          <span>👁️</span>
-          <span>Voir</span>
+          <Edit className="h-4 w-4" />
+          <span>Éditer</span>
         </button>
         
         {selected && (
@@ -317,6 +323,17 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         )}
       </div>
     </NodeViewWrapper>
+    
+    {/* Éditeur d'image Fabric.js */}
+    <ImageEditor
+      open={showEditor}
+      onClose={() => setShowEditor(false)}
+      imageUrl={node.attrs.src}
+      onSave={(newImageUrl) => {
+        updateAttributes({ src: newImageUrl });
+      }}
+    />
+    
     
     {/* Rectangle fantôme pendant le drag */}
     {isDragging && dragPreviewPos && (
