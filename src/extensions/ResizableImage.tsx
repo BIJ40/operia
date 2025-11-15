@@ -4,16 +4,13 @@ import { useState, useRef, useEffect } from 'react';
 
 const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNodeViewProps) => {
   const [isResizing, setIsResizing] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: node.attrs.width || 300,
     height: node.attrs.height || 200,
   });
   const imageRef = useRef<HTMLImageElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const startPosRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
-  const dragStartRef = useRef({ x: 0, y: 0 });
   const aspectRatioRef = useRef(1);
   const currentDimensionsRef = useRef({ width: 0, height: 0 });
 
@@ -97,44 +94,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  const handleDragStart = (e: React.MouseEvent) => {
-    if (isResizing) return;
-    
-    e.preventDefault();
-    e.stopPropagation();
-    
-    setIsDragging(true);
-    dragStartRef.current = {
-      x: e.clientX,
-      y: e.clientY,
-    };
-
-    const handleDragMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - dragStartRef.current.x;
-      const deltaY = moveEvent.clientY - dragStartRef.current.y;
-      
-      // Déplacer le conteneur
-      if (containerRef.current) {
-        containerRef.current.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-      }
-    };
-
-    const handleDragEnd = () => {
-      setIsDragging(false);
-      
-      // Réinitialiser la position (Tiptap gère la position dans le document)
-      if (containerRef.current) {
-        containerRef.current.style.transform = '';
-      }
-      
-      document.removeEventListener('mousemove', handleDragMove);
-      document.removeEventListener('mouseup', handleDragEnd);
-    };
-
-    document.addEventListener('mousemove', handleDragMove);
-    document.addEventListener('mouseup', handleDragEnd);
-  };
-
   return (
     <NodeViewWrapper 
       className="resizable-image-wrapper" 
@@ -146,7 +105,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
       }}
     >
       <div
-        ref={containerRef}
         className={`relative inline-block group ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''}`}
         style={{ width: dimensions.width, height: dimensions.height, display: 'inline-block' }}
       >
@@ -225,25 +183,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
                 →
               </button>
             </div>
-            
-            {/* Bordure de déplacement avec curseur move */}
-            <div
-              className="absolute inset-0 border-2 border-primary/50 rounded-lg cursor-move pointer-events-auto"
-              onMouseDown={handleDragStart}
-              style={{ 
-                borderStyle: isDragging ? 'solid' : 'dashed',
-                opacity: isDragging ? 0.8 : 0,
-                transition: 'opacity 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = '0.5';
-              }}
-              onMouseLeave={(e) => {
-                if (!isDragging) {
-                  e.currentTarget.style.opacity = '0';
-                }
-              }}
-            />
             
             {/* Corner resize handles */}
             <div
