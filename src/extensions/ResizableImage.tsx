@@ -393,9 +393,39 @@ export const ResizableImage = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
+    const styles = ['display: inline-block', 'vertical-align: middle', 'margin: 0 4px'];
+    
+    if (HTMLAttributes.style) {
+      // Merge with existing styles
+      const existingStyles = HTMLAttributes.style.split(';').filter((s: string) => s.trim());
+      styles.push(...existingStyles);
+    }
+    
+    if (HTMLAttributes.float && HTMLAttributes.float !== 'none') {
+      styles.push(`float: ${HTMLAttributes.float}`);
+    }
+    
+    if (HTMLAttributes.margin) {
+      const marginIndex = styles.findIndex(s => s.trim().startsWith('margin:'));
+      if (marginIndex >= 0) {
+        styles[marginIndex] = `margin: ${HTMLAttributes.margin}`;
+      } else {
+        styles.push(`margin: ${HTMLAttributes.margin}`);
+      }
+    }
+    
+    if (HTMLAttributes.display && HTMLAttributes.display !== 'inline-block') {
+      const displayIndex = styles.findIndex(s => s.trim().startsWith('display:'));
+      if (displayIndex >= 0) {
+        styles[displayIndex] = `display: ${HTMLAttributes.display}`;
+      } else {
+        styles.push(`display: ${HTMLAttributes.display}`);
+      }
+    }
+    
     return ['img', mergeAttributes(HTMLAttributes, { 
       class: 'rounded-lg',
-      style: 'display: inline-block; vertical-align: middle; margin: 0 4px;'
+      style: styles.join('; ')
     })];
   },
 
