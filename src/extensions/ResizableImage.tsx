@@ -66,7 +66,15 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
 
     const handleDragMove = (e: MouseEvent) => {
       e.preventDefault();
-      setDragPreviewPos({ x: e.clientX, y: e.clientY });
+      
+      const editorView = editor.view;
+      const coords = editorView.posAtCoords({ left: e.clientX, top: e.clientY });
+      
+      if (coords) {
+        // Obtenir les coordonnées du DOM pour cette position
+        const domCoords = editorView.coordsAtPos(coords.pos);
+        setDragPreviewPos({ x: domCoords.left, y: domCoords.top });
+      }
     };
 
     const handleDragEnd = (e: MouseEvent) => {
@@ -312,11 +320,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
       <div
         style={{
           position: 'fixed',
-          top: dragPreviewPos.y - dimensions.height / 2,
-          left: dragPreviewPos.x - dimensions.width / 2,
+          top: dragPreviewPos.y,
+          left: dragPreviewPos.x,
           width: dimensions.width,
           height: dimensions.height,
-          backgroundColor: 'hsl(var(--primary) / 0.2)',
+          backgroundColor: 'hsl(var(--primary) / 0.15)',
           border: '2px dashed hsl(var(--primary))',
           borderRadius: '8px',
           pointerEvents: 'none',
@@ -469,31 +477,36 @@ export const ResizableImage = Node.create({
   renderHTML({ HTMLAttributes }) {
     const styles: string[] = [];
     
-    // Ajouter float en priorité
-    if (HTMLAttributes.float && HTMLAttributes.float !== 'none') {
-      styles.push(`float: ${HTMLAttributes.float} !important`);
-    }
+    // Toujours réinitialiser le float d'abord
+    const floatValue = HTMLAttributes.float || 'none';
+    styles.push(`float: ${floatValue} !important`);
     
-    // Ajouter margin
+    // Ajouter margin selon le float
     if (HTMLAttributes.margin) {
       styles.push(`margin: ${HTMLAttributes.margin} !important`);
+    } else if (floatValue === 'left') {
+      styles.push('margin: 0 1rem 0.5rem 0 !important');
+    } else if (floatValue === 'right') {
+      styles.push('margin: 0 0 0.5rem 1rem !important');
     } else {
-      styles.push('margin: 0 4px !important');
+      styles.push('margin: 1rem auto !important');
     }
     
     // Ajouter display
-    if (HTMLAttributes.display) {
-      styles.push(`display: ${HTMLAttributes.display} !important`);
-    } else {
-      styles.push('display: inline-block !important');
-    }
+    const displayValue = HTMLAttributes.display || (floatValue === 'none' ? 'block' : 'block');
+    styles.push(`display: ${displayValue} !important`);
     
     // Ajouter width et height si présents
     if (HTMLAttributes.width) {
-      styles.push(`width: ${HTMLAttributes.width}px !important`);
+      styles.push(`width: ${HTMLAttributes.width}px`);
     }
     if (HTMLAttributes.height) {
-      styles.push(`height: ${HTMLAttributes.height}px !important`);
+      styles.push(`height: ${HTMLAttributes.height}px`);
+    }
+    
+    // Max width pour les images flottantes
+    if (floatValue !== 'none') {
+      styles.push('max-width: 60%');
     }
     
     // Autres styles
