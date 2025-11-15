@@ -465,10 +465,11 @@ export default function ApporteurGuide() {
           {isAdmin && isEditMode && (
             <Button
               onClick={handleAddCategory}
-              className="flex items-center gap-2"
+              size="sm"
+              variant="ghost"
+              className="gap-1 text-muted-foreground hover:text-foreground"
             >
-              <Plus className="w-5 h-5" />
-              Ajouter
+              <Plus className="w-4 h-4" />
             </Button>
           )}
         </div>

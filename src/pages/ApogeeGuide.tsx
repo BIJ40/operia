@@ -428,10 +428,9 @@ export default function ApogeeGuide() {
         )}
 
         {isEditMode && isAdmin && (
-          <div className="flex justify-center mt-8">
-            <Button onClick={handleAddCategory} size="lg">
-              <Plus className="w-5 h-5 mr-2" />
-              Ajouter une catégorie
+          <div className="flex justify-end mt-8">
+            <Button onClick={handleAddCategory} size="sm" variant="ghost" className="gap-1 text-muted-foreground hover:text-foreground">
+              <Plus className="w-4 h-4" />
             </Button>
           </div>
         )}
