@@ -1,7 +1,7 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer, NodeViewWrapper, ReactNodeViewProps } from '@tiptap/react';
 import { useState, useRef, useEffect } from 'react';
-import { Hand } from 'lucide-react';
+import { ArrowLeft, Minus, ArrowRight } from 'lucide-react';
 
 interface ExtendedNodeViewProps extends ReactNodeViewProps {
   editor: any;
@@ -11,6 +11,8 @@ interface ExtendedNodeViewProps extends ReactNodeViewProps {
 
 const ResizableImageComponent = ({ node, updateAttributes, selected, editor, getPos, deleteNode }: ExtendedNodeViewProps) => {
   const [isResizing, setIsResizing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPreviewPos, setDragPreviewPos] = useState<{ x: number; y: number } | null>(null);
   const [hasError, setHasError] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: node.attrs.width || 300,
@@ -19,6 +21,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const startPosRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
+  const dragStartRef = useRef({ x: 0, y: 0 });
   const aspectRatioRef = useRef(1);
   const currentDimensionsRef = useRef({ width: 0, height: 0 });
 
@@ -48,6 +51,57 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
       setDimensions({ width: node.attrs.width, height: node.attrs.height });
     }
   }, [node.attrs.src, node.attrs.width, node.attrs.height]);
+
+  
+  const handleDragStart = (e: React.MouseEvent) => {
+    if (isResizing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY
+    };
+
+    const handleDragMove = (e: MouseEvent) => {
+      e.preventDefault();
+      setDragPreviewPos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleDragEnd = (e: MouseEvent) => {
+      setIsDragging(false);
+      setDragPreviewPos(null);
+      document.removeEventListener('mousemove', handleDragMove);
+      document.removeEventListener('mouseup', handleDragEnd);
+
+      // Trouver la position dans l'éditeur
+      const pos = getPos();
+      if (typeof pos !== 'number') return;
+
+      const editorView = editor.view;
+      const coords = editorView.posAtCoords({ left: e.clientX, top: e.clientY });
+      
+      if (coords) {
+        const { state, dispatch } = editorView;
+        const nodeSize = node.nodeSize;
+        const tr = state.tr;
+        
+        tr.delete(pos, pos + nodeSize);
+        
+        let newPos = coords.pos;
+        if (newPos > pos) {
+          newPos -= nodeSize;
+        }
+        
+        tr.insert(newPos, node);
+        dispatch(tr);
+      }
+    };
+
+    document.addEventListener('mousemove', handleDragMove);
+    document.addEventListener('mouseup', handleDragEnd);
+  };
 
   const handleMouseDown = (e: React.MouseEvent, corner: string) => {
     e.preventDefault();
@@ -107,10 +161,13 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
       <NodeViewWrapper
         className="react-component"
         data-drag-handle
+        style={{
+          cursor: isDragging ? 'grabbing' : (selected ? 'grab' : 'default')
+        }}
       >
         <div
           ref={containerRef}
-          className={`relative inline-block group ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''}`}
+          className={`relative inline-block group ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''} ${isDragging ? 'opacity-30' : ''}`}
           style={{ 
             width: dimensions.width, 
             height: dimensions.height,
@@ -118,6 +175,7 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
             margin: node.attrs.margin || '0 4px',
             display: node.attrs.display || 'inline-block'
           }}
+          onMouseDown={selected ? handleDragStart : undefined}
         >
         {hasError ? (
           <div 
@@ -159,8 +217,8 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         
         {selected && (
           <>
-            {/* Options de positionnement */}
-            <div className="absolute -top-12 left-0 bg-background border border-border rounded-md shadow-lg p-2 flex gap-2 z-20">
+            {/* Options de positionnement avec icônes */}
+            <div className="absolute -top-12 left-0 bg-background border border-border rounded-md shadow-lg p-1 flex gap-1 z-20">
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -171,11 +229,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
                     display: 'block' 
                   });
                 }}
-                className={`px-3 py-1 text-sm rounded hover:bg-accent ${node.attrs.float === 'left' ? 'bg-accent' : ''}`}
+                className={`p-2 rounded hover:bg-accent ${node.attrs.float === 'left' ? 'bg-accent' : ''}`}
                 title="Flottant à gauche"
                 type="button"
               >
-                ← Gauche
+                <ArrowLeft size={16} />
               </button>
               <button
                 onClick={(e) => {
@@ -187,11 +245,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
                     display: 'block' 
                   });
                 }}
-                className={`px-3 py-1 text-sm rounded hover:bg-accent ${node.attrs.float === 'none' ? 'bg-accent' : ''}`}
+                className={`p-2 rounded hover:bg-accent ${node.attrs.float === 'none' ? 'bg-accent' : ''}`}
                 title="Centré"
                 type="button"
               >
-                ⬌ Centre
+                <Minus size={16} />
               </button>
               <button
                 onClick={(e) => {
@@ -203,11 +261,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
                     display: 'block' 
                   });
                 }}
-                className={`px-3 py-1 text-sm rounded hover:bg-accent ${node.attrs.float === 'right' ? 'bg-accent' : ''}`}
+                className={`p-2 rounded hover:bg-accent ${node.attrs.float === 'right' ? 'bg-accent' : ''}`}
                 title="Flottant à droite"
                 type="button"
               >
-                Droite →
+                <ArrowRight size={16} />
               </button>
             </div>
             
@@ -248,6 +306,25 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         )}
       </div>
     </NodeViewWrapper>
+    
+    {/* Rectangle fantôme pendant le drag */}
+    {isDragging && dragPreviewPos && (
+      <div
+        style={{
+          position: 'fixed',
+          top: dragPreviewPos.y - dimensions.height / 2,
+          left: dragPreviewPos.x - dimensions.width / 2,
+          width: dimensions.width,
+          height: dimensions.height,
+          backgroundColor: 'hsl(var(--primary) / 0.2)',
+          border: '2px dashed hsl(var(--primary))',
+          borderRadius: '8px',
+          pointerEvents: 'none',
+          zIndex: 9999,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+        }}
+      />
+    )}
   </>
   );
 };
