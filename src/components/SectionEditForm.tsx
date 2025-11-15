@@ -93,9 +93,9 @@ export function SectionEditForm({
   };
 
   return (
-    <div className="fixed top-20 right-8 w-[800px] max-h-[calc(100vh-120px)] overflow-y-auto bg-background border rounded-lg p-4 shadow-2xl space-y-4 z-50">
-      {/* Boutons STICKY - toujours visibles même lors du scroll */}
-      <div className="sticky top-0 bg-background z-20 -mx-4 -mt-4 px-4 pt-4 pb-2 border-b mb-4 shadow-sm">
+    <div className="fixed top-20 right-8 w-[800px] max-h-[calc(100vh-120px)] bg-background border rounded-lg shadow-2xl z-50 flex flex-col">
+      {/* Header FIXED au-dessus du scroll */}
+      <div className="flex-shrink-0 bg-background px-4 pt-4 pb-3 border-b rounded-t-lg">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-lg">Édition</h3>
           <div className="flex gap-2">
@@ -105,10 +105,14 @@ export function SectionEditForm({
               onClick={handleSave}
               title="Enregistrer"
               disabled={isSaving}
-              className={isSaving ? "bg-green-500 hover:bg-green-500 text-white scale-110 transition-all duration-300" : "transition-all duration-200"}
+              className={`transition-all duration-300 ${
+                isSaving 
+                  ? "bg-green-500 hover:bg-green-500 text-white scale-125 shadow-lg shadow-green-500/50" 
+                  : "hover:scale-105"
+              }`}
             >
               {isSaving ? (
-                <Check className="h-5 w-5 animate-in zoom-in-50 duration-200" />
+                <Check className="h-5 w-5 animate-pulse" />
               ) : (
                 <Save className="h-5 w-5" />
               )}
@@ -119,13 +123,16 @@ export function SectionEditForm({
               variant="outline"
               onClick={handleCancel}
               title="Annuler"
+              className="hover:scale-105 transition-transform"
             >
               <X className="h-5 w-5" />
             </Button>
           </div>
         </div>
       </div>
-      
+
+      {/* Contenu scrollable */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
       <Input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -181,7 +188,7 @@ export function SectionEditForm({
         content={content}
         onChange={setContent}
       />
-      {/* Boutons supprimés - on utilise uniquement les icônes en haut */}
+      </div>
     </div>
   );
 }
