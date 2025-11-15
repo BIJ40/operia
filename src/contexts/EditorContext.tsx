@@ -30,42 +30,37 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { isAdmin } = useAuth();
 
+  // Load data on mount
   useEffect(() => {
     const initData = async () => {
       console.log('🔄 Chargement des données...');
       
-      try {
-        // Charger depuis Supabase avec timeout
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout')), 8000)
-        );
+      // Importer et restaurer depuis le backup JSON
+      const apogeeData = await import('../data/apogee-data.json');
+      
+      if (apogeeData.default && apogeeData.default.blocks) {
+        const blocks = apogeeData.default.blocks as Block[];
         
-        const dataPromise = loadAppData();
+        // Restaurer dans Supabase
+        await supabase.from('blocks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         
-        const data = await Promise.race([dataPromise, timeoutPromise]) as AppData | null;
+        const blocksToInsert = blocks.map(block => ({
+          id: block.id,
+          type: block.type,
+          title: block.title,
+          content: block.content || '',
+          icon: block.icon || null,
+          color_preset: block.colorPreset || 'white',
+          order: block.order || 0,
+          slug: block.slug,
+          parent_id: block.parentId || null,
+          attachments: (block.attachments || []) as any,
+          hide_from_sidebar: block.hideFromSidebar || false,
+        }));
         
-        if (data && data.blocks && data.blocks.length > 0) {
-          setBlocks(data.blocks);
-          console.log(`✅ ${data.blocks.length} blocks chargés depuis Supabase`);
-        } else {
-          console.log('⚠️ Aucune donnée en base, chargement du JSON par défaut');
-          const apogeeData = await import('../data/apogee-data.json');
-          
-          if (apogeeData.default && apogeeData.default.blocks) {
-            const blocks = apogeeData.default.blocks as Block[];
-            setBlocks(blocks);
-            console.log(`✅ ${blocks.length} blocks chargés depuis JSON`);
-          }
-        }
-      } catch (error) {
-        console.error('❌ Erreur chargement:', error);
-        // Fallback sur JSON en cas d'erreur
-        const apogeeData = await import('../data/apogee-data.json');
-        if (apogeeData.default && apogeeData.default.blocks) {
-          const blocks = apogeeData.default.blocks as Block[];
-          setBlocks(blocks);
-          console.log(`✅ ${blocks.length} blocks chargés depuis JSON (fallback)`);
-        }
+        await supabase.from('blocks').insert(blocksToInsert as any);
+        setBlocks(blocks);
+        console.log(`✅ ${blocks.length} blocks restaurés`);
       }
       
       setLoading(false);
@@ -74,8 +69,28 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     initData();
   }, []);
 
-  // Auto-save DÉSACTIVÉ - sauvegarde uniquement manuelle
-  // L'auto-save causait des sauvegardes incessantes et des notifications répétitives
+  // Auto-save SÉCURISÉ - réactivé avec protection
+  useEffect(() => {
+    if (!loading && blocks.length > 0) {
+      const timer = setTimeout(() => {
+        const appData: AppData = {
+          blocks,
+          version: '1.0',
+          lastModified: Date.now(),
+        };
+        saveAppData(appData).catch(err => {
+          console.error('Erreur auto-save:', err);
+          toast({ 
+            title: 'Erreur de sauvegarde', 
+            description: 'Vos modifications n\'ont pas pu être sauvegardées automatiquement',
+            variant: 'destructive' 
+          });
+        });
+      }, 2000); // 2 secondes au lieu de 1
+
+      return () => clearTimeout(timer);
+    }
+  }, [blocks, loading, toast]);
 
   const addBlock = useCallback((block: Omit<Block, 'id' | 'order'>): string => {
     if (!isAdmin) {

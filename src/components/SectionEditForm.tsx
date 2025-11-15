@@ -3,9 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { ColorPreset } from '@/types/block';
-import { useState, useEffect, useRef } from 'react';
-import { Save, X, Check } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
+import { Save, X } from 'lucide-react';
 
 interface SectionEditFormProps {
   sectionId: string;
@@ -51,16 +50,6 @@ export function SectionEditForm({
     const saved = sessionStorage.getItem(`${storageKey}-hide`);
     return saved ? saved === 'true' : initialHideFromSidebar;
   });
-  const [isSaving, setIsSaving] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  // Bloquer le scroll de la page derrière
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
 
   // Sauvegarder automatiquement l'état lors des modifications
   useEffect(() => {
@@ -87,43 +76,9 @@ export function SectionEditForm({
     sessionStorage.removeItem(`${storageKey}-hide`);
   };
 
-  const handleSave = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Sauvegarder la position de scroll AVANT tout
-    const currentScroll = scrollContainerRef.current?.scrollTop || 0;
-    
-    setIsSaving(true);
-    
-    try {
-      await onSave({ title, content, colorPreset: color, hideFromSidebar });
-      clearStorage();
-      
-      // Toast de confirmation
-      toast({
-        title: "✓ Enregistré",
-        description: "Les modifications ont été sauvegardées",
-        duration: 2000,
-      });
-      
-      // Réinitialiser l'état après 2s
-      setTimeout(() => setIsSaving(false), 2000);
-    } catch (error) {
-      setIsSaving(false);
-      toast({
-        title: "✗ Erreur",
-        description: "Impossible de sauvegarder",
-        variant: "destructive",
-      });
-    }
-    
-    // Restaurer la position de scroll APRÈS tout
-    setTimeout(() => {
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTop = currentScroll;
-      }
-    }, 0);
+  const handleSave = () => {
+    onSave({ title, content, colorPreset: color, hideFromSidebar });
+    clearStorage();
   };
 
   const handleCancel = () => {
@@ -132,60 +87,7 @@ export function SectionEditForm({
   };
 
   return (
-    <>
-      {/* Backdrop pour bloquer les interactions avec la page derrière */}
-      <div className="fixed inset-0 bg-black/20 z-40" />
-      
-      {/* Fenêtre d'édition */}
-      <div 
-        className="fixed top-20 right-8 w-[800px] max-h-[calc(100vh-120px)] bg-background border rounded-lg shadow-2xl z-50 flex flex-col"
-      >
-      {/* Header FIXED au-dessus du scroll */}
-      <div className="flex-shrink-0 bg-background px-4 pt-4 pb-3 border-b rounded-t-lg">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-lg">Édition</h3>
-          <div className="flex gap-2">
-            <Button 
-              type="button"
-              size="icon"
-              variant="outline"
-              onClick={handleSave}
-              disabled={isSaving}
-              title="Enregistrer"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              style={{
-                backgroundColor: isSaving ? '#22c55e' : undefined,
-                borderColor: isSaving ? '#22c55e' : undefined,
-                color: isSaving ? '#ffffff' : undefined,
-                transform: isSaving ? 'scale(1.2)' : 'scale(1)',
-                boxShadow: isSaving ? '0 10px 25px -5px rgba(34, 197, 94, 0.5)' : undefined,
-              }}
-            >
-              {isSaving ? (
-                <Check className="h-5 w-5 animate-pulse" />
-              ) : (
-                <Save className="h-5 w-5" />
-              )}
-            </Button>
-            <Button 
-              type="button"
-              size="icon"
-              variant="outline"
-              onClick={handleCancel}
-              title="Annuler"
-              className="hover:scale-105 transition-transform"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Contenu scrollable */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+    <div className="space-y-4">
       <Input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -193,7 +95,28 @@ export function SectionEditForm({
         className="font-semibold text-xl"
       />
       <div className="space-y-2">
-        <label className="text-sm font-medium">Couleur</label>
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium">Couleur</label>
+          <div className="flex gap-2">
+            <Button 
+              type="button"
+              size="icon"
+              onClick={handleSave}
+              title="Enregistrer"
+            >
+              <Save className="h-4 w-4" />
+            </Button>
+            <Button 
+              type="button"
+              size="icon"
+              variant="outline"
+              onClick={handleCancel}
+              title="Annuler"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
         <div className="flex flex-wrap gap-2">
           {[
             { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
@@ -241,8 +164,12 @@ export function SectionEditForm({
         content={content}
         onChange={setContent}
       />
+      <div className="flex gap-2">
+        <Button onClick={handleSave}>Enregistrer</Button>
+        <Button variant="outline" onClick={handleCancel}>
+          Annuler
+        </Button>
       </div>
-      </div>
-    </>
+    </div>
   );
 }

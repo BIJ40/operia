@@ -192,7 +192,7 @@ const SortableCategory = ({
 };
 
 export default function ApogeeGuide() {
-  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useEditor();
+  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isAdmin } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -201,28 +201,6 @@ export default function ApogeeGuide() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Afficher skeleton loader pendant le chargement
-  if (loading) {
-    return (
-      <div className="container max-w-6xl mx-auto p-8">
-        <div className="space-y-8">
-          <div className="space-y-4">
-            <div className="h-12 bg-muted animate-pulse rounded-lg w-3/4"></div>
-            <div className="h-6 bg-muted animate-pulse rounded w-1/2"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="border-2 rounded-lg p-6 space-y-3">
-                <div className="h-12 w-12 bg-muted animate-pulse rounded-lg"></div>
-                <div className="h-6 bg-muted animate-pulse rounded w-3/4"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Filtrer uniquement les catégories Apogée (exclure FAQ)
   const apogeeCategories = blocks
