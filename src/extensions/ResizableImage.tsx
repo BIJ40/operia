@@ -68,10 +68,16 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
       
       // Afficher un aperçu de la position où l'image sera insérée
       const editorView = editor.view;
+      const editorRect = editorView.dom.getBoundingClientRect();
       const coords = editorView.posAtCoords({ left: e.clientX, top: e.clientY });
       
       if (coords) {
-        setDragPreviewPos({ top: e.clientY, left: e.clientX });
+        // Calculer la position réelle dans l'éditeur en tenant compte du scroll
+        const scrollTop = editorView.dom.scrollTop || 0;
+        setDragPreviewPos({ 
+          top: e.clientY, 
+          left: editorRect.left + 20
+        });
       }
     };
 
@@ -265,14 +271,16 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
       <div
         style={{
           position: 'fixed',
-          top: dragPreviewPos.top - 10,
+          top: dragPreviewPos.top,
           left: dragPreviewPos.left,
-          width: '2px',
-          height: '20px',
+          width: '3px',
+          height: '30px',
           backgroundColor: 'hsl(var(--primary))',
           pointerEvents: 'none',
           zIndex: 9999,
-          boxShadow: '0 0 10px hsl(var(--primary))'
+          transform: 'translateY(-15px)',
+          boxShadow: '0 0 10px hsl(var(--primary))',
+          borderRadius: '2px'
         }}
       />
     )}
