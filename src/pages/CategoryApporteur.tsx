@@ -381,7 +381,6 @@ export default function CategoryApporteur() {
                 className="prose prose-sm max-w-none break-words overflow-visible"
                 dangerouslySetInnerHTML={{ __html: section.content }}
               />
-              <DocumentsList blockId={section.id} scope="apporteur" />
             </AccordionContent>
           </div>
         </AccordionItem>
@@ -446,6 +445,8 @@ export default function CategoryApporteur() {
               </p>
             </div>
           )}
+
+          <DocumentsList blockId={subcategory.id} scope="apporteur" />
         </div>
       </div>
 
