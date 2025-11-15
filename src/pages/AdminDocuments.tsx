@@ -61,6 +61,7 @@ export default function AdminDocuments() {
       const { data, error } = await supabase
         .from(tableName)
         .select('id, title, slug, type, parent_id')
+        .in('type', ['category', 'subcategory'])
         .order('order');
 
       if (error) throw error;
@@ -69,7 +70,7 @@ export default function AdminDocuments() {
       console.error('Error loading blocks:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de charger les sections',
+        description: 'Impossible de charger les catégories',
         variant: 'destructive',
       });
     }
@@ -213,7 +214,7 @@ export default function AdminDocuments() {
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="scope">Section</Label>
+              <Label htmlFor="scope">Thème</Label>
               <Select value={scope} onValueChange={(v) => setScope(v as 'apogee' | 'apporteur')}>
                 <SelectTrigger id="scope">
                   <SelectValue />
@@ -234,7 +235,7 @@ export default function AdminDocuments() {
                 <SelectContent>
                   {blocks.map((block) => (
                     <SelectItem key={block.id} value={block.id}>
-                      {block.type === 'category' ? '📁 ' : '📄 '}
+                      {block.type === 'category' ? '📁 ' : '📂 '}
                       {block.title}
                     </SelectItem>
                   ))}
