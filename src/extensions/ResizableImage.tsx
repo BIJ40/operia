@@ -189,23 +189,38 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
             {/* Options de positionnement */}
             <div className="absolute -top-12 left-0 bg-background border border-border rounded-md shadow-lg p-2 flex gap-2 z-20">
               <button
-                onClick={() => updateAttributes({ float: 'left', margin: '0 1rem 1rem 0' })}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  updateAttributes({ float: 'left', margin: '0 1rem 1rem 0', display: 'inline-block' });
+                }}
                 className="px-3 py-1 text-sm rounded hover:bg-accent"
                 title="Flottant à gauche"
+                type="button"
               >
                 ← Gauche
               </button>
               <button
-                onClick={() => updateAttributes({ float: 'none', margin: '1rem auto', display: 'block' })}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  updateAttributes({ float: 'none', margin: '1rem auto', display: 'block' });
+                }}
                 className="px-3 py-1 text-sm rounded hover:bg-accent"
                 title="Centré"
+                type="button"
               >
                 ⬌ Centre
               </button>
               <button
-                onClick={() => updateAttributes({ float: 'right', margin: '0 0 1rem 1rem' })}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  updateAttributes({ float: 'right', margin: '0 0 1rem 1rem', display: 'inline-block' });
+                }}
                 className="px-3 py-1 text-sm rounded hover:bg-accent"
                 title="Flottant à droite"
+                type="button"
               >
                 Droite →
               </button>
