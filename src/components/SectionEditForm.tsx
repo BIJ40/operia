@@ -78,13 +78,19 @@ export function SectionEditForm({
   };
 
   const handleSave = async () => {
+    console.log('🔵 AVANT setIsSaving(true)');
     setIsSaving(true);
+    console.log('🟢 APRÈS setIsSaving(true) - isSaving devrait être true');
     
     await onSave({ title, content, colorPreset: color, hideFromSidebar });
     clearStorage();
     
+    console.log('🟡 Sauvegarde terminée, attente avant reset');
     // Réinitialiser après que Category.tsx ait fermé la fenêtre
-    setTimeout(() => setIsSaving(false), 2000);
+    setTimeout(() => {
+      console.log('🔴 setIsSaving(false)');
+      setIsSaving(false);
+    }, 2000);
   };
 
   const handleCancel = () => {
@@ -105,11 +111,13 @@ export function SectionEditForm({
               onClick={handleSave}
               title="Enregistrer"
               disabled={isSaving}
-              className={`transition-all duration-300 ${
-                isSaving 
-                  ? "bg-green-500 hover:bg-green-500 text-white scale-125 shadow-lg shadow-green-500/50" 
-                  : "hover:scale-105"
-              }`}
+              style={{
+                backgroundColor: isSaving ? '#22c55e' : undefined,
+                transform: isSaving ? 'scale(1.25)' : 'scale(1)',
+                transition: 'all 0.3s ease',
+                boxShadow: isSaving ? '0 10px 25px -5px rgba(34, 197, 94, 0.5)' : undefined
+              }}
+              className={isSaving ? "text-white" : ""}
             >
               {isSaving ? (
                 <Check className="h-5 w-5 animate-pulse" />
