@@ -60,12 +60,6 @@ export default function Category() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   
-  const category = blocks.find(b => b.type === 'category' && b.slug === slug);
-  
-  if (!category) {
-    return <div className="container max-w-4xl mx-auto p-8">Catégorie non trouvée</div>;
-  }
-  
   // Liste des catégories disponibles (exclure FAQ)
   const availableCategories = useMemo(() =>
     blocks
@@ -73,6 +67,8 @@ export default function Category() {
       .sort((a, b) => a.order - b.order),
     [blocks]
   );
+  
+  const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   
   // Mémoriser sections pour éviter les recalculs qui causent des scrolls
   const sections = useMemo(() => 
@@ -87,6 +83,10 @@ export default function Category() {
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const savedScrollPositionRef = useRef<number>(0);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
+  
+  if (!category) {
+    return <div className="container max-w-4xl mx-auto p-8">Catégorie non trouvée</div>;
+  }
 
   // Ouvrir automatiquement la section depuis l'URL hash
   useEffect(() => {
