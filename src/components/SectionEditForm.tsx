@@ -112,15 +112,11 @@ export function SectionEditForm({
   return (
     <>
       {/* Backdrop pour bloquer les interactions avec la page derrière */}
-      <div 
-        className="fixed inset-0 bg-black/20 z-40"
-        onClick={handleCancel}
-      />
+      <div className="fixed inset-0 bg-black/20 z-40" />
       
       {/* Fenêtre d'édition */}
       <div 
         className="fixed top-20 right-8 w-[800px] max-h-[calc(100vh-120px)] bg-background border rounded-lg shadow-2xl z-50 flex flex-col"
-        onClick={(e) => e.stopPropagation()}
       >
       {/* Header FIXED au-dessus du scroll */}
       <div className="flex-shrink-0 bg-background px-4 pt-4 pb-3 border-b rounded-t-lg">
@@ -133,13 +129,15 @@ export function SectionEditForm({
               onClick={handleSave}
               title="Enregistrer"
               disabled={isSaving}
+              key={isSaving ? 'saving' : 'idle'}
               style={{
                 backgroundColor: isSaving ? '#22c55e' : undefined,
-                transform: isSaving ? 'scale(1.25)' : 'scale(1)',
+                color: isSaving ? '#ffffff' : undefined,
+                transform: isSaving ? 'scale(1.3)' : 'scale(1)',
                 transition: 'all 0.3s ease',
-                boxShadow: isSaving ? '0 10px 25px -5px rgba(34, 197, 94, 0.5)' : undefined
+                boxShadow: isSaving ? '0 10px 25px -5px rgba(34, 197, 94, 0.5)' : undefined,
+                pointerEvents: isSaving ? 'none' : 'auto'
               }}
-              className={isSaving ? "text-white" : ""}
             >
               {isSaving ? (
                 <Check className="h-5 w-5 animate-pulse" />
