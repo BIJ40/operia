@@ -2,15 +2,24 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer, NodeViewWrapper, ReactNodeViewProps } from '@tiptap/react';
 import { useState, useRef, useEffect } from 'react';
 
-const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNodeViewProps) => {
+interface ExtendedNodeViewProps extends ReactNodeViewProps {
+  editor: any;
+  getPos: () => number | undefined;
+  deleteNode: () => void;
+}
+
+const ResizableImageComponent = ({ node, updateAttributes, selected, editor, getPos, deleteNode }: ExtendedNodeViewProps) => {
   const [isResizing, setIsResizing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: node.attrs.width || 300,
     height: node.attrs.height || 200,
   });
   const imageRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const startPosRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
+  const dragStartRef = useRef({ x: 0, y: 0 });
   const aspectRatioRef = useRef(1);
   const currentDimensionsRef = useRef({ width: 0, height: 0 });
 
@@ -40,6 +49,61 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
       setDimensions({ width: node.attrs.width, height: node.attrs.height });
     }
   }, [node.attrs.src, node.attrs.width, node.attrs.height]);
+
+  const handleDragStart = (e: React.MouseEvent) => {
+    if (isResizing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY
+    };
+
+    const handleDragMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      e.preventDefault();
+    };
+
+    const handleDragEnd = (e: MouseEvent) => {
+      setIsDragging(false);
+      document.removeEventListener('mousemove', handleDragMove);
+      document.removeEventListener('mouseup', handleDragEnd);
+
+      // Trouver la position la plus proche dans l'éditeur
+      const pos = getPos();
+      if (typeof pos !== 'number') return;
+
+      const editorView = editor.view;
+      const coords = editorView.posAtCoords({ left: e.clientX, top: e.clientY });
+      
+      if (coords) {
+        const { state, dispatch } = editorView;
+        const nodeSize = node.nodeSize;
+        
+        // Créer une transaction pour déplacer l'image
+        const tr = state.tr;
+        
+        // Supprimer l'image de sa position actuelle
+        tr.delete(pos, pos + nodeSize);
+        
+        // Calculer la nouvelle position (en tenant compte de la suppression)
+        let newPos = coords.pos;
+        if (newPos > pos) {
+          newPos -= nodeSize;
+        }
+        
+        // Insérer l'image à la nouvelle position avec tous ses attributs
+        tr.insert(newPos, node);
+        
+        dispatch(tr);
+      }
+    };
+
+    document.addEventListener('mousemove', handleDragMove);
+    document.addEventListener('mouseup', handleDragEnd);
+  };
 
   const handleMouseDown = (e: React.MouseEvent, corner: string) => {
     e.preventDefault();
@@ -96,17 +160,20 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
 
   return (
     <NodeViewWrapper 
-      className="resizable-image-wrapper" 
+      className={`resizable-image-wrapper ${isDragging ? 'opacity-50' : ''}`}
       style={{ 
         display: node.attrs.display || 'inline-block',
         verticalAlign: 'middle',
         margin: node.attrs.margin || '0 4px',
-        float: node.attrs.float || 'none'
+        float: node.attrs.float || 'none',
+        cursor: isDragging ? 'grabbing' : (selected ? 'grab' : 'default')
       }}
     >
       <div
+        ref={containerRef}
         className={`relative inline-block group ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''}`}
         style={{ width: dimensions.width, height: dimensions.height, display: 'inline-block' }}
+        onMouseDown={selected ? handleDragStart : undefined}
       >
         {hasError ? (
           <div 
@@ -144,6 +211,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
         
         {selected && (
           <>
+            {/* Indication de déplacement */}
+            <div className="absolute -top-16 left-0 bg-background border border-border rounded-md shadow-lg px-3 py-1.5 text-xs text-muted-foreground z-20">
+              Cliquez et glissez pour déplacer
+            </div>
+            
             {/* Options de positionnement */}
             <div className="absolute -top-12 left-0 bg-background border border-border rounded-md shadow-lg p-2 flex gap-2 z-20">
               <button
@@ -188,22 +260,34 @@ const ResizableImageComponent = ({ node, updateAttributes, selected }: ReactNode
             <div
               className="absolute bottom-0 right-0 w-4 h-4 bg-primary rounded-full cursor-se-resize border-2 border-background shadow-md z-10"
               style={{ transform: 'translate(50%, 50%)' }}
-              onMouseDown={(e) => handleMouseDown(e, 'bottom-right')}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                handleMouseDown(e, 'bottom-right');
+              }}
             />
             <div
               className="absolute top-0 right-0 w-4 h-4 bg-primary rounded-full cursor-ne-resize border-2 border-background shadow-md z-10"
               style={{ transform: 'translate(50%, -50%)' }}
-              onMouseDown={(e) => handleMouseDown(e, 'top-right')}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                handleMouseDown(e, 'top-right');
+              }}
             />
             <div
               className="absolute bottom-0 left-0 w-4 h-4 bg-primary rounded-full cursor-sw-resize border-2 border-background shadow-md z-10"
               style={{ transform: 'translate(-50%, 50%)' }}
-              onMouseDown={(e) => handleMouseDown(e, 'bottom-left')}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                handleMouseDown(e, 'bottom-left');
+              }}
             />
             <div
               className="absolute top-0 left-0 w-4 h-4 bg-primary rounded-full cursor-nw-resize border-2 border-background shadow-md z-10"
               style={{ transform: 'translate(-50%, -50%)' }}
-              onMouseDown={(e) => handleMouseDown(e, 'top-left')}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                handleMouseDown(e, 'top-left');
+              }}
             />
           </>
         )}
