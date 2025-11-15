@@ -19,11 +19,7 @@ export function Layout({ children, showHeader = true, showSidebar = true, sideba
   return (
     <SidebarProvider>
       <div className="min-h-screen w-full flex flex-row bg-background">
-        {showSidebar && (
-          <div className="h-screen sticky top-0">
-            <SidebarComponent />
-          </div>
-        )}
+        {showSidebar && <SidebarComponent />}
         
         <div className="flex-1 flex flex-col min-h-screen">
           {showHeader && <Header />}
