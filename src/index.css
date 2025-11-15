@@ -148,12 +148,17 @@ All colors MUST be HSL.
 .prose p {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
-  display: block;
+  display: inline;
   min-height: 1.5em;
 }
 
 .prose p:empty {
   min-height: 1.5em;
+  display: block;
+}
+
+.prose p:after {
+  content: "";
   display: block;
 }
 
@@ -325,6 +330,7 @@ div[data-callout] p {
   @apply cursor-pointer transition-opacity hover:opacity-80;
   max-width: 100%;
   height: auto;
+  display: inline;
 }
 
 /* Allow text to wrap around images with float */
@@ -333,8 +339,10 @@ div[data-callout] p {
   float: left !important;
   margin-right: 1rem !important;
   margin-bottom: 0.5rem !important;
+  margin-top: 0.25rem !important;
   max-width: 50% !important;
   shape-outside: margin-box;
+  display: block;
 }
 
 .prose img[style*="float: right"],
@@ -342,14 +350,25 @@ div[data-callout] p {
   float: right !important;
   margin-left: 1rem !important;
   margin-bottom: 0.5rem !important;
+  margin-top: 0.25rem !important;
   max-width: 50% !important;
   shape-outside: margin-box;
+  display: block;
 }
 
-/* Ensure paragraphs and lists don't clear the float */
+/* Force text content to flow around floated images */
+.prose {
+  overflow: auto;
+}
+
+/* Ensure paragraphs, lists flow around floated images */
 .prose p,
 .prose ul,
-.prose ol,
+.prose ol {
+  clear: none !important;
+  overflow: visible !important;
+}
+
 .prose li {
   clear: none !important;
 }
