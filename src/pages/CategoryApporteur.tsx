@@ -47,29 +47,30 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function CategoryApporteur() {
-  const { slug } = useParams();
+  const { slug, subslug } = useParams<{ slug: string; subslug: string }>();
   const location = useLocation();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useApporteurEditor();
   const { isAuthenticated } = useAuth();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
+  const subcategory = blocks.find(b => b.type === 'subcategory' && b.slug === subslug);
   
-  if (!category) {
-    return <div className="container max-w-4xl mx-auto p-8">Catégorie non trouvée</div>;
+  if (!category || !subcategory) {
+    return <div className="container max-w-4xl mx-auto p-8">Page non trouvée</div>;
   }
   
-  const availableCategories = useMemo(() =>
+  const availableSubcategories = useMemo(() =>
     blocks
-      .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
+      .filter(b => b.type === 'subcategory' && b.parentId === category.id)
       .sort((a, b) => a.order - b.order),
-    [blocks]
+    [blocks, category.id]
   );
   
   const sections = useMemo(() => 
     blocks
-      .filter(b => b.type === 'section' && b.parentId === category?.id)
+      .filter(b => b.type === 'section' && b.parentId === subcategory?.id)
       .sort((a, b) => a.order - b.order),
-    [blocks, category?.id]
+    [blocks, subcategory?.id]
   );
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -137,9 +138,9 @@ export default function CategoryApporteur() {
       type: 'section',
       title: 'Nouvelle section',
       content: '',
-      colorPreset: category.colorPreset || 'blue',
+      colorPreset: subcategory.colorPreset || 'blue',
       slug: `section-${Date.now()}`,
-      parentId: category.id,
+      parentId: subcategory.id,
       attachments: [],
     });
   };
@@ -260,7 +261,12 @@ export default function CategoryApporteur() {
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-4xl mx-auto px-4 py-8">
         <div className="bg-card border-2 rounded-lg p-6 mb-6 shadow-sm">
-          <h1 className="text-3xl font-bold mb-2 text-foreground">{category.title}</h1>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+            <span>{category.title}</span>
+            <span>/</span>
+            <span className="text-foreground font-semibold">{subcategory.title}</span>
+          </div>
+          <h1 className="text-3xl font-bold text-foreground">{subcategory.title}</h1>
         </div>
 
         {isEditMode && (

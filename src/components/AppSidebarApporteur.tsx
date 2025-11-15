@@ -27,6 +27,14 @@ interface BlockCategory {
   showTitleInMenu?: boolean;
 }
 
+interface BlockSubcategory {
+  id: string;
+  title: string;
+  slug: string;
+  parentId: string;
+  hideFromSidebar?: boolean;
+}
+
 interface BlockSection {
   id: string;
   title: string;
@@ -39,8 +47,10 @@ export function AppSidebarApporteur() {
   const location = useLocation();
   const { blocks } = useApporteurEditor();
   const [blockCategories, setBlockCategories] = useState<BlockCategory[]>([]);
+  const [blockSubcategories, setBlockSubcategories] = useState<BlockSubcategory[]>([]);
   const [blockSections, setBlockSections] = useState<BlockSection[]>([]);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
+  const [openSubcategories, setOpenSubcategories] = useState<Set<string>>(new Set());
   
   // Charger depuis blocks pour Apporteurs
   useEffect(() => {
@@ -57,6 +67,19 @@ export function AppSidebarApporteur() {
     
     setBlockCategories(cats);
     
+    const subs = blocks
+      .filter(b => b.type === 'subcategory')
+      .sort((a, b) => a.order - b.order)
+      .map(b => ({
+        id: b.id,
+        title: b.title,
+        slug: b.slug,
+        parentId: b.parentId || '',
+        hideFromSidebar: b.hideFromSidebar
+      }));
+    
+    setBlockSubcategories(subs);
+    
     const secs = blocks
       .filter(b => b.type === 'section' && !b.hideFromSidebar)
       .sort((a, b) => a.order - b.order)
@@ -71,10 +94,11 @@ export function AppSidebarApporteur() {
     setBlockSections(secs);
   }, [blocks]);
 
-  // Ouvrir automatiquement la catégorie active
+  // Ouvrir automatiquement la catégorie et sous-catégorie actives
   useEffect(() => {
     const pathParts = location.pathname.split('/');
     const categorySlug = pathParts[3];
+    const subSlug = pathParts[5];
     
     if (categorySlug) {
       const activeCategory = blockCategories.find(c => c.slug === categorySlug);
@@ -82,7 +106,14 @@ export function AppSidebarApporteur() {
         setOpenCategories(prev => new Set(prev).add(activeCategory.id));
       }
     }
-  }, [location.pathname, blockCategories]);
+    
+    if (subSlug) {
+      const activeSubcategory = blockSubcategories.find(s => s.slug === subSlug);
+      if (activeSubcategory) {
+        setOpenSubcategories(prev => new Set(prev).add(activeSubcategory.id));
+      }
+    }
+  }, [location.pathname, blockCategories, blockSubcategories]);
 
   const toggleCategory = (categoryId: string) => {
     setOpenCategories(prev => {
@@ -91,6 +122,18 @@ export function AppSidebarApporteur() {
         newSet.delete(categoryId);
       } else {
         newSet.add(categoryId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSubcategory = (subcategoryId: string) => {
+    setOpenSubcategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(subcategoryId)) {
+        newSet.delete(subcategoryId);
+      } else {
+        newSet.add(subcategoryId);
       }
       return newSet;
     });
@@ -128,7 +171,7 @@ export function AppSidebarApporteur() {
             <SidebarMenu>
               {blockCategories.map((category) => {
                 const Icon = IconComponent(category.icon);
-                const categorySections = blockSections.filter(s => s.parentId === category.id);
+                const categorySubcategories = blockSubcategories.filter(s => s.parentId === category.id);
                 const isOpen = openCategories.has(category.id);
                 const categoryPath = `/apporteurs/category/${category.slug}`;
                 const isActive = isActiveLink(categoryPath);
@@ -166,7 +209,7 @@ export function AppSidebarApporteur() {
                           {(category.showTitleInMenu !== false) && (
                             <span className="flex-1 text-left">{category.title}</span>
                           )}
-                          {categorySections.length > 0 && (
+                          {categorySubcategories.length > 0 && (
                             <ChevronRight 
                               className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-90' : ''}`} 
                             />
@@ -174,25 +217,61 @@ export function AppSidebarApporteur() {
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
                       
-                      {categorySections.length > 0 && (
+                      {categorySubcategories.length > 0 && (
                         <CollapsibleContent>
                           <SidebarMenuSub>
-                            {categorySections.map((section) => {
-                              const sectionPath = `/apporteurs/category/${category.slug}#${section.slug}`;
-                              const isSectionActive = location.pathname === categoryPath && 
-                                                      location.hash === `#${section.slug}`;
+                            {categorySubcategories.map((subcategory) => {
+                              const subcategorySections = blockSections.filter(s => s.parentId === subcategory.id);
+                              const isSubOpen = openSubcategories.has(subcategory.id);
+                              const subcategoryPath = `/apporteurs/category/${category.slug}/sub/${subcategory.slug}`;
+                              const isSubActive = isActiveLink(subcategoryPath);
                               
                               return (
-                                <SidebarMenuSubItem key={section.id}>
-                                  <SidebarMenuSubButton
-                                    asChild
-                                    className={isSectionActive ? 'bg-accent/50 text-accent-foreground' : ''}
-                                  >
-                                    <Link to={sectionPath}>
-                                      {section.title}
-                                    </Link>
-                                  </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
+                                <Collapsible
+                                  key={subcategory.id}
+                                  open={isSubOpen}
+                                  onOpenChange={() => toggleSubcategory(subcategory.id)}
+                                >
+                                  <SidebarMenuSubItem>
+                                    <CollapsibleTrigger asChild>
+                                      <SidebarMenuSubButton
+                                        className={`w-full ${isSubActive ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                                      >
+                                        <span className="flex-1">{subcategory.title}</span>
+                                        {subcategorySections.length > 0 && (
+                                          <ChevronRight 
+                                            className={`w-3 h-3 transition-transform ${isSubOpen ? 'rotate-90' : ''}`} 
+                                          />
+                                        )}
+                                      </SidebarMenuSubButton>
+                                    </CollapsibleTrigger>
+                                    
+                                    {subcategorySections.length > 0 && (
+                                      <CollapsibleContent>
+                                        <SidebarMenuSub className="ml-2">
+                                          {subcategorySections.map((section) => {
+                                            const sectionPath = `/apporteurs/category/${category.slug}/sub/${subcategory.slug}#${section.slug}`;
+                                            const isSectionActive = location.pathname === subcategoryPath && 
+                                                                    location.hash === `#${section.slug}`;
+                                            
+                                            return (
+                                              <SidebarMenuSubItem key={section.id}>
+                                                <SidebarMenuSubButton
+                                                  asChild
+                                                  className={isSectionActive ? 'bg-accent/30 text-accent-foreground' : ''}
+                                                >
+                                                  <Link to={sectionPath}>
+                                                    {section.title}
+                                                  </Link>
+                                                </SidebarMenuSubButton>
+                                              </SidebarMenuSubItem>
+                                            );
+                                          })}
+                                        </SidebarMenuSub>
+                                      </CollapsibleContent>
+                                    )}
+                                  </SidebarMenuSubItem>
+                                </Collapsible>
                               );
                             })}
                           </SidebarMenuSub>

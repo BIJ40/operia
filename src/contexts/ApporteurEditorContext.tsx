@@ -65,7 +65,38 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
       order: maxOrder + 1,
     };
     
-    setBlocks(prev => [...prev, newBlock]);
+    // Si c'est une catégorie pour les apporteurs, créer automatiquement les sous-catégories
+    if (block.type === 'category') {
+      const defaultSubcategories = [
+        'Présentation',
+        'Barème / tarifs',
+        'Exigences',
+        'Gestion extranet',
+        'Particularités',
+        'Aide à la rédaction d\'un devis',
+        'Base documentaire'
+      ];
+      
+      const subcategories: Block[] = defaultSubcategories.map((title, index) => ({
+        id: crypto.randomUUID(),
+        type: 'subcategory' as const,
+        title,
+        content: '',
+        colorPreset: 'white' as const,
+        order: maxOrder + 2 + index,
+        slug: `${block.slug}-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+        parentId: newId,
+        attachments: [],
+        hideFromSidebar: false,
+        showTitleOnCard: true,
+        showTitleInMenu: true,
+      }));
+      
+      setBlocks(prev => [...prev, newBlock, ...subcategories]);
+    } else {
+      setBlocks(prev => [...prev, newBlock]);
+    }
+    
     return newId;
   }, [blocks, isAdmin]);
 

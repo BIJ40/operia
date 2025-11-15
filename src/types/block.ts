@@ -1,5 +1,5 @@
 export type ColorPreset = "white" | "blanc" | "gray" | "green" | "yellow" | "red" | "blue" | "purple" | "pink" | "orange" | "cyan" | "indigo" | "teal" | "rose";
-export type BlockType = "category" | "section" | "home_card";
+export type BlockType = "category" | "subcategory" | "section" | "home_card";
 
 export interface Attachment {
   id: string;
