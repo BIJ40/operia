@@ -30,14 +30,19 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { isAdmin } = useAuth();
 
-  // Load data on mount
   useEffect(() => {
     const initData = async () => {
       console.log('🔄 Chargement des données...');
       
       try {
-        // Charger depuis Supabase
-        const data = await loadAppData();
+        // Charger depuis Supabase avec timeout
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 8000)
+        );
+        
+        const dataPromise = loadAppData();
+        
+        const data = await Promise.race([dataPromise, timeoutPromise]) as AppData | null;
         
         if (data && data.blocks && data.blocks.length > 0) {
           setBlocks(data.blocks);
@@ -54,6 +59,13 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.error('❌ Erreur chargement:', error);
+        // Fallback sur JSON en cas d'erreur
+        const apogeeData = await import('../data/apogee-data.json');
+        if (apogeeData.default && apogeeData.default.blocks) {
+          const blocks = apogeeData.default.blocks as Block[];
+          setBlocks(blocks);
+          console.log(`✅ ${blocks.length} blocks chargés depuis JSON (fallback)`);
+        }
       }
       
       setLoading(false);
