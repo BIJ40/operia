@@ -233,18 +233,25 @@ export function AppSidebarApporteur() {
                                   onOpenChange={() => toggleSubcategory(subcategory.id)}
                                 >
                                   <SidebarMenuSubItem>
-                                    <CollapsibleTrigger asChild>
+                                    <div className="flex items-center w-full">
                                       <SidebarMenuSubButton
-                                        className={`w-full ${isSubActive ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                                        asChild
+                                        className={`flex-1 ${isSubActive ? 'bg-accent/50 text-accent-foreground' : ''}`}
                                       >
-                                        <span className="flex-1">{subcategory.title}</span>
-                                        {subcategorySections.length > 0 && (
-                                          <ChevronRight 
-                                            className={`w-3 h-3 transition-transform ${isSubOpen ? 'rotate-90' : ''}`} 
-                                          />
-                                        )}
+                                        <Link to={subcategoryPath}>
+                                          <span className="flex-1">{subcategory.title}</span>
+                                        </Link>
                                       </SidebarMenuSubButton>
-                                    </CollapsibleTrigger>
+                                      {subcategorySections.length > 0 && (
+                                        <CollapsibleTrigger asChild>
+                                          <button className="p-1 hover:bg-accent/20 rounded">
+                                            <ChevronRight 
+                                              className={`w-3 h-3 transition-transform ${isSubOpen ? 'rotate-90' : ''}`} 
+                                            />
+                                          </button>
+                                        </CollapsibleTrigger>
+                                      )}
+                                    </div>
                                     
                                     {subcategorySections.length > 0 && (
                                       <CollapsibleContent>
