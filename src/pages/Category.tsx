@@ -192,10 +192,7 @@ export default function Category() {
     hideFromSidebar: boolean;
   }) => {
     if (editingId) {
-      // Fermer l'édition IMMÉDIATEMENT
       setEditingId(null);
-      
-      // Puis sauvegarder en arrière-plan
       updateBlock(editingId, data);
       
       const updatedBlocks = blocks.map(b => 
@@ -206,15 +203,8 @@ export default function Category() {
         blocks: updatedBlocks,
         version: '1.0',
         lastModified: Date.now(),
-      }).then(() => {
-        toast({ title: '✅ Sauvegardé', description: 'Modifications enregistrées en base de données' });
       }).catch((err) => {
         console.error('Erreur sauvegarde:', err);
-        toast({ 
-          title: '❌ Erreur', 
-          description: 'La sauvegarde a échoué',
-          variant: 'destructive'
-        });
       });
     }
   };
