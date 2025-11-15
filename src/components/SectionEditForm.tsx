@@ -145,29 +145,31 @@ export function SectionEditForm({
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-lg">Édition</h3>
           <div className="flex gap-2">
-            <button
+            <Button 
               type="button"
+              size="icon"
+              variant="outline"
               onClick={handleSave}
               disabled={isSaving}
               title="Enregistrer"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 w-10"
-              style={{
-                border: isSaving ? 'none' : '1px solid hsl(var(--border))',
-                backgroundColor: isSaving ? '#22c55e !important' : 'hsl(var(--background))',
-                color: isSaving ? '#ffffff !important' : 'hsl(var(--foreground))',
-                transform: isSaving ? 'scale(1.3)' : 'scale(1)',
-                transition: 'all 0.3s ease',
-                boxShadow: isSaving ? '0 10px 25px -5px rgba(34, 197, 94, 0.5)' : 'none',
-                cursor: isSaving ? 'not-allowed' : 'pointer',
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
               }}
-              onMouseDown={(e) => e.preventDefault()}
+              style={{
+                backgroundColor: isSaving ? '#22c55e' : undefined,
+                borderColor: isSaving ? '#22c55e' : undefined,
+                color: isSaving ? '#ffffff' : undefined,
+                transform: isSaving ? 'scale(1.2)' : 'scale(1)',
+                boxShadow: isSaving ? '0 10px 25px -5px rgba(34, 197, 94, 0.5)' : undefined,
+              }}
             >
               {isSaving ? (
-                <Check className="h-5 w-5 animate-pulse" style={{ color: '#ffffff' }} />
+                <Check className="h-5 w-5 animate-pulse" />
               ) : (
                 <Save className="h-5 w-5" />
               )}
-            </button>
+            </Button>
             <Button 
               type="button"
               size="icon"
