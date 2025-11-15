@@ -332,6 +332,28 @@ div[data-callout] p {
   opacity: 0.8;
 }
 
+/* Image positioning classes */
+.prose .image-float-left {
+  float: left !important;
+  margin: 0 1rem 0.5rem 0 !important;
+  max-width: 60% !important;
+  display: block !important;
+}
+
+.prose .image-float-right {
+  float: right !important;
+  margin: 0 0 0.5rem 1rem !important;
+  max-width: 60% !important;
+  display: block !important;
+}
+
+.prose .image-center {
+  float: none !important;
+  margin: 1rem auto !important;
+  display: block !important;
+  max-width: 100% !important;
+}
+
 /* Clear floats */
 .prose::after {
   content: "";
