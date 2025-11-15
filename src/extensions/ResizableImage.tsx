@@ -422,43 +422,25 @@ export const ResizableImage = Node.create({
       float: {
         default: 'none',
         parseHTML: element => {
-          const float = element.style.float || element.getAttribute('data-float');
-          return float || 'none';
+          const classList = element.classList;
+          if (classList.contains('image-float-left')) return 'left';
+          if (classList.contains('image-float-right')) return 'right';
+          return 'none';
         },
         renderHTML: attributes => {
-          if (!attributes.float || attributes.float === 'none') return {};
-          return { 
-            'data-float': attributes.float,
-            style: `float: ${attributes.float}`
-          };
+          return {};
         },
       },
       margin: {
         default: '0 4px',
-        parseHTML: element => {
-          const margin = element.style.margin || element.getAttribute('data-margin');
-          return margin || '0 4px';
-        },
-        renderHTML: attributes => {
-          if (!attributes.margin) return {};
-          return { 
-            'data-margin': attributes.margin,
-            style: `margin: ${attributes.margin}`
-          };
+        renderHTML: () => {
+          return {};
         },
       },
       display: {
         default: 'inline-block',
-        parseHTML: element => {
-          const display = element.style.display || element.getAttribute('data-display');
-          return display || 'inline-block';
-        },
-        renderHTML: attributes => {
-          if (!attributes.display || attributes.display === 'inline-block') return {};
-          return { 
-            'data-display': attributes.display,
-            style: `display: ${attributes.display}`
-          };
+        renderHTML: () => {
+          return {};
         },
       },
     };
@@ -477,12 +459,17 @@ export const ResizableImage = Node.create({
           const alt = element.getAttribute('alt');
           const title = element.getAttribute('title');
           
+          let float = 'none';
+          if (element.classList.contains('image-float-left')) float = 'left';
+          if (element.classList.contains('image-float-right')) float = 'right';
+          
           return {
             src,
             alt,
             title,
             width: width ? parseInt(width, 10) : null,
             height: height ? parseInt(height, 10) : null,
+            float,
           };
         },
       },
@@ -490,21 +477,19 @@ export const ResizableImage = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    // Ne pas appliquer les styles de positionnement ici
-    // Ils seront appliqués dans le composant React
-    const styles: string[] = [];
+    const classes = ['rounded-lg'];
     
-    // Ajouter width et height si présents
-    if (HTMLAttributes.width) {
-      styles.push(`width: ${HTMLAttributes.width}px`);
-    }
-    if (HTMLAttributes.height) {
-      styles.push(`height: ${HTMLAttributes.height}px`);
+    // Ajouter les classes de float
+    if (HTMLAttributes.float === 'left') {
+      classes.push('image-float-left');
+    } else if (HTMLAttributes.float === 'right') {
+      classes.push('image-float-right');
+    } else {
+      classes.push('image-center');
     }
     
     return ['img', mergeAttributes(HTMLAttributes, { 
-      class: 'rounded-lg',
-      style: styles.length > 0 ? styles.join('; ') : undefined
+      class: classes.join(' ')
     })];
   },
 
