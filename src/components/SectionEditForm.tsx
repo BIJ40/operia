@@ -85,7 +85,10 @@ export function SectionEditForm({
     sessionStorage.removeItem(`${storageKey}-hide`);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     console.log('🔵 AVANT setIsSaving(true)');
     setIsSaving(true);
     console.log('🟢 APRÈS setIsSaving(true) - isSaving devrait être true');
