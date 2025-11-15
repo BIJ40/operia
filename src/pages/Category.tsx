@@ -194,7 +194,7 @@ export default function Category() {
     if (editingId) {
       updateBlock(editingId, data);
       
-      // Sauvegarder IMMÉDIATEMENT en base de données
+      // Sauvegarder IMMÉDIATEMENT en base de données SANS TOAST
       const updatedBlocks = blocks.map(b => 
         b.id === editingId ? { ...b, ...data } : b
       );
