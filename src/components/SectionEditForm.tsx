@@ -19,6 +19,7 @@ interface SectionEditFormProps {
     hideFromSidebar: boolean;
   }) => void;
   onCancel: () => void;
+  onColorChange?: (color: ColorPreset) => void;
 }
 
 export function SectionEditForm({
@@ -29,6 +30,7 @@ export function SectionEditForm({
   initialHideFromSidebar,
   onSave,
   onCancel,
+  onColorChange,
 }: SectionEditFormProps) {
   // Clé stable basée sur l'ID de la section
   const storageKey = `edit-draft-${sectionId}`;
@@ -136,7 +138,12 @@ export function SectionEditForm({
             <button
               key={colorOption.value}
               type="button"
-              onClick={() => setColor(colorOption.value as ColorPreset)}
+              onClick={() => {
+                setColor(colorOption.value as ColorPreset);
+                if (onColorChange) {
+                  onColorChange(colorOption.value as ColorPreset);
+                }
+              }}
               className={`w-8 h-8 rounded-full ${colorOption.color} transition-all hover:scale-110 ${
                 color === colorOption.value 
                   ? 'ring-4 ring-primary ring-offset-2' 
