@@ -62,7 +62,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     initData();
   }, []);
 
-  // Auto-save SÉCURISÉ - réactivé avec protection
+  // Auto-save silencieux en arrière-plan
   useEffect(() => {
     if (!loading && blocks.length > 0) {
       const timer = setTimeout(() => {
@@ -73,17 +73,13 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         };
         saveAppData(appData).catch(err => {
           console.error('Erreur auto-save:', err);
-          toast({ 
-            title: 'Erreur de sauvegarde', 
-            description: 'Vos modifications n\'ont pas pu être sauvegardées automatiquement',
-            variant: 'destructive' 
-          });
+          // Pas de toast pour l'auto-save, seulement en cas de sauvegarde manuelle
         });
-      }, 2000); // 2 secondes au lieu de 1
+      }, 2000);
 
       return () => clearTimeout(timer);
     }
-  }, [blocks, loading, toast]);
+  }, [blocks, loading]);
 
   const addBlock = useCallback((block: Omit<Block, 'id' | 'order'>): string => {
     if (!isAdmin) {
