@@ -77,24 +77,14 @@ export function SectionEditForm({
     sessionStorage.removeItem(`${storageKey}-hide`);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     setIsSaving(true);
     console.log('💾 Début sauvegarde...');
     
-    try {
-      await onSave({ title, content, colorPreset: color, hideFromSidebar });
-      console.log('✅ Sauvegarde terminée');
-    } catch (error) {
-      console.error('❌ Erreur sauvegarde:', error);
-    }
-    
+    onSave({ title, content, colorPreset: color, hideFromSidebar });
     clearStorage();
     
-    // Délai pour montrer le feedback visuel (icône verte)
-    setTimeout(() => {
-      console.log('🔄 Réinitialisation du bouton');
-      setIsSaving(false);
-    }, 1500);
+    console.log('✅ Sauvegarde lancée, attente du retour...');
   };
 
   const handleCancel = () => {
