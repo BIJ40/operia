@@ -18,6 +18,7 @@ interface EditorContextType {
   exportData: () => Promise<string>;
   importData: (data: string) => Promise<void>;
   resetToDefault: () => void;
+  reloadBlocks: () => Promise<void>;
   loading: boolean;
 }
 
@@ -30,24 +31,52 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { isAdmin } = useAuth();
 
-  // Load data on mount - OPTIMISÉ pour chargement instantané
+  // Load data from Supabase on mount
   useEffect(() => {
     const initData = async () => {
-      console.log('🔄 Chargement instantané...');
+      console.log('🔄 Chargement depuis Supabase...');
       
-      // Charger d'abord depuis le JSON local pour affichage immédiat
-      const apogeeDataLocal = await import('../data/apogee-data.json');
-      
-      if (apogeeDataLocal.default && apogeeDataLocal.default.blocks) {
-        const blocks = apogeeDataLocal.default.blocks as Block[];
-        setBlocks(blocks);
+      try {
+        const { data, error } = await supabase
+          .from('blocks')
+          .select('*')
+          .order('order');
+
+        if (error) throw error;
+
+        if (data) {
+          // Transform data to match Block interface
+          const transformedBlocks: Block[] = data.map((block: any) => ({
+            id: block.id,
+            type: block.type,
+            title: block.title,
+            slug: block.slug,
+            content: block.content || '',
+            parentId: block.parent_id,
+            order: block.order,
+            icon: block.icon,
+            colorPreset: block.color_preset,
+            hideFromSidebar: block.hide_from_sidebar || false,
+            attachments: block.attachments || [],
+          }));
+
+          setBlocks(transformedBlocks);
+          console.log(`⚡ ${transformedBlocks.length} blocks chargés depuis Supabase`);
+        }
+      } catch (error) {
+        console.error('Erreur chargement Supabase:', error);
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de charger les données',
+          variant: 'destructive',
+        });
+      } finally {
         setLoading(false);
-        console.log(`⚡ ${blocks.length} blocks chargés instantanément`);
       }
     };
     
     initData();
-  }, []);
+  }, [toast]);
 
   // Auto-save DÉSACTIVÉ - sauvegarde uniquement sur action manuelle pour éviter les timeouts
   // La sauvegarde se fait maintenant uniquement via handleSave dans les pages
@@ -137,6 +166,43 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     });
   }, [isAdmin, toast]);
 
+  const reloadBlocks = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('blocks')
+        .select('*')
+        .order('order');
+
+      if (error) throw error;
+
+      if (data) {
+        const transformedBlocks: Block[] = data.map((block: any) => ({
+          id: block.id,
+          type: block.type,
+          title: block.title,
+          slug: block.slug,
+          content: block.content || '',
+          parentId: block.parent_id,
+          order: block.order,
+          icon: block.icon,
+          colorPreset: block.color_preset,
+          hideFromSidebar: block.hide_from_sidebar || false,
+          attachments: block.attachments || [],
+        }));
+
+        setBlocks(transformedBlocks);
+        console.log(`🔄 ${transformedBlocks.length} blocks rechargés`);
+      }
+    } catch (error) {
+      console.error('Erreur rechargement:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de recharger les données',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
   return (
     <EditorContext.Provider
       value={{
@@ -151,6 +217,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         exportData: exportDataFn,
         importData: importDataFn,
         resetToDefault,
+        reloadBlocks,
         loading,
       }}
     >
