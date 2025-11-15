@@ -89,12 +89,21 @@ export function SectionEditForm({
     e.preventDefault();
     e.stopPropagation();
     
+    // Empêcher tout scroll
+    const scrollContainer = document.querySelector('.flex-1.overflow-y-auto');
+    const currentScrollTop = scrollContainer?.scrollTop || 0;
+    
     console.log('🔵 AVANT setIsSaving(true)');
     setIsSaving(true);
     console.log('🟢 APRÈS setIsSaving(true) - isSaving devrait être true');
     
     await onSave({ title, content, colorPreset: color, hideFromSidebar });
     clearStorage();
+    
+    // Restaurer la position de scroll
+    if (scrollContainer) {
+      scrollContainer.scrollTop = currentScrollTop;
+    }
     
     console.log('🟡 Sauvegarde terminée, attente avant reset');
     // Réinitialiser après que Category.tsx ait fermé la fenêtre
@@ -128,23 +137,17 @@ export function SectionEditForm({
               onClick={handleSave}
               disabled={isSaving}
               title="Enregistrer"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 w-10"
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '40px',
-                height: '40px',
-                borderRadius: '0.375rem',
                 border: isSaving ? 'none' : '1px solid hsl(var(--border))',
-                backgroundColor: isSaving ? '#22c55e' : 'transparent',
-                color: isSaving ? '#ffffff' : 'hsl(var(--foreground))',
+                backgroundColor: isSaving ? '#22c55e !important' : 'hsl(var(--background))',
+                color: isSaving ? '#ffffff !important' : 'hsl(var(--foreground))',
                 transform: isSaving ? 'scale(1.3)' : 'scale(1)',
                 transition: 'all 0.3s ease',
                 boxShadow: isSaving ? '0 10px 25px -5px rgba(34, 197, 94, 0.5)' : 'none',
                 cursor: isSaving ? 'not-allowed' : 'pointer',
-                pointerEvents: isSaving ? 'none' : 'auto',
-                opacity: isSaving ? 1 : 1,
               }}
+              onMouseDown={(e) => e.preventDefault()}
             >
               {isSaving ? (
                 <Check className="h-5 w-5 animate-pulse" style={{ color: '#ffffff' }} />
