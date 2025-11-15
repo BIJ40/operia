@@ -401,13 +401,14 @@ export default function CategoryApporteur() {
           </div>
 
           {isEditMode && (
-            <div className="mb-6">
+            <div className="mb-6 flex justify-end">
               <Button
                 onClick={handleAddSection}
-                className="w-full flex items-center justify-center gap-2"
+                size="sm"
+                variant="ghost"
+                className="gap-1 text-muted-foreground hover:text-foreground"
               >
-                <Plus className="w-5 h-5" />
-                Ajouter une section
+                <Plus className="w-4 h-4" />
               </Button>
             </div>
           )}
