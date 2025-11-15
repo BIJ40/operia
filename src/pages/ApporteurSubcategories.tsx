@@ -162,7 +162,7 @@ function SortableSubcategory({
             <img 
               src={subcategory.icon} 
               alt="" 
-              className="w-[90px] h-[90px] object-contain flex-shrink-0"
+              className="w-[120px] h-[120px] object-contain flex-shrink-0"
             />
           ) : null}
           {subcategory.showTitleOnCard !== false && (
