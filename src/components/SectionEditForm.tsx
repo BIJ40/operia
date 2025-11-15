@@ -77,14 +77,13 @@ export function SectionEditForm({
     sessionStorage.removeItem(`${storageKey}-hide`);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    console.log('💾 Début sauvegarde...');
     
-    onSave({ title, content, colorPreset: color, hideFromSidebar });
+    await onSave({ title, content, colorPreset: color, hideFromSidebar });
     clearStorage();
     
-    console.log('✅ Sauvegarde lancée, attente du retour...');
+    setTimeout(() => setIsSaving(false), 500);
   };
 
   const handleCancel = () => {

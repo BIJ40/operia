@@ -71,29 +71,29 @@ export async function saveAppData(data: AppData): Promise<void> {
       console.log(`✅ ${newBlocks.length} nouveaux blocks insérés`);
     }
 
-    // 2. Mettre à jour les existants UN PAR UN (plus sûr)
-    for (const block of updateBlocks) {
-      const { error: updateError } = await supabase
+    // 2. Mettre à jour les existants EN BATCH (beaucoup plus rapide)
+    if (updateBlocks.length > 0) {
+      const { error: upsertError } = await supabase
         .from('blocks')
-        .update({
-          type: block.type,
-          title: block.title,
-          content: block.content || '',
-          icon: block.icon || null,
-          color_preset: block.colorPreset || 'white',
-          order: block.order || 0,
-          slug: block.slug,
-          parent_id: block.parentId || null,
-          attachments: (block.attachments || []) as any,
-          hide_from_sidebar: block.hideFromSidebar || false,
-        } as any)
-        .eq('id', block.id);
+        .upsert(
+          updateBlocks.map(block => ({
+            id: block.id,
+            type: block.type,
+            title: block.title,
+            content: block.content || '',
+            icon: block.icon || null,
+            color_preset: block.colorPreset || 'white',
+            order: block.order || 0,
+            slug: block.slug,
+            parent_id: block.parentId || null,
+            attachments: (block.attachments || []) as any,
+            hide_from_sidebar: block.hideFromSidebar || false,
+          })) as any
+        );
       
-      if (updateError) {
-        console.error(`❌ Erreur mise à jour block ${block.id}:`, updateError);
-      }
+      if (upsertError) throw upsertError;
+      console.log(`✅ ${updateBlocks.length} blocks mis à jour`);
     }
-    console.log(`✅ ${updateBlocks.length} blocks mis à jour`);
 
     // 3. Supprimer UNIQUEMENT les blocks qui n'existent plus
     if (toDelete.length > 0) {
