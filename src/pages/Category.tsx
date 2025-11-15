@@ -4,6 +4,7 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { saveAppData } from '@/lib/db';
+import { Block, ColorPreset } from '@/types/block';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput } from 'lucide-react';
 import {
@@ -40,7 +41,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { SectionEditForm } from '@/components/SectionEditForm';
-import { ColorPreset } from '@/types/block';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
@@ -52,6 +52,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function Category() {
   const { slug } = useParams();
@@ -83,6 +89,7 @@ export default function Category() {
   );
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingSection, setEditingSection] = useState<Block | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const savedScrollPositionRef = useRef<number>(0);
@@ -191,12 +198,12 @@ export default function Category() {
     colorPreset: ColorPreset;
     hideFromSidebar: boolean;
   }) => {
-    if (editingId) {
-      setEditingId(null);
-      updateBlock(editingId, data);
+    if (editingSection) {
+      setEditingSection(null);
+      updateBlock(editingSection.id, data);
       
       const updatedBlocks = blocks.map(b => 
-        b.id === editingId ? { ...b, ...data } : b
+        b.id === editingSection.id ? { ...b, ...data } : b
       );
       
       saveAppData({
@@ -432,22 +439,10 @@ export default function Category() {
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-6">
-              {editingId === section.id ? (
-                <SectionEditForm
-                  sectionId={section.id}
-                  initialTitle={section.title}
-                  initialContent={section.content}
-                  initialColor={section.colorPreset || 'red'}
-                  initialHideFromSidebar={section.hideFromSidebar || false}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                />
-              ) : (
-                <div
-                  className="prose prose-sm max-w-none break-words overflow-visible"
-                  dangerouslySetInnerHTML={{ __html: section.content }}
-                />
-              )}
+              <div
+                className="prose prose-sm max-w-none break-words overflow-visible"
+                dangerouslySetInnerHTML={{ __html: section.content }}
+              />
             </AccordionContent>
           </div>
         </AccordionItem>
@@ -529,6 +524,25 @@ export default function Category() {
           </div>
         )}
       </div>
+
+      <Dialog open={!!editingSection} onOpenChange={(open) => !open && setEditingSection(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Éditer la section</DialogTitle>
+          </DialogHeader>
+          {editingSection && (
+            <SectionEditForm
+              sectionId={editingSection.id}
+              initialTitle={editingSection.title}
+              initialContent={editingSection.content}
+              initialColor={editingSection.colorPreset || 'red'}
+              initialHideFromSidebar={editingSection.hideFromSidebar || false}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
