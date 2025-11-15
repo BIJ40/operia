@@ -320,9 +320,29 @@ div[data-callout] p {
   @apply text-sm text-gray-800 my-1;
 }
 
-/* Make images in content clickable with cursor pointer */
+/* Make images in content clickable with cursor pointer and allow text wrapping */
 .prose img {
   @apply cursor-pointer transition-opacity hover:opacity-80;
+}
+
+/* Allow text to wrap around images with float */
+.prose img[style*="float: left"],
+.prose img[style*="float:left"] {
+  @apply mr-4 mb-2;
+  float: left !important;
+}
+
+.prose img[style*="float: right"],
+.prose img[style*="float:right"] {
+  @apply ml-4 mb-2;
+  float: right !important;
+}
+
+/* Clear floats after images */
+.prose::after {
+  content: "";
+  display: table;
+  clear: both;
 }
 
 /* Make image modal buttons clickable in rendered content */
