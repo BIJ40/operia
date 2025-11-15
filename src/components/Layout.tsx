@@ -18,10 +18,10 @@ export function Layout({ children, showHeader = true, showSidebar = true, sideba
   
   return (
     <SidebarProvider>
-      <div className="min-h-screen w-full flex bg-background">
+      <div className="min-h-screen w-full flex bg-background overflow-x-auto">
         {showSidebar && <SidebarComponent />}
         
-        <div className="flex-1 flex flex-col min-h-screen">
+        <div className="flex-1 flex flex-col min-h-screen min-w-0">
           {showHeader && <Header />}
 
           <main className="flex-1">
