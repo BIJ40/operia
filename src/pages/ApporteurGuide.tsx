@@ -240,18 +240,14 @@ const SortableCategory = ({
       ) : (
         <>
           <Link to={`/apporteurs/category/${category.slug}`} className="block">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="p-3 bg-background/50 rounded-lg flex items-center justify-center">
-                {isCustomImage ? (
-                  <img src={category.icon} alt={category.title} className="w-[90px] h-[90px] object-contain" />
-                ) : (
-                  <Icon className="w-[90px] h-[90px] text-primary" />
-                )}
-              </div>
-              {(category.showTitleOnCard !== false) && (
-                <h3 className="text-xl font-semibold text-foreground flex-1">
-                  {category.title}
-                </h3>
+            <div className="flex flex-col items-center justify-center gap-3">
+              {isCustomImage ? (
+                <img src={category.icon} alt={category.title} className="w-[90px] h-[90px] object-contain" />
+              ) : (
+                <Icon className="w-[90px] h-[90px] text-primary" />
+              )}
+              {category.showTitleOnCard !== false && (
+                <h3 className="text-xl font-semibold text-center">{category.title}</h3>
               )}
             </div>
           </Link>
