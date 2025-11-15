@@ -1,7 +1,7 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer, NodeViewWrapper, ReactNodeViewProps } from '@tiptap/react';
 import { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Minus, ArrowRight, Edit } from 'lucide-react';
+import { Edit } from 'lucide-react';
 import { ImageEditor } from '@/components/ImageEditor';
 
 interface ExtendedNodeViewProps extends ReactNodeViewProps {
@@ -246,46 +246,6 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         
         {selected && (
           <>
-            {/* Options de positionnement avec icônes */}
-            <div className="absolute -top-12 left-0 bg-background border border-border rounded-md shadow-lg p-1 flex gap-1 z-20">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  updateAttributes({ float: 'left' });
-                }}
-                className={`p-2 rounded hover:bg-accent ${node.attrs.float === 'left' ? 'bg-accent' : ''}`}
-                title="Flottant à gauche"
-                type="button"
-              >
-                <ArrowLeft size={16} />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  updateAttributes({ float: 'none' });
-                }}
-                className={`p-2 rounded hover:bg-accent ${node.attrs.float === 'none' || !node.attrs.float ? 'bg-accent' : ''}`}
-                title="Centré"
-                type="button"
-              >
-                <Minus size={16} />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  updateAttributes({ float: 'right' });
-                }}
-                className={`p-2 rounded hover:bg-accent ${node.attrs.float === 'right' ? 'bg-accent' : ''}`}
-                title="Flottant à droite"
-                type="button"
-              >
-                <ArrowRight size={16} />
-              </button>
-            </div>
-            
             {/* Corner resize handles */}
             <div
               className="absolute bottom-0 right-0 w-4 h-4 bg-primary rounded-full cursor-se-resize border-2 border-background shadow-md z-10"
