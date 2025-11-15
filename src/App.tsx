@@ -19,13 +19,13 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <EditorProvider>
-        <ApporteurEditorProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AuthProvider>
+          <EditorProvider>
+            <ApporteurEditorProvider>
               <Routes>
                 <Route path="/" element={<Layout showHeader showSidebar={false}><Landing /></Layout>} />
                 <Route path="/apogee" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><ApogeeGuide /></Layout>} />
@@ -35,11 +35,11 @@ const App = () => (
                 <Route path="/documents" element={<Layout showHeader showSidebar={false}><Documents /></Layout>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </ApporteurEditorProvider>
-      </EditorProvider>
-    </AuthProvider>
+            </ApporteurEditorProvider>
+          </EditorProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </TooltipProvider>
   </QueryClientProvider>
 );
 
