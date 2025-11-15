@@ -83,7 +83,8 @@ export function SectionEditForm({
     await onSave({ title, content, colorPreset: color, hideFromSidebar });
     clearStorage();
     
-    setTimeout(() => setIsSaving(false), 500);
+    // Laisser le temps de voir le feedback visuel (icône verte)
+    setTimeout(() => setIsSaving(false), 1200);
   };
 
   const handleCancel = () => {
@@ -93,33 +94,35 @@ export function SectionEditForm({
 
   return (
     <div className="fixed top-20 right-8 w-[800px] max-h-[calc(100vh-120px)] overflow-y-auto bg-background border rounded-lg p-4 shadow-2xl space-y-4 z-50">
-      {/* Boutons de sauvegarde en haut */}
-      <div className="flex items-center justify-between pb-2 border-b sticky top-0 bg-background z-10">
-        <h3 className="font-semibold text-lg">Édition</h3>
-        <div className="flex gap-2">
-          <Button 
-            type="button"
-            size="icon"
-            onClick={handleSave}
-            title="Enregistrer"
-            disabled={isSaving}
-            className={isSaving ? "bg-green-500 hover:bg-green-500 text-white" : ""}
-          >
-            {isSaving ? (
-              <Check className="h-5 w-5 animate-in zoom-in duration-200" />
-            ) : (
-              <Save className="h-5 w-5" />
-            )}
-          </Button>
-          <Button 
-            type="button"
-            size="icon"
-            variant="outline"
-            onClick={handleCancel}
-            title="Annuler"
-          >
-            <X className="h-5 w-5" />
-          </Button>
+      {/* Boutons STICKY - toujours visibles même lors du scroll */}
+      <div className="sticky top-0 bg-background z-20 -mx-4 -mt-4 px-4 pt-4 pb-2 border-b mb-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-lg">Édition</h3>
+          <div className="flex gap-2">
+            <Button 
+              type="button"
+              size="icon"
+              onClick={handleSave}
+              title="Enregistrer"
+              disabled={isSaving}
+              className={isSaving ? "bg-green-500 hover:bg-green-500 text-white scale-110 transition-all duration-300" : "transition-all duration-200"}
+            >
+              {isSaving ? (
+                <Check className="h-5 w-5 animate-in zoom-in-50 duration-200" />
+              ) : (
+                <Save className="h-5 w-5" />
+              )}
+            </Button>
+            <Button 
+              type="button"
+              size="icon"
+              variant="outline"
+              onClick={handleCancel}
+              title="Annuler"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </div>
       
