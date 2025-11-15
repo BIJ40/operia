@@ -21,6 +21,7 @@ export const ImageEditor = ({ open, onClose, imageUrl, onSave }: ImageEditorProp
   const [activeTool, setActiveTool] = useState<'move' | 'crop'>('move');
   const fabricImageRef = useRef<FabricImage | null>(null);
 
+  // Initialiser le canvas quand le dialog s'ouvre
   useEffect(() => {
     if (!open || !canvasRef.current) return;
 
@@ -48,9 +49,9 @@ export const ImageEditor = ({ open, onClose, imageUrl, onSave }: ImageEditorProp
       
       const scaleX = (canvasWidth * 0.8) / imgWidth;
       const scaleY = (canvasHeight * 0.8) / imgHeight;
-      const scale = Math.min(scaleX, scaleY);
+      const initialScale = Math.min(scaleX, scaleY);
       
-      img.scale(scale);
+      img.scale(initialScale);
       img.set({
         left: canvasWidth / 2,
         top: canvasHeight / 2,
@@ -60,7 +61,10 @@ export const ImageEditor = ({ open, onClose, imageUrl, onSave }: ImageEditorProp
       
       canvas.add(img);
       canvas.renderAll();
-      setScale(scale);
+      setScale(initialScale);
+    }).catch((error) => {
+      console.error('Error loading image:', error);
+      toast.error('Erreur lors du chargement de l\'image');
     });
 
     return () => {
@@ -148,9 +152,12 @@ export const ImageEditor = ({ open, onClose, imageUrl, onSave }: ImageEditorProp
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden" aria-describedby="image-editor-description">
         <DialogHeader>
           <DialogTitle>Éditeur d'image</DialogTitle>
+          <p id="image-editor-description" className="sr-only">
+            Éditez votre image avec les outils de rotation, zoom et recadrage
+          </p>
         </DialogHeader>
         
         <div className="flex flex-col gap-4">
