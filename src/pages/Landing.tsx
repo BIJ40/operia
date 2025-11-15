@@ -497,10 +497,9 @@ export default function Landing() {
         )}
 
         {isEditMode && isAdmin && (
-          <div className="flex justify-center mt-8">
-            <Button onClick={handleAddCard} size="lg">
-              <Plus className="w-5 h-5 mr-2" />
-              Ajouter une carte
+          <div className="flex justify-end mt-8">
+            <Button onClick={handleAddCard} size="sm" variant="ghost" className="gap-1 text-muted-foreground hover:text-foreground">
+              <Plus className="w-4 h-4" />
             </Button>
           </div>
         )}

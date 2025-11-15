@@ -332,10 +332,9 @@ export default function ApporteurSubcategories() {
       </div>
 
       {isEditMode && isAdmin && (
-        <div className="mb-6">
-          <Button onClick={handleAddSubcategory}>
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter une sous-catégorie
+        <div className="mb-6 flex justify-end">
+          <Button onClick={handleAddSubcategory} size="sm" variant="ghost" className="gap-1 text-muted-foreground hover:text-foreground">
+            <Plus className="w-4 h-4" />
           </Button>
         </div>
       )}
