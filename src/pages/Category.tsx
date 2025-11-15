@@ -442,10 +442,6 @@ export default function Category() {
                   initialHideFromSidebar={section.hideFromSidebar || false}
                   onSave={handleSave}
                   onCancel={handleCancel}
-                  onColorChange={(newColor) => {
-                    // Appliquer la couleur immédiatement
-                    updateBlock(section.id, { colorPreset: newColor });
-                  }}
                 />
               ) : (
                 <div
