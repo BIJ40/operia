@@ -23,6 +23,7 @@ export type Database = {
           hide_from_sidebar: boolean | null
           icon: string | null
           id: string
+          is_single_section: boolean | null
           order: number
           parent_id: string | null
           show_title_in_menu: boolean | null
@@ -40,6 +41,7 @@ export type Database = {
           hide_from_sidebar?: boolean | null
           icon?: string | null
           id?: string
+          is_single_section?: boolean | null
           order?: number
           parent_id?: string | null
           show_title_in_menu?: boolean | null
@@ -57,6 +59,7 @@ export type Database = {
           hide_from_sidebar?: boolean | null
           icon?: string | null
           id?: string
+          is_single_section?: boolean | null
           order?: number
           parent_id?: string | null
           show_title_in_menu?: boolean | null
