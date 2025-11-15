@@ -12,11 +12,13 @@ interface SectionEditFormProps {
   initialContent: string;
   initialColor: ColorPreset;
   initialHideFromSidebar: boolean;
+  initialIsSingleSection?: boolean;
   onSave: (data: {
     title: string;
     content: string;
     colorPreset: ColorPreset;
     hideFromSidebar: boolean;
+    isSingleSection?: boolean;
   }) => void;
   onCancel: () => void;
 }
@@ -27,6 +29,7 @@ export function SectionEditForm({
   initialContent,
   initialColor,
   initialHideFromSidebar,
+  initialIsSingleSection = false,
   onSave,
   onCancel,
 }: SectionEditFormProps) {
@@ -50,6 +53,10 @@ export function SectionEditForm({
     const saved = sessionStorage.getItem(`${storageKey}-hide`);
     return saved ? saved === 'true' : initialHideFromSidebar;
   });
+  const [isSingleSection, setIsSingleSection] = useState(() => {
+    const saved = sessionStorage.getItem(`${storageKey}-single`);
+    return saved ? saved === 'true' : initialIsSingleSection;
+  });
 
   // Sauvegarder automatiquement l'état lors des modifications
   useEffect(() => {
@@ -68,16 +75,21 @@ export function SectionEditForm({
     sessionStorage.setItem(`${storageKey}-hide`, hideFromSidebar.toString());
   }, [hideFromSidebar, storageKey]);
 
+  useEffect(() => {
+    sessionStorage.setItem(`${storageKey}-single`, isSingleSection.toString());
+  }, [isSingleSection, storageKey]);
+
   // Nettoyer le stockage lors de la sauvegarde ou de l'annulation
   const clearStorage = () => {
     sessionStorage.removeItem(`${storageKey}-title`);
     sessionStorage.removeItem(`${storageKey}-content`);
     sessionStorage.removeItem(`${storageKey}-color`);
     sessionStorage.removeItem(`${storageKey}-hide`);
+    sessionStorage.removeItem(`${storageKey}-single`);
   };
 
   const handleSave = () => {
-    onSave({ title, content, colorPreset: color, hideFromSidebar });
+    onSave({ title, content, colorPreset: color, hideFromSidebar, isSingleSection });
     clearStorage();
   };
 
@@ -158,6 +170,19 @@ export function SectionEditForm({
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
         >
           Masquer du sommaire (Tips/Encart)
+        </label>
+      </div>
+      <div className="flex items-center space-x-2 py-2">
+        <Checkbox 
+          id="isSingleSection" 
+          checked={isSingleSection}
+          onCheckedChange={(checked) => setIsSingleSection(checked as boolean)}
+        />
+        <label 
+          htmlFor="isSingleSection" 
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+        >
+          Section unique (pas de titre, toujours visible)
         </label>
       </div>
       <RichTextEditor

@@ -192,6 +192,66 @@ export default function CategoryApporteur() {
       opacity: isDragging ? 0.5 : 1,
     };
 
+    // Si c'est une section unique, l'afficher sans accordéon
+    if (section.isSingleSection) {
+      return (
+        <div ref={setNodeRef} style={style} className="bg-card border-2 rounded-lg p-6 shadow-sm">
+          {isEditMode && (
+            <div
+              {...attributes}
+              {...listeners}
+              className="float-left -ml-8 mr-2 cursor-grab active:cursor-grabbing"
+            >
+              <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
+            </div>
+          )}
+          {editingId === section.id ? (
+            <SectionEditForm
+              sectionId={section.id}
+              initialTitle={section.title}
+              initialContent={section.content}
+              initialColor={section.colorPreset}
+              initialHideFromSidebar={section.hideFromSidebar || false}
+              initialIsSingleSection={section.isSingleSection || false}
+              onSave={(data) => handleSaveSection(section.id, data)}
+              onCancel={handleCancelEdit}
+            />
+          ) : (
+            <div>
+              <div 
+                className="prose prose-sm max-w-none dark:prose-invert"
+                dangerouslySetInnerHTML={{ __html: section.content }}
+              />
+              
+              {isEditMode && (
+                <div className="flex gap-2 mt-4 pt-4 border-t">
+                  <Button
+                    onClick={() => handleEdit(section.id)}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    Modifier
+                  </Button>
+                  <Button
+                    onClick={() => handleDelete(section.id)}
+                    variant="destructive"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Supprimer
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Affichage normal avec accordéon
     return (
       <div ref={setNodeRef} style={style}>
         <AccordionItem value={section.slug} id={section.slug}>
@@ -217,6 +277,7 @@ export default function CategoryApporteur() {
                 initialContent={section.content}
                 initialColor={section.colorPreset}
                 initialHideFromSidebar={section.hideFromSidebar || false}
+                initialIsSingleSection={section.isSingleSection || false}
                 onSave={(data) => handleSaveSection(section.id, data)}
                 onCancel={handleCancelEdit}
               />

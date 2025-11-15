@@ -22,6 +22,7 @@ export interface Block {
   hideFromSidebar?: boolean;
   showTitleOnCard?: boolean;
   showTitleInMenu?: boolean;
+  isSingleSection?: boolean;
 }
 
 export interface AppData {
