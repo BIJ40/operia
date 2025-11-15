@@ -1,5 +1,5 @@
 // Page Category pour Apporteurs (utilise apporteur_blocks)
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -393,7 +393,9 @@ export default function CategoryApporteur() {
         <div className="container max-w-4xl mx-auto px-4 py-8">
           <div className="bg-card border-2 rounded-lg p-6 mb-6 shadow-sm">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-              <span>{category.title}</span>
+              <Link to={`/apporteurs/category/${category.slug}`} className="hover:text-foreground transition-colors cursor-pointer">
+                {category.title}
+              </Link>
               <span>/</span>
               <span className="text-foreground font-semibold">{subcategory.title}</span>
             </div>
