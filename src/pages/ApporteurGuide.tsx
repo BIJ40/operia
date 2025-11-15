@@ -7,7 +7,7 @@ import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical, Upload, X } from 'lucide-react';
+import { Plus, Trash2, Search, GripVertical, Upload, X, Edit2 } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -112,13 +112,33 @@ const SortableCategory = ({
       style={style}
       className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(category.colorPreset)}`}
     >
-      {isEditMode && (
-        <div
-          {...attributes}
-          {...listeners}
-          className="absolute top-2 left-2 cursor-grab active:cursor-grabbing z-10"
-        >
-          <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
+      {isEditMode && !editingId && (
+        <div className="absolute top-2 right-2 flex gap-1 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 cursor-grab active:cursor-grabbing"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            onClick={() => onEdit(category.id)}
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 text-destructive"
+            onClick={() => onDelete(category.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       )}
       
@@ -238,40 +258,18 @@ const SortableCategory = ({
           </div>
         </div>
       ) : (
-        <>
-          <Link to={`/apporteurs/category/${category.slug}`} className="block">
-            <div className="flex flex-col items-center justify-center gap-3">
-              {isCustomImage ? (
-                <img src={category.icon} alt={category.title} className="w-[90px] h-[90px] object-contain" />
-              ) : (
-                <Icon className="w-[90px] h-[90px] text-primary" />
-              )}
-              {category.showTitleOnCard !== false && (
-                <h3 className="text-xl font-semibold text-center">{category.title}</h3>
-              )}
-            </div>
-          </Link>
-
-          {isEditMode && (
-            <div className="flex gap-2 mt-4">
-              <Button
-                onClick={() => onEdit(category.id)}
-                variant="outline"
-                size="sm"
-                className="flex-1"
-              >
-                Modifier
-              </Button>
-              <Button
-                onClick={() => onDelete(category.id)}
-                variant="destructive"
-                size="sm"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-        </>
+        <Link to={`/apporteurs/category/${category.slug}`} className="block">
+          <div className="flex flex-col items-center justify-center gap-3">
+            {isCustomImage ? (
+              <img src={category.icon} alt={category.title} className="w-[90px] h-[90px] object-contain" />
+            ) : (
+              <Icon className="w-[90px] h-[90px] text-primary" />
+            )}
+            {category.showTitleOnCard !== false && (
+              <h3 className="text-xl font-semibold text-center">{category.title}</h3>
+            )}
+          </div>
+        </Link>
       )}
     </div>
   );

@@ -172,11 +172,11 @@ function SortableSubcategory({
       </Link>
 
       {isEditMode && (
-        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 flex gap-1 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10">
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-grab active:cursor-grabbing"
             {...attributes}
             {...listeners}
           >
