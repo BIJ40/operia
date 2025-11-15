@@ -168,7 +168,7 @@ export function AppSidebar() {
   if (!scope) return null;
 
   return (
-    <Sidebar className="border-r bg-background !z-[100] h-screen sticky top-0" collapsible="icon">
+    <Sidebar className="bg-background" collapsible="icon">
       <SidebarHeader className="p-4 border-b bg-background">
         <Link to="/" className="block" onClick={(e) => e.stopPropagation()}>
           <img 
