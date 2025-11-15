@@ -52,6 +52,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function Category() {
   const { slug } = useParams();
@@ -83,6 +89,7 @@ export default function Category() {
   );
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const savedScrollPositionRef = useRef<number>(0);
@@ -192,6 +199,7 @@ export default function Category() {
     hideFromSidebar: boolean;
   }) => {
     if (editingId) {
+      setEditDialogOpen(false);
       setEditingId(null);
       updateBlock(editingId, data);
       
@@ -407,7 +415,8 @@ export default function Category() {
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        handleEdit(section);
+                        setEditingId(section.id);
+                        setEditDialogOpen(true);
                       }}
                     >
                       <Edit2 className="w-4 h-4" />
@@ -432,22 +441,10 @@ export default function Category() {
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-6">
-              {editingId === section.id ? (
-                <SectionEditForm
-                  sectionId={section.id}
-                  initialTitle={section.title}
-                  initialContent={section.content}
-                  initialColor={section.colorPreset || 'red'}
-                  initialHideFromSidebar={section.hideFromSidebar || false}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                />
-              ) : (
-                <div
-                  className="prose prose-sm max-w-none break-words overflow-visible"
-                  dangerouslySetInnerHTML={{ __html: section.content }}
-                />
-              )}
+              <div
+                className="prose prose-sm max-w-none break-words overflow-visible"
+                dangerouslySetInnerHTML={{ __html: section.content }}
+              />
             </AccordionContent>
           </div>
         </AccordionItem>
@@ -546,6 +543,28 @@ export default function Category() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Modifier la section</DialogTitle>
+          </DialogHeader>
+          {editingId && (
+            <SectionEditForm
+              sectionId={editingId}
+              initialTitle={sections.find(s => s.id === editingId)?.title || ''}
+              initialContent={sections.find(s => s.id === editingId)?.content || ''}
+              initialColor={sections.find(s => s.id === editingId)?.colorPreset || 'blue'}
+              initialHideFromSidebar={sections.find(s => s.id === editingId)?.hideFromSidebar || false}
+              onSave={handleSave}
+              onCancel={() => {
+                setEditDialogOpen(false);
+                setEditingId(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
