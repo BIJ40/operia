@@ -466,35 +466,37 @@ export const ResizableImage = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    const styles = ['display: inline-block', 'vertical-align: middle', 'margin: 0 4px'];
+    const styles: string[] = [];
     
-    if (HTMLAttributes.style) {
-      // Merge with existing styles
-      const existingStyles = HTMLAttributes.style.split(';').filter((s: string) => s.trim());
-      styles.push(...existingStyles);
-    }
-    
+    // Ajouter float en priorité
     if (HTMLAttributes.float && HTMLAttributes.float !== 'none') {
-      styles.push(`float: ${HTMLAttributes.float}`);
+      styles.push(`float: ${HTMLAttributes.float} !important`);
     }
     
+    // Ajouter margin
     if (HTMLAttributes.margin) {
-      const marginIndex = styles.findIndex(s => s.trim().startsWith('margin:'));
-      if (marginIndex >= 0) {
-        styles[marginIndex] = `margin: ${HTMLAttributes.margin}`;
-      } else {
-        styles.push(`margin: ${HTMLAttributes.margin}`);
-      }
+      styles.push(`margin: ${HTMLAttributes.margin} !important`);
+    } else {
+      styles.push('margin: 0 4px !important');
     }
     
-    if (HTMLAttributes.display && HTMLAttributes.display !== 'inline-block') {
-      const displayIndex = styles.findIndex(s => s.trim().startsWith('display:'));
-      if (displayIndex >= 0) {
-        styles[displayIndex] = `display: ${HTMLAttributes.display}`;
-      } else {
-        styles.push(`display: ${HTMLAttributes.display}`);
-      }
+    // Ajouter display
+    if (HTMLAttributes.display) {
+      styles.push(`display: ${HTMLAttributes.display} !important`);
+    } else {
+      styles.push('display: inline-block !important');
     }
+    
+    // Ajouter width et height si présents
+    if (HTMLAttributes.width) {
+      styles.push(`width: ${HTMLAttributes.width}px !important`);
+    }
+    if (HTMLAttributes.height) {
+      styles.push(`height: ${HTMLAttributes.height}px !important`);
+    }
+    
+    // Autres styles
+    styles.push('vertical-align: middle');
     
     return ['img', mergeAttributes(HTMLAttributes, { 
       class: 'rounded-lg',
