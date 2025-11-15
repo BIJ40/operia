@@ -243,9 +243,9 @@ const SortableCategory = ({
             <div className="flex items-center gap-4 mb-2">
               <div className="p-3 bg-background/50 rounded-lg flex items-center justify-center">
                 {isCustomImage ? (
-                  <img src={category.icon} alt={category.title} className="w-[30px] h-[30px] object-contain" />
+                  <img src={category.icon} alt={category.title} className="w-[90px] h-[90px] object-contain" />
                 ) : (
-                  <Icon className="w-[30px] h-[30px] text-primary" />
+                  <Icon className="w-[90px] h-[90px] text-primary" />
                 )}
               </div>
               {(category.showTitleOnCard !== false) && (

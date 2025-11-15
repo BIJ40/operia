@@ -157,16 +157,16 @@ function SortableSubcategory({
         to={`/apporteurs/category/${categorySlug}/sub/${subcategory.slug}`}
         className={`block p-4 rounded-lg shadow-sm hover:shadow-md transition-all border ${colorClass}`}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col items-center gap-3 p-2">
           {subcategory.icon?.startsWith('http') ? (
             <img 
               src={subcategory.icon} 
               alt="" 
-              className="w-6 h-6 object-contain flex-shrink-0"
+              className="w-[90px] h-[90px] object-contain flex-shrink-0"
             />
           ) : null}
           {subcategory.showTitleOnCard !== false && (
-            <h3 className="text-base font-semibold">{subcategory.title}</h3>
+            <h3 className="text-base font-semibold text-center">{subcategory.title}</h3>
           )}
         </div>
       </Link>
