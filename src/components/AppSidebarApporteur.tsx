@@ -145,9 +145,23 @@ export function AppSidebarApporteur() {
                           className={`w-full ${isActive ? 'bg-accent text-accent-foreground' : ''}`}
                         >
                           {Icon ? (
-                            <Icon className="w-4 h-4 mr-2" />
+                            <Icon 
+                              className="w-4 h-4 mr-2 cursor-pointer hover:opacity-70" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.location.href = categoryPath;
+                              }}
+                            />
                           ) : category.icon?.startsWith('http') ? (
-                            <img src={category.icon} alt="" className="w-4 h-4 mr-2 object-contain" />
+                            <img 
+                              src={category.icon} 
+                              alt="" 
+                              className="w-4 h-4 mr-2 object-contain cursor-pointer hover:opacity-70" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.location.href = categoryPath;
+                              }}
+                            />
                           ) : null}
                           {(category.showTitleInMenu !== false) && (
                             <span className="flex-1 text-left">{category.title}</span>

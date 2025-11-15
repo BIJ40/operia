@@ -202,7 +202,13 @@ export function AppSidebar() {
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton className="w-full hover:bg-accent">
-                            <Icon className="h-4 w-4 shrink-0" />
+                            <Icon 
+                              className="h-4 w-4 shrink-0 cursor-pointer hover:opacity-70" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/apogee/category/${category.slug}`);
+                              }}
+                            />
                             <span className="flex-1 text-left truncate">{category.title}</span>
                             <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200" 
                               style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }} 
