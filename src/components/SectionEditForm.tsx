@@ -83,8 +83,8 @@ export function SectionEditForm({
     await onSave({ title, content, colorPreset: color, hideFromSidebar });
     clearStorage();
     
-    // Laisser le temps de voir le feedback visuel (icône verte)
-    setTimeout(() => setIsSaving(false), 1200);
+    // Réinitialiser après que Category.tsx ait fermé la fenêtre
+    setTimeout(() => setIsSaving(false), 2000);
   };
 
   const handleCancel = () => {

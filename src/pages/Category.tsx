@@ -205,6 +205,8 @@ export default function Category() {
         lastModified: Date.now(),
       });
       
+      // ATTENDRE 1.5s pour que le feedback visuel soit visible avant de fermer
+      await new Promise(resolve => setTimeout(resolve, 1500));
       setEditingId(null);
     }
   };
