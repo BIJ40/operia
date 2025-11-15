@@ -192,21 +192,30 @@ export default function Category() {
     hideFromSidebar: boolean;
   }) => {
     if (editingId) {
+      // Fermer l'édition IMMÉDIATEMENT
+      setEditingId(null);
+      
+      // Puis sauvegarder en arrière-plan
       updateBlock(editingId, data);
       
-      // Sauvegarder IMMÉDIATEMENT en base de données
       const updatedBlocks = blocks.map(b => 
         b.id === editingId ? { ...b, ...data } : b
       );
       
-      await saveAppData({
+      saveAppData({
         blocks: updatedBlocks,
         version: '1.0',
         lastModified: Date.now(),
+      }).then(() => {
+        toast({ title: '✅ Sauvegardé', description: 'Modifications enregistrées en base de données' });
+      }).catch((err) => {
+        console.error('Erreur sauvegarde:', err);
+        toast({ 
+          title: '❌ Erreur', 
+          description: 'La sauvegarde a échoué',
+          variant: 'destructive'
+        });
       });
-      
-      toast({ title: '✅ Sauvegardé', description: 'Modifications enregistrées en base de données' });
-      setEditingId(null);
     }
   };
 
