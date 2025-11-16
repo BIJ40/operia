@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { saveAppData } from '@/lib/db';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info } from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import {
   Accordion,
@@ -19,6 +19,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 import {
   DndContext,
   closestCenter,
@@ -649,7 +654,30 @@ export default function Category() {
             <AccordionTrigger className="px-6 py-4 hover:no-underline">
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-3 flex-1">
-                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+                  {section.showSummary && section.summary ? (
+                    <HoverCard openDelay={200}>
+                      <HoverCardTrigger asChild>
+                        <div 
+                          className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 shrink-0 cursor-help"
+                          onClick={(e) => {
+                            if (isEditMode && isAuthenticated) {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              setEditingId(section.id);
+                              setEditDialogOpen(true);
+                            }
+                          }}
+                        >
+                          <Info className="h-4 w-4" />
+                        </div>
+                      </HoverCardTrigger>
+                      <HoverCardContent className="w-80 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200" side="right">
+                        <p className="text-sm text-gray-900 leading-relaxed">{section.summary}</p>
+                      </HoverCardContent>
+                    </HoverCard>
+                  ) : (
+                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+                  )}
                   <h2 className="text-xl font-semibold text-left">
                     {section.title}
                   </h2>
@@ -859,7 +887,20 @@ export default function Category() {
                     <div className={`rounded-lg ${getColorClass(section.colorPreset)}`}>
                       <AccordionTrigger className="px-6 py-4 hover:no-underline">
                         <div className="flex items-center gap-3 w-full">
-                          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+                          {section.showSummary && section.summary ? (
+                            <HoverCard openDelay={200}>
+                              <HoverCardTrigger asChild>
+                                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 shrink-0 cursor-help">
+                                  <Info className="h-4 w-4" />
+                                </div>
+                              </HoverCardTrigger>
+                              <HoverCardContent className="w-80 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200" side="right">
+                                <p className="text-sm text-gray-900 leading-relaxed">{section.summary}</p>
+                              </HoverCardContent>
+                            </HoverCard>
+                          ) : (
+                            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+                          )}
                           <h2 className="text-xl font-semibold text-left">
                             {section.title}
                           </h2>
@@ -939,6 +980,8 @@ export default function Category() {
               initialColor={sections.find(s => s.id === editingId)?.colorPreset || 'blue'}
               initialHideFromSidebar={sections.find(s => s.id === editingId)?.hideFromSidebar || false}
               initialIsSingleSection={sections.find(s => s.id === editingId)?.isSingleSection || false}
+              initialSummary={sections.find(s => s.id === editingId)?.summary || ''}
+              initialShowSummary={sections.find(s => s.id === editingId)?.showSummary ?? true}
               onSave={handleSave}
               onCancel={() => {
                 setEditDialogOpen(false);

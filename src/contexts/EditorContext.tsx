@@ -60,6 +60,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             attachments: block.attachments || [],
             contentType: block.content_type || 'section',
             tipsType: block.tips_type,
+            summary: block.summary || '',
+            showSummary: block.show_summary !== false,
           }));
 
           setBlocks(transformedBlocks);
@@ -146,6 +148,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       if (updates.attachments !== undefined) updateData.attachments = updates.attachments;
       if (updates.contentType !== undefined) updateData.content_type = updates.contentType;
       if (updates.tipsType !== undefined) updateData.tips_type = updates.tipsType;
+      if (updates.summary !== undefined) updateData.summary = updates.summary;
+      if (updates.showSummary !== undefined) updateData.show_summary = updates.showSummary;
       
       const { error } = await supabase
         .from('blocks')

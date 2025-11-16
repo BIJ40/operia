@@ -44,12 +44,16 @@ interface SectionEditFormProps {
   initialColor: ColorPreset;
   initialHideFromSidebar: boolean;
   initialIsSingleSection?: boolean;
+  initialSummary?: string;
+  initialShowSummary?: boolean;
   onSave: (data: {
     title: string;
     content: string;
     colorPreset: ColorPreset;
     hideFromSidebar: boolean;
     isSingleSection?: boolean;
+    summary?: string;
+    showSummary?: boolean;
   }) => void;
   onCancel: () => void;
 }
@@ -61,6 +65,8 @@ export function SectionEditForm({
   initialColor,
   initialHideFromSidebar,
   initialIsSingleSection = false,
+  initialSummary = '',
+  initialShowSummary = true,
   onSave,
   onCancel,
 }: SectionEditFormProps) {
@@ -88,6 +94,14 @@ export function SectionEditForm({
     const saved = sessionStorage.getItem(`${storageKey}-single`);
     return saved ? saved === 'true' : initialIsSingleSection;
   });
+  const [summary, setSummary] = useState(() => {
+    const saved = sessionStorage.getItem(`${storageKey}-summary`);
+    return saved || initialSummary;
+  });
+  const [showSummary, setShowSummary] = useState(() => {
+    const saved = sessionStorage.getItem(`${storageKey}-showSummary`);
+    return saved ? saved === 'true' : initialShowSummary;
+  });
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Sauvegarder automatiquement l'état lors des modifications
@@ -110,6 +124,14 @@ export function SectionEditForm({
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}-single`, isSingleSection.toString());
   }, [isSingleSection, storageKey]);
+
+  useEffect(() => {
+    sessionStorage.setItem(`${storageKey}-summary`, summary);
+  }, [summary, storageKey]);
+
+  useEffect(() => {
+    sessionStorage.setItem(`${storageKey}-showSummary`, showSummary.toString());
+  }, [showSummary, storageKey]);
 
   // Proposer un titre par défaut quand la couleur change
   useEffect(() => {
@@ -144,10 +166,12 @@ export function SectionEditForm({
     sessionStorage.removeItem(`${storageKey}-color`);
     sessionStorage.removeItem(`${storageKey}-hide`);
     sessionStorage.removeItem(`${storageKey}-single`);
+    sessionStorage.removeItem(`${storageKey}-summary`);
+    sessionStorage.removeItem(`${storageKey}-showSummary`);
   };
 
   const handleSave = () => {
-    onSave({ title, content, colorPreset: color, hideFromSidebar, isSingleSection });
+    onSave({ title, content, colorPreset: color, hideFromSidebar, isSingleSection, summary, showSummary });
     clearStorage();
   };
 
@@ -262,6 +286,34 @@ export function SectionEditForm({
           Section figée (pas de titre, toujours visible)
         </label>
       </div>
+      <div className="flex items-center space-x-2 py-2">
+        <Checkbox 
+          id="showSummary" 
+          checked={showSummary}
+          onCheckedChange={(checked) => setShowSummary(checked as boolean)}
+        />
+        <label 
+          htmlFor="showSummary" 
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+        >
+          Afficher l'icône résumé
+        </label>
+      </div>
+      {showSummary && (
+        <div className="space-y-2">
+          <label htmlFor="summary" className="text-sm font-medium">
+            Résumé (affiché au survol de l'icône info)
+          </label>
+          <textarea
+            id="summary"
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            placeholder="Entrez un bref résumé de cette section..."
+            className="w-full min-h-[100px] p-3 border rounded-md resize-y"
+            rows={3}
+          />
+        </div>
+      )}
       <RichTextEditor
         content={content}
         onChange={setContent}
