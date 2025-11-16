@@ -373,6 +373,91 @@ export default function Category() {
       zIndex: isDragging ? 50 : 'auto',
     };
 
+    // Si c'est une section figée, l'afficher sans accordéon
+    if (section.isSingleSection) {
+      return (
+        <div ref={setNodeRef} style={style} className="mb-4">
+          <div className={`rounded-lg relative ${getColorClass(section.colorPreset)} p-6`}>
+            {isEditMode && isAuthenticated && (
+              <div className="absolute top-2 right-2 flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="cursor-move"
+                  {...attributes}
+                  {...listeners}
+                >
+                  <GripVertical className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setEditingId(section.id);
+                    setEditDialogOpen(true);
+                  }}
+                >
+                  <Edit2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  title="Dupliquer la section"
+                  onClick={() => handleDuplicate(section.id)}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      title="Changer de catégorie"
+                    >
+                      <FolderInput className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-background border shadow-md z-[200]">
+                    {availableCategories
+                      .filter(cat => cat.id !== category?.id)
+                      .map((cat) => (
+                        <DropdownMenuItem
+                          key={cat.id}
+                          onClick={() => handleMoveToCategory(section.id, cat.id)}
+                        >
+                          {cat.title}
+                        </DropdownMenuItem>
+                      ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleDeleteClick(section.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+            {section.title && section.title.trim() !== '' ? (
+              <h3 className="text-lg font-semibold mb-4">{section.title}</h3>
+            ) : section.hideFromSidebar ? (
+              <h3 className="text-lg font-semibold mb-4">💡 Info / Astuce</h3>
+            ) : null}
+            <div
+              className="prose prose-sm max-w-none break-words overflow-visible"
+              dangerouslySetInnerHTML={{ __html: section.content }}
+            />
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div ref={setNodeRef} style={style}>
         <AccordionItem value={section.id} id={section.id} className="mb-4">
