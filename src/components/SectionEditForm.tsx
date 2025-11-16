@@ -42,16 +42,12 @@ interface SectionEditFormProps {
   initialTitle: string;
   initialContent: string;
   initialColor: ColorPreset;
-  initialHideFromSidebar: boolean;
-  initialIsSingleSection?: boolean;
   initialSummary?: string;
   initialShowSummary?: boolean;
   onSave: (data: {
     title: string;
     content: string;
     colorPreset: ColorPreset;
-    hideFromSidebar: boolean;
-    isSingleSection?: boolean;
     summary?: string;
     showSummary?: boolean;
   }) => void;
@@ -63,8 +59,6 @@ export function SectionEditForm({
   initialTitle,
   initialContent,
   initialColor,
-  initialHideFromSidebar,
-  initialIsSingleSection = false,
   initialSummary = '',
   initialShowSummary = true,
   onSave,
@@ -85,14 +79,6 @@ export function SectionEditForm({
   const [color, setColor] = useState<ColorPreset>(() => {
     const saved = sessionStorage.getItem(`${storageKey}-color`);
     return (saved as ColorPreset) || initialColor;
-  });
-  const [hideFromSidebar, setHideFromSidebar] = useState(() => {
-    const saved = sessionStorage.getItem(`${storageKey}-hide`);
-    return saved ? saved === 'true' : initialHideFromSidebar;
-  });
-  const [isSingleSection, setIsSingleSection] = useState(() => {
-    const saved = sessionStorage.getItem(`${storageKey}-single`);
-    return saved ? saved === 'true' : initialIsSingleSection;
   });
   const [summary, setSummary] = useState(() => {
     const saved = sessionStorage.getItem(`${storageKey}-summary`);
@@ -116,14 +102,6 @@ export function SectionEditForm({
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}-color`, color);
   }, [color, storageKey]);
-
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}-hide`, hideFromSidebar.toString());
-  }, [hideFromSidebar, storageKey]);
-
-  useEffect(() => {
-    sessionStorage.setItem(`${storageKey}-single`, isSingleSection.toString());
-  }, [isSingleSection, storageKey]);
 
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}-summary`, summary);
@@ -164,14 +142,12 @@ export function SectionEditForm({
     sessionStorage.removeItem(`${storageKey}-title`);
     sessionStorage.removeItem(`${storageKey}-content`);
     sessionStorage.removeItem(`${storageKey}-color`);
-    sessionStorage.removeItem(`${storageKey}-hide`);
-    sessionStorage.removeItem(`${storageKey}-single`);
     sessionStorage.removeItem(`${storageKey}-summary`);
     sessionStorage.removeItem(`${storageKey}-showSummary`);
   };
 
   const handleSave = () => {
-    onSave({ title, content, colorPreset: color, hideFromSidebar, isSingleSection, summary, showSummary });
+    onSave({ title, content, colorPreset: color, summary, showSummary });
     clearStorage();
   };
 
@@ -179,9 +155,7 @@ export function SectionEditForm({
     // Vérifier si des modifications ont été faites
     const hasChanges = title !== initialTitle || 
                        content !== initialContent || 
-                       color !== initialColor || 
-                       hideFromSidebar !== initialHideFromSidebar ||
-                       isSingleSection !== initialIsSingleSection;
+                       color !== initialColor;
     
     if (hasChanges) {
       setShowCancelDialog(true);
@@ -259,32 +233,6 @@ export function SectionEditForm({
             />
           ))}
         </div>
-      </div>
-      <div className="flex items-center space-x-2 py-2">
-        <Checkbox 
-          id="hideFromSidebar" 
-          checked={hideFromSidebar}
-          onCheckedChange={(checked) => setHideFromSidebar(checked as boolean)}
-        />
-        <label 
-          htmlFor="hideFromSidebar" 
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-        >
-          Masquer du sommaire (Tips/Encart)
-        </label>
-      </div>
-      <div className="flex items-center space-x-2 py-2">
-        <Checkbox 
-          id="isSingleSection" 
-          checked={isSingleSection}
-          onCheckedChange={(checked) => setIsSingleSection(checked as boolean)}
-        />
-        <label 
-          htmlFor="isSingleSection" 
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-        >
-          Section figée (pas de titre, toujours visible)
-        </label>
       </div>
       <div className="flex items-center space-x-2 py-2">
         <Checkbox 
