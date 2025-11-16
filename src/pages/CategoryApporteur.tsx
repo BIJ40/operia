@@ -87,6 +87,7 @@ export default function CategoryApporteur() {
   const savedScrollPositionRef = useRef<number>(0);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const [showTips, setShowTips] = useState(true);
+  const [showSections, setShowSections] = useState(true);
 
   useEffect(() => {
     const hash = location.hash.replace('#', '');
@@ -416,19 +417,40 @@ export default function CategoryApporteur() {
             <h1 className="text-3xl font-bold text-foreground">{subcategory.title}</h1>
           </div>
 
-          {sections.some(s => s.hideFromSidebar) && (
-            <div className="mb-6">
+          <div className="mb-6 flex gap-3">
+            {sections.some(s => s.hideFromSidebar) && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowTips(!showTips)}
+                onClick={() => {
+                  if (showTips && !showSections) {
+                    setShowSections(true);
+                  }
+                  setShowTips(!showTips);
+                }}
                 className="gap-2"
               >
                 <Lightbulb className="w-4 h-4" />
                 {showTips ? 'Masquer les TIPS' : 'Afficher les TIPS'}
               </Button>
-            </div>
-          )}
+            )}
+            {sections.some(s => !s.hideFromSidebar) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (showSections && !showTips) {
+                    setShowTips(true);
+                  }
+                  setShowSections(!showSections);
+                }}
+                className="gap-2"
+              >
+                <ChevronDown className="w-4 h-4" />
+                {showSections ? 'Masquer les tutoriels' : 'Afficher les tutoriels'}
+              </Button>
+            )}
+          </div>
 
           {isEditMode && (
             <div className="mb-6 flex justify-end">
@@ -459,7 +481,11 @@ export default function CategoryApporteur() {
                 className="space-y-4"
               >
                 {sections
-                  .filter(section => showTips || !section.hideFromSidebar)
+                  .filter(section => {
+                    const isTip = section.hideFromSidebar;
+                    if (isTip) return showTips;
+                    return showSections;
+                  })
                   .map((section, index) => (
                   <SortableSection key={section.id} section={section} index={index} />
                 ))}
