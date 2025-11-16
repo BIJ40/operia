@@ -63,7 +63,7 @@ import {
 export default function Category() {
   const { slug } = useParams();
   const location = useLocation();
-  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useEditor();
+  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   
@@ -265,7 +265,7 @@ export default function Category() {
     }
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -274,10 +274,18 @@ export default function Category() {
 
       const reorderedSections = arrayMove(sections, oldIndex, newIndex);
       
-      // Mettre à jour l'ordre de chaque section
-      reorderedSections.forEach((section, index) => {
-        updateBlock(section.id, { order: index });
+      // Créer une nouvelle liste de blocs avec l'ordre mis à jour
+      const updatedBlocks = blocks.map(block => {
+        const sectionIndex = reorderedSections.findIndex(s => s.id === block.id);
+        if (sectionIndex !== -1) {
+          // Cette section fait partie des sections réordonnées
+          return { ...block, order: sectionIndex };
+        }
+        return block;
       });
+      
+      // Utiliser reorderBlocks qui sauvegarde dans Supabase
+      await reorderBlocks(updatedBlocks);
     }
   };
 

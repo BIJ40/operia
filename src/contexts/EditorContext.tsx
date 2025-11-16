@@ -14,7 +14,7 @@ interface EditorContextType {
   addBlock: (block: Omit<Block, 'id' | 'order'>) => Promise<string>;
   updateBlock: (id: string, updates: Partial<Block>) => Promise<void>;
   deleteBlock: (id: string) => Promise<void>;
-  reorderBlocks: (blocks: Block[]) => void;
+  reorderBlocks: (blocks: Block[]) => Promise<void>;
   exportData: () => Promise<string>;
   importData: (data: string) => Promise<void>;
   resetToDefault: () => void;
@@ -178,12 +178,35 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     }
   }, [toast, isAdmin]);
 
-  const reorderBlocks = useCallback((newBlocks: Block[]) => {
+  const reorderBlocks = useCallback(async (newBlocks: Block[]) => {
     if (!isAdmin) {
       toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent réorganiser le contenu', variant: 'destructive' });
       return;
     }
-    setBlocks(newBlocks.map((block, index) => ({ ...block, order: index })));
+    
+    const reorderedBlocks = newBlocks.map((block, index) => ({ ...block, order: index }));
+    setBlocks(reorderedBlocks);
+    
+    // Sauvegarder l'ordre dans Supabase
+    try {
+      const updates = reorderedBlocks.map(block => ({
+        id: block.id,
+        order: block.order
+      }));
+      
+      // Mettre à jour chaque bloc avec son nouvel ordre
+      for (const update of updates) {
+        await supabase
+          .from('blocks')
+          .update({ order: update.order })
+          .eq('id', update.id);
+      }
+      
+      console.log('✅ Ordre sauvegardé dans Supabase');
+    } catch (error) {
+      console.error('Erreur sauvegarde ordre:', error);
+      toast({ title: 'Erreur', description: 'Impossible de sauvegarder l\'ordre', variant: 'destructive' });
+    }
   }, [isAdmin, toast]);
 
   const exportDataFn = useCallback(async (): Promise<string> => {

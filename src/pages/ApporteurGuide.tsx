@@ -276,7 +276,7 @@ const SortableCategory = ({
 };
 
 export default function ApporteurGuide() {
-  const { blocks, isEditMode, addBlock, updateBlock, deleteBlock } = useApporteurEditor();
+  const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, reorderBlocks } = useApporteurEditor();
   const { isAdmin } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -424,11 +424,18 @@ export default function ApporteurGuide() {
       
       const reorderedCategories = arrayMove(apporteurCategories, oldIndex, newIndex);
       
-      // Mettre à jour l'ordre de toutes les catégories
-      for (let index = 0; index < reorderedCategories.length; index++) {
-        const category = reorderedCategories[index];
-        await updateBlock(category.id, { order: index });
-      }
+      // Créer une nouvelle liste de blocs avec l'ordre mis à jour
+      const updatedBlocks = blocks.map(block => {
+        const categoryIndex = reorderedCategories.findIndex(c => c.id === block.id);
+        if (categoryIndex !== -1) {
+          // Cette catégorie fait partie des catégories réordonnées
+          return { ...block, order: categoryIndex };
+        }
+        return block;
+      });
+      
+      // Utiliser reorderBlocks qui sauvegarde dans Supabase
+      await reorderBlocks(updatedBlocks);
     }
   };
 
