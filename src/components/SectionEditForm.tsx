@@ -5,6 +5,16 @@ import { RichTextEditor } from '@/components/RichTextEditor';
 import { ColorPreset } from '@/types/block';
 import { useState, useEffect } from 'react';
 import { Save, X } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface SectionEditFormProps {
   sectionId: string;
@@ -57,6 +67,7 @@ export function SectionEditForm({
     const saved = sessionStorage.getItem(`${storageKey}-single`);
     return saved ? saved === 'true' : initialIsSingleSection;
   });
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Sauvegarder automatiquement l'état lors des modifications
   useEffect(() => {
@@ -94,8 +105,26 @@ export function SectionEditForm({
   };
 
   const handleCancel = () => {
-    // Ne pas effacer le brouillon en cas d'annulation
-    // Il sera conservé pour permettre une récupération en cas d'erreur
+    // Vérifier si des modifications ont été faites
+    const hasChanges = title !== initialTitle || 
+                       content !== initialContent || 
+                       color !== initialColor || 
+                       hideFromSidebar !== initialHideFromSidebar ||
+                       isSingleSection !== initialIsSingleSection;
+    
+    if (hasChanges) {
+      setShowCancelDialog(true);
+    } else {
+      clearStorage();
+      onCancel();
+    }
+  };
+
+  const confirmCancel = (keepDraft: boolean) => {
+    if (!keepDraft) {
+      clearStorage();
+    }
+    setShowCancelDialog(false);
     onCancel();
   };
 
@@ -196,6 +225,27 @@ export function SectionEditForm({
           Annuler
         </Button>
       </div>
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Annuler les modifications ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous avez des modifications non sauvegardées. Voulez-vous :
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowCancelDialog(false)}>
+              Continuer l'édition
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmCancel(true)} className="bg-blue-600 hover:bg-blue-700">
+              Garder le brouillon
+            </AlertDialogAction>
+            <AlertDialogAction onClick={() => confirmCancel(false)} className="bg-destructive hover:bg-destructive/90">
+              Tout annuler
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
