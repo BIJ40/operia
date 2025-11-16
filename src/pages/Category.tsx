@@ -92,13 +92,10 @@ export default function Category() {
   const savedScrollPositionRef = useRef<number>(0);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
 
-  // Early return AFTER all hooks
-  if (!category) {
-    return <div className="container max-w-4xl mx-auto p-8">Catégorie non trouvée</div>;
-  }
-
   // Ouvrir automatiquement la section depuis l'URL hash
   useEffect(() => {
+    if (!category) return;
+    
     const hash = location.hash.replace('#', '');
     if (hash && sections.some(s => s.id === hash)) {
       // Ouvrir l'accordéon de cette section
@@ -124,7 +121,7 @@ export default function Category() {
         }
       }, 400);
     }
-  }, [location.hash, sections]);
+  }, [location.hash, sections, category]);
 
   // Réinitialiser les accordéons ouverts quand on passe en mode édition/normal
   useEffect(() => {
@@ -174,7 +171,7 @@ export default function Category() {
     return () => clearInterval(intervalId);
   }, [editingId]);
 
-
+  // Early return AFTER all hooks
   if (!category) {
     return (
       <div className="flex items-center justify-center py-12">
