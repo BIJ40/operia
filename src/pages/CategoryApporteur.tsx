@@ -56,7 +56,7 @@ import {
 export default function CategoryApporteur() {
   const { slug, subslug } = useParams<{ slug: string; subslug: string }>();
   const location = useLocation();
-  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useApporteurEditor();
+  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useApporteurEditor();
   const { isAuthenticated } = useAuth();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
@@ -173,10 +173,18 @@ export default function CategoryApporteur() {
       
       const reorderedSections = arrayMove(sections, oldIndex, newIndex);
       
-      for (let index = 0; index < reorderedSections.length; index++) {
-        const section = reorderedSections[index];
-        await updateBlock(section.id, { order: index });
-      }
+      // Créer une nouvelle liste de blocs avec l'ordre mis à jour
+      const updatedBlocks = blocks.map(block => {
+        const sectionIndex = reorderedSections.findIndex(s => s.id === block.id);
+        if (sectionIndex !== -1) {
+          // Cette section fait partie des sections réordonnées
+          return { ...block, order: sectionIndex };
+        }
+        return block;
+      });
+      
+      // Utiliser reorderBlocks qui sauvegarde dans Supabase
+      await reorderBlocks(updatedBlocks);
     }
   };
 

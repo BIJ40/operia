@@ -11,7 +11,7 @@ interface ApporteurEditorContextType {
   addBlock: (block: Omit<Block, 'id' | 'order'>) => Promise<string>;
   updateBlock: (id: string, updates: Partial<Block>) => Promise<void>;
   deleteBlock: (id: string) => Promise<void>;
-  reorderBlocks: (blocks: Block[]) => void;
+  reorderBlocks: (blocks: Block[]) => Promise<void>;
   exportData: () => Promise<string>;
   importData: (data: string) => Promise<void>;
   resetToDefault: () => void;
@@ -202,9 +202,30 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
     }
   }, [isAdmin, blocks]);
 
-  const reorderBlocks = useCallback((newBlocks: Block[]) => {
+  const reorderBlocks = useCallback(async (newBlocks: Block[]) => {
     if (!isAdmin) return;
+    
     setBlocks(newBlocks);
+    
+    // Sauvegarder l'ordre dans Supabase
+    try {
+      const updates = newBlocks.map((block, index) => ({
+        id: block.id,
+        order: index
+      }));
+      
+      // Mettre à jour chaque bloc avec son nouvel ordre
+      for (const update of updates) {
+        await supabase
+          .from('apporteur_blocks')
+          .update({ order: update.order })
+          .eq('id', update.id);
+      }
+      
+      console.log('✅ Ordre apporteurs sauvegardé dans Supabase');
+    } catch (error) {
+      console.error('Erreur sauvegarde ordre apporteurs:', error);
+    }
   }, [isAdmin]);
 
   const handleExportData = useCallback(async (): Promise<string> => {

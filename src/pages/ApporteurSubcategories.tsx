@@ -309,7 +309,7 @@ export default function ApporteurSubcategories() {
     });
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -327,7 +327,7 @@ export default function ApporteurSubcategories() {
       b => !(b.type === 'subcategory' && b.parentId === category.id)
     );
 
-    reorderBlocks([...otherBlocks, ...reordered]);
+    await reorderBlocks([...otherBlocks, ...reordered]);
   };
 
   return (
