@@ -132,14 +132,17 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
           tips_type: newBlock.tipsType || null,
         }]);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Erreur insertion Supabase:', error);
+          throw error;
+        }
         setBlocks(prev => [...prev, newBlock]);
       }
+      return newId;
     } catch (error) {
       console.error('Erreur sauvegarde apporteur:', error);
+      return '';
     }
-    
-    return newId;
   }, [blocks, isAdmin]);
 
   const updateBlock = useCallback(async (id: string, updates: Partial<Block>) => {
