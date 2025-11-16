@@ -201,6 +201,9 @@ export default function Category() {
     isSingleSection?: boolean;
   }) => {
     if (editingId) {
+      // Sauvegarder la position de scroll avant la fermeture
+      savedScrollPositionRef.current = window.pageYOffset;
+      
       setEditDialogOpen(false);
       setEditingId(null);
       updateBlock(editingId, data);
@@ -216,6 +219,11 @@ export default function Category() {
       }).catch((err) => {
         console.error('Erreur sauvegarde:', err);
       });
+
+      // Restaurer la position de scroll après le re-render
+      setTimeout(() => {
+        window.scrollTo(0, savedScrollPositionRef.current);
+      }, 100);
     }
   };
 
@@ -226,6 +234,9 @@ export default function Category() {
     hideFromSidebar: boolean
   ) => {
     if (editingId) {
+      // Sauvegarder la position de scroll avant la fermeture
+      savedScrollPositionRef.current = window.pageYOffset;
+      
       const colorMap: Record<TipsType, ColorPreset> = {
         danger: 'red',
         warning: 'orange',
@@ -263,6 +274,11 @@ export default function Category() {
       }).catch((err) => {
         console.error('Erreur sauvegarde:', err);
       });
+
+      // Restaurer la position de scroll après le re-render
+      setTimeout(() => {
+        window.scrollTo(0, savedScrollPositionRef.current);
+      }, 100);
     }
   };
 
