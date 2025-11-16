@@ -112,6 +112,12 @@ export default function Category() {
   const [showTips, setShowTips] = useState(true);
   const [showSections, setShowSections] = useState(true);
 
+  // Réinitialiser les filtres quand on change de catégorie
+  useEffect(() => {
+    setShowTips(true);
+    setShowSections(true);
+  }, [slug]);
+
   // Ouvrir automatiquement la section depuis l'URL hash
   useEffect(() => {
     if (!category) return;
