@@ -30,6 +30,39 @@ export default function AdminBackup() {
     );
   }
 
+  // Fonction pour nettoyer le HTML et le rendre lisible
+  const cleanHtmlForExport = (html: string): string => {
+    if (!html) return '';
+    
+    // Créer un élément temporaire pour parser le HTML
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    
+    // Fonction récursive pour nettoyer les attributs
+    const cleanElement = (element: Element) => {
+      // Garder uniquement les attributs essentiels
+      const attributesToKeep = ['href', 'src', 'alt', 'title'];
+      const attributes = Array.from(element.attributes);
+      
+      attributes.forEach(attr => {
+        if (!attributesToKeep.includes(attr.name)) {
+          element.removeAttribute(attr.name);
+        }
+      });
+      
+      // Nettoyer les enfants
+      Array.from(element.children).forEach(child => cleanElement(child));
+    };
+    
+    cleanElement(temp);
+    
+    // Retourner le HTML nettoyé avec indentation
+    return temp.innerHTML
+      .replace(/></g, '>\n<')
+      .replace(/\n\s*\n/g, '\n')
+      .trim();
+  };
+
   const exportApogeeData = async () => {
     setExportingApogee(true);
     try {
@@ -61,7 +94,8 @@ export default function AdminBackup() {
               id: s.id,
               title: s.title,
               slug: s.slug,
-              content: s.content,
+              contentHtml: cleanHtmlForExport(s.content),
+              contentRaw: s.content, // Garder aussi le HTML brut pour réimport
               summary: s.summary,
               showSummary: s.show_summary,
               icon: s.icon,
@@ -138,7 +172,8 @@ export default function AdminBackup() {
               id: s.id,
               title: s.title,
               slug: s.slug,
-              content: s.content,
+              contentHtml: cleanHtmlForExport(s.content),
+              contentRaw: s.content, // Garder aussi le HTML brut pour réimport
               summary: s.summary,
               showSummary: s.show_summary,
               icon: s.icon,
