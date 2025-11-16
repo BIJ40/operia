@@ -240,7 +240,7 @@ export default function Category() {
     setEditingId(null);
   };
 
-  const handleAddSection = (position: 'top' | 'bottom' = 'bottom') => {
+  const handleAddSection = async (position: 'top' | 'bottom' = 'bottom') => {
     if (!category) return;
     
     // Calculer l'ordre AVANT d'ajouter la section
@@ -249,7 +249,7 @@ export default function Category() {
       : (sections[sections.length - 1]?.order ?? 0) + 1;
     
     // addBlock retourne maintenant l'ID du nouveau block
-    const newBlockId = addBlock({
+    const newBlockId = await addBlock({
       type: 'section',
       title: 'Nouvelle sous-section',
       content: '<p>Contenu de la sous-section...</p>',
@@ -261,8 +261,8 @@ export default function Category() {
     
     if (newBlockId) {
       // Mettre à jour l'ordre et ouvrir en mode édition
-      setTimeout(() => {
-        updateBlock(newBlockId, { order: newOrder });
+      setTimeout(async () => {
+        await updateBlock(newBlockId, { order: newOrder });
         setEditingId(newBlockId);
       }, 50);
     }
