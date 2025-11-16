@@ -1065,8 +1065,6 @@ export default function Category() {
               initialTitle={sections.find(s => s.id === editingId)?.title || ''}
               initialContent={sections.find(s => s.id === editingId)?.content || ''}
               initialColor={sections.find(s => s.id === editingId)?.colorPreset || 'blue'}
-              initialHideFromSidebar={sections.find(s => s.id === editingId)?.hideFromSidebar || false}
-              initialIsSingleSection={sections.find(s => s.id === editingId)?.isSingleSection || false}
               initialSummary={sections.find(s => s.id === editingId)?.summary || ''}
               initialShowSummary={sections.find(s => s.id === editingId)?.showSummary ?? true}
               onSave={handleSave}
