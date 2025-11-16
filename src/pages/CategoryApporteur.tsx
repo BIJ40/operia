@@ -3,7 +3,7 @@ import { useParams, useLocation, Link } from 'react-router-dom';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Lightbulb } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Lightbulb, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import {
   Accordion,
@@ -465,6 +465,40 @@ export default function CategoryApporteur() {
                 {showSections ? 'Masquer les tutoriels' : 'Afficher les tutoriels'}
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const visibleSections = sections.filter(section => {
+                  const isTip = section.hideFromSidebar;
+                  if (isTip) return showTips;
+                  return showSections;
+                }).filter(s => !s.isSingleSection && !s.hideTitle);
+                
+                if (openAccordions.length === visibleSections.length) {
+                  setOpenAccordions([]);
+                } else {
+                  setOpenAccordions(visibleSections.map(s => s.slug));
+                }
+              }}
+              className="gap-2"
+            >
+              {openAccordions.length === sections.filter(s => {
+                const isTip = s.hideFromSidebar;
+                if (isTip) return showTips;
+                return showSections;
+              }).filter(s => !s.isSingleSection && !s.hideTitle).length ? (
+                <>
+                  <ChevronsUpDown className="w-4 h-4" />
+                  Replier tout
+                </>
+              ) : (
+                <>
+                  <ChevronsDownUp className="w-4 h-4" />
+                  Déployer tout
+                </>
+              )}
+            </Button>
           </div>
 
           {isEditMode && (
