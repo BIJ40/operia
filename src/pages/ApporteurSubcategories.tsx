@@ -306,6 +306,7 @@ export default function ApporteurSubcategories() {
       hideFromSidebar: false,
       showTitleOnCard: true,
       showTitleInMenu: true,
+      order: subcategories.length,
     });
   };
 

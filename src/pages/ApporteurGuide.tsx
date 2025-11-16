@@ -412,6 +412,7 @@ export default function ApporteurGuide() {
       slug: `categorie-${Date.now()}`,
       parentId: undefined,
       attachments: [],
+      order: apporteurCategories.length,
     });
   };
 

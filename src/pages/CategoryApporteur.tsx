@@ -150,6 +150,7 @@ export default function CategoryApporteur() {
       parentId: subcategory.id,
       attachments: [],
       isSingleSection: false,
+      order: sections.length,
     });
   };
 
