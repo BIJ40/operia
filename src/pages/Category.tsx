@@ -666,9 +666,19 @@ export default function Category() {
                   ) : section.contentType !== 'tips' ? (
                     <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
                   ) : null}
-                  <h2 className="text-xl font-semibold text-left">
-                    {section.title}
-                  </h2>
+                  {!section.hideTitle ? (
+                    <h2 className="text-xl font-semibold text-left">
+                      {section.title}
+                    </h2>
+                  ) : section.contentType === 'tips' && section.tipsType ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{getTipIcon(section.tipsType)}</span>
+                      <div 
+                        className="prose prose-sm max-w-none text-left line-clamp-1"
+                        dangerouslySetInnerHTML={{ __html: section.content }}
+                      />
+                    </div>
+                  ) : null}
                 </div>
                 {isEditMode && isAuthenticated && (
                   <div 
