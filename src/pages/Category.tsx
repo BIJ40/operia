@@ -99,6 +99,7 @@ export default function Category() {
   const savedScrollPositionRef = useRef<number>(0);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const [showTips, setShowTips] = useState(true);
+  const [showSections, setShowSections] = useState(true);
 
   // Ouvrir automatiquement la section depuis l'URL hash
   useEffect(() => {
@@ -833,19 +834,42 @@ export default function Category() {
           )}
         </div>
         
-        {sections.some(s => s.contentType === 'tips') && (
-          <div className="mb-8">
+        <div className="mb-8 flex gap-3">
+          {sections.some(s => s.contentType === 'tips') && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowTips(!showTips)}
+              onClick={() => {
+                if (showTips && !showSections) {
+                  // Si on masque les TIPS et les sections sont déjà masquées, afficher les sections
+                  setShowSections(true);
+                }
+                setShowTips(!showTips);
+              }}
               className="gap-2"
             >
               <Lightbulb className="w-4 h-4" />
               {showTips ? 'Masquer les TIPS' : 'Afficher les TIPS'}
             </Button>
-          </div>
-        )}
+          )}
+          {sections.some(s => s.contentType !== 'tips') && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (showSections && !showTips) {
+                  // Si on masque les sections et les TIPS sont déjà masqués, afficher les TIPS
+                  setShowTips(true);
+                }
+                setShowSections(!showSections);
+              }}
+              className="gap-2"
+            >
+              <ChevronDown className="w-4 h-4" />
+              {showSections ? 'Masquer les tutoriels' : 'Afficher les tutoriels'}
+            </Button>
+          )}
+        </div>
 
         <DndContext
           sensors={sensors}
@@ -863,8 +887,12 @@ export default function Category() {
               onValueChange={setOpenAccordions}
             >
               {sections
-                .filter(section => showTips || section.contentType !== 'tips')
-                .map((section) => 
+                .filter(section => {
+                  const isTip = section.contentType === 'tips';
+                  if (isTip) return showTips;
+                  return showSections;
+                })
+                .map((section) =>
                 isEditMode ? (
                   <SortableAccordionItem key={section.id} section={section} />
                 ) : (
