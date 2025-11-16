@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Upload, Database, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Download, Upload, Database, AlertCircle, CheckCircle2, FileJson } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AdminBackup() {
   const { isAdmin } = useAuth();
@@ -13,6 +14,8 @@ export default function AdminBackup() {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [lastBackup, setLastBackup] = useState<Date | null>(null);
+  const [exportingApogee, setExportingApogee] = useState(false);
+  const [exportingApporteur, setExportingApporteur] = useState(false);
 
   if (!isAdmin) {
     return (
@@ -27,10 +30,161 @@ export default function AdminBackup() {
     );
   }
 
+  const exportApogeeData = async () => {
+    setExportingApogee(true);
+    try {
+      const { data: blocks, error } = await supabase
+        .from('blocks')
+        .select('*')
+        .order('order');
+
+      if (error) throw error;
+
+      // Organiser par catégories
+      const categories = blocks?.filter(b => b.type === 'category') || [];
+      const sections = blocks?.filter(b => b.type === 'section') || [];
+
+      const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        type: 'apogee',
+        categories: categories.map(cat => ({
+          id: cat.id,
+          title: cat.title,
+          slug: cat.slug,
+          icon: cat.icon,
+          colorPreset: cat.color_preset,
+          order: cat.order,
+          sections: sections
+            .filter(s => s.parent_id === cat.id)
+            .map(s => ({
+              id: s.id,
+              title: s.title,
+              slug: s.slug,
+              content: s.content,
+              summary: s.summary,
+              showSummary: s.show_summary,
+              icon: s.icon,
+              colorPreset: s.color_preset,
+              order: s.order,
+              contentType: s.content_type,
+              tipsType: s.tips_type,
+              hideFromSidebar: s.hide_from_sidebar,
+            }))
+            .sort((a, b) => a.order - b.order)
+        })).sort((a, b) => a.order - b.order),
+        stats: {
+          totalCategories: categories.length,
+          totalSections: sections.length,
+        }
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `export-apogee-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Export Apogée réussi !',
+        description: `${exportData.stats.totalCategories} catégories, ${exportData.stats.totalSections} sections exportées`,
+      });
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast({
+        title: 'Erreur d\'export',
+        description: 'Impossible d\'exporter les données Apogée',
+        variant: 'destructive',
+      });
+    } finally {
+      setExportingApogee(false);
+    }
+  };
+
+  const exportApporteurData = async () => {
+    setExportingApporteur(true);
+    try {
+      const { data: blocks, error } = await supabase
+        .from('apporteur_blocks')
+        .select('*')
+        .order('order');
+
+      if (error) throw error;
+
+      const categories = blocks?.filter(b => b.type === 'category') || [];
+      const sections = blocks?.filter(b => b.type === 'section') || [];
+
+      const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        type: 'apporteur',
+        categories: categories.map(cat => ({
+          id: cat.id,
+          title: cat.title,
+          slug: cat.slug,
+          icon: cat.icon,
+          colorPreset: cat.color_preset,
+          order: cat.order,
+          isSingleSection: cat.is_single_section,
+          showTitleInMenu: cat.show_title_in_menu,
+          showTitleOnCard: cat.show_title_on_card,
+          sections: sections
+            .filter(s => s.parent_id === cat.id)
+            .map(s => ({
+              id: s.id,
+              title: s.title,
+              slug: s.slug,
+              content: s.content,
+              summary: s.summary,
+              showSummary: s.show_summary,
+              icon: s.icon,
+              colorPreset: s.color_preset,
+              order: s.order,
+              contentType: s.content_type,
+              tipsType: s.tips_type,
+              hideFromSidebar: s.hide_from_sidebar,
+            }))
+            .sort((a, b) => a.order - b.order)
+        })).sort((a, b) => a.order - b.order),
+        stats: {
+          totalCategories: categories.length,
+          totalSections: sections.length,
+        }
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `export-apporteur-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Export Apporteur réussi !',
+        description: `${exportData.stats.totalCategories} catégories, ${exportData.stats.totalSections} sections exportées`,
+      });
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast({
+        title: 'Erreur d\'export',
+        description: 'Impossible d\'exporter les données Apporteur',
+        variant: 'destructive',
+      });
+    } finally {
+      setExportingApporteur(false);
+    }
+  };
+
   const exportAllData = async () => {
     setExporting(true);
     try {
-      // Récupérer toutes les données
       const [blocksResult, apporteurBlocksResult, documentsResult, categoriesResult, sectionsResult] = await Promise.all([
         supabase.from('blocks').select('*').order('order'),
         supabase.from('apporteur_blocks').select('*').order('order'),
@@ -63,12 +217,11 @@ export default function AdminBackup() {
         }
       };
 
-      // Créer le fichier JSON et le télécharger
       const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `backup-helpogee-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `backup-helpogee-complet-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -76,7 +229,7 @@ export default function AdminBackup() {
 
       setLastBackup(new Date());
       toast({
-        title: 'Export réussi !',
+        title: 'Export complet réussi !',
         description: `${backupData.stats.totalBlocks} blocs, ${backupData.stats.totalDocuments} documents exportés`,
       });
     } catch (error) {
@@ -150,144 +303,182 @@ export default function AdminBackup() {
   };
 
   return (
-    <div className="container max-w-4xl mx-auto p-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Sauvegarde & Restauration</h1>
-        <p className="text-muted-foreground">
-          Exportez et importez toutes vos données en toute sécurité
-        </p>
+    <div className="container max-w-6xl mx-auto p-8 space-y-8">
+      <div className="flex items-center gap-3 mb-8">
+        <Database className="h-8 w-8 text-primary" />
+        <h1 className="text-3xl font-bold">Sauvegarde & Restauration</h1>
       </div>
 
-      <div className="grid gap-6">
-        {/* Export */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Download className="w-5 h-5" />
-              Exporter les données
-            </CardTitle>
-            <CardDescription>
-              Téléchargez une sauvegarde complète de toutes vos données au format JSON
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-2">Ce qui sera exporté :</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>✓ Tous les blocs Apogée (catégories, sections, contenu)</li>
-                <li>✓ Tous les blocs Apporteurs (catégories, sous-catégories, sections)</li>
-                <li>✓ Tous les documents liés</li>
-                <li>✓ Toutes les métadonnées</li>
-              </ul>
-            </div>
-            
-            {lastBackup && (
-              <Alert>
-                <CheckCircle2 className="h-4 w-4" />
-                <AlertDescription>
-                  Dernière sauvegarde : {lastBackup.toLocaleString('fr-FR')}
-                </AlertDescription>
-              </Alert>
-            )}
+      {lastBackup && (
+        <Alert>
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>
+            Dernière sauvegarde complète : {lastBackup.toLocaleString('fr-FR')}
+          </AlertDescription>
+        </Alert>
+      )}
 
-            <Button 
-              onClick={exportAllData} 
-              disabled={exporting}
-              size="lg"
-              className="w-full"
-            >
-              {exporting ? (
-                <>
-                  <Database className="w-4 h-4 mr-2 animate-pulse" />
-                  Export en cours...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4 mr-2" />
-                  Télécharger la sauvegarde JSON
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="structured" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="structured">Export Structuré</TabsTrigger>
+          <TabsTrigger value="complete">Sauvegarde Complète</TabsTrigger>
+        </TabsList>
 
-        {/* Import */}
-        <Card className="border-orange-200 dark:border-orange-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
-              <Upload className="w-5 h-5" />
-              Importer les données
-            </CardTitle>
-            <CardDescription>
-              Restaurez vos données depuis un fichier de sauvegarde JSON
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>ATTENTION:</strong> L'import va ÉCRASER toutes les données actuelles. 
-                Assurez-vous d'avoir fait une sauvegarde avant d'importer !
-              </AlertDescription>
-            </Alert>
+        {/* Export Structuré */}
+        <TabsContent value="structured" className="space-y-6">
+          <Alert>
+            <FileJson className="h-4 w-4" />
+            <AlertDescription>
+              Export lisible et structuré par catégories et sections. Format JSON facile à lire et éditer.
+            </AlertDescription>
+          </Alert>
 
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-2">Avant d'importer :</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>1. Exportez vos données actuelles (au cas où)</li>
-                <li>2. Vérifiez que le fichier JSON est valide</li>
-                <li>3. Confirmez que vous voulez écraser les données</li>
-              </ul>
-            </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="h-5 w-5" />
+                  Manuel Apogée
+                </CardTitle>
+                <CardDescription>
+                  Export des catégories et sections du guide Apogée
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={exportApogeeData}
+                  disabled={exportingApogee}
+                  className="w-full"
+                  size="lg"
+                >
+                  {exportingApogee ? 'Export en cours...' : 'Exporter Apogée'}
+                </Button>
+              </CardContent>
+            </Card>
 
-            <div className="relative">
-              <input
-                type="file"
-                accept=".json"
-                onChange={importData}
-                disabled={importing}
-                className="hidden"
-                id="import-file"
-              />
-              <Button
-                onClick={() => document.getElementById('import-file')?.click()}
-                disabled={importing}
-                variant="outline"
-                size="lg"
-                className="w-full border-orange-200 dark:border-orange-800"
-              >
-                {importing ? (
-                  <>
-                    <Database className="w-4 h-4 mr-2 animate-pulse" />
-                    Import en cours...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Sélectionner un fichier JSON
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="h-5 w-5" />
+                  Guide Apporteur
+                </CardTitle>
+                <CardDescription>
+                  Export des catégories et sections du guide Apporteur
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={exportApporteurData}
+                  disabled={exportingApporteur}
+                  className="w-full"
+                  size="lg"
+                >
+                  {exportingApporteur ? 'Export en cours...' : 'Exporter Apporteur'}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
-        {/* Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="w-5 h-5" />
-              Informations
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>• Les fichiers de sauvegarde sont au format JSON lisible</p>
-            <p>• Vous pouvez les ouvrir avec n'importe quel éditeur de texte</p>
-            <p>• Stockez vos sauvegardes dans un endroit sûr (Dropbox, Google Drive, etc.)</p>
-            <p>• Faites des sauvegardes régulières pour éviter toute perte de données</p>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Sauvegarde Complète */}
+        <TabsContent value="complete" className="space-y-6">
+          <Alert>
+            <Database className="h-4 w-4" />
+            <AlertDescription>
+              Sauvegarde technique complète incluant tous les champs de la base de données (blocks, documents, etc.)
+            </AlertDescription>
+          </Alert>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="h-5 w-5" />
+                  Exporter toutes les données
+                </CardTitle>
+                <CardDescription>
+                  Sauvegarde complète (format technique)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={exportAllData}
+                  disabled={exporting}
+                  className="w-full"
+                  size="lg"
+                >
+                  {exporting ? 'Export en cours...' : 'Télécharger la sauvegarde'}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  Restaurer les données
+                </CardTitle>
+                <CardDescription>
+                  Importer un fichier de sauvegarde complète
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <label htmlFor="import-file">
+                  <Button 
+                    disabled={importing}
+                    className="w-full"
+                    size="lg"
+                    asChild
+                  >
+                    <span>
+                      {importing ? 'Import en cours...' : 'Choisir un fichier'}
+                    </span>
+                  </Button>
+                  <input
+                    id="import-file"
+                    type="file"
+                    accept=".json"
+                    onChange={importData}
+                    className="hidden"
+                  />
+                </label>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Attention :</strong> L'import écrasera toutes les données actuelles. 
+              Assurez-vous d'avoir une sauvegarde récente avant de continuer.
+            </AlertDescription>
+          </Alert>
+        </TabsContent>
+      </Tabs>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Informations</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-semibold mb-2">Export Structuré vs Sauvegarde Complète</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><strong>Export Structuré :</strong> Format JSON lisible organisé par catégories et sections. Idéal pour l'édition manuelle ou la consultation du contenu.</li>
+              <li><strong>Sauvegarde Complète :</strong> Format technique incluant tous les champs de la base de données. À utiliser pour les restaurations complètes du système.</li>
+            </ul>
+          </div>
+          <div className="bg-muted/50 p-4 rounded-lg">
+            <h4 className="font-semibold mb-2">Bonnes pratiques :</h4>
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              <li>✓ Exportez régulièrement vos données</li>
+              <li>✓ Conservez plusieurs sauvegardes à différentes dates</li>
+              <li>✓ Utilisez l'export structuré pour consulter ou éditer le contenu</li>
+              <li>✓ Utilisez la sauvegarde complète pour les restaurations système</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
