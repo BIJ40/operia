@@ -342,9 +342,9 @@ export default function Category() {
     
     const newBlockId = await addBlock({
       type: 'section',
-      title: 'Nouvelle sous-section',
-      content: '<p>Contenu de la sous-section...</p>',
-      colorPreset: 'red',
+      title: 'Nouvelle section',
+      content: '<p>Contenu de la section...</p>',
+      colorPreset: 'white',
       parentId: category.id,
       slug: `${category.slug}-section-${Date.now()}`,
       attachments: [],
@@ -352,11 +352,15 @@ export default function Category() {
     });
     
     if (newBlockId) {
+      // Attendre un peu plus pour que l'état se mette à jour
       setTimeout(async () => {
         await updateBlock(newBlockId, { order: newOrder });
-        setEditingId(newBlockId);
-        setEditDialogOpen(true);
-      }, 50);
+        // Attendre encore avant d'ouvrir le formulaire
+        setTimeout(() => {
+          setEditingId(newBlockId);
+          setEditDialogOpen(true);
+        }, 100);
+      }, 100);
     }
   };
 
@@ -398,11 +402,15 @@ export default function Category() {
     });
     
     if (newBlockId) {
+      // Attendre un peu plus pour que l'état se mette à jour
       setTimeout(async () => {
         await updateBlock(newBlockId, { order: newOrder });
-        setEditingId(newBlockId);
-        setEditDialogOpen(true);
-      }, 50);
+        // Attendre encore avant d'ouvrir le formulaire
+        setTimeout(() => {
+          setEditingId(newBlockId);
+          setEditDialogOpen(true);
+        }, 100);
+      }, 100);
     }
   };
 
