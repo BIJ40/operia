@@ -643,9 +643,9 @@ export default function Category() {
                         <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">{section.summary}</p>
                       </HoverCardContent>
                     </HoverCard>
-                  ) : (
+                  ) : section.contentType !== 'tips' ? (
                     <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
-                  )}
+                  ) : null}
                   <h2 className="text-xl font-semibold text-left">
                     {section.title}
                   </h2>
@@ -866,9 +866,9 @@ export default function Category() {
                                 <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">{section.summary}</p>
                               </HoverCardContent>
                             </HoverCard>
-                          ) : (
+                          ) : section.contentType !== 'tips' ? (
                             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
-                          )}
+                          ) : null}
                           <h2 className="text-xl font-semibold text-left">
                             {section.title}
                           </h2>
