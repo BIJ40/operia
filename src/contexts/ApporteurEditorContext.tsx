@@ -202,24 +202,22 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
     }
   }, [isAdmin, blocks]);
 
-  const reorderBlocks = useCallback(async (newBlocks: Block[]) => {
+  const reorderBlocks = useCallback(async (blocksToReorder: Block[]) => {
     if (!isAdmin) return;
     
-    setBlocks(newBlocks);
+    // Mettre à jour l'état en fusionnant avec les blocs existants
+    setBlocks(prevBlocks => prevBlocks.map(block => {
+      const updatedBlock = blocksToReorder.find(b => b.id === block.id);
+      return updatedBlock || block;
+    }));
     
     // Sauvegarder l'ordre dans Supabase
     try {
-      const updates = newBlocks.map((block, index) => ({
-        id: block.id,
-        order: index
-      }));
-      
-      // Mettre à jour chaque bloc avec son nouvel ordre
-      for (const update of updates) {
+      for (const block of blocksToReorder) {
         await supabase
           .from('apporteur_blocks')
-          .update({ order: update.order })
-          .eq('id', update.id);
+          .update({ order: block.order })
+          .eq('id', block.id);
       }
       
       console.log('✅ Ordre apporteurs sauvegardé dans Supabase');

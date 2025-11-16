@@ -274,18 +274,15 @@ export default function Category() {
 
       const reorderedSections = arrayMove(sections, oldIndex, newIndex);
       
-      // Créer une nouvelle liste de blocs avec l'ordre mis à jour
-      const updatedBlocks = blocks.map(block => {
-        const sectionIndex = reorderedSections.findIndex(s => s.id === block.id);
-        if (sectionIndex !== -1) {
-          // Cette section fait partie des sections réordonnées
-          return { ...block, order: sectionIndex };
-        }
-        return block;
-      });
+      // Calculer les nouveaux ordres en préservant l'ordre minimum
+      const minOrder = Math.min(...sections.map(s => s.order));
+      const sectionsWithNewOrder = reorderedSections.map((section, index) => ({
+        ...section,
+        order: minOrder + index
+      }));
       
-      // Utiliser reorderBlocks qui sauvegarde dans Supabase
-      await reorderBlocks(updatedBlocks);
+      // Utiliser reorderBlocks pour sauvegarder
+      await reorderBlocks(sectionsWithNewOrder);
     }
   };
 

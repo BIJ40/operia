@@ -318,16 +318,16 @@ export default function ApporteurSubcategories() {
 
     if (oldIndex === -1 || newIndex === -1) return;
 
-    const reordered = arrayMove(subcategories, oldIndex, newIndex).map((s, idx) => ({
-      ...s,
-      order: idx,
+    const reorderedSubcategories = arrayMove(subcategories, oldIndex, newIndex);
+    
+    // Calculer les nouveaux ordres en préservant l'ordre minimum
+    const minOrder = Math.min(...subcategories.map(s => s.order));
+    const subcategoriesWithNewOrder = reorderedSubcategories.map((subcategory, index) => ({
+      ...subcategory,
+      order: minOrder + index
     }));
 
-    const otherBlocks = blocks.filter(
-      b => !(b.type === 'subcategory' && b.parentId === category.id)
-    );
-
-    await reorderBlocks([...otherBlocks, ...reordered]);
+    await reorderBlocks(subcategoriesWithNewOrder);
   };
 
   return (

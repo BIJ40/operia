@@ -424,18 +424,15 @@ export default function ApporteurGuide() {
       
       const reorderedCategories = arrayMove(apporteurCategories, oldIndex, newIndex);
       
-      // Créer une nouvelle liste de blocs avec l'ordre mis à jour
-      const updatedBlocks = blocks.map(block => {
-        const categoryIndex = reorderedCategories.findIndex(c => c.id === block.id);
-        if (categoryIndex !== -1) {
-          // Cette catégorie fait partie des catégories réordonnées
-          return { ...block, order: categoryIndex };
-        }
-        return block;
-      });
+      // Calculer les nouveaux ordres en préservant l'ordre minimum
+      const minOrder = Math.min(...apporteurCategories.map(c => c.order));
+      const categoriesWithNewOrder = reorderedCategories.map((category, index) => ({
+        ...category,
+        order: minOrder + index
+      }));
       
-      // Utiliser reorderBlocks qui sauvegarde dans Supabase
-      await reorderBlocks(updatedBlocks);
+      // Utiliser reorderBlocks pour sauvegarder
+      await reorderBlocks(categoriesWithNewOrder);
     }
   };
 
