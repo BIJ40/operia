@@ -11,9 +11,9 @@ interface EditorContextType {
   isEditMode: boolean;
   setIsEditMode: (mode: boolean) => void;
   toggleEditMode: () => void;
-  addBlock: (block: Omit<Block, 'id' | 'order'>) => string;
-  updateBlock: (id: string, updates: Partial<Block>) => void;
-  deleteBlock: (id: string) => void;
+  addBlock: (block: Omit<Block, 'id' | 'order'>) => Promise<string>;
+  updateBlock: (id: string, updates: Partial<Block>) => Promise<void>;
+  deleteBlock: (id: string) => Promise<void>;
   reorderBlocks: (blocks: Block[]) => void;
   exportData: () => Promise<string>;
   importData: (data: string) => Promise<void>;
@@ -81,7 +81,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   // Auto-save DÉSACTIVÉ - sauvegarde uniquement sur action manuelle pour éviter les timeouts
   // La sauvegarde se fait maintenant uniquement via handleSave dans les pages
 
-  const addBlock = useCallback((block: Omit<Block, 'id' | 'order'>): string => {
+  const addBlock = useCallback(async (block: Omit<Block, 'id' | 'order'>): Promise<string> => {
     if (!isAdmin) {
       toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent ajouter du contenu', variant: 'destructive' });
       return '';
@@ -91,28 +91,91 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       order: blocks.length,
     };
-    setBlocks((prev) => [...prev, newBlock]);
-    toast({ title: 'Bloc ajouté' });
+    
+    // Sauvegarder immédiatement dans Supabase
+    try {
+      const { error } = await supabase.from('blocks').insert([{
+        id: newBlock.id,
+        type: newBlock.type,
+        title: newBlock.title,
+        slug: newBlock.slug,
+        content: newBlock.content,
+        parent_id: newBlock.parentId,
+        order: newBlock.order,
+        icon: newBlock.icon,
+        color_preset: newBlock.colorPreset,
+        hide_from_sidebar: newBlock.hideFromSidebar,
+        attachments: newBlock.attachments as any,
+      }]);
+      
+      if (error) throw error;
+      
+      setBlocks((prev) => [...prev, newBlock]);
+      toast({ title: 'Catégorie ajoutée et sauvegardée' });
+    } catch (error) {
+      console.error('Erreur sauvegarde:', error);
+      toast({ title: 'Erreur', description: 'Impossible de sauvegarder la catégorie', variant: 'destructive' });
+    }
+    
     return newBlock.id;
   }, [blocks.length, toast, isAdmin]);
 
-  const updateBlock = useCallback((id: string, updates: Partial<Block>) => {
+  const updateBlock = useCallback(async (id: string, updates: Partial<Block>) => {
     if (!isAdmin) {
       toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent modifier le contenu', variant: 'destructive' });
       return;
     }
-    setBlocks((prev) =>
-      prev.map((block) => (block.id === id ? { ...block, ...updates } : block))
-    );
+    
+    // Sauvegarder dans Supabase
+    try {
+      const updateData: any = {};
+      if (updates.title !== undefined) updateData.title = updates.title;
+      if (updates.content !== undefined) updateData.content = updates.content;
+      if (updates.slug !== undefined) updateData.slug = updates.slug;
+      if (updates.icon !== undefined) updateData.icon = updates.icon;
+      if (updates.colorPreset !== undefined) updateData.color_preset = updates.colorPreset;
+      if (updates.order !== undefined) updateData.order = updates.order;
+      if (updates.parentId !== undefined) updateData.parent_id = updates.parentId;
+      if (updates.hideFromSidebar !== undefined) updateData.hide_from_sidebar = updates.hideFromSidebar;
+      if (updates.attachments !== undefined) updateData.attachments = updates.attachments;
+      
+      const { error } = await supabase
+        .from('blocks')
+        .update(updateData)
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setBlocks((prev) =>
+        prev.map((block) => (block.id === id ? { ...block, ...updates } : block))
+      );
+    } catch (error) {
+      console.error('Erreur mise à jour:', error);
+      toast({ title: 'Erreur', description: 'Impossible de sauvegarder les modifications', variant: 'destructive' });
+    }
   }, [isAdmin, toast]);
 
-  const deleteBlock = useCallback((id: string) => {
+  const deleteBlock = useCallback(async (id: string) => {
     if (!isAdmin) {
       toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent supprimer du contenu', variant: 'destructive' });
       return;
     }
-    setBlocks((prev) => prev.filter((block) => block.id !== id));
-    toast({ title: 'Bloc supprimé' });
+    
+    // Supprimer de Supabase
+    try {
+      const { error } = await supabase
+        .from('blocks')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setBlocks((prev) => prev.filter((block) => block.id !== id));
+      toast({ title: 'Bloc supprimé' });
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+      toast({ title: 'Erreur', description: 'Impossible de supprimer le bloc', variant: 'destructive' });
+    }
   }, [toast, isAdmin]);
 
   const reorderBlocks = useCallback((newBlocks: Block[]) => {

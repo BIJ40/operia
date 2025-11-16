@@ -140,8 +140,8 @@ export default function CategoryApporteur() {
     setDeleteDialogOpen(false);
   };
 
-  const handleAddSection = () => {
-    addBlock({
+  const handleAddSection = async () => {
+    await addBlock({
       type: 'section',
       title: 'Nouvelle section',
       content: '',
