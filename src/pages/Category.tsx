@@ -303,15 +303,31 @@ export default function Category() {
     setEditingId(null);
   };
 
-  const handleAddSection = async (position: 'top' | 'bottom' = 'bottom') => {
+  const handleAddSection = async (afterSectionId?: string) => {
     if (!category) return;
     
-    // Calculer l'ordre AVANT d'ajouter la section
-    const newOrder = position === 'top' 
-      ? (sections[0]?.order ?? 0) - 1
-      : (sections[sections.length - 1]?.order ?? 0) + 1;
+    let newOrder: number;
     
-    // addBlock retourne maintenant l'ID du nouveau block
+    if (afterSectionId) {
+      // Insérer après la section spécifiée
+      const afterSection = sections.find(s => s.id === afterSectionId);
+      const afterIndex = sections.findIndex(s => s.id === afterSectionId);
+      
+      if (afterIndex === sections.length - 1) {
+        // Si c'est la dernière section, ajouter après
+        newOrder = afterSection!.order + 1;
+      } else {
+        // Sinon, prendre la moyenne entre cette section et la suivante
+        const nextSection = sections[afterIndex + 1];
+        newOrder = (afterSection!.order + nextSection.order) / 2;
+      }
+    } else {
+      // Sans afterSectionId, ajouter au début
+      newOrder = sections.length > 0 
+        ? sections[0].order - 1 
+        : 0;
+    }
+    
     const newBlockId = await addBlock({
       type: 'section',
       title: 'Nouvelle sous-section',
@@ -324,7 +340,6 @@ export default function Category() {
     });
     
     if (newBlockId) {
-      // Mettre à jour l'ordre et ouvrir directement le dialog d'édition
       setTimeout(async () => {
         await updateBlock(newBlockId, { order: newOrder });
         setEditingId(newBlockId);
@@ -333,12 +348,30 @@ export default function Category() {
     }
   };
 
-  const handleAddTips = async (position: 'top' | 'bottom' = 'bottom') => {
+  const handleAddTips = async (afterSectionId?: string) => {
     if (!category) return;
     
-    const newOrder = position === 'top' 
-      ? (sections[0]?.order ?? 0) - 1
-      : (sections[sections.length - 1]?.order ?? 0) + 1;
+    let newOrder: number;
+    
+    if (afterSectionId) {
+      // Insérer après la section spécifiée
+      const afterSection = sections.find(s => s.id === afterSectionId);
+      const afterIndex = sections.findIndex(s => s.id === afterSectionId);
+      
+      if (afterIndex === sections.length - 1) {
+        // Si c'est la dernière section, ajouter après
+        newOrder = afterSection!.order + 1;
+      } else {
+        // Sinon, prendre la moyenne entre cette section et la suivante
+        const nextSection = sections[afterIndex + 1];
+        newOrder = (afterSection!.order + nextSection.order) / 2;
+      }
+    } else {
+      // Sans afterSectionId, ajouter au début
+      newOrder = sections.length > 0 
+        ? sections[0].order - 1 
+        : 0;
+    }
     
     const newBlockId = await addBlock({
       type: 'section',
@@ -548,6 +581,34 @@ export default function Category() {
               className="prose prose-sm max-w-none break-words overflow-visible"
               dangerouslySetInnerHTML={{ __html: section.content }}
             />
+            {isEditMode && isAuthenticated && (
+              <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border/50">
+                <Button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddSection(section.id);
+                  }}
+                  size="icon"
+                  variant="outline"
+                  title="Insérer une section après"
+                  className="h-8 w-8"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+                <Button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddTips(section.id);
+                  }}
+                  size="icon"
+                  variant="outline"
+                  title="Insérer un TIPS après"
+                  className="h-8 w-8"
+                >
+                  <Lightbulb className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       );
@@ -681,6 +742,34 @@ export default function Category() {
                 className="prose prose-sm max-w-none break-words overflow-visible"
                 dangerouslySetInnerHTML={{ __html: section.content }}
               />
+              {isEditMode && isAuthenticated && (
+                <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border/50">
+                  <Button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddSection(section.id);
+                    }}
+                    size="icon"
+                    variant="outline"
+                    title="Insérer une section après"
+                    className="h-8 w-8"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddTips(section.id);
+                    }}
+                    size="icon"
+                    variant="outline"
+                    title="Insérer un TIPS après"
+                    className="h-8 w-8"
+                  >
+                    <Lightbulb className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </AccordionContent>
           </div>
         </AccordionItem>
@@ -696,18 +785,18 @@ export default function Category() {
           {isEditMode && isAuthenticated && (
             <div className="flex gap-2">
               <Button 
-                onClick={() => handleAddSection('top')} 
+                onClick={() => handleAddSection()} 
                 size="icon"
                 variant="ghost"
-                title="Ajouter une section en haut"
+                title="Ajouter une section au début"
               >
                 <Plus className="w-4 h-4" />
               </Button>
               <Button 
-                onClick={() => handleAddTips('top')} 
+                onClick={() => handleAddTips()} 
                 size="icon"
                 variant="ghost"
-                title="Ajouter un TIPS en haut"
+                title="Ajouter un TIPS au début"
               >
                 <Lightbulb className="w-4 h-4" />
               </Button>
@@ -757,27 +846,6 @@ export default function Category() {
             </Accordion>
           </SortableContext>
         </DndContext>
-
-        {isEditMode && isAuthenticated && (
-          <div className="mt-8 flex justify-center gap-3">
-            <Button 
-              onClick={() => handleAddSection('bottom')} 
-              size="icon"
-              variant="outline"
-              title="Ajouter une section"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-            <Button 
-              onClick={() => handleAddTips('bottom')} 
-              size="icon"
-              variant="outline"
-              title="Ajouter un TIPS"
-            >
-              <Lightbulb className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
 
         <DocumentsList blockId={category.id} scope="apogee" />
       </div>
