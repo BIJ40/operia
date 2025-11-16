@@ -48,6 +48,7 @@ export const TipsEditForm = ({
   const [hideFromSidebar, setHideFromSidebar] = useState(initialHideFromSidebar);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [titleManuallyEdited, setTitleManuallyEdited] = useState(false);
 
   const storageKey = `tips-draft-${sectionId}`;
 
@@ -68,15 +69,19 @@ export const TipsEditForm = ({
     sessionStorage.setItem(`${storageKey}-hide`, hideFromSidebar.toString());
   }, [hideFromSidebar, storageKey]);
 
-  // Mettre à jour le titre par défaut quand le type change
+  // Mettre à jour le titre par défaut quand le type change SEULEMENT si l'utilisateur n'a pas modifié le titre
   useEffect(() => {
-    const defaultTitle = tipsConfig[tipsType].defaultTitle;
-    // Mettre le titre par défaut si le titre est vide ou correspond à un autre titre par défaut
-    const isDefaultTitle = Object.values(tipsConfig).some(config => config.defaultTitle === title);
-    if (title === '' || isDefaultTitle) {
+    if (!titleManuallyEdited) {
+      const defaultTitle = tipsConfig[tipsType].defaultTitle;
       setTitle(defaultTitle);
     }
-  }, [tipsType]);
+  }, [tipsType, titleManuallyEdited]);
+
+  // Handler pour le changement de titre
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+    setTitleManuallyEdited(true);
+  };
 
   const clearStorage = () => {
     sessionStorage.removeItem(`${storageKey}-title`);
@@ -144,7 +149,7 @@ export const TipsEditForm = ({
         <Input
           id="title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={handleTitleChange}
           placeholder={tipsConfig[tipsType].defaultTitle}
         />
         <p className="text-xs text-muted-foreground">
