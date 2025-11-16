@@ -308,10 +308,11 @@ export default function Category() {
     });
     
     if (newBlockId) {
-      // Mettre à jour l'ordre et ouvrir en mode édition
+      // Mettre à jour l'ordre et ouvrir directement le dialog d'édition
       setTimeout(async () => {
         await updateBlock(newBlockId, { order: newOrder });
         setEditingId(newBlockId);
+        setEditDialogOpen(true);
       }, 50);
     }
   };
@@ -339,6 +340,7 @@ export default function Category() {
       setTimeout(async () => {
         await updateBlock(newBlockId, { order: newOrder });
         setEditingId(newBlockId);
+        setEditDialogOpen(true);
       }, 50);
     }
   };
@@ -676,15 +678,24 @@ export default function Category() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">{category.title}</h1>
           {isEditMode && isAuthenticated && (
-            <Button 
-              onClick={() => handleAddSection('top')} 
-              size="sm"
-              variant="ghost"
-              className="ml-4"
-              title="Ajouter une section en haut"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => handleAddSection('top')} 
+                size="icon"
+                variant="ghost"
+                title="Ajouter une section en haut"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+              <Button 
+                onClick={() => handleAddTips('top')} 
+                size="icon"
+                variant="ghost"
+                title="Ajouter un TIPS en haut"
+              >
+                <Lightbulb className="w-4 h-4" />
+              </Button>
+            </div>
           )}
         </div>
 
@@ -732,26 +743,22 @@ export default function Category() {
         </DndContext>
 
         {isEditMode && isAuthenticated && (
-          <div className="mt-8 flex justify-center gap-4">
+          <div className="mt-8 flex justify-center gap-3">
             <Button 
               onClick={() => handleAddSection('bottom')} 
-              size="sm"
+              size="icon"
               variant="outline"
               title="Ajouter une section"
-              className="gap-2"
             >
               <Plus className="w-4 h-4" />
-              Nouvelle section
             </Button>
             <Button 
               onClick={() => handleAddTips('bottom')} 
-              size="sm"
+              size="icon"
               variant="outline"
               title="Ajouter un TIPS"
-              className="gap-2"
             >
               <Lightbulb className="w-4 h-4" />
-              Nouveau TIPS
             </Button>
           </div>
         )}
