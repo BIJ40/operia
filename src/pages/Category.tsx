@@ -244,7 +244,8 @@ export default function Category() {
     title: string,
     content: string,
     tipsType: TipsType,
-    hideFromSidebar: boolean
+    hideFromSidebar: boolean,
+    hideTitle: boolean
   ) => {
     if (editingId) {
       // Sauvegarder la position de scroll IMMÉDIATEMENT
@@ -269,6 +270,7 @@ export default function Category() {
         content,
         colorPreset: colorMap[tipsType],
         hideFromSidebar,
+        hideTitle,
         tipsType,
         contentType: 'tips',
       });
@@ -514,8 +516,8 @@ export default function Category() {
       zIndex: isDragging ? 50 : 'auto',
     };
 
-    // Si c'est une section figée, l'afficher sans accordéon
-    if (section.isSingleSection) {
+    // Si c'est une section figée OU un TIPS avec titre masqué, l'afficher sans accordéon
+    if (section.isSingleSection || (section.contentType === 'tips' && section.hideTitle)) {
       return (
         <div ref={setNodeRef} style={style} className="mb-4">
           <div className={`rounded-lg relative ${getColorClass(section.colorPreset)} p-6`}>
@@ -603,9 +605,9 @@ export default function Category() {
                 </Button>
               </div>
             )}
-            {section.title && section.title.trim() !== '' ? (
+            {!section.hideTitle && section.title && section.title.trim() !== '' ? (
               <h3 className="text-lg font-semibold mb-4">{section.title}</h3>
-            ) : section.hideFromSidebar ? (
+            ) : !section.hideTitle && section.hideFromSidebar ? (
               <h3 className="text-lg font-semibold mb-4">💡 Info / Astuce</h3>
             ) : null}
             <div
@@ -979,6 +981,7 @@ export default function Category() {
               initialContent={sections.find(s => s.id === editingId)?.content || ''}
               initialTipsType={sections.find(s => s.id === editingId)?.tipsType || 'information'}
               initialHideFromSidebar={sections.find(s => s.id === editingId)?.hideFromSidebar ?? true}
+              initialHideTitle={sections.find(s => s.id === editingId)?.hideTitle ?? false}
               onSave={handleSaveTips}
               onCancel={() => {
                 setEditDialogOpen(false);

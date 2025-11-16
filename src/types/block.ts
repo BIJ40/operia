@@ -30,6 +30,7 @@ export interface Block {
   tipsType?: TipsType;
   summary?: string;
   showSummary?: boolean;
+  hideTitle?: boolean;
 }
 
 export interface AppData {
