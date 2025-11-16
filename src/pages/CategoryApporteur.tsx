@@ -3,7 +3,7 @@ import { useParams, useLocation, Link } from 'react-router-dom';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Lightbulb } from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import {
   Accordion,
@@ -86,6 +86,7 @@ export default function CategoryApporteur() {
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const savedScrollPositionRef = useRef<number>(0);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
+  const [showTips, setShowTips] = useState(true);
 
   useEffect(() => {
     const hash = location.hash.replace('#', '');
@@ -415,6 +416,20 @@ export default function CategoryApporteur() {
             <h1 className="text-3xl font-bold text-foreground">{subcategory.title}</h1>
           </div>
 
+          {sections.some(s => s.hideFromSidebar) && (
+            <div className="mb-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowTips(!showTips)}
+                className="gap-2"
+              >
+                <Lightbulb className="w-4 h-4" />
+                {showTips ? 'Masquer les TIPS' : 'Afficher les TIPS'}
+              </Button>
+            </div>
+          )}
+
           {isEditMode && (
             <div className="mb-6 flex justify-end">
               <Button
@@ -443,7 +458,9 @@ export default function CategoryApporteur() {
                 onValueChange={setOpenAccordions}
                 className="space-y-4"
               >
-                {sections.map((section, index) => (
+                {sections
+                  .filter(section => showTips || !section.hideFromSidebar)
+                  .map((section, index) => (
                   <SortableSection key={section.id} section={section} index={index} />
                 ))}
               </Accordion>
