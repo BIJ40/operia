@@ -58,6 +58,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             colorPreset: block.color_preset,
             hideFromSidebar: block.hide_from_sidebar || false,
             attachments: block.attachments || [],
+            contentType: block.content_type || 'section',
+            tipsType: block.tips_type,
           }));
 
           setBlocks(transformedBlocks);
@@ -106,6 +108,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         color_preset: newBlock.colorPreset,
         hide_from_sidebar: newBlock.hideFromSidebar,
         attachments: newBlock.attachments as any,
+        content_type: newBlock.contentType || 'section',
+        tips_type: newBlock.tipsType,
       }]);
       
       if (error) throw error;
@@ -138,6 +142,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       if (updates.parentId !== undefined) updateData.parent_id = updates.parentId;
       if (updates.hideFromSidebar !== undefined) updateData.hide_from_sidebar = updates.hideFromSidebar;
       if (updates.attachments !== undefined) updateData.attachments = updates.attachments;
+      if (updates.contentType !== undefined) updateData.content_type = updates.contentType;
+      if (updates.tipsType !== undefined) updateData.tips_type = updates.tipsType;
       
       const { error } = await supabase
         .from('blocks')

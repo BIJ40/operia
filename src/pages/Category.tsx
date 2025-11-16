@@ -41,7 +41,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { SectionEditForm } from '@/components/SectionEditForm';
-import { ColorPreset } from '@/types/block';
+import { TipsEditForm } from '@/components/TipsEditForm';
+import { ColorPreset, TipsType } from '@/types/block';
+import { Lightbulb } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
@@ -217,6 +219,53 @@ export default function Category() {
     }
   };
 
+  const handleSaveTips = async (
+    title: string,
+    content: string,
+    tipsType: TipsType,
+    hideFromSidebar: boolean
+  ) => {
+    if (editingId) {
+      const colorMap: Record<TipsType, ColorPreset> = {
+        danger: 'red',
+        warning: 'orange',
+        success: 'green',
+        info: 'blue',
+      };
+
+      setEditDialogOpen(false);
+      setEditingId(null);
+      updateBlock(editingId, {
+        title,
+        content,
+        colorPreset: colorMap[tipsType],
+        hideFromSidebar,
+        tipsType,
+        contentType: 'tips',
+      });
+      
+      const updatedBlocks = blocks.map(b => 
+        b.id === editingId ? { 
+          ...b, 
+          title,
+          content,
+          colorPreset: colorMap[tipsType],
+          hideFromSidebar,
+          tipsType,
+          contentType: 'tips' as const,
+        } : b
+      );
+      
+      saveAppData({
+        blocks: updatedBlocks,
+        version: '1.0',
+        lastModified: Date.now(),
+      }).catch((err) => {
+        console.error('Erreur sauvegarde:', err);
+      });
+    }
+  };
+
   const handleMoveToCategory = (sectionId: string, newCategoryId: string) => {
     // Récupérer les sections de la nouvelle catégorie
     const newCategorySections = blocks
@@ -255,10 +304,38 @@ export default function Category() {
       parentId: category.id,
       slug: `${category.slug}-section-${Date.now()}`,
       attachments: [],
+      contentType: 'section',
     });
     
     if (newBlockId) {
       // Mettre à jour l'ordre et ouvrir en mode édition
+      setTimeout(async () => {
+        await updateBlock(newBlockId, { order: newOrder });
+        setEditingId(newBlockId);
+      }, 50);
+    }
+  };
+
+  const handleAddTips = async (position: 'top' | 'bottom' = 'bottom') => {
+    if (!category) return;
+    
+    const newOrder = position === 'top' 
+      ? (sections[0]?.order ?? 0) - 1
+      : (sections[sections.length - 1]?.order ?? 0) + 1;
+    
+    const newBlockId = await addBlock({
+      type: 'section',
+      title: 'ℹ️ Info',
+      content: '<p>Contenu du TIPS...</p>',
+      colorPreset: 'blue',
+      parentId: category.id,
+      slug: `${category.slug}-tips-${Date.now()}`,
+      attachments: [],
+      contentType: 'tips',
+      tipsType: 'info',
+    });
+    
+    if (newBlockId) {
       setTimeout(async () => {
         await updateBlock(newBlockId, { order: newOrder });
         setEditingId(newBlockId);
@@ -655,14 +732,26 @@ export default function Category() {
         </DndContext>
 
         {isEditMode && isAuthenticated && (
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex justify-center gap-4">
             <Button 
               onClick={() => handleAddSection('bottom')} 
               size="sm"
-              variant="ghost"
-              title="Ajouter une section en bas"
+              variant="outline"
+              title="Ajouter une section"
+              className="gap-2"
             >
               <Plus className="w-4 h-4" />
+              Nouvelle section
+            </Button>
+            <Button 
+              onClick={() => handleAddTips('bottom')} 
+              size="sm"
+              variant="outline"
+              title="Ajouter un TIPS"
+              className="gap-2"
+            >
+              <Lightbulb className="w-4 h-4" />
+              Nouveau TIPS
             </Button>
           </div>
         )}
@@ -694,9 +783,26 @@ export default function Category() {
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
           <DialogHeader>
-            <DialogTitle>Modifier la section</DialogTitle>
+            <DialogTitle>
+              {editingId && sections.find(s => s.id === editingId)?.contentType === 'tips' 
+                ? 'Modifier le TIPS' 
+                : 'Modifier la section'}
+            </DialogTitle>
           </DialogHeader>
-          {editingId && (
+          {editingId && sections.find(s => s.id === editingId)?.contentType === 'tips' ? (
+            <TipsEditForm
+              sectionId={editingId}
+              initialTitle={sections.find(s => s.id === editingId)?.title || ''}
+              initialContent={sections.find(s => s.id === editingId)?.content || ''}
+              initialTipsType={sections.find(s => s.id === editingId)?.tipsType || 'info'}
+              initialHideFromSidebar={sections.find(s => s.id === editingId)?.hideFromSidebar || false}
+              onSave={handleSaveTips}
+              onCancel={() => {
+                setEditDialogOpen(false);
+                setEditingId(null);
+              }}
+            />
+          ) : editingId ? (
             <SectionEditForm
               sectionId={editingId}
               initialTitle={sections.find(s => s.id === editingId)?.title || ''}
@@ -710,7 +816,7 @@ export default function Category() {
                 setEditingId(null);
               }}
             />
-          )}
+          ) : null}
         </DialogContent>
       </Dialog>
     </>

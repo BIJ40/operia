@@ -38,6 +38,8 @@ export async function saveApporteurData(data: AppData): Promise<void> {
           show_title_on_card: block.showTitleOnCard !== false,
           show_title_in_menu: block.showTitleInMenu !== false,
           is_single_section: block.isSingleSection || false,
+          content_type: block.contentType || 'section',
+          tips_type: block.tipsType || null,
         })));
       if (error) throw error;
     }
@@ -61,6 +63,8 @@ export async function saveApporteurData(data: AppData): Promise<void> {
           show_title_on_card: block.showTitleOnCard !== false,
           show_title_in_menu: block.showTitleInMenu !== false,
           is_single_section: block.isSingleSection || false,
+          content_type: block.contentType || 'section',
+          tips_type: block.tipsType || null,
         })));
       if (error) throw error;
     }
@@ -103,6 +107,8 @@ export async function loadApporteurData(): Promise<AppData | null> {
         showTitleOnCard: block.show_title_on_card !== false,
         showTitleInMenu: block.show_title_in_menu !== false,
         isSingleSection: block.is_single_section || false,
+        contentType: block.content_type || 'section',
+        tipsType: block.tips_type || undefined,
       })),
       version: '1.0',
       lastModified: Date.now(),

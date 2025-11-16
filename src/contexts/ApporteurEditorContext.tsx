@@ -104,6 +104,8 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
             show_title_on_card: b.showTitleOnCard !== false,
             show_title_in_menu: b.showTitleInMenu !== false,
             is_single_section: b.isSingleSection || false,
+            content_type: b.contentType || 'section',
+            tips_type: b.tipsType || null,
           }))
         );
         
@@ -126,6 +128,8 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
           show_title_on_card: newBlock.showTitleOnCard !== false,
           show_title_in_menu: newBlock.showTitleInMenu !== false,
           is_single_section: newBlock.isSingleSection || false,
+          content_type: newBlock.contentType || 'section',
+          tips_type: newBlock.tipsType || null,
         }]);
         
         if (error) throw error;
@@ -156,6 +160,8 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
       if (updates.showTitleInMenu !== undefined) updateData.show_title_in_menu = updates.showTitleInMenu;
       if (updates.isSingleSection !== undefined) updateData.is_single_section = updates.isSingleSection;
       if (updates.attachments !== undefined) updateData.attachments = updates.attachments;
+      if (updates.contentType !== undefined) updateData.content_type = updates.contentType;
+      if (updates.tipsType !== undefined) updateData.tips_type = updates.tipsType;
       
       // Sauvegarder dans Supabase
       const { error } = await supabase
