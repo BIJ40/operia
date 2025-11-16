@@ -640,7 +640,7 @@ export default function Category() {
                         </div>
                       </HoverCardTrigger>
                       <HoverCardContent className="w-80 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200" side="right">
-                        <p className="text-sm text-gray-900 leading-relaxed">{section.summary}</p>
+                        <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">{section.summary}</p>
                       </HoverCardContent>
                     </HoverCard>
                   ) : (
@@ -863,7 +863,7 @@ export default function Category() {
                                 </div>
                               </HoverCardTrigger>
                               <HoverCardContent className="w-80 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200" side="right">
-                                <p className="text-sm text-gray-900 leading-relaxed">{section.summary}</p>
+                                <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">{section.summary}</p>
                               </HoverCardContent>
                             </HoverCard>
                           ) : (
