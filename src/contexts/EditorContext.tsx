@@ -112,6 +112,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         attachments: newBlock.attachments as any,
         content_type: newBlock.contentType || 'section',
         tips_type: newBlock.tipsType,
+        summary: newBlock.summary || '',
+        show_summary: newBlock.showSummary !== false,
       }]);
       
       if (error) {

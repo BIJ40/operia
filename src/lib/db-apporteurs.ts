@@ -40,6 +40,8 @@ export async function saveApporteurData(data: AppData): Promise<void> {
           is_single_section: block.isSingleSection || false,
           content_type: block.contentType || 'section',
           tips_type: block.tipsType || null,
+          summary: block.summary || '',
+          show_summary: block.showSummary !== false,
         })));
       if (error) throw error;
     }
@@ -65,6 +67,8 @@ export async function saveApporteurData(data: AppData): Promise<void> {
           is_single_section: block.isSingleSection || false,
           content_type: block.contentType || 'section',
           tips_type: block.tipsType || null,
+          summary: block.summary || '',
+          show_summary: block.showSummary !== false,
         })));
       if (error) throw error;
     }
@@ -109,6 +113,8 @@ export async function loadApporteurData(): Promise<AppData | null> {
         isSingleSection: block.is_single_section || false,
         contentType: block.content_type || 'section',
         tipsType: block.tips_type || undefined,
+        summary: block.summary || '',
+        showSummary: block.show_summary !== false,
       })),
       version: '1.0',
       lastModified: Date.now(),
