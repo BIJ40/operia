@@ -22,6 +22,7 @@ export type Database = {
           content_type: string | null
           created_at: string
           hide_from_sidebar: boolean | null
+          hide_title: boolean | null
           icon: string | null
           id: string
           is_single_section: boolean | null
@@ -44,6 +45,7 @@ export type Database = {
           content_type?: string | null
           created_at?: string
           hide_from_sidebar?: boolean | null
+          hide_title?: boolean | null
           icon?: string | null
           id?: string
           is_single_section?: boolean | null
@@ -66,6 +68,7 @@ export type Database = {
           content_type?: string | null
           created_at?: string
           hide_from_sidebar?: boolean | null
+          hide_title?: boolean | null
           icon?: string | null
           id?: string
           is_single_section?: boolean | null
@@ -91,6 +94,7 @@ export type Database = {
           content_type: string | null
           created_at: string
           hide_from_sidebar: boolean | null
+          hide_title: boolean | null
           icon: string | null
           id: string
           order: number
@@ -110,6 +114,7 @@ export type Database = {
           content_type?: string | null
           created_at?: string
           hide_from_sidebar?: boolean | null
+          hide_title?: boolean | null
           icon?: string | null
           id?: string
           order?: number
@@ -129,6 +134,7 @@ export type Database = {
           content_type?: string | null
           created_at?: string
           hide_from_sidebar?: boolean | null
+          hide_title?: boolean | null
           icon?: string | null
           id?: string
           order?: number

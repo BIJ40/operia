@@ -210,8 +210,8 @@ export default function CategoryApporteur() {
       zIndex: isDragging ? 50 : 'auto',
     };
 
-    // Si c'est une section figée, l'afficher sans accordéon
-    if (section.isSingleSection) {
+    // Si c'est une section figée OU un TIPS avec titre masqué, l'afficher sans accordéon
+    if (section.isSingleSection || section.hideTitle) {
       return (
         <div ref={setNodeRef} style={style} className="mb-4">
           <div className="rounded-lg relative bg-card border-2 p-6 shadow-sm">
@@ -269,9 +269,9 @@ export default function CategoryApporteur() {
                 </Button>
               </div>
             )}
-            {section.title && section.title.trim() !== '' ? (
+            {!section.hideTitle && section.title && section.title.trim() !== '' ? (
               <h3 className="text-lg font-semibold mb-4 text-foreground">{section.title}</h3>
-            ) : section.hideFromSidebar ? (
+            ) : !section.hideTitle && section.hideFromSidebar ? (
               <h3 className="text-lg font-semibold mb-4 text-foreground">💡 Information / Astuce</h3>
             ) : null}
             <div 
