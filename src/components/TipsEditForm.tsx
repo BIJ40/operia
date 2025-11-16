@@ -19,7 +19,7 @@ import {
 const tipsConfig: Record<TipsType, { label: string; icon: any; color: string; defaultTitle: string }> = {
   danger: { label: 'Danger', icon: AlertCircle, color: 'red', defaultTitle: '⚠️ Danger' },
   warning: { label: 'Attention', icon: AlertTriangle, color: 'orange', defaultTitle: '⚠️ Attention' },
-  success: { label: 'Astuce / Conseil', icon: Lightbulb, color: 'green', defaultTitle: '✅ Astuce / Conseil' },
+  success: { label: 'Astuce / Conseil', icon: Lightbulb, color: 'green', defaultTitle: '💡 Astuce / Conseil' },
   info: { label: 'Info', icon: Info, color: 'blue', defaultTitle: 'ℹ️ Info' },
 };
 
