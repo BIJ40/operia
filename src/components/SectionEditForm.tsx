@@ -94,7 +94,8 @@ export function SectionEditForm({
   };
 
   const handleCancel = () => {
-    clearStorage();
+    // Ne pas effacer le brouillon en cas d'annulation
+    // Il sera conservé pour permettre une récupération en cas d'erreur
     onCancel();
   };
 
