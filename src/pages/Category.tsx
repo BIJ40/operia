@@ -534,6 +534,24 @@ export default function Category() {
                   type="button"
                   size="sm"
                   variant="ghost"
+                  title="Insérer une section après"
+                  onClick={() => handleAddSection(section.id)}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  title="Insérer un TIPS après"
+                  onClick={() => handleAddTips(section.id)}
+                >
+                  <Lightbulb className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
                   onClick={() => {
                     setEditingId(section.id);
                     setEditDialogOpen(true);
@@ -593,34 +611,6 @@ export default function Category() {
               className="prose prose-sm max-w-none break-words overflow-visible"
               dangerouslySetInnerHTML={{ __html: section.content }}
             />
-            {isEditMode && isAuthenticated && (
-              <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border/50">
-                <Button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddSection(section.id);
-                  }}
-                  size="icon"
-                  variant="outline"
-                  title="Insérer une section après"
-                  className="h-8 w-8"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-                <Button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddTips(section.id);
-                  }}
-                  size="icon"
-                  variant="outline"
-                  title="Insérer un TIPS après"
-                  className="h-8 w-8"
-                >
-                  <Lightbulb className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       );
@@ -666,6 +656,38 @@ export default function Category() {
                       }}
                     >
                       <GripVertical className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      title="Insérer une section après"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleAddSection(section.id);
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      title="Insérer un TIPS après"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleAddTips(section.id);
+                      }}
+                    >
+                      <Lightbulb className="w-4 h-4" />
                     </Button>
                     <Button
                       type="button"
@@ -754,34 +776,6 @@ export default function Category() {
                 className="prose prose-sm max-w-none break-words overflow-visible"
                 dangerouslySetInnerHTML={{ __html: section.content }}
               />
-              {isEditMode && isAuthenticated && (
-                <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border/50">
-                  <Button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddSection(section.id);
-                    }}
-                    size="icon"
-                    variant="outline"
-                    title="Insérer une section après"
-                    className="h-8 w-8"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddTips(section.id);
-                    }}
-                    size="icon"
-                    variant="outline"
-                    title="Insérer un TIPS après"
-                    className="h-8 w-8"
-                  >
-                    <Lightbulb className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
             </AccordionContent>
           </div>
         </AccordionItem>
