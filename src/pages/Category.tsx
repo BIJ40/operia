@@ -196,6 +196,7 @@ export default function Category() {
     content: string;
     colorPreset: ColorPreset;
     hideFromSidebar: boolean;
+    isSingleSection?: boolean;
   }) => {
     if (editingId) {
       setEditDialogOpen(false);
@@ -617,6 +618,7 @@ export default function Category() {
               initialContent={sections.find(s => s.id === editingId)?.content || ''}
               initialColor={sections.find(s => s.id === editingId)?.colorPreset || 'blue'}
               initialHideFromSidebar={sections.find(s => s.id === editingId)?.hideFromSidebar || false}
+              initialIsSingleSection={sections.find(s => s.id === editingId)?.isSingleSection || false}
               onSave={handleSave}
               onCancel={() => {
                 setEditDialogOpen(false);
