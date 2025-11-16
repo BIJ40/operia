@@ -112,16 +112,18 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         tips_type: newBlock.tipsType,
       }]);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur insertion Supabase:', error);
+        throw error;
+      }
       
       setBlocks((prev) => [...prev, newBlock]);
-      toast({ title: 'Catégorie ajoutée et sauvegardée' });
+      return newBlock.id;
     } catch (error) {
       console.error('Erreur sauvegarde:', error);
       toast({ title: 'Erreur', description: 'Impossible de sauvegarder la catégorie', variant: 'destructive' });
+      return '';
     }
-    
-    return newBlock.id;
   }, [blocks.length, toast, isAdmin]);
 
   const updateBlock = useCallback(async (id: string, updates: Partial<Block>) => {
