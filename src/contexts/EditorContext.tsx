@@ -11,7 +11,7 @@ interface EditorContextType {
   isEditMode: boolean;
   setIsEditMode: (mode: boolean) => void;
   toggleEditMode: () => void;
-  addBlock: (block: Omit<Block, 'id' | 'order'>) => Promise<string>;
+  addBlock: (block: Omit<Block, 'id'>) => Promise<string>;
   updateBlock: (id: string, updates: Partial<Block>) => Promise<void>;
   deleteBlock: (id: string) => Promise<void>;
   reorderBlocks: (blocks: Block[]) => Promise<void>;
@@ -83,7 +83,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   // Auto-save DÉSACTIVÉ - sauvegarde uniquement sur action manuelle pour éviter les timeouts
   // La sauvegarde se fait maintenant uniquement via handleSave dans les pages
 
-  const addBlock = useCallback(async (block: Omit<Block, 'id' | 'order'>): Promise<string> => {
+  const addBlock = useCallback(async (block: Omit<Block, 'id'>): Promise<string> => {
     if (!isAdmin) {
       toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent ajouter du contenu', variant: 'destructive' });
       return '';
@@ -91,7 +91,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     const newBlock: Block = {
       ...block,
       id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      order: blocks.length,
+      order: block.order ?? blocks.length,
     };
     
     // Sauvegarder immédiatement dans Supabase

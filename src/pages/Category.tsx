@@ -349,17 +349,13 @@ export default function Category() {
       slug: `${category.slug}-section-${Date.now()}`,
       attachments: [],
       contentType: 'section',
+      order: newOrder,
     });
     
     if (newBlockId) {
-      // Attendre un peu plus pour que l'état se mette à jour
-      setTimeout(async () => {
-        await updateBlock(newBlockId, { order: newOrder });
-        // Attendre encore avant d'ouvrir le formulaire
-        setTimeout(() => {
-          setEditingId(newBlockId);
-          setEditDialogOpen(true);
-        }, 100);
+      setTimeout(() => {
+        setEditingId(newBlockId);
+        setEditDialogOpen(true);
       }, 100);
     }
   };
@@ -399,17 +395,13 @@ export default function Category() {
       attachments: [],
       contentType: 'tips',
       tipsType: 'info',
+      order: newOrder,
     });
     
     if (newBlockId) {
-      // Attendre un peu plus pour que l'état se mette à jour
-      setTimeout(async () => {
-        await updateBlock(newBlockId, { order: newOrder });
-        // Attendre encore avant d'ouvrir le formulaire
-        setTimeout(() => {
-          setEditingId(newBlockId);
-          setEditDialogOpen(true);
-        }, 100);
+      setTimeout(() => {
+        setEditingId(newBlockId);
+        setEditDialogOpen(true);
       }, 100);
     }
   };
@@ -469,6 +461,7 @@ export default function Category() {
       slug: `${category.slug}-section-${Date.now()}`,
       attachments: sectionToDuplicate.attachments || [],
       hideFromSidebar: sectionToDuplicate.hideFromSidebar,
+      order: newOrder,
     });
 
     if (newBlockId) {

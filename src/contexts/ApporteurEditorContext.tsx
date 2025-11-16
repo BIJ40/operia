@@ -8,7 +8,7 @@ interface ApporteurEditorContextType {
   blocks: Block[];
   isEditMode: boolean;
   loading: boolean;
-  addBlock: (block: Omit<Block, 'id' | 'order'>) => Promise<string>;
+  addBlock: (block: Omit<Block, 'id'>) => Promise<string>;
   updateBlock: (id: string, updates: Partial<Block>) => Promise<void>;
   deleteBlock: (id: string) => Promise<void>;
   reorderBlocks: (blocks: Block[]) => Promise<void>;
@@ -45,7 +45,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
 
   // Sauvegarde automatique DÉSACTIVÉE - sauvegarde immédiate dans chaque fonction
 
-  const addBlock = useCallback(async (block: Omit<Block, 'id' | 'order'>): Promise<string> => {
+  const addBlock = useCallback(async (block: Omit<Block, 'id'>): Promise<string> => {
     if (!isAdmin) return '';
     
     const newId = crypto.randomUUID();
@@ -54,7 +54,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
     const newBlock: Block = {
       ...block,
       id: newId,
-      order: maxOrder + 1,
+      order: block.order ?? maxOrder + 1,
     };
     
     try {

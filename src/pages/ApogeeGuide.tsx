@@ -317,6 +317,7 @@ export default function ApogeeGuide() {
       slug: `categorie-${Date.now()}`,
       parentId: null,
       attachments: [],
+      order: apogeeCategories.length,
     });
   };
 
