@@ -91,7 +91,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     const newBlock: Block = {
       ...block,
       id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      order: block.order ?? blocks.length,
+      order: Math.floor(block.order ?? blocks.length),
     };
     
     // Sauvegarder immédiatement dans Supabase
