@@ -94,6 +94,12 @@ export default function CategoryApporteur() {
   const [showTips, setShowTips] = useState(true);
   const [showSections, setShowSections] = useState(true);
 
+  // Réinitialiser les filtres quand on change de sous-catégorie
+  useEffect(() => {
+    setShowTips(true);
+    setShowSections(true);
+  }, [slug, subslug]);
+
   useEffect(() => {
     const hash = location.hash.replace('#', '');
     if (hash && sections.some(s => s.slug === hash)) {
