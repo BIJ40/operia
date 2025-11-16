@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { saveAppData } from '@/lib/db';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info, ChevronsDownUp, ChevronsUpDown, Lightbulb } from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import {
   Accordion,
@@ -48,7 +48,6 @@ import { RichTextEditor } from '@/components/RichTextEditor';
 import { SectionEditForm } from '@/components/SectionEditForm';
 import { TipsEditForm } from '@/components/TipsEditForm';
 import { ColorPreset, TipsType } from '@/types/block';
-import { Lightbulb } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
@@ -903,6 +902,40 @@ export default function Category() {
               {showSections ? 'Masquer les tutoriels' : 'Afficher les tutoriels'}
             </Button>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const visibleSections = sections.filter(section => {
+                const isTip = section.contentType === 'tips';
+                if (isTip) return showTips;
+                return showSections;
+              }).filter(s => !s.isSingleSection && !s.hideTitle);
+              
+              if (openAccordions.length === visibleSections.length) {
+                setOpenAccordions([]);
+              } else {
+                setOpenAccordions(visibleSections.map(s => s.id));
+              }
+            }}
+            className="gap-2"
+          >
+            {openAccordions.length === sections.filter(s => {
+              const isTip = s.contentType === 'tips';
+              if (isTip) return showTips;
+              return showSections;
+            }).filter(s => !s.isSingleSection && !s.hideTitle).length ? (
+              <>
+                <ChevronsUpDown className="w-4 h-4" />
+                Replier tout
+              </>
+            ) : (
+              <>
+                <ChevronsDownUp className="w-4 h-4" />
+                Déployer tout
+              </>
+            )}
+          </Button>
         </div>
 
         <DndContext
