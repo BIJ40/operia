@@ -205,6 +205,12 @@ export default function Category() {
       const scrollPos = window.pageYOffset;
       savedScrollPositionRef.current = scrollPos;
       
+      // Sauvegarder et supprimer temporairement le hash pour éviter le scroll automatique
+      const currentHash = window.location.hash;
+      if (currentHash) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      
       updateBlock(editingId, data);
       
       const updatedBlocks = blocks.map(b => 
@@ -226,7 +232,13 @@ export default function Category() {
       // Restaurer plusieurs fois pour être sûr
       requestAnimationFrame(() => {
         window.scrollTo(0, scrollPos);
-        setTimeout(() => window.scrollTo(0, scrollPos), 0);
+        setTimeout(() => {
+          window.scrollTo(0, scrollPos);
+          // Remettre le hash après la restauration du scroll
+          if (currentHash) {
+            history.replaceState(null, '', window.location.pathname + window.location.search + currentHash);
+          }
+        }, 0);
         setTimeout(() => window.scrollTo(0, scrollPos), 50);
         setTimeout(() => window.scrollTo(0, scrollPos), 100);
       });
@@ -243,6 +255,12 @@ export default function Category() {
       // Sauvegarder la position de scroll IMMÉDIATEMENT
       const scrollPos = window.pageYOffset;
       savedScrollPositionRef.current = scrollPos;
+      
+      // Sauvegarder et supprimer temporairement le hash pour éviter le scroll automatique
+      const currentHash = window.location.hash;
+      if (currentHash) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
       
       const colorMap: Record<TipsType, ColorPreset> = {
         danger: 'red',
@@ -287,7 +305,13 @@ export default function Category() {
       // Restaurer plusieurs fois pour être sûr
       requestAnimationFrame(() => {
         window.scrollTo(0, scrollPos);
-        setTimeout(() => window.scrollTo(0, scrollPos), 0);
+        setTimeout(() => {
+          window.scrollTo(0, scrollPos);
+          // Remettre le hash après la restauration du scroll
+          if (currentHash) {
+            history.replaceState(null, '', window.location.pathname + window.location.search + currentHash);
+          }
+        }, 0);
         setTimeout(() => window.scrollTo(0, scrollPos), 50);
         setTimeout(() => window.scrollTo(0, scrollPos), 100);
       });
