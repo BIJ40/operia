@@ -68,74 +68,28 @@ serve(async (req) => {
     }
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Accès à la base de connaissances - VERSION ULTRA LÉGÈRE
-    let knowledgeContext = "";
-    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      
-      // Extraire les mots-clés de la dernière question
-      const lastMessage = messages[messages.length - 1]?.content || "";
-      const keywords = lastMessage
-        .toLowerCase()
-        .split(/\s+/)
-        .filter((word: string) => word.length > 3)
-        .slice(0, 3); // Seulement 3 mots-clés
-      
-      console.log("Recherche mots-clés:", keywords);
-      
-      if (keywords.length > 0) {
-        // Chercher UN SEUL document avec le premier mot-clé
-        const { data: doc } = await supabase
-          .from('knowledge_base')
-          .select('title, content, category')
-          .ilike('content', `%${keywords[0]}%`)
-          .limit(1)
-          .single();
-        
-        if (doc) {
-          // Extraire seulement 800 caractères autour du mot-clé
-          const contentLower = doc.content.toLowerCase();
-          const keywordIndex = contentLower.indexOf(keywords[0]);
-          
-          let excerpt = "";
-          if (keywordIndex !== -1) {
-            const start = Math.max(0, keywordIndex - 400);
-            const end = Math.min(doc.content.length, keywordIndex + 400);
-            excerpt = doc.content.substring(start, end);
-          } else {
-            excerpt = doc.content.substring(0, 800);
-          }
-          
-          knowledgeContext = `\n\nDocument pertinent [${doc.category}] ${doc.title}:\n${excerpt}`;
-          console.log("Document trouvé:", doc.title);
-        } else {
-          console.log("Aucun document trouvé");
-        }
-      }
-    }
-
+    console.log("Guide content length:", guideContent.length);
+    
+    // Préparer le prompt système avec TOUT le guide (sans recherche dans knowledge_base)
     const systemPrompt = `Tu es Mme MICHU, l'assistante virtuelle du guide Apogée CRM.
 
-Guide principal (résumé):
-${guideContent.substring(0, 3000)}
-${knowledgeContext}
+CONTENU DU GUIDE APOGÉE :
+${guideContent}
 
-Rôle:
-- Experte CRM Apogée
-- Utilise les infos ci-dessus pour répondre
-- Si l'info n'est pas dans le contexte, dis-le
+RÈGLES IMPORTANTES :
+1. Tu dois UNIQUEMENT utiliser les informations contenues dans le guide ci-dessus
+2. NE fais JAMAIS référence à des manuels externes (V8, V9, etc.)
+3. Si une information n'est pas dans le guide fourni, dis clairement "Je n'ai pas trouvé cette information dans le guide actuel"
+4. Réponds de manière concise et précise
+5. Si plusieurs sections sont pertinentes, mentionne leurs slugs pour faciliter la navigation
+6. Aide l'utilisateur à naviguer dans le guide en mentionnant les catégories pertinentes
 
-Règles:
-1. Réponds avec les infos fournies
-2. Sois concise et précise
-3. Si tu ne sais pas, dis-le clairement`;
+Réponds maintenant aux questions en te basant UNIQUEMENT sur le guide fourni ci-dessus.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
