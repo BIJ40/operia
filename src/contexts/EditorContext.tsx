@@ -178,28 +178,25 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     }
   }, [toast, isAdmin]);
 
-  const reorderBlocks = useCallback(async (newBlocks: Block[]) => {
+  const reorderBlocks = useCallback(async (blocksToReorder: Block[]) => {
     if (!isAdmin) {
       toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent réorganiser le contenu', variant: 'destructive' });
       return;
     }
     
-    const reorderedBlocks = newBlocks.map((block, index) => ({ ...block, order: index }));
-    setBlocks(reorderedBlocks);
+    // Mettre à jour l'état en fusionnant avec les blocs existants
+    setBlocks(prevBlocks => prevBlocks.map(block => {
+      const updatedBlock = blocksToReorder.find(b => b.id === block.id);
+      return updatedBlock || block;
+    }));
     
     // Sauvegarder l'ordre dans Supabase
     try {
-      const updates = reorderedBlocks.map(block => ({
-        id: block.id,
-        order: block.order
-      }));
-      
-      // Mettre à jour chaque bloc avec son nouvel ordre
-      for (const update of updates) {
+      for (const block of blocksToReorder) {
         await supabase
           .from('blocks')
-          .update({ order: update.order })
-          .eq('id', update.id);
+          .update({ order: block.order })
+          .eq('id', block.id);
       }
       
       console.log('✅ Ordre sauvegardé dans Supabase');
