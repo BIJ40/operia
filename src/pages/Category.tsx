@@ -266,7 +266,7 @@ export default function Category() {
         danger: 'red',
         warning: 'orange',
         success: 'green',
-        info: 'blue',
+        information: 'blue',
       };
 
       updateBlock(editingId, {
@@ -411,14 +411,15 @@ export default function Category() {
     
     const newBlockId = await addBlock({
       type: 'section',
-      title: 'ℹ️ Info',
+      title: 'ℹ️ Information',
       content: '<p>Contenu du TIPS...</p>',
       colorPreset: 'blue',
       parentId: category.id,
       slug: `${category.slug}-tips-${Date.now()}`,
       attachments: [],
       contentType: 'tips',
-      tipsType: 'info',
+      tipsType: 'information',
+      hideFromSidebar: true,
       order: newOrder,
     });
     
@@ -922,8 +923,8 @@ export default function Category() {
               sectionId={editingId}
               initialTitle={sections.find(s => s.id === editingId)?.title || ''}
               initialContent={sections.find(s => s.id === editingId)?.content || ''}
-              initialTipsType={sections.find(s => s.id === editingId)?.tipsType || 'info'}
-              initialHideFromSidebar={sections.find(s => s.id === editingId)?.hideFromSidebar || false}
+              initialTipsType={sections.find(s => s.id === editingId)?.tipsType || 'information'}
+              initialHideFromSidebar={sections.find(s => s.id === editingId)?.hideFromSidebar ?? true}
               onSave={handleSaveTips}
               onCancel={() => {
                 setEditDialogOpen(false);

@@ -9,7 +9,7 @@ export interface Attachment {
 }
 
 export type ContentType = 'section' | 'tips';
-export type TipsType = 'danger' | 'warning' | 'success' | 'info';
+export type TipsType = 'danger' | 'warning' | 'success' | 'information';
 
 export interface Block {
   id: string;

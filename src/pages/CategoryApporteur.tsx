@@ -270,7 +270,7 @@ export default function CategoryApporteur() {
             {section.title && section.title.trim() !== '' ? (
               <h3 className="text-lg font-semibold mb-4 text-foreground">{section.title}</h3>
             ) : section.hideFromSidebar ? (
-              <h3 className="text-lg font-semibold mb-4 text-foreground">💡 Info / Astuce</h3>
+              <h3 className="text-lg font-semibold mb-4 text-foreground">💡 Information / Astuce</h3>
             ) : null}
             <div 
               className="prose prose-sm max-w-none dark:prose-invert"

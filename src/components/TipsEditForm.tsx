@@ -20,7 +20,7 @@ const tipsConfig: Record<TipsType, { label: string; icon: any; color: string; de
   danger: { label: 'À ne surtout pas faire', icon: XCircle, color: 'red', defaultTitle: '🚫 À ne surtout pas faire' },
   warning: { label: 'Attention', icon: AlertTriangle, color: 'orange', defaultTitle: '⚠️ Attention' },
   success: { label: 'Astuce / Conseil', icon: Lightbulb, color: 'green', defaultTitle: '💡 Astuce / Conseil' },
-  info: { label: 'Info', icon: Info, color: 'blue', defaultTitle: 'ℹ️ Info' },
+  information: { label: 'Information', icon: Info, color: 'blue', defaultTitle: 'ℹ️ Information' },
 };
 
 interface TipsEditFormProps {
