@@ -465,40 +465,46 @@ export default function CategoryApporteur() {
                 {showSections ? 'Masquer les tutoriels' : 'Afficher les tutoriels'}
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const visibleSections = sections.filter(section => {
-                  const isTip = section.hideFromSidebar;
+            {(showTips || showSections) && sections.filter(s => {
+              const isTip = s.hideFromSidebar;
+              if (isTip) return showTips;
+              return showSections;
+            }).filter(s => !s.isSingleSection && !s.hideTitle).length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const visibleSections = sections.filter(section => {
+                    const isTip = section.hideFromSidebar;
+                    if (isTip) return showTips;
+                    return showSections;
+                  }).filter(s => !s.isSingleSection && !s.hideTitle);
+                  
+                  if (openAccordions.length === visibleSections.length) {
+                    setOpenAccordions([]);
+                  } else {
+                    setOpenAccordions(visibleSections.map(s => s.slug));
+                  }
+                }}
+                className="gap-2"
+              >
+                {openAccordions.length === sections.filter(s => {
+                  const isTip = s.hideFromSidebar;
                   if (isTip) return showTips;
                   return showSections;
-                }).filter(s => !s.isSingleSection && !s.hideTitle);
-                
-                if (openAccordions.length === visibleSections.length) {
-                  setOpenAccordions([]);
-                } else {
-                  setOpenAccordions(visibleSections.map(s => s.slug));
-                }
-              }}
-              className="gap-2"
-            >
-              {openAccordions.length === sections.filter(s => {
-                const isTip = s.hideFromSidebar;
-                if (isTip) return showTips;
-                return showSections;
-              }).filter(s => !s.isSingleSection && !s.hideTitle).length ? (
-                <>
-                  <ChevronsUpDown className="w-4 h-4" />
-                  Replier tout
-                </>
-              ) : (
-                <>
-                  <ChevronsDownUp className="w-4 h-4" />
-                  Déployer tout
-                </>
-              )}
-            </Button>
+                }).filter(s => !s.isSingleSection && !s.hideTitle).length ? (
+                  <>
+                    <ChevronsUpDown className="w-4 h-4" />
+                    Replier tout
+                  </>
+                ) : (
+                  <>
+                    <ChevronsDownUp className="w-4 h-4" />
+                    Déplier tout
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
           {isEditMode && (
