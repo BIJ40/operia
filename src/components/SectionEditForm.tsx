@@ -16,6 +16,27 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+// Mapping couleur -> titre par défaut
+const getDefaultTitleByColor = (color: ColorPreset): string => {
+  const mapping: Record<ColorPreset, string> = {
+    red: '❌ Important',
+    yellow: '⚠️ Attention',
+    orange: '⚠️ Attention',
+    green: '✅ Conseil',
+    blue: 'ℹ️ Information',
+    cyan: 'ℹ️ Information',
+    indigo: 'ℹ️ Information',
+    gray: '💡 Note',
+    purple: '🔮 Astuce',
+    pink: '💗 À retenir',
+    rose: '💗 À retenir',
+    teal: '📌 Point clé',
+    blanc: '',
+    white: '',
+  };
+  return mapping[color] || '';
+};
+
 interface SectionEditFormProps {
   sectionId: string;
   initialTitle: string;
@@ -89,6 +110,32 @@ export function SectionEditForm({
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}-single`, isSingleSection.toString());
   }, [isSingleSection, storageKey]);
+
+  // Proposer un titre par défaut quand la couleur change
+  useEffect(() => {
+    const defaultTitle = getDefaultTitleByColor(color);
+    // Proposer le titre par défaut uniquement si :
+    // - le titre est vide OU
+    // - le titre actuel correspond à un titre par défaut d'une autre couleur
+    const isDefaultTitle = Object.values({
+      red: '❌ Important',
+      yellow: '⚠️ Attention',
+      orange: '⚠️ Attention',
+      green: '✅ Conseil',
+      blue: 'ℹ️ Information',
+      cyan: 'ℹ️ Information',
+      indigo: 'ℹ️ Information',
+      gray: '💡 Note',
+      purple: '🔮 Astuce',
+      pink: '💗 À retenir',
+      rose: '💗 À retenir',
+      teal: '📌 Point clé',
+    } as const).includes(title as any);
+    
+    if (defaultTitle && (title === '' || isDefaultTitle)) {
+      setTitle(defaultTitle);
+    }
+  }, [color]);
 
   // Nettoyer le stockage lors de la sauvegarde ou de l'annulation
   const clearStorage = () => {
