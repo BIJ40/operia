@@ -331,7 +331,7 @@ export default function Category() {
       } else {
         // Sinon, prendre la moyenne entre cette section et la suivante
         const nextSection = sections[afterIndex + 1];
-        newOrder = (afterSection!.order + nextSection.order) / 2;
+        newOrder = Math.floor((afterSection!.order + nextSection.order) / 2);
       }
     } else {
       // Sans afterSectionId, ajouter au début
@@ -376,7 +376,7 @@ export default function Category() {
       } else {
         // Sinon, prendre la moyenne entre cette section et la suivante
         const nextSection = sections[afterIndex + 1];
-        newOrder = (afterSection!.order + nextSection.order) / 2;
+        newOrder = Math.floor((afterSection!.order + nextSection.order) / 2);
       }
     } else {
       // Sans afterSectionId, ajouter au début

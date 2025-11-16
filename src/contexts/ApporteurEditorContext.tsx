@@ -54,7 +54,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
     const newBlock: Block = {
       ...block,
       id: newId,
-      order: block.order ?? maxOrder + 1,
+      order: Math.floor(block.order ?? maxOrder + 1),
     };
     
     try {
