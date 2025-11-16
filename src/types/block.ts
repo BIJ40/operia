@@ -8,6 +8,9 @@ export interface Attachment {
   type: string;
 }
 
+export type ContentType = 'section' | 'tips';
+export type TipsType = 'danger' | 'warning' | 'success' | 'info';
+
 export interface Block {
   id: string;
   type: BlockType;
@@ -23,6 +26,8 @@ export interface Block {
   showTitleOnCard?: boolean;
   showTitleInMenu?: boolean;
   isSingleSection?: boolean;
+  contentType?: ContentType;
+  tipsType?: TipsType;
 }
 
 export interface AppData {

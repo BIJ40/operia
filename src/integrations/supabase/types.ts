@@ -19,6 +19,7 @@ export type Database = {
           attachments: Json | null
           color_preset: string
           content: string
+          content_type: string | null
           created_at: string
           hide_from_sidebar: boolean | null
           icon: string | null
@@ -29,6 +30,7 @@ export type Database = {
           show_title_in_menu: boolean | null
           show_title_on_card: boolean | null
           slug: string
+          tips_type: string | null
           title: string
           type: string
           updated_at: string
@@ -37,6 +39,7 @@ export type Database = {
           attachments?: Json | null
           color_preset?: string
           content?: string
+          content_type?: string | null
           created_at?: string
           hide_from_sidebar?: boolean | null
           icon?: string | null
@@ -47,6 +50,7 @@ export type Database = {
           show_title_in_menu?: boolean | null
           show_title_on_card?: boolean | null
           slug: string
+          tips_type?: string | null
           title: string
           type: string
           updated_at?: string
@@ -55,6 +59,7 @@ export type Database = {
           attachments?: Json | null
           color_preset?: string
           content?: string
+          content_type?: string | null
           created_at?: string
           hide_from_sidebar?: boolean | null
           icon?: string | null
@@ -65,6 +70,7 @@ export type Database = {
           show_title_in_menu?: boolean | null
           show_title_on_card?: boolean | null
           slug?: string
+          tips_type?: string | null
           title?: string
           type?: string
           updated_at?: string
@@ -76,6 +82,7 @@ export type Database = {
           attachments: Json | null
           color_preset: string
           content: string
+          content_type: string | null
           created_at: string
           hide_from_sidebar: boolean | null
           icon: string | null
@@ -83,6 +90,7 @@ export type Database = {
           order: number
           parent_id: string | null
           slug: string
+          tips_type: string | null
           title: string
           type: string
           updated_at: string
@@ -91,6 +99,7 @@ export type Database = {
           attachments?: Json | null
           color_preset?: string
           content?: string
+          content_type?: string | null
           created_at?: string
           hide_from_sidebar?: boolean | null
           icon?: string | null
@@ -98,6 +107,7 @@ export type Database = {
           order?: number
           parent_id?: string | null
           slug: string
+          tips_type?: string | null
           title: string
           type: string
           updated_at?: string
@@ -106,6 +116,7 @@ export type Database = {
           attachments?: Json | null
           color_preset?: string
           content?: string
+          content_type?: string | null
           created_at?: string
           hide_from_sidebar?: boolean | null
           icon?: string | null
@@ -113,6 +124,7 @@ export type Database = {
           order?: number
           parent_id?: string | null
           slug?: string
+          tips_type?: string | null
           title?: string
           type?: string
           updated_at?: string
