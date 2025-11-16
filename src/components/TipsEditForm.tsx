@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { TipsType } from '@/types/block';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, AlertTriangle, Lightbulb, Info } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Lightbulb, Info, XCircle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const tipsConfig: Record<TipsType, { label: string; icon: any; color: string; defaultTitle: string }> = {
-  danger: { label: 'Danger', icon: AlertCircle, color: 'red', defaultTitle: '⚠️ Danger' },
+  danger: { label: 'À ne surtout pas faire', icon: XCircle, color: 'red', defaultTitle: '🚫 À ne surtout pas faire' },
   warning: { label: 'Attention', icon: AlertTriangle, color: 'orange', defaultTitle: '⚠️ Attention' },
   success: { label: 'Astuce / Conseil', icon: Lightbulb, color: 'green', defaultTitle: '💡 Astuce / Conseil' },
   info: { label: 'Info', icon: Info, color: 'blue', defaultTitle: 'ℹ️ Info' },
