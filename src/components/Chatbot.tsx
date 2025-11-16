@@ -114,11 +114,24 @@ export function Chatbot() {
   const prepareGuideContent = () => {
     return blocks
       .map((block) => {
+        // Fonction pour nettoyer le HTML et extraire le texte
+        const cleanHtml = (html: string) => {
+          if (!html) return '';
+          // Retirer les images et leur contenu base64
+          const withoutImages = html.replace(/<img[^>]*>/g, '[IMAGE]');
+          // Retirer toutes les balises HTML
+          const withoutTags = withoutImages.replace(/<[^>]*>/g, ' ');
+          // Nettoyer les espaces multiples
+          const cleaned = withoutTags.replace(/\s+/g, ' ').trim();
+          // Limiter à 500 caractères max
+          return cleaned.length > 500 ? cleaned.substring(0, 500) + '...' : cleaned;
+        };
+
         if (block.type === 'category') {
-          return `## ${block.title} (slug: ${block.slug})\n${block.content || ''}`;
+          return `## ${block.title} (slug: ${block.slug})\n${cleanHtml(block.content)}`;
         } else if (block.type === 'section') {
           const parent = blocks.find(b => b.id === block.parentId);
-          return `### ${block.title} (catégorie: ${parent?.slug}, section: ${block.slug})\n${block.content || ''}`;
+          return `### ${block.title} (catégorie: ${parent?.slug}, section: ${block.slug})\n${cleanHtml(block.content)}`;
         }
         return '';
       })
