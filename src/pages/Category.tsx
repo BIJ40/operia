@@ -76,6 +76,17 @@ export default function Category() {
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   
+  // Fonction pour obtenir l'icône d'un TIPS
+  const getTipIcon = (tipsType: TipsType) => {
+    const icons = {
+      danger: '🚫',
+      warning: '⚠️',
+      success: '💡',
+      information: 'ℹ️',
+    };
+    return icons[tipsType] || 'ℹ️';
+  };
+  
   // Liste des catégories disponibles (exclure FAQ)
   const availableCategories = useMemo(() =>
     blocks
@@ -397,6 +408,7 @@ export default function Category() {
       contentType: 'tips',
       tipsType: 'information',
       hideFromSidebar: true,
+      hideTitle: true,
       order: newOrder,
     });
     
@@ -612,7 +624,11 @@ export default function Category() {
             ) : null}
             <div
               className="prose prose-sm max-w-none break-words overflow-visible"
-              dangerouslySetInnerHTML={{ __html: section.content }}
+              dangerouslySetInnerHTML={{ 
+                __html: section.hideTitle && section.contentType === 'tips' && section.tipsType
+                  ? `<span style="font-size: 1.25rem; margin-right: 0.5rem;">${getTipIcon(section.tipsType)}</span>${section.content}`
+                  : section.content 
+              }}
             />
           </div>
         </div>
