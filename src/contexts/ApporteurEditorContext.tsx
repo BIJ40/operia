@@ -106,6 +106,8 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
             is_single_section: b.isSingleSection || false,
             content_type: b.contentType || 'section',
             tips_type: b.tipsType || null,
+            summary: b.summary || '',
+            show_summary: b.showSummary !== false,
           }))
         );
         
@@ -130,6 +132,8 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
           is_single_section: newBlock.isSingleSection || false,
           content_type: newBlock.contentType || 'section',
           tips_type: newBlock.tipsType || null,
+          summary: newBlock.summary || '',
+          show_summary: newBlock.showSummary !== false,
         }]);
         
         if (error) {

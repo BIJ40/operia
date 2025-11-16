@@ -217,18 +217,6 @@ export default function Category() {
       }
       
       updateBlock(editingId, data);
-      
-      const updatedBlocks = blocks.map(b => 
-        b.id === editingId ? { ...b, ...data } : b
-      );
-      
-      saveAppData({
-        blocks: updatedBlocks,
-        version: '1.0',
-        lastModified: Date.now(),
-      }).catch((err) => {
-        console.error('Erreur sauvegarde:', err);
-      });
 
       // Fermer le dialog et restaurer immédiatement
       setEditDialogOpen(false);
@@ -281,26 +269,6 @@ export default function Category() {
         hideFromSidebar,
         tipsType,
         contentType: 'tips',
-      });
-      
-      const updatedBlocks = blocks.map(b => 
-        b.id === editingId ? { 
-          ...b, 
-          title,
-          content,
-          colorPreset: colorMap[tipsType],
-          hideFromSidebar,
-          tipsType,
-          contentType: 'tips' as const,
-        } : b
-      );
-      
-      saveAppData({
-        blocks: updatedBlocks,
-        version: '1.0',
-        lastModified: Date.now(),
-      }).catch((err) => {
-        console.error('Erreur sauvegarde:', err);
       });
 
       // Fermer le dialog et restaurer immédiatement
