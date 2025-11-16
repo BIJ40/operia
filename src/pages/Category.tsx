@@ -98,6 +98,7 @@ export default function Category() {
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const savedScrollPositionRef = useRef<number>(0);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
+  const [showTips, setShowTips] = useState(true);
 
   // Ouvrir automatiquement la section depuis l'URL hash
   useEffect(() => {
@@ -808,7 +809,7 @@ export default function Category() {
   return (
     <>
       <div className="container max-w-4xl mx-auto p-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold">{category.title}</h1>
           {isEditMode && isAuthenticated && (
             <div className="flex gap-2">
@@ -831,6 +832,20 @@ export default function Category() {
             </div>
           )}
         </div>
+        
+        {sections.some(s => s.contentType === 'tips') && (
+          <div className="mb-8">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTips(!showTips)}
+              className="gap-2"
+            >
+              <Lightbulb className="w-4 h-4" />
+              {showTips ? 'Masquer les TIPS' : 'Afficher les TIPS'}
+            </Button>
+          </div>
+        )}
 
         <DndContext
           sensors={sensors}
@@ -847,7 +862,9 @@ export default function Category() {
               value={openAccordions}
               onValueChange={setOpenAccordions}
             >
-              {sections.map((section) => 
+              {sections
+                .filter(section => showTips || section.contentType !== 'tips')
+                .map((section) => 
                 isEditMode ? (
                   <SortableAccordionItem key={section.id} section={section} />
                 ) : (
