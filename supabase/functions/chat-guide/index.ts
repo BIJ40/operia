@@ -41,8 +41,8 @@ function validateInput(messages: any, guideContent: any): { valid: boolean; erro
     return { valid: false, error: 'Invalid guide content' };
   }
   
-  if (guideContent.length > 20000) {
-    return { valid: false, error: 'Guide content too long (max 20000 chars)' };
+  if (guideContent.length > 100000) {
+    return { valid: false, error: 'Guide content too long (max 100000 chars)' };
   }
   
   return { valid: true };
