@@ -368,7 +368,7 @@ export default function Category() {
       type: 'section',
       title: 'Nouvelle section',
       content: '<p>Contenu de la section...</p>',
-      colorPreset: 'white',
+      colorPreset: 'purple',
       parentId: category.id,
       slug: `${category.slug}-section-${Date.now()}`,
       attachments: [],
@@ -515,8 +515,8 @@ export default function Category() {
       case 'rose': return 'bg-rose-50 border-l-4 border-l-rose-500';
       case 'gray': return 'bg-gray-50 border-l-4 border-l-gray-400';
       case 'blanc': return 'bg-white dark:bg-background border-l-4 border-l-border';
-      case 'white': return 'bg-red-50 border-l-4 border-l-red-500'; // White ancien = rouge
-      default: return 'bg-red-50 border-l-4 border-l-red-500'; // Rouge par défaut
+      case 'white': return 'bg-purple-50 border-l-4 border-l-purple-500'; // White ancien = violet
+      default: return 'bg-purple-50 border-l-4 border-l-purple-500'; // Violet par défaut
     }
   };
 
