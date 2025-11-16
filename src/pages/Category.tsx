@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { saveAppData } from '@/lib/db';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy } from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import {
   Accordion,
@@ -299,6 +299,41 @@ export default function Category() {
     setDeleteDialogOpen(false);
   };
 
+  const handleDuplicate = async (sectionId: string) => {
+    const sectionToDuplicate = sections.find(s => s.id === sectionId);
+    if (!sectionToDuplicate) return;
+
+    // Calculer le nouvel ordre (juste après la section actuelle)
+    const currentIndex = sections.findIndex(s => s.id === sectionId);
+    const nextSection = sections[currentIndex + 1];
+    const newOrder = nextSection 
+      ? (sectionToDuplicate.order + nextSection.order) / 2
+      : sectionToDuplicate.order + 1;
+
+    // Créer la nouvelle section dupliquée
+    const newBlockId = await addBlock({
+      type: 'section',
+      title: `${sectionToDuplicate.title} (copie)`,
+      content: sectionToDuplicate.content,
+      colorPreset: sectionToDuplicate.colorPreset,
+      parentId: category.id,
+      slug: `${category.slug}-section-${Date.now()}`,
+      attachments: sectionToDuplicate.attachments || [],
+      hideFromSidebar: sectionToDuplicate.hideFromSidebar,
+    });
+
+    if (newBlockId) {
+      // Mettre à jour l'ordre
+      setTimeout(async () => {
+        await updateBlock(newBlockId, { order: newOrder });
+        toast({ 
+          title: 'Section dupliquée', 
+          description: 'La section a été dupliquée avec succès' 
+        });
+      }, 50);
+    }
+  };
+
   const getColorClass = (color?: string) => {
     switch (color) {
       case 'green': return 'bg-green-50 border-l-4 border-l-green-500';
@@ -378,6 +413,38 @@ export default function Category() {
                     >
                       <GripVertical className="w-4 h-4" />
                     </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setEditingId(section.id);
+                        setEditDialogOpen(true);
+                      }}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      title="Dupliquer la section"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleDuplicate(section.id);
+                      }}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -409,22 +476,6 @@ export default function Category() {
                           ))}
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        setEditingId(section.id);
-                        setEditDialogOpen(true);
-                      }}
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
                     <Button
                       type="button"
                       size="sm"
