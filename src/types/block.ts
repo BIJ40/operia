@@ -28,6 +28,8 @@ export interface Block {
   isSingleSection?: boolean;
   contentType?: ContentType;
   tipsType?: TipsType;
+  summary?: string;
+  showSummary?: boolean;
 }
 
 export interface AppData {

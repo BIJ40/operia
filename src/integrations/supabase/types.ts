@@ -27,9 +27,11 @@ export type Database = {
           is_single_section: boolean | null
           order: number
           parent_id: string | null
+          show_summary: boolean | null
           show_title_in_menu: boolean | null
           show_title_on_card: boolean | null
           slug: string
+          summary: string | null
           tips_type: string | null
           title: string
           type: string
@@ -47,9 +49,11 @@ export type Database = {
           is_single_section?: boolean | null
           order?: number
           parent_id?: string | null
+          show_summary?: boolean | null
           show_title_in_menu?: boolean | null
           show_title_on_card?: boolean | null
           slug: string
+          summary?: string | null
           tips_type?: string | null
           title: string
           type: string
@@ -67,9 +71,11 @@ export type Database = {
           is_single_section?: boolean | null
           order?: number
           parent_id?: string | null
+          show_summary?: boolean | null
           show_title_in_menu?: boolean | null
           show_title_on_card?: boolean | null
           slug?: string
+          summary?: string | null
           tips_type?: string | null
           title?: string
           type?: string
@@ -89,7 +95,9 @@ export type Database = {
           id: string
           order: number
           parent_id: string | null
+          show_summary: boolean | null
           slug: string
+          summary: string | null
           tips_type: string | null
           title: string
           type: string
@@ -106,7 +114,9 @@ export type Database = {
           id?: string
           order?: number
           parent_id?: string | null
+          show_summary?: boolean | null
           slug: string
+          summary?: string | null
           tips_type?: string | null
           title: string
           type: string
@@ -123,7 +133,9 @@ export type Database = {
           id?: string
           order?: number
           parent_id?: string | null
+          show_summary?: boolean | null
           slug?: string
+          summary?: string | null
           tips_type?: string | null
           title?: string
           type?: string
