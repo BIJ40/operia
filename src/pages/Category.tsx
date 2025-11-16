@@ -201,11 +201,10 @@ export default function Category() {
     isSingleSection?: boolean;
   }) => {
     if (editingId) {
-      // Sauvegarder la position de scroll avant la fermeture
-      savedScrollPositionRef.current = window.pageYOffset;
+      // Sauvegarder la position de scroll IMMÉDIATEMENT
+      const scrollPos = window.pageYOffset;
+      savedScrollPositionRef.current = scrollPos;
       
-      setEditDialogOpen(false);
-      setEditingId(null);
       updateBlock(editingId, data);
       
       const updatedBlocks = blocks.map(b => 
@@ -220,10 +219,17 @@ export default function Category() {
         console.error('Erreur sauvegarde:', err);
       });
 
-      // Restaurer la position de scroll après le re-render
-      setTimeout(() => {
-        window.scrollTo(0, savedScrollPositionRef.current);
-      }, 100);
+      // Fermer le dialog et restaurer immédiatement
+      setEditDialogOpen(false);
+      setEditingId(null);
+      
+      // Restaurer plusieurs fois pour être sûr
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollPos);
+        setTimeout(() => window.scrollTo(0, scrollPos), 0);
+        setTimeout(() => window.scrollTo(0, scrollPos), 50);
+        setTimeout(() => window.scrollTo(0, scrollPos), 100);
+      });
     }
   };
 
@@ -234,8 +240,9 @@ export default function Category() {
     hideFromSidebar: boolean
   ) => {
     if (editingId) {
-      // Sauvegarder la position de scroll avant la fermeture
-      savedScrollPositionRef.current = window.pageYOffset;
+      // Sauvegarder la position de scroll IMMÉDIATEMENT
+      const scrollPos = window.pageYOffset;
+      savedScrollPositionRef.current = scrollPos;
       
       const colorMap: Record<TipsType, ColorPreset> = {
         danger: 'red',
@@ -244,8 +251,6 @@ export default function Category() {
         info: 'blue',
       };
 
-      setEditDialogOpen(false);
-      setEditingId(null);
       updateBlock(editingId, {
         title,
         content,
@@ -275,10 +280,17 @@ export default function Category() {
         console.error('Erreur sauvegarde:', err);
       });
 
-      // Restaurer la position de scroll après le re-render
-      setTimeout(() => {
-        window.scrollTo(0, savedScrollPositionRef.current);
-      }, 100);
+      // Fermer le dialog et restaurer immédiatement
+      setEditDialogOpen(false);
+      setEditingId(null);
+      
+      // Restaurer plusieurs fois pour être sûr
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollPos);
+        setTimeout(() => window.scrollTo(0, scrollPos), 0);
+        setTimeout(() => window.scrollTo(0, scrollPos), 50);
+        setTimeout(() => window.scrollTo(0, scrollPos), 100);
+      });
     }
   };
 
@@ -867,11 +879,17 @@ export default function Category() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen} modal={true}>
         <DialogContent 
           className="max-w-4xl max-h-[90vh] overflow-y-auto"
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            // Restaurer le scroll quand le dialog se ferme
+            const scrollPos = savedScrollPositionRef.current;
+            setTimeout(() => window.scrollTo(0, scrollPos), 0);
+          }}
         >
           <DialogHeader>
             <DialogTitle>
