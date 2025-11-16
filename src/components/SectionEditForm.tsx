@@ -92,23 +92,48 @@ export function SectionEditForm({
 
   // Sauvegarder automatiquement l'état lors des modifications
   useEffect(() => {
-    sessionStorage.setItem(`${storageKey}-title`, title);
+    try {
+      sessionStorage.setItem(`${storageKey}-title`, title);
+    } catch (e) {
+      // Silently fail if quota exceeded
+      console.warn('Unable to save draft to sessionStorage:', e);
+    }
   }, [title, storageKey]);
 
   useEffect(() => {
-    sessionStorage.setItem(`${storageKey}-content`, content);
+    try {
+      sessionStorage.setItem(`${storageKey}-content`, content);
+    } catch (e) {
+      // Silently fail if quota exceeded
+      console.warn('Unable to save draft to sessionStorage:', e);
+    }
   }, [content, storageKey]);
 
   useEffect(() => {
-    sessionStorage.setItem(`${storageKey}-color`, color);
+    try {
+      sessionStorage.setItem(`${storageKey}-color`, color);
+    } catch (e) {
+      // Silently fail if quota exceeded
+      console.warn('Unable to save draft to sessionStorage:', e);
+    }
   }, [color, storageKey]);
 
   useEffect(() => {
-    sessionStorage.setItem(`${storageKey}-summary`, summary);
+    try {
+      sessionStorage.setItem(`${storageKey}-summary`, summary);
+    } catch (e) {
+      // Silently fail if quota exceeded
+      console.warn('Unable to save draft to sessionStorage:', e);
+    }
   }, [summary, storageKey]);
 
   useEffect(() => {
-    sessionStorage.setItem(`${storageKey}-showSummary`, showSummary.toString());
+    try {
+      sessionStorage.setItem(`${storageKey}-showSummary`, showSummary.toString());
+    } catch (e) {
+      // Silently fail if quota exceeded
+      console.warn('Unable to save draft to sessionStorage:', e);
+    }
   }, [showSummary, storageKey]);
 
   // Proposer un titre par défaut quand la couleur change
