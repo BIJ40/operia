@@ -371,9 +371,9 @@ export default function ApporteurGuide() {
     toast.success('Image retirée');
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (editingId) {
-      updateBlock(editingId, {
+      await updateBlock(editingId, {
         title: editTitle,
         icon: editIcon,
         colorPreset: editColor,
@@ -394,16 +394,16 @@ export default function ApporteurGuide() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (categoryToDelete) {
-      deleteBlock(categoryToDelete);
+      await deleteBlock(categoryToDelete);
       setCategoryToDelete(null);
     }
     setDeleteDialogOpen(false);
   };
 
-  const handleAddCategory = () => {
-    addBlock({
+  const handleAddCategory = async () => {
+    await addBlock({
       type: 'category',
       title: 'Nouvelle catégorie',
       content: '',
@@ -415,7 +415,7 @@ export default function ApporteurGuide() {
     });
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
@@ -424,9 +424,11 @@ export default function ApporteurGuide() {
       
       const reorderedCategories = arrayMove(apporteurCategories, oldIndex, newIndex);
       
-      reorderedCategories.forEach((category, index) => {
-        updateBlock(category.id, { order: index });
-      });
+      // Mettre à jour l'ordre de toutes les catégories
+      for (let index = 0; index < reorderedCategories.length; index++) {
+        const category = reorderedCategories[index];
+        await updateBlock(category.id, { order: index });
+      }
     }
   };
 

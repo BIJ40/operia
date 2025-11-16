@@ -111,13 +111,13 @@ export default function CategoryApporteur() {
     setEditDialogOpen(true);
   };
 
-  const handleSaveSection = (id: string, updates: any) => {
+  const handleSaveSection = async (id: string, updates: any) => {
     // S'assurer que isSingleSection est bien passé
     const sectionUpdates = {
       ...updates,
       isSingleSection: updates.isSingleSection || false,
     };
-    updateBlock(id, sectionUpdates);
+    await updateBlock(id, sectionUpdates);
     setEditingId(null);
     setEditDialogOpen(false);
   };
@@ -164,7 +164,7 @@ export default function CategoryApporteur() {
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
@@ -173,9 +173,10 @@ export default function CategoryApporteur() {
       
       const reorderedSections = arrayMove(sections, oldIndex, newIndex);
       
-      reorderedSections.forEach((section, index) => {
-        updateBlock(section.id, { order: index });
-      });
+      for (let index = 0; index < reorderedSections.length; index++) {
+        const section = reorderedSections[index];
+        await updateBlock(section.id, { order: index });
+      }
     }
   };
 
@@ -235,7 +236,7 @@ export default function CategoryApporteur() {
                       .map((sub) => (
                         <DropdownMenuItem
                           key={sub.id}
-                          onClick={() => updateBlock(section.id, { parentId: sub.id })}
+                          onClick={async () => await updateBlock(section.id, { parentId: sub.id })}
                         >
                           {sub.title}
                         </DropdownMenuItem>
@@ -335,7 +336,7 @@ export default function CategoryApporteur() {
                           .map((sub) => (
                             <DropdownMenuItem
                               key={sub.id}
-                              onClick={() => updateBlock(section.id, { parentId: sub.id })}
+                              onClick={async () => await updateBlock(section.id, { parentId: sub.id })}
                             >
                               {sub.title}
                             </DropdownMenuItem>

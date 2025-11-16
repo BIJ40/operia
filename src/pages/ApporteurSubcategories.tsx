@@ -260,10 +260,10 @@ export default function ApporteurSubcategories() {
     setEditShowTitleOnCard(subcategory.showTitleOnCard !== false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingId) return;
 
-    updateBlock(editingId, {
+    await updateBlock(editingId, {
       title: editTitle,
       icon: editImageUrl || editIcon,
       colorPreset: editColorPreset,
@@ -283,19 +283,19 @@ export default function ApporteurSubcategories() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (subcategoryToDelete) {
-      deleteBlock(subcategoryToDelete);
+      await deleteBlock(subcategoryToDelete);
       setSubcategoryToDelete(null);
     }
     setDeleteDialogOpen(false);
   };
 
-  const handleAddSubcategory = () => {
+  const handleAddSubcategory = async () => {
     if (!category) return;
 
     const newSlug = `nouvelle-sous-categorie-${Date.now()}`;
-    addBlock({
+    await addBlock({
       type: 'subcategory',
       title: 'Nouvelle sous-catégorie',
       content: '',

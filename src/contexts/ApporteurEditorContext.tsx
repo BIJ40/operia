@@ -2,14 +2,15 @@ import { createContext, useContext, ReactNode, useState, useCallback, useEffect 
 import { Block } from '@/types/block';
 import { loadApporteurData, saveApporteurData, exportApporteurData, importApporteurData } from '@/lib/db-apporteurs';
 import { useAuth } from './AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ApporteurEditorContextType {
   blocks: Block[];
   isEditMode: boolean;
   loading: boolean;
-  addBlock: (block: Omit<Block, 'id' | 'order'>) => string;
-  updateBlock: (id: string, updates: Partial<Block>) => void;
-  deleteBlock: (id: string) => void;
+  addBlock: (block: Omit<Block, 'id' | 'order'>) => Promise<string>;
+  updateBlock: (id: string, updates: Partial<Block>) => Promise<void>;
+  deleteBlock: (id: string) => Promise<void>;
   reorderBlocks: (blocks: Block[]) => void;
   exportData: () => Promise<string>;
   importData: (data: string) => Promise<void>;
@@ -42,18 +43,9 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
     loadData();
   }, []);
 
-  // Sauvegarde automatique
-  useEffect(() => {
-    if (!loading && blocks.length > 0) {
-      const saveTimer = setTimeout(() => {
-        saveApporteurData({ blocks, version: '1.0', lastModified: Date.now() })
-          .catch(err => console.error('Erreur sauvegarde auto:', err));
-      }, 1000);
-      return () => clearTimeout(saveTimer);
-    }
-  }, [blocks, loading]);
+  // Sauvegarde automatique DÉSACTIVÉE - sauvegarde immédiate dans chaque fonction
 
-  const addBlock = useCallback((block: Omit<Block, 'id' | 'order'>): string => {
+  const addBlock = useCallback(async (block: Omit<Block, 'id' | 'order'>): Promise<string> => {
     if (!isAdmin) return '';
     
     const newId = crypto.randomUUID();
@@ -65,61 +57,150 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
       order: maxOrder + 1,
     };
     
-    // Si c'est une catégorie pour les apporteurs, créer automatiquement les sous-catégories
-    if (block.type === 'category') {
-      const defaultSubcategories = [
-        'Présentation',
-        'Barème / tarifs',
-        'Exigences',
-        'Gestion extranet',
-        'Particularités',
-        'Aide à la rédaction d\'un devis',
-        'Base documentaire'
-      ];
-      
-      const subcategories: Block[] = defaultSubcategories.map((title, index) => ({
-        id: crypto.randomUUID(),
-        type: 'subcategory' as const,
-        title,
-        content: '',
-        colorPreset: 'white' as const,
-        order: maxOrder + 2 + index,
-        slug: `${block.slug}-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-        parentId: newId,
-        attachments: [],
-        hideFromSidebar: false,
-        showTitleOnCard: true,
-        showTitleInMenu: true,
-      }));
-      
-      setBlocks(prev => [...prev, newBlock, ...subcategories]);
-    } else {
-      setBlocks(prev => [...prev, newBlock]);
+    try {
+      // Si c'est une catégorie pour les apporteurs, créer automatiquement les sous-catégories
+      if (block.type === 'category') {
+        const defaultSubcategories = [
+          'Présentation',
+          'Barème / tarifs',
+          'Exigences',
+          'Gestion extranet',
+          'Particularités',
+          'Aide à la rédaction d\'un devis',
+          'Base documentaire'
+        ];
+        
+        const subcategories: Block[] = defaultSubcategories.map((title, index) => ({
+          id: crypto.randomUUID(),
+          type: 'subcategory' as const,
+          title,
+          content: '',
+          colorPreset: 'white' as const,
+          order: maxOrder + 2 + index,
+          slug: `${block.slug}-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+          parentId: newId,
+          attachments: [],
+          hideFromSidebar: false,
+          showTitleOnCard: true,
+          showTitleInMenu: true,
+        }));
+        
+        const allNewBlocks = [newBlock, ...subcategories];
+        
+        // Sauvegarder dans Supabase
+        const { error } = await supabase.from('apporteur_blocks').insert(
+          allNewBlocks.map(b => ({
+            id: b.id,
+            type: b.type,
+            title: b.title,
+            content: b.content || '',
+            icon: b.icon || null,
+            color_preset: b.colorPreset || 'white',
+            order: b.order,
+            slug: b.slug,
+            parent_id: b.parentId || null,
+            attachments: b.attachments as any || [],
+            hide_from_sidebar: b.hideFromSidebar || false,
+            show_title_on_card: b.showTitleOnCard !== false,
+            show_title_in_menu: b.showTitleInMenu !== false,
+            is_single_section: b.isSingleSection || false,
+          }))
+        );
+        
+        if (error) throw error;
+        setBlocks(prev => [...prev, ...allNewBlocks]);
+      } else {
+        // Sauvegarder dans Supabase
+        const { error } = await supabase.from('apporteur_blocks').insert([{
+          id: newBlock.id,
+          type: newBlock.type,
+          title: newBlock.title,
+          content: newBlock.content || '',
+          icon: newBlock.icon || null,
+          color_preset: newBlock.colorPreset || 'white',
+          order: newBlock.order,
+          slug: newBlock.slug,
+          parent_id: newBlock.parentId || null,
+          attachments: newBlock.attachments as any || [],
+          hide_from_sidebar: newBlock.hideFromSidebar || false,
+          show_title_on_card: newBlock.showTitleOnCard !== false,
+          show_title_in_menu: newBlock.showTitleInMenu !== false,
+          is_single_section: newBlock.isSingleSection || false,
+        }]);
+        
+        if (error) throw error;
+        setBlocks(prev => [...prev, newBlock]);
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde apporteur:', error);
     }
     
     return newId;
   }, [blocks, isAdmin]);
 
-  const updateBlock = useCallback((id: string, updates: Partial<Block>) => {
+  const updateBlock = useCallback(async (id: string, updates: Partial<Block>) => {
     if (!isAdmin) return;
     
-    setBlocks(prev => prev.map(block => 
-      block.id === id ? { ...block, ...updates } : block
-    ));
+    try {
+      // Préparer les données pour Supabase
+      const updateData: any = {};
+      if (updates.title !== undefined) updateData.title = updates.title;
+      if (updates.content !== undefined) updateData.content = updates.content;
+      if (updates.slug !== undefined) updateData.slug = updates.slug;
+      if (updates.icon !== undefined) updateData.icon = updates.icon;
+      if (updates.colorPreset !== undefined) updateData.color_preset = updates.colorPreset;
+      if (updates.order !== undefined) updateData.order = updates.order;
+      if (updates.parentId !== undefined) updateData.parent_id = updates.parentId;
+      if (updates.hideFromSidebar !== undefined) updateData.hide_from_sidebar = updates.hideFromSidebar;
+      if (updates.showTitleOnCard !== undefined) updateData.show_title_on_card = updates.showTitleOnCard;
+      if (updates.showTitleInMenu !== undefined) updateData.show_title_in_menu = updates.showTitleInMenu;
+      if (updates.isSingleSection !== undefined) updateData.is_single_section = updates.isSingleSection;
+      if (updates.attachments !== undefined) updateData.attachments = updates.attachments;
+      
+      // Sauvegarder dans Supabase
+      const { error } = await supabase
+        .from('apporteur_blocks')
+        .update(updateData)
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setBlocks(prev => prev.map(block => 
+        block.id === id ? { ...block, ...updates } : block
+      ));
+    } catch (error) {
+      console.error('Erreur mise à jour apporteur:', error);
+    }
   }, [isAdmin]);
 
-  const deleteBlock = useCallback((id: string) => {
+  const deleteBlock = useCallback(async (id: string) => {
     if (!isAdmin) return;
     
-    setBlocks(prev => {
-      const filtered = prev.filter(block => {
-        if (block.id === id) return false;
-        if (block.parentId === id) return false;
-        return true;
+    try {
+      // Récupérer tous les blocs enfants à supprimer
+      const childBlocks = blocks.filter(b => b.parentId === id);
+      const idsToDelete = [id, ...childBlocks.map(b => b.id)];
+      
+      // Supprimer de Supabase
+      const { error } = await supabase
+        .from('apporteur_blocks')
+        .delete()
+        .in('id', idsToDelete);
+      
+      if (error) throw error;
+      
+      setBlocks(prev => {
+        const filtered = prev.filter(block => {
+          if (block.id === id) return false;
+          if (block.parentId === id) return false;
+          return true;
+        });
+        return filtered;
       });
-      return filtered;
-    });
-  }, [isAdmin]);
+    } catch (error) {
+      console.error('Erreur suppression apporteur:', error);
+    }
+  }, [isAdmin, blocks]);
 
   const reorderBlocks = useCallback((newBlocks: Block[]) => {
     if (!isAdmin) return;
