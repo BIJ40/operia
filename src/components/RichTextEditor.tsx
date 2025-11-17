@@ -660,7 +660,25 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           size="sm"
           variant="ghost"
           onClick={() => editor.chain().focus().insertTable({ rows: 2, cols: 2, withHeaderRow: false }).run()}
-          title="Insérer un tableau (2 colonnes)"
+          title="Insérer un tableau (2x2)"
+        >
+          <TableIcon className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().insertTable({ rows: 2, cols: 3, withHeaderRow: false }).run()}
+          title="Insérer un tableau (3 colonnes)"
+        >
+          <TableIcon className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().insertTable({ rows: 2, cols: 4, withHeaderRow: false }).run()}
+          title="Insérer un tableau (4 colonnes)"
         >
           <TableIcon className="w-4 h-4" />
         </Button>
