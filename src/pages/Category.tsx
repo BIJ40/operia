@@ -975,20 +975,14 @@ export default function Category() {
                       return (
                         <div key={section.id} className="mb-4">
                           <div className={`rounded-lg ${getColorClass(section.colorPreset)} p-6`}>
-                            {section.contentType === 'tips' && section.tipsType ? (
-                              <div className="flex items-start gap-2">
-                                <span className="text-xl flex-shrink-0 mt-0.5">{getTipIcon(section.tipsType)}</span>
-                                <div
-                                  className="prose prose-sm max-w-none break-words overflow-visible flex-1 [&>*]:inline [&>*]:m-0"
-                                  dangerouslySetInnerHTML={{ __html: section.content }}
-                                />
-                              </div>
-                            ) : (
-                              <div
-                                className="prose prose-sm max-w-none break-words overflow-visible"
-                                dangerouslySetInnerHTML={{ __html: section.content }}
-                              />
-                            )}
+                            <div
+                              className="prose prose-sm max-w-none break-words overflow-visible"
+                              dangerouslySetInnerHTML={{ 
+                                __html: section.contentType === 'tips' && section.tipsType
+                                  ? `<span style="font-size: 1.25rem; margin-right: 0.5rem;">${getTipIcon(section.tipsType)}</span>${section.content}`
+                                  : section.content 
+                              }}
+                            />
                           </div>
                         </div>
                       );
