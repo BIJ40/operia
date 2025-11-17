@@ -31,27 +31,40 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { isAdmin } = useAuth();
 
-  // Load data from Supabase on mount
+  // Load data from Supabase on mount with optimized query
   useEffect(() => {
     const initData = async () => {
       console.log('🔄 Chargement depuis Supabase...');
       
       try {
+        // First load metadata without content to avoid timeout
         const { data, error } = await supabase
           .from('blocks')
-          .select('*')
+          .select('id,type,title,slug,parent_id,order,icon,color_preset,hide_from_sidebar,hide_title,is_single_section,attachments,content_type,tips_type,summary,show_summary')
           .order('order');
 
         if (error) throw error;
 
         if (data) {
+          // Then load content separately in batches
+          const ids = data.map((b: any) => b.id);
+          const { data: contentData, error: contentError } = await supabase
+            .from('blocks')
+            .select('id,content')
+            .in('id', ids);
+
+          if (contentError) throw contentError;
+
+          // Merge content back
+          const contentMap = new Map(contentData?.map((c: any) => [c.id, c.content]) || []);
+
           // Transform data to match Block interface
           const transformedBlocks: Block[] = data.map((block: any) => ({
             id: block.id,
             type: block.type,
             title: block.title,
             slug: block.slug,
-            content: block.content || '',
+            content: contentMap.get(block.id) || '',
             parentId: block.parent_id,
             order: block.order,
             icon: block.icon,
