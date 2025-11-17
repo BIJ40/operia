@@ -29,8 +29,7 @@ interface TipsEditFormProps {
   initialContent: string;
   initialTipsType: TipsType;
   initialHideFromSidebar: boolean;
-  initialHideTitle?: boolean;
-  onSave: (title: string, content: string, tipsType: TipsType, hideFromSidebar: boolean, hideTitle: boolean) => Promise<void>;
+  onSave: (title: string, content: string, tipsType: TipsType, hideFromSidebar: boolean) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -40,7 +39,6 @@ export const TipsEditForm = ({
   initialContent,
   initialTipsType,
   initialHideFromSidebar,
-  initialHideTitle = false,
   onSave,
   onCancel,
 }: TipsEditFormProps) => {
@@ -48,7 +46,6 @@ export const TipsEditForm = ({
   const [content, setContent] = useState(initialContent);
   const [tipsType, setTipsType] = useState<TipsType>(initialTipsType);
   const [hideFromSidebar, setHideFromSidebar] = useState(initialHideFromSidebar);
-  const [hideTitle, setHideTitle] = useState(initialHideTitle);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [titleManuallyEdited, setTitleManuallyEdited] = useState(false);
@@ -96,7 +93,7 @@ export const TipsEditForm = ({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onSave(title, content, tipsType, hideFromSidebar, hideTitle);
+      await onSave(title, content, tipsType, hideFromSidebar);
       clearStorage();
     } finally {
       setIsSaving(false);
@@ -169,17 +166,6 @@ export const TipsEditForm = ({
         />
         <label htmlFor="hideFromSidebar" className="text-sm cursor-pointer">
           Masquer du sommaire
-        </label>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="hideTitle"
-          checked={hideTitle}
-          onCheckedChange={(checked) => setHideTitle(checked as boolean)}
-        />
-        <label htmlFor="hideTitle" className="text-sm cursor-pointer">
-          Masquer le titre (afficher directement le contenu)
         </label>
       </div>
 

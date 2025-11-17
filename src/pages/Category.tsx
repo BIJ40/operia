@@ -273,8 +273,7 @@ export default function Category() {
     title: string,
     content: string,
     tipsType: TipsType,
-    hideFromSidebar: boolean,
-    hideTitle: boolean
+    hideFromSidebar: boolean
   ) => {
     if (editingId) {
       // Sauvegarder la position de scroll IMMÉDIATEMENT
@@ -299,7 +298,7 @@ export default function Category() {
         content,
         colorPreset: colorMap[tipsType],
         hideFromSidebar,
-        hideTitle,
+        hideTitle: true, // TOUJOURS masquer le titre pour les TIPS
         tipsType,
         contentType: 'tips',
       });
@@ -546,8 +545,8 @@ export default function Category() {
       zIndex: isDragging ? 50 : 'auto',
     };
 
-    // Si c'est une section figée OU un TIPS avec titre masqué, l'afficher sans accordéon
-    if (section.isSingleSection || (section.contentType === 'tips' && section.hideTitle)) {
+    // Si c'est une section figée OU un TIPS, l'afficher sans accordéon
+    if (section.isSingleSection || section.contentType === 'tips') {
       return (
         <div ref={setNodeRef} style={style} className="mb-4">
           <div className={`rounded-lg relative ${getColorClass(section.colorPreset)} p-6`}>
@@ -635,15 +634,13 @@ export default function Category() {
                 </Button>
               </div>
             )}
-            {!section.hideTitle && section.title && section.title.trim() !== '' ? (
+            {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
               <h3 className="text-lg font-semibold mb-4">{section.title}</h3>
-            ) : !section.hideTitle && section.hideFromSidebar ? (
-              <h3 className="text-lg font-semibold mb-4">💡 Info / Astuce</h3>
             ) : null}
             <div
               className="prose prose-sm max-w-none break-words overflow-visible"
               dangerouslySetInnerHTML={{ 
-                __html: section.hideTitle && section.contentType === 'tips' && section.tipsType
+                __html: section.contentType === 'tips' && section.tipsType
                   ? `<span style="font-size: 1.25rem; margin-right: 0.5rem;">${getTipIcon(section.tipsType)}</span>${section.content}`
                   : section.content 
               }}
@@ -681,22 +678,12 @@ export default function Category() {
                         <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">{section.summary}</p>
                       </HoverCardContent>
                     </HoverCard>
-                  ) : section.contentType !== 'tips' ? (
+                  ) : (
                     <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
-                  ) : null}
-                  {!section.hideTitle ? (
-                    <h2 className="text-xl font-semibold text-left">
-                      {section.title}
-                    </h2>
-                  ) : section.contentType === 'tips' && section.tipsType ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{getTipIcon(section.tipsType)}</span>
-                      <div 
-                        className="prose prose-sm max-w-none text-left line-clamp-1"
-                        dangerouslySetInnerHTML={{ __html: section.content }}
-                      />
-                    </div>
-                  ) : null}
+                  )}
+                  <h2 className="text-xl font-semibold text-left">
+                    {section.title}
+                  </h2>
                 </div>
                 {isEditMode && isAuthenticated && (
                   <div 
@@ -973,15 +960,39 @@ export default function Category() {
               onValueChange={setOpenAccordions}
             >
               {sections
-                .filter(section => {
+                 .filter(section => {
                   const isTip = section.contentType === 'tips';
                   if (isTip) return showTips;
                   return showSections;
                 })
-                .map((section) =>
-                isEditMode ? (
-                  <SortableAccordionItem key={section.id} section={section} />
-                ) : (
+                .map((section) => {
+                  // Les TIPS sont toujours affichés sans accordéon
+                  if (section.contentType === 'tips' || section.isSingleSection) {
+                    if (isEditMode) {
+                      return <SortableAccordionItem key={section.id} section={section} />;
+                    } else {
+                      // Mode non-édition : rendu direct sans accordéon
+                      return (
+                        <div key={section.id} className="mb-4">
+                          <div className={`rounded-lg ${getColorClass(section.colorPreset)} p-6`}>
+                            <div
+                              className="prose prose-sm max-w-none break-words overflow-visible"
+                              dangerouslySetInnerHTML={{ 
+                                __html: section.contentType === 'tips' && section.tipsType
+                                  ? `<span style="font-size: 1.25rem; margin-right: 0.5rem;">${getTipIcon(section.tipsType)}</span>${section.content}`
+                                  : section.content 
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+                  }
+                  
+                  // Sections normales avec accordéon
+                  return isEditMode ? (
+                    <SortableAccordionItem key={section.id} section={section} />
+                  ) : (
                   <AccordionItem key={section.id} value={section.id} id={section.id} className="mb-4">
                     <div className={`rounded-lg ${getColorClass(section.colorPreset)}`}>
                       <AccordionTrigger className="px-6 py-4 hover:no-underline">
@@ -997,9 +1008,9 @@ export default function Category() {
                                 <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">{section.summary}</p>
                               </HoverCardContent>
                             </HoverCard>
-                          ) : section.contentType !== 'tips' ? (
+                          ) : (
                             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
-                          ) : null}
+                          )}
                           <h2 className="text-xl font-semibold text-left">
                             {section.title}
                           </h2>
@@ -1013,7 +1024,7 @@ export default function Category() {
                       </AccordionContent>
                     </div>
                   </AccordionItem>
-                )
+                )}
               )}
             </Accordion>
           </SortableContext>
@@ -1065,7 +1076,6 @@ export default function Category() {
               initialContent={sections.find(s => s.id === editingId)?.content || ''}
               initialTipsType={sections.find(s => s.id === editingId)?.tipsType || 'information'}
               initialHideFromSidebar={sections.find(s => s.id === editingId)?.hideFromSidebar ?? true}
-              initialHideTitle={sections.find(s => s.id === editingId)?.hideTitle ?? false}
               onSave={handleSaveTips}
               onCancel={() => {
                 setEditDialogOpen(false);
