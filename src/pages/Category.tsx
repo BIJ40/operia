@@ -979,7 +979,7 @@ export default function Category() {
                               <div className="flex items-start gap-2">
                                 <span className="text-xl flex-shrink-0 mt-0.5">{getTipIcon(section.tipsType)}</span>
                                 <div
-                                  className="prose prose-sm max-w-none break-words overflow-visible flex-1"
+                                  className="prose prose-sm max-w-none break-words overflow-visible flex-1 [&>*]:inline [&>*]:m-0"
                                   dangerouslySetInnerHTML={{ __html: section.content }}
                                 />
                               </div>
