@@ -40,7 +40,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         // First load metadata without content to avoid timeout
         const { data, error } = await supabase
           .from('blocks')
-          .select('id,type,title,slug,parent_id,order,icon,color_preset,hide_from_sidebar,hide_title,is_single_section,attachments,content_type,tips_type,summary,show_summary')
+          .select('id,type,title,slug,parent_id,order,icon,color_preset,hide_from_sidebar,hide_title,attachments,content_type,tips_type,summary,show_summary')
           .order('order');
 
         if (error) throw error;
@@ -71,7 +71,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             colorPreset: block.color_preset,
             hideFromSidebar: block.hide_from_sidebar || false,
             hideTitle: block.hide_title || false,
-            isSingleSection: block.is_single_section || false,
             attachments: block.attachments || [],
             contentType: block.content_type || 'section',
             tipsType: block.tips_type,
