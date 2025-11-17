@@ -46,17 +46,24 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
 
         if (data) {
-          // Then load content separately in batches
+          // Then load content separately in smaller batches to avoid timeout
           const ids = data.map((b: any) => b.id);
-          const { data: contentData, error: contentError } = await supabase
-            .from('blocks')
-            .select('id,content')
-            .in('id', ids);
+          const batchSize = 50;
+          const contentMap = new Map();
+          
+          // Load content in batches
+          for (let i = 0; i < ids.length; i += batchSize) {
+            const batchIds = ids.slice(i, i + batchSize);
+            const { data: contentData, error: contentError } = await supabase
+              .from('blocks')
+              .select('id,content')
+              .in('id', batchIds);
 
-          if (contentError) throw contentError;
-
-          // Merge content back
-          const contentMap = new Map(contentData?.map((c: any) => [c.id, c.content]) || []);
+            if (contentError) throw contentError;
+            
+            // Add to content map
+            contentData?.forEach((c: any) => contentMap.set(c.id, c.content));
+          }
 
           // Transform data to match Block interface
           const transformedBlocks: Block[] = data.map((block: any) => ({
