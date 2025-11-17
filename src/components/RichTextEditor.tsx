@@ -10,7 +10,7 @@ import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { FontSize } from '@/extensions/FontSize';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip, ChevronDown, Table as TableIcon, Plus, Minus } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, AlertCircle, Lightbulb, AlertTriangle, Info, ImageIcon, AtSign, Hash, Highlighter, FileText, Type, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, Paperclip, ChevronDown, Table as TableIcon, Plus, Minus, Merge, Split } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -701,6 +701,26 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           title="Supprimer la ligne"
         >
           <Minus className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().mergeCells().run()}
+          disabled={!editor.can().mergeCells()}
+          title="Fusionner les cellules"
+        >
+          <Merge className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => editor.chain().focus().splitCell().run()}
+          disabled={!editor.can().splitCell()}
+          title="Séparer la cellule"
+        >
+          <Split className="w-4 h-4" />
         </Button>
 
         <div className="w-px h-6 bg-border mx-1" />
