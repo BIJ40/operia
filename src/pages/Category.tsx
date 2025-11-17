@@ -641,7 +641,7 @@ export default function Category() {
               className="prose prose-sm max-w-none break-words overflow-visible"
               dangerouslySetInnerHTML={{ 
                 __html: section.contentType === 'tips' && section.tipsType
-                  ? `<span style="font-size: 1.25rem; margin-right: 0.5rem;">${getTipIcon(section.tipsType)}</span>${section.content}`
+                  ? `<div style="display: inline;"><span style="font-size: 1.25rem; margin-right: 0.5rem;">${getTipIcon(section.tipsType)}</span><div style="display: inline;">${section.content.replace(/<p>/g, '<span>').replace(/<\/p>/g, '</span>')}</div></div>`
                   : section.content 
               }}
             />
@@ -979,7 +979,7 @@ export default function Category() {
                               className="prose prose-sm max-w-none break-words overflow-visible"
                               dangerouslySetInnerHTML={{ 
                                 __html: section.contentType === 'tips' && section.tipsType
-                                  ? `<span style="font-size: 1.25rem; margin-right: 0.5rem;">${getTipIcon(section.tipsType)}</span>${section.content}`
+                                  ? `<div style="display: inline;"><span style="font-size: 1.25rem; margin-right: 0.5rem;">${getTipIcon(section.tipsType)}</span><div style="display: inline;">${section.content.replace(/<p>/g, '<span>').replace(/<\/p>/g, '</span>')}</div></div>`
                                   : section.content 
                               }}
                             />
