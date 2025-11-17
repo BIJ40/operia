@@ -974,13 +974,14 @@ export default function Category() {
                       // Mode non-édition : rendu direct sans accordéon
                       return (
                         <div key={section.id} className="mb-4">
-                          <div className={`rounded-lg ${getColorClass(section.colorPreset)} p-6 flex items-start gap-2`}>
-                            {section.contentType === 'tips' && section.tipsType && (
-                              <span className="text-xl flex-shrink-0">{getTipIcon(section.tipsType)}</span>
-                            )}
+                          <div className={`rounded-lg ${getColorClass(section.colorPreset)} p-6`}>
                             <div
-                              className="prose prose-sm max-w-none break-words overflow-visible flex-1 [&_p]:inline [&_p]:m-0 [&_img]:inline [&_img]:align-middle"
-                              dangerouslySetInnerHTML={{ __html: section.content }}
+                              className="prose prose-sm max-w-none break-words overflow-visible"
+                              dangerouslySetInnerHTML={{ 
+                                __html: section.contentType === 'tips' && section.tipsType
+                                  ? `<span style="font-size: 1.25rem; margin-right: 0.5rem;">${getTipIcon(section.tipsType)}</span>${section.content}`
+                                  : section.content 
+                              }}
                             />
                           </div>
                         </div>
