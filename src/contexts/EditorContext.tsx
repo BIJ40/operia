@@ -57,6 +57,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             icon: block.icon,
             colorPreset: block.color_preset,
             hideFromSidebar: block.hide_from_sidebar || false,
+            hideTitle: block.hide_title || false,
+            isSingleSection: block.is_single_section || false,
             attachments: block.attachments || [],
             contentType: block.content_type || 'section',
             tipsType: block.tips_type,

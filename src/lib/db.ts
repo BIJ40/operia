@@ -65,6 +65,9 @@ export async function saveAppData(data: AppData): Promise<void> {
             parent_id: block.parentId || null,
             attachments: (block.attachments || []) as any,
             hide_from_sidebar: block.hideFromSidebar || false,
+            hide_title: block.hideTitle || false,
+            content_type: block.contentType || 'section',
+            tips_type: block.tipsType || null,
           })) as any
         );
       if (insertError) throw insertError;
@@ -88,6 +91,9 @@ export async function saveAppData(data: AppData): Promise<void> {
             parent_id: block.parentId || null,
             attachments: (block.attachments || []) as any,
             hide_from_sidebar: block.hideFromSidebar || false,
+            hide_title: block.hideTitle || false,
+            content_type: block.contentType || 'section',
+            tips_type: block.tipsType || null,
           })) as any
         );
       if (updateError) throw updateError;
@@ -140,6 +146,9 @@ export async function loadAppData(): Promise<AppData | null> {
         parentId: block.parent_id || undefined,
         attachments: Array.isArray(block.attachments) ? block.attachments : [],
         hideFromSidebar: block.hide_from_sidebar || false,
+        hideTitle: block.hide_title || false,
+        contentType: block.content_type || 'section',
+        tipsType: block.tips_type || undefined,
       })),
       version: '1.0',
       lastModified: Date.now(),
