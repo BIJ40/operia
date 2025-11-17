@@ -1028,7 +1028,7 @@ export default function Category() {
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen} modal={true}>
         <DialogContent 
-          className="max-w-4xl max-h-[90vh] overflow-y-auto"
+          className="max-w-6xl max-h-[90vh] overflow-y-auto"
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
           onCloseAutoFocus={(e) => {
