@@ -111,6 +111,19 @@ export default function Category() {
   const [showTips, setShowTips] = useState(true);
   const [showSections, setShowSections] = useState(true);
 
+  // Déplier les TIPS par défaut au chargement
+  useEffect(() => {
+    const tipsIds = sections
+      .filter(s => s.contentType === 'tips' && !s.isSingleSection && !s.hideTitle)
+      .map(s => s.id);
+    
+    setOpenAccordions(prev => {
+      // Fusionner les TIPS avec les accordéons déjà ouverts
+      const newIds = tipsIds.filter(id => !prev.includes(id));
+      return [...prev, ...newIds];
+    });
+  }, [sections]);
+
   // Réinitialiser les filtres quand on change de catégorie
   useEffect(() => {
     setShowTips(true);
