@@ -78,10 +78,17 @@ export default function FAQ() {
   );
 
   const scrollToCategory = (categoryId: string) => {
-    categoryRefs.current[categoryId]?.scrollIntoView({ 
-      behavior: 'smooth', 
-      block: 'start' 
-    });
+    const element = categoryRefs.current[categoryId];
+    if (element) {
+      const offset = 100; // Offset pour tenir compte du header
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
   };
 
   // Fonction pour surligner le texte recherché
