@@ -71,6 +71,12 @@ export default function FAQ() {
     })
   })).filter(({ items }) => items.length > 0);
 
+  // Compter le nombre total de résultats
+  const totalResults = filteredQuestionsByCategory.reduce(
+    (sum, { items }) => sum + items.length, 
+    0
+  );
+
   const scrollToCategory = (categoryId: string) => {
     categoryRefs.current[categoryId]?.scrollIntoView({ 
       behavior: 'smooth', 
@@ -180,15 +186,22 @@ export default function FAQ() {
           </div>
 
           {/* Barre de recherche */}
-          <div className="relative max-w-xl mx-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Rechercher dans la FAQ..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 text-base"
-            />
+          <div className="max-w-xl mx-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Rechercher dans la FAQ..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 text-base"
+              />
+            </div>
+            {searchQuery && (
+              <p className="text-sm text-muted-foreground mt-2 text-center">
+                {totalResults} {totalResults === 1 ? 'résultat trouvé' : 'résultats trouvés'}
+              </p>
+            )}
           </div>
         </div>
 
