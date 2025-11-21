@@ -1,5 +1,5 @@
 // Force update - color fix for blanc/white
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, Navigate } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -69,6 +69,12 @@ import {
 export default function Category() {
   const { slug } = useParams();
   const location = useLocation();
+
+  // Désactiver complètement l'ancienne page FAQ globale
+  if (slug === 'faq-globale') {
+    return <Navigate to="/apogee" replace />;
+  }
+
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
