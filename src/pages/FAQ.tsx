@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -54,6 +54,29 @@ export default function FAQ() {
   const [editQuestion, setEditQuestion] = useState('');
   const [editAnswer, setEditAnswer] = useState('');
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Filtrer les questions selon la recherche
+  const filteredQuestionsByCategory = questionsByCategory.map(({ category, items }) => ({
+    category,
+    items: items.filter(item => {
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        item.title.toLowerCase().includes(query) ||
+        item.content.toLowerCase().includes(query)
+      );
+    })
+  })).filter(({ items }) => items.length > 0);
+
+  const scrollToCategory = (categoryId: string) => {
+    categoryRefs.current[categoryId]?.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'start' 
+    });
+  };
 
   // Créer la catégorie FAQ si elle n'existe pas
   const ensureFaqCategory = async () => {
@@ -136,25 +159,55 @@ export default function FAQ() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-4xl mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-6 text-center bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Foire Aux Questions
           </h1>
-          <p className="text-lg text-muted-foreground">
-            Trouvez rapidement des réponses à vos questions
-          </p>
+          
+          {/* Boutons de navigation par thème */}
+          <div className="flex flex-wrap gap-2 justify-center mb-6">
+            {faqSubcategories.map((subcat) => (
+              <Button
+                key={subcat.id}
+                variant="outline"
+                size="sm"
+                onClick={() => scrollToCategory(subcat.id)}
+                className="rounded-full"
+              >
+                {subcat.title}
+              </Button>
+            ))}
+          </div>
+
+          {/* Barre de recherche */}
+          <div className="relative max-w-xl mx-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Rechercher dans la FAQ..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-12 text-base"
+            />
+          </div>
         </div>
 
-        {questionsByCategory.length === 0 && !isEditMode ? (
+        {filteredQuestionsByCategory.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Aucune question pour le moment</p>
+            <p className="text-muted-foreground">
+              {searchQuery ? 'Aucun résultat trouvé pour votre recherche' : 'Aucune question pour le moment'}
+            </p>
           </div>
         ) : (
           <div className="space-y-8">
-            {questionsByCategory.map(({ category, items }) => (
-              <div key={category.id} className="space-y-4">
+            {filteredQuestionsByCategory.map(({ category, items }) => (
+              <div 
+                key={category.id} 
+                className="space-y-4"
+                ref={(el) => (categoryRefs.current[category.id] = el)}
+              >
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-foreground">
+                  <h2 className="text-2xl font-bold text-foreground scroll-mt-24">
                     {category.title}
                   </h2>
                   {isEditMode && isAdmin && (
