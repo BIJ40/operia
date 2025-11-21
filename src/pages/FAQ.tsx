@@ -84,6 +84,26 @@ export default function FAQ() {
     });
   };
 
+  // Fonction pour surligner le texte recherché
+  const highlightText = (text: string, query: string) => {
+    if (!query.trim()) return text;
+    
+    const parts = text.split(new RegExp(`(${query})`, 'gi'));
+    return (
+      <>
+        {parts.map((part, index) => 
+          part.toLowerCase() === query.toLowerCase() ? (
+            <mark key={index} className="bg-yellow-300 dark:bg-yellow-600 text-foreground px-0.5 rounded">
+              {part}
+            </mark>
+          ) : (
+            part
+          )
+        )}
+      </>
+    );
+  };
+
   // Créer la catégorie FAQ si elle n'existe pas
   const ensureFaqCategory = async () => {
     if (!faqCategory) {
@@ -250,7 +270,7 @@ export default function FAQ() {
                       >
                         <div className="flex items-center gap-2">
                           <AccordionTrigger className="flex-1 text-left font-semibold">
-                            {item.title}
+                            {highlightText(item.title, searchQuery)}
                           </AccordionTrigger>
                           {isEditMode && isAdmin && (
                             <div className="flex gap-2">
@@ -272,7 +292,7 @@ export default function FAQ() {
                           )}
                         </div>
                         <AccordionContent className="text-muted-foreground pt-4 pb-2">
-                          {item.content}
+                          {highlightText(item.content, searchQuery)}
                         </AccordionContent>
                       </AccordionItem>
                     ))}
