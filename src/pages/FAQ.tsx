@@ -59,17 +59,19 @@ export default function FAQ() {
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Filtrer les questions selon la recherche
-  const filteredQuestionsByCategory = questionsByCategory.map(({ category, items }) => ({
-    category,
-    items: items.filter(item => {
-      if (!searchQuery.trim()) return true;
-      const query = searchQuery.toLowerCase();
-      return (
-        item.title.toLowerCase().includes(query) ||
-        item.content.toLowerCase().includes(query)
-      );
-    })
-  })).filter(({ items }) => items.length > 0);
+  const filteredQuestionsByCategory = questionsByCategory.map(({ category, items }) => {
+    return {
+      category,
+      items: items.filter(item => {
+        if (!searchQuery.trim()) return true;
+        const query = searchQuery.toLowerCase();
+        return (
+          item.title.toLowerCase().includes(query) ||
+          item.content.toLowerCase().includes(query)
+        );
+      }),
+    };
+  });
 
   // Compter le nombre total de résultats
   const totalResults = filteredQuestionsByCategory.reduce(
