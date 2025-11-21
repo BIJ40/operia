@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { saveAppData } from '@/lib/db';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info, ChevronsDownUp, ChevronsUpDown, Lightbulb, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info, ChevronsDownUp, ChevronsUpDown, Lightbulb } from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import {
   Accordion,
@@ -110,7 +110,6 @@ export default function Category() {
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const [showTips, setShowTips] = useState(true);
   const [showSections, setShowSections] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Déplier les TIPS par défaut au chargement
   useEffect(() => {
@@ -841,75 +840,6 @@ export default function Category() {
     );
   };
 
-  // Fonction pour surligner le texte recherché
-  const highlightText = (text: string, query: string) => {
-    if (!query.trim()) return text;
-    
-    const regex = new RegExp(`(${query})`, 'gi');
-    return text.replace(regex, '<mark class="bg-yellow-300 dark:bg-yellow-600 px-0.5 rounded">$1</mark>');
-  };
-
-  // Regrouper les questions FAQ par catégorie
-  const faqGroups = useMemo(() => {
-    if (slug !== 'faq-globale') return null;
-    
-    const groups: { [key: string]: typeof sections } = {};
-    const standalone: typeof sections = [];
-    
-    sections.forEach(section => {
-      // Filtrer par recherche si une query existe
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const titleMatch = section.title.toLowerCase().includes(query);
-        const contentMatch = section.content.toLowerCase().includes(query);
-        if (!titleMatch && !contentMatch) return;
-      }
-      
-      // Détecter les sections avec numérotation (13.1, 13.2, etc.)
-      const match = section.title.match(/^(\d+\.\d+)\s+(.+)$/);
-      if (match) {
-        const [, number, categoryName] = match;
-        if (!groups[categoryName]) {
-          groups[categoryName] = [];
-        }
-        groups[categoryName].push(section);
-      } else if (
-        section.title.includes('Clients') || section.title.includes('Client') ||
-        section.title.includes('Dossier') || section.title.includes('Planning') ||
-        section.title.includes('Intervention') || section.title.includes('Technicien') ||
-        section.title.includes('Relevé') || section.title.includes('RT')
-      ) {
-        // Regrouper par mots-clés
-        let categoryKey = 'Autres questions';
-        if (section.title.toLowerCase().includes('client')) categoryKey = 'Clients & Apporteurs';
-        else if (section.title.toLowerCase().includes('dossier')) categoryKey = 'Dossiers';
-        else if (section.title.toLowerCase().includes('planning')) categoryKey = 'Planning';
-        else if (section.title.toLowerCase().includes('intervention') || section.title.toLowerCase().includes('technicien')) categoryKey = 'Interventions / Techniciens';
-        else if (section.title.toLowerCase().includes('relevé') || section.title.toLowerCase().includes('rt')) categoryKey = 'Relevés Techniques';
-        
-        if (!groups[categoryKey]) {
-          groups[categoryKey] = [];
-        }
-        groups[categoryKey].push(section);
-      } else {
-        standalone.push(section);
-      }
-    });
-    
-    if (standalone.length > 0) {
-      groups['Autres questions'] = standalone;
-    }
-    
-    return groups;
-  }, [sections, slug, searchQuery]);
-  
-  // Compter le nombre total de résultats
-  const totalFaqResults = useMemo(() => {
-    if (!faqGroups) return 0;
-    return Object.values(faqGroups).reduce((sum, sections) => sum + sections.length, 0);
-  }, [faqGroups]);
-
-  const isFaqPage = slug === 'faq-globale';
 
   return (
     <>
@@ -938,70 +868,6 @@ export default function Category() {
           )}
         </div>
         
-        {isFaqPage && faqGroups ? (
-          // Affichage spécial pour la FAQ
-          <>
-            <div className="mb-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Rechercher dans la FAQ..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-12 text-base"
-                />
-              </div>
-              {searchQuery && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  {totalFaqResults} {totalFaqResults === 1 ? 'résultat trouvé' : 'résultats trouvés'}
-                </p>
-              )}
-            </div>
-            
-            {totalFaqResults === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  Aucun résultat trouvé pour votre recherche
-                </p>
-              </div>
-            ) : (
-          <Accordion type="multiple" className="w-full space-y-4">
-            {Object.entries(faqGroups)
-              .sort(([a], [b]) => {
-                // Trier par ordre d'apparition des titres
-                const order = ['Questions générales', 'Problèmes fréquents', 'Bonnes pratiques recommandées', 'Support et assistance', 'Clients & Apporteurs', 'Dossiers', 'Planning', 'Interventions / Techniciens', 'Relevés Techniques', 'Autres questions'];
-                return order.indexOf(a) - order.indexOf(b);
-              })
-              .map(([categoryName, categorySections]) => (
-              <AccordionItem 
-                key={categoryName} 
-                value={categoryName}
-                className="bg-card border-2 border-border rounded-lg px-6 shadow-sm"
-              >
-                <AccordionTrigger className="text-left font-bold text-lg hover:no-underline py-4">
-                  {categoryName}
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6 space-y-4">
-                  {categorySections.map((section) => (
-                    <div key={section.id} className="space-y-2">
-                      <div 
-                        className="prose prose-sm max-w-none [&_strong]:font-bold [&_strong]:text-foreground [&_p]:mb-2"
-                        dangerouslySetInnerHTML={{ 
-                          __html: searchQuery ? highlightText(section.content, searchQuery) : section.content 
-                        }}
-                      />
-                    </div>
-                  ))}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-            )}
-          </>
-        ) : (
-          // Affichage normal pour les autres catégories
-          <>
         <div className="mb-8 flex gap-3">
           {sections.some(s => s.contentType === 'tips') && (
             <Button
@@ -1164,8 +1030,6 @@ export default function Category() {
             </Accordion>
           </SortableContext>
         </DndContext>
-          </>
-        )}
 
         <DocumentsList blockId={category.id} scope="apogee" />
       </div>
