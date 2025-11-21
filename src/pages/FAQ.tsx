@@ -32,11 +32,21 @@ export default function FAQ() {
   const { blocks, isEditMode, addBlock, updateBlock, deleteBlock } = useEditor();
   const { isAdmin } = useAuth();
   
-  // Récupérer la catégorie FAQ et ses sections
+  // Récupérer la catégorie FAQ principale
   const faqCategory = blocks.find(b => b.type === 'category' && b.slug === 'faq');
-  const faqItems = blocks
-    .filter(b => b.type === 'section' && b.parentId === faqCategory?.id)
+  
+  // Récupérer les sous-catégories (thèmes)
+  const faqSubcategories = blocks
+    .filter(b => b.type === 'category' && b.parentId === faqCategory?.id)
     .sort((a, b) => a.order - b.order);
+  
+  // Grouper les questions par sous-catégorie
+  const questionsByCategory = faqSubcategories.map(subcat => ({
+    category: subcat,
+    items: blocks
+      .filter(b => b.type === 'section' && b.parentId === subcat.id)
+      .sort((a, b) => a.order - b.order)
+  }));
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -62,20 +72,22 @@ export default function FAQ() {
     }
   };
 
-  const handleAdd = async () => {
+  const handleAdd = async (subcategoryId: string) => {
     await ensureFaqCategory();
-    const category = blocks.find(b => b.type === 'category' && b.slug === 'faq');
     
-    if (category) {
+    const subcategory = blocks.find(b => b.id === subcategoryId);
+    if (subcategory) {
+      const itemsCount = blocks.filter(b => b.type === 'section' && b.parentId === subcategoryId).length;
+      
       const newBlockId = await addBlock({
         type: 'section',
         title: 'Nouvelle question',
         content: 'Nouvelle réponse',
         colorPreset: 'white',
-        parentId: category.id,
+        parentId: subcategoryId,
         slug: `faq-${Date.now()}`,
         attachments: [],
-        order: faqItems.length,
+        order: itemsCount,
         contentType: 'section',
       });
 
@@ -88,7 +100,7 @@ export default function FAQ() {
     }
   };
 
-  const handleEdit = (item: typeof faqItems[0]) => {
+  const handleEdit = (item: any) => {
     setEditingId(item.id);
     setEditQuestion(item.title);
     setEditAnswer(item.content);
@@ -133,55 +145,75 @@ export default function FAQ() {
           </p>
         </div>
 
-        {faqItems.length === 0 && !isEditMode ? (
+        {questionsByCategory.length === 0 && !isEditMode ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Aucune question pour le moment</p>
           </div>
         ) : (
-          <Accordion type="single" collapsible className="w-full space-y-4">
-            {faqItems.map((item) => (
-              <AccordionItem 
-                key={item.id} 
-                value={item.id}
-                className="bg-card border-2 border-border rounded-lg px-6 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center gap-2">
-                  <AccordionTrigger className="flex-1 text-left font-semibold">
-                    {item.title}
-                  </AccordionTrigger>
+          <div className="space-y-8">
+            {questionsByCategory.map(({ category, items }) => (
+              <div key={category.id} className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-foreground">
+                    {category.title}
+                  </h2>
                   {isEditMode && isAdmin && (
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleEdit(item)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteClick(item.id)}
-                        variant="destructive"
-                        size="sm"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    <Button 
+                      onClick={() => handleAdd(category.id)} 
+                      size="sm" 
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Ajouter une question
+                    </Button>
                   )}
                 </div>
-                <AccordionContent className="text-muted-foreground pt-4 pb-2">
-                  {item.content}
-                </AccordionContent>
-              </AccordionItem>
+                
+                {items.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic">
+                    Aucune question dans cette catégorie
+                  </p>
+                ) : (
+                  <Accordion type="single" collapsible className="w-full space-y-3">
+                    {items.map((item) => (
+                      <AccordionItem 
+                        key={item.id} 
+                        value={item.id}
+                        className="bg-card border-2 border-border rounded-lg px-6 shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-center gap-2">
+                          <AccordionTrigger className="flex-1 text-left font-semibold">
+                            {item.title}
+                          </AccordionTrigger>
+                          {isEditMode && isAdmin && (
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleEdit(item)}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                onClick={() => handleDeleteClick(item.id)}
+                                variant="destructive"
+                                size="sm"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                        <AccordionContent className="text-muted-foreground pt-4 pb-2">
+                          {item.content}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </div>
             ))}
-          </Accordion>
-        )}
-
-        {isEditMode && isAdmin && (
-          <div className="flex justify-center mt-8">
-            <Button onClick={handleAdd} size="lg" className="gap-2">
-              <Plus className="w-5 h-5" />
-              Ajouter une question
-            </Button>
           </div>
         )}
 
