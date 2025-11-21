@@ -30,6 +30,15 @@ export default function AdminBackup() {
     );
   }
 
+  // Fonction pour extraire le texte pur sans HTML
+  const extractPlainText = (html: string): string => {
+    if (!html) return '';
+    
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    return temp.textContent || temp.innerText || '';
+  };
+
   // Fonction pour nettoyer le HTML et le rendre lisible
   const cleanHtmlForExport = (html: string): string => {
     if (!html) return '';
@@ -94,6 +103,7 @@ export default function AdminBackup() {
               id: s.id,
               title: s.title,
               slug: s.slug,
+              contentText: extractPlainText(s.content), // Texte pur sans HTML
               contentHtml: cleanHtmlForExport(s.content),
               contentRaw: s.content, // Garder aussi le HTML brut pour réimport
               summary: s.summary,
@@ -172,6 +182,7 @@ export default function AdminBackup() {
               id: s.id,
               title: s.title,
               slug: s.slug,
+              contentText: extractPlainText(s.content), // Texte pur sans HTML
               contentHtml: cleanHtmlForExport(s.content),
               contentRaw: s.content, // Garder aussi le HTML brut pour réimport
               summary: s.summary,
