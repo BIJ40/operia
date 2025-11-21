@@ -55,23 +55,30 @@ export default function FAQ() {
   const [editAnswer, setEditAnswer] = useState('');
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
-  // Filtrer les questions selon la recherche
-  const filteredQuestionsByCategory = questionsByCategory.map(({ category, items }) => {
-    return {
-      category,
-      items: items.filter(item => {
-        if (!searchQuery.trim()) return true;
-        const query = searchQuery.toLowerCase();
-        return (
-          item.title.toLowerCase().includes(query) ||
-          item.content.toLowerCase().includes(query)
-        );
-      }),
-    };
-  });
+  // Filtrer les questions selon la recherche ET la catégorie sélectionnée
+  const filteredQuestionsByCategory = questionsByCategory
+    .filter(({ category }) => {
+      // Si une catégorie est sélectionnée, ne montrer que celle-ci
+      if (selectedCategoryId) {
+        return category.id === selectedCategoryId;
+      }
+      return true;
+    })
+    .map(({ category, items }) => {
+      return {
+        category,
+        items: items.filter(item => {
+          if (!searchQuery.trim()) return true;
+          const query = searchQuery.toLowerCase();
+          return (
+            item.title.toLowerCase().includes(query) ||
+            item.content.toLowerCase().includes(query)
+          );
+        }),
+      };
+    });
 
   // Compter le nombre total de résultats
   const totalResults = filteredQuestionsByCategory.reduce(
@@ -79,19 +86,15 @@ export default function FAQ() {
     0
   );
 
-  const scrollToCategory = (categoryId: string) => {
-    const element = categoryRefs.current[categoryId];
-    
-    if (element) {
-      const offset = 150;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - offset;
-      
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
+  const handleCategoryClick = (categoryId: string) => {
+    // Si on clique sur la catégorie déjà sélectionnée, on désélectionne (affiche tout)
+    if (selectedCategoryId === categoryId) {
+      setSelectedCategoryId(null);
+    } else {
+      setSelectedCategoryId(categoryId);
     }
+    // Réinitialiser la recherche quand on change de catégorie
+    setSearchQuery('');
   };
 
   // Fonction pour surligner le texte recherché
@@ -205,9 +208,9 @@ export default function FAQ() {
             {faqSubcategories.map((subcat) => (
               <Button
                 key={subcat.id}
-                variant="outline"
+                variant={selectedCategoryId === subcat.id ? "default" : "outline"}
                 size="sm"
-                onClick={() => scrollToCategory(subcat.id)}
+                onClick={() => handleCategoryClick(subcat.id)}
                 className="rounded-full"
               >
                 {subcat.title}
@@ -227,27 +230,36 @@ export default function FAQ() {
                 className="pl-10 h-12 text-base"
               />
             </div>
-            {searchQuery && (
+            {(searchQuery || selectedCategoryId) && (
               <p className="text-sm text-muted-foreground mt-2 text-center">
-                {totalResults} {totalResults === 1 ? 'résultat trouvé' : 'résultats trouvés'}
+                {searchQuery 
+                  ? `${totalResults} ${totalResults === 1 ? 'résultat trouvé' : 'résultats trouvés'}`
+                  : `${totalResults} ${totalResults === 1 ? 'question' : 'questions'}`
+                }
               </p>
             )}
           </div>
         </div>
 
-        {filteredQuestionsByCategory.length === 0 ? (
+        {filteredQuestionsByCategory.length === 0 || 
+         filteredQuestionsByCategory.every(({ items }) => items.length === 0) ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              {searchQuery ? 'Aucun résultat trouvé pour votre recherche' : 'Aucune question pour le moment'}
+              {searchQuery 
+                ? 'Aucun résultat trouvé pour votre recherche' 
+                : selectedCategoryId 
+                  ? 'Aucune question dans cette catégorie'
+                  : 'Aucune question pour le moment'}
             </p>
           </div>
         ) : (
           <div className="space-y-8">
-            {filteredQuestionsByCategory.map(({ category, items }) => (
+            {filteredQuestionsByCategory
+              .filter(({ items }) => items.length > 0)
+              .map(({ category, items }) => (
               <div 
                 key={category.id} 
                 className="space-y-4"
-                ref={(el) => (categoryRefs.current[category.id] = el)}
               >
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-foreground scroll-mt-24">
