@@ -77,8 +77,15 @@ export function AppSidebar() {
   // Charger depuis blocks pour Apogée
   useEffect(() => {
     if (isApogee) {
+      // Trouver la catégorie FAQ principale
+      const faqCategory = blocks.find(b => b.type === 'category' && b.slug === 'faq');
+      
       const cats = blocks
-        .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
+        .filter(b => 
+          b.type === 'category' && 
+          b.slug !== 'faq' && // Exclure la catégorie FAQ principale
+          b.parentId !== faqCategory?.id // Exclure les sous-catégories FAQ
+        )
         .sort((a, b) => a.order - b.order)
         .map(b => ({
           id: b.id,
