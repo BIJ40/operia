@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Upload, Database, AlertCircle, CheckCircle2, FileJson } from 'lucide-react';
+import { Download, Upload, Database, AlertCircle, CheckCircle2, FileJson, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function AdminBackup() {
   const { isAdmin } = useAuth();
@@ -16,6 +17,28 @@ export default function AdminBackup() {
   const [lastBackup, setLastBackup] = useState<Date | null>(null);
   const [exportingApogee, setExportingApogee] = useState(false);
   const [exportingApporteur, setExportingApporteur] = useState(false);
+  const [apogeeCategories, setApogeeCategories] = useState<any[]>([]);
+  const [apporteurCategories, setApporteurCategories] = useState<any[]>([]);
+  const [selectedApogeeCategory, setSelectedApogeeCategory] = useState<string>('');
+  const [selectedApporteurCategory, setSelectedApporteurCategory] = useState<string>('');
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const [apogeeResult, apporteurResult] = await Promise.all([
+        supabase.from('blocks').select('id, title').eq('type', 'category').order('order'),
+        supabase.from('apporteur_blocks').select('id, title').eq('type', 'category').order('order'),
+      ]);
+
+      if (apogeeResult.data) setApogeeCategories(apogeeResult.data);
+      if (apporteurResult.data) setApporteurCategories(apporteurResult.data);
+    } catch (error) {
+      console.error('Erreur chargement catégories:', error);
+    }
+  };
 
   if (!isAdmin) {
     return (
@@ -348,6 +371,227 @@ export default function AdminBackup() {
     }
   };
 
+  const exportSingleApogeeCategory = async (format: 'json' | 'txt') => {
+    if (!selectedApogeeCategory) {
+      toast({
+        title: 'Aucune catégorie sélectionnée',
+        description: 'Veuillez sélectionner une catégorie',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setExportingApogee(true);
+    try {
+      const { data: blocks, error } = await supabase
+        .from('blocks')
+        .select('*')
+        .or(`id.eq.${selectedApogeeCategory},parent_id.eq.${selectedApogeeCategory}`)
+        .order('order');
+
+      if (error) throw error;
+
+      const category = blocks?.find(b => b.id === selectedApogeeCategory);
+      const sections = blocks?.filter(b => b.parent_id === selectedApogeeCategory) || [];
+
+      if (!category) {
+        throw new Error('Catégorie non trouvée');
+      }
+
+      if (format === 'txt') {
+        let textContent = `MANUEL APOGÉE - ${category.title.toUpperCase()}\n`;
+        textContent += `Export du ${new Date().toLocaleDateString('fr-FR')}\n`;
+        textContent += '='.repeat(70) + '\n\n';
+
+        sections.sort((a, b) => a.order - b.order).forEach(section => {
+          textContent += `\n${'-'.repeat(60)}\n`;
+          textContent += `SECTION: ${section.title}\n`;
+          textContent += `${'-'.repeat(60)}\n\n`;
+          textContent += extractPlainText(section.content);
+          textContent += '\n\n';
+        });
+
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `export-apogee-${category.slug}-${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        const exportData = {
+          version: '1.0',
+          exportDate: new Date().toISOString(),
+          type: 'apogee-single-category',
+          category: {
+            id: category.id,
+            title: category.title,
+            slug: category.slug,
+            icon: category.icon,
+            colorPreset: category.color_preset,
+            order: category.order,
+            sections: sections
+              .map(s => ({
+                id: s.id,
+                title: s.title,
+                slug: s.slug,
+                contentText: extractPlainText(s.content),
+                contentHtml: cleanHtmlForExport(s.content),
+                contentRaw: s.content,
+                summary: s.summary,
+                showSummary: s.show_summary,
+                icon: s.icon,
+                colorPreset: s.color_preset,
+                order: s.order,
+                contentType: s.content_type,
+                tipsType: s.tips_type,
+                hideFromSidebar: s.hide_from_sidebar,
+              }))
+              .sort((a, b) => a.order - b.order)
+          }
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `export-apogee-${category.slug}-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      toast({
+        title: `Export ${format.toUpperCase()} réussi !`,
+        description: `Catégorie "${category.title}" avec ${sections.length} sections exportée`,
+      });
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast({
+        title: "Erreur d'export",
+        description: error instanceof Error ? error.message : 'Impossible d\'exporter la catégorie',
+        variant: 'destructive',
+      });
+    } finally {
+      setExportingApogee(false);
+    }
+  };
+
+  const exportSingleApporteurCategory = async (format: 'json' | 'txt') => {
+    if (!selectedApporteurCategory) {
+      toast({
+        title: 'Aucune catégorie sélectionnée',
+        description: 'Veuillez sélectionner une catégorie',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setExportingApporteur(true);
+    try {
+      const { data: blocks, error } = await supabase
+        .from('apporteur_blocks')
+        .select('*')
+        .or(`id.eq.${selectedApporteurCategory},parent_id.eq.${selectedApporteurCategory}`)
+        .order('order');
+
+      if (error) throw error;
+
+      const category = blocks?.find(b => b.id === selectedApporteurCategory);
+      const sections = blocks?.filter(b => b.parent_id === selectedApporteurCategory) || [];
+
+      if (!category) {
+        throw new Error('Catégorie non trouvée');
+      }
+
+      if (format === 'txt') {
+        let textContent = `GUIDE APPORTEUR - ${category.title.toUpperCase()}\n`;
+        textContent += `Export du ${new Date().toLocaleDateString('fr-FR')}\n`;
+        textContent += '='.repeat(70) + '\n\n';
+
+        sections.sort((a, b) => a.order - b.order).forEach(section => {
+          textContent += `\n${'-'.repeat(60)}\n`;
+          textContent += `SECTION: ${section.title}\n`;
+          textContent += `${'-'.repeat(60)}\n\n`;
+          textContent += extractPlainText(section.content);
+          textContent += '\n\n';
+        });
+
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `export-apporteur-${category.slug}-${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        const exportData = {
+          version: '1.0',
+          exportDate: new Date().toISOString(),
+          type: 'apporteur-single-category',
+          category: {
+            id: category.id,
+            title: category.title,
+            slug: category.slug,
+            icon: category.icon,
+            colorPreset: category.color_preset,
+            order: category.order,
+            isSingleSection: category.is_single_section,
+            showTitleInMenu: category.show_title_in_menu,
+            showTitleOnCard: category.show_title_on_card,
+            sections: sections
+              .map(s => ({
+                id: s.id,
+                title: s.title,
+                slug: s.slug,
+                contentText: extractPlainText(s.content),
+                contentHtml: cleanHtmlForExport(s.content),
+                contentRaw: s.content,
+                summary: s.summary,
+                showSummary: s.show_summary,
+                icon: s.icon,
+                colorPreset: s.color_preset,
+                order: s.order,
+                contentType: s.content_type,
+                tipsType: s.tips_type,
+                hideFromSidebar: s.hide_from_sidebar,
+              }))
+              .sort((a, b) => a.order - b.order)
+          }
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `export-apporteur-${category.slug}-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      toast({
+        title: `Export ${format.toUpperCase()} réussi !`,
+        description: `Catégorie "${category.title}" avec ${sections.length} sections exportée`,
+      });
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast({
+        title: "Erreur d'export",
+        description: error instanceof Error ? error.message : 'Impossible d\'exporter la catégorie',
+        variant: 'destructive',
+      });
+    } finally {
+      setExportingApporteur(false);
+    }
+  };
+
   const exportAllData = async () => {
     setExporting(true);
     try {
@@ -485,8 +729,9 @@ export default function AdminBackup() {
       )}
 
       <Tabs defaultValue="structured" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="structured">Export Structuré</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="structured">Export Complet</TabsTrigger>
+          <TabsTrigger value="single">Export Catégorie</TabsTrigger>
           <TabsTrigger value="complete">Sauvegarde Complète</TabsTrigger>
         </TabsList>
 
@@ -559,6 +804,108 @@ export default function AdminBackup() {
                 >
                   {exportingApporteur ? 'Export en cours...' : 'Exporter Texte (.txt)'}
                 </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Export Catégorie Unique */}
+        <TabsContent value="single" className="space-y-6">
+          <Alert>
+            <FileText className="h-4 w-4" />
+            <AlertDescription>
+              Exportez une seule catégorie avec toutes ses sections en JSON ou texte brut.
+            </AlertDescription>
+          </Alert>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="h-5 w-5" />
+                  Catégorie Apogée
+                </CardTitle>
+                <CardDescription>
+                  Sélectionnez une catégorie du guide Apogée
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Select value={selectedApogeeCategory} onValueChange={setSelectedApogeeCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choisir une catégorie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {apogeeCategories.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => exportSingleApogeeCategory('json')}
+                    disabled={!selectedApogeeCategory || exportingApogee}
+                    className="flex-1"
+                    size="sm"
+                  >
+                    JSON
+                  </Button>
+                  <Button 
+                    onClick={() => exportSingleApogeeCategory('txt')}
+                    disabled={!selectedApogeeCategory || exportingApogee}
+                    className="flex-1"
+                    size="sm"
+                    variant="outline"
+                  >
+                    Texte
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="h-5 w-5" />
+                  Catégorie Apporteur
+                </CardTitle>
+                <CardDescription>
+                  Sélectionnez une catégorie du guide Apporteur
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Select value={selectedApporteurCategory} onValueChange={setSelectedApporteurCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choisir une catégorie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {apporteurCategories.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => exportSingleApporteurCategory('json')}
+                    disabled={!selectedApporteurCategory || exportingApporteur}
+                    className="flex-1"
+                    size="sm"
+                  >
+                    JSON
+                  </Button>
+                  <Button 
+                    onClick={() => exportSingleApporteurCategory('txt')}
+                    disabled={!selectedApporteurCategory || exportingApporteur}
+                    className="flex-1"
+                    size="sm"
+                    variant="outline"
+                  >
+                    Texte
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
