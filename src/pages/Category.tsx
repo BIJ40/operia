@@ -840,6 +840,54 @@ export default function Category() {
     );
   };
 
+  // Regrouper les questions FAQ par catégorie
+  const faqGroups = useMemo(() => {
+    if (slug !== 'faq-globale') return null;
+    
+    const groups: { [key: string]: typeof sections } = {};
+    const standalone: typeof sections = [];
+    
+    sections.forEach(section => {
+      // Détecter les sections avec numérotation (13.1, 13.2, etc.)
+      const match = section.title.match(/^(\d+\.\d+)\s+(.+)$/);
+      if (match) {
+        const [, number, categoryName] = match;
+        if (!groups[categoryName]) {
+          groups[categoryName] = [];
+        }
+        groups[categoryName].push(section);
+      } else if (
+        section.title.includes('Clients') || section.title.includes('Client') ||
+        section.title.includes('Dossier') || section.title.includes('Planning') ||
+        section.title.includes('Intervention') || section.title.includes('Technicien') ||
+        section.title.includes('Relevé') || section.title.includes('RT')
+      ) {
+        // Regrouper par mots-clés
+        let categoryKey = 'Autres questions';
+        if (section.title.toLowerCase().includes('client')) categoryKey = 'Clients & Apporteurs';
+        else if (section.title.toLowerCase().includes('dossier')) categoryKey = 'Dossiers';
+        else if (section.title.toLowerCase().includes('planning')) categoryKey = 'Planning';
+        else if (section.title.toLowerCase().includes('intervention') || section.title.toLowerCase().includes('technicien')) categoryKey = 'Interventions / Techniciens';
+        else if (section.title.toLowerCase().includes('relevé') || section.title.toLowerCase().includes('rt')) categoryKey = 'Relevés Techniques';
+        
+        if (!groups[categoryKey]) {
+          groups[categoryKey] = [];
+        }
+        groups[categoryKey].push(section);
+      } else {
+        standalone.push(section);
+      }
+    });
+    
+    if (standalone.length > 0) {
+      groups['Autres questions'] = standalone;
+    }
+    
+    return groups;
+  }, [sections, slug]);
+
+  const isFaqPage = slug === 'faq-globale';
+
   return (
     <>
       <div className="container max-w-4xl mx-auto p-8">
@@ -867,6 +915,40 @@ export default function Category() {
           )}
         </div>
         
+        {isFaqPage && faqGroups ? (
+          // Affichage spécial pour la FAQ
+          <Accordion type="multiple" className="w-full space-y-4">
+            {Object.entries(faqGroups)
+              .sort(([a], [b]) => {
+                // Trier par ordre d'apparition des titres
+                const order = ['Questions générales', 'Problèmes fréquents', 'Bonnes pratiques recommandées', 'Support et assistance', 'Clients & Apporteurs', 'Dossiers', 'Planning', 'Interventions / Techniciens', 'Relevés Techniques', 'Autres questions'];
+                return order.indexOf(a) - order.indexOf(b);
+              })
+              .map(([categoryName, categorySections]) => (
+              <AccordionItem 
+                key={categoryName} 
+                value={categoryName}
+                className="bg-card border-2 border-border rounded-lg px-6 shadow-sm"
+              >
+                <AccordionTrigger className="text-left font-bold text-lg hover:no-underline py-4">
+                  {categoryName}
+                </AccordionTrigger>
+                <AccordionContent className="pt-4 pb-6 space-y-4">
+                  {categorySections.map((section) => (
+                    <div key={section.id} className="space-y-2">
+                      <div 
+                        className="prose prose-sm max-w-none [&_strong]:font-bold [&_strong]:text-foreground [&_p]:mb-2"
+                        dangerouslySetInnerHTML={{ __html: section.content }}
+                      />
+                    </div>
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
+          // Affichage normal pour les autres catégories
+          <>
         <div className="mb-8 flex gap-3">
           {sections.some(s => s.contentType === 'tips') && (
             <Button
@@ -1029,6 +1111,8 @@ export default function Category() {
             </Accordion>
           </SortableContext>
         </DndContext>
+          </>
+        )}
 
         <DocumentsList blockId={category.id} scope="apogee" />
       </div>
