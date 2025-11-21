@@ -288,27 +288,6 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {/* Lien FAQ pour Apogée uniquement */}
-        {isApogee && (
-          <SidebarGroup className="mt-auto">
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link 
-                      to="/apogee/category/faq" 
-                      className="flex items-center gap-2"
-                    >
-                      <Icons.HelpCircle className="h-4 w-4" />
-                      <span>FAQ</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
     </Sidebar>
   );
