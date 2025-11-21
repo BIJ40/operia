@@ -219,8 +219,128 @@ export default function AdminBackup() {
     } catch (error) {
       console.error('Erreur export:', error);
       toast({
-        title: 'Erreur d\'export',
+        title: "Erreur d'export",
         description: 'Impossible d\'exporter les données Apporteur',
+        variant: 'destructive',
+      });
+    } finally {
+      setExportingApporteur(false);
+    }
+  };
+
+  const exportApogeeTextOnly = async () => {
+    setExportingApogee(true);
+    try {
+      const { data: blocks, error } = await supabase
+        .from('blocks')
+        .select('*')
+        .order('order');
+
+      if (error) throw error;
+
+      const categories = blocks?.filter(b => b.type === 'category') || [];
+      const sections = blocks?.filter(b => b.type === 'section') || [];
+
+      let textContent = `MANUEL APOGÉE - Export du ${new Date().toLocaleDateString('fr-FR')}\n`;
+      textContent += '='.repeat(70) + '\n\n';
+
+      categories.forEach(cat => {
+        textContent += `\n${'#'.repeat(70)}\n`;
+        textContent += `CATÉGORIE: ${cat.title.toUpperCase()}\n`;
+        textContent += `${'#'.repeat(70)}\n\n`;
+
+        const catSections = sections
+          .filter(s => s.parent_id === cat.id)
+          .sort((a, b) => a.order - b.order);
+
+        catSections.forEach(section => {
+          textContent += `\n${'-'.repeat(60)}\n`;
+          textContent += `SECTION: ${section.title}\n`;
+          textContent += `${'-'.repeat(60)}\n\n`;
+          textContent += extractPlainText(section.content);
+          textContent += '\n\n';
+        });
+      });
+
+      const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `export-apogee-texte-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Export texte Apogée réussi !',
+        description: `${categories.length} catégories exportées en texte brut`,
+      });
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast({
+        title: "Erreur d'export",
+        description: 'Impossible d\'exporter le texte Apogée',
+        variant: 'destructive',
+      });
+    } finally {
+      setExportingApogee(false);
+    }
+  };
+
+  const exportApporteurTextOnly = async () => {
+    setExportingApporteur(true);
+    try {
+      const { data: blocks, error } = await supabase
+        .from('apporteur_blocks')
+        .select('*')
+        .order('order');
+
+      if (error) throw error;
+
+      const categories = blocks?.filter(b => b.type === 'category') || [];
+      const sections = blocks?.filter(b => b.type === 'section') || [];
+
+      let textContent = `GUIDE APPORTEUR - Export du ${new Date().toLocaleDateString('fr-FR')}\n`;
+      textContent += '='.repeat(70) + '\n\n';
+
+      categories.forEach(cat => {
+        textContent += `\n${'#'.repeat(70)}\n`;
+        textContent += `CATÉGORIE: ${cat.title.toUpperCase()}\n`;
+        textContent += `${'#'.repeat(70)}\n\n`;
+
+        const catSections = sections
+          .filter(s => s.parent_id === cat.id)
+          .sort((a, b) => a.order - b.order);
+
+        catSections.forEach(section => {
+          textContent += `\n${'-'.repeat(60)}\n`;
+          textContent += `SECTION: ${section.title}\n`;
+          textContent += `${'-'.repeat(60)}\n\n`;
+          textContent += extractPlainText(section.content);
+          textContent += '\n\n';
+        });
+      });
+
+      const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `export-apporteur-texte-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Export texte Apporteur réussi !',
+        description: `${categories.length} catégories exportées en texte brut`,
+      });
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast({
+        title: "Erreur d'export",
+        description: 'Impossible d\'exporter le texte Apporteur',
         variant: 'destructive',
       });
     } finally {
@@ -390,14 +510,23 @@ export default function AdminBackup() {
                   Export des catégories et sections du guide Apogée
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-2">
                 <Button 
                   onClick={exportApogeeData}
                   disabled={exportingApogee}
                   className="w-full"
                   size="lg"
                 >
-                  {exportingApogee ? 'Export en cours...' : 'Exporter Apogée'}
+                  {exportingApogee ? 'Export en cours...' : 'Exporter JSON'}
+                </Button>
+                <Button 
+                  onClick={exportApogeeTextOnly}
+                  disabled={exportingApogee}
+                  className="w-full"
+                  size="lg"
+                  variant="outline"
+                >
+                  {exportingApogee ? 'Export en cours...' : 'Exporter Texte (.txt)'}
                 </Button>
               </CardContent>
             </Card>
@@ -412,14 +541,23 @@ export default function AdminBackup() {
                   Export des catégories et sections du guide Apporteur
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-2">
                 <Button 
                   onClick={exportApporteurData}
                   disabled={exportingApporteur}
                   className="w-full"
                   size="lg"
                 >
-                  {exportingApporteur ? 'Export en cours...' : 'Exporter Apporteur'}
+                  {exportingApporteur ? 'Export en cours...' : 'Exporter JSON'}
+                </Button>
+                <Button 
+                  onClick={exportApporteurTextOnly}
+                  disabled={exportingApporteur}
+                  className="w-full"
+                  size="lg"
+                  variant="outline"
+                >
+                  {exportingApporteur ? 'Export en cours...' : 'Exporter Texte (.txt)'}
                 </Button>
               </CardContent>
             </Card>
