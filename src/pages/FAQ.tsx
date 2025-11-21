@@ -78,16 +78,25 @@ export default function FAQ() {
   );
 
   const scrollToCategory = (categoryId: string) => {
+    console.log('Attempting to scroll to category:', categoryId);
+    console.log('Available refs:', Object.keys(categoryRefs.current));
+    
     const element = categoryRefs.current[categoryId];
+    console.log('Found element:', element);
+    
     if (element) {
-      const offset = 100; // Offset pour tenir compte du header
+      const offset = 150; // Offset pour tenir compte du header et des boutons
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - offset;
 
+      console.log('Scrolling to position:', offsetPosition);
+      
       window.scrollTo({
         top: offsetPosition,
         behavior: 'smooth'
       });
+    } else {
+      console.error('Element not found for category:', categoryId);
     }
   };
 
