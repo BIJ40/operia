@@ -55,11 +55,11 @@ const CalloutComponent = ({ node, deleteNode }: NodeViewProps) => {
   return (
     <NodeViewWrapper>
       <div className={`${style.bg} ${style.border} border-l-4 p-4 rounded-lg my-4 relative group`}>
-        <div className="font-bold mb-2">
+        <div className="font-bold mb-3">
           <span className="mr-2">{style.icon}</span>
           {style.label}
         </div>
-        <NodeViewContent as="div" className="text-sm text-gray-800 [&>p]:my-1" />
+        <NodeViewContent as="div" className="text-sm text-gray-800 [&>p]:mt-0 [&>p]:mb-1" />
       </div>
     </NodeViewWrapper>
   );
