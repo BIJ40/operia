@@ -710,13 +710,6 @@ export default function Category() {
                       className="cursor-move"
                       {...attributes}
                       {...listeners}
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                      }}
                     >
                       <GripVertical className="w-4 h-4" />
                     </Button>
