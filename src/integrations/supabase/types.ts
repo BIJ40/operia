@@ -247,6 +247,48 @@ export type Database = {
           },
         ]
       }
+      guide_chunks: {
+        Row: {
+          block_id: string
+          block_slug: string
+          block_title: string
+          block_type: string
+          chunk_index: number
+          chunk_text: string
+          created_at: string | null
+          embedding: Json
+          id: string
+          metadata: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          block_id: string
+          block_slug: string
+          block_title: string
+          block_type: string
+          chunk_index: number
+          chunk_text: string
+          created_at?: string | null
+          embedding: Json
+          id?: string
+          metadata?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          block_id?: string
+          block_slug?: string
+          block_title?: string
+          block_type?: string
+          chunk_index?: number
+          chunk_text?: string
+          created_at?: string | null
+          embedding?: Json
+          id?: string
+          metadata?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       home_cards: {
         Row: {
           color_preset: string

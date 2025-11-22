@@ -74,7 +74,7 @@ export function Chatbot() {
       setInput('');
       
       try {
-        const guideContent = prepareGuideContent();
+        const relevantContent = await searchRelevantContent(userMessage);
         
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-guide`,
@@ -86,7 +86,7 @@ export function Chatbot() {
             },
             body: JSON.stringify({
               message: userMessage,
-              guideContent,
+              guideContent: relevantContent,
             }),
           }
         );
@@ -111,31 +111,48 @@ export function Chatbot() {
     return () => window.removeEventListener('chatbot-question', handleChatbotQuestion as EventListener);
   }, [blocks, toast]);
 
-  const prepareGuideContent = () => {
-    return blocks
-      .map((block) => {
-        // Fonction pour nettoyer le HTML et extraire le texte
-        const cleanHtml = (html: string) => {
-          if (!html) return '';
-          // Retirer les images et leur contenu base64
-          const withoutImages = html.replace(/<img[^>]*>/g, '[IMAGE]');
-          // Retirer toutes les balises HTML
-          const withoutTags = withoutImages.replace(/<[^>]*>/g, ' ');
-          // Nettoyer les espaces multiples
-          const cleaned = withoutTags.replace(/\s+/g, ' ').trim();
-          // Limiter à 500 caractères max
-          return cleaned.length > 500 ? cleaned.substring(0, 500) + '...' : cleaned;
-        };
-
-        if (block.type === 'category') {
-          return `## ${block.title} (slug: ${block.slug})\n${cleanHtml(block.content)}`;
-        } else if (block.type === 'section') {
-          const parent = blocks.find(b => b.id === block.parentId);
-          return `### ${block.title} (catégorie: ${parent?.slug}, section: ${block.slug})\n${cleanHtml(block.content)}`;
+  const searchRelevantContent = async (query: string): Promise<string> => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-embeddings`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            query,
+            topK: 5, // Get top 5 most relevant chunks
+          }),
         }
-        return '';
-      })
-      .join('\n\n');
+      );
+
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      const { results } = await response.json();
+      
+      if (!results || results.length === 0) {
+        return 'Aucun contenu indexé trouvé. Veuillez indexer le guide.';
+      }
+
+      // Format the results
+      return results
+        .map((result: any, idx: number) => {
+          return `[${idx + 1}] ${result.block_title} (slug: ${result.block_slug})\n${result.chunk_text}`;
+        })
+        .join('\n\n---\n\n');
+        
+    } catch (error) {
+      console.error('Search error:', error);
+      // Fallback to basic content if RAG search fails
+      return blocks
+        .slice(0, 10)
+        .map(block => `${block.title}: ${block.content.substring(0, 200)}`)
+        .join('\n\n');
+    }
   };
 
   const handleLinkClick = (url: string) => {
@@ -175,7 +192,10 @@ export function Chatbot() {
     setIsLoading(true);
 
     try {
-      const guideContent = prepareGuideContent();
+      // Use RAG search to find relevant content
+      const relevantContent = await searchRelevantContent(input);
+      console.log('Relevant content found:', relevantContent.length, 'characters');
+      
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-guide`,
         {
@@ -186,7 +206,7 @@ export function Chatbot() {
           },
           body: JSON.stringify({
             messages: [...messages, userMessage],
-            guideContent,
+            guideContent: relevantContent,
           }),
         }
       );
