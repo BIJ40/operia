@@ -643,14 +643,23 @@ export default function Category() {
             {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
               <h3 className="text-lg font-semibold mb-4">{section.title}</h3>
             ) : null}
-            <div
-              className="prose prose-sm max-w-none break-words overflow-visible"
-              dangerouslySetInnerHTML={{ 
-                __html: section.contentType === 'tips' && section.tipsType
-                  ? `<div style="display: inline;"><span style="font-size: 1.25rem; margin-right: 0.5rem;">${getTipIcon(section.tipsType)}</span><div style="display: inline;">${section.content.replace(/<p>/g, '<span>').replace(/<\/p>/g, '</span>')}</div></div>`
-                  : section.content 
-              }}
-            />
+            {section.contentType === 'tips' && section.tipsType ? (
+              <div>
+                <div className="font-bold mb-3">
+                  <span className="text-xl mr-2">{getTipIcon(section.tipsType)}</span>
+                  {section.title}
+                </div>
+                <div
+                  className="prose prose-sm max-w-none break-words overflow-visible"
+                  dangerouslySetInnerHTML={{ __html: section.content }}
+                />
+              </div>
+            ) : (
+              <div
+                className="prose prose-sm max-w-none break-words overflow-visible"
+                dangerouslySetInnerHTML={{ __html: section.content }}
+              />
+            )}
           </div>
         </div>
       );
