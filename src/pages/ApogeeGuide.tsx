@@ -246,11 +246,18 @@ export default function ApogeeGuide() {
     const colors = {
       red: 'bg-red-50 border-red-200 hover:border-red-300',
       blanc: 'bg-white border-gray-300 hover:border-gray-400',
+      white: 'bg-white border-gray-300 hover:border-gray-400',
       blue: 'bg-blue-50 border-blue-200 hover:border-blue-300',
       green: 'bg-green-50 border-green-200 hover:border-green-300',
       yellow: 'bg-yellow-50 border-yellow-200 hover:border-yellow-300',
       purple: 'bg-purple-50 border-purple-200 hover:border-purple-300',
       orange: 'bg-orange-50 border-orange-200 hover:border-orange-300',
+      pink: 'bg-pink-50 border-pink-200 hover:border-pink-300',
+      cyan: 'bg-cyan-50 border-cyan-200 hover:border-cyan-300',
+      indigo: 'bg-indigo-50 border-indigo-200 hover:border-indigo-300',
+      teal: 'bg-teal-50 border-teal-200 hover:border-teal-300',
+      rose: 'bg-rose-50 border-rose-200 hover:border-rose-300',
+      gray: 'bg-gray-50 border-gray-200 hover:border-gray-300',
     };
     return colors[color || 'blue'] || colors.blue;
   };
