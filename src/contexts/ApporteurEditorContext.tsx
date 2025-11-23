@@ -192,28 +192,26 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
     if (!isAdmin) return;
     
     try {
-      // Récupérer tous les blocs enfants à supprimer
-      const childBlocks = blocks.filter(b => b.parentId === id);
-      const idsToDelete = [id, ...childBlocks.map(b => b.id)];
-      
-      // Supprimer de Supabase
+      // SÉCURISATION : on n'efface plus définitivement les blocs
+      // On les "archive" en les masquant de l'interface (hide_from_sidebar = true)
       const { error } = await supabase
         .from('apporteur_blocks')
-        .delete()
-        .in('id', idsToDelete);
+        .update({ hide_from_sidebar: true })
+        .eq('id', id);
       
       if (error) throw error;
       
-      setBlocks(prev => {
-        const filtered = prev.filter(block => {
-          if (block.id === id) return false;
-          if (block.parentId === id) return false;
-          return true;
-        });
-        return filtered;
-      });
+      setBlocks(prev => prev.map(block => {
+        if (block.id === id) {
+          return { ...block, hideFromSidebar: true };
+        }
+        if (block.parentId === id) {
+          return { ...block, hideFromSidebar: true };
+        }
+        return block;
+      }));
     } catch (error) {
-      console.error('Erreur suppression apporteur:', error);
+      console.error('Erreur archivage apporteur:', error);
     }
   }, [isAdmin, blocks]);
 
