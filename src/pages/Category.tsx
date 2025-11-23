@@ -515,7 +515,7 @@ export default function Category() {
 
   const getColorClass = (color?: string) => {
     switch (color) {
-      case 'green': return 'border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2';
+      case 'green': return 'bg-helpconfort-blue-light/20 border-l-4 border-l-accent rounded-full px-6 py-3';
       case 'yellow': return 'bg-yellow-50 border-l-4 border-l-yellow-500 rounded-full px-4 py-2';
       case 'red': return 'bg-red-50 border-l-4 border-l-red-500 rounded-full px-4 py-2';
       case 'blue': return 'bg-blue-50 border-l-4 border-l-blue-500 rounded-full px-4 py-2';
