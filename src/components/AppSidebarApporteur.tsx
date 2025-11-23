@@ -153,7 +153,7 @@ export function AppSidebarApporteur() {
 
   return (
     <Sidebar className="border-r">
-      <SidebarHeader className="p-4 border-b">
+      <SidebarHeader className="p-2 border-b">
         <Link to="/apporteurs" className="flex items-center gap-2">
           <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
             <Icons.Users className="w-6 h-6 text-primary" />
