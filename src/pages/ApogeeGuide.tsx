@@ -107,24 +107,24 @@ const SortableCategory = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 ${getColorClass(category.colorPreset)}`}
+      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 ${getColorClass(category.colorPreset)}`}
     >
       {isEditMode && (
         <>
           <div
             {...attributes}
             {...listeners}
-            className="absolute top-2 left-2 cursor-grab active:cursor-grabbing z-10"
+            className="absolute -top-2 -left-2 cursor-grab active:cursor-grabbing z-10 bg-background rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
+            <GripVertical className="w-4 h-4 text-muted-foreground hover:text-primary" />
           </div>
           {editingId !== category.id && (
-            <div className="absolute top-10 left-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
               <Button
                 onClick={() => onEdit(category.id)}
                 size="icon"
                 variant="outline"
-                className="h-7 w-7"
+                className="h-7 w-7 bg-background shadow-md"
               >
                 <Icons.Edit className="w-3 h-3" />
               </Button>
@@ -132,7 +132,7 @@ const SortableCategory = ({
                 onClick={() => onDelete(category.id)}
                 size="icon"
                 variant="destructive"
-                className="h-7 w-7"
+                className="h-7 w-7 shadow-md"
               >
                 <Trash2 className="w-3 h-3" />
               </Button>
@@ -240,20 +240,20 @@ export default function ApogeeGuide() {
 
   const getColorClass = (color?: ColorPreset) => {
     const colors = {
-      red: 'bg-red-50 border-red-200 hover:border-red-300',
-      blanc: 'bg-white border-gray-300 hover:border-gray-400',
-      white: 'bg-white border-gray-300 hover:border-gray-400',
-      blue: 'bg-blue-50 border-blue-200 hover:border-blue-300',
-      green: 'bg-gradient-to-r from-helpconfort-blue-light/20 to-helpconfort-blue-dark/20 border-accent border-l-4 hover:shadow-xl hover:border-accent/80',
-      yellow: 'bg-yellow-50 border-yellow-200 hover:border-yellow-300',
-      purple: 'bg-purple-50 border-purple-200 hover:border-purple-300',
-      orange: 'bg-orange-50 border-orange-200 hover:border-orange-300',
-      pink: 'bg-pink-50 border-pink-200 hover:border-pink-300',
-      cyan: 'bg-cyan-50 border-cyan-200 hover:border-cyan-300',
-      indigo: 'bg-indigo-50 border-indigo-200 hover:border-indigo-300',
-      teal: 'bg-teal-50 border-teal-200 hover:border-teal-300',
-      rose: 'bg-rose-50 border-rose-200 hover:border-rose-300',
-      gray: 'bg-gray-50 border-gray-200 hover:border-gray-300',
+      red: 'bg-red-50 border-l-red-500 hover:border-l-red-600',
+      blanc: 'bg-white border-l-gray-400 hover:border-l-gray-500',
+      white: 'bg-white border-l-gray-400 hover:border-l-gray-500',
+      blue: 'bg-blue-50 border-l-blue-500 hover:border-l-blue-600',
+      green: 'border-l-accent bg-gradient-to-r from-helpconfort-blue-light/20 to-helpconfort-blue-dark/20 hover:shadow-xl hover:border-l-accent/80',
+      yellow: 'bg-yellow-50 border-l-yellow-500 hover:border-l-yellow-600',
+      purple: 'bg-purple-50 border-l-purple-500 hover:border-l-purple-600',
+      orange: 'bg-orange-50 border-l-orange-500 hover:border-l-orange-600',
+      pink: 'bg-pink-50 border-l-pink-500 hover:border-l-pink-600',
+      cyan: 'bg-cyan-50 border-l-cyan-500 hover:border-l-cyan-600',
+      indigo: 'bg-indigo-50 border-l-indigo-500 hover:border-l-indigo-600',
+      teal: 'bg-teal-50 border-l-teal-500 hover:border-l-teal-600',
+      rose: 'bg-rose-50 border-l-rose-500 hover:border-l-rose-600',
+      gray: 'bg-gray-50 border-l-gray-400 hover:border-l-gray-500',
     };
     return colors[color || 'blue'] || colors.blue;
   };
@@ -422,7 +422,7 @@ export default function ApogeeGuide() {
                 <Link
                   key={category.id}
                   to={`/apogee/category/${category.slug}`}
-                  className={`group relative border-2 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 ${getColorClass(category.colorPreset)}`}
+                  className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 ${getColorClass(category.colorPreset)}`}
                 >
                   {isCustomImage ? (
                     <img 
