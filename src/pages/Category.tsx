@@ -543,7 +543,7 @@ export default function Category() {
           <div className={`rounded-lg relative ${getColorClass(section.colorPreset)}`}>
             <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white rounded-t-lg">
               {isEditMode && isAuthenticated && (
-                <div className="absolute top-2 right-2 flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
+                <div className="absolute top-2 right-2 flex gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
                 <Button
                   type="button"
                   size="sm"
@@ -688,7 +688,7 @@ export default function Category() {
                 </div>
                 {isEditMode && isAuthenticated && (
                   <div 
-                    className="flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm"
+                    className="flex gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm"
                     onMouseDown={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
