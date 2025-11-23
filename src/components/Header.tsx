@@ -33,34 +33,38 @@ export function Header() {
     <>
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link 
-            to="/" 
-            className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-          >
-            <Home className="w-5 h-5 text-primary" />
-            <span className="font-semibold text-foreground">ACCUEIL</span>
-          </Link>
+          {isAuthenticated && (
+            <>
+              <Link 
+                to="/" 
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+              >
+                <Home className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-foreground">ACCUEIL</span>
+              </Link>
 
-          <Link 
-            to="/apogee" 
-            className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-          >
-            <span className="font-semibold text-foreground">APOGEE</span>
-          </Link>
+              <Link 
+                to="/apogee" 
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+              >
+                <span className="font-semibold text-foreground">APOGEE</span>
+              </Link>
 
-          <Link 
-            to="/apporteurs" 
-            className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-          >
-            <span className="font-semibold text-foreground">APPORTEURS</span>
-          </Link>
+              <Link 
+                to="/apporteurs" 
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+              >
+                <span className="font-semibold text-foreground">APPORTEURS</span>
+              </Link>
 
-          <Link 
-            to="/" 
-            className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-          >
-            <span className="font-semibold text-foreground">HELPCONFORT</span>
-          </Link>
+              <Link 
+                to="/" 
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+              >
+                <span className="font-semibold text-foreground">HELPCONFORT</span>
+              </Link>
+            </>
+          )}
 
           {isAdmin && (
             <>
