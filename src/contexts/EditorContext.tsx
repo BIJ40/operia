@@ -196,20 +196,23 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    // Supprimer de Supabase
+    // SÉCURISATION : on n'efface plus définitivement les blocs
+    // On les "archive" en les masquant de l'interface (hide_from_sidebar = true)
     try {
       const { error } = await supabase
         .from('blocks')
-        .delete()
+        .update({ hide_from_sidebar: true })
         .eq('id', id);
       
       if (error) throw error;
       
-      setBlocks((prev) => prev.filter((block) => block.id !== id));
-      toast({ title: 'Bloc supprimé' });
+      setBlocks((prev) => prev.map((block) =>
+        block.id === id ? { ...block, hideFromSidebar: true } : block
+      ));
+      toast({ title: 'Bloc archivé', description: 'Le contenu est caché mais toujours présent en base.' });
     } catch (error) {
-      console.error('Erreur suppression:', error);
-      toast({ title: 'Erreur', description: 'Impossible de supprimer le bloc', variant: 'destructive' });
+      console.error('Erreur archivage:', error);
+      toast({ title: 'Erreur', description: 'Impossible d\'archiver le bloc', variant: 'destructive' });
     }
   }, [toast, isAdmin]);
 
