@@ -94,10 +94,8 @@ export default function CategoryApporteur() {
   const [showTips, setShowTips] = useState(true);
   const [showSections, setShowSections] = useState(true);
 
-  // Déplier les TIPS par défaut au chargement (uniquement en mode édition)
+  // Déplier les TIPS par défaut au chargement
   useEffect(() => {
-    if (!isEditMode) return;
-
     const tipsIds = sections
       .filter(s => s.contentType === 'tips' && !s.isSingleSection && !s.hideTitle)
       .map(s => s.id);
@@ -107,7 +105,7 @@ export default function CategoryApporteur() {
       const newIds = tipsIds.filter(id => !prev.includes(id));
       return [...prev, ...newIds];
     });
-  }, [sections, isEditMode]);
+  }, [sections]);
 
   // Réinitialiser les filtres quand on change de sous-catégorie
   useEffect(() => {
