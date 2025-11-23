@@ -209,7 +209,7 @@ export function AppSidebar() {
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton className={`w-full bg-white text-foreground hover:border-2 hover:border-helpconfort-orange hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isActiveCat ? 'border-2 border-helpconfort-orange rounded-lg shadow-[0_0_15px_hsl(var(--orange-accent)/0.5)] animate-pulse' : ''}`}>
+                          <SidebarMenuButton className={`w-full bg-white text-foreground hover:border-2 hover:border-helpconfort-orange hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isActiveCat ? 'border-2 border-helpconfort-orange rounded-lg shadow-[0_0_15px_hsl(var(--orange-accent)/0.5)]' : ''}`}>
                             <Icon 
                               className="h-4 w-4 shrink-0 cursor-pointer group-hover:rotate-12 group-hover:scale-110 transition-all duration-200" 
                               onClick={(e) => {

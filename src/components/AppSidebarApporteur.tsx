@@ -185,7 +185,7 @@ export function AppSidebarApporteur() {
                     <SidebarMenuItem>
                        <CollapsibleTrigger asChild>
                         <SidebarMenuButton
-                          className={`w-full bg-white hover:border-2 hover:border-helpconfort-orange hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isActive ? 'border-2 border-helpconfort-orange rounded-lg shadow-[0_0_15px_hsl(var(--orange-accent)/0.5)] animate-pulse' : ''}`}
+                          className={`w-full bg-white hover:border-2 hover:border-helpconfort-orange hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isActive ? 'border-2 border-helpconfort-orange rounded-lg shadow-[0_0_15px_hsl(var(--orange-accent)/0.5)]' : ''}`}
                         >
                           {Icon ? (
                             <Icon 
