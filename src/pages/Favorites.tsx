@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, Trash2, ExternalLink, Lightbulb } from 'lucide-react';
+import { Heart, Trash2, ExternalLink, Lightbulb, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 interface Favorite {
   id: string;
@@ -29,12 +34,20 @@ interface FavoriteWithContent extends Favorite {
   content_type: string;
 }
 
+interface CategoryGroup {
+  categorySlug: string;
+  categoryTitle: string;
+  favorites: FavoriteWithContent[];
+}
+
 export default function Favorites() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [favorites, setFavorites] = useState<FavoriteWithContent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
+  const [openCategories, setOpenCategories] = useState<string[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -90,6 +103,45 @@ export default function Favorites() {
       });
 
       setFavorites(favoritesWithContent);
+
+      // Récupérer les titres des catégories depuis blocks
+      const categorySlugSet = new Set(favoritesWithContent.map(f => f.category_slug));
+      const categorySlugs = Array.from(categorySlugSet);
+      
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('blocks')
+        .select('slug, title')
+        .in('slug', categorySlugs)
+        .eq('type', 'category');
+
+      if (categoriesError) throw categoriesError;
+
+      // Créer une map des catégories
+      const categoriesMap = new Map(
+        categoriesData?.map(cat => [cat.slug, cat.title]) || []
+      );
+
+      // Grouper les favoris par catégorie
+      const groups: CategoryGroup[] = [];
+      categorySlugs.forEach(slug => {
+        const categoryFavorites = favoritesWithContent.filter(f => f.category_slug === slug);
+        if (categoryFavorites.length > 0) {
+          groups.push({
+            categorySlug: slug,
+            categoryTitle: categoriesMap.get(slug) || slug,
+            favorites: categoryFavorites,
+          });
+        }
+      });
+
+      // Trier les groupes par nombre de favoris (décroissant)
+      groups.sort((a, b) => b.favorites.length - a.favorites.length);
+      setCategoryGroups(groups);
+
+      // Ouvrir la première catégorie par défaut
+      if (groups.length > 0) {
+        setOpenCategories([groups[0].categorySlug]);
+      }
     } catch (error) {
       console.error('Error loading favorites:', error);
       toast({
@@ -174,72 +226,105 @@ export default function Favorites() {
           </Button>
         </div>
       ) : (
-        <Accordion type="multiple" className="space-y-3">
-          {favorites.map((favorite) => {
-            const colorClasses = getColorClasses(favorite.color_preset);
-            const isTips = favorite.content_type === 'tips';
+        <div className="space-y-6">
+          {categoryGroups.map((group) => (
+            <Collapsible
+              key={group.categorySlug}
+              open={openCategories.includes(group.categorySlug)}
+              onOpenChange={(open) => {
+                setOpenCategories(prev => 
+                  open 
+                    ? [...prev, group.categorySlug]
+                    : prev.filter(slug => slug !== group.categorySlug)
+                );
+              }}
+            >
+              <div className="border-2 border-helpconfort-orange rounded-lg overflow-hidden">
+                <CollapsibleTrigger className="w-full bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white p-4 hover:opacity-90 transition-opacity">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <ChevronDown className={`w-5 h-5 transition-transform ${openCategories.includes(group.categorySlug) ? 'rotate-180' : ''}`} />
+                      <h2 className="text-xl font-bold">{group.categoryTitle}</h2>
+                      <Badge className="bg-white/20 text-white border-white/30">
+                        {group.favorites.length} favori{group.favorites.length > 1 ? 's' : ''}
+                      </Badge>
+                    </div>
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="p-4 bg-card space-y-3">
+                    <Accordion type="multiple">
+                      {group.favorites.map((favorite) => {
+                        const colorClasses = getColorClasses(favorite.color_preset);
+                        const isTips = favorite.content_type === 'tips';
 
-            return (
-              <AccordionItem 
-                key={favorite.id} 
-                value={favorite.id}
-                className="border-0"
-              >
-                <div className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border-2 border-helpconfort-orange">
-                  <AccordionTrigger className={`${colorClasses} px-6 hover:no-underline [&[data-state=open]>div>svg]:rotate-180`}>
-                    <div className="flex items-center justify-between w-full gap-4 pr-4">
-                      <div className="flex items-center gap-3 flex-1">
-                        {isTips && (
-                          <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1">
-                            <Lightbulb className="w-3 h-3" />
-                            TIPS
-                          </Badge>
-                        )}
-                        <h3 className="text-lg font-semibold text-white text-left">
-                          {favorite.block_title}
-                        </h3>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleNavigateToSection(favorite);
-                          }}
-                          variant="ghost"
-                          size="icon"
-                          title="Voir dans la catégorie"
-                          className="text-white hover:bg-white/20 h-8 w-8"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveFavorite(favorite.id);
-                          }}
-                          variant="ghost"
-                          size="icon"
-                          title="Retirer des favoris"
-                          className="text-white hover:bg-red-500/80 h-8 w-8"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="bg-card border-t-2 border-helpconfort-orange">
-                    <div className="p-6">
-                      <div
-                        className="prose prose-sm max-w-none break-words overflow-visible"
-                        dangerouslySetInnerHTML={{ __html: favorite.content }}
-                      />
-                    </div>
-                  </AccordionContent>
-                </div>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
+                        return (
+                          <AccordionItem 
+                            key={favorite.id} 
+                            value={favorite.id}
+                            className="border-0 mb-3 last:mb-0"
+                          >
+                            <div className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border-2 border-helpconfort-orange">
+                              <AccordionTrigger className={`${colorClasses} px-6 hover:no-underline [&[data-state=open]>div>svg]:rotate-180`}>
+                                <div className="flex items-center justify-between w-full gap-4 pr-4">
+                                  <div className="flex items-center gap-3 flex-1">
+                                    {isTips && (
+                                      <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1">
+                                        <Lightbulb className="w-3 h-3" />
+                                        TIPS
+                                      </Badge>
+                                    )}
+                                    <h3 className="text-lg font-semibold text-white text-left">
+                                      {favorite.block_title}
+                                    </h3>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                    <Button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleNavigateToSection(favorite);
+                                      }}
+                                      variant="ghost"
+                                      size="icon"
+                                      title="Voir dans la catégorie"
+                                      className="text-white hover:bg-white/20 h-8 w-8"
+                                    >
+                                      <ExternalLink className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRemoveFavorite(favorite.id);
+                                      }}
+                                      variant="ghost"
+                                      size="icon"
+                                      title="Retirer des favoris"
+                                      className="text-white hover:bg-red-500/80 h-8 w-8"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="bg-card border-t-2 border-helpconfort-orange">
+                                <div className="p-6">
+                                  <div
+                                    className="prose prose-sm max-w-none break-words overflow-visible"
+                                    dangerouslySetInnerHTML={{ __html: favorite.content }}
+                                  />
+                                </div>
+                              </AccordionContent>
+                            </div>
+                          </AccordionItem>
+                        );
+                      })}
+                    </Accordion>
+                  </div>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
+          ))}
+        </div>
       )}
     </div>
   );
