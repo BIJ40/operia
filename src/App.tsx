@@ -30,7 +30,7 @@ const App = () => (
           <EditorProvider>
             <ApporteurEditorProvider>
               <Routes>
-                <Route path="/" element={<Layout showHeader showSidebar={false}><Landing /></Layout>} />
+                <Route path="/" element={<Layout showHeader={false} showSidebar={false}><Landing /></Layout>} />
                 <Route path="/apogee" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><ApogeeGuide /></Layout>} />
                 <Route path="/apogee/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><Category /></Layout>} />
                 <Route path="/apporteurs" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><ApporteurGuide /></Layout>} />
