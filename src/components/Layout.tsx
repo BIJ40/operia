@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { AppSidebarApporteur } from '@/components/AppSidebarApporteur';
+import { AppSidebarHelpConfort } from '@/components/AppSidebarHelpConfort';
 import { Header } from '@/components/Header';
 import { Chatbot } from '@/components/Chatbot';
 import { ImageModal } from '@/components/ImageModal';
@@ -10,11 +11,15 @@ interface LayoutProps {
   children: ReactNode;
   showHeader?: boolean;
   showSidebar?: boolean;
-  sidebarType?: 'apogee' | 'apporteur';
+  sidebarType?: 'apogee' | 'apporteur' | 'helpconfort';
 }
 
 export function Layout({ children, showHeader = true, showSidebar = true, sidebarType = 'apogee' }: LayoutProps) {
-  const SidebarComponent = sidebarType === 'apporteur' ? AppSidebarApporteur : AppSidebar;
+  const SidebarComponent = sidebarType === 'apporteur' 
+    ? AppSidebarApporteur 
+    : sidebarType === 'helpconfort'
+    ? AppSidebarHelpConfort
+    : AppSidebar;
   
   return (
     <SidebarProvider>
