@@ -969,35 +969,17 @@ export default function Category() {
             >
               {sections
                  .filter(section => {
-                  const isTip = section.contentType === 'tips';
-                  if (isTip) return showTips;
-                  return showSections;
-                })
-                .map((section) => {
-                  // Les TIPS sont toujours affichés sans accordéon
-                  if (section.contentType === 'tips' || section.isSingleSection) {
-                    if (isEditMode) {
-                      return <SortableAccordionItem key={section.id} section={section} />;
-                    } else {
-                      // Mode non-édition : rendu direct sans accordéon
-                      return (
-                        <div key={section.id} className="mb-4">
-                          <div className={`rounded-lg ${getColorClass(section.colorPreset)} p-6`}>
-                            <div
-                              className="prose prose-sm max-w-none break-words overflow-visible"
-                              dangerouslySetInnerHTML={{ 
-                                __html: section.contentType === 'tips' && section.tipsType
-                                  ? `<div style="display: inline;"><span style="font-size: 1.25rem; margin-right: 0.5rem;">${getTipIcon(section.tipsType)}</span><div style="display: inline;">${section.content.replace(/<p>/g, '<span>').replace(/<\/p>/g, '</span>')}</div></div>`
-                                  : section.content 
-                              }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    }
-                  }
-                  
-                  // Sections normales avec accordéon
+                   const isTip = section.contentType === 'tips';
+                   if (isTip) return showTips;
+                   return showSections;
+                 })
+                 .map((section) => {
+                   // Les TIPS et sections figées utilisent toujours le même rendu carte (sortable)
+                   if (section.contentType === 'tips' || section.isSingleSection) {
+                     return <SortableAccordionItem key={section.id} section={section} />;
+                   }
+                   
+                   // Sections normales avec accordéon
                   return isEditMode ? (
                     <SortableAccordionItem key={section.id} section={section} />
                   ) : (
