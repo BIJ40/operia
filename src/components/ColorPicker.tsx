@@ -10,7 +10,7 @@ export const ColorPicker = ({ value, onChange }: ColorPickerProps) => {
     { value: 'red', className: 'bg-red-500' },
     { value: 'blanc', className: 'bg-white border-2 border-gray-300' },
     { value: 'blue', className: 'bg-blue-500' },
-    { value: 'green', className: 'bg-green-500' },
+    { value: 'green', className: 'bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark border-2 border-accent' },
     { value: 'yellow', className: 'bg-yellow-400' },
     { value: 'purple', className: 'bg-purple-500' },
     { value: 'orange', className: 'bg-orange-500' },
