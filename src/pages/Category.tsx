@@ -544,65 +544,70 @@ export default function Category() {
             <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white rounded-t-lg">
               {isEditMode && isAuthenticated && (
                 <div className="absolute top-2 right-2 flex gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="cursor-move"
-                  {...attributes}
-                  {...listeners}
-                >
-                  <GripVertical className="w-4 h-4" />
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  title="Insérer une section après"
-                  onClick={() => handleAddSection(section.id)}
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  title="Insérer un TIPS après"
-                  onClick={() => handleAddTips(section.id)}
-                >
-                  <Lightbulb className="w-4 h-4" />
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setEditingId(section.id);
-                    setEditDialogOpen(true);
-                  }}
-                >
-                  <Edit2 className="w-4 h-4" />
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  title="Dupliquer la section"
-                  onClick={() => handleDuplicate(section.id)}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      title="Changer de catégorie"
-                    >
-                      <FolderInput className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="cursor-move text-foreground hover:text-accent hover:bg-accent/10"
+                    {...attributes}
+                    {...listeners}
+                  >
+                    <GripVertical className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    title="Insérer une section après"
+                    className="text-foreground hover:text-accent hover:bg-accent/10"
+                    onClick={() => handleAddSection(section.id)}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    title="Insérer un TIPS après"
+                    className="text-foreground hover:text-accent hover:bg-accent/10"
+                    onClick={() => handleAddTips(section.id)}
+                  >
+                    <Lightbulb className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="text-foreground hover:text-accent hover:bg-accent/10"
+                    onClick={() => {
+                      setEditingId(section.id);
+                      setEditDialogOpen(true);
+                    }}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    title="Dupliquer la section"
+                    className="text-foreground hover:text-accent hover:bg-accent/10"
+                    onClick={() => handleDuplicate(section.id)}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        title="Changer de catégorie"
+                        className="text-foreground hover:text-accent hover:bg-accent/10"
+                      >
+                        <FolderInput className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-background border shadow-md z-[200]">
                     {availableCategories
                       .filter(cat => cat.id !== category?.id)
@@ -616,14 +621,15 @@ export default function Category() {
                       ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleDeleteClick(section.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="text-foreground hover:text-accent hover:bg-accent/10"
+                      onClick={() => handleDeleteClick(section.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
               </div>
             )}
             {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
@@ -702,7 +708,7 @@ export default function Category() {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="cursor-move"
+                      className="cursor-move text-foreground hover:text-accent hover:bg-accent/10"
                       {...attributes}
                       {...listeners}
                     >
@@ -713,6 +719,7 @@ export default function Category() {
                       size="sm"
                       variant="ghost"
                       title="Insérer une section après"
+                      className="text-foreground hover:text-accent hover:bg-accent/10"
                       onMouseDown={(e) => {
                         e.stopPropagation();
                       }}
@@ -729,6 +736,7 @@ export default function Category() {
                       size="sm"
                       variant="ghost"
                       title="Insérer un TIPS après"
+                      className="text-foreground hover:text-accent hover:bg-accent/10"
                       onMouseDown={(e) => {
                         e.stopPropagation();
                       }}
@@ -744,6 +752,7 @@ export default function Category() {
                       type="button"
                       size="sm"
                       variant="ghost"
+                      className="text-foreground hover:text-accent hover:bg-accent/10"
                       onMouseDown={(e) => {
                         e.stopPropagation();
                       }}
@@ -761,6 +770,7 @@ export default function Category() {
                       size="sm"
                       variant="ghost"
                       title="Dupliquer la section"
+                      className="text-foreground hover:text-accent hover:bg-accent/10"
                       onMouseDown={(e) => {
                         e.stopPropagation();
                       }}
@@ -779,6 +789,7 @@ export default function Category() {
                           size="sm"
                           variant="ghost"
                           title="Changer de catégorie"
+                          className="text-foreground hover:text-accent hover:bg-accent/10"
                           onMouseDown={(e) => {
                             e.stopPropagation();
                           }}
@@ -807,6 +818,7 @@ export default function Category() {
                       type="button"
                       size="sm"
                       variant="ghost"
+                      className="text-foreground hover:text-accent hover:bg-accent/10"
                       onMouseDown={(e) => {
                         e.stopPropagation();
                       }}
