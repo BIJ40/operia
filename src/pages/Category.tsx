@@ -81,17 +81,6 @@ export default function Category() {
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   
-  // Fonction pour obtenir l'icône d'un TIPS
-  const getTipIcon = (tipsType: TipsType) => {
-    const icons = {
-      danger: '🚫',
-      warning: '⚠️',
-      success: '💡',
-      information: 'ℹ️',
-    };
-    return icons[tipsType] || 'ℹ️';
-  };
-  
   // Liste des catégories disponibles (exclure FAQ)
   const availableCategories = useMemo(() =>
     blocks
@@ -513,11 +502,6 @@ export default function Category() {
     }
   };
 
-  const getColorClass = (color?: string) => {
-    // Cette fonction n'est plus utilisée - les styles sont appliqués directement
-    return '';
-  };
-
   // Composant d'accordéon triable
   const SortableAccordionItem = ({ section }: { section: typeof sections[0] }) => {
     const {
@@ -638,22 +622,10 @@ export default function Category() {
             ) : null}
             </div>
             <div className="p-6 bg-card">
-            {section.contentType === 'tips' && section.tipsType ? (
-              <div>
-                {!section.hideTitle && section.title && section.title.trim() !== '' && (
-                  <div className="text-xl mb-3">{getTipIcon(section.tipsType)}</div>
-                )}
-                <div
-                  className="prose prose-sm max-w-none break-words overflow-visible"
-                  dangerouslySetInnerHTML={{ __html: section.content }}
-                />
-              </div>
-            ) : (
               <div
                 className="prose prose-sm max-w-none break-words overflow-visible"
                 dangerouslySetInnerHTML={{ __html: section.content }}
               />
-            )}
             </div>
           </div>
         </div>
@@ -980,12 +952,11 @@ export default function Category() {
                    }
                    
                    // Sections normales avec accordéon
-                  return isEditMode ? (
-                    <SortableAccordionItem key={section.id} section={section} />
-                  ) : (
-                  <AccordionItem key={section.id} value={section.id} id={section.id} className="mb-4">
-                    <div className={`rounded-lg ${getColorClass(section.colorPreset)}`}>
-                      <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                   return isEditMode ? (
+                     <SortableAccordionItem key={section.id} section={section} />
+                   ) : (
+                   <AccordionItem key={section.id} value={section.id} id={section.id}>
+                      <AccordionTrigger>
                         <div className="flex items-center gap-3 w-full">
                           {section.showSummary && section.summary ? (
                             <HoverCard openDelay={200}>
@@ -1006,14 +977,13 @@ export default function Category() {
                           </h2>
                         </div>
                       </AccordionTrigger>
-                      <AccordionContent className="px-6 pb-6">
+                      <AccordionContent>
                         <div
                           className="prose prose-sm max-w-none break-words overflow-visible"
                           dangerouslySetInnerHTML={{ __html: section.content }}
                         />
                       </AccordionContent>
-                    </div>
-                  </AccordionItem>
+                    </AccordionItem>
                 )}
               )}
             </Accordion>
