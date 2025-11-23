@@ -639,7 +639,9 @@ export default function Category() {
             <div className="p-6 bg-muted/30 rounded-b-3xl">
             {section.contentType === 'tips' && section.tipsType ? (
               <div>
-                <div className="text-xl mb-3">{getTipIcon(section.tipsType)}</div>
+                {!section.hideTitle && section.title && section.title.trim() !== '' && (
+                  <div className="text-xl mb-3">{getTipIcon(section.tipsType)}</div>
+                )}
                 <div
                   className="prose prose-sm max-w-none break-words overflow-visible"
                   dangerouslySetInnerHTML={{ __html: section.content }}
