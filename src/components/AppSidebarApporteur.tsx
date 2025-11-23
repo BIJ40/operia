@@ -183,9 +183,9 @@ export function AppSidebarApporteur() {
                     onOpenChange={() => toggleCategory(category.id)}
                   >
                     <SidebarMenuItem>
-                      <CollapsibleTrigger asChild>
+                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton
-                          className={`w-full bg-white hover:border-2 hover:border-[#FF6B35] hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isActive ? 'border-2 border-[#FF6B35] rounded-lg' : ''}`}
+                          className={`w-full bg-white hover:border-2 hover:border-[#FF6B35] hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isActive ? 'border-2 border-[#FF6B35] rounded-lg shadow-[0_0_15px_rgba(255,107,53,0.5)] animate-pulse' : ''}`}
                         >
                           {Icon ? (
                             <Icon 
@@ -218,7 +218,7 @@ export function AppSidebarApporteur() {
                       </CollapsibleTrigger>
                       
                       {categorySubcategories.length > 0 && (
-                        <CollapsibleContent>
+                        <CollapsibleContent className="overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                           <SidebarMenuSub>
                             {categorySubcategories.map((subcategory) => {
                               const subcategorySections = blockSections.filter(s => s.parentId === subcategory.id);
@@ -236,7 +236,7 @@ export function AppSidebarApporteur() {
                                     <div className="flex items-center w-full">
                                       <SidebarMenuSubButton
                                         asChild
-                                        className={`flex-1 hover:border-2 hover:border-[#0096D6] hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isSubActive ? 'border-2 border-[#0096D6] rounded-lg' : ''}`}
+                                        className={`flex-1 hover:border-2 hover:border-[#0096D6] hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isSubActive ? 'border-2 border-[#0096D6] rounded-lg shadow-[0_0_15px_rgba(0,150,214,0.5)]' : ''}`}
                                       >
                                         <Link to={subcategoryPath}>
                                           <span className="flex-1 group-hover:translate-x-1 transition-transform duration-200">{subcategory.title}</span>
@@ -254,7 +254,7 @@ export function AppSidebarApporteur() {
                                     </div>
                                     
                                     {subcategorySections.length > 0 && (
-                                      <CollapsibleContent>
+                                      <CollapsibleContent className="overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                                         <SidebarMenuSub className="ml-2">
                                           {subcategorySections.map((section) => {
                                             const sectionPath = `/apporteurs/category/${category.slug}/sub/${subcategory.slug}#${section.slug}`;
@@ -265,7 +265,7 @@ export function AppSidebarApporteur() {
                                               <SidebarMenuSubItem key={section.id}>
                                                 <SidebarMenuSubButton
                                                   asChild
-                                                  className={`hover:border-2 hover:border-[#0096D6] hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isSectionActive ? 'border-2 border-[#0096D6] rounded-lg' : ''}`}
+                                                  className={`hover:border-2 hover:border-[#0096D6] hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isSectionActive ? 'border-2 border-[#0096D6] rounded-lg shadow-[0_0_15px_rgba(0,150,214,0.5)]' : ''}`}
                                                 >
                                                   <Link to={sectionPath}>
                                                     <span className="group-hover:translate-x-1 transition-transform duration-200">{section.title}</span>
