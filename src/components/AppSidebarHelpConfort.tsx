@@ -45,7 +45,7 @@ export function AppSidebarHelpConfort() {
   // Charger depuis blocks pour HelpConfort
   useEffect(() => {
     const cats = blocks
-      .filter(b => b.type === 'category' && b.slug.startsWith('helpconfort-'))
+      .filter(b => b.type === 'category' && b.slug.startsWith('helpconfort-') && !b.hideFromSidebar)
       .sort((a, b) => a.order - b.order)
       .map(b => ({
         id: b.id,

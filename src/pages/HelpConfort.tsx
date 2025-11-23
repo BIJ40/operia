@@ -221,7 +221,7 @@ export default function HelpConfort() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const helpconfortCategories = (blocks as any[])
-    .filter(b => b.type === 'category' && b.slug.startsWith('helpconfort-'))
+    .filter(b => b.type === 'category' && b.slug.startsWith('helpconfort-') && !b.hideFromSidebar)
     .sort((a, b) => a.order - b.order);
 
   const sensors = useSensors(
