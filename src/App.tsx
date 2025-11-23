@@ -39,7 +39,7 @@ const App = () => (
                 <Route path="/apporteurs" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><ApporteurGuide /></Layout>} />
                 <Route path="/apporteurs/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><ApporteurSubcategories /></Layout>} />
                 <Route path="/apporteurs/category/:slug/sub/:subslug" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><CategoryApporteur /></Layout>} />
-                <Route path="/helpconfort" element={<Layout showHeader showSidebar={false}><HelpConfort /></Layout>} />
+                <Route path="/helpconfort" element={<Layout showHeader showSidebar={true} sidebarType="helpconfort"><HelpConfort /></Layout>} />
                 <Route path="/documents" element={<Layout showHeader showSidebar={false}><Documents /></Layout>} />
                 <Route path="/admin/documents" element={<Layout showHeader showSidebar={false}><AdminDocuments /></Layout>} />
                 <Route path="/admin/backup" element={<Layout showHeader showSidebar={false}><AdminBackup /></Layout>} />
