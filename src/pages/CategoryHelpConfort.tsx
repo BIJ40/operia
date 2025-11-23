@@ -1,6 +1,6 @@
 // Copie exacte de Category.tsx adaptée pour HelpConfort
 import { useParams, useLocation } from 'react-router-dom';
-import { useEditor } from '@/contexts/EditorContext';
+import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { saveAppData } from '@/lib/db';
@@ -71,7 +71,7 @@ export default function CategoryHelpConfort() {
   const { slug } = useParams();
   const location = useLocation();
 
-  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
+  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useApporteurEditor();
   const { isAuthenticated, isAdmin } = useAuth();
   const { toast } = useToast();
   

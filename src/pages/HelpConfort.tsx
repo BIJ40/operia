@@ -1,5 +1,5 @@
 // Page dédiée à la Base de connaissance HelpConfort
-import { useEditor } from '@/contexts/EditorContext';
+import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -207,7 +207,7 @@ const SortableCategory = ({
 };
 
 export default function HelpConfort() {
-  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useEditor();
+  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useApporteurEditor();
   const { isAdmin } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
