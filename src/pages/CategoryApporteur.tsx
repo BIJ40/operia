@@ -66,11 +66,6 @@ export default function CategoryApporteur() {
     return <div className="container max-w-4xl mx-auto p-8">Page non trouvée</div>;
   }
   
-  // Fonction pour obtenir l'icône d'un TIPS
-  const getTipIcon = (hideFromSidebar: boolean) => {
-    return hideFromSidebar ? '💡' : '';
-  };
-  
   const availableSubcategories = useMemo(() =>
     blocks
       .filter(b => b.type === 'subcategory' && b.parentId === category.id)
@@ -302,11 +297,7 @@ export default function CategoryApporteur() {
             ) : null}
             <div 
               className="prose prose-sm max-w-none dark:prose-invert"
-              dangerouslySetInnerHTML={{ 
-                __html: section.hideTitle && section.hideFromSidebar
-                  ? `<span style="font-size: 1.25rem; margin-right: 0.5rem;">${getTipIcon(section.hideFromSidebar)}</span>${section.content}`
-                  : section.content 
-              }}
+              dangerouslySetInnerHTML={{ __html: section.content }}
             />
           </div>
         </div>
