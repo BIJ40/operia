@@ -859,7 +859,7 @@ export default function Category() {
                 }
                 setShowTips(!showTips);
               }}
-              className="gap-2"
+              className="gap-2 border-helpconfort-blue-main hover:bg-helpconfort-blue-main hover:text-white transition-all duration-200 hover:scale-105"
             >
               <Lightbulb className="w-4 h-4" />
               {showTips ? 'Masquer les TIPS' : 'Afficher les TIPS'}
@@ -876,7 +876,7 @@ export default function Category() {
                 }
                 setShowSections(!showSections);
               }}
-              className="gap-2"
+              className="gap-2 border-helpconfort-blue-main hover:bg-helpconfort-blue-main hover:text-white transition-all duration-200 hover:scale-105"
             >
               <ChevronDown className="w-4 h-4" />
               {showSections ? 'Masquer les tutoriels' : 'Afficher les tutoriels'}
@@ -903,7 +903,7 @@ export default function Category() {
                   setOpenAccordions(visibleSections.map(s => s.id));
                 }
               }}
-              className="gap-2"
+              className="gap-2 border-helpconfort-orange hover:bg-helpconfort-orange hover:text-white transition-all duration-200 hover:scale-105"
             >
               {openAccordions.length === sections.filter(s => {
                 const isTip = s.contentType === 'tips';
