@@ -1,4 +1,5 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
+import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -26,9 +27,9 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { RichTextEditor } from '@/components/RichTextEditor';
+import { useState, useEffect, useMemo } from 'react';
+import { SectionEditForm } from '@/components/SectionEditForm';
+import { ColorPreset } from '@/types/block';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,34 +46,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { supabase } from '@/integrations/supabase/client';
-
-interface Section {
-  id: string;
-  category_id: string;
-  title: string;
-  content: any;
-  display_order: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Category {
-  id: string;
-  title: string;
-  icon: string;
-  color_preset: string;
-  scope: string;
-  display_order: number;
-}
 
 interface SortableSectionProps {
-  section: Section;
+  section: any;
   isEditMode: boolean;
-  onEdit: (section: Section) => void;
+  onEdit: (section: any) => void;
   onDelete: (id: string) => void;
   openAccordions: string[];
-  onAccordionChange: (value: string[]) => void;
+  getColorClass: (color?: ColorPreset) => string;
 }
 
 function SortableSection({
@@ -81,7 +62,7 @@ function SortableSection({
   onEdit,
   onDelete,
   openAccordions,
-  onAccordionChange,
+  getColorClass,
 }: SortableSectionProps) {
   const {
     attributes,
@@ -98,16 +79,12 @@ function SortableSection({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const renderContent = (content: any) => {
-    if (typeof content === 'string') {
-      return <div dangerouslySetInnerHTML={{ __html: content }} />;
-    }
-    return <div>{JSON.stringify(content)}</div>;
-  };
-
   return (
     <div ref={setNodeRef} style={style} className="mb-4">
-      <AccordionItem value={section.id} className="border rounded-lg bg-card">
+      <AccordionItem 
+        value={section.id} 
+        className={`border rounded-lg ${getColorClass(section.colorPreset)}`}
+      >
         <div className="flex items-center gap-2 pr-4">
           {isEditMode && (
             <div
@@ -118,7 +95,7 @@ function SortableSection({
               <GripVertical className="h-5 w-5 text-muted-foreground" />
             </div>
           )}
-          <AccordionTrigger className="flex-1 hover:no-underline">
+          <AccordionTrigger className="flex-1 hover:no-underline px-6">
             <span className="font-semibold">{section.title}</span>
           </AccordionTrigger>
           {isEditMode && (
@@ -147,8 +124,8 @@ function SortableSection({
           )}
         </div>
         <AccordionContent className="px-6 pb-4">
-          <div className="prose prose-sm max-w-none">
-            {renderContent(section.content)}
+          <div className="prose prose-sm max-w-none dark:prose-invert">
+            <div dangerouslySetInnerHTML={{ __html: section.content }} />
           </div>
         </AccordionContent>
       </AccordionItem>
@@ -158,22 +135,25 @@ function SortableSection({
 
 export default function CategoryHelpConfort() {
   const { slug } = useParams();
-  const { isAdmin } = useAuth();
+  const location = useLocation();
+  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
+  const { isAuthenticated, isAdmin } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  
+  const category = blocks.find(b => b.type === 'category' && b.slug === slug);
+  
+  const sections = useMemo(() => 
+    blocks
+      .filter(b => b.type === 'section' && b.parentId === category?.id)
+      .sort((a, b) => a.order - b.order),
+    [blocks, category?.id]
+  );
 
-  const [category, setCategory] = useState<Category | null>(null);
-  const [sections, setSections] = useState<Section[]>([]);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editingSection, setEditingSection] = useState<Section | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
-
-  // Form state
-  const [editTitle, setEditTitle] = useState('');
-  const [editContent, setEditContent] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -186,166 +166,142 @@ export default function CategoryHelpConfort() {
     })
   );
 
-  // Load category
-  useEffect(() => {
-    loadCategory();
-  }, [slug]);
-
-  // Load sections when category changes
-  useEffect(() => {
-    if (category) {
-      loadSections();
-    }
-  }, [category]);
-
-  const loadCategory = async () => {
-    if (!slug) return;
-
-    const categorySlug = slug.replace('helpconfort-', '');
-    
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .eq('scope', 'helpconfort')
-      .ilike('title', `%${categorySlug.replace(/-/g, ' ')}%`)
-      .single();
-
-    if (error) {
-      console.error('Error loading category:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger la catégorie',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setCategory(data);
+  const getColorClass = (color?: ColorPreset) => {
+    const colorMap: Record<ColorPreset, string> = {
+      white: 'bg-card',
+      blanc: 'bg-card',
+      gray: 'bg-muted',
+      green: 'bg-green-50 dark:bg-green-950',
+      yellow: 'bg-yellow-50 dark:bg-yellow-950',
+      red: 'bg-red-50 dark:bg-red-950',
+      blue: 'bg-blue-50 dark:bg-blue-950',
+      purple: 'bg-purple-50 dark:bg-purple-950',
+      pink: 'bg-pink-50 dark:bg-pink-950',
+      orange: 'bg-orange-50 dark:bg-orange-950',
+      cyan: 'bg-cyan-50 dark:bg-cyan-950',
+      indigo: 'bg-indigo-50 dark:bg-indigo-950',
+      teal: 'bg-teal-50 dark:bg-teal-950',
+      rose: 'bg-rose-50 dark:bg-rose-950',
+    };
+    return colorMap[color || 'white'];
   };
 
-  const loadSections = async () => {
+  useEffect(() => {
     if (!category) return;
-
-    const { data, error } = await supabase
-      .from('sections')
-      .select('*')
-      .eq('category_id', category.id)
-      .order('display_order', { ascending: true });
-
-    if (error) {
-      console.error('Error loading sections:', error);
-      return;
+    
+    const hash = location.hash.replace('#', '');
+    if (hash && sections.some(s => s.id === hash)) {
+      setOpenAccordions(prev => {
+        if (!prev.includes(hash)) {
+          return [...prev, hash];
+        }
+        return prev;
+      });
+      
+      setTimeout(() => {
+        const element = document.getElementById(hash);
+        if (element) {
+          const headerOffset = 140;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+        }
+      }, 400);
     }
+  }, [location.hash, sections, category]);
 
-    setSections(data || []);
+  useEffect(() => {
+    setOpenAccordions([]);
+  }, [isEditMode]);
+
+  if (!category) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">Catégorie introuvable</p>
+      </div>
+    );
+  }
+
+  const handleEdit = (block: typeof sections[0]) => {
+    setEditingId(block.id);
+    setOpenAccordions(prev => {
+      if (!prev.includes(block.id)) {
+        return [...prev, block.id];
+      }
+      return prev;
+    });
+  };
+
+  const handleSave = async (data: {
+    title: string;
+    content: string;
+    colorPreset: ColorPreset;
+    summary?: string;
+    showSummary?: boolean;
+  }) => {
+    if (editingId) {
+      const scrollPos = window.pageYOffset;
+      const currentHash = window.location.hash;
+      if (currentHash) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      
+      updateBlock(editingId, data);
+
+      setEditDialogOpen(false);
+      setEditingId(null);
+      
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollPos);
+        setTimeout(() => {
+          window.scrollTo(0, scrollPos);
+          if (currentHash) {
+            history.replaceState(null, '', window.location.pathname + window.location.search + currentHash);
+          }
+        }, 0);
+      });
+      
+      toast({
+        title: 'Section sauvegardée',
+        description: 'Les modifications ont été enregistrées',
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditDialogOpen(false);
   };
 
   const handleAddSection = async () => {
     if (!category) return;
-
-    const maxOrder = sections.length > 0 
-      ? Math.max(...sections.map(s => s.display_order))
-      : -1;
-
-    const { data, error } = await supabase
-      .from('sections')
-      .insert({
-        category_id: category.id,
-        title: 'Nouvelle section',
-        content: '<p>Contenu de la section...</p>',
-        display_order: maxOrder + 1,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de créer la section',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setSections([...sections, data]);
-    setEditingSection(data);
-    setEditTitle(data.title);
-    const contentStr = typeof data.content === 'string' 
-      ? data.content 
-      : (data.content ? JSON.stringify(data.content) : '');
-    setEditContent(contentStr);
-    setEditDialogOpen(true);
-  };
-
-  const handleEdit = (section: Section) => {
-    setEditingSection(section);
-    setEditTitle(section.title);
-    const contentStr = typeof section.content === 'string' 
-      ? section.content 
-      : (section.content ? JSON.stringify(section.content) : '');
-    setEditContent(contentStr);
-    setEditDialogOpen(true);
-  };
-
-  const handleSave = async () => {
-    if (!editingSection) return;
-
-    const { error } = await supabase
-      .from('sections')
-      .update({
-        title: editTitle,
-        content: editContent,
-      })
-      .eq('id', editingSection.id);
-
-    if (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de sauvegarder la section',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    await loadSections();
-    setEditDialogOpen(false);
-    setEditingSection(null);
     
-    toast({
-      title: 'Section sauvegardée',
-      description: 'Les modifications ont été enregistrées',
-    });
-  };
-
-  const handleDeleteClick = (sectionId: string) => {
-    setSectionToDelete(sectionId);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!sectionToDelete) return;
-
-    const { error } = await supabase
-      .from('sections')
-      .delete()
-      .eq('id', sectionToDelete);
-
-    if (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de supprimer la section',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setSections(sections.filter(s => s.id !== sectionToDelete));
-    setDeleteDialogOpen(false);
-    setSectionToDelete(null);
+    const newOrder = sections.length > 0 
+      ? sections[0].order - 1 
+      : 0;
     
-    toast({
-      title: 'Section supprimée',
+    const newBlockId = await addBlock({
+      type: 'section',
+      title: 'Nouvelle section',
+      content: '<p>Contenu de la section...</p>',
+      colorPreset: 'purple',
+      parentId: category.id,
+      slug: `${category.slug}-section-${Date.now()}`,
+      attachments: [],
+      contentType: 'section',
+      order: newOrder,
     });
+    
+    if (newBlockId) {
+      setTimeout(() => {
+        setEditingId(newBlockId);
+        setEditDialogOpen(true);
+      }, 100);
+    }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -357,51 +313,45 @@ export default function CategoryHelpConfort() {
 
       const reorderedSections = arrayMove(sections, oldIndex, newIndex);
       
-      // Update display_order for all sections
-      const updates = reorderedSections.map((section, index) => ({
-        id: section.id,
-        display_order: index,
+      const minOrder = Math.min(...sections.map(s => s.order));
+      const sectionsWithNewOrder = reorderedSections.map((section, index) => ({
+        ...section,
+        order: minOrder + index
       }));
-
-      setSections(reorderedSections);
-
-      // Save to database
-      for (const update of updates) {
-        await supabase
-          .from('sections')
-          .update({ display_order: update.display_order })
-          .eq('id', update.id);
-      }
+      
+      await reorderBlocks(sectionsWithNewOrder);
     }
   };
 
-  if (!category) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Catégorie introuvable</p>
-      </div>
-    );
-  }
+  const handleDeleteClick = (sectionId: string) => {
+    setSectionToDelete(sectionId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (sectionToDelete) {
+      deleteBlock(sectionToDelete);
+      setSectionToDelete(null);
+      toast({
+        title: 'Section supprimée',
+      });
+    }
+    setDeleteDialogOpen(false);
+  };
+
+  const editingSection = sections.find(s => s.id === editingId);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">{category.title}</h1>
         
-        {isAdmin && (
+        {isAdmin && isEditMode && (
           <div className="flex gap-2 mt-4">
-            <Button
-              variant={isEditMode ? "default" : "outline"}
-              onClick={() => setIsEditMode(!isEditMode)}
-            >
-              {isEditMode ? "Mode normal" : "Mode édition"}
+            <Button onClick={handleAddSection}>
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter une section
             </Button>
-            {isEditMode && (
-              <Button onClick={handleAddSection}>
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter une section
-              </Button>
-            )}
           </div>
         )}
       </div>
@@ -442,7 +392,7 @@ export default function CategoryHelpConfort() {
                   onEdit={handleEdit}
                   onDelete={handleDeleteClick}
                   openAccordions={openAccordions}
-                  onAccordionChange={setOpenAccordions}
+                  getColorClass={getColorClass}
                 />
               ))}
             </Accordion>
@@ -456,31 +406,18 @@ export default function CategoryHelpConfort() {
           <DialogHeader>
             <DialogTitle>Éditer la section</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Titre</label>
-              <Input
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                placeholder="Titre de la section"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Contenu</label>
-              <RichTextEditor
-                content={editContent}
-                onChange={setEditContent}
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-                Annuler
-              </Button>
-              <Button onClick={handleSave}>
-                Sauvegarder
-              </Button>
-            </div>
-          </div>
+          {editingSection && (
+            <SectionEditForm
+              sectionId={editingSection.id}
+              initialTitle={editingSection.title}
+              initialContent={editingSection.content}
+              initialColor={editingSection.colorPreset}
+              initialSummary={editingSection.summary}
+              initialShowSummary={editingSection.showSummary}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
