@@ -209,7 +209,7 @@ const SortableCard = ({
       ) : (
         <>
           <Link to={card.link} className="flex items-center gap-2">
-          <Icon className="w-6 h-6 text-blue-600 flex-shrink-0" />
+          <Icon className="w-12 h-12 text-blue-600 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <h2 className="text-lg font-bold text-blue-900 truncate">{card.title}</h2>
               <p className="text-xs text-muted-foreground truncate">{card.description}</p>
@@ -541,7 +541,7 @@ export default function Landing() {
                       to={card.link}
                       className="group relative border-2 border-blue-200 bg-blue-50 rounded-full px-4 py-2 hover:shadow-lg hover:border-blue-300 transition-all flex items-center gap-2 w-fit"
                     >
-                      <Icon className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                      <Icon className="w-12 h-12 text-blue-600 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <h2 className="text-lg font-bold text-blue-900 truncate">{card.title}</h2>
                         <p className="text-xs text-muted-foreground truncate">{card.description}</p>
