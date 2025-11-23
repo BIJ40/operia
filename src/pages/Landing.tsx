@@ -8,6 +8,7 @@ import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { LoginDialog } from '@/components/LoginDialog';
 
 const supabaseAny = supabase as any;
 import {
@@ -214,7 +215,7 @@ const SortableCard = ({
 };
 
 export default function Landing() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [homeCards, setHomeCards] = useState<HomeCard[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -226,6 +227,7 @@ export default function Landing() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(!isAuthenticated);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -239,7 +241,12 @@ export default function Landing() {
   );
 
   useEffect(() => {
-    loadCards();
+    if (isAuthenticated) {
+      loadCards();
+      setLoginOpen(false);
+    } else {
+      setLoginOpen(true);
+    }
     
     // Synchroniser isEditMode avec localStorage
     const storedEditMode = localStorage.getItem('editMode') === 'true';
@@ -259,7 +266,7 @@ export default function Landing() {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('editModeChange', handleStorageChange);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   const loadCards = async () => {
     try {
@@ -463,99 +470,112 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <div className="container max-w-6xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Bienvenue sur Help Confort Services
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Accédez à tous nos guides et ressources
-          </p>
+    <>
+      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+      
+      {!isAuthenticated ? (
+        <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold mb-4">Accès protégé</h1>
+            <p className="text-muted-foreground">Veuillez vous connecter pour accéder à cette page</p>
+          </div>
         </div>
+      ) : (
+        <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+          <div className="container max-w-6xl mx-auto px-4 py-12">
+            <div className="text-center mb-12">
+              <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                Bienvenue sur Help Confort Services
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Accédez à tous nos guides et ressources
+              </p>
+            </div>
 
-        {isEditMode && isAdmin ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={homeCards.map(c => c.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                {homeCards.map(card => (
-                  <SortableCard
-                    key={card.id}
-                    card={card}
-                    editingId={editingId}
-                    editTitle={editTitle}
-                    editDescription={editDescription}
-                    editLink={editLink}
-                    editIcon={editIcon}
-                    editColor={editColor}
-                    isEditMode={isEditMode}
-                    onEditTitleChange={setEditTitle}
-                    onEditDescriptionChange={setEditDescription}
-                    onEditLinkChange={setEditLink}
-                    onEditIconChange={setEditIcon}
-                    onEditColorChange={setEditColor}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    getColorClass={getColorClass}
-                    IconComponent={IconComponent}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {homeCards.map(card => {
-              const Icon = IconComponent(card.icon || 'BookOpen');
-              return (
-                <Link
-                  key={card.id}
-                  to={card.link}
-                  className={`group relative border-2 rounded-lg p-8 hover:shadow-xl transition-all ${getColorClass(card.color_preset)}`}
+            {isEditMode && isAdmin ? (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={homeCards.map(c => c.id)}
+                  strategy={verticalListSortingStrategy}
                 >
-                  <Icon className="w-16 h-16 mb-4 text-primary group-hover:scale-110 transition-transform" />
-                  <h2 className="text-2xl font-bold text-foreground mb-2">{card.title}</h2>
-                  <p className="text-muted-foreground">{card.description}</p>
-                </Link>
-              );
-            })}
-          </div>
-        )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    {homeCards.map(card => (
+                      <SortableCard
+                        key={card.id}
+                        card={card}
+                        editingId={editingId}
+                        editTitle={editTitle}
+                        editDescription={editDescription}
+                        editLink={editLink}
+                        editIcon={editIcon}
+                        editColor={editColor}
+                        isEditMode={isEditMode}
+                        onEditTitleChange={setEditTitle}
+                        onEditDescriptionChange={setEditDescription}
+                        onEditLinkChange={setEditLink}
+                        onEditIconChange={setEditIcon}
+                        onEditColorChange={setEditColor}
+                        onSave={handleSave}
+                        onCancel={handleCancel}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        getColorClass={getColorClass}
+                        IconComponent={IconComponent}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {homeCards.map(card => {
+                  const Icon = IconComponent(card.icon || 'BookOpen');
+                  return (
+                    <Link
+                      key={card.id}
+                      to={card.link}
+                      className={`group relative border-2 rounded-lg p-8 hover:shadow-xl transition-all ${getColorClass(card.color_preset)}`}
+                    >
+                      <Icon className="w-16 h-16 mb-4 text-primary group-hover:scale-110 transition-transform" />
+                      <h2 className="text-2xl font-bold text-foreground mb-2">{card.title}</h2>
+                      <p className="text-muted-foreground">{card.description}</p>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
 
-        {isEditMode && isAdmin && (
-          <div className="flex justify-end mt-8">
-            <Button onClick={handleAddCard} size="sm" variant="ghost" className="gap-1 text-muted-foreground hover:text-foreground">
-              <Plus className="w-4 h-4" />
-            </Button>
+            {isEditMode && isAdmin && (
+              <div className="flex justify-end mt-8">
+                <Button onClick={handleAddCard} size="sm" variant="ghost" className="gap-1 text-muted-foreground hover:text-foreground">
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer cette carte ?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Êtes-vous sûr de vouloir supprimer cette carte ?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Supprimer
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
+    </>
   );
 }
