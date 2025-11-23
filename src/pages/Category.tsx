@@ -7,6 +7,7 @@ import { saveAppData } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info, ChevronsDownUp, ChevronsUpDown, Lightbulb } from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
+import { FavoriteButton } from '@/components/FavoriteButton';
 import {
   Accordion,
   AccordionContent,
@@ -618,7 +619,18 @@ export default function Category() {
               </div>
             )}
             {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
-              <h3 className="text-lg font-semibold text-white">{section.title}</h3>
+              <div className="flex items-center justify-between gap-2 w-full">
+                <h3 className="text-lg font-semibold text-white flex-1">{section.title}</h3>
+                {!isEditMode && (
+                  <FavoriteButton
+                    blockId={section.id}
+                    blockTitle={section.title}
+                    blockSlug={section.slug}
+                    categorySlug={category.slug}
+                    scope="apogee"
+                  />
+                )}
+              </div>
             ) : null}
             </div>
             <div className="p-6 bg-card">
@@ -665,6 +677,17 @@ export default function Category() {
                   <h2 className="text-xl font-semibold text-left text-white">
                     {section.title}
                   </h2>
+                  {!isEditMode && (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <FavoriteButton
+                        blockId={section.id}
+                        blockTitle={section.title}
+                        blockSlug={section.slug}
+                        categorySlug={category.slug}
+                        scope="apogee"
+                      />
+                    </div>
+                  )}
                 </div>
                 {isEditMode && isAuthenticated && (
                   <div 
@@ -957,25 +980,36 @@ export default function Category() {
                    ) : (
                    <AccordionItem key={section.id} value={section.id} id={section.id}>
                       <AccordionTrigger>
-                        <div className="flex items-center gap-3 w-full">
-                          {section.showSummary && section.summary ? (
-                            <HoverCard openDelay={200}>
-                              <HoverCardTrigger asChild>
-                                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 shrink-0 cursor-help">
-                                  <Info className="h-4 w-4" />
-                                </div>
-                              </HoverCardTrigger>
-                              <HoverCardContent className="w-[500px] bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200" side="right">
-                                <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">{section.summary}</p>
-                              </HoverCardContent>
-                            </HoverCard>
-                          ) : (
-                            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
-                          )}
-                          <h2 className="text-xl font-semibold text-left">
-                            {section.title}
-                          </h2>
-                        </div>
+                         <div className="flex items-center justify-between gap-3 w-full">
+                           <div className="flex items-center gap-3 flex-1">
+                             {section.showSummary && section.summary ? (
+                               <HoverCard openDelay={200}>
+                                 <HoverCardTrigger asChild>
+                                   <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 shrink-0 cursor-help">
+                                     <Info className="h-4 w-4" />
+                                   </div>
+                                 </HoverCardTrigger>
+                                 <HoverCardContent className="w-[500px] bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200" side="right">
+                                   <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">{section.summary}</p>
+                                 </HoverCardContent>
+                               </HoverCard>
+                             ) : (
+                               <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+                             )}
+                             <h2 className="text-xl font-semibold text-left">
+                               {section.title}
+                             </h2>
+                           </div>
+                           <div onClick={(e) => e.stopPropagation()}>
+                             <FavoriteButton
+                               blockId={section.id}
+                               blockTitle={section.title}
+                               blockSlug={section.slug}
+                               categorySlug={category.slug}
+                               scope="apogee"
+                             />
+                           </div>
+                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
                         <div

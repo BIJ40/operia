@@ -247,6 +247,39 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          block_id: string
+          block_slug: string
+          block_title: string
+          category_slug: string
+          created_at: string
+          id: string
+          scope: string
+          user_id: string
+        }
+        Insert: {
+          block_id: string
+          block_slug: string
+          block_title: string
+          category_slug: string
+          created_at?: string
+          id?: string
+          scope?: string
+          user_id: string
+        }
+        Update: {
+          block_id?: string
+          block_slug?: string
+          block_title?: string
+          category_slug?: string
+          created_at?: string
+          id?: string
+          scope?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       guide_chunks: {
         Row: {
           block_id: string

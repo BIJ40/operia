@@ -13,6 +13,7 @@ import Documents from "./pages/Documents";
 import AdminDocuments from "./pages/AdminDocuments";
 import AdminBackup from "./pages/AdminBackup";
 import Profile from "./pages/Profile";
+import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
@@ -41,6 +42,7 @@ const App = () => (
                 <Route path="/admin/documents" element={<Layout showHeader showSidebar={false}><AdminDocuments /></Layout>} />
                 <Route path="/admin/backup" element={<Layout showHeader showSidebar={false}><AdminBackup /></Layout>} />
                 <Route path="/profile" element={<Layout showHeader={false} showSidebar={false}><Profile /></Layout>} />
+                <Route path="/favorites" element={<Layout showHeader={false} showSidebar={false}><Favorites /></Layout>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ApporteurEditorProvider>
