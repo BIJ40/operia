@@ -383,43 +383,56 @@ export default function HelpConfort() {
             </p>
           </div>
         ) : isEditMode && isAdmin ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={filteredCategories.map(c => c.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                {filteredCategories.map(category => (
-                  <SortableCategory
-                    key={category.id}
-                    category={category}
-                    editingId={editingId}
-                    editTitle={editTitle}
-                    editIcon={editIcon}
-                    editColor={editColor}
-                    editImageUrl={editImageUrl}
-                    editShowTitleOnCard={editShowTitleOnCard}
-                    isEditMode={isEditMode}
-                    onEditTitleChange={setEditTitle}
-                    onEditIconChange={setEditIcon}
-                    onEditColorChange={setEditColor}
-                    onEditImageUrlChange={setEditImageUrl}
-                    onEditShowTitleOnCardChange={setEditShowTitleOnCard}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    getColorClass={getColorClass}
-                    IconComponent={IconComponent}
-                  />
-                ))}
+          <>
+            {helpconfortCategories.length === 0 && (
+              <div className="text-center py-12 mb-8">
+                <Icons.Library className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-lg text-muted-foreground mb-2">
+                  Aucune catégorie pour le moment
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Utilisez le bouton ci-dessous pour créer votre première catégorie
+                </p>
               </div>
-            </SortableContext>
-          </DndContext>
+            )}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={filteredCategories.map(c => c.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                  {filteredCategories.map(category => (
+                    <SortableCategory
+                      key={category.id}
+                      category={category}
+                      editingId={editingId}
+                      editTitle={editTitle}
+                      editIcon={editIcon}
+                      editColor={editColor}
+                      editImageUrl={editImageUrl}
+                      editShowTitleOnCard={editShowTitleOnCard}
+                      isEditMode={isEditMode}
+                      onEditTitleChange={setEditTitle}
+                      onEditIconChange={setEditIcon}
+                      onEditColorChange={setEditColor}
+                      onEditImageUrlChange={setEditImageUrl}
+                      onEditShowTitleOnCardChange={setEditShowTitleOnCard}
+                      onSave={handleSave}
+                      onCancel={handleCancel}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      getColorClass={getColorClass}
+                      IconComponent={IconComponent}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </>
         ) : filteredCategories.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredCategories.map(category => {
