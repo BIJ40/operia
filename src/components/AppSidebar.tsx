@@ -223,7 +223,7 @@ export function AppSidebar() {
                             />
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
-                        <CollapsibleContent className="overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                        <CollapsibleContent className="overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down data-[state=closed]:opacity-0 data-[state=open]:animate-fade-in">
                           <SidebarMenuSub className="bg-white">
                             {categorySections.map((section) => {
                               const isSectionActive = location.hash === `#${section.id}`;
@@ -266,7 +266,7 @@ export function AppSidebar() {
                             />
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
-                        <CollapsibleContent className="overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                        <CollapsibleContent className="overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down data-[state=closed]:opacity-0 data-[state=open]:animate-fade-in">
                           <SidebarMenuSub className="bg-white">
                             {categorySections.map((section) => (
                               <SidebarMenuSubItem key={section.id}>
