@@ -174,15 +174,6 @@ export default function Favorites() {
         <Accordion type="multiple" className="space-y-3">
           {favorites.map((favorite) => {
             const colorClasses = getColorClasses(favorite.color_preset);
-            const borderColorMap: Record<string, string> = {
-              white: 'border-gray-200',
-              blue: 'border-helpconfort-blue-main',
-              orange: 'border-helpconfort-orange',
-              green: 'border-helpconfort-green',
-              yellow: 'border-helpconfort-yellow',
-              red: 'border-helpconfort-red',
-            };
-            const borderColor = borderColorMap[favorite.color_preset] || 'border-gray-200';
 
             return (
               <AccordionItem 
@@ -190,7 +181,7 @@ export default function Favorites() {
                 value={favorite.id}
                 className="border-0"
               >
-                <div className={`rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border-2 ${borderColor}`}>
+                <div className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border-2 border-helpconfort-orange">
                   <AccordionTrigger className={`${colorClasses} px-6 hover:no-underline [&[data-state=open]>div>svg]:rotate-180`}>
                     <div className="flex items-center justify-between w-full gap-4 pr-4">
                       <h3 className="text-lg font-semibold text-white flex-1 text-left">
@@ -224,7 +215,7 @@ export default function Favorites() {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="bg-card border-t-2 ${borderColor}">
+                  <AccordionContent className="bg-card border-t-2 border-helpconfort-orange">
                     <div className="p-6">
                       <div
                         className="prose prose-sm max-w-none break-words overflow-visible"
