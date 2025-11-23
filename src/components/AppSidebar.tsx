@@ -209,7 +209,7 @@ export function AppSidebar() {
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton className={`w-full bg-white text-foreground hover:border-2 hover:border-[#FF6B35] hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isActiveCat ? 'border-2 border-[#FF6B35] rounded-lg shadow-[0_0_15px_rgba(255,107,53,0.5)] animate-pulse' : ''}`}>
+                          <SidebarMenuButton className={`w-full bg-white text-foreground hover:border-2 hover:border-helpconfort-orange hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isActiveCat ? 'border-2 border-helpconfort-orange rounded-lg shadow-[0_0_15px_hsl(var(--orange-accent)/0.5)] animate-pulse' : ''}`}>
                             <Icon 
                               className="h-4 w-4 shrink-0 cursor-pointer group-hover:rotate-12 group-hover:scale-110 transition-all duration-200" 
                               onClick={(e) => {
@@ -258,7 +258,7 @@ export function AppSidebar() {
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton className="w-full bg-white text-foreground hover:border-2 hover:border-[#FF6B35] hover:rounded-lg hover:scale-105 transition-all duration-200 group">
+                          <SidebarMenuButton className="w-full bg-white text-foreground hover:border-2 hover:border-helpconfort-orange hover:rounded-lg hover:scale-105 transition-all duration-200 group">
                             <Icon className="h-4 w-4 shrink-0 group-hover:rotate-12 group-hover:scale-110 transition-all duration-200" />
                             <span className="flex-1 text-left truncate group-hover:translate-x-1 transition-transform duration-200">{category.title}</span>
                             <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:scale-125" 
