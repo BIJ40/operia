@@ -220,9 +220,9 @@ export default function ApogeeGuide() {
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filtrer uniquement les catégories Apogée (exclure FAQ)
+  // Filtrer uniquement les catégories Apogée (exclure FAQ et HelpConfort)
   const apogeeCategories = blocks
-    .filter(b => b.type === 'category' && b.slug !== 'faq' && !b.title.toLowerCase().includes('faq'))
+    .filter(b => b.type === 'category' && b.slug !== 'faq' && !b.title.toLowerCase().includes('faq') && !b.slug.startsWith('helpconfort-'))
     .sort((a, b) => a.order - b.order);
 
   const sensors = useSensors(

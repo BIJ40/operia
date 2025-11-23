@@ -86,6 +86,7 @@ export function AppSidebar() {
         .filter(b => 
           b.type === 'category' && 
           b.slug !== 'faq' && // Exclure la catégorie FAQ principale
+          !b.slug.startsWith('helpconfort-') && // Exclure les catégories HelpConfort
           b.parentId !== faqCategory?.id // Exclure les sous-catégories FAQ
         )
         .sort((a, b) => a.order - b.order)
