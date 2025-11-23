@@ -9,6 +9,7 @@ import { IconPicker } from '@/components/IconPicker';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { LoginDialog } from '@/components/LoginDialog';
+import helpConfortServicesImg from '@/assets/help-confort-services.png';
 
 const supabaseAny = supabase as any;
 import {
@@ -475,9 +476,12 @@ export default function Landing() {
       
       {!isAuthenticated ? (
         <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">Accès protégé</h1>
-            <p className="text-muted-foreground">Veuillez vous connecter pour accéder à cette page</p>
+          <div className="text-center max-w-3xl mx-auto px-4">
+            <img 
+              src={helpConfortServicesImg} 
+              alt="Help Confort Services" 
+              className="w-full max-w-2xl mx-auto"
+            />
           </div>
         </div>
       ) : (
@@ -548,6 +552,15 @@ export default function Landing() {
                 })}
               </div>
             )}
+
+            {/* Help Confort Services Image */}
+            <div className="mt-12 text-center">
+              <img 
+                src={helpConfortServicesImg} 
+                alt="Help Confort Services" 
+                className="w-full max-w-3xl mx-auto"
+              />
+            </div>
 
             {isEditMode && isAdmin && (
               <div className="flex justify-end mt-8">
