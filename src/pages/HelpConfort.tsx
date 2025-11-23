@@ -452,11 +452,17 @@ export default function HelpConfort() {
         ) : null}
 
         {isEditMode && isAdmin && (
-          <div className="flex justify-center mt-8">
+          <div className="flex flex-col items-center gap-3 mt-8">
             <Button onClick={handleAddCategory} size="lg" className="gap-2">
               <Plus className="w-5 h-5" />
               Ajouter une catégorie
             </Button>
+            <Link to="/admin/helpconfort-backup">
+              <Button variant="outline" size="lg" className="gap-2">
+                <Icons.Database className="w-5 h-5" />
+                Sauvegardes HelpConfort
+              </Button>
+            </Link>
           </div>
         )}
 
