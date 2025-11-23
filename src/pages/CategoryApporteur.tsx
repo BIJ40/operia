@@ -238,7 +238,7 @@ export default function CategoryApporteur() {
     if (section.isSingleSection || section.hideTitle) {
       return (
         <div ref={setNodeRef} style={style} className="mb-4">
-          <div className="rounded-lg relative bg-card border-2 p-6 shadow-sm">
+          <div className="rounded-3xl relative border-2 border-accent bg-card p-6 shadow-sm overflow-hidden">
             {isEditMode && (
               <div className="absolute top-2 right-2 flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm">
                 <Button
@@ -314,9 +314,8 @@ export default function CategoryApporteur() {
     // Affichage normal avec accordéon
     return (
       <div ref={setNodeRef} style={style}>
-        <AccordionItem value={section.slug} id={section.slug} className="mb-4">
-          <div className="rounded-lg relative bg-card border-2">
-            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+        <AccordionItem value={section.slug} id={section.slug}>
+            <AccordionTrigger>
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-3 flex-1">
                   <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
@@ -418,13 +417,12 @@ export default function CategoryApporteur() {
                 )}
               </div>
             </AccordionTrigger>
-            <AccordionContent className="px-6 pb-6">
+            <AccordionContent>
               <div
                 className="prose prose-sm max-w-none break-words overflow-visible"
                 dangerouslySetInnerHTML={{ __html: section.content }}
               />
             </AccordionContent>
-          </div>
         </AccordionItem>
       </div>
     );
