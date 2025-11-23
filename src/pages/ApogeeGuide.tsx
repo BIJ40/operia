@@ -248,7 +248,7 @@ export default function ApogeeGuide() {
       blanc: 'bg-white border-gray-300 hover:border-gray-400',
       white: 'bg-white border-gray-300 hover:border-gray-400',
       blue: 'bg-blue-50 border-blue-200 hover:border-blue-300',
-      green: 'bg-green-50 border-green-200 hover:border-green-300',
+      green: 'bg-gradient-to-r from-helpconfort-blue-light/20 to-helpconfort-blue-dark/20 border-accent border-l-4 hover:shadow-xl hover:border-accent/80',
       yellow: 'bg-yellow-50 border-yellow-200 hover:border-yellow-300',
       purple: 'bg-purple-50 border-purple-200 hover:border-purple-300',
       orange: 'bg-orange-50 border-orange-200 hover:border-orange-300',
