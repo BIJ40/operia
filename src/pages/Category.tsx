@@ -514,8 +514,8 @@ export default function Category() {
   };
 
   const getColorClass = (color?: string) => {
-    // Toutes les sections utilisent le style helpconfort : dégradé bleu
-    return 'bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark border border-helpconfort-blue-dark/20';
+    // Toutes les sections utilisent le style helpconfort : dégradé bleu avec bords très arrondis
+    return 'bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark border border-helpconfort-blue-dark/20 rounded-3xl';
   };
 
   // Composant d'accordéon triable
@@ -540,8 +540,8 @@ export default function Category() {
     if (section.isSingleSection || section.contentType === 'tips') {
       return (
         <div ref={setNodeRef} style={style} className="mb-4">
-          <div className={`rounded-lg relative ${getColorClass(section.colorPreset)}`}>
-            <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white rounded-t-lg">
+          <div className={`rounded-3xl relative ${getColorClass(section.colorPreset)}`}>
+            <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white rounded-t-3xl">
               {isEditMode && isAuthenticated && (
                 <div className="absolute top-2 right-2 flex gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
                   <Button
@@ -636,7 +636,7 @@ export default function Category() {
               <h3 className="text-lg font-semibold mb-4 text-white">{section.title}</h3>
             ) : null}
             </div>
-            <div className="p-6 bg-muted/30 rounded-b-lg">
+            <div className="p-6 bg-muted/30 rounded-b-3xl">
             {section.contentType === 'tips' && section.tipsType ? (
               <div>
                 <div className="text-xl mb-3">{getTipIcon(section.tipsType)}</div>
@@ -660,7 +660,7 @@ export default function Category() {
     return (
       <div ref={setNodeRef} style={style}>
         <AccordionItem value={section.id} id={section.id} className="mb-4">
-          <div className={`rounded-lg relative ${getColorClass(section.colorPreset)}`}>
+          <div className={`rounded-3xl relative ${getColorClass(section.colorPreset)}`}>
             <AccordionTrigger className="px-6 py-4 hover:no-underline text-white">
               <div className="flex items-center justify-between w-full text-white">
                 <div className="flex items-center gap-3 flex-1">
@@ -834,7 +834,7 @@ export default function Category() {
                 )}
               </div>
             </AccordionTrigger>
-            <AccordionContent className="px-6 pb-6 bg-muted/30">
+            <AccordionContent className="px-6 pb-6 bg-muted/30 rounded-b-3xl">
               <div
                 className="prose prose-sm max-w-none break-words overflow-visible"
                 dangerouslySetInnerHTML={{ __html: section.content }}
