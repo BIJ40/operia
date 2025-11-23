@@ -487,15 +487,6 @@ export default function Landing() {
       ) : (
         <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
           <div className="container max-w-6xl mx-auto px-4 py-12">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Bienvenue sur Help Confort Services
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Accédez à tous nos guides et ressources
-              </p>
-            </div>
-
             {isEditMode && isAdmin ? (
               <DndContext
                 sensors={sensors}
