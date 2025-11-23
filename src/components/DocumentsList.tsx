@@ -16,7 +16,7 @@ interface Document {
 
 interface DocumentsListProps {
   blockId: string;
-  scope: 'apogee' | 'apporteur';
+  scope: 'apogee' | 'apporteur' | 'helpconfort';
 }
 
 export function DocumentsList({ blockId, scope }: DocumentsListProps) {
@@ -30,7 +30,11 @@ export function DocumentsList({ blockId, scope }: DocumentsListProps) {
   const loadDocuments = async () => {
     try {
       setLoading(true);
-      const column = scope === 'apogee' ? 'block_id' : 'apporteur_block_id';
+      const column = scope === 'apogee' 
+        ? 'block_id' 
+        : scope === 'apporteur'
+        ? 'apporteur_block_id'
+        : 'block_id'; // helpconfort uses block_id too
       
       const { data, error } = await supabase
         .from('documents')
