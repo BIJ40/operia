@@ -176,12 +176,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r" collapsible="icon">
-      <SidebarHeader className="px-3 py-3 border-b">
-        <Link to="/" className="block" onClick={(e) => e.stopPropagation()}>
+      <SidebarHeader className="p-4 border-b">
+        <Link to="/" className="block h-16" onClick={(e) => e.stopPropagation()}>
           <img 
             src={logoApogee} 
             alt="Helpogee" 
-            className="w-full max-h-12 object-contain cursor-pointer hover:opacity-80 transition-opacity"
+            className="w-full h-full object-contain cursor-pointer hover:opacity-80 transition-opacity"
             draggable={false}
             data-no-modal="true"
           />
