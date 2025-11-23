@@ -235,10 +235,12 @@ export default function CategoryApporteur() {
     };
 
     // Si c'est une section figée OU un TIPS avec titre masqué, l'afficher sans accordéon
+    // Si c'est une section figée OU un TIPS avec titre masqué, l'afficher sans accordéon
     if (section.isSingleSection || section.hideTitle) {
+      const isTips = section.hideFromSidebar || section.contentType === 'tips';
       return (
         <div ref={setNodeRef} style={style} className="mb-4">
-          <div className="rounded-3xl relative border-2 border-accent bg-card p-6 shadow-sm overflow-hidden">
+          <div className={`rounded-3xl relative border-2 ${isTips ? 'border-[#0096D6]' : 'border-accent'} bg-card p-6 shadow-sm overflow-hidden`}>
             {isEditMode && (
               <div className="absolute top-2 right-2 flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm">
                 <Button

@@ -538,9 +538,10 @@ export default function Category() {
 
     // Si c'est une section figée OU un TIPS, l'afficher sans accordéon
     if (section.isSingleSection || section.contentType === 'tips') {
+      const isTips = section.contentType === 'tips';
       return (
         <div ref={setNodeRef} style={style} className="mb-4">
-          <div className="rounded-3xl overflow-hidden border-2 border-accent bg-card shadow-sm">
+          <div className={`rounded-3xl overflow-hidden border-2 ${isTips ? 'border-[#0096D6]' : 'border-accent'} bg-card shadow-sm`}>
             <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white relative">
               {isEditMode && isAuthenticated && (
                 <div className="absolute top-2 right-2 flex gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
