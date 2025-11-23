@@ -1,5 +1,4 @@
 // Page dédiée à la Base de connaissance HelpConfort
-import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
@@ -208,7 +207,7 @@ const SortableCategory = ({
 };
 
 export default function HelpConfort() {
-  const { blocks, updateBlock, deleteBlock, addBlock } = useApporteurEditor();
+  const { blocks, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isEditMode } = useEditor();
   const { isAdmin } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -221,9 +220,7 @@ export default function HelpConfort() {
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filtrer uniquement les catégories HelpConfort (à créer)
-  // Pour l'instant vide, les catégories seront créées plus tard
-  const helpconfortCategories = blocks
+  const helpconfortCategories = (blocks as any[])
     .filter(b => b.type === 'category' && b.slug.startsWith('helpconfort-'))
     .sort((a, b) => a.order - b.order);
 
