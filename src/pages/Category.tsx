@@ -514,23 +514,8 @@ export default function Category() {
   };
 
   const getColorClass = (color?: string) => {
-    switch (color) {
-      case 'green': return 'bg-helpconfort-blue-light/20 border-l-4 border-l-accent rounded-full px-6 py-3';
-      case 'yellow': return 'bg-yellow-50 border-l-4 border-l-yellow-500 rounded-full px-4 py-2';
-      case 'red': return 'bg-red-50 border-l-4 border-l-red-500 rounded-full px-4 py-2';
-      case 'blue': return 'bg-blue-50 border-l-4 border-l-blue-500 rounded-full px-4 py-2';
-      case 'purple': return 'bg-purple-50 border-l-4 border-l-purple-500 rounded-full px-4 py-2';
-      case 'pink': return 'bg-pink-50 border-l-4 border-l-pink-500 rounded-full px-4 py-2';
-      case 'orange': return 'bg-orange-50 border-l-4 border-l-orange-500 rounded-full px-4 py-2';
-      case 'cyan': return 'bg-cyan-50 border-l-4 border-l-cyan-500 rounded-full px-4 py-2';
-      case 'indigo': return 'bg-indigo-50 border-l-4 border-l-indigo-500 rounded-full px-4 py-2';
-      case 'teal': return 'bg-teal-50 border-l-4 border-l-teal-500 rounded-full px-4 py-2';
-      case 'rose': return 'bg-rose-50 border-l-4 border-l-rose-500 rounded-full px-4 py-2';
-      case 'gray': return 'bg-gray-50 border-l-4 border-l-gray-400 rounded-full px-4 py-2';
-      case 'blanc': return 'bg-white dark:bg-background border-l-4 border-l-border rounded-full px-4 py-2';
-      case 'white': return 'bg-purple-50 border-l-4 border-l-purple-500 rounded-full px-4 py-2'; // White ancien = violet
-      default: return 'bg-purple-50 border-l-4 border-l-purple-500 rounded-full px-4 py-2'; // Violet par défaut
-    }
+    // Toutes les sections utilisent le style helpconfort : dégradé bleu
+    return 'bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark border border-helpconfort-blue-dark/20';
   };
 
   // Composant d'accordéon triable
@@ -555,9 +540,10 @@ export default function Category() {
     if (section.isSingleSection || section.contentType === 'tips') {
       return (
         <div ref={setNodeRef} style={style} className="mb-4">
-          <div className={`rounded-lg relative ${getColorClass(section.colorPreset)} p-6`}>
-            {isEditMode && isAuthenticated && (
-              <div className="absolute top-2 right-2 flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm">
+          <div className={`rounded-lg relative ${getColorClass(section.colorPreset)}`}>
+            <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white rounded-t-lg">
+              {isEditMode && isAuthenticated && (
+                <div className="absolute top-2 right-2 flex gap-2 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
                 <Button
                   type="button"
                   size="sm"
@@ -641,8 +627,10 @@ export default function Category() {
               </div>
             )}
             {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
-              <h3 className="text-lg font-semibold mb-4">{section.title}</h3>
+              <h3 className="text-lg font-semibold mb-4 text-white">{section.title}</h3>
             ) : null}
+            </div>
+            <div className="p-6 bg-muted/30 rounded-b-lg">
             {section.contentType === 'tips' && section.tipsType ? (
               <div>
                 <div className="text-xl mb-3">{getTipIcon(section.tipsType)}</div>
@@ -657,6 +645,7 @@ export default function Category() {
                 dangerouslySetInnerHTML={{ __html: section.content }}
               />
             )}
+            </div>
           </div>
         </div>
       );
@@ -666,14 +655,14 @@ export default function Category() {
       <div ref={setNodeRef} style={style}>
         <AccordionItem value={section.id} id={section.id} className="mb-4">
           <div className={`rounded-lg relative ${getColorClass(section.colorPreset)}`}>
-            <AccordionTrigger className="px-6 py-4 hover:no-underline">
-              <div className="flex items-center justify-between w-full">
+            <AccordionTrigger className="px-6 py-4 hover:no-underline text-white">
+              <div className="flex items-center justify-between w-full text-white">
                 <div className="flex items-center gap-3 flex-1">
                   {section.showSummary && section.summary ? (
                     <HoverCard openDelay={200}>
                       <HoverCardTrigger asChild>
                         <div 
-                          className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 shrink-0 cursor-help"
+                          className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-white shrink-0 cursor-help"
                           onClick={(e) => {
                             if (isEditMode && isAuthenticated) {
                               e.stopPropagation();
@@ -691,9 +680,9 @@ export default function Category() {
                       </HoverCardContent>
                     </HoverCard>
                   ) : (
-                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+                    <ChevronDown className="h-4 w-4 shrink-0 text-white transition-transform duration-200" />
                   )}
-                  <h2 className="text-xl font-semibold text-left">
+                  <h2 className="text-xl font-semibold text-left text-white">
                     {section.title}
                   </h2>
                 </div>
@@ -833,7 +822,7 @@ export default function Category() {
                 )}
               </div>
             </AccordionTrigger>
-            <AccordionContent className="px-6 pb-6">
+            <AccordionContent className="px-6 pb-6 bg-muted/30">
               <div
                 className="prose prose-sm max-w-none break-words overflow-visible"
                 dangerouslySetInnerHTML={{ __html: section.content }}
