@@ -515,21 +515,21 @@ export default function Category() {
 
   const getColorClass = (color?: string) => {
     switch (color) {
-      case 'green': return 'bg-green-50 border-l-4 border-l-green-500';
-      case 'yellow': return 'bg-yellow-50 border-l-4 border-l-yellow-500';
-      case 'red': return 'bg-red-50 border-l-4 border-l-red-500';
-      case 'blue': return 'bg-blue-50 border-l-4 border-l-blue-500';
-      case 'purple': return 'bg-purple-50 border-l-4 border-l-purple-500';
-      case 'pink': return 'bg-pink-50 border-l-4 border-l-pink-500';
-      case 'orange': return 'bg-orange-50 border-l-4 border-l-orange-500';
-      case 'cyan': return 'bg-cyan-50 border-l-4 border-l-cyan-500';
-      case 'indigo': return 'bg-indigo-50 border-l-4 border-l-indigo-500';
-      case 'teal': return 'bg-teal-50 border-l-4 border-l-teal-500';
-      case 'rose': return 'bg-rose-50 border-l-4 border-l-rose-500';
-      case 'gray': return 'bg-gray-50 border-l-4 border-l-gray-400';
-      case 'blanc': return 'bg-white dark:bg-background border-l-4 border-l-border';
-      case 'white': return 'bg-purple-50 border-l-4 border-l-purple-500'; // White ancien = violet
-      default: return 'bg-purple-50 border-l-4 border-l-purple-500'; // Violet par défaut
+      case 'green': return 'border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2';
+      case 'yellow': return 'bg-yellow-50 border-l-4 border-l-yellow-500 rounded-full px-4 py-2';
+      case 'red': return 'bg-red-50 border-l-4 border-l-red-500 rounded-full px-4 py-2';
+      case 'blue': return 'bg-blue-50 border-l-4 border-l-blue-500 rounded-full px-4 py-2';
+      case 'purple': return 'bg-purple-50 border-l-4 border-l-purple-500 rounded-full px-4 py-2';
+      case 'pink': return 'bg-pink-50 border-l-4 border-l-pink-500 rounded-full px-4 py-2';
+      case 'orange': return 'bg-orange-50 border-l-4 border-l-orange-500 rounded-full px-4 py-2';
+      case 'cyan': return 'bg-cyan-50 border-l-4 border-l-cyan-500 rounded-full px-4 py-2';
+      case 'indigo': return 'bg-indigo-50 border-l-4 border-l-indigo-500 rounded-full px-4 py-2';
+      case 'teal': return 'bg-teal-50 border-l-4 border-l-teal-500 rounded-full px-4 py-2';
+      case 'rose': return 'bg-rose-50 border-l-4 border-l-rose-500 rounded-full px-4 py-2';
+      case 'gray': return 'bg-gray-50 border-l-4 border-l-gray-400 rounded-full px-4 py-2';
+      case 'blanc': return 'bg-white dark:bg-background border-l-4 border-l-border rounded-full px-4 py-2';
+      case 'white': return 'bg-purple-50 border-l-4 border-l-purple-500 rounded-full px-4 py-2'; // White ancien = violet
+      default: return 'bg-purple-50 border-l-4 border-l-purple-500 rounded-full px-4 py-2'; // Violet par défaut
     }
   };
 
