@@ -70,15 +70,15 @@ const commonIcons = [
   
   // Weather & Nature
   'Sun', 'Moon', 'Cloud', 'CloudRain', 'CloudSnow', 'CloudDrizzle',
-  'CloudLightning', 'Wind', 'Droplet', 'Droplets', 'Snowflake', 'Thermometer',
+  'CloudLightning', 'Wind', 'Droplet', 'Droplets', 'Snowflake',
   'Waves', 'Trees', 'Flower', 'Leaf', 'Bug', 'Bird',
   
   // Status & Alerts
   'Bell', 'BellOff', 'AlertCircle', 'AlertTriangle', 'Info', 'HelpCircle',
-  'CheckCircle2', 'XOctagon', 'AlertOctagon', 'Construction', 'ShieldAlert', 'Siren',
+  'CheckCircle2', 'XOctagon', 'AlertOctagon', 'Construction', 'Siren',
   
   // Tools & Settings
-  'Wrench', 'Settings', 'Settings2', 'Sliders', 'Tool', 'Hammer',
+  'Wrench', 'Settings2', 'Sliders', 'Tool', 'Hammer',
   'Paintbrush', 'Palette', 'Pipette', 'Scissors', 'Ruler', 'Pen',
   
   // Social & Sharing
@@ -86,16 +86,16 @@ const commonIcons = [
   'Github', 'Twitter', 'Facebook', 'Instagram', 'Linkedin', 'Youtube',
   
   // Health & Medical
-  'Heart', 'HeartPulse', 'Activity', 'Pill', 'Syringe', 'Stethoscope',
-  'Thermometer', 'Zap', 'Battery', 'BatteryCharging', 'BatteryFull', 'BatteryLow',
+  'HeartPulse', 'Pill', 'Syringe', 'Stethoscope',
+  'Zap', 'Battery', 'BatteryCharging', 'BatteryFull', 'BatteryLow',
   
   // Food & Dining
   'Coffee', 'Pizza', 'Utensils', 'UtensilsCrossed', 'Cookie', 'Beef',
   'Cherry', 'Grape', 'Apple', 'Carrot', 'Fish', 'Egg',
   
   // Miscellaneous
-  'Rocket', 'Zap', 'Sparkles', 'Flame', 'Lightbulb', 'Lamp',
-  'Glasses', 'Shirt', 'Watch', 'Crown', 'Diamond', 'Gem',
+  'Rocket', 'Sparkles', 'Flame', 'Lightbulb', 'Lamp',
+  'Glasses', 'Shirt', 'Crown', 'Diamond', 'Gem',
   'Box', 'Boxes', 'Maximize', 'Minimize', 'Move', 'Grab',
 ];
 
