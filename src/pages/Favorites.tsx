@@ -3,9 +3,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, Trash2, ExternalLink } from 'lucide-react';
+import { Heart, Trash2, ExternalLink, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 interface Favorite {
   id: string;
@@ -17,11 +23,16 @@ interface Favorite {
   created_at: string;
 }
 
+interface FavoriteWithContent extends Favorite {
+  content: string;
+  color_preset: string;
+}
+
 export default function Favorites() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteWithContent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,15 +48,46 @@ export default function Favorites() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // Charger les favoris
+      const { data: favoritesData, error: favoritesError } = await supabase
         .from('favorites')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (favoritesError) throw favoritesError;
 
-      setFavorites(data || []);
+      if (!favoritesData || favoritesData.length === 0) {
+        setFavorites([]);
+        setLoading(false);
+        return;
+      }
+
+      // Récupérer le contenu des blocks
+      const blockIds = favoritesData.map(f => f.block_id);
+      const { data: blocksData, error: blocksError } = await supabase
+        .from('blocks')
+        .select('id, content, color_preset')
+        .in('id', blockIds);
+
+      if (blocksError) throw blocksError;
+
+      // Créer une map des blocks pour un accès rapide
+      const blocksMap = new Map(
+        blocksData?.map(block => [block.id, block]) || []
+      );
+
+      // Combiner les données
+      const favoritesWithContent = favoritesData.map(favorite => {
+        const block = blocksMap.get(favorite.block_id);
+        return {
+          ...favorite,
+          content: block?.content || '<p>Contenu non disponible</p>',
+          color_preset: block?.color_preset || 'white',
+        };
+      });
+
+      setFavorites(favoritesWithContent);
     } catch (error) {
       console.error('Error loading favorites:', error);
       toast({
@@ -123,46 +165,74 @@ export default function Favorites() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {favorites.map((favorite) => (
-                  <Card key={favorite.id} className="border-2 hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-lg truncate mb-1">
-                            {favorite.block_title}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {favorite.scope === 'apporteurs-nationaux' ? 'Guide Apporteurs' : 'Guide Apogée'} 
-                            {' • '}
-                            {new Date(favorite.created_at).toLocaleDateString('fr-FR')}
-                          </p>
+              <Accordion type="multiple" className="space-y-4">
+                {favorites.map((favorite) => {
+                  const colorClasses = {
+                    white: 'bg-white',
+                    blue: 'bg-helpconfort-blue-light',
+                    orange: 'bg-helpconfort-orange',
+                    green: 'bg-helpconfort-green',
+                    yellow: 'bg-helpconfort-yellow',
+                    red: 'bg-helpconfort-red',
+                  }[favorite.color_preset] || 'bg-white';
+
+                  return (
+                    <AccordionItem 
+                      key={favorite.id} 
+                      value={favorite.id}
+                      className="border-2 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                    >
+                      <AccordionTrigger className={`${colorClasses} px-6 hover:no-underline group`}>
+                        <div className="flex items-center justify-between w-full gap-4">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <Heart className="w-5 h-5 text-red-500 fill-red-500 shrink-0" />
+                            <div className="flex-1 text-left min-w-0">
+                              <h3 className="font-semibold text-lg text-white truncate">
+                                {favorite.block_title}
+                              </h3>
+                              <p className="text-sm text-white/80">
+                                {favorite.scope === 'apporteurs-nationaux' ? 'Guide Apporteurs' : 'Guide Apogée'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleNavigateToSection(favorite);
+                              }}
+                              variant="outline"
+                              size="icon"
+                              title="Voir dans la catégorie"
+                              className="border-white/50 hover:bg-white/10 hover:text-white transition-all duration-200 text-white"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveFavorite(favorite.id);
+                              }}
+                              variant="outline"
+                              size="icon"
+                              title="Retirer des favoris"
+                              className="border-white/50 hover:bg-red-500 hover:text-white transition-all duration-200 text-white"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            onClick={() => handleNavigateToSection(favorite)}
-                            variant="outline"
-                            size="icon"
-                            title="Voir la section"
-                            className="border-helpconfort-blue-main hover:bg-helpconfort-blue-main hover:text-white transition-all duration-200"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            onClick={() => handleRemoveFavorite(favorite.id)}
-                            variant="outline"
-                            size="icon"
-                            title="Retirer des favoris"
-                            className="border-destructive hover:bg-destructive hover:text-destructive-foreground transition-all duration-200"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="bg-card p-6">
+                        <div
+                          className="prose prose-sm max-w-none break-words overflow-visible"
+                          dangerouslySetInnerHTML={{ __html: favorite.content }}
+                        />
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
             )}
           </CardContent>
         </Card>
