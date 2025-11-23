@@ -185,11 +185,11 @@ export function AppSidebarApporteur() {
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton
-                          className={`w-full bg-white hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200 ${isActive ? 'border-2 border-[#FF6B35] rounded-lg' : ''}`}
+                          className={`w-full bg-white hover:border-2 hover:border-[#FF6B35] hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isActive ? 'border-2 border-[#FF6B35] rounded-lg' : ''}`}
                         >
                           {Icon ? (
                             <Icon 
-                              className="w-4 h-4 mr-2 cursor-pointer hover:opacity-70" 
+                              className="w-4 h-4 mr-2 cursor-pointer group-hover:rotate-12 group-hover:scale-110 transition-all duration-200" 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 window.location.href = categoryPath;
@@ -199,7 +199,7 @@ export function AppSidebarApporteur() {
                             <img 
                               src={category.icon} 
                               alt="" 
-                              className="w-4 h-4 mr-2 object-contain cursor-pointer hover:opacity-70" 
+                              className="w-4 h-4 mr-2 object-contain cursor-pointer group-hover:rotate-12 group-hover:scale-110 transition-all duration-200" 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 window.location.href = categoryPath;
@@ -207,11 +207,11 @@ export function AppSidebarApporteur() {
                             />
                           ) : null}
                           {(category.showTitleInMenu !== false) && (
-                            <span className="flex-1 text-left">{category.title}</span>
+                            <span className="flex-1 text-left group-hover:translate-x-1 transition-transform duration-200">{category.title}</span>
                           )}
                           {categorySubcategories.length > 0 && (
                             <ChevronRight 
-                              className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-90' : ''}`} 
+                              className={`w-4 h-4 transition-transform duration-200 group-hover:scale-125 ${isOpen ? 'rotate-90' : ''}`} 
                             />
                           )}
                         </SidebarMenuButton>
@@ -236,10 +236,10 @@ export function AppSidebarApporteur() {
                                     <div className="flex items-center w-full">
                                       <SidebarMenuSubButton
                                         asChild
-                                        className={`flex-1 hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200 ${isSubActive ? 'border-2 border-[#FF6B35] rounded-lg' : ''}`}
+                                        className={`flex-1 hover:border-2 hover:border-[#0096D6] hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isSubActive ? 'border-2 border-[#0096D6] rounded-lg' : ''}`}
                                       >
                                         <Link to={subcategoryPath}>
-                                          <span className="flex-1">{subcategory.title}</span>
+                                          <span className="flex-1 group-hover:translate-x-1 transition-transform duration-200">{subcategory.title}</span>
                                         </Link>
                                       </SidebarMenuSubButton>
                                       {subcategorySections.length > 0 && (
@@ -265,10 +265,10 @@ export function AppSidebarApporteur() {
                                               <SidebarMenuSubItem key={section.id}>
                                                 <SidebarMenuSubButton
                                                   asChild
-                                                  className={`hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200 ${isSectionActive ? 'border-2 border-[#FF6B35] rounded-lg' : ''}`}
+                                                  className={`hover:border-2 hover:border-[#0096D6] hover:rounded-lg hover:scale-105 transition-all duration-200 group ${isSectionActive ? 'border-2 border-[#0096D6] rounded-lg' : ''}`}
                                                 >
                                                   <Link to={sectionPath}>
-                                                    {section.title}
+                                                    <span className="group-hover:translate-x-1 transition-transform duration-200">{section.title}</span>
                                                   </Link>
                                                 </SidebarMenuSubButton>
                                               </SidebarMenuSubItem>

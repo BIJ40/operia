@@ -208,16 +208,16 @@ export function AppSidebar() {
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton className="w-full bg-white text-foreground hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200">
+                          <SidebarMenuButton className="w-full bg-white text-foreground hover:border-2 hover:border-[#FF6B35] hover:rounded-lg hover:scale-105 transition-all duration-200 group">
                             <Icon 
-                              className="h-4 w-4 shrink-0 cursor-pointer hover:opacity-70" 
+                              className="h-4 w-4 shrink-0 cursor-pointer group-hover:rotate-12 group-hover:scale-110 transition-all duration-200" 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(`/apogee/category/${category.slug}`);
                               }}
                             />
-                            <span className="flex-1 text-left truncate">{category.title}</span>
-                            <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200" 
+                            <span className="flex-1 text-left truncate group-hover:translate-x-1 transition-transform duration-200">{category.title}</span>
+                            <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-125" 
                               style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }} 
                             />
                           </SidebarMenuButton>
@@ -228,9 +228,9 @@ export function AppSidebar() {
                               <SidebarMenuSubItem key={section.id}>
                                 <SidebarMenuSubButton
                                   onClick={() => handleSectionClick(section.id, category.slug)}
-                                  className="cursor-pointer hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200"
+                                  className="cursor-pointer hover:border-2 hover:border-[#0096D6] hover:rounded-lg hover:scale-105 transition-all duration-200 group"
                                 >
-                                  <span className="text-sm">{section.title}</span>
+                                  <span className="text-sm group-hover:translate-x-1 transition-transform duration-200">{section.title}</span>
                                 </SidebarMenuSubButton>
                               </SidebarMenuSubItem>
                             ))}
@@ -255,10 +255,10 @@ export function AppSidebar() {
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton className="w-full bg-white text-foreground hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200">
-                            <Icon className="h-4 w-4 shrink-0" />
-                            <span className="flex-1 text-left truncate">{category.title}</span>
-                            <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200" 
+                          <SidebarMenuButton className="w-full bg-white text-foreground hover:border-2 hover:border-[#FF6B35] hover:rounded-lg hover:scale-105 transition-all duration-200 group">
+                            <Icon className="h-4 w-4 shrink-0 group-hover:rotate-12 group-hover:scale-110 transition-all duration-200" />
+                            <span className="flex-1 text-left truncate group-hover:translate-x-1 transition-transform duration-200">{category.title}</span>
+                            <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-125" 
                               style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }} 
                             />
                           </SidebarMenuButton>
@@ -272,9 +272,9 @@ export function AppSidebar() {
                                     e.preventDefault();
                                     handleSectionClick(section.id, category.id);
                                   }}
-                                  className="cursor-pointer hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200"
+                                  className="cursor-pointer hover:border-2 hover:border-[#0096D6] hover:rounded-lg hover:scale-105 transition-all duration-200 group"
                                 >
-                                  <span className="text-sm">{section.title}</span>
+                                  <span className="text-sm group-hover:translate-x-1 transition-transform duration-200">{section.title}</span>
                                 </SidebarMenuSubButton>
                               </SidebarMenuSubItem>
                             ))}
