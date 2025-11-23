@@ -659,9 +659,10 @@ export default function Category() {
 
     return (
       <div ref={setNodeRef} style={style}>
-        <AccordionItem value={section.id} id={section.id} className="mb-4">
-          <div className={`rounded-3xl relative ${getColorClass(section.colorPreset)}`}>
-            <AccordionTrigger className="px-6 py-4 hover:no-underline text-white">
+        <AccordionItem value={section.id} id={section.id} className="mb-4 border-none">
+          <div className="rounded-3xl overflow-hidden border border-helpconfort-blue-dark/20">
+            <div className="bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark">
+            <AccordionTrigger className="px-6 py-4 hover:no-underline text-white [&[data-state=open]]:rounded-b-none">
               <div className="flex items-center justify-between w-full text-white">
                 <div className="flex items-center gap-3 flex-1">
                   {section.showSummary && section.summary ? (
@@ -834,7 +835,8 @@ export default function Category() {
                 )}
               </div>
             </AccordionTrigger>
-            <AccordionContent className="px-6 pb-6 bg-muted/30 rounded-b-3xl">
+            </div>
+            <AccordionContent className="px-6 pb-6 bg-muted">
               <div
                 className="prose prose-sm max-w-none break-words overflow-visible"
                 dangerouslySetInnerHTML={{ __html: section.content }}
