@@ -119,13 +119,35 @@ const SortableCard = ({
       className="group relative border-2 border-blue-200 bg-blue-50 rounded-full px-6 py-3 hover:shadow-lg hover:border-blue-300 transition-all flex items-center gap-3"
     >
       {isEditMode && (
-        <div
-          {...attributes}
-          {...listeners}
-          className="absolute top-2 left-2 cursor-grab active:cursor-grabbing z-10"
-        >
-          <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
-        </div>
+        <>
+          <div
+            {...attributes}
+            {...listeners}
+            className="absolute top-2 left-2 cursor-grab active:cursor-grabbing z-10"
+          >
+            <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
+          </div>
+          {editingId !== card.id && (
+            <div className="absolute top-10 left-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <Button
+                onClick={() => onEdit(card.id)}
+                size="icon"
+                variant="outline"
+                className="h-7 w-7"
+              >
+                <Icons.Edit className="w-3 h-3" />
+              </Button>
+              <Button
+                onClick={() => onDelete(card.id)}
+                size="icon"
+                variant="destructive"
+                className="h-7 w-7"
+              >
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+        </>
       )}
       
       {editingId === card.id ? (
@@ -193,24 +215,6 @@ const SortableCard = ({
               <p className="text-xs text-muted-foreground">{card.description}</p>
             </div>
           </Link>
-          {isEditMode && (
-            <div className="flex gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                onClick={() => onEdit(card.id)}
-                size="sm"
-                variant="outline"
-              >
-                Modifier
-              </Button>
-              <Button
-                onClick={() => onDelete(card.id)}
-                size="sm"
-                variant="destructive"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
         </>
       )}
     </div>
