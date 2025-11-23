@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
+import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -348,8 +349,9 @@ export default function HelpConfort() {
     : helpconfortCategories;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <div className="container max-w-6xl mx-auto px-4 py-8">
+    <Layout sidebarType="helpconfort">
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+        <div className="container max-w-6xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Base de connaissance HelpConfort
@@ -475,9 +477,9 @@ export default function HelpConfort() {
           </div>
         )}
 
-      </div>
+        </div>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
@@ -493,6 +495,7 @@ export default function HelpConfort() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </Layout>
   );
 }
