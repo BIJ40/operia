@@ -31,85 +31,69 @@ export function Header() {
 
   return (
     <>
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          {isAuthenticated && (
-            <>
-              <Link 
-                to="/" 
-                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-              >
-                <Home className="w-5 h-5 text-primary" />
-                <span className="font-semibold text-foreground">ACCUEIL</span>
-              </Link>
+      {isAuthenticated ? (
+        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+            <Link 
+              to="/" 
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+            >
+              <Home className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-foreground">ACCUEIL</span>
+            </Link>
 
-              <Link 
-                to="/apogee" 
-                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-              >
-                <span className="font-semibold text-foreground">APOGEE</span>
-              </Link>
+            <Link 
+              to="/apogee" 
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+            >
+              <span className="font-semibold text-foreground">APOGEE</span>
+            </Link>
 
-              <Link 
-                to="/apporteurs" 
-                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-              >
-                <span className="font-semibold text-foreground">APPORTEURS</span>
-              </Link>
+            <Link 
+              to="/apporteurs" 
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+            >
+              <span className="font-semibold text-foreground">APPORTEURS</span>
+            </Link>
 
-              <Link 
-                to="/" 
-                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-              >
-                <span className="font-semibold text-foreground">HELPCONFORT</span>
-              </Link>
-            </>
-          )}
+            <Link 
+              to="/" 
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+            >
+              <span className="font-semibold text-foreground">HELPCONFORT</span>
+            </Link>
 
-          {isAdmin && (
-            <>
-              <Button
-                onClick={handleEnrichirClick}
-                variant="ghost"
-                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-              >
-                {isEditMode ? (
-                  <>
-                    <Square className="w-5 h-5 text-destructive" />
-                    <span className="font-semibold text-foreground">STOP</span>
-                  </>
-                ) : (
-                  <>
-                    <Edit3 className="w-5 h-5 text-primary" />
-                    <span className="font-semibold text-foreground">ENRICHIR</span>
-                  </>
-                )}
-              </Button>
+            {isAdmin && (
+              <>
+                <Button
+                  onClick={handleEnrichirClick}
+                  variant="ghost"
+                  className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+                >
+                  {isEditMode ? (
+                    <>
+                      <Square className="w-5 h-5 text-destructive" />
+                      <span className="font-semibold text-foreground">STOP</span>
+                    </>
+                  ) : (
+                    <>
+                      <Edit3 className="w-5 h-5 text-primary" />
+                      <span className="font-semibold text-foreground">ENRICHIR</span>
+                    </>
+                  )}
+                </Button>
 
-              <Link
-                to="/admin/documents"
-                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-              >
-                <Settings className="w-5 h-5 text-primary" />
-                <span className="font-semibold text-foreground">ADMIN</span>
-              </Link>
-            </>
-          )}
-
-          <div className="ml-auto flex items-center gap-2">
-            {!isAuthenticated && (
-              <Button
-                onClick={() => setLoginOpen(true)}
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-foreground"
-                title="Connexion administrateur"
-              >
-                <LogIn className="w-5 h-5" />
-              </Button>
+                <Link
+                  to="/admin/documents"
+                  className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+                >
+                  <Settings className="w-5 h-5 text-primary" />
+                  <span className="font-semibold text-foreground">ADMIN</span>
+                </Link>
+              </>
             )}
 
-            {isAuthenticated && (
+            <div className="ml-auto flex items-center gap-2">
               <Button
                 onClick={logout}
                 variant="ghost"
@@ -118,10 +102,24 @@ export function Header() {
                 <LogOut className="w-5 h-5 text-muted-foreground" />
                 <span className="font-semibold text-foreground">QUITTER</span>
               </Button>
-            )}
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      ) : (
+        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-2 flex items-center justify-end">
+            <Button
+              onClick={() => setLoginOpen(true)}
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground"
+              title="Connexion administrateur"
+            >
+              <LogIn className="w-5 h-5" />
+            </Button>
+          </div>
+        </header>
+      )}
       
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </>
