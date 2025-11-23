@@ -31,7 +31,7 @@ export function Header() {
 
   return (
     <>
-      {isAuthenticated ? (
+      {isAdmin && (
         <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4 flex items-center gap-4">
             <Link 
@@ -63,35 +63,31 @@ export function Header() {
               <span className="font-semibold text-foreground">HELPCONFORT</span>
             </Link>
 
-            {isAdmin && (
-              <>
-                <Button
-                  onClick={handleEnrichirClick}
-                  variant="ghost"
-                  className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-                >
-                  {isEditMode ? (
-                    <>
-                      <Square className="w-5 h-5 text-destructive" />
-                      <span className="font-semibold text-foreground">STOP</span>
-                    </>
-                  ) : (
-                    <>
-                      <Edit3 className="w-5 h-5 text-primary" />
-                      <span className="font-semibold text-foreground">ENRICHIR</span>
-                    </>
-                  )}
-                </Button>
+            <Button
+              onClick={handleEnrichirClick}
+              variant="ghost"
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+            >
+              {isEditMode ? (
+                <>
+                  <Square className="w-5 h-5 text-destructive" />
+                  <span className="font-semibold text-foreground">STOP</span>
+                </>
+              ) : (
+                <>
+                  <Edit3 className="w-5 h-5 text-primary" />
+                  <span className="font-semibold text-foreground">ENRICHIR</span>
+                </>
+              )}
+            </Button>
 
-                <Link
-                  to="/admin/documents"
-                  className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
-                >
-                  <Settings className="w-5 h-5 text-primary" />
-                  <span className="font-semibold text-foreground">ADMIN</span>
-                </Link>
-              </>
-            )}
+            <Link
+              to="/admin/documents"
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+            >
+              <Settings className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-foreground">ADMIN</span>
+            </Link>
 
             <div className="ml-auto flex items-center gap-2">
               <Button
@@ -105,21 +101,26 @@ export function Header() {
             </div>
           </div>
         </header>
-      ) : (
+      )}
+
+      {!isAdmin && (
         <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
           <div className="container mx-auto px-4 py-2 flex items-center justify-end">
-            <Button
-              onClick={() => setLoginOpen(true)}
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground"
-              title="Connexion administrateur"
-            >
-              <LogIn className="w-5 h-5" />
-            </Button>
+            {!isAuthenticated && (
+              <Button
+                onClick={() => setLoginOpen(true)}
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground"
+                title="Connexion administrateur"
+              >
+                <LogIn className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         </header>
       )}
+
       
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </>
