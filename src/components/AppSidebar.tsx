@@ -194,9 +194,10 @@ export function AppSidebar() {
         <SidebarGroup>
           <Link 
             to="/apogee" 
-            className="mx-2 mb-3 px-3 py-1.5 text-sm text-muted-foreground hover:text-helpconfort-blue-main hover:bg-helpconfort-orange/10 rounded transition-all duration-200"
+            className="mx-2 mb-3 px-4 py-2 text-sm font-semibold bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
           >
-            ← Retour accueil
+            <Icons.Home className="w-4 h-4 text-primary" />
+            <span>Retour accueil</span>
           </Link>
           
           {/* Favoris comme catégorie spéciale */}
