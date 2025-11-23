@@ -116,7 +116,7 @@ const SortableCard = ({
     <div
       ref={setNodeRef}
       style={style}
-      className="group relative border-2 border-blue-200 bg-blue-50 rounded-full p-6 hover:shadow-lg hover:border-blue-300 transition-all flex flex-col items-center justify-center min-h-[120px]"
+      className="group relative border-2 border-blue-200 bg-blue-50 rounded-full px-6 py-3 hover:shadow-lg hover:border-blue-300 transition-all flex items-center gap-3"
     >
       {isEditMode && (
         <div
@@ -186,9 +186,12 @@ const SortableCard = ({
         </div>
       ) : (
         <>
-          <Link to={card.link} className="block">
-            <h2 className="text-2xl font-bold mb-2 text-center">{card.title}</h2>
-            <p className="text-sm text-muted-foreground text-center">{card.description}</p>
+          <Link to={card.link} className="flex items-center gap-3">
+            <Icon className="w-8 h-8 text-blue-600 flex-shrink-0" />
+            <div className="flex-1">
+              <h2 className="text-xl font-bold">{card.title}</h2>
+              <p className="text-xs text-muted-foreground">{card.description}</p>
+            </div>
           </Link>
           {isEditMode && (
             <div className="flex gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -532,10 +535,13 @@ export default function Landing() {
                     <Link
                       key={card.id}
                       to={card.link}
-                      className="group relative border-2 border-blue-200 bg-blue-50 rounded-full p-6 hover:shadow-lg hover:border-blue-300 transition-all flex flex-col items-center justify-center min-h-[120px]"
+                      className="group relative border-2 border-blue-200 bg-blue-50 rounded-full px-6 py-3 hover:shadow-lg hover:border-blue-300 transition-all flex items-center gap-3"
                     >
-                      <h2 className="text-2xl font-bold text-foreground mb-2 text-center">{card.title}</h2>
-                      <p className="text-sm text-muted-foreground text-center">{card.description}</p>
+                      <Icon className="w-8 h-8 text-blue-600 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h2 className="text-xl font-bold text-foreground">{card.title}</h2>
+                        <p className="text-xs text-muted-foreground">{card.description}</p>
+                      </div>
                     </Link>
                   );
                 })}
