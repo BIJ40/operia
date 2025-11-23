@@ -116,7 +116,7 @@ export function FavoriteButton({ blockId, blockTitle, blockSlug, categorySlug, s
       className={`transition-all duration-200 ${
         isFavorite 
           ? 'text-red-500 hover:text-red-600' 
-          : 'text-muted-foreground hover:text-red-500'
+          : 'text-orange-500 hover:text-orange-600'
       }`}
       title={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
     >
