@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronRight } from 'lucide-react';
-import logoApogee from '@/assets/logo_helpogee.png';
+import logoApogee from '@/assets/logo-apogee.png';
 import { supabase } from '@/integrations/supabase/client';
 import { useEditor } from '@/contexts/EditorContext';
 
