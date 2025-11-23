@@ -61,6 +61,14 @@ export default {
           DEFAULT: "hsl(var(--cyan))",
           foreground: "hsl(var(--cyan-foreground))",
         },
+        helpconfort: {
+          blue: {
+            light: "hsl(var(--blue-light))",
+            main: "hsl(var(--blue-main))",
+            dark: "hsl(var(--blue-dark))",
+          },
+          orange: "hsl(var(--orange-accent))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
