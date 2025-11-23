@@ -77,7 +77,7 @@ export default function Category() {
   }
 
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const { toast } = useToast();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
@@ -528,7 +528,7 @@ export default function Category() {
         <div ref={setNodeRef} style={style} className="mb-4">
           <div className={`rounded-3xl overflow-hidden border-2 ${isTips ? 'border-[#0096D6]' : 'border-accent'} bg-card shadow-sm`}>
             <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white relative">
-              {isEditMode && isAuthenticated && (
+              {isEditMode && isAdmin && (
                 <div className="absolute top-2 right-2 flex gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
                   <Button
                     type="button"
@@ -618,7 +618,7 @@ export default function Category() {
                     </Button>
               </div>
             )}
-            {!isEditMode && isTips && (
+            {!isEditMode && !isAdmin && isTips && (
               <div className="absolute top-2 right-2">
                 <FavoriteButton
                   blockId={section.id}
@@ -632,7 +632,7 @@ export default function Category() {
             {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
               <div className="flex items-center justify-between gap-2 w-full">
                 <h3 className="text-lg font-semibold text-white flex-1">{section.title}</h3>
-                {!isEditMode && (
+                {!isEditMode && !isAdmin && (
                   <FavoriteButton
                     blockId={section.id}
                     blockTitle={section.title}
@@ -667,7 +667,7 @@ export default function Category() {
                         <div 
                           className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-white shrink-0 cursor-help"
                           onClick={(e) => {
-                            if (isEditMode && isAuthenticated) {
+                            if (isEditMode && isAdmin) {
                               e.stopPropagation();
                               e.preventDefault();
                               setEditingId(section.id);
@@ -688,7 +688,7 @@ export default function Category() {
                   <h2 className="text-xl font-semibold text-left text-white">
                     {section.title}
                   </h2>
-                  {!isEditMode && (
+                  {!isEditMode && !isAdmin && (
                     <div onClick={(e) => e.stopPropagation()}>
                       <FavoriteButton
                         blockId={section.id}
@@ -700,7 +700,7 @@ export default function Category() {
                     </div>
                   )}
                 </div>
-                {isEditMode && isAuthenticated && (
+                {isEditMode && isAdmin && (
                   <div 
                     className="flex gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm"
                     onMouseDown={(e) => {
@@ -859,7 +859,7 @@ export default function Category() {
       <div className="container max-w-4xl mx-auto p-8">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold">{category.title}</h1>
-          {isEditMode && isAuthenticated && (
+          {isEditMode && isAdmin && (
             <div className="flex gap-2">
               <Button 
                 onClick={() => handleAddSection()} 
