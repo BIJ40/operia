@@ -218,7 +218,7 @@ export function AppSidebarApporteur() {
                       </CollapsibleTrigger>
                       
                       {categorySubcategories.length > 0 && (
-                        <CollapsibleContent className="overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                        <CollapsibleContent className="overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down data-[state=closed]:opacity-0 data-[state=open]:animate-fade-in">
                           <SidebarMenuSub>
                             {categorySubcategories.map((subcategory) => {
                               const subcategorySections = blockSections.filter(s => s.parentId === subcategory.id);
@@ -254,7 +254,7 @@ export function AppSidebarApporteur() {
                                     </div>
                                     
                                     {subcategorySections.length > 0 && (
-                                      <CollapsibleContent className="overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                                      <CollapsibleContent className="overflow-hidden transition-all duration-300 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down data-[state=closed]:opacity-0 data-[state=open]:animate-fade-in">
                                         <SidebarMenuSub className="ml-2">
                                           {subcategorySections.map((section) => {
                                             const sectionPath = `/apporteurs/category/${category.slug}/sub/${subcategory.slug}#${section.slug}`;
