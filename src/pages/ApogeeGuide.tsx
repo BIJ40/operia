@@ -107,20 +107,42 @@ const SortableCategory = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(category.colorPreset)}`}
+      className={`group relative border-2 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 ${getColorClass(category.colorPreset)}`}
     >
       {isEditMode && (
-        <div
-          {...attributes}
-          {...listeners}
-          className="absolute top-2 left-2 cursor-grab active:cursor-grabbing z-10"
-        >
-          <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
-        </div>
+        <>
+          <div
+            {...attributes}
+            {...listeners}
+            className="absolute top-2 left-2 cursor-grab active:cursor-grabbing z-10"
+          >
+            <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
+          </div>
+          {editingId !== category.id && (
+            <div className="absolute top-10 left-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <Button
+                onClick={() => onEdit(category.id)}
+                size="icon"
+                variant="outline"
+                className="h-7 w-7"
+              >
+                <Icons.Edit className="w-3 h-3" />
+              </Button>
+              <Button
+                onClick={() => onDelete(category.id)}
+                size="icon"
+                variant="destructive"
+                className="h-7 w-7"
+              >
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+        </>
       )}
       
       {editingId === category.id ? (
-        <div className="space-y-3">
+        <div className="space-y-3 w-full">
           <Input
             value={editTitle}
             onChange={(e) => onEditTitleChange(e.target.value)}
@@ -164,48 +186,22 @@ const SortableCategory = ({
           </div>
         </div>
       ) : (
-        <>
-          <Link to={`/apogee/category/${category.slug}`} className="block">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="p-3 bg-background/50 rounded-lg flex items-center justify-center">
-                {editImageUrl || (isCustomImage && category.icon) ? (
-                  <img 
-                    src={editImageUrl || category.icon} 
-                    alt={category.title} 
-                    className="w-[30px] h-[30px] object-contain" 
-                  />
-                ) : (
-                  <Icon className="w-[30px] h-[30px] text-primary" />
-                )}
-              </div>
-              {(category.showTitleOnCard !== false) && (
-                <h3 className="text-xl font-semibold text-foreground flex-1">
-                  {category.title}
-                </h3>
-              )}
-            </div>
-          </Link>
-
-          {isEditMode && (
-            <div className="flex gap-2 mt-4">
-              <Button
-                onClick={() => onEdit(category.id)}
-                variant="outline"
-                size="sm"
-                className="flex-1"
-              >
-                Modifier
-              </Button>
-              <Button
-                onClick={() => onDelete(category.id)}
-                variant="destructive"
-                size="sm"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
+        <Link to={`/apogee/category/${category.slug}`} className="flex items-center gap-3 flex-1 min-w-0">
+          {(isCustomImage && category.icon) || editImageUrl ? (
+            <img 
+              src={editImageUrl || category.icon} 
+              alt={category.title} 
+              className="w-6 h-6 object-contain flex-shrink-0" 
+            />
+          ) : (
+            <Icon className="w-6 h-6 text-primary flex-shrink-0" />
           )}
-        </>
+          {(category.showTitleOnCard !== false) && (
+            <span className="text-base font-medium text-foreground truncate">
+              {category.title}
+            </span>
+          )}
+        </Link>
       )}
     </div>
   );
@@ -418,17 +414,30 @@ export default function ApogeeGuide() {
             </SortableContext>
           </DndContext>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredCategories.map(category => {
               const Icon = IconComponent(category.icon || 'BookOpen');
+              const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
               return (
                 <Link
                   key={category.id}
                   to={`/apogee/category/${category.slug}`}
-                  className={`group relative border-2 rounded-lg p-6 hover:shadow-xl transition-all ${getColorClass(category.colorPreset)}`}
+                  className={`group relative border-2 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 ${getColorClass(category.colorPreset)}`}
                 >
-                  <Icon className="w-12 h-12 mb-4 text-primary group-hover:scale-110 transition-transform" />
-                  <h2 className="text-xl font-bold text-foreground">{category.title}</h2>
+                  {isCustomImage ? (
+                    <img 
+                      src={category.icon} 
+                      alt={category.title} 
+                      className="w-6 h-6 object-contain flex-shrink-0" 
+                    />
+                  ) : (
+                    <Icon className="w-6 h-6 text-primary flex-shrink-0" />
+                  )}
+                  {(category.showTitleOnCard !== false) && (
+                    <span className="text-base font-medium text-foreground truncate">
+                      {category.title}
+                    </span>
+                  )}
                 </Link>
               );
             })}
