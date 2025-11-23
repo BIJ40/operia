@@ -185,7 +185,7 @@ export function AppSidebarApporteur() {
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton
-                          className={`w-full ${isActive ? 'bg-accent text-accent-foreground' : ''}`}
+                          className={`w-full bg-white hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200 ${isActive ? 'border-2 border-[#FF6B35] rounded-lg' : ''}`}
                         >
                           {Icon ? (
                             <Icon 
@@ -236,7 +236,7 @@ export function AppSidebarApporteur() {
                                     <div className="flex items-center w-full">
                                       <SidebarMenuSubButton
                                         asChild
-                                        className={`flex-1 ${isSubActive ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                                        className={`flex-1 hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200 ${isSubActive ? 'border-2 border-[#FF6B35] rounded-lg' : ''}`}
                                       >
                                         <Link to={subcategoryPath}>
                                           <span className="flex-1">{subcategory.title}</span>
@@ -265,7 +265,7 @@ export function AppSidebarApporteur() {
                                               <SidebarMenuSubItem key={section.id}>
                                                 <SidebarMenuSubButton
                                                   asChild
-                                                  className={isSectionActive ? 'bg-accent/30 text-accent-foreground' : ''}
+                                                  className={`hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200 ${isSectionActive ? 'border-2 border-[#FF6B35] rounded-lg' : ''}`}
                                                 >
                                                   <Link to={sectionPath}>
                                                     {section.title}
