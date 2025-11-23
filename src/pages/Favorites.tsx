@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, Trash2, ExternalLink, ChevronDown } from 'lucide-react';
+import { Heart, Trash2, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -133,110 +132,103 @@ export default function Favorites() {
     return null;
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <div className="container max-w-6xl mx-auto px-4 py-8">
-        <Card className="border-2 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white">
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <Heart className="w-6 h-6 fill-white" />
-              Mes Favoris
-            </CardTitle>
-            <CardDescription className="text-white/90">
-              Retrouvez rapidement vos sections préférées
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            {loading ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Chargement...</p>
-              </div>
-            ) : favorites.length === 0 ? (
-              <div className="text-center py-12">
-                <Heart className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-                <p className="text-lg text-muted-foreground mb-2">
-                  Vous n'avez pas encore de favoris
-                </p>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Ajoutez des sections en favoris pour les retrouver facilement ici
-                </p>
-                <Button onClick={() => navigate('/apogee')} variant="outline">
-                  Parcourir le guide
-                </Button>
-              </div>
-            ) : (
-              <Accordion type="multiple" className="space-y-4">
-                {favorites.map((favorite) => {
-                  const colorClasses = {
-                    white: 'bg-white',
-                    blue: 'bg-helpconfort-blue-light',
-                    orange: 'bg-helpconfort-orange',
-                    green: 'bg-helpconfort-green',
-                    yellow: 'bg-helpconfort-yellow',
-                    red: 'bg-helpconfort-red',
-                  }[favorite.color_preset] || 'bg-white';
+  const getColorClasses = (colorPreset: string) => {
+    const colorMap: Record<string, string> = {
+      white: 'bg-white',
+      blue: 'bg-helpconfort-blue-light',
+      orange: 'bg-helpconfort-orange',
+      green: 'bg-helpconfort-green',
+      yellow: 'bg-helpconfort-yellow',
+      red: 'bg-helpconfort-red',
+    };
+    return colorMap[colorPreset] || 'bg-white';
+  };
 
-                  return (
-                    <AccordionItem 
-                      key={favorite.id} 
-                      value={favorite.id}
-                      className="border-2 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
-                    >
-                      <AccordionTrigger className={`${colorClasses} px-6 hover:no-underline group`}>
-                        <div className="flex items-center justify-between w-full gap-4">
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <Heart className="w-5 h-5 text-red-500 fill-red-500 shrink-0" />
-                            <div className="flex-1 text-left min-w-0">
-                              <h3 className="font-semibold text-lg text-white truncate">
-                                {favorite.block_title}
-                              </h3>
-                              <p className="text-sm text-white/80">
-                                {favorite.scope === 'apporteurs-nationaux' ? 'Guide Apporteurs' : 'Guide Apogée'}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleNavigateToSection(favorite);
-                              }}
-                              variant="outline"
-                              size="icon"
-                              title="Voir dans la catégorie"
-                              className="border-white/50 hover:bg-white/10 hover:text-white transition-all duration-200 text-white"
-                            >
-                              <ExternalLink className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveFavorite(favorite.id);
-                              }}
-                              variant="outline"
-                              size="icon"
-                              title="Retirer des favoris"
-                              className="border-white/50 hover:bg-red-500 hover:text-white transition-all duration-200 text-white"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="bg-card p-6">
-                        <div
-                          className="prose prose-sm max-w-none break-words overflow-visible"
-                          dangerouslySetInnerHTML={{ __html: favorite.content }}
-                        />
-                      </AccordionContent>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            )}
-          </CardContent>
-        </Card>
+  return (
+    <div className="container max-w-4xl mx-auto p-8">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Heart className="w-8 h-8 text-red-500 fill-red-500" />
+          Mes Favoris
+        </h1>
       </div>
+
+      {loading ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      ) : favorites.length === 0 ? (
+        <div className="text-center py-12 bg-card rounded-lg border-2 p-8">
+          <Heart className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
+          <p className="text-lg text-muted-foreground mb-2">
+            Vous n'avez pas encore de favoris
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Ajoutez des sections en favoris pour les retrouver facilement ici
+          </p>
+          <Button onClick={() => navigate('/apogee')} variant="outline">
+            Parcourir le guide
+          </Button>
+        </div>
+      ) : (
+        <Accordion type="multiple" className="space-y-3">
+          {favorites.map((favorite) => {
+            const colorClasses = getColorClasses(favorite.color_preset);
+
+            return (
+              <AccordionItem 
+                key={favorite.id} 
+                value={favorite.id}
+                className="border-0"
+              >
+                <div className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <AccordionTrigger className={`${colorClasses} px-6 hover:no-underline [&[data-state=open]>div>svg]:rotate-180`}>
+                    <div className="flex items-center justify-between w-full gap-4 pr-4">
+                      <h3 className="text-lg font-semibold text-white flex-1 text-left">
+                        {favorite.block_title}
+                      </h3>
+                      <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleNavigateToSection(favorite);
+                          }}
+                          variant="ghost"
+                          size="icon"
+                          title="Voir dans la catégorie"
+                          className="text-white hover:bg-white/20 h-8 w-8"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveFavorite(favorite.id);
+                          }}
+                          variant="ghost"
+                          size="icon"
+                          title="Retirer des favoris"
+                          className="text-white hover:bg-red-500/80 h-8 w-8"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-card">
+                    <div className="p-6">
+                      <div
+                        className="prose prose-sm max-w-none break-words overflow-visible"
+                        dangerouslySetInnerHTML={{ __html: favorite.content }}
+                      />
+                    </div>
+                  </AccordionContent>
+                </div>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      )}
     </div>
   );
 }

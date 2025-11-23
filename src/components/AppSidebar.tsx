@@ -65,6 +65,7 @@ export function AppSidebar() {
   // Déterminer le scope selon la route
   const getScope = () => {
     const path = location.pathname;
+    if (path.startsWith('/favorites')) return 'guide-apogee'; // Traiter favoris comme partie d'Apogée
     if (path.startsWith('/apogee')) return 'guide-apogee';
     if (path.startsWith('/guide-apporteurs')) return 'apporteurs-nationaux';
     if (path.startsWith('/help-confort')) return 'informations-utiles';
@@ -73,6 +74,7 @@ export function AppSidebar() {
 
   const scope = getScope();
   const isApogee = scope === 'guide-apogee';
+  const isFavoritesPage = location.pathname === '/favorites';
 
   // Charger depuis blocks pour Apogée
   useEffect(() => {
@@ -196,6 +198,24 @@ export function AppSidebar() {
           >
             ← Retour accueil
           </Link>
+          
+          {/* Favoris comme catégorie spéciale */}
+          {isApogee && (
+            <Link
+              to="/favorites"
+              className={`mx-2 mb-4 px-4 py-3 rounded-lg flex items-center gap-3 transition-all duration-200 ${
+                isFavoritesPage
+                  ? 'bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white shadow-md'
+                  : 'bg-white border-2 border-transparent hover:border-helpconfort-orange hover:shadow-sm'
+              }`}
+            >
+              <Icons.Heart className={`w-5 h-5 ${isFavoritesPage ? 'fill-white' : 'text-red-500 fill-red-500'}`} />
+              <span className={`font-semibold ${isFavoritesPage ? 'text-white' : 'text-foreground'}`}>
+                Mes Favoris
+              </span>
+            </Link>
+          )}
+
           <SidebarGroupContent>
             <SidebarMenu>
               {isApogee ? (
