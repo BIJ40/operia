@@ -10,26 +10,93 @@ interface IconPickerProps {
 }
 
 const commonIcons = [
-  'BookOpen', 'FileText', 'Users', 'Settings', 'Home', 'Search',
-  'Mail', 'Phone', 'Calendar', 'Clock', 'MapPin', 'Star',
-  'Heart', 'Bookmark', 'Tag', 'Folder', 'File', 'Image',
-  'Video', 'Music', 'Download', 'Upload', 'Share2', 'Link',
-  'MessageCircle', 'MessageSquare', 'Send', 'Bell', 'AlertCircle', 'Info',
-  'CheckCircle', 'XCircle', 'HelpCircle', 'PlusCircle', 'MinusCircle', 'Edit',
-  'Trash2', 'Save', 'Copy', 'Cut', 'Clipboard', 'Printer',
-  'Camera', 'Mic', 'Volume2', 'Play', 'Pause', 'StopCircle',
-  'SkipBack', 'SkipForward', 'RefreshCw', 'RotateCw', 'ZoomIn', 'ZoomOut',
-  'Maximize', 'Minimize', 'Menu', 'Grid', 'List', 'Layout',
-  'Sidebar', 'Columns', 'Package', 'ShoppingCart', 'ShoppingBag', 'CreditCard',
-  'DollarSign', 'TrendingUp', 'TrendingDown', 'BarChart', 'PieChart', 'Activity',
-  'Award', 'Target', 'Flag', 'Zap', 'Sun', 'Moon',
-  'Cloud', 'CloudRain', 'CloudSnow', 'Droplet', 'Wind', 'Thermometer',
-  'Briefcase', 'Database', 'Server', 'HardDrive', 'Cpu', 'Monitor',
-  'Smartphone', 'Tablet', 'Watch', 'Headphones', 'Wifi', 'Bluetooth',
-  'Battery', 'Power', 'Lock', 'Unlock', 'Key', 'Shield',
-  'Eye', 'EyeOff', 'UserCheck', 'UserPlus', 'UserMinus', 'UserX',
-  'Navigation', 'Compass', 'Map', 'Globe', 'Anchor', 'Plane',
-  'Truck', 'Train', 'Bus', 'Car', 'Bike', 'Rocket',
+  // Navigation & Interface
+  'Home', 'Menu', 'Search', 'Settings', 'MoreVertical', 'MoreHorizontal',
+  'ChevronRight', 'ChevronLeft', 'ChevronUp', 'ChevronDown', 'ArrowRight', 'ArrowLeft',
+  'ArrowUp', 'ArrowDown', 'ArrowUpRight', 'ArrowDownLeft', 'ExternalLink', 'Link',
+  'Grid', 'List', 'Layout', 'Sidebar', 'Columns', 'Rows',
+  
+  // Files & Documents
+  'File', 'FileText', 'Files', 'Folder', 'FolderOpen', 'FolderPlus',
+  'BookOpen', 'Book', 'Newspaper', 'FileImage', 'FileVideo', 'FileAudio',
+  'FilePlus', 'FileMinus', 'FileCheck', 'FileX', 'Archive', 'Package',
+  
+  // Communication
+  'Mail', 'Send', 'MessageCircle', 'MessageSquare', 'Phone', 'PhoneCall',
+  'PhoneIncoming', 'PhoneOutgoing', 'Video', 'Mic', 'MicOff', 'Voicemail',
+  'AtSign', 'Inbox', 'Share2', 'Reply', 'Forward', 'Rss',
+  
+  // Users & People
+  'User', 'Users', 'UserCheck', 'UserPlus', 'UserMinus', 'UserX',
+  'UserCircle', 'UsersRound', 'Contact', 'Badge', 'Smile', 'Laugh',
+  
+  // Actions & Controls
+  'Plus', 'Minus', 'X', 'Check', 'CheckCircle', 'XCircle',
+  'PlusCircle', 'MinusCircle', 'Edit', 'Edit2', 'Edit3', 'Save',
+  'Trash', 'Trash2', 'Delete', 'Copy', 'Cut', 'Clipboard',
+  'Download', 'Upload', 'RefreshCw', 'RotateCw', 'RotateCcw', 'Repeat',
+  
+  // Media & Entertainment
+  'Play', 'Pause', 'StopCircle', 'SkipBack', 'SkipForward', 'FastForward',
+  'Rewind', 'Music', 'Radio', 'Disc', 'Film', 'Image',
+  'Camera', 'CameraOff', 'Volume2', 'VolumeX', 'Headphones', 'Podcast',
+  
+  // Time & Calendar
+  'Calendar', 'Clock', 'Timer', 'AlarmClock', 'Watch', 'Hourglass',
+  'CalendarDays', 'CalendarClock', 'CalendarCheck', 'CalendarX', 'History', 'TimerReset',
+  
+  // Location & Travel
+  'MapPin', 'Map', 'Navigation', 'Compass', 'Globe', 'Locate',
+  'Plane', 'Car', 'Bus', 'Train', 'Truck', 'Bike',
+  'Ship', 'Anchor', 'Footprints', 'Milestone', 'Flag', 'MapPinned',
+  
+  // Business & Finance
+  'Briefcase', 'Building', 'Building2', 'Store', 'Warehouse', 'Factory',
+  'CreditCard', 'DollarSign', 'Euro', 'Banknote', 'Wallet', 'Receipt',
+  'ShoppingCart', 'ShoppingBag', 'ShoppingBasket', 'Gift', 'Tag', 'Tags',
+  
+  // Charts & Analytics
+  'BarChart', 'BarChart2', 'BarChart3', 'PieChart', 'LineChart', 'TrendingUp',
+  'TrendingDown', 'Activity', 'Target', 'Award', 'Trophy', 'Medal',
+  
+  // Technology & Devices
+  'Smartphone', 'Tablet', 'Monitor', 'Laptop', 'Computer', 'Keyboard',
+  'Mouse', 'Printer', 'Scanner', 'Cpu', 'HardDrive', 'Server',
+  'Database', 'Wifi', 'WifiOff', 'Bluetooth', 'Usb', 'Power',
+  
+  // Security & Privacy
+  'Lock', 'Unlock', 'Key', 'Shield', 'ShieldCheck', 'ShieldAlert',
+  'Eye', 'EyeOff', 'Fingerprint', 'Scan', 'ShieldQuestion', 'ShieldX',
+  
+  // Weather & Nature
+  'Sun', 'Moon', 'Cloud', 'CloudRain', 'CloudSnow', 'CloudDrizzle',
+  'CloudLightning', 'Wind', 'Droplet', 'Droplets', 'Snowflake', 'Thermometer',
+  'Waves', 'Trees', 'Flower', 'Leaf', 'Bug', 'Bird',
+  
+  // Status & Alerts
+  'Bell', 'BellOff', 'AlertCircle', 'AlertTriangle', 'Info', 'HelpCircle',
+  'CheckCircle2', 'XOctagon', 'AlertOctagon', 'Construction', 'ShieldAlert', 'Siren',
+  
+  // Tools & Settings
+  'Wrench', 'Settings', 'Settings2', 'Sliders', 'Tool', 'Hammer',
+  'Paintbrush', 'Palette', 'Pipette', 'Scissors', 'Ruler', 'Pen',
+  
+  // Social & Sharing
+  'Heart', 'Star', 'Bookmark', 'ThumbsUp', 'ThumbsDown', 'MessageHeart',
+  'Github', 'Twitter', 'Facebook', 'Instagram', 'Linkedin', 'Youtube',
+  
+  // Health & Medical
+  'Heart', 'HeartPulse', 'Activity', 'Pill', 'Syringe', 'Stethoscope',
+  'Thermometer', 'Zap', 'Battery', 'BatteryCharging', 'BatteryFull', 'BatteryLow',
+  
+  // Food & Dining
+  'Coffee', 'Pizza', 'Utensils', 'UtensilsCrossed', 'Cookie', 'Beef',
+  'Cherry', 'Grape', 'Apple', 'Carrot', 'Fish', 'Egg',
+  
+  // Miscellaneous
+  'Rocket', 'Zap', 'Sparkles', 'Flame', 'Lightbulb', 'Lamp',
+  'Glasses', 'Shirt', 'Watch', 'Crown', 'Diamond', 'Gem',
+  'Box', 'Boxes', 'Maximize', 'Minimize', 'Move', 'Grab',
 ];
 
 export function IconPicker({ value, onChange }: IconPickerProps) {
