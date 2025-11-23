@@ -218,7 +218,7 @@ export function AppSidebar() {
                               }}
                             />
                             <span className="flex-1 text-left truncate group-hover:translate-x-1 transition-transform duration-200">{category.title}</span>
-                            <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:scale-125" 
+                            <ChevronRight className="h-4 w-4 shrink-0 transition-all duration-500 ease-in-out group-hover:scale-125" 
                               style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }} 
                             />
                           </SidebarMenuButton>
@@ -261,7 +261,7 @@ export function AppSidebar() {
                           <SidebarMenuButton className="w-full bg-white text-foreground hover:border-2 hover:border-helpconfort-orange hover:rounded-lg hover:scale-105 transition-all duration-200 group">
                             <Icon className="h-4 w-4 shrink-0 group-hover:rotate-12 group-hover:scale-110 transition-all duration-200" />
                             <span className="flex-1 text-left truncate group-hover:translate-x-1 transition-transform duration-200">{category.title}</span>
-                            <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:scale-125" 
+                            <ChevronRight className="h-4 w-4 shrink-0 transition-all duration-500 ease-in-out group-hover:scale-125" 
                               style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }} 
                             />
                           </SidebarMenuButton>

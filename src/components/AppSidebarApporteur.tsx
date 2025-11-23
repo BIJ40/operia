@@ -211,7 +211,7 @@ export function AppSidebarApporteur() {
                           )}
                           {categorySubcategories.length > 0 && (
                             <ChevronRight 
-                              className={`w-4 h-4 transition-transform duration-200 group-hover:scale-125 ${isOpen ? 'rotate-90' : ''}`} 
+                              className={`w-4 h-4 transition-all duration-500 ease-in-out group-hover:scale-125 ${isOpen ? 'rotate-90' : ''}`} 
                             />
                           )}
                         </SidebarMenuButton>
@@ -244,9 +244,9 @@ export function AppSidebarApporteur() {
                                       </SidebarMenuSubButton>
                                       {subcategorySections.length > 0 && (
                                         <CollapsibleTrigger asChild>
-                                          <button className="p-1 hover:bg-accent/20 rounded">
+                                          <button className="p-1 hover:bg-accent/20 rounded transition-colors duration-200">
                                             <ChevronRight 
-                                              className={`w-3 h-3 transition-transform ${isSubOpen ? 'rotate-90' : ''}`} 
+                                              className={`w-3 h-3 transition-all duration-500 ease-in-out ${isSubOpen ? 'rotate-90' : ''}`} 
                                             />
                                           </button>
                                         </CollapsibleTrigger>
