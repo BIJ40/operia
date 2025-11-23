@@ -514,8 +514,8 @@ export default function Category() {
   };
 
   const getColorClass = (color?: string) => {
-    // Toutes les sections utilisent le style helpconfort : dégradé bleu avec bords très arrondis
-    return 'bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark border border-helpconfort-blue-dark/20 rounded-3xl';
+    // Cette fonction n'est plus utilisée - les styles sont appliqués directement
+    return '';
   };
 
   // Composant d'accordéon triable
@@ -541,7 +541,7 @@ export default function Category() {
       return (
         <div ref={setNodeRef} style={style} className="mb-4">
           <div className="rounded-3xl overflow-hidden border-2 border-accent">
-            <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white rounded-t-3xl relative">
+            <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white relative">
               {isEditMode && isAuthenticated && (
                 <div className="absolute top-2 right-2 flex gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
                   <Button
