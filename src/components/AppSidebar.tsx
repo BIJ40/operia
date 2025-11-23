@@ -208,7 +208,7 @@ export function AppSidebar() {
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton className="w-full bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white hover:opacity-90 transition-opacity">
+                          <SidebarMenuButton className="w-full bg-white text-foreground hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200">
                             <Icon 
                               className="h-4 w-4 shrink-0 cursor-pointer hover:opacity-70" 
                               onClick={(e) => {
@@ -223,12 +223,12 @@ export function AppSidebar() {
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <SidebarMenuSub className="bg-muted/50">
+                          <SidebarMenuSub className="bg-white">
                             {categorySections.map((section) => (
                               <SidebarMenuSubItem key={section.id}>
                                 <SidebarMenuSubButton
                                   onClick={() => handleSectionClick(section.id, category.slug)}
-                                  className="cursor-pointer bg-muted/30 hover:bg-muted"
+                                  className="cursor-pointer hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200"
                                 >
                                   <span className="text-sm">{section.title}</span>
                                 </SidebarMenuSubButton>
@@ -255,7 +255,7 @@ export function AppSidebar() {
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton className="w-full bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white hover:opacity-90 transition-opacity">
+                          <SidebarMenuButton className="w-full bg-white text-foreground hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200">
                             <Icon className="h-4 w-4 shrink-0" />
                             <span className="flex-1 text-left truncate">{category.title}</span>
                             <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200" 
@@ -264,7 +264,7 @@ export function AppSidebar() {
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <SidebarMenuSub className="bg-muted/50">
+                          <SidebarMenuSub className="bg-white">
                             {categorySections.map((section) => (
                               <SidebarMenuSubItem key={section.id}>
                                 <SidebarMenuSubButton
@@ -272,7 +272,7 @@ export function AppSidebar() {
                                     e.preventDefault();
                                     handleSectionClick(section.id, category.id);
                                   }}
-                                  className="cursor-pointer bg-muted/30 hover:bg-muted"
+                                  className="cursor-pointer hover:border-2 hover:border-[#FF6B35] hover:rounded-lg transition-all duration-200"
                                 >
                                   <span className="text-sm">{section.title}</span>
                                 </SidebarMenuSubButton>
