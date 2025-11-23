@@ -188,7 +188,7 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
       
-      <SidebarContent>
+      <SidebarContent className="pt-2">
         <SidebarGroup>
           <SidebarGroupLabel>Sommaire</SidebarGroupLabel>
           <SidebarGroupContent>

@@ -164,7 +164,7 @@ export function AppSidebarApporteur() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="pt-2">
         <SidebarGroup>
           <SidebarGroupLabel>Catégories</SidebarGroupLabel>
           <SidebarGroupContent>
