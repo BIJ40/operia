@@ -116,7 +116,7 @@ const SortableCard = ({
     <div
       ref={setNodeRef}
       style={style}
-      className="group relative border-2 border-blue-200 bg-blue-50 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all"
+      className="group relative border-2 border-blue-200 bg-blue-50 rounded-3xl p-4 hover:shadow-lg hover:border-blue-300 transition-all"
     >
       {isEditMode && (
         <div
@@ -533,7 +533,7 @@ export default function Landing() {
                     <Link
                       key={card.id}
                       to={card.link}
-                      className="group relative border-2 border-blue-200 bg-blue-50 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all"
+                      className="group relative border-2 border-blue-200 bg-blue-50 rounded-3xl p-4 hover:shadow-lg hover:border-blue-300 transition-all"
                     >
                       <Icon className="w-10 h-10 mb-3 text-blue-600 group-hover:scale-110 transition-transform" />
                       <h2 className="text-lg font-bold text-foreground mb-1">{card.title}</h2>
