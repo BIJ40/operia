@@ -57,7 +57,7 @@ export function Header() {
             </Link>
 
             <Link 
-              to="/" 
+              to="/helpconfort" 
               className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
             >
               <span className="font-semibold text-foreground">HELPCONFORT</span>
