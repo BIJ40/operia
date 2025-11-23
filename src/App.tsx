@@ -42,7 +42,7 @@ const App = () => (
                 <Route path="/admin/documents" element={<Layout showHeader showSidebar={false}><AdminDocuments /></Layout>} />
                 <Route path="/admin/backup" element={<Layout showHeader showSidebar={false}><AdminBackup /></Layout>} />
                 <Route path="/profile" element={<Layout showHeader={false} showSidebar={false}><Profile /></Layout>} />
-                <Route path="/favorites" element={<Layout showHeader={false} showSidebar={false}><Favorites /></Layout>} />
+                <Route path="/favorites" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><Favorites /></Layout>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ApporteurEditorProvider>
