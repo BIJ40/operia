@@ -529,12 +529,12 @@ export default function Category() {
           <div className={`rounded-3xl overflow-hidden border-2 ${isTips ? 'border-[#0096D6]' : 'border-accent'} bg-card shadow-sm`}>
             <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white relative">
               {isEditMode && isAdmin && (
-                <div className="absolute top-2 right-2 flex gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
+                <div className="absolute top-2 right-2 flex gap-2 z-10">
                   <Button
                     type="button"
                     size="sm"
                     variant="ghost"
-                    className="cursor-move text-foreground hover:text-accent hover:bg-accent/10"
+                    className="cursor-move text-white hover:bg-white/20 h-8 w-8 p-0"
                     {...attributes}
                     {...listeners}
                   >
@@ -545,7 +545,7 @@ export default function Category() {
                     size="sm"
                     variant="ghost"
                     title="Insérer une section après"
-                    className="text-foreground hover:text-accent hover:bg-accent/10"
+                    className="text-white hover:bg-white/20 h-8 w-8 p-0"
                     onClick={() => handleAddSection(section.id)}
                   >
                     <Plus className="w-4 h-4" />
@@ -555,7 +555,7 @@ export default function Category() {
                     size="sm"
                     variant="ghost"
                     title="Insérer un TIPS après"
-                    className="text-foreground hover:text-accent hover:bg-accent/10"
+                    className="text-white hover:bg-white/20 h-8 w-8 p-0"
                     onClick={() => handleAddTips(section.id)}
                   >
                     <Lightbulb className="w-4 h-4" />
@@ -564,7 +564,7 @@ export default function Category() {
                     type="button"
                     size="sm"
                     variant="ghost"
-                    className="text-foreground hover:text-accent hover:bg-accent/10"
+                    className="text-white hover:bg-white/20 h-8 w-8 p-0"
                     onClick={() => {
                       setEditingId(section.id);
                       setEditDialogOpen(true);
@@ -577,7 +577,7 @@ export default function Category() {
                     size="sm"
                     variant="ghost"
                     title="Dupliquer la section"
-                    className="text-foreground hover:text-accent hover:bg-accent/10"
+                    className="text-white hover:bg-white/20 h-8 w-8 p-0"
                     onClick={() => handleDuplicate(section.id)}
                   >
                     <Copy className="w-4 h-4" />
@@ -589,7 +589,7 @@ export default function Category() {
                         size="sm"
                         variant="ghost"
                         title="Changer de catégorie"
-                        className="text-foreground hover:text-accent hover:bg-accent/10"
+                        className="text-white hover:bg-white/20 h-8 w-8 p-0"
                       >
                         <FolderInput className="w-4 h-4" />
                       </Button>
@@ -611,7 +611,7 @@ export default function Category() {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="text-foreground hover:text-accent hover:bg-accent/10"
+                      className="text-white hover:bg-red-500/80 h-8 w-8 p-0"
                       onClick={() => handleDeleteClick(section.id)}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -702,7 +702,7 @@ export default function Category() {
                 </div>
                 {isEditMode && isAdmin && (
                   <div 
-                    className="flex gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm"
+                    className="flex gap-2"
                     onMouseDown={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -716,7 +716,7 @@ export default function Category() {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="cursor-move text-foreground hover:text-accent hover:bg-accent/10"
+                      className="cursor-move text-white hover:bg-white/20 h-8 w-8 p-0"
                       {...attributes}
                       {...listeners}
                     >
@@ -727,7 +727,7 @@ export default function Category() {
                       size="sm"
                       variant="ghost"
                       title="Insérer une section après"
-                      className="text-foreground hover:text-accent hover:bg-accent/10"
+                      className="text-white hover:bg-white/20 h-8 w-8 p-0"
                       onMouseDown={(e) => {
                         e.stopPropagation();
                       }}
@@ -744,7 +744,7 @@ export default function Category() {
                       size="sm"
                       variant="ghost"
                       title="Insérer un TIPS après"
-                      className="text-foreground hover:text-accent hover:bg-accent/10"
+                      className="text-white hover:bg-white/20 h-8 w-8 p-0"
                       onMouseDown={(e) => {
                         e.stopPropagation();
                       }}
@@ -760,7 +760,7 @@ export default function Category() {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="text-foreground hover:text-accent hover:bg-accent/10"
+                      className="text-white hover:bg-white/20 h-8 w-8 p-0"
                       onMouseDown={(e) => {
                         e.stopPropagation();
                       }}
@@ -778,7 +778,7 @@ export default function Category() {
                       size="sm"
                       variant="ghost"
                       title="Dupliquer la section"
-                      className="text-foreground hover:text-accent hover:bg-accent/10"
+                      className="text-white hover:bg-white/20 h-8 w-8 p-0"
                       onMouseDown={(e) => {
                         e.stopPropagation();
                       }}
@@ -797,7 +797,7 @@ export default function Category() {
                           size="sm"
                           variant="ghost"
                           title="Changer de catégorie"
-                          className="text-foreground hover:text-accent hover:bg-accent/10"
+                          className="text-white hover:bg-white/20 h-8 w-8 p-0"
                           onMouseDown={(e) => {
                             e.stopPropagation();
                           }}
@@ -826,7 +826,7 @@ export default function Category() {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="text-foreground hover:text-accent hover:bg-accent/10"
+                      className="text-white hover:bg-red-500/80 h-8 w-8 p-0"
                       onMouseDown={(e) => {
                         e.stopPropagation();
                       }}
