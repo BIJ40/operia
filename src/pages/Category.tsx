@@ -540,8 +540,8 @@ export default function Category() {
     if (section.isSingleSection || section.contentType === 'tips') {
       return (
         <div ref={setNodeRef} style={style} className="mb-4">
-          <div className={`rounded-3xl relative ${getColorClass(section.colorPreset)}`}>
-            <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white rounded-t-3xl">
+          <div className="rounded-3xl overflow-hidden border border-helpconfort-blue-dark/20">
+            <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white rounded-t-3xl relative">
               {isEditMode && isAuthenticated && (
                 <div className="absolute top-2 right-2 flex gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
                   <Button
@@ -633,10 +633,10 @@ export default function Category() {
               </div>
             )}
             {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
-              <h3 className="text-lg font-semibold mb-4 text-white">{section.title}</h3>
+              <h3 className="text-lg font-semibold text-white">{section.title}</h3>
             ) : null}
             </div>
-            <div className="p-6 bg-muted/30 rounded-b-3xl">
+            <div className="p-6 bg-muted rounded-b-3xl">
             {section.contentType === 'tips' && section.tipsType ? (
               <div>
                 {!section.hideTitle && section.title && section.title.trim() !== '' && (
