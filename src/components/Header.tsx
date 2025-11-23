@@ -108,7 +108,7 @@ export function Header() {
               onClick={() => setLoginOpen(true)}
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-foreground hover:scale-110 transition-all duration-300 animate-pulse"
+              className="text-primary hover:text-primary hover:scale-110 transition-all duration-300 shadow-[0_0_15px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_20px_hsl(var(--primary)/0.5)]"
               title="Connexion administrateur"
             >
               <LogIn className="w-5 h-5" />
