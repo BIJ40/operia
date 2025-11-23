@@ -116,7 +116,7 @@ const SortableCard = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(card.color_preset)}`}
+      className="group relative border-2 border-blue-200 bg-blue-50 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all"
     >
       {isEditMode && (
         <div
@@ -187,8 +187,8 @@ const SortableCard = ({
       ) : (
         <>
           <Link to={card.link} className="block">
-            <Icon className="w-12 h-12 mb-4 text-primary" />
-            <h2 className="text-xl font-bold mb-2">{card.title}</h2>
+            <Icon className="w-10 h-10 mb-3 text-blue-600" />
+            <h2 className="text-lg font-bold mb-1">{card.title}</h2>
             <p className="text-sm text-muted-foreground">{card.description}</p>
           </Link>
           {isEditMode && (
@@ -497,7 +497,7 @@ export default function Landing() {
                   items={homeCards.map(c => c.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {homeCards.map(card => (
                       <SortableCard
                         key={card.id}
@@ -526,18 +526,18 @@ export default function Landing() {
                 </SortableContext>
               </DndContext>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {homeCards.map(card => {
                   const Icon = IconComponent(card.icon || 'BookOpen');
                   return (
                     <Link
                       key={card.id}
                       to={card.link}
-                      className={`group relative border-2 rounded-lg p-8 hover:shadow-xl transition-all ${getColorClass(card.color_preset)}`}
+                      className="group relative border-2 border-blue-200 bg-blue-50 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all"
                     >
-                      <Icon className="w-16 h-16 mb-4 text-primary group-hover:scale-110 transition-transform" />
-                      <h2 className="text-2xl font-bold text-foreground mb-2">{card.title}</h2>
-                      <p className="text-muted-foreground">{card.description}</p>
+                      <Icon className="w-10 h-10 mb-3 text-blue-600 group-hover:scale-110 transition-transform" />
+                      <h2 className="text-lg font-bold text-foreground mb-1">{card.title}</h2>
+                      <p className="text-sm text-muted-foreground">{card.description}</p>
                     </Link>
                   );
                 })}
