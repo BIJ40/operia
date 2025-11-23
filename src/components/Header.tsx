@@ -36,7 +36,7 @@ export function Header() {
           <div className="container mx-auto px-4 py-4 flex items-center gap-4">
             <Link 
               to="/" 
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
             >
               <Home className="w-5 h-5 text-primary" />
               <span className="font-semibold text-foreground">ACCUEIL</span>
@@ -44,21 +44,21 @@ export function Header() {
 
             <Link 
               to="/apogee" 
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
             >
               <span className="font-semibold text-foreground">APOGEE</span>
             </Link>
 
             <Link 
               to="/apporteurs" 
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
             >
               <span className="font-semibold text-foreground">APPORTEURS</span>
             </Link>
 
             <Link 
               to="/" 
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
             >
               <span className="font-semibold text-foreground">HELPCONFORT</span>
             </Link>
@@ -66,7 +66,7 @@ export function Header() {
             <Button
               onClick={handleEnrichirClick}
               variant="ghost"
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
             >
               {isEditMode ? (
                 <>
@@ -83,7 +83,7 @@ export function Header() {
 
             <Link
               to="/admin/documents"
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
             >
               <Settings className="w-5 h-5 text-primary" />
               <span className="font-semibold text-foreground">ADMIN</span>
@@ -92,14 +92,14 @@ export function Header() {
             <div className="ml-auto flex items-center gap-2">
               <Link
                 to="/favorites"
-                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
               >
                 <Heart className="w-5 h-5 text-primary" />
                 <span className="font-semibold text-foreground">FAVORIS</span>
               </Link>
               <Link
                 to="/profile"
-                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
               >
                 <User className="w-5 h-5 text-primary" />
                 <span className="font-semibold text-foreground">PROFIL</span>
@@ -107,7 +107,7 @@ export function Header() {
               <Button
                 onClick={logout}
                 variant="ghost"
-                className="flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-lg hover:shadow-md transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
               >
                 <LogOut className="w-5 h-5 text-muted-foreground" />
                 <span className="font-semibold text-foreground">QUITTER</span>
