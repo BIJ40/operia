@@ -618,6 +618,17 @@ export default function Category() {
                     </Button>
               </div>
             )}
+            {!isEditMode && isTips && (
+              <div className="absolute top-2 right-2">
+                <FavoriteButton
+                  blockId={section.id}
+                  blockTitle={section.title || 'TIPS'}
+                  blockSlug={section.slug}
+                  categorySlug={category.slug}
+                  scope="apogee"
+                />
+              </div>
+            )}
             {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
               <div className="flex items-center justify-between gap-2 w-full">
                 <h3 className="text-lg font-semibold text-white flex-1">{section.title}</h3>
