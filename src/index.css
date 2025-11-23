@@ -28,7 +28,7 @@ All colors MUST be HSL.
     --muted: 204 24% 93%;
     --muted-foreground: 0 0% 50%;
 
-    /* Orange Help Confort pour accents */
+    /* Orange Help Confort pour accents - #F7A600 */
     --accent: 40 100% 48%;
     --accent-foreground: 0 0% 100%;
 
@@ -55,7 +55,7 @@ All colors MUST be HSL.
     --blue-light: 194 100% 46%;
     --blue-main: 198 100% 42%;
     --blue-dark: 207 100% 33%;
-    --orange-accent: 40 100% 48%;
+    --orange-accent: 40 100% 48%; /* #F7A600 */
     
     --cyan: 198 100% 42%;
     --cyan-foreground: 0 0% 100%;
