@@ -177,7 +177,7 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r" collapsible="icon">
       <SidebarHeader className="p-2 border-b">
-        <Link to="/" className="block h-24" onClick={(e) => e.stopPropagation()}>
+        <Link to="/" className="block h-32" onClick={(e) => e.stopPropagation()}>
           <img 
             src={logoApogee} 
             alt="Helpogee" 
