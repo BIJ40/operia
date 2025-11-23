@@ -540,7 +540,7 @@ export default function Category() {
     if (section.isSingleSection || section.contentType === 'tips') {
       return (
         <div ref={setNodeRef} style={style} className="mb-4">
-          <div className="rounded-3xl overflow-hidden border-2 border-accent">
+          <div className="rounded-3xl overflow-hidden border-2 border-accent bg-white">
             <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white relative">
               {isEditMode && isAuthenticated && (
                 <div className="absolute top-2 right-2 flex gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
@@ -636,7 +636,7 @@ export default function Category() {
               <h3 className="text-lg font-semibold text-white">{section.title}</h3>
             ) : null}
             </div>
-            <div className="p-6 bg-white rounded-b-3xl">
+            <div className="p-6 bg-white">
             {section.contentType === 'tips' && section.tipsType ? (
               <div>
                 {!section.hideTitle && section.title && section.title.trim() !== '' && (
@@ -662,7 +662,7 @@ export default function Category() {
     return (
       <div ref={setNodeRef} style={style}>
         <AccordionItem value={section.id} id={section.id} className="mb-4 border-none">
-          <div className="rounded-3xl overflow-hidden border-2 border-accent">
+          <div className="rounded-3xl overflow-hidden border-2 border-accent bg-white">
             <div className="bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark">
             <AccordionTrigger className="px-6 py-4 hover:no-underline text-white [&[data-state=open]]:rounded-b-none">
               <div className="flex items-center justify-between w-full text-white">
