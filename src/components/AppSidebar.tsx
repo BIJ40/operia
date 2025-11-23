@@ -192,9 +192,9 @@ export function AppSidebar() {
         <SidebarGroup>
           <Link 
             to="/apogee" 
-            className="mx-2 mb-3 px-4 py-2 rounded-lg bg-gradient-to-r from-helpconfort-blue-main to-helpconfort-orange text-white text-center font-semibold hover:shadow-[0_0_15px_hsl(var(--orange-accent)/0.5)] hover:scale-105 transition-all duration-200"
+            className="mx-2 mb-3 px-3 py-1.5 text-sm text-muted-foreground hover:text-helpconfort-blue-main hover:bg-helpconfort-orange/10 rounded transition-all duration-200"
           >
-            Retour accueil
+            ← Retour accueil
           </Link>
           <SidebarGroupContent>
             <SidebarMenu>
