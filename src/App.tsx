@@ -10,6 +10,7 @@ import ApporteurSubcategories from "./pages/ApporteurSubcategories";
 import Category from "./pages/Category";
 import CategoryApporteur from "./pages/CategoryApporteur";
 import HelpConfort from "./pages/HelpConfort";
+import CategoryHelpConfort from "./pages/CategoryHelpConfort";
 import Documents from "./pages/Documents";
 import AdminDocuments from "./pages/AdminDocuments";
 import AdminBackup from "./pages/AdminBackup";
@@ -40,6 +41,7 @@ const App = () => (
                 <Route path="/apporteurs/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><ApporteurSubcategories /></Layout>} />
                 <Route path="/apporteurs/category/:slug/sub/:subslug" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><CategoryApporteur /></Layout>} />
                 <Route path="/helpconfort" element={<Layout showHeader showSidebar={true} sidebarType="helpconfort"><HelpConfort /></Layout>} />
+                <Route path="/helpconfort/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="helpconfort"><CategoryHelpConfort /></Layout>} />
                 <Route path="/documents" element={<Layout showHeader showSidebar={false}><Documents /></Layout>} />
                 <Route path="/admin/documents" element={<Layout showHeader showSidebar={false}><AdminDocuments /></Layout>} />
                 <Route path="/admin/backup" element={<Layout showHeader showSidebar={false}><AdminBackup /></Layout>} />
