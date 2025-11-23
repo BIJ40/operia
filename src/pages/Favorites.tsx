@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, Trash2, ExternalLink } from 'lucide-react';
+import { Heart, Trash2, ExternalLink, Lightbulb } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 import {
   Accordion,
   AccordionContent,
@@ -25,6 +26,7 @@ interface Favorite {
 interface FavoriteWithContent extends Favorite {
   content: string;
   color_preset: string;
+  content_type: string;
 }
 
 export default function Favorites() {
@@ -66,7 +68,7 @@ export default function Favorites() {
       const blockIds = favoritesData.map(f => f.block_id);
       const { data: blocksData, error: blocksError } = await supabase
         .from('blocks')
-        .select('id, content, color_preset')
+        .select('id, content, color_preset, content_type')
         .in('id', blockIds);
 
       if (blocksError) throw blocksError;
@@ -83,6 +85,7 @@ export default function Favorites() {
           ...favorite,
           content: block?.content || '<p>Contenu non disponible</p>',
           color_preset: block?.color_preset || 'white',
+          content_type: block?.content_type || 'section',
         };
       });
 
@@ -174,6 +177,7 @@ export default function Favorites() {
         <Accordion type="multiple" className="space-y-3">
           {favorites.map((favorite) => {
             const colorClasses = getColorClasses(favorite.color_preset);
+            const isTips = favorite.content_type === 'tips';
 
             return (
               <AccordionItem 
@@ -184,9 +188,17 @@ export default function Favorites() {
                 <div className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border-2 border-helpconfort-orange">
                   <AccordionTrigger className={`${colorClasses} px-6 hover:no-underline [&[data-state=open]>div>svg]:rotate-180`}>
                     <div className="flex items-center justify-between w-full gap-4 pr-4">
-                      <h3 className="text-lg font-semibold text-white flex-1 text-left">
-                        {favorite.block_title}
-                      </h3>
+                      <div className="flex items-center gap-3 flex-1">
+                        {isTips && (
+                          <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1">
+                            <Lightbulb className="w-3 h-3" />
+                            TIPS
+                          </Badge>
+                        )}
+                        <h3 className="text-lg font-semibold text-white text-left">
+                          {favorite.block_title}
+                        </h3>
+                      </div>
                       <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                         <Button
                           onClick={(e) => {
