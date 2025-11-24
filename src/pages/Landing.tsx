@@ -589,11 +589,31 @@ export default function Landing() {
                 {homeCards.map(card => {
                   const Icon = IconComponent(card.icon || 'BookOpen');
                   
-                  // Trouver le block correspondant à la carte pour vérifier l'accès
-                  const linkParts = card.link.split('/');
-                  const slug = linkParts[linkParts.length - 1];
-                  const matchingBlock = blocks.find(b => b.slug === slug && b.type === 'category');
-                  const isLocked = matchingBlock ? isBlockLocked(matchingBlock.id, blocks) : false;
+                  // Vérifier l'accès en fonction du lien
+                  let isLocked = false;
+                  
+                  if (card.link === '/helpconfort') {
+                    // Pour HelpConfort, vérifier si l'utilisateur a accès à au moins une catégorie
+                    const helpconfortCategories = blocks.filter(b => b.type === 'category' && b.slug.startsWith('helpconfort-'));
+                    const hasAccessToAny = helpconfortCategories.some(cat => !isBlockLocked(cat.id, blocks));
+                    isLocked = !hasAccessToAny;
+                  } else if (card.link === '/apporteurs') {
+                    // Pour Apporteurs, vérifier si l'utilisateur a accès à au moins une catégorie
+                    const apporteurCategories = blocks.filter(b => b.type === 'category' && !b.slug.startsWith('helpconfort-'));
+                    const hasAccessToAny = apporteurCategories.some(cat => !isBlockLocked(cat.id, blocks));
+                    isLocked = !hasAccessToAny;
+                  } else if (card.link === '/apogee') {
+                    // Pour Apogée, vérifier si l'utilisateur a accès à au moins une catégorie
+                    const apogeeCategories = blocks.filter(b => b.type === 'category' && !b.slug.startsWith('helpconfort-'));
+                    const hasAccessToAny = apogeeCategories.some(cat => !isBlockLocked(cat.id, blocks));
+                    isLocked = !hasAccessToAny;
+                  } else {
+                    // Pour les liens directs vers des catégories
+                    const linkParts = card.link.split('/');
+                    const slug = linkParts[linkParts.length - 1];
+                    const matchingBlock = blocks.find(b => b.slug === slug && b.type === 'category');
+                    isLocked = matchingBlock ? isBlockLocked(matchingBlock.id, blocks) : false;
+                  }
                   
                   if (isLocked) {
                     return (
