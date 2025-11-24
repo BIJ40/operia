@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Shield, ArrowLeft } from 'lucide-react';
+import { Loader2, Shield } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Block {
@@ -35,7 +34,6 @@ const AVAILABLE_ROLES = [
 export default function AdminRolePermissions() {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState<string>('technicien');
   const [loading, setLoading] = useState(true);
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -355,14 +353,6 @@ export default function AdminRolePermissions() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/admin')}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Retour
-        </Button>
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
           <Shield className="w-8 h-8 text-primary" />
           Gestion des permissions par rôle
