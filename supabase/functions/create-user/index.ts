@@ -55,20 +55,46 @@ serve(async (req) => {
     }
 
     // Récupérer les données de la requête
-    const { email, password, firstName, lastName } = await req.json()
+    const { pseudo, password, firstName, lastName } = await req.json()
 
-    if (!email || !password || !firstName || !lastName) {
-      throw new Error('Email, mot de passe, prénom et nom sont requis')
+    if (!pseudo || !password || !firstName || !lastName) {
+      throw new Error('Pseudo, mot de passe, prénom et nom sont requis')
     }
+
+    // Validation du pseudo
+    const pseudoRegex = /^[a-zA-Z0-9_-]+$/
+    if (!pseudoRegex.test(pseudo) || pseudo.length < 3 || pseudo.length > 30) {
+      throw new Error('Le pseudo doit contenir 3-30 caractères (lettres, chiffres, - et _)')
+    }
+
+    // Validation du mot de passe
+    if (password.length < 8 || password.length > 100) {
+      throw new Error('Le mot de passe doit contenir entre 8 et 100 caractères')
+    }
+
+    // Vérifier si le pseudo existe déjà
+    const { data: existingProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('pseudo')
+      .eq('pseudo', pseudo)
+      .maybeSingle()
+
+    if (existingProfile) {
+      throw new Error('Ce pseudo est déjà utilisé')
+    }
+
+    // Créer un email fictif interne basé sur le pseudo
+    const internalEmail = `${pseudo}@internal.helpogee.local`
 
     // Créer l'utilisateur avec le service role
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: internalEmail,
       password,
-      email_confirm: true, // Auto-confirm l'email
+      email_confirm: true,
       user_metadata: {
         first_name: firstName,
-        last_name: lastName
+        last_name: lastName,
+        pseudo: pseudo
       }
     })
 
@@ -81,25 +107,28 @@ serve(async (req) => {
       throw new Error('Utilisateur non créé')
     }
 
-    // Marquer que l'utilisateur doit changer son mot de passe
+    // Mettre à jour le profil avec le pseudo et le flag de changement de mot de passe
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
-      .update({ must_change_password: true })
+      .update({ 
+        pseudo: pseudo,
+        must_change_password: true 
+      })
       .eq('id', newUser.user.id)
 
     if (updateError) {
       console.error('Erreur mise à jour profil:', updateError)
-      // On ne throw pas car l'utilisateur est déjà créé
+      throw new Error('Erreur lors de la mise à jour du profil')
     }
 
-    console.log('Utilisateur créé avec succès:', newUser.user.email)
+    console.log('Utilisateur créé avec succès:', pseudo)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         user: { 
           id: newUser.user.id, 
-          email: newUser.user.email 
+          pseudo: pseudo 
         } 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

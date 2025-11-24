@@ -9,9 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { z } from 'zod';
 
 interface UserProfile {
   id: string;
+  pseudo: string | null;
   first_name: string | null;
   last_name: string | null;
   agence: string | null;
@@ -19,19 +21,35 @@ interface UserProfile {
   created_at: string;
 }
 
-interface UserWithEmail extends UserProfile {
-  email?: string;
-}
+const createUserSchema = z.object({
+  pseudo: z.string()
+    .trim()
+    .min(3, { message: "Le pseudo doit contenir au moins 3 caractères" })
+    .max(30, { message: "Le pseudo ne peut pas dépasser 30 caractères" })
+    .regex(/^[a-zA-Z0-9_-]+$/, { message: "Le pseudo ne peut contenir que des lettres, chiffres, tirets et underscores" }),
+  firstName: z.string()
+    .trim()
+    .min(1, { message: "Le prénom est requis" })
+    .max(50, { message: "Le prénom ne peut pas dépasser 50 caractères" }),
+  lastName: z.string()
+    .trim()
+    .min(1, { message: "Le nom est requis" })
+    .max(50, { message: "Le nom ne peut pas dépasser 50 caractères" }),
+  password: z.string()
+    .min(8, { message: "Le mot de passe doit contenir au moins 8 caractères" })
+    .max(100, { message: "Le mot de passe ne peut pas dépasser 100 caractères" })
+});
 
 export default function AdminUsers() {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<UserWithEmail[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   
   // Form fields
-  const [email, setEmail] = useState('');
+  const [pseudo, setPseudo] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [tempPassword, setTempPassword] = useState('');
@@ -57,21 +75,38 @@ export default function AdminUsers() {
   };
 
   const generatePassword = () => {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
     let password = '';
     for (let i = 0; i < 12; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setTempPassword(password);
+    setErrors(prev => ({ ...prev, password: '' }));
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
     
-    if (!email || !tempPassword || !firstName || !lastName) {
+    // Validation avec Zod
+    const validation = createUserSchema.safeParse({
+      pseudo: pseudo.trim(),
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      password: tempPassword
+    });
+
+    if (!validation.success) {
+      const newErrors: Record<string, string> = {};
+      validation.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          newErrors[issue.path[0] as string] = issue.message;
+        }
+      });
+      setErrors(newErrors);
       toast({
-        title: 'Champs manquants',
-        description: 'Veuillez remplir tous les champs obligatoires',
+        title: 'Erreur de validation',
+        description: 'Veuillez corriger les erreurs dans le formulaire',
         variant: 'destructive',
       });
       return;
@@ -81,10 +116,10 @@ export default function AdminUsers() {
     try {
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: { 
-          email, 
+          pseudo: pseudo.trim(),
           password: tempPassword,
-          firstName,
-          lastName
+          firstName: firstName.trim(),
+          lastName: lastName.trim()
         }
       });
 
@@ -92,14 +127,15 @@ export default function AdminUsers() {
 
       toast({
         title: 'Utilisateur créé !',
-        description: `L'utilisateur ${email} a été créé avec succès. Communiquez-lui ses identifiants.`,
+        description: `L'utilisateur "${pseudo}" a été créé avec succès. Communiquez-lui ses identifiants : Pseudo = ${pseudo}, Mot de passe = ${tempPassword}`,
       });
 
       // Reset form
-      setEmail('');
+      setPseudo('');
       setFirstName('');
       setLastName('');
       setTempPassword('');
+      setErrors({});
       
       // Reload users
       loadUsers();
@@ -171,52 +207,70 @@ export default function AdminUsers() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreateUser} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="pseudo">Pseudo * <span className="text-xs text-muted-foreground">(3-30 caractères, lettres, chiffres, - et _)</span></Label>
+              <Input
+                id="pseudo"
+                value={pseudo}
+                onChange={(e) => {
+                  setPseudo(e.target.value);
+                  setErrors(prev => ({ ...prev, pseudo: '' }));
+                }}
+                placeholder="jean_dupont"
+                required
+                className={errors.pseudo ? 'border-destructive' : ''}
+              />
+              {errors.pseudo && <p className="text-sm text-destructive">{errors.pseudo}</p>}
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">Prénom *</Label>
                 <Input
                   id="firstName"
                   value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  onChange={(e) => {
+                    setFirstName(e.target.value);
+                    setErrors(prev => ({ ...prev, firstName: '' }));
+                  }}
                   placeholder="Jean"
                   required
+                  className={errors.firstName ? 'border-destructive' : ''}
                 />
+                {errors.firstName && <p className="text-sm text-destructive">{errors.firstName}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Nom *</Label>
                 <Input
                   id="lastName"
                   value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  onChange={(e) => {
+                    setLastName(e.target.value);
+                    setErrors(prev => ({ ...prev, lastName: '' }));
+                  }}
                   placeholder="Dupont"
                   required
+                  className={errors.lastName ? 'border-destructive' : ''}
                 />
+                {errors.lastName && <p className="text-sm text-destructive">{errors.lastName}</p>}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="utilisateur@example.com"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe provisoire *</Label>
+              <Label htmlFor="password">Mot de passe provisoire * <span className="text-xs text-muted-foreground">(min. 8 caractères)</span></Label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     value={tempPassword}
-                    onChange={(e) => setTempPassword(e.target.value)}
+                    onChange={(e) => {
+                      setTempPassword(e.target.value);
+                      setErrors(prev => ({ ...prev, password: '' }));
+                    }}
                     placeholder="Mot de passe provisoire"
                     required
+                    className={errors.password ? 'border-destructive' : ''}
                   />
                   <Button
                     type="button"
@@ -232,9 +286,16 @@ export default function AdminUsers() {
                   Générer
                 </Button>
               </div>
+              {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
               <p className="text-sm text-muted-foreground">
                 Ce mot de passe sera communiqué à l'utilisateur. Il devra le changer à sa première connexion.
               </p>
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  Si l'utilisateur perd son mot de passe, il doit vous contacter pour réinitialisation.
+                </AlertDescription>
+              </Alert>
             </div>
 
             <Button type="submit" disabled={loading} className="w-full">
@@ -256,6 +317,7 @@ export default function AdminUsers() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Pseudo</TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Prénom</TableHead>
                 <TableHead>Agence</TableHead>
@@ -267,7 +329,8 @@ export default function AdminUsers() {
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.last_name || '-'}</TableCell>
+                  <TableCell className="font-medium">{user.pseudo || '-'}</TableCell>
+                  <TableCell>{user.last_name || '-'}</TableCell>
                   <TableCell>{user.first_name || '-'}</TableCell>
                   <TableCell>{user.agence || '-'}</TableCell>
                   <TableCell>{user.role_agence || '-'}</TableCell>
@@ -285,7 +348,7 @@ export default function AdminUsers() {
               ))}
               {users.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
                     Aucun utilisateur enregistré
                   </TableCell>
                 </TableRow>
