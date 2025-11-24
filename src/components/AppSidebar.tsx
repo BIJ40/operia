@@ -210,16 +210,14 @@ export function AppSidebar() {
           {isApogee && (
             <Link
               to="/favorites"
-              className={`mx-2 mb-4 px-4 py-3 rounded-lg flex items-center gap-3 transition-all duration-200 ${
+              className={`mx-2 mb-3 px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center gap-2 ${
                 isFavoritesPage
-                  ? 'bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white shadow-md'
-                  : 'bg-white border-2 border-transparent hover:border-helpconfort-orange hover:shadow-sm'
+                  ? 'bg-primary text-primary-foreground border-2 border-primary shadow-sm'
+                  : 'bg-card border-2 border-border hover:bg-accent hover:border-primary/50 hover:scale-[1.02]'
               }`}
             >
-              <Icons.Heart className={`w-5 h-5 ${isFavoritesPage ? 'fill-white' : 'text-red-500 fill-red-500'}`} />
-              <span className={`font-semibold ${isFavoritesPage ? 'text-white' : 'text-foreground'}`}>
-                Mes Favoris
-              </span>
+              <Icons.Heart className={`w-4 h-4 ${isFavoritesPage ? 'fill-current' : 'text-red-500 fill-red-500'}`} />
+              <span>Mes Favoris</span>
             </Link>
           )}
 
