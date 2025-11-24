@@ -1,5 +1,5 @@
 // Copie exacte de Category.tsx adaptée pour HelpConfort
-import { useParams, useLocation, Link } from 'react-router-dom';
+import { useParams, useLocation, Link, Navigate } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -73,10 +73,19 @@ export default function CategoryHelpConfort() {
   const location = useLocation();
 
   const { blocks, updateBlock, deleteBlock, addBlock, reorderBlocks, isEditMode } = useEditor();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, roleAgence } = useAuth();
   const { toast } = useToast();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
+
+  // Bloquer l'accès pour les assistant(e)s
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  
+  if (roleAgence === 'assistant(e)') {
+    return <Navigate to="/" replace />;
+  }
   
   // Liste des catégories disponibles HelpConfort
   const availableCategories = useMemo(() =>
