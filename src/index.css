@@ -119,14 +119,6 @@ All colors MUST be HSL.
   outline: none;
 }
 
-.ProseMirror p {
-  color: #000000;
-}
-
-.prose {
-  color: #000000;
-}
-
 /* Heading styles in editor */
 .ProseMirror h1 {
   font-size: 1.875rem;
