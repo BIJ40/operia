@@ -28,60 +28,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (session?.user) {
           // Check if user is admin
-          setTimeout(async () => {
-            const { data } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', session.user.id)
-              .eq('role', 'admin')
-              .maybeSingle();
-            
-            setIsAdmin(!!data);
+          const { data } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .eq('role', 'admin')
+            .maybeSingle();
+          
+          setIsAdmin(!!data);
 
-            // Check if user must change password
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('must_change_password')
-              .eq('id', session.user.id)
-              .single();
-            
-            setMustChangePassword(profile?.must_change_password || false);
-          }, 0);
+          // Check if user must change password
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('must_change_password')
+            .eq('id', session.user.id)
+            .single();
+          
+          setMustChangePassword(profile?.must_change_password || false);
+          setLoading(false);
         } else {
           setIsAdmin(false);
           setMustChangePassword(false);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
         // Check if user is admin
-        supabase
+        const { data: roleData } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', session.user.id)
           .eq('role', 'admin')
-          .maybeSingle()
-          .then(({ data }) => {
-            setIsAdmin(!!data);
-          });
+          .maybeSingle();
+        
+        setIsAdmin(!!roleData);
 
         // Check if user must change password
-        supabase
+        const { data: profileData } = await supabase
           .from('profiles')
           .select('must_change_password')
           .eq('id', session.user.id)
-          .single()
-          .then(({ data }) => {
-            setMustChangePassword(data?.must_change_password || false);
-            setLoading(false);
-          });
+          .single();
+        
+        setMustChangePassword(profileData?.must_change_password || false);
+        setLoading(false);
       } else {
         setLoading(false);
       }
