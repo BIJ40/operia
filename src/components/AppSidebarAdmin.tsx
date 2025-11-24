@@ -51,6 +51,11 @@ const adminMenuItems = [
     icon: MessageSquare,
   },
   {
+    title: 'Support',
+    url: '/admin/support',
+    icon: MessageSquare,
+  },
+  {
     title: 'Sauvegardes',
     url: '/admin/backup',
     icon: Database,
