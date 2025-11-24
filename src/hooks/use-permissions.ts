@@ -18,12 +18,22 @@ export function useIsBlockLocked() {
 
   return useMemo(() => {
     return (blockId: string, blocks: Block[] = []): boolean => {
-      // Les admins et les utilisateurs sans rôle spécifique ont accès à tout
-      if (isAdmin || !roleAgence) {
+      // Les admins ont accès à tout
+      if (isAdmin) {
         return false;
       }
 
-      // Vérifier l'accès au block
+      // Les dirigeants n'ont accès à rien (règle métier spécifique)
+      if (roleAgence === 'dirigeant') {
+        return true;
+      }
+
+      // Les utilisateurs sans rôle spécifique ont accès à tout
+      if (!roleAgence) {
+        return false;
+      }
+
+      // Vérifier l'accès au block via la logique centrale
       return !hasAccessToBlock(blockId);
     };
   }, [hasAccessToBlock, isAdmin, roleAgence]);
