@@ -4,6 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
+import { Lock } from 'lucide-react';
+import { useIsBlockLocked } from '@/hooks/use-permissions';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -210,6 +213,8 @@ const SortableCategory = ({
 export default function ApogeeGuide() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isAdmin, isAuthenticated } = useAuth();
+  const isBlockLocked = useIsBlockLocked();
+  const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
@@ -427,6 +432,44 @@ export default function ApogeeGuide() {
             {filteredCategories.map(category => {
               const Icon = IconComponent(category.icon || 'BookOpen');
               const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
+              const isLocked = isBlockLocked(category.id, blocks);
+              
+              if (isLocked) {
+                return (
+                  <div
+                    key={category.id}
+                    onClick={() => {
+                      toast({
+                        title: 'Accès restreint',
+                        description: 'Vous n\'avez pas les permissions pour accéder à cette section',
+                        variant: 'destructive',
+                      });
+                    }}
+                    className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 cursor-pointer opacity-60 ${getColorClass(category.colorPreset)}`}
+                  >
+                    {/* Cadenas en overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <Lock className="w-8 h-8 text-destructive drop-shadow-lg" />
+                    </div>
+                    
+                    {isCustomImage ? (
+                      <img 
+                        src={category.icon} 
+                        alt={category.title} 
+                        className="w-6 h-6 object-contain flex-shrink-0 opacity-50" 
+                      />
+                    ) : (
+                      <Icon className="w-6 h-6 text-primary flex-shrink-0 opacity-50" />
+                    )}
+                    {(category.showTitleOnCard !== false) && (
+                      <span className="text-base font-medium text-foreground truncate">
+                        {category.title}
+                      </span>
+                    )}
+                  </div>
+                );
+              }
+              
               return (
                 <Link
                   key={category.id}
