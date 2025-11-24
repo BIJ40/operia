@@ -46,13 +46,8 @@ const adminMenuItems = [
     icon: Shield,
   },
   {
-    title: 'Mme Michu - Documents',
+    title: 'Mme Michu',
     url: '/admin/documents',
-    icon: FileText,
-  },
-  {
-    title: 'Mme Michu - Questions',
-    url: '/admin/chatbot-queries',
     icon: MessageSquare,
   },
   {

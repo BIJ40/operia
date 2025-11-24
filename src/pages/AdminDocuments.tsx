@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,11 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileText, Trash2, Download, Edit2, Database } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, Edit2, MessageSquare, CheckCircle2, AlertCircle, Clock, Database } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RAGIndexManager } from '@/components/RAGIndexManager';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface Block {
   id: string;
@@ -34,6 +37,18 @@ interface Document {
   created_at: string;
 }
 
+interface ChatbotQuery {
+  id: string;
+  user_pseudo: string;
+  question: string;
+  answer: string | null;
+  is_incomplete: boolean;
+  status: string;
+  admin_notes: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+}
+
 export default function AdminDocuments() {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
@@ -53,6 +68,12 @@ export default function AdminDocuments() {
   const [editBlockId, setEditBlockId] = useState('');
   const [indexingDoc, setIndexingDoc] = useState<string | null>(null);
   const [indexProgress, setIndexProgress] = useState(0);
+  
+  // Chatbot queries state
+  const [queries, setQueries] = useState<ChatbotQuery[]>([]);
+  const [queryFilter, setQueryFilter] = useState<'all' | 'pending' | 'resolved'>('all');
+  const [editingNotes, setEditingNotes] = useState<{ [key: string]: string }>({});
+  const [activeTab, setActiveTab] = useState('documents');
 
   useEffect(() => {
     if (!isAdmin) {
@@ -61,6 +82,7 @@ export default function AdminDocuments() {
     }
     loadBlocks();
     loadDocuments();
+    loadQueries();
   }, [isAdmin, navigate, scope]);
 
   const loadBlocks = async () => {
@@ -68,7 +90,6 @@ export default function AdminDocuments() {
       let data: Block[] = [];
       
       if (scope === 'helpconfort') {
-        // Pour HelpConfort, on charge depuis la table blocks avec le préfixe helpconfort-
         const { data: blocksData, error } = await supabase
           .from('blocks')
           .select('id, title, slug, type, parent_id')
@@ -134,7 +155,6 @@ export default function AdminDocuments() {
 
     setUploading(true);
     try {
-      // Upload file to storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${scope}/${fileName}`;
@@ -145,7 +165,6 @@ export default function AdminDocuments() {
 
       if (uploadError) throw uploadError;
 
-      // Insert document metadata
       const { data: insertedDoc, error: insertError } = await supabase.from('documents').insert({
         title,
         description: description || null,
@@ -159,7 +178,6 @@ export default function AdminDocuments() {
 
       if (insertError) throw insertError;
 
-      // Auto-index text documents
       if (file.type.includes('text') || file.type.includes('plain')) {
         try {
           await supabase.functions.invoke('index-document', {
@@ -171,24 +189,22 @@ export default function AdminDocuments() {
           
           toast({
             title: 'Succès',
-            description: 'Document uploadé et indexé automatiquement',
+            description: 'Document uploadé et indexé',
           });
         } catch (indexError) {
-          console.error('Auto-indexing error:', indexError);
           toast({
             title: 'Attention',
-            description: 'Document uploadé mais l\'indexation automatique a échoué. Utilisez le bouton "Indexer" manuellement.',
+            description: 'Document uploadé mais non indexé',
             variant: 'default',
           });
         }
       } else {
         toast({
           title: 'Succès',
-          description: 'Document uploadé. Utilisez le bouton "Indexer" pour le rendre accessible au chatbot.',
+          description: 'Document uploadé',
         });
       }
 
-      // Reset form
       setTitle('');
       setDescription('');
       setFile(null);
@@ -207,32 +223,15 @@ export default function AdminDocuments() {
   };
 
   const handleDelete = async (doc: Document) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) return;
+    if (!confirm('Supprimer ce document ?')) return;
 
     try {
-      // Delete file from storage
-      const { error: storageError } = await supabase.storage
-        .from('documents')
-        .remove([doc.file_path]);
+      await supabase.storage.from('documents').remove([doc.file_path]);
+      await supabase.from('documents').delete().eq('id', doc.id);
 
-      if (storageError) throw storageError;
-
-      // Delete metadata
-      const { error: deleteError } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', doc.id);
-
-      if (deleteError) throw deleteError;
-
-      toast({
-        title: 'Succès',
-        description: 'Document supprimé',
-      });
-
+      toast({ title: 'Succès', description: 'Document supprimé' });
       loadDocuments();
     } catch (error) {
-      console.error('Error deleting document:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de supprimer le document',
@@ -259,7 +258,7 @@ export default function AdminDocuments() {
     if (!editingDoc || !editTitle || !editBlockId) {
       toast({
         title: 'Erreur',
-        description: 'Veuillez remplir tous les champs requis',
+        description: 'Champs requis manquants',
         variant: 'destructive',
       });
       return;
@@ -279,25 +278,15 @@ export default function AdminDocuments() {
         updateData.block_id = null;
       }
 
-      const { error } = await supabase
-        .from('documents')
-        .update(updateData)
-        .eq('id', editingDoc.id);
+      await supabase.from('documents').update(updateData).eq('id', editingDoc.id);
 
-      if (error) throw error;
-
-      toast({
-        title: 'Succès',
-        description: 'Document modifié avec succès',
-      });
-
+      toast({ title: 'Succès', description: 'Document modifié' });
       cancelEditing();
       loadDocuments();
     } catch (error) {
-      console.error('Error updating document:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de modifier le document',
+        description: 'Impossible de modifier',
         variant: 'destructive',
       });
     }
@@ -313,16 +302,9 @@ export default function AdminDocuments() {
     setIndexProgress(0);
 
     try {
-      // Simuler la progression en temps réel
       const progressInterval = setInterval(() => {
-        setIndexProgress(prev => {
-          if (prev >= 95) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + 5;
-        });
-      }, 200); // Mise à jour toutes les 200ms
+        setIndexProgress(prev => (prev >= 95 ? prev : prev + 5));
+      }, 200);
 
       const { data, error } = await supabase.functions.invoke('index-document', {
         body: { 
@@ -345,12 +327,11 @@ export default function AdminDocuments() {
         setIndexProgress(0);
       }, 500);
     } catch (error) {
-      console.error('Indexing error:', error);
       setIndexingDoc(null);
       setIndexProgress(0);
       toast({
         title: 'Erreur',
-        description: error instanceof Error ? error.message : 'Impossible d\'indexer le document',
+        description: 'Impossible d\'indexer',
         variant: 'destructive',
       });
     }
@@ -362,239 +343,430 @@ export default function AdminDocuments() {
     return block?.title || 'Section inconnue';
   };
 
+  // Chatbot queries functions
+  const loadQueries = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('chatbot_queries')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setQueries(data || []);
+    } catch (error) {
+      console.error('Erreur chargement requêtes:', error);
+    }
+  };
+
+  const updateQueryStatus = async (queryId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('chatbot_queries')
+        .update({ status: newStatus, reviewed_by: (await supabase.auth.getUser()).data.user?.id })
+        .eq('id', queryId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Statut mis à jour',
+      });
+
+      loadQueries();
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const saveAdminNotes = async (queryId: string) => {
+    try {
+      await supabase
+        .from('chatbot_queries')
+        .update({ admin_notes: editingNotes[queryId] })
+        .eq('id', queryId);
+
+      toast({ title: 'Notes sauvegardées' });
+
+      setEditingNotes((prev) => {
+        const newNotes = { ...prev };
+        delete newNotes[queryId];
+        return newNotes;
+      });
+
+      loadQueries();
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de sauvegarder',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const filteredQueries = queries.filter((q) => {
+    if (queryFilter === 'all') return true;
+    return q.status === queryFilter;
+  });
+
+  const pendingCount = queries.filter((q) => q.status === 'pending').length;
+
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-8">
+    <div className="container max-w-7xl mx-auto px-4 py-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Mme MICHU - Gestion des Documents</h1>
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <MessageSquare className="w-8 h-8" />
+          Mme MICHU
+        </h1>
         <p className="text-muted-foreground mt-2">
-          Uploadez des documents qui seront indexés et utilisés par le chatbot pour affiner ses réponses
+          Gestion des documents et des questions du chatbot
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Upload section */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Uploader un document</h2>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="scope">Grande catégorie</Label>
-              <Select value={scope} onValueChange={(v) => setScope(v as 'apogee' | 'apporteur' | 'helpconfort')}>
-                <SelectTrigger id="scope">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="apogee">Guide Apogée</SelectItem>
-                  <SelectItem value="apporteur">Guide Apporteurs</SelectItem>
-                  <SelectItem value="helpconfort">Base HelpConfort</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="block">Catégorie / Sous-catégorie</Label>
-              <Select value={selectedBlockId} onValueChange={setSelectedBlockId}>
-                <SelectTrigger id="block">
-                  <SelectValue placeholder="Sélectionner..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {blocks.map((block) => (
-                    <SelectItem key={block.id} value={block.id}>
-                      {block.type === 'category' ? '📁 ' : '📂 '}
-                      {block.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="title">Titre du document</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Guide de procédure"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="description">Description (optionnelle)</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Description du document..."
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="file">Fichier</Label>
-              <Input
-                id="file"
-                type="file"
-                onChange={handleFileChange}
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png"
-              />
-              {file && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {file.name} ({(file.size / 1024).toFixed(2)} KB)
-                </p>
-              )}
-            </div>
-
-            <Button onClick={handleUpload} disabled={uploading} className="w-full">
-              <Upload className="w-4 h-4 mr-2" />
-              {uploading ? 'Upload en cours...' : 'Uploader'}
-            </Button>
-          </div>
-        </Card>
-
-        {/* Documents list */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Documents uploadés</h2>
-          
-          {/* Progress bar for indexing */}
-          {indexingDoc && (
-            <div className="mb-4 p-4 bg-muted rounded-lg space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Indexation en cours...</span>
-                <span className="text-muted-foreground">{indexProgress}%</span>
-              </div>
-              <div className="grid grid-cols-20 gap-1 h-3">
-                {Array.from({ length: 20 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`rounded-sm transition-colors duration-300 ${
-                      i < Math.floor(indexProgress / 5)
-                        ? 'bg-primary'
-                        : 'bg-muted-foreground/20'
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-1 max-h-[600px] overflow-y-auto">
-            {documents.map((doc) => (
-              <Card key={doc.id} className="p-2">
-                {editingDoc?.id === doc.id ? (
-                  // Edit mode
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="edit-title">Titre</Label>
-                      <Input
-                        id="edit-title"
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-description">Description</Label>
-                      <Textarea
-                        id="edit-description"
-                        value={editDescription}
-                        onChange={(e) => setEditDescription(e.target.value)}
-                        rows={2}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-block">Catégorie / Sous-catégorie</Label>
-                      <Select value={editBlockId} onValueChange={setEditBlockId}>
-                        <SelectTrigger id="edit-block">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {blocks.map((block) => (
-                            <SelectItem key={block.id} value={block.id}>
-                              {block.type === 'category' ? '📁 ' : '📂 '}
-                              {block.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button size="sm" variant="outline" onClick={cancelEditing}>
-                        Annuler
-                      </Button>
-                      <Button size="sm" onClick={saveEditing}>
-                        Enregistrer
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  // View mode - compact single line
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <FileText className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                      <div className="flex items-center gap-2 flex-1 min-w-0 text-xs">
-                        <span className="font-medium truncate">{doc.title}</span>
-                        <span className="text-muted-foreground">•</span>
-                        <span className="text-muted-foreground truncate">{getBlockTitle(doc)}</span>
-                        <span className="text-muted-foreground flex-shrink-0">
-                          {new Date(doc.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-1 flex-shrink-0">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                        onClick={() => handleIndex(doc)}
-                        disabled={indexingDoc === doc.id}
-                        title="Indexer pour le chatbot"
-                      >
-                        <Database className={`w-3.5 h-3.5 ${indexingDoc === doc.id ? 'animate-pulse' : ''}`} />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                        onClick={() => window.open(getDownloadUrl(doc.file_path), '_blank')}
-                        title="Télécharger"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                        onClick={() => startEditing(doc)}
-                        title="Modifier"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(doc)}
-                        title="Supprimer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </Card>
-            ))}
-            {documents.length === 0 && (
-              <Card className="p-8 text-center text-muted-foreground">
-                Aucun document pour ce thème
-              </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="documents" className="gap-2">
+            <FileText className="w-4 h-4" />
+            Documents
+          </TabsTrigger>
+          <TabsTrigger value="questions" className="gap-2">
+            <MessageSquare className="w-4 h-4" />
+            Questions
+            {pendingCount > 0 && (
+              <Badge variant="destructive" className="ml-2">{pendingCount}</Badge>
             )}
-          </div>
-        </div>
-      </div>
+          </TabsTrigger>
+          <TabsTrigger value="rag" className="gap-2">
+            <Database className="w-4 h-4" />
+            RAG Index
+          </TabsTrigger>
+        </TabsList>
 
-      {/* RAG Index Management */}
-      <div className="mt-8">
-        <RAGIndexManager />
-      </div>
+        {/* Documents Tab */}
+        <TabsContent value="documents" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Upload section - Compact */}
+            <Card className="p-4">
+              <h2 className="text-lg font-semibold mb-3">Uploader un document</h2>
+
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="scope" className="text-xs">Grande catégorie</Label>
+                    <Select value={scope} onValueChange={(v) => setScope(v as 'apogee' | 'apporteur' | 'helpconfort')}>
+                      <SelectTrigger id="scope" className="h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="apogee">Apogée</SelectItem>
+                        <SelectItem value="apporteur">Apporteurs</SelectItem>
+                        <SelectItem value="helpconfort">HelpConfort</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="block" className="text-xs">Catégorie</Label>
+                    <Select value={selectedBlockId} onValueChange={setSelectedBlockId}>
+                      <SelectTrigger id="block" className="h-8 text-sm">
+                        <SelectValue placeholder="Sélectionner..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {blocks.map((block) => (
+                          <SelectItem key={block.id} value={block.id}>
+                            {block.type === 'category' ? '📁 ' : '📂 '}
+                            {block.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="title" className="text-xs">Titre</Label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Titre du document"
+                    className="h-8 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="description" className="text-xs">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Description..."
+                    rows={2}
+                    className="text-sm"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="file" className="text-xs">Fichier</Label>
+                  <Input
+                    id="file"
+                    type="file"
+                    onChange={handleFileChange}
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png"
+                    className="h-8 text-sm"
+                  />
+                  {file && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                    </p>
+                  )}
+                </div>
+
+                <Button onClick={handleUpload} disabled={uploading} className="w-full h-8 text-sm">
+                  <Upload className="w-3.5 h-3.5 mr-2" />
+                  {uploading ? 'Upload...' : 'Uploader'}
+                </Button>
+              </div>
+            </Card>
+
+            {/* Documents list */}
+            <div>
+              <h2 className="text-lg font-semibold mb-3">Documents uploadés</h2>
+              
+              {indexingDoc && (
+                <div className="mb-3 p-3 bg-muted rounded-lg space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium">Indexation...</span>
+                    <span className="text-muted-foreground">{indexProgress}%</span>
+                  </div>
+                  <div className="grid grid-cols-20 gap-1 h-2">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`rounded-sm transition-colors ${
+                          i < Math.floor(indexProgress / 5) ? 'bg-primary' : 'bg-muted-foreground/20'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1 max-h-[500px] overflow-y-auto">
+                {documents.map((doc) => (
+                  <Card key={doc.id} className="p-2">
+                    {editingDoc?.id === doc.id ? (
+                      <div className="space-y-2">
+                        <div>
+                          <Label className="text-xs">Titre</Label>
+                          <Input
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            className="h-7 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Description</Label>
+                          <Textarea
+                            value={editDescription}
+                            onChange={(e) => setEditDescription(e.target.value)}
+                            rows={1}
+                            className="text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Catégorie</Label>
+                          <Select value={editBlockId} onValueChange={setEditBlockId}>
+                            <SelectTrigger className="h-7 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {blocks.map((block) => (
+                                <SelectItem key={block.id} value={block.id}>
+                                  {block.type === 'category' ? '📁 ' : '📂 '}
+                                  {block.title}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <Button size="sm" variant="outline" onClick={cancelEditing} className="h-7 text-xs">
+                            Annuler
+                          </Button>
+                          <Button size="sm" onClick={saveEditing} className="h-7 text-xs">
+                            Enregistrer
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <FileText className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                          <div className="flex items-center gap-2 flex-1 min-w-0 text-xs">
+                            <span className="font-medium truncate">{doc.title}</span>
+                            <span className="text-muted-foreground">•</span>
+                            <span className="text-muted-foreground truncate">{getBlockTitle(doc)}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={() => handleIndex(doc)}
+                            disabled={indexingDoc === doc.id}
+                            title="Indexer"
+                          >
+                            <Database className={`w-3.5 h-3.5 ${indexingDoc === doc.id ? 'animate-pulse' : ''}`} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={() => window.open(getDownloadUrl(doc.file_path), '_blank')}
+                            title="Télécharger"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={() => startEditing(doc)}
+                            title="Modifier"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(doc)}
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                ))}
+                {documents.length === 0 && (
+                  <Card className="p-6 text-center text-sm text-muted-foreground">
+                    Aucun document pour ce thème
+                  </Card>
+                )}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Questions Tab */}
+        <TabsContent value="questions" className="space-y-4">
+          <Tabs value={queryFilter} onValueChange={(v) => setQueryFilter(v as any)}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="all" className="gap-2 text-sm">
+                <MessageSquare className="w-3.5 h-3.5" />
+                Toutes ({queries.length})
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="gap-2 text-sm">
+                <AlertCircle className="w-3.5 h-3.5" />
+                En attente ({pendingCount})
+              </TabsTrigger>
+              <TabsTrigger value="resolved" className="gap-2 text-sm">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Résolues ({queries.filter((q) => q.status === 'resolved').length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={queryFilter} className="space-y-3 mt-4">
+              {filteredQueries.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                    Aucune requête
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredQueries.map((query) => (
+                  <Card key={query.id} className={query.is_incomplete ? 'border-l-4 border-l-destructive' : ''}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-sm">{query.user_pseudo}</CardTitle>
+                            {query.is_incomplete && (
+                              <Badge variant="destructive" className="text-xs">Incomplète</Badge>
+                            )}
+                            <Badge variant={query.status === 'resolved' ? 'default' : 'secondary'} className="text-xs">
+                              {query.status === 'resolved' ? 'Résolue' : 'En attente'}
+                            </Badge>
+                          </div>
+                          <CardDescription className="flex items-center gap-2 text-xs">
+                            <Clock className="w-3 h-3" />
+                            {format(new Date(query.created_at), "d MMM yyyy 'à' HH:mm", { locale: fr })}
+                          </CardDescription>
+                        </div>
+                        {query.status !== 'resolved' && (
+                          <Button
+                            size="sm"
+                            onClick={() => updateQueryStatus(query.id, 'resolved')}
+                            className="h-7 text-xs"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                            Résoudre
+                          </Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                      <div>
+                        <h4 className="font-semibold mb-1 text-xs">Question :</h4>
+                        <p className="text-xs bg-muted p-2 rounded">{query.question}</p>
+                      </div>
+                      
+                      {query.answer && (
+                        <div>
+                          <h4 className="font-semibold mb-1 text-xs">Réponse :</h4>
+                          <p className="text-xs bg-muted p-2 rounded whitespace-pre-wrap">{query.answer}</p>
+                        </div>
+                      )}
+
+                      <div>
+                        <h4 className="font-semibold mb-1 text-xs">Notes :</h4>
+                        <Textarea
+                          placeholder="Notes internes..."
+                          value={editingNotes[query.id] ?? query.admin_notes ?? ''}
+                          onChange={(e) =>
+                            setEditingNotes((prev) => ({ ...prev, [query.id]: e.target.value }))
+                          }
+                          className="min-h-[60px] text-xs"
+                        />
+                        {(editingNotes[query.id] !== undefined) && (
+                          <Button
+                            size="sm"
+                            className="mt-2 h-7 text-xs"
+                            onClick={() => saveAdminNotes(query.id)}
+                          >
+                            Sauvegarder
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
+
+        {/* RAG Index Tab */}
+        <TabsContent value="rag">
+          <RAGIndexManager />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
