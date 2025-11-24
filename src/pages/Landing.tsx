@@ -536,7 +536,8 @@ export default function Landing() {
               <img 
                 src={helpConfortServicesImg} 
                 alt="Help Confort Services" 
-                className="w-full max-w-3xl mx-auto"
+                className="w-full max-w-md mx-auto pointer-events-none select-none"
+                draggable="false"
               />
             </div>
           </div>
@@ -644,7 +645,8 @@ export default function Landing() {
               <img 
                 src={helpConfortServicesImg} 
                 alt="Help Confort Services" 
-                className="w-full max-w-3xl mx-auto"
+                className="w-full max-w-md mx-auto pointer-events-none select-none"
+                draggable="false"
               />
             </div>
 
