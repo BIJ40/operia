@@ -1,32 +1,5 @@
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { AppData, Block } from '@/types/block';
+import { AppData } from '@/types/block';
 import { supabase } from '@/integrations/supabase/client';
-
-interface ApogeeDB extends DBSchema {
-  appData: {
-    key: string;
-    value: AppData;
-  };
-}
-
-const DB_NAME = 'apogee-guide-db';
-const DB_VERSION = 1;
-
-let dbInstance: IDBPDatabase<ApogeeDB> | null = null;
-
-export async function getDB(): Promise<IDBPDatabase<ApogeeDB>> {
-  if (dbInstance) return dbInstance;
-
-  dbInstance = await openDB<ApogeeDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains('appData')) {
-        db.createObjectStore('appData');
-      }
-    },
-  });
-
-  return dbInstance;
-}
 
 export async function saveAppData(data: AppData): Promise<void> {
   try {
