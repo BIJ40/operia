@@ -45,7 +45,7 @@ const adminMenuItems = [
     icon: Shield,
   },
   {
-    title: 'Documents',
+    title: 'Mme Michu',
     url: '/admin/documents',
     icon: FileText,
   },

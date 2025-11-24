@@ -340,7 +340,7 @@ export default function AdminDocuments() {
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Gestion des Documents pour Mme MICHU</h1>
+        <h1 className="text-3xl font-bold">Mme MICHU - Gestion des Documents</h1>
         <p className="text-muted-foreground mt-2">
           Uploadez des documents qui seront indexés et utilisés par le chatbot pour affiner ses réponses
         </p>
