@@ -356,30 +356,16 @@ export default function AdminIndex() {
       {/* Mme MICHU */}
       <div>
         <h2 className="text-xl font-semibold text-muted-foreground mb-4">Mme MICHU</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
           <Link to="/admin/documents">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  Documents
-                </CardTitle>
-                <CardDescription>
-                  Uploader des fichiers (PDF, Word, etc.) pour enrichir la connaissance du chatbot. Ces documents sont indexés pour améliorer les réponses de Mme MICHU.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link to="/admin/chatbot-queries">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-primary" />
-                  Questions reçues
+                  Documents & Questions
                 </CardTitle>
                 <CardDescription>
-                  Consulter les questions posées à Mme MICHU et gérer les demandes de clarification du guide
+                  Uploader des documents pour enrichir le chatbot et consulter les questions reçues par Mme MICHU
                 </CardDescription>
               </CardHeader>
             </Card>
