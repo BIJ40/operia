@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Lock, LogIn } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -482,13 +482,60 @@ export default function Landing() {
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
       
       {!isAuthenticated ? (
-        <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
-          <div className="text-center max-w-3xl mx-auto px-4">
-            <img 
-              src={helpConfortServicesImg} 
-              alt="Help Confort Services" 
-              className="w-full max-w-2xl mx-auto"
-            />
+        <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+          {/* Header visiteur - uniquement bouton de connexion */}
+          <div className="container mx-auto px-4 py-4 flex justify-end">
+            <Button
+              onClick={() => setLoginOpen(true)}
+              variant="ghost"
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
+            >
+              <LogIn className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-foreground">SE CONNECTER</span>
+            </Button>
+          </div>
+
+          <div className="container max-w-6xl mx-auto px-4 py-8">
+            {/* Cartes avec cadenas pour visiteurs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {homeCards.map(card => {
+                const Icon = IconComponent(card.icon || 'BookOpen');
+                return (
+                  <div
+                    key={card.id}
+                    onClick={() => {
+                      toast({
+                        title: 'Accès restreint',
+                        description: 'Veuillez vous connecter pour accéder à cette section',
+                        variant: 'destructive',
+                      });
+                      setLoginOpen(true);
+                    }}
+                    className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 cursor-pointer opacity-60"
+                  >
+                    {/* Cadenas en overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
+                    </div>
+                    
+                    <Icon className="w-12 h-12 text-primary flex-shrink-0 opacity-50" />
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
+                      <p className="text-xs text-muted-foreground truncate">{card.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Help Confort Services Image */}
+            <div className="mt-12 text-center">
+              <img 
+                src={helpConfortServicesImg} 
+                alt="Help Confort Services" 
+                className="w-full max-w-3xl mx-auto"
+              />
+            </div>
           </div>
         </div>
       ) : (
