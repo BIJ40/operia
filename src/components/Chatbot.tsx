@@ -45,7 +45,7 @@ export function Chatbot() {
   const [showChoiceMode, setShowChoiceMode] = useState(true);
   const [buttonPosition, setButtonPosition] = useState(() => {
     const saved = localStorage.getItem('chatbot-position');
-    return saved ? JSON.parse(saved) : { bottom: 24, right: 24 };
+    return saved ? JSON.parse(saved) : { bottom: 200, right: 600 };
   });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
