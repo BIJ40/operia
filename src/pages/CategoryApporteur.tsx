@@ -4,6 +4,7 @@ import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Lightbulb, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import {
   Accordion,
@@ -494,6 +495,11 @@ export default function CategoryApporteur() {
     <>
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
         <div className="container max-w-4xl mx-auto px-4 py-8">
+          <Link to="/apporteurs" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
+            <Icons.ArrowLeft className="w-4 h-4" />
+            <span>Retour vers Apporteurs</span>
+          </Link>
+          
           <div className="bg-card border-2 rounded-lg p-6 mb-6 shadow-sm">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
               <Link to={`/apporteurs/category/${category.slug}`} className="hover:text-foreground transition-colors cursor-pointer">

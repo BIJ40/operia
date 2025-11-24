@@ -1,11 +1,12 @@
 // Copie exacte de Category.tsx adaptée pour HelpConfort
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { saveAppData } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info, ChevronsDownUp, ChevronsUpDown, Lightbulb } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import {
@@ -852,6 +853,11 @@ export default function CategoryHelpConfort() {
   return (
     <>
       <div className="container max-w-4xl mx-auto p-8">
+        <Link to="/helpconfort" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
+          <Icons.ArrowLeft className="w-4 h-4" />
+          <span>Retour vers HelpConfort</span>
+        </Link>
+        
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold">{category.title}</h1>
           {isEditMode && isAdmin && (
