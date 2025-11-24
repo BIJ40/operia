@@ -606,6 +606,8 @@ export type Database = {
           created_at: string
           id: string
           priority: string
+          rating: number | null
+          rating_comment: string | null
           resolved_at: string | null
           status: string
           updated_at: string
@@ -618,6 +620,8 @@ export type Database = {
           created_at?: string
           id?: string
           priority?: string
+          rating?: number | null
+          rating_comment?: string | null
           resolved_at?: string | null
           status?: string
           updated_at?: string
@@ -630,6 +634,8 @@ export type Database = {
           created_at?: string
           id?: string
           priority?: string
+          rating?: number | null
+          rating_comment?: string | null
           resolved_at?: string | null
           status?: string
           updated_at?: string

@@ -10,6 +10,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupportTicket } from '@/hooks/use-support-ticket';
 import chatIcon from '@/assets/logo_chat.png';
+import { RatingStars } from '@/components/RatingStars';
+import { Textarea } from '@/components/ui/textarea';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +40,8 @@ export function Chatbot() {
   const [supportMessages, setSupportMessages] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isUserTyping, setIsUserTyping] = useState(false);
+  const [ticketRating, setTicketRating] = useState(0);
+  const [ticketComment, setTicketComment] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { blocks } = useEditor();
@@ -795,40 +799,80 @@ export function Chatbot() {
       
       {/* Dialog de confirmation pour fermer le chat avec ticket actif */}
       <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Fermer la conversation ?</AlertDialogTitle>
+            <AlertDialogTitle>Évaluer la conversation</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir fermer cette conversation ? Le ticket sera marqué comme résolu.
+              Comment évalueriez-vous l'assistance reçue ?
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          <div className="flex flex-col gap-4 py-4">
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-sm font-medium">Note</p>
+              <RatingStars 
+                rating={ticketRating} 
+                onRatingChange={setTicketRating}
+                size="lg"
+              />
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium">
+                Commentaire (optionnel)
+              </label>
+              <Textarea
+                value={ticketComment}
+                onChange={(e) => setTicketComment(e.target.value)}
+                placeholder="Partagez votre expérience..."
+                className="resize-none"
+                rows={3}
+              />
+            </div>
+          </div>
+
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={async () => {
-              if (activeTicket) {
-                // Marquer le ticket comme résolu
-                const { error } = await supabase
-                  .from('support_tickets')
-                  .update({ 
-                    status: 'resolved',
-                    resolved_at: new Date().toISOString()
-                  })
-                  .eq('id', activeTicket.id);
-                
-                if (!error) {
-                  setActiveTicket(null);
-                  setSupportMessages([]);
-                  setUnreadCount(0); // Réinitialiser le compteur
-                  toast({
-                    title: 'Conversation fermée',
-                    description: 'Le ticket a été marqué comme résolu.',
-                  });
-                }
-              }
-              setIsOpen(false);
-              setShowCloseConfirm(false);
+            <AlertDialogCancel onClick={() => {
+              setTicketRating(0);
+              setTicketComment('');
             }}>
-              Fermer
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={async () => {
+                if (activeTicket) {
+                  // Marquer le ticket comme résolu avec évaluation
+                  const { error } = await supabase
+                    .from('support_tickets')
+                    .update({ 
+                      status: 'resolved',
+                      resolved_at: new Date().toISOString(),
+                      rating: ticketRating > 0 ? ticketRating : null,
+                      rating_comment: ticketComment.trim() || null,
+                    })
+                    .eq('id', activeTicket.id);
+                  
+                  if (!error) {
+                    setActiveTicket(null);
+                    setSupportMessages([]);
+                    setUnreadCount(0);
+                    toast({
+                      title: 'Conversation fermée',
+                      description: ticketRating > 0 
+                        ? 'Merci pour votre évaluation !' 
+                        : 'Le ticket a été marqué comme résolu.',
+                    });
+                    // Réinitialiser le rating et le commentaire
+                    setTicketRating(0);
+                    setTicketComment('');
+                  }
+                }
+                setIsOpen(false);
+                setShowCloseConfirm(false);
+              }}
+              disabled={ticketRating === 0}
+            >
+              {ticketRating === 0 ? 'Sélectionnez une note' : 'Fermer'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
