@@ -7,10 +7,11 @@ import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical, Upload, X, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Search, GripVertical, Upload, X, Edit2, Lock } from 'lucide-react';
+import { useIsBlockLocked } from '@/hooks/use-permissions';
+import { toast } from 'sonner';
 import { IconPicker } from '@/components/IconPicker';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import {
   DndContext,
   closestCenter,
@@ -48,6 +49,7 @@ interface SortableCategoryProps {
   editShowTitleOnCard: boolean;
   editShowTitleInMenu: boolean;
   isEditMode: boolean;
+  isBlockLocked: (blockId: string, blocks: any[]) => boolean;
   onEditTitleChange: (value: string) => void;
   onEditIconChange: (value: string) => void;
   onEditColorChange: (value: ColorPreset) => void;
@@ -73,6 +75,7 @@ const SortableCategory = ({
   editShowTitleOnCard,
   editShowTitleInMenu,
   isEditMode,
+  isBlockLocked,
   onEditTitleChange,
   onEditIconChange,
   onEditColorChange,
@@ -257,6 +260,27 @@ const SortableCategory = ({
             </Button>
           </div>
         </div>
+      ) : isBlockLocked(category.id, [category]) ? (
+        <div 
+          onClick={() => {
+            toast.error("Accès restreint - Vous n'avez pas les permissions pour accéder à cette section");
+          }}
+          className="block opacity-60 cursor-pointer relative"
+        >
+          <div className="flex flex-col items-center justify-center gap-3">
+            {isCustomImage ? (
+              <img src={category.icon} alt={category.title} className="w-[120px] h-[120px] object-contain opacity-50" />
+            ) : (
+              <Icon className="w-[120px] h-[120px] text-primary opacity-50" />
+            )}
+            {category.showTitleOnCard !== false && (
+              <h3 className="text-xl font-semibold text-center">{category.title}</h3>
+            )}
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <Lock className="w-8 h-8 text-destructive drop-shadow-lg" />
+          </div>
+        </div>
       ) : (
         <Link to={`/apporteurs/category/${category.slug}`} className="block">
           <div className="flex flex-col items-center justify-center gap-3">
@@ -278,6 +302,7 @@ const SortableCategory = ({
 export default function ApporteurGuide() {
   const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, reorderBlocks } = useApporteurEditor();
   const { isAdmin, isAuthenticated } = useAuth();
+  const isBlockLocked = useIsBlockLocked();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
@@ -511,6 +536,7 @@ export default function ApporteurGuide() {
                   editShowTitleOnCard={editShowTitleOnCard}
                   editShowTitleInMenu={editShowTitleInMenu}
                   isEditMode={isEditMode}
+                  isBlockLocked={isBlockLocked}
                   onEditTitleChange={setEditTitle}
                   onEditIconChange={setEditIcon}
                   onEditColorChange={setEditColor}
