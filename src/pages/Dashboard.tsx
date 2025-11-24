@@ -202,7 +202,7 @@ export default function Dashboard() {
                   alt="HelpConfort Services" 
                   className="h-24 mx-auto mb-4"
                 />
-                <h1 className="text-3xl font-bold mb-2">Bienvenue sur Helpogée</h1>
+                <h1 className="text-3xl font-bold mb-2">Bienvenue sur HelpConfort Services</h1>
                 <p className="text-muted-foreground">Votre plateforme centrale de ressources et documentation</p>
               </div>
 
