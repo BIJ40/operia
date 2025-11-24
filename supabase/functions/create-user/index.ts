@@ -55,7 +55,7 @@ serve(async (req) => {
     }
 
     // Récupérer les données de la requête
-    const { pseudo, password, firstName, lastName } = await req.json()
+    const { pseudo, password, firstName, lastName, agence, roleAgence } = await req.json()
 
     if (!pseudo || !password || !firstName || !lastName) {
       throw new Error('Pseudo, mot de passe, prénom et nom sont requis')
@@ -112,6 +112,8 @@ serve(async (req) => {
       .from('profiles')
       .update({ 
         pseudo: pseudo,
+        agence: agence || null,
+        role_agence: roleAgence || null,
         must_change_password: true 
       })
       .eq('id', newUser.user.id)

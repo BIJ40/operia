@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface Profile {
   id: string;
+  pseudo: string | null;
   first_name: string | null;
   last_name: string | null;
   agence: string | null;
@@ -22,8 +23,8 @@ export default function Profile() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [pseudo, setPseudo] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [agence, setAgence] = useState('');
@@ -46,14 +47,15 @@ export default function Profile() {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error;
       }
 
       if (data) {
         setProfile(data);
+        setPseudo(data.pseudo || '');
         setFirstName(data.first_name || '');
         setLastName(data.last_name || '');
         setAgence(data.agence || '');
@@ -71,37 +73,12 @@ export default function Profile() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          first_name: firstName,
-          last_name: lastName,
-          agence,
-          role_agence: roleAgence,
-          updated_at: new Date().toISOString(),
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Profil mis à jour',
-        description: 'Vos informations ont été enregistrées avec succès',
-      });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de mettre à jour le profil',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Fonction désactivée - les modifications sont gérées par l'administrateur
+    toast({
+      title: 'Modification non autorisée',
+      description: 'Seul l\'administrateur peut modifier votre profil. Contactez-le pour toute modification.',
+      variant: 'destructive',
+    });
   };
 
   if (!isAuthenticated) {
@@ -118,12 +95,26 @@ export default function Profile() {
               Mon Profil
             </CardTitle>
             <CardDescription className="text-white/90">
-              Gérez vos informations personnelles et professionnelles
+              Consultez vos informations personnelles et professionnelles
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="pseudo" className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-primary" />
+                    Pseudo
+                  </Label>
+                  <Input
+                    id="pseudo"
+                    value={pseudo}
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                    placeholder="Non renseigné"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="email" className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-primary" />
@@ -134,11 +125,8 @@ export default function Profile() {
                     type="email"
                     value={user?.email || ''}
                     disabled
-                    className="bg-muted"
+                    className="bg-muted cursor-not-allowed"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    L'email ne peut pas être modifié
-                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -146,8 +134,9 @@ export default function Profile() {
                   <Input
                     id="firstName"
                     value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Votre prénom"
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                    placeholder="Non renseigné"
                   />
                 </div>
 
@@ -156,8 +145,9 @@ export default function Profile() {
                   <Input
                     id="lastName"
                     value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Votre nom"
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                    placeholder="Non renseigné"
                   />
                 </div>
 
@@ -169,9 +159,13 @@ export default function Profile() {
                   <Input
                     id="agence"
                     value={agence}
-                    onChange={(e) => setAgence(e.target.value)}
-                    placeholder="Nom de votre agence"
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                    placeholder="Non renseigné"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Défini par l'administrateur
+                  </p>
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
@@ -182,28 +176,29 @@ export default function Profile() {
                   <Input
                     id="roleAgence"
                     value={roleAgence}
-                    onChange={(e) => setRoleAgence(e.target.value)}
-                    placeholder="Ex: Conseiller, Responsable d'agence..."
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                    placeholder="Non renseigné"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Défini par l'administrateur
+                  </p>
                 </div>
               </div>
 
               <div className="flex gap-4 pt-4">
                 <Button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark hover:opacity-90"
-                >
-                  {loading ? 'Enregistrement...' : 'Enregistrer les modifications'}
-                </Button>
-                <Button
                   type="button"
                   variant="outline"
                   onClick={() => navigate(-1)}
+                  className="flex-1"
                 >
                   Retour
                 </Button>
               </div>
+              <p className="text-sm text-center text-muted-foreground pt-2">
+                Pour toute modification de vos informations, contactez votre administrateur
+              </p>
             </form>
           </CardContent>
         </Card>

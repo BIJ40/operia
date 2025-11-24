@@ -35,6 +35,14 @@ const createUserSchema = z.object({
     .trim()
     .min(1, { message: "Le nom est requis" })
     .max(50, { message: "Le nom ne peut pas dépasser 50 caractères" }),
+  agence: z.string()
+    .trim()
+    .max(100, { message: "L'agence ne peut pas dépasser 100 caractères" })
+    .optional(),
+  roleAgence: z.string()
+    .trim()
+    .max(100, { message: "Le rôle ne peut pas dépasser 100 caractères" })
+    .optional(),
   password: z.string()
     .min(8, { message: "Le mot de passe doit contenir au moins 8 caractères" })
     .max(100, { message: "Le mot de passe ne peut pas dépasser 100 caractères" })
@@ -52,6 +60,8 @@ export default function AdminUsers() {
   const [pseudo, setPseudo] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [agence, setAgence] = useState('');
+  const [roleAgence, setRoleAgence] = useState('');
   const [tempPassword, setTempPassword] = useState('');
 
   useEffect(() => {
@@ -93,6 +103,8 @@ export default function AdminUsers() {
       pseudo: pseudo.trim(),
       firstName: firstName.trim(),
       lastName: lastName.trim(),
+      agence: agence.trim() || undefined,
+      roleAgence: roleAgence.trim() || undefined,
       password: tempPassword
     });
 
@@ -119,7 +131,9 @@ export default function AdminUsers() {
           pseudo: pseudo.trim(),
           password: tempPassword,
           firstName: firstName.trim(),
-          lastName: lastName.trim()
+          lastName: lastName.trim(),
+          agence: agence.trim() || null,
+          roleAgence: roleAgence.trim() || null
         }
       });
 
@@ -134,6 +148,8 @@ export default function AdminUsers() {
       setPseudo('');
       setFirstName('');
       setLastName('');
+      setAgence('');
+      setRoleAgence('');
       setTempPassword('');
       setErrors({});
       
@@ -254,6 +270,36 @@ export default function AdminUsers() {
                 />
                 {errors.lastName && <p className="text-sm text-destructive">{errors.lastName}</p>}
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="agence">Agence</Label>
+              <Input
+                id="agence"
+                value={agence}
+                onChange={(e) => {
+                  setAgence(e.target.value);
+                  setErrors(prev => ({ ...prev, agence: '' }));
+                }}
+                placeholder="Nom de l'agence"
+                className={errors.agence ? 'border-destructive' : ''}
+              />
+              {errors.agence && <p className="text-sm text-destructive">{errors.agence}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="roleAgence">Rôle dans l'agence</Label>
+              <Input
+                id="roleAgence"
+                value={roleAgence}
+                onChange={(e) => {
+                  setRoleAgence(e.target.value);
+                  setErrors(prev => ({ ...prev, roleAgence: '' }));
+                }}
+                placeholder="Ex: Conseiller, Manager, etc."
+                className={errors.roleAgence ? 'border-destructive' : ''}
+              />
+              {errors.roleAgence && <p className="text-sm text-destructive">{errors.roleAgence}</p>}
             </div>
 
             <div className="space-y-2">
