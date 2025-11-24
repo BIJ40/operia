@@ -76,6 +76,21 @@ export function AppSidebar() {
   const isApogee = scope === 'guide-apogee';
   const isFavoritesPage = location.pathname === '/favorites';
 
+  // Déterminer la page parent basée sur la route actuelle
+  const getParentPath = () => {
+    const path = location.pathname;
+    if (path === '/apogee' || path === '/') return null; // Déjà sur la page d'accueil
+    if (path.startsWith('/apogee/category/')) return '/apogee';
+    if (path === '/favorites') return '/apogee';
+    if (path.startsWith('/guide-apporteurs/category/')) return '/guide-apporteurs';
+    if (path === '/guide-apporteurs') return '/';
+    if (path.startsWith('/help-confort/category/')) return '/help-confort';
+    if (path === '/help-confort') return '/';
+    return '/';
+  };
+
+  const parentPath = getParentPath();
+
   // Charger depuis blocks pour Apogée
   useEffect(() => {
     if (isApogee) {
@@ -193,13 +208,15 @@ export function AppSidebar() {
       
       <SidebarContent className="pt-1">
         <SidebarGroup>
-          <Link 
-            to="/apogee" 
-            className="mx-2 mb-3 px-4 py-2 text-sm font-semibold bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
-          >
-            <Icons.Home className="w-4 h-4 text-primary" />
-            <span>Retour accueil</span>
-          </Link>
+          {parentPath && (
+            <Link 
+              to={parentPath}
+              className="mx-2 mb-3 px-4 py-2 text-sm font-semibold bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
+            >
+              <Icons.ArrowLeft className="w-4 h-4 text-primary" />
+              <span>Retour</span>
+            </Link>
+          )}
           
           {/* Favoris comme catégorie spéciale */}
           {isApogee && (
