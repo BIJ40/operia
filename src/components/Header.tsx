@@ -13,7 +13,7 @@ export function Header() {
   const location = useLocation();
   const editorContext = useEditor();
   const apporteurContext = useApporteurEditor();
-  const { isAuthenticated, isAdmin, roleAgence, isLoggingOut, logout } = useAuth();
+  const { isAuthenticated, isAdmin, isSupport, roleAgence, isLoggingOut, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   
   // Déterminer quel contexte utiliser selon la page
@@ -109,6 +109,15 @@ export function Header() {
             <div className="ml-auto flex items-center gap-2">
               <ChatbotNotifications />
               <SupportNotifications />
+              {isSupport && (
+                <Link
+                  to="/support"
+                  className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-primary/30 rounded-xl hover:bg-accent hover:border-primary hover:scale-[1.02] transition-all duration-300"
+                >
+                  <Settings className="w-5 h-5 text-primary" />
+                  <span className="font-semibold text-foreground">SUPPORT</span>
+                </Link>
+              )}
               <Link
                 to="/favorites"
                 className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
@@ -139,6 +148,15 @@ export function Header() {
           <div className="container mx-auto px-4 py-2 flex items-center justify-end gap-2">
             {isAuthenticated ? (
               <>
+                {isSupport && (
+                  <Link
+                    to="/support"
+                    className="text-primary hover:text-primary hover:scale-110 transition-all duration-300 shadow-[0_0_15px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_20px_hsl(var(--primary)/0.5)] p-2 rounded-md"
+                    title="Support client"
+                  >
+                    <Settings className="w-5 h-5" />
+                  </Link>
+                )}
                 <Link
                   to="/favorites"
                   className="text-primary hover:text-primary hover:scale-110 transition-all duration-300 shadow-[0_0_15px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_20px_hsl(var(--primary)/0.5)] p-2 rounded-md"
