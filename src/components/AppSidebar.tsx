@@ -176,8 +176,28 @@ export function AppSidebar() {
   };
 
   const handleBackNavigation = () => {
-    // Navigation intelligente : revenir en arrière dans l'historique
-    navigate(-1);
+    // Navigation intelligente vers la page parente
+    const path = location.pathname;
+    
+    if (path.startsWith('/apogee/category/')) {
+      // Depuis une catégorie Apogée → retour au guide Apogée
+      navigate('/apogee');
+    } else if (path.startsWith('/guide-apporteurs/category/')) {
+      // Depuis une catégorie Apporteurs → retour au guide Apporteurs
+      navigate('/guide-apporteurs');
+    } else if (path.startsWith('/help-confort/category/')) {
+      // Depuis une catégorie HelpConfort → retour à HelpConfort
+      navigate('/help-confort');
+    } else if (path === '/apogee' || path === '/guide-apporteurs' || path === '/help-confort' || path === '/favorites') {
+      // Depuis une page principale → retour à l'accueil
+      navigate('/');
+    }
+  };
+
+  // Déterminer si on doit afficher le bouton retour
+  const shouldShowBackButton = () => {
+    const path = location.pathname;
+    return path !== '/';
   };
 
   if (!scope) return null;
@@ -198,13 +218,15 @@ export function AppSidebar() {
       
       <SidebarContent className="pt-1">
         <SidebarGroup>
-          <button 
-            onClick={handleBackNavigation}
-            className="mx-2 mb-3 px-4 py-2 text-sm font-semibold bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 w-[calc(100%-1rem)]"
-          >
-            <Icons.ArrowLeft className="w-4 h-4 text-primary" />
-            <span>Retour</span>
-          </button>
+          {shouldShowBackButton() && (
+            <button 
+              onClick={handleBackNavigation}
+              className="mx-2 mb-3 px-4 py-2 text-sm font-semibold bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 w-[calc(100%-1rem)]"
+            >
+              <Icons.ArrowLeft className="w-4 h-4 text-primary" />
+              <span>Retour</span>
+            </button>
+          )}
           
           {/* Favoris comme catégorie spéciale */}
           {isApogee && (
