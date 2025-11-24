@@ -602,7 +602,7 @@ export function Chatbot() {
             right: '24px',
             zIndex: 9999
           }} 
-          className="w-80 h-[400px] bg-card border-2 rounded-lg shadow-xl flex flex-col animate-slide-in-right"
+          className="w-80 h-[500px] bg-card border-2 rounded-lg shadow-xl flex flex-col animate-slide-in-right"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-3 border-b">
