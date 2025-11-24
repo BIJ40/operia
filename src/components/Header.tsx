@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Home, Edit3, Square, LogIn, Settings, User, Heart } from 'lucide-react';
+import { LogOut, Home, Edit3, Square, LogIn, Settings, User, Heart, Loader2 } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +11,7 @@ export function Header() {
   const location = useLocation();
   const editorContext = useEditor();
   const apporteurContext = useApporteurEditor();
-  const { isAuthenticated, isAdmin, roleAgence, logout } = useAuth();
+  const { isAuthenticated, isAdmin, roleAgence, isLoggingOut, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   
   // Déterminer quel contexte utiliser selon la page
@@ -31,6 +31,19 @@ export function Header() {
 
   return (
     <>
+      {/* Overlay de déconnexion */}
+      {isLoggingOut && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center animate-fade-in">
+          <div className="bg-card border-2 border-primary/20 rounded-2xl p-8 shadow-2xl animate-scale-in flex flex-col items-center gap-4">
+            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-foreground mb-2">Déconnexion en cours...</h3>
+              <p className="text-sm text-muted-foreground">À bientôt !</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isAdmin ? (
         <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4 flex items-center gap-4">

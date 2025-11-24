@@ -9,6 +9,7 @@ interface AuthContextType {
   mustChangePassword: boolean;
   roleAgence: string | null;
   userPermissions: string[];
+  isLoggingOut: boolean;
   hasAccessToBlock: (blockId: string) => boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener
@@ -161,6 +163,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      setIsLoggingOut(true);
+      
+      // Petite pause pour laisser l'animation se voir
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
       // Déconnexion complète de Supabase
       await supabase.auth.signOut();
       
@@ -177,6 +184,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Erreur lors de la déconnexion:', error);
       // En cas d'erreur, forcer quand même la redirection
       window.location.href = '/';
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -201,6 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         mustChangePassword,
         roleAgence,
         userPermissions,
+        isLoggingOut,
         hasAccessToBlock,
         login, 
         logout,
@@ -219,6 +229,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mustChangePassword,
       roleAgence,
       userPermissions,
+      isLoggingOut,
       hasAccessToBlock,
       login, 
       logout,
