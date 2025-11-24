@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { LoginDialog } from '@/components/LoginDialog';
 import { Header } from '@/components/Header';
 import helpConfortServicesImg from '@/assets/help-confort-services.png';
+import { useEditor } from '@/contexts/EditorContext';
+import { useIsBlockLocked } from '@/hooks/use-permissions';
 
 const supabaseAny = supabase as any;
 import {
@@ -225,6 +227,8 @@ const SortableCard = ({
 export default function Landing() {
   const { isAdmin, isAuthenticated, roleAgence } = useAuth();
   const { toast } = useToast();
+  const { blocks } = useEditor();
+  const isBlockLocked = useIsBlockLocked();
   const [homeCards, setHomeCards] = useState<HomeCard[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -582,30 +586,56 @@ export default function Landing() {
               </DndContext>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {homeCards
-                  .filter(card => {
-                    // Filtrer les cartes HelpConfort pour les assistant(e)s
-                    if (roleAgence === 'assistant(e)' && card.link.includes('/helpconfort')) {
-                      return false;
-                    }
-                    return true;
-                  })
-                  .map(card => {
-                    const Icon = IconComponent(card.icon || 'BookOpen');
+                {homeCards.map(card => {
+                  const Icon = IconComponent(card.icon || 'BookOpen');
+                  
+                  // Trouver le block correspondant à la carte pour vérifier l'accès
+                  const linkParts = card.link.split('/');
+                  const slug = linkParts[linkParts.length - 1];
+                  const matchingBlock = blocks.find(b => b.slug === slug && b.type === 'category');
+                  const isLocked = matchingBlock ? isBlockLocked(matchingBlock.id, blocks) : false;
+                  
+                  if (isLocked) {
                     return (
-                      <Link
+                      <div
                         key={card.id}
-                        to={card.link}
-                        className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
+                        onClick={() => {
+                          toast({
+                            title: 'Accès restreint',
+                            description: 'Vous n\'avez pas les permissions pour accéder à cette section',
+                            variant: 'destructive',
+                          });
+                        }}
+                        className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 cursor-pointer opacity-60"
                       >
-                        <Icon className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
+                        {/* Cadenas en overlay */}
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
+                        </div>
+                        
+                        <Icon className="w-12 h-12 text-primary flex-shrink-0 opacity-50" />
                         <div className="flex-1 min-w-0">
                           <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
                           <p className="text-xs text-muted-foreground truncate">{card.description}</p>
                         </div>
-                      </Link>
+                      </div>
                     );
-                  })}
+                  }
+                  
+                  return (
+                    <Link
+                      key={card.id}
+                      to={card.link}
+                      className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
+                    >
+                      <Icon className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
+                        <p className="text-xs text-muted-foreground truncate">{card.description}</p>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             )}
 
