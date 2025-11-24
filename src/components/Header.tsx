@@ -91,7 +91,7 @@ export function Header() {
               ) : (
                 <>
                   <Edit3 className="w-5 h-5 text-primary" />
-                  <span className="font-semibold text-foreground">ENRICHIR</span>
+                  <span className="font-semibold text-foreground">EDITER</span>
                 </>
               )}
             </Button>
