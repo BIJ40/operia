@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { saveAppData } from '@/lib/db';
 import { Button } from '@/components/ui/button';
+import { useContentLoader } from '@/hooks/useContentLoader';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info, ChevronsDownUp, ChevronsUpDown, Lightbulb } from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import { FavoriteButton } from '@/components/FavoriteButton';
@@ -655,8 +656,22 @@ export default function Category() {
       );
     }
 
+    const { elementRef, content, isLoading } = useContentLoader({
+      blockId: section.id,
+      enabled: !isEditMode,
+      threshold: 0.3
+    });
+
     return (
-      <div ref={setNodeRef} style={style}>
+      <div 
+        ref={(node) => {
+          setNodeRef(node);
+          if (node && elementRef.current !== node) {
+            (elementRef as any).current = node;
+          }
+        }}
+        style={style}
+      >
         <AccordionItem value={section.id} id={section.id}>
             <AccordionTrigger>
               <div className="flex items-center justify-between w-full text-white">
@@ -843,10 +858,16 @@ export default function Category() {
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div
-                className="prose prose-sm max-w-none break-words overflow-visible"
-                dangerouslySetInnerHTML={{ __html: section.content }}
-              />
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <div
+                  className="prose prose-sm max-w-none break-words overflow-visible"
+                  dangerouslySetInnerHTML={{ __html: isEditMode ? section.content : content }}
+                />
+              )}
             </AccordionContent>
         </AccordionItem>
       </div>
