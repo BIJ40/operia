@@ -526,6 +526,104 @@ export default function Category() {
       zIndex: isDragging ? 50 : 'auto',
     };
 
+    // Si hideTitle est activé et ce n'est pas un TIPS ni une section figée, afficher un encart simple
+    if (section.hideTitle && !section.isSingleSection && section.contentType !== 'tips') {
+      return (
+        <div ref={setNodeRef} style={style} className="mb-4">
+          <div className="rounded-lg border-2 border-border bg-card shadow-sm p-6">
+            {isEditMode && isAdmin && (
+              <div className="flex gap-2 mb-4 justify-end bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="cursor-move"
+                  {...attributes}
+                  {...listeners}
+                >
+                  <GripVertical className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  title="Insérer une section après"
+                  onClick={() => handleAddSection(section.id)}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  title="Insérer un TIPS après"
+                  onClick={() => handleAddTips(section.id)}
+                >
+                  <Lightbulb className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setEditingId(section.id);
+                    setEditDialogOpen(true);
+                  }}
+                >
+                  <Edit2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  title="Dupliquer la section"
+                  onClick={() => handleDuplicate(section.id)}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      title="Changer de catégorie"
+                    >
+                      <FolderInput className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-background border shadow-md z-[200]">
+                    {availableCategories
+                      .filter(cat => cat.id !== category?.id)
+                      .map((cat) => (
+                        <DropdownMenuItem
+                          key={cat.id}
+                          onClick={() => handleMoveToCategory(section.id, cat.id)}
+                        >
+                          {cat.title}
+                        </DropdownMenuItem>
+                      ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleDeleteClick(section.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+            <div
+              className="prose prose-sm max-w-none break-words overflow-visible dark:prose-invert"
+              dangerouslySetInnerHTML={{ __html: section.content }}
+            />
+          </div>
+        </div>
+      );
+    }
+
     // Si c'est une section figée OU un TIPS, l'afficher sans accordéon
     if (section.isSingleSection || section.contentType === 'tips') {
       const isTips = section.contentType === 'tips';
