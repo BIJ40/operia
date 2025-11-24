@@ -19,6 +19,9 @@ export function Chatbot() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
+  
+  // Chatbot en maintenance
+  const isUnderMaintenance = true;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { blocks } = useEditor();
   const { toast } = useToast();
@@ -316,12 +319,19 @@ export function Chatbot() {
 
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
-            {messages.length === 0 && (
-              <div className="text-center text-muted-foreground text-sm py-8">
-                Demandez à Mme Michu !
+            {isUnderMaintenance ? (
+              <div className="text-center text-muted-foreground py-8">
+                <p className="text-lg mb-2">🚧</p>
+                <p className="text-sm font-medium">Je suis en travaux pour le moment, revenez plus tard!</p>
               </div>
-            )}
-            {messages.map((msg, idx) => (
+            ) : (
+              <>
+                {messages.length === 0 && (
+                  <div className="text-center text-muted-foreground text-sm py-8">
+                    Demandez à Mme Michu !
+                  </div>
+                )}
+                {messages.map((msg, idx) => (
               <div
                 key={idx}
                 className={`mb-4 ${
@@ -342,17 +352,19 @@ export function Chatbot() {
                   </div>
                 </div>
               </div>
-            ))}
-            {isLoading && (
-              <div className="text-left">
-                <div className="inline-block bg-muted p-3 rounded-lg">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
+                ))}
+                {isLoading && (
+                  <div className="text-left">
+                    <div className="inline-block bg-muted p-3 rounded-lg">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                )}
+              </>
             )}
             <div ref={messagesEndRef} />
           </ScrollArea>
@@ -370,10 +382,10 @@ export function Chatbot() {
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Posez votre question..."
-                disabled={isLoading}
+                placeholder={isUnderMaintenance ? "En maintenance..." : "Posez votre question..."}
+                disabled={isLoading || isUnderMaintenance}
               />
-              <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+              <Button type="submit" size="icon" disabled={isLoading || !input.trim() || isUnderMaintenance}>
                 <Send className="h-4 w-4" />
               </Button>
             </form>
