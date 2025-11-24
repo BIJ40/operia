@@ -235,7 +235,7 @@ export default function Landing() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(!isAuthenticated);
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -249,11 +249,10 @@ export default function Landing() {
   );
 
   useEffect(() => {
+    loadCards(); // Toujours charger les cartes, même pour les visiteurs
+    
     if (isAuthenticated) {
-      loadCards();
       setLoginOpen(false);
-    } else {
-      setLoginOpen(true);
     }
     
     // Synchroniser isEditMode avec localStorage
