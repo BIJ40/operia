@@ -190,6 +190,54 @@ export type Database = {
         }
         Relationships: []
       }
+      chatbot_queries: {
+        Row: {
+          admin_notes: string | null
+          answer: string | null
+          context_found: string | null
+          created_at: string | null
+          id: string
+          is_incomplete: boolean | null
+          question: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          similarity_scores: Json | null
+          status: string | null
+          user_id: string | null
+          user_pseudo: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          answer?: string | null
+          context_found?: string | null
+          created_at?: string | null
+          id?: string
+          is_incomplete?: boolean | null
+          question: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          similarity_scores?: Json | null
+          status?: string | null
+          user_id?: string | null
+          user_pseudo?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          answer?: string | null
+          context_found?: string | null
+          created_at?: string | null
+          id?: string
+          is_incomplete?: boolean | null
+          question?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          similarity_scores?: Json | null
+          status?: string | null
+          user_id?: string | null
+          user_pseudo?: string | null
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           apporteur_block_id: string | null

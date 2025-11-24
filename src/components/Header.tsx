@@ -5,6 +5,7 @@ import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { LoginDialog } from '@/components/LoginDialog';
+import { ChatbotNotifications } from '@/components/ChatbotNotifications';
 import { useState } from 'react';
 
 export function Header() {
@@ -105,6 +106,7 @@ export function Header() {
             </Link>
 
             <div className="ml-auto flex items-center gap-2">
+              <ChatbotNotifications />
               <Link
                 to="/favorites"
                 className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"

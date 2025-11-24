@@ -7,14 +7,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple input validation
 interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
 
 function validateInput(messages: any, guideContent: any): { valid: boolean; error?: string } {
-  // Validate messages array
   if (!Array.isArray(messages)) {
     return { valid: false, error: 'Messages must be an array' };
   }
@@ -37,7 +35,6 @@ function validateInput(messages: any, guideContent: any): { valid: boolean; erro
     }
   }
   
-  // Validate guideContent
   if (typeof guideContent !== 'string') {
     return { valid: false, error: 'Invalid guide content' };
   }
@@ -49,6 +46,21 @@ function validateInput(messages: any, guideContent: any): { valid: boolean; erro
   return { valid: true };
 }
 
+// Détecte si la réponse indique une information manquante
+function isIncompleteAnswer(answer: string): boolean {
+  const incompleteMarkers = [
+    "n'est pas documentée",
+    "je n'ai pas trouvé",
+    "information précise n'est pas",
+    "pas dans le guide",
+    "non documenté",
+    "cette information manque"
+  ];
+  
+  const lowerAnswer = answer.toLowerCase();
+  return incompleteMarkers.some(marker => lowerAnswer.includes(marker));
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -56,9 +68,8 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { messages, guideContent } = body;
+    const { messages, guideContent, userId, userPseudo, similarityScores } = body;
     
-    // Validate input
     const validation = validateInput(messages, guideContent);
     if (!validation.valid) {
       console.error('Validation error:', validation.error);
@@ -74,9 +85,15 @@ serve(async (req) => {
       throw new Error("OPENAI_API_KEY is not configured");
     }
 
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     console.log("Guide content length:", guideContent.length);
     
-    // Prompt système avec gestion explicite de l'absence d'information
+    // Récupérer la dernière question utilisateur
+    const userQuestion = messages[messages.length - 1]?.content || '';
+
     const systemPrompt = `Tu es Mme MICHU, l'assistante du guide Apogée CRM.
 
 📚 CONTENU INDEXÉ (recherche sémantique) :
@@ -95,7 +112,7 @@ ${guideContent}
    Si la question concerne une procédure/action NON décrite dans le contenu :
    
    Réponds EXACTEMENT :
-   "❌ Cette information précise n'est pas documentée dans le guide indexé.
+   "❌ Désolé ${userPseudo || ''}, le guide ne semble pas donner cette information. Je remonte immédiatement la demande afin qu'une clarification soit apportée sur le sujet. De plus, je fais en sorte que tu sois recontacté à ce sujet.
    
    Voici ce que j'ai trouvé de pertinent :
    - [Liste les sections les plus proches avec leurs liens]
@@ -120,7 +137,7 @@ ${guideContent}
 VÉRIFICATION AVANT ENVOI :
 □ Chaque élément existe MOT À MOT dans le contenu ?
 □ J'ai fourni les liens de toutes les sections ?
-□ Si l'info manque, j'ai dit "non documenté" ?
+□ Si l'info manque, j'ai dit "non documenté" avec le message personnalisé ?
 
 Réponds maintenant.`;
 
@@ -132,7 +149,7 @@ Réponds maintenant.`;
       },
       body: JSON.stringify({
         model: "gpt-4o",
-        temperature: 0.1, // Très bas pour limiter la créativité
+        temperature: 0.1,
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
@@ -162,7 +179,66 @@ Réponds maintenant.`;
       });
     }
 
-    return new Response(response.body, {
+    // Stream la réponse et accumule le contenu
+    let fullAnswer = '';
+    const encoder = new TextEncoder();
+    
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n').filter(line => line.trim() !== '');
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
+                
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices?.[0]?.delta?.content || '';
+                  if (content) {
+                    fullAnswer += content;
+                    controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+                  }
+                } catch (e) {
+                  // Ignore parsing errors
+                }
+              }
+            }
+          }
+          
+          // Enregistrer la question/réponse dans la base
+          const isIncomplete = isIncompleteAnswer(fullAnswer);
+          
+          await supabase.from('chatbot_queries').insert({
+            user_id: userId || null,
+            user_pseudo: userPseudo || 'Anonyme',
+            question: userQuestion,
+            answer: fullAnswer,
+            is_incomplete: isIncomplete,
+            context_found: guideContent.substring(0, 5000), // Limite à 5000 chars
+            similarity_scores: similarityScores || null,
+            status: isIncomplete ? 'pending' : 'resolved'
+          });
+          
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        } catch (error) {
+          console.error('Stream error:', error);
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(stream, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {

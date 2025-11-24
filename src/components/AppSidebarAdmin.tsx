@@ -6,7 +6,8 @@ import {
   Database, 
   Shield,
   ArrowLeft,
-  Home
+  Home,
+  MessageSquare
 } from 'lucide-react';
 import {
   Sidebar,
@@ -45,9 +46,14 @@ const adminMenuItems = [
     icon: Shield,
   },
   {
-    title: 'Mme Michu',
+    title: 'Mme Michu - Documents',
     url: '/admin/documents',
     icon: FileText,
+  },
+  {
+    title: 'Mme Michu - Questions',
+    url: '/admin/chatbot-queries',
+    icon: MessageSquare,
   },
   {
     title: 'Sauvegardes',
