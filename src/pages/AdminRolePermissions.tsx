@@ -205,6 +205,58 @@ export default function AdminRolePermissions() {
     }
   };
 
+  const toggleAllInSection = async (blocksList: Block[], newValue: boolean) => {
+    setSaving(true);
+    try {
+      const allBlockIds = blocksList.map(b => b.id);
+
+      // Supprimer les anciennes permissions
+      await supabase
+        .from('role_permissions')
+        .delete()
+        .eq('role_agence', selectedRole)
+        .in('block_id', allBlockIds);
+
+      // Créer les nouvelles permissions
+      const newPermissions = allBlockIds.map(id => ({
+        role_agence: selectedRole,
+        block_id: id,
+        can_access: newValue,
+      }));
+
+      const { error } = await supabase
+        .from('role_permissions')
+        .insert(newPermissions);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: `Toutes les permissions ${newValue ? 'activées' : 'désactivées'}`,
+      });
+
+      await loadData();
+    } catch (error) {
+      console.error('Error toggling all:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de modifier les permissions',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getSectionCheckState = (blocksList: Block[]): boolean | 'indeterminate' => {
+    const allBlockIds = blocksList.map(b => b.id);
+    const accessibleCount = allBlockIds.filter(id => hasPermission(id)).length;
+    
+    if (accessibleCount === 0) return false;
+    if (accessibleCount === allBlockIds.length) return true;
+    return 'indeterminate';
+  };
+
   const toggleCategory = (categoryId: string) => {
     const newOpen = new Set(openCategories);
     if (newOpen.has(categoryId)) {
@@ -309,10 +361,24 @@ export default function AdminRolePermissions() {
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Guide Apogée</CardTitle>
-            <CardDescription>
-              Gérez l'accès aux catégories et sections du guide Apogée
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Guide Apogée</CardTitle>
+                <CardDescription>
+                  Gérez l'accès aux catégories et sections du guide Apogée
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={getSectionCheckState(blocks.filter(b => !b.slug.startsWith('helpconfort-')))}
+                  onCheckedChange={(checked) => 
+                    toggleAllInSection(blocks.filter(b => !b.slug.startsWith('helpconfort-')), !!checked)
+                  }
+                  disabled={saving}
+                />
+                <span className="text-sm font-medium">Tout sélectionner</span>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {renderBlockTree(blocks.filter(b => !b.slug.startsWith('helpconfort-')), 'blocks')}
@@ -321,10 +387,24 @@ export default function AdminRolePermissions() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Guide Apporteurs</CardTitle>
-            <CardDescription>
-              Gérez l'accès aux catégories et sections du guide Apporteurs
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Guide Apporteurs</CardTitle>
+                <CardDescription>
+                  Gérez l'accès aux catégories et sections du guide Apporteurs
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={getSectionCheckState(apporteurBlocks)}
+                  onCheckedChange={(checked) => 
+                    toggleAllInSection(apporteurBlocks, !!checked)
+                  }
+                  disabled={saving}
+                />
+                <span className="text-sm font-medium">Tout sélectionner</span>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {renderBlockTree(apporteurBlocks, 'apporteur_blocks')}
@@ -333,10 +413,24 @@ export default function AdminRolePermissions() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Base HelpConfort</CardTitle>
-            <CardDescription>
-              Gérez l'accès aux catégories et sections de la base HelpConfort
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Base HelpConfort</CardTitle>
+                <CardDescription>
+                  Gérez l'accès aux catégories et sections de la base HelpConfort
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={getSectionCheckState(blocks.filter(b => b.slug.startsWith('helpconfort-')))}
+                  onCheckedChange={(checked) => 
+                    toggleAllInSection(blocks.filter(b => b.slug.startsWith('helpconfort-')), !!checked)
+                  }
+                  disabled={saving}
+                />
+                <span className="text-sm font-medium">Tout sélectionner</span>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {renderBlockTree(blocks.filter(b => b.slug.startsWith('helpconfort-')), 'blocks')}
