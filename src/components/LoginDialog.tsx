@@ -50,17 +50,6 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
 
     setLoading(true);
     try {
-      // Récupérer l'email associé au pseudo
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('pseudo', pseudo.trim())
-        .maybeSingle();
-
-      if (profileError || !profile) {
-        throw new Error('Pseudo ou mot de passe incorrect');
-      }
-
       // Utiliser l'email interne pour se connecter
       const internalEmail = `${pseudo.trim()}@internal.helpogee.local`;
       
