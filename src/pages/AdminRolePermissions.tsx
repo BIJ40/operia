@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Shield, ChevronDown, ChevronRight } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Loader2, Shield } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Block {
   id: string;
@@ -40,7 +40,6 @@ export default function AdminRolePermissions() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [apporteurBlocks, setApporteurBlocks] = useState<Block[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (isAdmin) {
@@ -291,60 +290,57 @@ export default function AdminRolePermissions() {
     return 'indeterminate';
   };
 
-  const toggleCategory = (categoryId: string) => {
-    const newOpen = new Set(openCategories);
-    if (newOpen.has(categoryId)) {
-      newOpen.delete(categoryId);
-    } else {
-      newOpen.add(categoryId);
-    }
-    setOpenCategories(newOpen);
-  };
-
-  const renderBlockTree = (parentBlocks: Block[], tableName: 'blocks' | 'apporteur_blocks') => {
+  const renderCategoryGrid = (parentBlocks: Block[], tableName: 'blocks' | 'apporteur_blocks') => {
     const categories = parentBlocks.filter(b => b.type === 'category' && !b.parentId);
     const allBlocks = tableName === 'blocks' ? blocks : apporteurBlocks;
 
-    return categories.map(category => {
-      const sections = allBlocks.filter(b => b.type === 'section' && b.parentId === category.id);
-      const isOpen = openCategories.has(category.id);
-      const categoryPermission = hasPermission(category.id);
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {categories.map(category => {
+          const sections = allBlocks.filter(b => b.type === 'section' && b.parentId === category.id);
+          const categoryPermission = hasPermission(category.id);
 
-      return (
-        <div key={category.id} className="border rounded-lg p-4 mb-4">
-          <Collapsible open={isOpen} onOpenChange={() => toggleCategory(category.id)}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 flex-1">
-                <Checkbox
-                  checked={categoryPermission}
-                  onCheckedChange={(checked) => toggleCategoryAndChildren(category.id, !!checked)}
-                />
-                <CollapsibleTrigger className="flex items-center gap-2 hover:text-primary">
-                  {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                  <span className="font-semibold">{category.title}</span>
-                  <span className="text-xs text-muted-foreground">({sections.length} sections)</span>
-                </CollapsibleTrigger>
-              </div>
-            </div>
-
-            <CollapsibleContent className="mt-4 ml-8 space-y-2">
-              {sections.map(section => {
-                const sectionPermission = hasPermission(section.id);
-                return (
-                  <div key={section.id} className="flex items-center gap-3 p-2 hover:bg-muted rounded">
-                    <Checkbox
-                      checked={sectionPermission}
-                      onCheckedChange={(checked) => togglePermission(section.id, !!checked)}
-                    />
-                    <span className="text-sm">{section.title}</span>
+          return (
+            <Card key={category.id} className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    checked={categoryPermission}
+                    onCheckedChange={(checked) => toggleCategoryAndChildren(category.id, !!checked)}
+                    className="mt-1"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-base leading-tight break-words">{category.title}</CardTitle>
+                    <CardDescription className="text-xs mt-1">
+                      {sections.length} section{sections.length > 1 ? 's' : ''}
+                    </CardDescription>
                   </div>
-                );
-              })}
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
-      );
-    });
+                </div>
+              </CardHeader>
+              {categoryPermission && sections.length > 0 && (
+                <CardContent className="pt-0">
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {sections.map(section => {
+                      const sectionPermission = hasPermission(section.id);
+                      return (
+                        <div key={section.id} className="flex items-start gap-2 text-sm">
+                          <Checkbox
+                            checked={sectionPermission}
+                            onCheckedChange={(checked) => togglePermission(section.id, !!checked)}
+                            className="mt-0.5"
+                          />
+                          <span className="leading-tight break-words">{section.title}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+    );
   };
 
   if (loading) {
@@ -367,105 +363,97 @@ export default function AdminRolePermissions() {
         </p>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Sélectionner un rôle</CardTitle>
-          <CardDescription>
-            Choisissez le rôle pour lequel vous souhaitez gérer les permissions
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select value={selectedRole} onValueChange={setSelectedRole}>
-            <SelectTrigger className="w-full md:w-64">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {AVAILABLE_ROLES.map(role => (
-                <SelectItem key={role.value} value={role.value}>
-                  {role.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Guide Apogée</CardTitle>
-                <CardDescription>
-                  Gérez l'accès aux catégories et sections du guide Apogée
-                </CardDescription>
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-4">Sélectionner un rôle</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {AVAILABLE_ROLES.map(role => (
+            <Button
+              key={role.value}
+              variant={selectedRole === role.value ? 'default' : 'outline'}
+              className="h-auto py-4 px-6"
+              onClick={() => setSelectedRole(role.value)}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <Shield className="w-5 h-5" />
+                <span className="font-medium">{role.label}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={getSectionCheckState(blocks.filter(b => !b.slug.startsWith('helpconfort-')))}
-                  onCheckedChange={(checked) => 
-                    toggleAllInSection(blocks.filter(b => !b.slug.startsWith('helpconfort-')), !!checked)
-                  }
-                />
-                <span className="text-sm font-medium">Tout sélectionner</span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {renderBlockTree(blocks.filter(b => !b.slug.startsWith('helpconfort-')), 'blocks')}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Guide Apporteurs</CardTitle>
-                <CardDescription>
-                  Gérez l'accès aux catégories et sections du guide Apporteurs
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={getSectionCheckState(apporteurBlocks)}
-                  onCheckedChange={(checked) => 
-                    toggleAllInSection(apporteurBlocks, !!checked)
-                  }
-                />
-                <span className="text-sm font-medium">Tout sélectionner</span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {renderBlockTree(apporteurBlocks, 'apporteur_blocks')}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Base HelpConfort</CardTitle>
-                <CardDescription>
-                  Gérez l'accès aux catégories et sections de la base HelpConfort
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={getSectionCheckState(blocks.filter(b => b.slug.startsWith('helpconfort-')))}
-                  onCheckedChange={(checked) => 
-                    toggleAllInSection(blocks.filter(b => b.slug.startsWith('helpconfort-')), !!checked)
-                  }
-                />
-                <span className="text-sm font-medium">Tout sélectionner</span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {renderBlockTree(blocks.filter(b => b.slug.startsWith('helpconfort-')), 'blocks')}
-          </CardContent>
-        </Card>
+            </Button>
+          ))}
+        </div>
       </div>
+
+      <Tabs defaultValue="apogee" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="apogee">Guide Apogée</TabsTrigger>
+          <TabsTrigger value="apporteurs">Guide Apporteurs</TabsTrigger>
+          <TabsTrigger value="helpconfort">Base HelpConfort</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="apogee" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              Gérez l'accès aux catégories et sections du guide Apogée
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const apogeeBlocks = blocks.filter(b => !b.slug.startsWith('helpconfort-'));
+                const currentState = getSectionCheckState(apogeeBlocks);
+                toggleAllInSection(apogeeBlocks, currentState !== true);
+              }}
+            >
+              {getSectionCheckState(blocks.filter(b => !b.slug.startsWith('helpconfort-'))) === true 
+                ? 'Tout désélectionner' 
+                : 'Tout sélectionner'}
+            </Button>
+          </div>
+          {renderCategoryGrid(blocks.filter(b => !b.slug.startsWith('helpconfort-')), 'blocks')}
+        </TabsContent>
+
+        <TabsContent value="apporteurs" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              Gérez l'accès aux catégories et sections du guide Apporteurs
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const currentState = getSectionCheckState(apporteurBlocks);
+                toggleAllInSection(apporteurBlocks, currentState !== true);
+              }}
+            >
+              {getSectionCheckState(apporteurBlocks) === true 
+                ? 'Tout désélectionner' 
+                : 'Tout sélectionner'}
+            </Button>
+          </div>
+          {renderCategoryGrid(apporteurBlocks, 'apporteur_blocks')}
+        </TabsContent>
+
+        <TabsContent value="helpconfort" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              Gérez l'accès aux catégories et sections de la base HelpConfort
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const helpconfortBlocks = blocks.filter(b => b.slug.startsWith('helpconfort-'));
+                const currentState = getSectionCheckState(helpconfortBlocks);
+                toggleAllInSection(helpconfortBlocks, currentState !== true);
+              }}
+            >
+              {getSectionCheckState(blocks.filter(b => b.slug.startsWith('helpconfort-'))) === true 
+                ? 'Tout désélectionner' 
+                : 'Tout sélectionner'}
+            </Button>
+          </div>
+          {renderCategoryGrid(blocks.filter(b => b.slug.startsWith('helpconfort-')), 'blocks')}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
