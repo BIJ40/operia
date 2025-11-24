@@ -141,7 +141,7 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
           </div>
 
           <div className="space-y-3">
-            <Label>Rôle dans l'agence</Label>
+            <Label>Poste occupé</Label>
             <RadioGroup value={roleAgence} onValueChange={setRoleAgence}>
               {ROLE_OPTIONS.map((role) => (
                 <div key={role.value} className="flex items-center space-x-2">
