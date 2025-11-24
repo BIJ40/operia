@@ -2,7 +2,7 @@
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -220,12 +220,9 @@ export default function ApogeeGuide() {
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Rediriger si non authentifié
-  useEffect(() => {
-    if (!isAuthenticated) {
-      window.location.href = '/';
-    }
-  }, [isAuthenticated]);
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
 
   // Filtrer uniquement les catégories Apogée (exclure FAQ et HelpConfort)
   const apogeeCategories = blocks
