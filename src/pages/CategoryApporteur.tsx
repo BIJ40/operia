@@ -3,6 +3,7 @@ import { useParams, useLocation, Link } from 'react-router-dom';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
+import { usePageVisitTracker } from '@/hooks/usePageVisitTracker';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Lightbulb, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 import * as Icons from 'lucide-react';
@@ -87,6 +88,17 @@ export default function CategoryApporteur() {
     );
   }
   
+  // Tracking automatique de l'historique de navigation
+  usePageVisitTracker(
+    subcategory ? {
+      blockId: subcategory.id,
+      blockTitle: subcategory.title,
+      blockSlug: subcategory.slug,
+      categorySlug: category.slug,
+      scope: 'apporteur'
+    } : null
+  );
+
   const availableSubcategories = useMemo(() =>
     blocks
       .filter(b => b.type === 'subcategory' && b.parentId === category.id)
