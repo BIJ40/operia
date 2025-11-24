@@ -175,6 +175,11 @@ export function AppSidebar() {
     }
   };
 
+  const handleBackNavigation = () => {
+    // Navigation intelligente : revenir en arrière dans l'historique
+    navigate(-1);
+  };
+
   if (!scope) return null;
 
   return (
@@ -193,13 +198,13 @@ export function AppSidebar() {
       
       <SidebarContent className="pt-1">
         <SidebarGroup>
-          <Link 
-            to="/apogee" 
-            className="mx-2 mb-3 px-4 py-2 text-sm font-semibold bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
+          <button 
+            onClick={handleBackNavigation}
+            className="mx-2 mb-3 px-4 py-2 text-sm font-semibold bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 w-[calc(100%-1rem)]"
           >
-            <Icons.Home className="w-4 h-4 text-primary" />
-            <span>Retour accueil</span>
-          </Link>
+            <Icons.ArrowLeft className="w-4 h-4 text-primary" />
+            <span>Retour</span>
+          </button>
           
           {/* Favoris comme catégorie spéciale */}
           {isApogee && (
