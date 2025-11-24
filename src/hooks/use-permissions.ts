@@ -23,11 +23,6 @@ export function useIsBlockLocked() {
         return false;
       }
 
-      // Les dirigeants n'ont accès à rien (règle métier spécifique)
-      if (roleAgence === 'dirigeant') {
-        return true;
-      }
-
       // Les utilisateurs sans rôle spécifique ont accès à tout
       if (!roleAgence) {
         return false;

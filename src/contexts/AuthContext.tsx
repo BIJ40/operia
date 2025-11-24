@@ -205,9 +205,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Les admins ont accès à tout
     if (isAdmin) return true;
 
-    // Les dirigeants n'ont accès à rien (sauf si admin)
-    if (roleAgence === 'dirigeant') return false;
-
     // Les utilisateurs sans rôle spécifique ont accès à tout
     if (!roleAgence) return true;
 
