@@ -151,10 +151,37 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     }
   }, [blocks.length, toast, isAdmin]);
 
-  const updateBlock = useCallback(async (id: string, updates: Partial<Block>) => {
+  const updateBlock = useCallback(async (id: string, updates: Partial<Block>, options?: { allowContentDeletion?: boolean }) => {
     if (!isAdmin) {
       toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent modifier le contenu', variant: 'destructive' });
       return;
+    }
+    
+    // 🔒 VERROU DE SÉCURITÉ : empêcher le vidage accidentel du contenu
+    if (updates.content !== undefined) {
+      const existingBlock = blocks.find(b => b.id === id);
+      
+      if (existingBlock && existingBlock.content && existingBlock.content.trim().length > 0) {
+        const newContent = updates.content?.trim() || '';
+        
+        // Si on essaie de vider un contenu existant SANS autorisation explicite
+        if (newContent.length === 0 && !options?.allowContentDeletion) {
+          console.error('🚫 TENTATIVE DE VIDAGE DE CONTENU BLOQUÉE:', {
+            blockId: id,
+            blockTitle: existingBlock.title,
+            previousContentLength: existingBlock.content.length,
+            attemptedNewContent: newContent
+          });
+          
+          toast({ 
+            title: '🔒 Opération bloquée', 
+            description: 'Impossible de vider le contenu d\'une section par erreur. Utilisez le formulaire d\'édition pour supprimer intentionnellement du contenu.',
+            variant: 'destructive',
+            duration: 6000
+          });
+          return;
+        }
+      }
     }
     
     // Sauvegarder dans Supabase
@@ -184,11 +211,13 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       setBlocks((prev) =>
         prev.map((block) => (block.id === id ? { ...block, ...updates } : block))
       );
+      
+      console.log('✅ Bloc mis à jour avec succès:', id);
     } catch (error) {
       console.error('Erreur mise à jour:', error);
       toast({ title: 'Erreur', description: 'Impossible de sauvegarder les modifications', variant: 'destructive' });
     }
-  }, [isAdmin, toast]);
+  }, [isAdmin, toast, blocks]);
 
   const deleteBlock = useCallback(async (id: string) => {
     if (!isAdmin) {
