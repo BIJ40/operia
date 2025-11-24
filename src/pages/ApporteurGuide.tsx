@@ -2,7 +2,7 @@
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -289,12 +289,9 @@ export default function ApporteurGuide() {
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  // Rediriger si non authentifié
-  useEffect(() => {
-    if (!isAuthenticated) {
-      window.location.href = '/';
-    }
-  }, [isAuthenticated]);
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
 
   const apporteurCategories = blocks
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
