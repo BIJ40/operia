@@ -83,7 +83,7 @@ serve(async (req) => {
   }
 
   try {
-    const { query, topK = 5 } = await req.json();
+    const { query, topK = 8 } = await req.json();
 
     if (!query || typeof query !== 'string') {
       throw new Error('Query is required');
@@ -138,13 +138,45 @@ serve(async (req) => {
       .sort((a, b) => b.similarity_score - a.similarity_score)
       .slice(0, topK);
 
-    console.log('Top results:', topResults.map(r => ({
+    console.log('Top guide results:', topResults.map(r => ({
       title: r.block_title,
       score: r.similarity_score
     })));
 
+    // Rechercher aussi dans les documents
+    const { data: documents, error: docsError } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('scope', 'guide-apogee');
+
+    let documentResults: any[] = [];
+    
+    if (documents && !docsError) {
+      // Recherche simple par mots-clés dans les titres et descriptions
+      const queryWords = query.toLowerCase().split(/\s+/);
+      documentResults = documents
+        .filter(doc => {
+          const searchText = `${doc.title} ${doc.description || ''}`.toLowerCase();
+          return queryWords.some(word => searchText.includes(word));
+        })
+        .map(doc => ({
+          type: 'document',
+          title: doc.title,
+          description: doc.description,
+          file_path: doc.file_path,
+          file_type: doc.file_type,
+          block_id: doc.block_id,
+        }))
+        .slice(0, 3); // Max 3 documents
+      
+      console.log('Matching documents:', documentResults.length);
+    }
+
     return new Response(
-      JSON.stringify({ results: topResults }),
+      JSON.stringify({ 
+        results: topResults,
+        documents: documentResults,
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }

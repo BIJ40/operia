@@ -21,7 +21,7 @@ export function Chatbot() {
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
   
   // Chatbot en maintenance
-  const isUnderMaintenance = true;
+  const isUnderMaintenance = false;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { blocks } = useEditor();
   const { toast } = useToast();
@@ -114,7 +114,7 @@ export function Chatbot() {
     return () => window.removeEventListener('chatbot-question', handleChatbotQuestion as EventListener);
   }, [blocks, toast]);
 
-  const searchRelevantContent = async (query: string): Promise<string> => {
+  const searchRelevantContent = async (query: string): Promise<{ guideContent: string; documents: any[] }> => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-embeddings`,
@@ -126,7 +126,7 @@ export function Chatbot() {
           },
           body: JSON.stringify({
             query,
-            topK: 5, // Get top 5 most relevant chunks
+            topK: 8, // Augmenté pour plus de contexte
           }),
         }
       );
@@ -135,26 +135,29 @@ export function Chatbot() {
         throw new Error('Search failed');
       }
 
-      const { results } = await response.json();
+      const { results, documents } = await response.json();
       
       if (!results || results.length === 0) {
-        return 'Aucun contenu indexé trouvé. Veuillez indexer le guide.';
+        return { guideContent: 'Aucun contenu indexé trouvé. Veuillez indexer le guide.', documents: [] };
       }
 
       // Format the results
-      return results
+      const guideContent = results
         .map((result: any, idx: number) => {
           return `[${idx + 1}] ${result.block_title} (slug: ${result.block_slug})\n${result.chunk_text}`;
         })
         .join('\n\n---\n\n');
+      
+      return { guideContent, documents: documents || [] };
         
     } catch (error) {
       console.error('Search error:', error);
       // Fallback to basic content if RAG search fails
-      return blocks
+      const fallbackContent = blocks
         .slice(0, 10)
         .map(block => `${block.title}: ${block.content.substring(0, 200)}`)
         .join('\n\n');
+      return { guideContent: fallbackContent, documents: [] };
     }
   };
 
@@ -196,8 +199,9 @@ export function Chatbot() {
 
     try {
       // Use RAG search to find relevant content
-      const relevantContent = await searchRelevantContent(input);
-      console.log('Relevant content found:', relevantContent.length, 'characters');
+      const { guideContent, documents } = await searchRelevantContent(input);
+      console.log('Relevant content found:', guideContent.length, 'characters');
+      console.log('Related documents found:', documents.length);
       
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-guide`,
@@ -209,7 +213,8 @@ export function Chatbot() {
           },
           body: JSON.stringify({
             messages: [...messages, userMessage],
-            guideContent: relevantContent,
+            guideContent,
+            documents,
           }),
         }
       );
