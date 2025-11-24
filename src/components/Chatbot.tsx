@@ -558,10 +558,21 @@ export function Chatbot() {
 
                 {/* Messages du support */}
                 {supportMessages.length === 0 ? (
-                  <div className="text-center text-muted-foreground text-sm py-8">
-                    {activeTicket.status === 'waiting' 
-                      ? 'Un conseiller va bientôt vous répondre...'
-                      : 'Discutez avec le support'}
+                  <div className="text-center py-8">
+                    <div className="inline-block bg-muted p-4 rounded-lg max-w-[80%]">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
+                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {activeTicket.status === 'waiting' 
+                            ? 'Patientez quelques instants, un conseiller va se connecter...'
+                            : 'Conseiller connecté - Vous pouvez échanger'}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="mb-4">
@@ -644,13 +655,9 @@ export function Chatbot() {
                 onClick={async () => {
                   const ticket = await createSupportTicket(messages);
                   if (ticket) {
-                    // Définir le ticket actif immédiatement
+                    // Définir le ticket actif immédiatement - PAS de toast, PAS de fermeture
                     setActiveTicket(ticket);
                     setSupportMessages([]);
-                    toast({
-                      title: 'Conseiller contacté',
-                      description: 'Vous allez recevoir une réponse rapidement.',
-                    });
                   }
                 }}
                 disabled={isCreating}
