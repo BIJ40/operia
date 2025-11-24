@@ -19,7 +19,7 @@ export function Header() {
   const currentContext = isApporteurPage ? apporteurContext : editorContext;
   const { isEditMode, toggleEditMode } = currentContext;
 
-  const handleEnrichirClick = () => {
+  const handleEditerClick = () => {
     if (!isAdmin) {
       setLoginOpen(true);
     } else if (isEditMode) {
@@ -79,7 +79,7 @@ export function Header() {
             )}
 
             <Button
-              onClick={handleEnrichirClick}
+              onClick={handleEditerClick}
               variant="ghost"
               className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
             >
