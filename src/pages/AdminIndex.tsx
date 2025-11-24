@@ -1,23 +1,13 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, Users, Database, FileText, Settings } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Link } from 'react-router-dom';
+import { Users, Database, FileText } from 'lucide-react';
+import { Link, Navigate } from 'react-router-dom';
 
 export default function AdminIndex() {
   const { isAdmin } = useAuth();
 
   if (!isAdmin) {
-    return (
-      <div className="container max-w-4xl mx-auto p-8">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Accès refusé. Cette page est réservée aux administrateurs.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+    return <Navigate to="/" replace />;
   }
 
   return (

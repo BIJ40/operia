@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Navigate } from 'react-router-dom';
 
 export default function AdminBackup() {
   const { isAdmin } = useAuth();
@@ -41,16 +42,7 @@ export default function AdminBackup() {
   };
 
   if (!isAdmin) {
-    return (
-      <div className="container max-w-4xl mx-auto p-8">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Accès refusé. Cette page est réservée aux administrateurs.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+    return <Navigate to="/" replace />;
   }
 
   // Fonction pour extraire le texte pur sans HTML
