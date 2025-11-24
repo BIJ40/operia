@@ -50,12 +50,12 @@ function AppContent() {
         <Route path="/helpconfort" element={<Layout showHeader showSidebar={true} sidebarType="helpconfort"><HelpConfort /></Layout>} />
         <Route path="/helpconfort/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="helpconfort"><CategoryHelpConfort /></Layout>} />
         <Route path="/documents" element={<Layout showHeader showSidebar={false}><Documents /></Layout>} />
-        <Route path="/admin" element={<Layout showHeader showSidebar={false}><AdminIndex /></Layout>} />
-        <Route path="/admin/documents" element={<Layout showHeader showSidebar={false}><AdminDocuments /></Layout>} />
-        <Route path="/admin/backup" element={<Layout showHeader showSidebar={false}><AdminBackup /></Layout>} />
-        <Route path="/admin/helpconfort-backup" element={<Layout showHeader showSidebar={false}><AdminHelpConfortBackup /></Layout>} />
-        <Route path="/admin/users" element={<Layout showHeader showSidebar={false}><AdminUsers /></Layout>} />
-        <Route path="/admin/role-permissions" element={<Layout showHeader showSidebar={false}><AdminRolePermissions /></Layout>} />
+        <Route path="/admin" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminIndex /></Layout>} />
+        <Route path="/admin/documents" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminDocuments /></Layout>} />
+        <Route path="/admin/backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminBackup /></Layout>} />
+        <Route path="/admin/helpconfort-backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminHelpConfortBackup /></Layout>} />
+        <Route path="/admin/users" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUsers /></Layout>} />
+        <Route path="/admin/role-permissions" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminRolePermissions /></Layout>} />
         <Route path="/profile" element={<Layout showHeader={false} showSidebar={false}><Profile /></Layout>} />
         <Route path="/favorites" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><Favorites /></Layout>} />
         <Route path="*" element={<NotFound />} />
