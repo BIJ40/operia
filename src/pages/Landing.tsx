@@ -553,7 +553,7 @@ export default function Landing() {
               <img 
                 src={helpConfortServicesImg} 
                 alt="Help Confort Services" 
-                className="w-full max-w-3xl mx-auto"
+                className="w-full max-w-2xl mx-auto"
               />
             </div>
           </div>
@@ -680,7 +680,7 @@ export default function Landing() {
               <img 
                 src={helpConfortServicesImg} 
                 alt="Help Confort Services" 
-                className="w-full max-w-3xl mx-auto"
+                className="w-full max-w-2xl mx-auto"
               />
             </div>
 
