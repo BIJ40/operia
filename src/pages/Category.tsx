@@ -3,6 +3,7 @@ import { useParams, useLocation, Navigate, Link } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { saveAppData } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info, ChevronsDownUp, ChevronsUpDown, Lightbulb, ArrowLeft } from 'lucide-react';
@@ -80,12 +81,31 @@ export default function Category() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
   const { isAuthenticated, isAdmin } = useAuth();
   const { toast } = useToast();
+  const isBlockLocked = useIsBlockLocked();
   
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
+
+  // Vérifier les permissions d'accès à cette catégorie
+  if (category && isBlockLocked(category.id, blocks)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <Icons.Lock className="w-16 h-16 mx-auto mb-4 text-destructive" />
+          <h1 className="text-2xl font-bold mb-2">Accès restreint</h1>
+          <p className="text-muted-foreground mb-6">
+            Vous n'avez pas les permissions nécessaires pour accéder à cette catégorie.
+          </p>
+          <Link to="/apogee">
+            <Button>Retour au guide Apogée</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
   
   // Liste des catégories disponibles (exclure FAQ)
   const availableCategories = useMemo(() =>
