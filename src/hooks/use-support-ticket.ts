@@ -8,6 +8,17 @@ interface Message {
   content: string;
 }
 
+interface TicketCreatedData {
+  id: string;
+  user_id: string;
+  user_pseudo: string;
+  status: string;
+  priority: string;
+  chatbot_conversation: any;
+  created_at: string;
+  updated_at: string;
+}
+
 export const useSupportTicket = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -70,12 +81,10 @@ export const useSupportTicket = () => {
         // On continue même si la notification échoue
       }
 
-      toast({
-        title: 'Ticket créé !',
-        description: 'Un conseiller va vous répondre très rapidement.',
-      });
+      // NE PAS afficher de toast ici - c'est géré dans le Chatbot
+      // pour éviter de fermer le chat
 
-      return ticket.id;
+      return ticket;
     } catch (error) {
       console.error('Error creating support ticket:', error);
       toast({
