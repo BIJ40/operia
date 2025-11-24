@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Database, FileText } from 'lucide-react';
+import { Users, Database, FileText, Shield } from 'lucide-react';
 import { Link, Navigate } from 'react-router-dom';
 
 export default function AdminIndex() {
@@ -24,6 +24,20 @@ export default function AdminIndex() {
               </CardTitle>
               <CardDescription>
                 Créer et gérer les comptes utilisateurs
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
+
+        <Link to="/admin/role-permissions">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                Permissions par rôle
+              </CardTitle>
+              <CardDescription>
+                Gérer les accès aux catégories par rôle
               </CardDescription>
             </CardHeader>
           </Card>

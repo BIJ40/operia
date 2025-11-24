@@ -427,6 +427,33 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          block_id: string
+          can_access: boolean
+          created_at: string | null
+          id: string
+          role_agence: string
+          updated_at: string | null
+        }
+        Insert: {
+          block_id: string
+          can_access?: boolean
+          created_at?: string | null
+          id?: string
+          role_agence: string
+          updated_at?: string | null
+        }
+        Update: {
+          block_id?: string
+          can_access?: boolean
+          created_at?: string | null
+          id?: string
+          role_agence?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       sections: {
         Row: {
           category_id: string
