@@ -45,6 +45,7 @@ interface SectionEditFormProps {
   initialSummary?: string;
   initialShowSummary?: boolean;
   initialHideTitle?: boolean;
+  initialHideFromSidebar?: boolean;
   onSave: (data: {
     title: string;
     content: string;
@@ -52,6 +53,7 @@ interface SectionEditFormProps {
     summary?: string;
     showSummary?: boolean;
     hideTitle?: boolean;
+    hideFromSidebar?: boolean;
   }) => void;
   onCancel: () => void;
 }
@@ -64,6 +66,7 @@ export function SectionEditForm({
   initialSummary = '',
   initialShowSummary = true,
   initialHideTitle = false,
+  initialHideFromSidebar = false,
   onSave,
   onCancel,
 }: SectionEditFormProps) {
@@ -94,6 +97,10 @@ export function SectionEditForm({
   const [hideTitle, setHideTitle] = useState(() => {
     const saved = sessionStorage.getItem(`${storageKey}-hideTitle`);
     return saved ? saved === 'true' : initialHideTitle;
+  });
+  const [hideFromSidebar, setHideFromSidebar] = useState(() => {
+    const saved = sessionStorage.getItem(`${storageKey}-hideFromSidebar`);
+    return saved ? saved === 'true' : initialHideFromSidebar;
   });
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
@@ -152,6 +159,15 @@ export function SectionEditForm({
     }
   }, [hideTitle, storageKey]);
 
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(`${storageKey}-hideFromSidebar`, hideFromSidebar.toString());
+    } catch (e) {
+      // Silently fail if quota exceeded
+      console.warn('Unable to save draft to sessionStorage:', e);
+    }
+  }, [hideFromSidebar, storageKey]);
+
   // Proposer un titre par défaut quand la couleur change
   useEffect(() => {
     const defaultTitle = getDefaultTitleByColor(color);
@@ -186,10 +202,11 @@ export function SectionEditForm({
     sessionStorage.removeItem(`${storageKey}-summary`);
     sessionStorage.removeItem(`${storageKey}-showSummary`);
     sessionStorage.removeItem(`${storageKey}-hideTitle`);
+    sessionStorage.removeItem(`${storageKey}-hideFromSidebar`);
   };
 
   const handleSave = () => {
-    onSave({ title, content, colorPreset: color, summary, showSummary, hideTitle });
+    onSave({ title, content, colorPreset: color, summary, showSummary, hideTitle, hideFromSidebar });
     clearStorage();
   };
 
@@ -276,18 +293,33 @@ export function SectionEditForm({
           ))}
         </div>
       </div>
-      <div className="flex items-center space-x-2 py-2">
-        <Checkbox 
-          id="hideTitle" 
-          checked={hideTitle}
-          onCheckedChange={(checked) => setHideTitle(checked as boolean)}
-        />
-        <label 
-          htmlFor="hideTitle" 
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-        >
-          Ne pas afficher le titre (afficher juste un encart avec bordure)
-        </label>
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2 py-2">
+          <Checkbox 
+            id="hideTitle" 
+            checked={hideTitle}
+            onCheckedChange={(checked) => setHideTitle(checked as boolean)}
+          />
+          <label 
+            htmlFor="hideTitle" 
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+          >
+            Ne pas afficher le titre (afficher juste un encart avec bordure)
+          </label>
+        </div>
+        <div className="flex items-center space-x-2 py-2">
+          <Checkbox 
+            id="hideFromSidebar" 
+            checked={hideFromSidebar}
+            onCheckedChange={(checked) => setHideFromSidebar(checked as boolean)}
+          />
+          <label 
+            htmlFor="hideFromSidebar" 
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+          >
+            Ne pas afficher dans le sommaire
+          </label>
+        </div>
       </div>
       {!hideTitle && (
         <div className="flex items-center space-x-2 py-2">
