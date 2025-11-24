@@ -119,13 +119,6 @@ export function Header() {
                 </Link>
               )}
               <Link
-                to="/favorites"
-                className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
-              >
-                <Heart className="w-5 h-5 text-primary" />
-                <span className="font-semibold text-foreground">FAVORIS</span>
-              </Link>
-              <Link
                 to="/profile"
                 className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
               >
