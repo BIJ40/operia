@@ -642,23 +642,15 @@ export function Chatbot() {
             <div className="px-4 pt-2 pb-2 border-t">
               <Button
                 onClick={async () => {
-                  const ticketId = await createSupportTicket(messages);
-                  if (ticketId) {
-                    // Recharger le ticket actif sans fermer le chat
-                    const { data } = await supabase
-                      .from('support_tickets')
-                      .select('*')
-                      .eq('id', ticketId)
-                      .single();
-                    
-                    if (data) {
-                      setActiveTicket(data);
-                      setSupportMessages([]);
-                      toast({
-                        title: 'Conseiller contacté',
-                        description: 'Vous allez recevoir une réponse rapidement.',
-                      });
-                    }
+                  const ticket = await createSupportTicket(messages);
+                  if (ticket) {
+                    // Définir le ticket actif immédiatement
+                    setActiveTicket(ticket);
+                    setSupportMessages([]);
+                    toast({
+                      title: 'Conseiller contacté',
+                      description: 'Vous allez recevoir une réponse rapidement.',
+                    });
                   }
                 }}
                 disabled={isCreating}
