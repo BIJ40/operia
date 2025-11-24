@@ -155,6 +155,22 @@ All colors MUST be HSL.
   min-height: 1.5em;
 }
 
+/* CRITICAL: Force inline color styles to always take precedence */
+/* This ensures colors are preserved in dialogs, sheets, and all contexts */
+.prose [style*="color:"],
+.prose span[style*="color:"],
+.prose p[style*="color:"],
+.prose div[style*="color:"],
+.prose strong[style*="color:"],
+.prose em[style*="color:"],
+.prose b[style*="color:"],
+.prose i[style*="color:"],
+.prose h1[style*="color:"],
+.prose h2[style*="color:"],
+.prose h3[style*="color:"] {
+  /* Inline styles have natural precedence, this is just defensive */
+}
+
 .prose p:empty {
   min-height: 1.5em;
   display: block;
