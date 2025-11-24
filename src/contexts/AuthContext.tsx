@@ -165,17 +165,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoggingOut(true);
 
+      // Petite pause pour laisser l'animation se voir
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
       // Déconnexion complète de Supabase
       await supabase.auth.signOut();
 
       // Fallback de sécurité : supprimer manuellement les sessions locales Supabase
-      try {
-        Object.keys(localStorage)
-          .filter((key) => key.startsWith('sb-'))
-          .forEach((key) => localStorage.removeItem(key));
-      } catch (e) {
-        console.warn('Impossible de nettoyer complètement le localStorage Supabase', e);
-      }
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith('sb-'))
+        .forEach((key) => localStorage.removeItem(key));
 
       // Nettoyer les états en mémoire
       setIsAdmin(false);
@@ -184,16 +183,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserPermissions([]);
       setUser(null);
 
-      // Petite pause pour laisser l'animation se voir
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      // Rechargement complet de l'app
+      // Redirection immédiate vers la page d'accueil
       window.location.href = '/';
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
+      // En cas d'erreur, on redirige quand même
       window.location.href = '/';
-    } finally {
-      setIsLoggingOut(false);
     }
   };
 
