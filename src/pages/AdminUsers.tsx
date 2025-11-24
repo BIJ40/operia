@@ -9,10 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { EditUserDialog } from '@/components/EditUserDialog';
 import { z } from 'zod';
+import { Navigate } from 'react-router-dom';
 
 interface UserProfile {
   id: string;
@@ -200,16 +200,7 @@ export default function AdminUsers() {
   };
 
   if (!isAdmin) {
-    return (
-      <div className="container max-w-4xl mx-auto p-8">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Accès refusé. Cette page est réservée aux administrateurs.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+    return <Navigate to="/" replace />;
   }
 
   return (

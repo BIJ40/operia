@@ -9,6 +9,7 @@ import { Download, Upload, AlertCircle } from 'lucide-react';
 import { Block } from '@/types/block';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Navigate } from 'react-router-dom';
 
 export default function AdminHelpConfortBackup() {
   const { isAdmin } = useAuth();
@@ -209,16 +210,7 @@ export default function AdminHelpConfortBackup() {
   };
 
   if (!isAdmin) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Vous devez être administrateur pour accéder à cette page.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+    return <Navigate to="/" replace />;
   }
 
   return (
