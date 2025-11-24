@@ -215,6 +215,7 @@ export function Chatbot() {
             toast({
               title: 'Ticket résolu',
               description: 'Votre demande a été résolue.',
+              duration: 4000,
             });
             setActiveTicket(null);
             setSupportMessages([]);
@@ -302,6 +303,7 @@ export function Chatbot() {
           title: 'Erreur',
           description: 'Impossible de se connecter au chatbot',
           variant: 'destructive',
+          duration: 4000,
         });
       } finally {
         setIsLoading(false);
@@ -437,6 +439,7 @@ export function Chatbot() {
           title: 'Erreur',
           description: 'Impossible d\'envoyer le message',
           variant: 'destructive',
+          duration: 4000,
         });
       }
       return;
@@ -488,6 +491,7 @@ export function Chatbot() {
             title: 'Erreur',
             description: error.error,
             variant: 'destructive',
+            duration: 4000,
           });
           setIsLoading(false);
           return;
@@ -546,6 +550,7 @@ export function Chatbot() {
         title: 'Erreur',
         description: 'Impossible de se connecter au chatbot',
         variant: 'destructive',
+        duration: 4000,
       });
     } finally {
       setIsLoading(false);
@@ -861,6 +866,7 @@ export function Chatbot() {
                       description: ticketRating > 0 
                         ? 'Merci pour votre évaluation !' 
                         : 'Le ticket a été marqué comme résolu.',
+                      duration: 4000,
                     });
                     // Réinitialiser le rating et le commentaire
                     setTicketRating(0);
