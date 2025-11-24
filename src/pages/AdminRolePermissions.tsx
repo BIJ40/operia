@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Shield, ChevronDown, ChevronRight } from 'lucide-react';
+import { Loader2, Shield, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface Block {
@@ -357,14 +357,22 @@ export default function AdminRolePermissions() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-          <Shield className="w-8 h-8 text-primary" />
-          Gestion des permissions par rôle
-        </h1>
-        <p className="text-muted-foreground">
-          Gérez les accès aux catégories et sections pour chaque rôle
-        </p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+            <Shield className="w-8 h-8 text-primary" />
+            Gestion des permissions par rôle
+          </h1>
+          <p className="text-muted-foreground">
+            Gérez les accès aux catégories et sections pour chaque rôle
+          </p>
+        </div>
+        <Link to="/admin">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour admin
+          </Button>
+        </Link>
       </div>
 
       <Card className="mb-6">

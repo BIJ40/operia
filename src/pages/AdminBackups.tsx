@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Database } from 'lucide-react';
+import { Download, Database, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AdminBackups() {
@@ -384,7 +384,24 @@ export default function AdminBackups() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+              <Database className="w-8 h-8 text-primary" />
+              Sauvegardes
+            </h1>
+            <p className="text-muted-foreground">
+              Exporter les guides en JSON pour sauvegarde ou migration
+            </p>
+          </div>
+          <Link to="/admin">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour admin
+            </Button>
+          </Link>
+        </div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
           <Database className="w-8 h-8 text-primary" />
