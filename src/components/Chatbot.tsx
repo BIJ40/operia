@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send } from 'lucide-react';
+import { X, Send, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useSupportTicket } from '@/hooks/use-support-ticket';
 import chatIcon from '@/assets/logo_chat.png';
 
 type Message = {
@@ -26,6 +27,7 @@ export function Chatbot() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { createSupportTicket, isCreating } = useSupportTicket();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -372,6 +374,32 @@ export function Chatbot() {
             )}
             <div ref={messagesEndRef} />
           </ScrollArea>
+
+          {/* Support button - visible si messages existent */}
+          {messages.length > 0 && (
+            <div className="px-4 pb-2 border-t pt-2">
+              <Button
+                onClick={async () => {
+                  const ticketId = await createSupportTicket(messages);
+                  if (ticketId) {
+                    setMessages([]);
+                    setIsOpen(false);
+                    toast({
+                      title: 'Ticket créé',
+                      description: 'Un conseiller va vous contacter rapidement.',
+                    });
+                  }
+                }}
+                disabled={isCreating}
+                variant="outline"
+                size="sm"
+                className="w-full"
+              >
+                <UserCircle className="h-4 w-4 mr-2" />
+                {isCreating ? 'Création...' : 'Parler à un conseiller'}
+              </Button>
+            </div>
+          )}
 
           {/* Input */}
           <div className="p-4 border-t">
