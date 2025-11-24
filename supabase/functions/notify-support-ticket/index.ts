@@ -28,14 +28,14 @@ serve(async (req) => {
     const { ticketId, userPseudo, lastQuestion, appUrl }: NotificationRequest = await req.json();
 
     // Récupérer tous les utilisateurs avec le rôle "support" ou "admin"
-    const { data: supportUsers, error: usersError } = await supabase
+    const { data: supportUserRoles, error: usersError } = await supabase
       .from('user_roles')
-      .select('user_id, profiles!inner(pseudo)')
+      .select('user_id')
       .in('role', ['admin', 'support']);
 
     if (usersError) throw usersError;
 
-    if (!supportUsers || supportUsers.length === 0) {
+    if (!supportUserRoles || supportUserRoles.length === 0) {
       console.log('No support users found');
       return new Response(
         JSON.stringify({ message: 'No support users to notify' }),
@@ -46,15 +46,16 @@ serve(async (req) => {
       );
     }
 
-    // Récupérer les emails des utilisateurs support
+    // Récupérer les user IDs
+    const userIds = supportUserRoles.map(ur => ur.user_id);
+
+    // Récupérer les emails des utilisateurs support depuis auth.users
     const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
     if (authError) throw authError;
 
-    const supportEmails = supportUsers
-      .map(su => {
-        const authUser = authUsers.users.find(au => au.id === su.user_id);
-        return authUser?.email;
-      })
+    const supportEmails = authUsers.users
+      .filter(user => userIds.includes(user.id))
+      .map(user => user.email)
       .filter(email => email) as string[];
 
     if (supportEmails.length === 0) {
