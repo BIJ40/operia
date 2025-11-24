@@ -19,6 +19,7 @@ interface EditorContextType {
   importData: (data: string) => Promise<void>;
   resetToDefault: () => void;
   reloadBlocks: () => Promise<void>;
+  loadBlockContent: (blockId: string) => Promise<string>;
   loading: boolean;
 }
 
@@ -31,13 +32,13 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { isAdmin } = useAuth();
 
-  // Load data from Supabase on mount with optimized query
+  // Load data from Supabase on mount - OPTIMIZED: load only metadata, content loaded on demand
   useEffect(() => {
     const initData = async () => {
-      console.log('🔄 Chargement depuis Supabase...');
+      console.log('🔄 Chargement optimisé depuis Supabase...');
       
       try {
-        // First load metadata without content to avoid timeout
+        // Load only metadata without heavy content field
         const { data, error } = await supabase
           .from('blocks')
           .select('id,type,title,slug,parent_id,order,icon,color_preset,hide_from_sidebar,hide_title,attachments,content_type,tips_type,summary,show_summary')
@@ -46,32 +47,13 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
 
         if (data) {
-          // Then load content separately in smaller batches to avoid timeout
-          const ids = data.map((b: any) => b.id);
-          const batchSize = 50;
-          const contentMap = new Map();
-          
-          // Load content in batches
-          for (let i = 0; i < ids.length; i += batchSize) {
-            const batchIds = ids.slice(i, i + batchSize);
-            const { data: contentData, error: contentError } = await supabase
-              .from('blocks')
-              .select('id,content')
-              .in('id', batchIds);
-
-            if (contentError) throw contentError;
-            
-            // Add to content map
-            contentData?.forEach((c: any) => contentMap.set(c.id, c.content));
-          }
-
-          // Transform data to match Block interface
+          // Transform data - content will be loaded lazily when needed
           const transformedBlocks: Block[] = data.map((block: any) => ({
             id: block.id,
             type: block.type,
             title: block.title,
             slug: block.slug,
-            content: contentMap.get(block.id) || '',
+            content: '', // Empty initially - loaded on demand
             parentId: block.parent_id,
             order: block.order,
             icon: block.icon,
@@ -86,7 +68,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           }));
 
           setBlocks(transformedBlocks);
-          console.log(`⚡ ${transformedBlocks.length} blocks chargés depuis Supabase`);
+          console.log(`⚡ ${transformedBlocks.length} blocks chargés (métadonnées seules)`);
         }
       } catch (error) {
         console.error('Erreur chargement Supabase:', error);
@@ -102,6 +84,29 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     
     initData();
   }, [toast]);
+
+  // Function to load content for a specific block (lazy loading)
+  const loadBlockContent = useCallback(async (blockId: string): Promise<string> => {
+    try {
+      const { data, error } = await supabase
+        .from('blocks')
+        .select('content')
+        .eq('id', blockId)
+        .single();
+
+      if (error) throw error;
+      
+      // Update block in state with loaded content
+      setBlocks(prev => prev.map(b => 
+        b.id === blockId ? { ...b, content: data.content || '' } : b
+      ));
+      
+      return data.content || '';
+    } catch (error) {
+      console.error('Erreur chargement contenu:', error);
+      return '';
+    }
+  }, []);
 
   // Auto-save DÉSACTIVÉ - sauvegarde uniquement sur action manuelle pour éviter les timeouts
   // La sauvegarde se fait maintenant uniquement via handleSave dans les pages
@@ -339,6 +344,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         importData: importDataFn,
         resetToDefault,
         reloadBlocks,
+        loadBlockContent,
         loading,
       }}
     >
