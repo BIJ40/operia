@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useToast } from '@/hooks/use-toast';
 import { MessageSquare, CheckCircle2, Clock, AlertCircle, Send, User, Star, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
@@ -379,78 +380,72 @@ export default function AdminSupport() {
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Star className="w-4 h-4 text-yellow-400" />
-              Note moyenne
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end gap-2">
-              <span className="text-2xl font-bold">{stats.averageRating}</span>
-              <span className="text-sm text-muted-foreground mb-1">/ 5</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {stats.totalRatings} évaluation{stats.totalRatings > 1 ? 's' : ''}
-            </p>
-          </CardContent>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+        <Card className="p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Star className="w-3.5 h-3.5 text-yellow-400" />
+            <h3 className="text-xs font-medium">Note moyenne</h3>
+          </div>
+          <div className="flex items-end gap-1">
+            <span className="text-xl font-bold">{stats.averageRating}</span>
+            <span className="text-xs text-muted-foreground mb-0.5">/ 5</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {stats.totalRatings} éval.
+          </p>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              Total tickets
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTickets}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Tous statuts confondus
-            </p>
-          </CardContent>
+        <Card className="p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <MessageSquare className="w-3.5 h-3.5" />
+            <h3 className="text-xs font-medium">Total tickets</h3>
+          </div>
+          <div className="text-xl font-bold">{stats.totalTickets}</div>
+          <p className="text-xs text-muted-foreground">
+            Tous statuts
+          </p>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-500" />
-              Taux de résolution
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end gap-2">
-              <span className="text-2xl font-bold">{stats.resolutionRate}</span>
-              <span className="text-sm text-muted-foreground mb-1">%</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {stats.resolvedCount} résolus
-            </p>
-          </CardContent>
+        <Card className="p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+            <h3 className="text-xs font-medium">Résolution</h3>
+          </div>
+          <div className="flex items-end gap-1">
+            <span className="text-xl font-bold">{stats.resolutionRate}</span>
+            <span className="text-xs text-muted-foreground mb-0.5">%</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {stats.resolvedCount} résolus
+          </p>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Clock className="w-4 h-4 text-orange-500" />
-              En cours
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.inProgressCount + stats.waitingCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {stats.waitingCount} en attente
-            </p>
-          </CardContent>
+        <Card className="p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Clock className="w-3.5 h-3.5 text-orange-500" />
+            <h3 className="text-xs font-medium">En cours</h3>
+          </div>
+          <div className="text-xl font-bold">{stats.inProgressCount + stats.waitingCount}</div>
+          <p className="text-xs text-muted-foreground">
+            {stats.waitingCount} en attente
+          </p>
         </Card>
       </div>
 
       {/* Graphique d'évolution */}
-      <div className="mb-6">
-        <SatisfactionChart tickets={tickets} period="month" />
-      </div>
+      <Accordion type="single" collapsible className="mb-4">
+        <AccordionItem value="chart" className="border rounded-lg">
+          <AccordionTrigger className="px-4 py-2 hover:no-underline">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-sm font-medium">Graphique d'évolution de satisfaction</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <SatisfactionChart tickets={tickets} period="month" />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Liste des tickets */}
