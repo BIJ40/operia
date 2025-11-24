@@ -80,6 +80,13 @@ export default function Category() {
   const { isAuthenticated, isAdmin } = useAuth();
   const { toast } = useToast();
   
+  // Rediriger si non authentifié
+  useEffect(() => {
+    if (!isAuthenticated) {
+      window.location.href = '/';
+    }
+  }, [isAuthenticated]);
+  
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   
   // Liste des catégories disponibles (exclure FAQ)

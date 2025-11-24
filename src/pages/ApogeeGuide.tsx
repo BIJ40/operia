@@ -209,7 +209,7 @@ const SortableCategory = ({
 
 export default function ApogeeGuide() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useEditor();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isAuthenticated } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
@@ -219,6 +219,13 @@ export default function ApogeeGuide() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Rediriger si non authentifié
+  useEffect(() => {
+    if (!isAuthenticated) {
+      window.location.href = '/';
+    }
+  }, [isAuthenticated]);
 
   // Filtrer uniquement les catégories Apogée (exclure FAQ et HelpConfort)
   const apogeeCategories = blocks

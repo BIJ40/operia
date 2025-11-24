@@ -1,7 +1,7 @@
 // Page dédiée à la Base de connaissance HelpConfort
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -209,7 +209,7 @@ const SortableCategory = ({
 export default function HelpConfort() {
   const { blocks, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isEditMode } = useEditor();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isAuthenticated } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
@@ -219,6 +219,13 @@ export default function HelpConfort() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Rediriger si non authentifié
+  useEffect(() => {
+    if (!isAuthenticated) {
+      window.location.href = '/';
+    }
+  }, [isAuthenticated]);
 
   const helpconfortCategories = (blocks as any[])
     .filter(b => b.type === 'category' && b.slug.startsWith('helpconfort-') && !b.hideFromSidebar)
