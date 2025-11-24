@@ -43,8 +43,15 @@ export function Chatbot() {
   const [ticketRating, setTicketRating] = useState(0);
   const [ticketComment, setTicketComment] = useState('');
   const [showChoiceMode, setShowChoiceMode] = useState(true);
+  const [buttonPosition, setButtonPosition] = useState(() => {
+    const saved = localStorage.getItem('chatbot-position');
+    return saved ? JSON.parse(saved) : { bottom: 24, right: 24 };
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const { blocks } = useEditor();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -59,6 +66,55 @@ export function Chatbot() {
       }
     };
   }, []);
+
+  // Gérer le drag and drop du bouton
+  const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (isOpen) return; // Ne pas permettre le drag si le chat est ouvert
+    
+    setIsDragging(true);
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (rect) {
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    }
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      const buttonSize = 80; // 20 * 4px (w-20)
+
+      // Calculer la nouvelle position en fonction de la souris
+      const newRight = windowWidth - e.clientX - dragOffset.x - buttonSize;
+      const newBottom = windowHeight - e.clientY - dragOffset.y - buttonSize;
+
+      // Limiter la position dans les bordures de la fenêtre
+      const clampedRight = Math.max(0, Math.min(windowWidth - buttonSize, newRight));
+      const clampedBottom = Math.max(0, Math.min(windowHeight - buttonSize, newBottom));
+
+      setButtonPosition({ right: clampedRight, bottom: clampedBottom });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      // Sauvegarder la position dans localStorage
+      localStorage.setItem('chatbot-position', JSON.stringify(buttonPosition));
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset, buttonPosition]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -566,16 +622,21 @@ export function Chatbot() {
       {/* Floating button */}
       {!isOpen && (
         <button
-          onClick={() => {
-            setIsOpen(true);
-            setUnreadCount(0);
+          ref={buttonRef}
+          onMouseDown={handleMouseDown}
+          onClick={(e) => {
+            if (!isDragging) {
+              setIsOpen(true);
+              setUnreadCount(0);
+            }
           }}
           data-chatbot-trigger
           style={{ 
             position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            zIndex: 9999
+            bottom: `${buttonPosition.bottom}px`,
+            right: `${buttonPosition.right}px`,
+            zIndex: 9999,
+            cursor: isDragging ? 'grabbing' : 'grab'
           }}
           className="relative h-20 w-20 rounded-full shadow-2xl hover:scale-110 transition-transform overflow-visible bg-gradient-to-br from-helpconfort-blue-light via-helpconfort-blue-dark to-primary animate-pulse"
         >
@@ -607,8 +668,8 @@ export function Chatbot() {
         <div 
           style={{ 
             position: 'fixed',
-            bottom: '24px',
-            right: '24px',
+            bottom: `${buttonPosition.bottom}px`,
+            right: `${buttonPosition.right}px`,
             zIndex: 9999
           }} 
           className="w-80 h-[500px] bg-card border-2 rounded-lg shadow-xl flex flex-col animate-slide-in-right"
