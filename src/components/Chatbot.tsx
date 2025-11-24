@@ -69,17 +69,37 @@ export function Chatbot() {
 
   // Gérer le drag and drop du bouton
   const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (isOpen) return; // Ne pas permettre le drag si le chat est ouvert
+    if (isOpen) return;
     
-    setIsDragging(true);
     const rect = buttonRef.current?.getBoundingClientRect();
-    if (rect) {
+    if (!rect) return;
+    
+    // Calculer la position relative du clic dans le bouton
+    const relativeX = e.clientX - rect.left;
+    const buttonWidth = rect.width;
+    
+    // Zone de drag : seulement les 25% à droite du bouton
+    const isDragZone = relativeX > buttonWidth * 0.75;
+    
+    if (isDragZone) {
+      setIsDragging(true);
       setDragOffset({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
       });
+      e.preventDefault();
+      e.stopPropagation();
     }
-    e.preventDefault();
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (isDragging) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    setIsOpen(true);
+    setUnreadCount(0);
   };
 
   useEffect(() => {
@@ -624,29 +644,28 @@ export function Chatbot() {
         <button
           ref={buttonRef}
           onMouseDown={handleMouseDown}
-          onClick={(e) => {
-            if (!isDragging) {
-              setIsOpen(true);
-              setUnreadCount(0);
-            }
-          }}
+          onClick={handleClick}
           data-chatbot-trigger
           style={{ 
             position: 'fixed',
             bottom: `${buttonPosition.bottom}px`,
             right: `${buttonPosition.right}px`,
             zIndex: 9999,
-            cursor: isDragging ? 'grabbing' : 'grab'
           }}
-          className="relative h-20 w-20 rounded-full shadow-2xl hover:scale-110 transition-transform overflow-visible bg-gradient-to-br from-helpconfort-blue-light via-helpconfort-blue-dark to-primary animate-pulse"
+          className="relative h-20 w-20 rounded-full shadow-2xl hover:scale-110 transition-transform overflow-visible bg-gradient-to-br from-helpconfort-blue-light via-helpconfort-blue-dark to-primary animate-pulse group"
         >
+          {/* Zone de drag visible au hover - petit indicateur à droite */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1/4 h-full cursor-grab group-hover:opacity-100 opacity-0 transition-opacity pointer-events-none">
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1 h-6 bg-white/50 rounded-full"></div>
+          </div>
+          
           {/* Bordure animée avec gradient tournant */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-helpconfort-blue-light via-primary to-helpconfort-blue-dark animate-spin-slow opacity-75 blur-sm" 
+          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-helpconfort-blue-light via-primary to-helpconfort-blue-dark animate-spin-slow opacity-75 blur-sm pointer-events-none" 
                style={{ padding: '3px' }}>
           </div>
           
           {/* Contenu du bouton */}
-          <div className="relative h-full w-full rounded-full bg-gradient-to-br from-helpconfort-blue-light to-helpconfort-blue-dark flex items-center justify-center shadow-inner">
+          <div className="relative h-full w-full rounded-full bg-gradient-to-br from-helpconfort-blue-light to-helpconfort-blue-dark flex items-center justify-center shadow-inner pointer-events-none">
             <img 
               src={chatIcon} 
               alt="Chat" 
@@ -656,7 +675,7 @@ export function Chatbot() {
           </div>
           
           {unreadCount > 0 && (
-            <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-7 w-7 flex items-center justify-center animate-pulse shadow-lg border-2 border-background">
+            <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-7 w-7 flex items-center justify-center animate-pulse shadow-lg border-2 border-background pointer-events-none">
               {unreadCount > 9 ? '9+' : unreadCount}
             </div>
           )}
