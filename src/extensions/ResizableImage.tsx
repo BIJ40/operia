@@ -190,10 +190,13 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
       >
         <div
           ref={containerRef}
-          className={`relative inline-block group ${selected ? 'ring-2 ring-primary rounded-lg' : ''} ${isDragging ? 'opacity-30' : ''}`}
+          className={`relative inline-block group ${isDragging ? 'opacity-30' : ''}`}
           style={{ 
             width: dimensions.width, 
-            height: dimensions.height
+            height: dimensions.height,
+            outline: selected ? '2px solid hsl(var(--primary))' : 'none',
+            outlineOffset: '0px',
+            borderRadius: '0.5rem'
           }}
           onMouseDown={selected ? handleDragStart : undefined}
         >
