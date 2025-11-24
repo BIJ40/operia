@@ -36,6 +36,7 @@ export function Chatbot() {
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
   const [activeTicket, setActiveTicket] = useState<any>(null);
   const [supportMessages, setSupportMessages] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { blocks } = useEditor();
   const { toast } = useToast();
@@ -103,9 +104,12 @@ export function Chatbot() {
           console.log('New support message:', payload);
           setSupportMessages(prev => [...prev, payload.new]);
           
-          // Jouer un son si c'est un message du support (pas de toast)
+          // Jouer un son et incrémenter le compteur si c'est un message du support et que le chat est fermé
           if (payload.new.is_from_support) {
             playNotificationSound();
+            if (!isOpen) {
+              setUnreadCount(prev => prev + 1);
+            }
           }
         }
       )
@@ -114,7 +118,7 @@ export function Chatbot() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeTicket]);
+  }, [activeTicket, isOpen]);
 
   // Fonction pour jouer un son de notification
   const playNotificationSound = () => {
@@ -167,6 +171,7 @@ export function Chatbot() {
             });
             setActiveTicket(null);
             setSupportMessages([]);
+            setUnreadCount(0); // Réinitialiser le compteur
             // Fermer le chatbot quand le ticket est résolu
             setIsOpen(false);
           } else {
@@ -475,9 +480,12 @@ export function Chatbot() {
       {/* Floating button */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            setIsOpen(true);
+            setUnreadCount(0); // Réinitialiser le compteur quand on ouvre le chat
+          }}
           data-chatbot-trigger
-          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-50 hover:scale-110 transition-transform overflow-hidden bg-white"
+          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-50 hover:scale-110 transition-transform overflow-hidden bg-white relative"
         >
           <img 
             src={chatIcon} 
@@ -485,6 +493,11 @@ export function Chatbot() {
             className="w-full h-full pointer-events-none select-none" 
             draggable="false"
           />
+          {unreadCount > 0 && (
+            <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </div>
+          )}
         </button>
       )}
 
@@ -722,6 +735,7 @@ export function Chatbot() {
                 if (!error) {
                   setActiveTicket(null);
                   setSupportMessages([]);
+                  setUnreadCount(0); // Réinitialiser le compteur
                   toast({
                     title: 'Conversation fermée',
                     description: 'Le ticket a été marqué comme résolu.',
