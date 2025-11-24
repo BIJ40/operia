@@ -82,7 +82,7 @@ export function Header() {
             </Button>
 
             <Link
-              to="/admin/documents"
+              to="/admin"
               className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
             >
               <Settings className="w-5 h-5 text-primary" />
