@@ -4,11 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, UserPlus, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { AlertCircle, UserPlus, Eye, EyeOff, Trash2, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { EditUserDialog } from '@/components/EditUserDialog';
 import { z } from 'zod';
 
 interface UserProfile {
@@ -40,9 +43,10 @@ const createUserSchema = z.object({
     .max(100, { message: "L'agence ne peut pas dépasser 100 caractères" })
     .optional(),
   roleAgence: z.string()
-    .trim()
-    .max(100, { message: "Le rôle ne peut pas dépasser 100 caractères" })
-    .optional(),
+    .optional()
+    .refine((val) => !val || ['Dirigeant(e)', 'Assistant(e)', 'Technicien(ne)', 'Autre'].includes(val), {
+      message: "Veuillez sélectionner un rôle valide"
+    }),
   password: z.string()
     .min(8, { message: "Le mot de passe doit contenir au moins 8 caractères" })
     .max(100, { message: "Le mot de passe ne peut pas dépasser 100 caractères" })
@@ -55,6 +59,8 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   
   // Form fields
   const [pseudo, setPseudo] = useState('');
@@ -287,18 +293,34 @@ export default function AdminUsers() {
               {errors.agence && <p className="text-sm text-destructive">{errors.agence}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="roleAgence">Rôle dans l'agence</Label>
-              <Input
-                id="roleAgence"
-                value={roleAgence}
-                onChange={(e) => {
-                  setRoleAgence(e.target.value);
-                  setErrors(prev => ({ ...prev, roleAgence: '' }));
-                }}
-                placeholder="Ex: Conseiller, Manager, etc."
-                className={errors.roleAgence ? 'border-destructive' : ''}
-              />
+            <div className="space-y-3">
+              <Label>Rôle dans l'agence</Label>
+              <RadioGroup value={roleAgence} onValueChange={setRoleAgence}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Dirigeant(e)" id="role-dirigeant" />
+                  <Label htmlFor="role-dirigeant" className="cursor-pointer font-normal">
+                    Dirigeant(e)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Assistant(e)" id="role-assistant" />
+                  <Label htmlFor="role-assistant" className="cursor-pointer font-normal">
+                    Assistant(e)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Technicien(ne)" id="role-technicien" />
+                  <Label htmlFor="role-technicien" className="cursor-pointer font-normal">
+                    Technicien(ne)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Autre" id="role-autre" />
+                  <Label htmlFor="role-autre" className="cursor-pointer font-normal">
+                    Autre
+                  </Label>
+                </div>
+              </RadioGroup>
               {errors.roleAgence && <p className="text-sm text-destructive">{errors.roleAgence}</p>}
             </div>
 
@@ -382,13 +404,27 @@ export default function AdminUsers() {
                   <TableCell>{user.role_agence || '-'}</TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString('fr-FR')}</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteUser(user.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingUser(user);
+                          setShowEditDialog(true);
+                        }}
+                        title="Modifier"
+                      >
+                        <Edit className="w-4 h-4 text-primary" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteUser(user.id)}
+                        title="Supprimer"
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -403,6 +439,13 @@ export default function AdminUsers() {
           </Table>
         </CardContent>
       </Card>
+    
+      <EditUserDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        user={editingUser}
+        onSuccess={loadUsers}
+      />
     </div>
   );
 }
