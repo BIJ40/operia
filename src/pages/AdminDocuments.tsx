@@ -51,6 +51,8 @@ export default function AdminDocuments() {
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editBlockId, setEditBlockId] = useState('');
+  const [indexingDoc, setIndexingDoc] = useState<string | null>(null);
+  const [indexProgress, setIndexProgress] = useState(0);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -307,7 +309,21 @@ export default function AdminDocuments() {
   };
 
   const handleIndex = async (doc: Document) => {
+    setIndexingDoc(doc.id);
+    setIndexProgress(0);
+
     try {
+      // Simuler la progression en temps réel
+      const progressInterval = setInterval(() => {
+        setIndexProgress(prev => {
+          if (prev >= 95) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 5;
+        });
+      }, 200); // Mise à jour toutes les 200ms
+
       const { data, error } = await supabase.functions.invoke('index-document', {
         body: { 
           documentId: doc.id,
@@ -315,14 +331,23 @@ export default function AdminDocuments() {
         }
       });
 
+      clearInterval(progressInterval);
+      setIndexProgress(100);
+
       if (error) throw error;
 
-      toast({
-        title: 'Succès',
-        description: `Document indexé: ${data.chunks_created} chunks créés`,
-      });
+      setTimeout(() => {
+        toast({
+          title: 'Succès',
+          description: `Document indexé: ${data.chunks_created} chunks créés`,
+        });
+        setIndexingDoc(null);
+        setIndexProgress(0);
+      }, 500);
     } catch (error) {
       console.error('Indexing error:', error);
+      setIndexingDoc(null);
+      setIndexProgress(0);
       toast({
         title: 'Erreur',
         description: error instanceof Error ? error.message : 'Impossible d\'indexer le document',
@@ -429,6 +454,29 @@ export default function AdminDocuments() {
         {/* Documents list */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Documents uploadés</h2>
+          
+          {/* Progress bar for indexing */}
+          {indexingDoc && (
+            <div className="mb-4 p-4 bg-muted rounded-lg space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">Indexation en cours...</span>
+                <span className="text-muted-foreground">{indexProgress}%</span>
+              </div>
+              <div className="grid grid-cols-20 gap-1 h-3">
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`rounded-sm transition-colors duration-300 ${
+                      i < Math.floor(indexProgress / 5)
+                        ? 'bg-primary'
+                        : 'bg-muted-foreground/20'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1 max-h-[600px] overflow-y-auto">
             {documents.map((doc) => (
               <Card key={doc.id} className="p-2">
@@ -497,9 +545,10 @@ export default function AdminDocuments() {
                         variant="ghost"
                         className="h-7 w-7 p-0"
                         onClick={() => handleIndex(doc)}
+                        disabled={indexingDoc === doc.id}
                         title="Indexer pour le chatbot"
                       >
-                        <Database className="w-3.5 h-3.5" />
+                        <Database className={`w-3.5 h-3.5 ${indexingDoc === doc.id ? 'animate-pulse' : ''}`} />
                       </Button>
                       <Button
                         size="sm"
