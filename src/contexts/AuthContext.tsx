@@ -7,6 +7,7 @@ interface AuthContextType {
   isAdmin: boolean;
   user: User | null;
   mustChangePassword: boolean;
+  roleAgence: string | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -18,6 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,18 +40,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             setIsAdmin(!!data);
 
-            // Check if user must change password
+            // Check if user must change password and get role_agence
             const { data: profile } = await supabase
               .from('profiles')
-              .select('must_change_password')
+              .select('must_change_password, role_agence')
               .eq('id', session.user.id)
               .single();
             
             setMustChangePassword(profile?.must_change_password || false);
+            setRoleAgence(profile?.role_agence || null);
           }, 0);
         } else {
           setIsAdmin(false);
           setMustChangePassword(false);
+          setRoleAgence(null);
         }
         
         setLoading(false);
@@ -72,14 +76,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setIsAdmin(!!data);
           });
 
-        // Check if user must change password
+        // Check if user must change password and get role_agence
         supabase
           .from('profiles')
-          .select('must_change_password')
+          .select('must_change_password, role_agence')
           .eq('id', session.user.id)
           .single()
           .then(({ data }) => {
             setMustChangePassword(data?.must_change_password || false);
+            setRoleAgence(data?.role_agence || null);
             setLoading(false);
           });
       } else {
@@ -131,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setIsAdmin(false);
     setMustChangePassword(false);
+    setRoleAgence(null);
   };
 
   if (loading) {
@@ -141,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin,
         user,
         mustChangePassword,
+        roleAgence,
         login, 
         logout,
         signup 
@@ -156,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin,
       user,
       mustChangePassword,
+      roleAgence,
       login, 
       logout,
       signup 

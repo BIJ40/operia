@@ -11,7 +11,7 @@ export function Header() {
   const location = useLocation();
   const editorContext = useEditor();
   const apporteurContext = useApporteurEditor();
-  const { isAuthenticated, isAdmin, logout } = useAuth();
+  const { isAuthenticated, isAdmin, roleAgence, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   
   // Déterminer quel contexte utiliser selon la page
@@ -56,12 +56,14 @@ export function Header() {
               <span className="font-semibold text-foreground">APPORTEURS</span>
             </Link>
 
-            <Link 
-              to="/helpconfort" 
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
-            >
-              <span className="font-semibold text-foreground">HELPCONFORT</span>
-            </Link>
+            {roleAgence !== 'assistant(e)' && (
+              <Link 
+                to="/helpconfort" 
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
+              >
+                <span className="font-semibold text-foreground">HELPCONFORT</span>
+              </Link>
+            )}
 
             <Button
               onClick={handleEnrichirClick}

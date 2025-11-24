@@ -209,7 +209,7 @@ const SortableCategory = ({
 export default function HelpConfort() {
   const { blocks, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isEditMode } = useEditor();
-  const { isAdmin, isAuthenticated } = useAuth();
+  const { isAdmin, isAuthenticated, roleAgence } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
@@ -221,6 +221,11 @@ export default function HelpConfort() {
   const [searchTerm, setSearchTerm] = useState('');
 
   if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Bloquer l'accès pour les assistant(e)s
+  if (roleAgence === 'assistant(e)') {
     return <Navigate to="/" replace />;
   }
 
