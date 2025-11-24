@@ -177,7 +177,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             title: '🔒 Opération bloquée', 
             description: 'Impossible de vider le contenu d\'une section par erreur. Utilisez le formulaire d\'édition pour supprimer intentionnellement du contenu.',
             variant: 'destructive',
-            duration: 6000
           });
           return;
         }
