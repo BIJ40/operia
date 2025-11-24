@@ -1,16 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, UserPlus, Eye, EyeOff, Trash2, Edit } from 'lucide-react';
+import { AlertCircle, UserPlus, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { EditUserDialog } from '@/components/EditUserDialog';
 import { z } from 'zod';
 import { Navigate } from 'react-router-dom';
 
@@ -67,11 +65,8 @@ export default function AdminUsers() {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<UserProfile[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   
   // Form fields
   const [pseudo, setPseudo] = useState('');
@@ -80,26 +75,6 @@ export default function AdminUsers() {
   const [agence, setAgence] = useState('');
   const [roleAgence, setRoleAgence] = useState('');
   const [tempPassword, setTempPassword] = useState('');
-
-  useEffect(() => {
-    if (isAdmin) {
-      loadUsers();
-    }
-  }, [isAdmin]);
-
-  const loadUsers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (error) {
-      console.error('Erreur chargement utilisateurs:', error);
-    }
-  };
 
   const generatePassword = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
@@ -188,8 +163,10 @@ export default function AdminUsers() {
       setTempPassword('');
       setErrors({});
       
-      // Reload users
-      loadUsers();
+      toast({
+        title: 'Utilisateur créé !',
+        description: `L'utilisateur "${pseudo}" a été créé avec succès. Communiquez-lui ses identifiants : Pseudo = ${pseudo}, Mot de passe = ${tempPassword}`,
+      });
     } catch (error: any) {
       console.error('Erreur création utilisateur:', error);
       toast({
@@ -202,70 +179,43 @@ export default function AdminUsers() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) return;
-
-    try {
-      const { error } = await supabase.functions.invoke('delete-user', {
-        body: { userId }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Utilisateur supprimé',
-        description: 'L\'utilisateur a été supprimé avec succès',
-      });
-
-      loadUsers();
-    } catch (error: any) {
-      console.error('Erreur suppression:', error);
-      toast({
-        title: 'Erreur',
-        description: error.message || 'Impossible de supprimer l\'utilisateur',
-        variant: 'destructive',
-      });
-    }
-  };
-
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
 
   return (
-    <div className="container max-w-6xl mx-auto p-8 space-y-8">
-      <h1 className="text-3xl font-bold">Gestion des utilisateurs</h1>
+    <div className="container max-w-4xl mx-auto p-8">
+      <h1 className="text-3xl font-bold mb-6">Créer un utilisateur</h1>
 
-      {/* Création d'utilisateur */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5" />
-            Créer un nouvel utilisateur
+            Nouvel utilisateur
           </CardTitle>
           <CardDescription>
-            Créez un compte utilisateur avec un mot de passe provisoire. L'utilisateur devra le changer à sa première connexion.
+            Créez un compte avec un mot de passe provisoire. L'utilisateur devra le changer à sa première connexion.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreateUser} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="pseudo">Pseudo * <span className="text-xs text-muted-foreground">(3-30 caractères, lettres, chiffres, - et _)</span></Label>
-              <Input
-                id="pseudo"
-                value={pseudo}
-                onChange={(e) => {
-                  setPseudo(e.target.value);
-                  setErrors(prev => ({ ...prev, pseudo: '' }));
-                }}
-                placeholder="jean_dupont"
-                required
-                className={errors.pseudo ? 'border-destructive' : ''}
-              />
-              {errors.pseudo && <p className="text-sm text-destructive">{errors.pseudo}</p>}
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="pseudo">Pseudo *</Label>
+                <Input
+                  id="pseudo"
+                  value={pseudo}
+                  onChange={(e) => {
+                    setPseudo(e.target.value);
+                    setErrors(prev => ({ ...prev, pseudo: '' }));
+                  }}
+                  placeholder="jean_dupont"
+                  required
+                  className={errors.pseudo ? 'border-destructive' : ''}
+                />
+                {errors.pseudo && <p className="text-xs text-destructive">{errors.pseudo}</p>}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="firstName">Prénom *</Label>
                 <Input
@@ -279,8 +229,9 @@ export default function AdminUsers() {
                   required
                   className={errors.firstName ? 'border-destructive' : ''}
                 />
-                {errors.firstName && <p className="text-sm text-destructive">{errors.firstName}</p>}
+                {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="lastName">Nom *</Label>
                 <Input
@@ -294,58 +245,58 @@ export default function AdminUsers() {
                   required
                   className={errors.lastName ? 'border-destructive' : ''}
                 />
-                {errors.lastName && <p className="text-sm text-destructive">{errors.lastName}</p>}
+                {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="agence">Agence</Label>
+                <Input
+                  id="agence"
+                  value={agence}
+                  onChange={(e) => {
+                    setAgence(e.target.value);
+                    setErrors(prev => ({ ...prev, agence: '' }));
+                  }}
+                  placeholder="Nom de l'agence"
+                  className={errors.agence ? 'border-destructive' : ''}
+                />
+                {errors.agence && <p className="text-xs text-destructive">{errors.agence}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Rôle</Label>
+                <RadioGroup value={roleAgence} onValueChange={setRoleAgence} className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="dirigeant" id="role-dirigeant" />
+                    <Label htmlFor="role-dirigeant" className="cursor-pointer font-normal text-sm">
+                      Dirigeant(e)
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="assistant(e)" id="role-assistant" />
+                    <Label htmlFor="role-assistant" className="cursor-pointer font-normal text-sm">
+                      Assistant(e)
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="technicien" id="role-technicien" />
+                    <Label htmlFor="role-technicien" className="cursor-pointer font-normal text-sm">
+                      Technicien
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="commercial" id="role-commercial" />
+                    <Label htmlFor="role-commercial" className="cursor-pointer font-normal text-sm">
+                      Commercial
+                    </Label>
+                  </div>
+                </RadioGroup>
+                {errors.roleAgence && <p className="text-xs text-destructive">{errors.roleAgence}</p>}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="agence">Agence</Label>
-              <Input
-                id="agence"
-                value={agence}
-                onChange={(e) => {
-                  setAgence(e.target.value);
-                  setErrors(prev => ({ ...prev, agence: '' }));
-                }}
-                placeholder="Nom de l'agence"
-                className={errors.agence ? 'border-destructive' : ''}
-              />
-              {errors.agence && <p className="text-sm text-destructive">{errors.agence}</p>}
-            </div>
-
-            <div className="space-y-3">
-              <Label>Rôle dans l'agence</Label>
-              <RadioGroup value={roleAgence} onValueChange={setRoleAgence}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="dirigeant" id="role-dirigeant" />
-                  <Label htmlFor="role-dirigeant" className="cursor-pointer font-normal">
-                    Dirigeant(e)
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="assistant(e)" id="role-assistant" />
-                  <Label htmlFor="role-assistant" className="cursor-pointer font-normal">
-                    Assistant(e)
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="technicien" id="role-technicien" />
-                  <Label htmlFor="role-technicien" className="cursor-pointer font-normal">
-                    Technicien
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="commercial" id="role-commercial" />
-                  <Label htmlFor="role-commercial" className="cursor-pointer font-normal">
-                    Commercial
-                  </Label>
-                </div>
-              </RadioGroup>
-              {errors.roleAgence && <p className="text-sm text-destructive">{errors.roleAgence}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe provisoire * <span className="text-xs text-muted-foreground">(min. 8 caractères)</span></Label>
+            <div className="space-y-2 pt-2">
+              <Label htmlFor="password">Mot de passe provisoire *</Label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Input
@@ -356,7 +307,7 @@ export default function AdminUsers() {
                       setTempPassword(e.target.value);
                       setErrors(prev => ({ ...prev, password: '' }));
                     }}
-                    placeholder="Mot de passe provisoire"
+                    placeholder="Min. 8 caractères"
                     required
                     className={errors.password ? 'border-destructive' : ''}
                   />
@@ -364,24 +315,21 @@ export default function AdminUsers() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </Button>
                 </div>
                 <Button type="button" variant="outline" onClick={generatePassword}>
                   Générer
                 </Button>
               </div>
-              {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-              <p className="text-sm text-muted-foreground">
-                Ce mot de passe sera communiqué à l'utilisateur. Il devra le changer à sa première connexion.
-              </p>
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
+              {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+              <Alert className="py-2">
+                <AlertCircle className="h-3.5 w-3.5" />
                 <AlertDescription className="text-xs">
-                  Si l'utilisateur perd son mot de passe, il doit vous contacter pour réinitialisation.
+                  Communiquez ces identifiants à l'utilisateur. Il devra changer son mot de passe à la première connexion.
                 </AlertDescription>
               </Alert>
             </div>
@@ -392,80 +340,6 @@ export default function AdminUsers() {
           </form>
         </CardContent>
       </Card>
-
-      {/* Liste des utilisateurs */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Liste des utilisateurs</CardTitle>
-          <CardDescription>
-            {users.length} utilisateur{users.length > 1 ? 's' : ''} enregistré{users.length > 1 ? 's' : ''}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Pseudo</TableHead>
-                <TableHead>Nom</TableHead>
-                <TableHead>Prénom</TableHead>
-                <TableHead>Agence</TableHead>
-                <TableHead>Rôle</TableHead>
-                <TableHead>Créé le</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.pseudo || '-'}</TableCell>
-                  <TableCell>{user.last_name || '-'}</TableCell>
-                  <TableCell>{user.first_name || '-'}</TableCell>
-                  <TableCell>{user.agence || '-'}</TableCell>
-                  <TableCell>{getRoleLabel(user.role_agence)}</TableCell>
-                  <TableCell>{new Date(user.created_at).toLocaleDateString('fr-FR')}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditingUser(user);
-                          setShowEditDialog(true);
-                        }}
-                        title="Modifier"
-                      >
-                        <Edit className="w-4 h-4 text-primary" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteUser(user.id)}
-                        title="Supprimer"
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {users.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
-                    Aucun utilisateur enregistré
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    
-      <EditUserDialog
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-        user={editingUser}
-        onSuccess={loadUsers}
-      />
     </div>
   );
 }

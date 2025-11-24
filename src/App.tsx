@@ -17,6 +17,7 @@ import AdminDocuments from "./pages/AdminDocuments";
 import AdminBackup from "./pages/AdminBackup";
 import AdminHelpConfortBackup from "./pages/AdminHelpConfortBackup";
 import AdminUsers from "./pages/AdminUsers";
+import AdminUsersList from "./pages/AdminUsersList";
 import AdminIndex from "./pages/AdminIndex";
 import AdminRolePermissions from "./pages/AdminRolePermissions";
 import Profile from "./pages/Profile";
@@ -55,6 +56,7 @@ function AppContent() {
         <Route path="/admin/backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminBackup /></Layout>} />
         <Route path="/admin/helpconfort-backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminHelpConfortBackup /></Layout>} />
         <Route path="/admin/users" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUsers /></Layout>} />
+        <Route path="/admin/users-list" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUsersList /></Layout>} />
         <Route path="/admin/role-permissions" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminRolePermissions /></Layout>} />
         <Route path="/profile" element={<Layout showHeader={false} showSidebar={false}><Profile /></Layout>} />
         <Route path="/favorites" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><Favorites /></Layout>} />

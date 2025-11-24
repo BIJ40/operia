@@ -30,8 +30,13 @@ const adminMenuItems = [
     icon: Home,
   },
   {
-    title: 'Utilisateurs',
+    title: 'Créer utilisateur',
     url: '/admin/users',
+    icon: Users,
+  },
+  {
+    title: 'Liste utilisateurs',
+    url: '/admin/users-list',
     icon: Users,
   },
   {
