@@ -160,11 +160,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setIsAdmin(false);
-    setMustChangePassword(false);
-    setRoleAgence(null);
-    setUserPermissions([]);
+    try {
+      // Déconnexion complète de Supabase
+      await supabase.auth.signOut();
+      
+      // Nettoyer les états
+      setIsAdmin(false);
+      setMustChangePassword(false);
+      setRoleAgence(null);
+      setUserPermissions([]);
+      setUser(null);
+      
+      // Forcer un rechargement complet de la page pour nettoyer tous les états
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      // En cas d'erreur, forcer quand même la redirection
+      window.location.href = '/';
+    }
   };
 
   const hasAccessToBlock = (blockId: string): boolean => {
