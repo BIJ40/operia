@@ -185,11 +185,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         style={{
           cursor: isDragging ? 'grabbing' : (selected ? 'grab' : 'default'),
           display: 'inline-block',
-          margin: 0,
+          margin: '0.5rem 0',
           padding: 0,
           width: dimensions.width,
           height: dimensions.height,
-          verticalAlign: 'baseline'
+          verticalAlign: 'top'
         }}
       >
         <div

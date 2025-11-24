@@ -425,13 +425,21 @@ export default function ApporteurGuide() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-6xl mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Guide Apporteurs
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Toutes les informations pour les apporteurs d'affaires
-          </p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="text-center flex-1">
+            <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Guide Apporteurs
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Toutes les informations pour les apporteurs d'affaires
+            </p>
+          </div>
+          <Link to="/">
+            <Button variant="outline" size="sm">
+              <Icons.ArrowLeft className="w-4 h-4 mr-2" />
+              Retour
+            </Button>
+          </Link>
         </div>
 
         {!isEditMode && apporteurCategories.length > 0 && (

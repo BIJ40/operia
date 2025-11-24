@@ -6,7 +6,6 @@ import { Download, Database, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigate, Link } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AdminBackups() {
   const { isAdmin } = useAuth();
@@ -384,137 +383,113 @@ export default function AdminBackups() {
   };
 
   return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-              <Database className="w-8 h-8 text-primary" />
-              Sauvegardes
-            </h1>
-            <p className="text-muted-foreground">
-              Exporter les guides en JSON pour sauvegarde ou migration
-            </p>
-          </div>
-          <Link to="/admin">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour admin
-            </Button>
-          </Link>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+            <Database className="w-8 h-8 text-primary" />
+            Sauvegardes
+          </h1>
+          <p className="text-muted-foreground">
+            Exportez vos guides au format TXT ou JSON
+          </p>
         </div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-          <Database className="w-8 h-8 text-primary" />
-          Sauvegardes
-        </h1>
-        <p className="text-muted-foreground">
-          Exportez vos données Apogée, Apporteurs et HelpConfort
-        </p>
+        <Link to="/admin">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour admin
+          </Button>
+        </Link>
       </div>
 
-      <Tabs defaultValue="apogee" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="apogee">Apogée</TabsTrigger>
-          <TabsTrigger value="apporteurs">Apporteurs</TabsTrigger>
-          <TabsTrigger value="helpconfort">HelpConfort</TabsTrigger>
-        </TabsList>
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Guide Apogée</CardTitle>
+            <CardDescription>
+              Exportez le guide Apogée
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => exportApogeeData('txt')}
+                disabled={exportingApogee}
+                className="flex-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {exportingApogee ? 'Export...' : 'EXPORT .TXT'}
+              </Button>
+              <Button
+                onClick={() => exportApogeeData('json')}
+                disabled={exportingApogee}
+                className="flex-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {exportingApogee ? 'Export...' : 'EXPORT .JSON'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="apogee">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sauvegarde Apogée</CardTitle>
-              <CardDescription>
-                Exportez toutes les données du guide Apogée au format JSON ou texte
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <Button
-                  onClick={() => exportApogeeData('json')}
-                  disabled={exportingApogee}
-                  className="flex-1"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {exportingApogee ? 'Export en cours...' : 'Exporter JSON'}
-                </Button>
-                <Button
-                  onClick={() => exportApogeeData('txt')}
-                  disabled={exportingApogee}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {exportingApogee ? 'Export en cours...' : 'Exporter TXT'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <Card>
+          <CardHeader>
+            <CardTitle>Guide Apporteurs</CardTitle>
+            <CardDescription>
+              Exportez le guide Apporteurs
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => exportApporteurData('txt')}
+                disabled={exportingApporteur}
+                className="flex-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {exportingApporteur ? 'Export...' : 'EXPORT .TXT'}
+              </Button>
+              <Button
+                onClick={() => exportApporteurData('json')}
+                disabled={exportingApporteur}
+                className="flex-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {exportingApporteur ? 'Export...' : 'EXPORT .JSON'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="apporteurs">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sauvegarde Apporteurs</CardTitle>
-              <CardDescription>
-                Exportez toutes les données du guide Apporteurs au format JSON ou texte
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <Button
-                  onClick={() => exportApporteurData('json')}
-                  disabled={exportingApporteur}
-                  className="flex-1"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {exportingApporteur ? 'Export en cours...' : 'Exporter JSON'}
-                </Button>
-                <Button
-                  onClick={() => exportApporteurData('txt')}
-                  disabled={exportingApporteur}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {exportingApporteur ? 'Export en cours...' : 'Exporter TXT'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="helpconfort">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sauvegarde HelpConfort</CardTitle>
-              <CardDescription>
-                Exportez toutes les données de la base HelpConfort au format JSON ou texte
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <Button
-                  onClick={() => exportHelpConfortData('json')}
-                  disabled={exportingHelpConfort}
-                  className="flex-1"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {exportingHelpConfort ? 'Export en cours...' : 'Exporter JSON'}
-                </Button>
-                <Button
-                  onClick={() => exportHelpConfortData('txt')}
-                  disabled={exportingHelpConfort}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {exportingHelpConfort ? 'Export en cours...' : 'Exporter TXT'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        <Card>
+          <CardHeader>
+            <CardTitle>Guide HelpConfort</CardTitle>
+            <CardDescription>
+              Exportez le guide HelpConfort
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => exportHelpConfortData('txt')}
+                disabled={exportingHelpConfort}
+                className="flex-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {exportingHelpConfort ? 'Export...' : 'EXPORT .TXT'}
+              </Button>
+              <Button
+                onClick={() => exportHelpConfortData('json')}
+                disabled={exportingHelpConfort}
+                className="flex-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {exportingHelpConfort ? 'Export...' : 'EXPORT .JSON'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
