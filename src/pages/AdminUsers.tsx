@@ -44,13 +44,24 @@ const createUserSchema = z.object({
     .optional(),
   roleAgence: z.string()
     .optional()
-    .refine((val) => !val || ['Dirigeant(e)', 'Assistant(e)', 'Technicien(ne)', 'Autre'].includes(val), {
+    .refine((val) => !val || ['dirigeant', 'assistant(e)', 'technicien', 'commercial'].includes(val), {
       message: "Veuillez sélectionner un rôle valide"
     }),
   password: z.string()
     .min(8, { message: "Le mot de passe doit contenir au moins 8 caractères" })
     .max(100, { message: "Le mot de passe ne peut pas dépasser 100 caractères" })
 });
+
+const getRoleLabel = (roleValue: string | null): string => {
+  if (!roleValue) return '-';
+  const roles: Record<string, string> = {
+    'dirigeant': 'Dirigeant(e)',
+    'assistant(e)': 'Assistant(e)',
+    'technicien': 'Technicien',
+    'commercial': 'Commercial',
+  };
+  return roles[roleValue] || roleValue;
+};
 
 export default function AdminUsers() {
   const { isAdmin } = useAuth();
@@ -306,27 +317,27 @@ export default function AdminUsers() {
               <Label>Rôle dans l'agence</Label>
               <RadioGroup value={roleAgence} onValueChange={setRoleAgence}>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Dirigeant(e)" id="role-dirigeant" />
+                  <RadioGroupItem value="dirigeant" id="role-dirigeant" />
                   <Label htmlFor="role-dirigeant" className="cursor-pointer font-normal">
                     Dirigeant(e)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Assistant(e)" id="role-assistant" />
+                  <RadioGroupItem value="assistant(e)" id="role-assistant" />
                   <Label htmlFor="role-assistant" className="cursor-pointer font-normal">
                     Assistant(e)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Technicien(ne)" id="role-technicien" />
+                  <RadioGroupItem value="technicien" id="role-technicien" />
                   <Label htmlFor="role-technicien" className="cursor-pointer font-normal">
-                    Technicien(ne)
+                    Technicien
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Autre" id="role-autre" />
-                  <Label htmlFor="role-autre" className="cursor-pointer font-normal">
-                    Autre
+                  <RadioGroupItem value="commercial" id="role-commercial" />
+                  <Label htmlFor="role-commercial" className="cursor-pointer font-normal">
+                    Commercial
                   </Label>
                 </div>
               </RadioGroup>
@@ -410,7 +421,7 @@ export default function AdminUsers() {
                   <TableCell>{user.last_name || '-'}</TableCell>
                   <TableCell>{user.first_name || '-'}</TableCell>
                   <TableCell>{user.agence || '-'}</TableCell>
-                  <TableCell>{user.role_agence || '-'}</TableCell>
+                  <TableCell>{getRoleLabel(user.role_agence)}</TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString('fr-FR')}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
