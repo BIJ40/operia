@@ -466,14 +466,37 @@ export default function ApporteurGuide() {
     }
   };
 
+  // Helper pour extraire le texte d'un contenu HTML
+  const extractTextFromHtml = (html: string): string => {
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    return temp.textContent || temp.innerText || '';
+  };
+
   const filteredCategories = searchTerm 
     ? apporteurCategories.filter(cat => {
-        const matchesTitle = cat.title.toLowerCase().includes(searchTerm.toLowerCase());
+        const searchLower = searchTerm.toLowerCase();
+        
+        // Recherche dans le titre de la catégorie
+        const matchesTitle = cat.title.toLowerCase().includes(searchLower);
+        
+        // Recherche dans les sections
         const sections = blocks.filter(b => b.type === 'section' && b.parentId === cat.id);
-        const matchesSection = sections.some(s => s.title.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesSection = sections.some(s => {
+          // Recherche dans le titre de la section
+          const matchesSectionTitle = s.title.toLowerCase().includes(searchLower);
+          
+          // Recherche dans le contenu de la section
+          const sectionText = extractTextFromHtml(s.content).toLowerCase();
+          const matchesSectionContent = sectionText.includes(searchLower);
+          
+          return matchesSectionTitle || matchesSectionContent;
+        });
+        
         return matchesTitle || matchesSection;
       })
     : apporteurCategories;
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
