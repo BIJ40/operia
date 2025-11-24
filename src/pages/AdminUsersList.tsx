@@ -3,11 +3,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Edit, Users } from 'lucide-react';
+import { Trash2, Edit, Users, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EditUserDialog } from '@/components/EditUserDialog';
+import { ManageSystemRoleDialog } from '@/components/ManageSystemRoleDialog';
+import { Badge } from '@/components/ui/badge';
 
 interface UserProfile {
   id: string;
@@ -17,6 +19,7 @@ interface UserProfile {
   agence: string | null;
   role_agence: string | null;
   created_at: string;
+  system_role?: string;
 }
 
 const getRoleLabel = (roleValue: string | null): string => {
@@ -37,6 +40,9 @@ export default function AdminUsersList() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [managingRoleUserId, setManagingRoleUserId] = useState<string | null>(null);
+  const [managingRoleUserName, setManagingRoleUserName] = useState<string | null>(null);
+  const [showRoleDialog, setShowRoleDialog] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -48,13 +54,30 @@ export default function AdminUsersList() {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (profilesError) throw profilesError;
+
+      // Récupérer les rôles système pour chaque utilisateur
+      const usersWithRoles = await Promise.all(
+        (profilesData || []).map(async (profile) => {
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', profile.id)
+            .maybeSingle();
+
+          return {
+            ...profile,
+            system_role: roleData?.role || 'user'
+          };
+        })
+      );
+
+      setUsers(usersWithRoles);
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
     }
@@ -110,7 +133,8 @@ export default function AdminUsersList() {
                 <TableHead>Nom</TableHead>
                 <TableHead>Prénom</TableHead>
                 <TableHead>Agence</TableHead>
-                <TableHead>Rôle</TableHead>
+                <TableHead>Poste occupé</TableHead>
+                <TableHead>Rôle système</TableHead>
                 <TableHead>Créé le</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -123,6 +147,17 @@ export default function AdminUsersList() {
                   <TableCell>{user.first_name || '-'}</TableCell>
                   <TableCell>{user.agence || '-'}</TableCell>
                   <TableCell>{getRoleLabel(user.role_agence)}</TableCell>
+                  <TableCell>
+                    <Badge variant={
+                      user.system_role === 'admin' ? 'destructive' : 
+                      user.system_role === 'support' ? 'default' : 
+                      'secondary'
+                    }>
+                      {user.system_role === 'admin' ? 'Administrateur' : 
+                       user.system_role === 'support' ? 'Support' : 
+                       'Utilisateur'}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString('fr-FR')}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
@@ -133,10 +168,24 @@ export default function AdminUsersList() {
                           setEditingUser(user);
                           setShowEditDialog(true);
                         }}
-                        title="Modifier"
+                        title="Modifier les informations"
                       >
                         <Edit className="w-4 h-4 text-primary" />
                       </Button>
+                      {user.system_role !== 'admin' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setManagingRoleUserId(user.id);
+                            setManagingRoleUserName(user.pseudo || `${user.first_name} ${user.last_name}`);
+                            setShowRoleDialog(true);
+                          }}
+                          title="Gérer le rôle système"
+                        >
+                          <Shield className="w-4 h-4 text-blue-500" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -151,7 +200,7 @@ export default function AdminUsersList() {
               ))}
               {users.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     Aucun utilisateur enregistré
                   </TableCell>
                 </TableRow>
@@ -165,6 +214,14 @@ export default function AdminUsersList() {
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
         user={editingUser}
+        onSuccess={loadUsers}
+      />
+
+      <ManageSystemRoleDialog
+        open={showRoleDialog}
+        onOpenChange={setShowRoleDialog}
+        userId={managingRoleUserId}
+        userName={managingRoleUserName}
         onSuccess={loadUsers}
       />
     </div>
