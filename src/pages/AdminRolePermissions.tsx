@@ -37,7 +37,6 @@ export default function AdminRolePermissions() {
   const { toast } = useToast();
   const [selectedRole, setSelectedRole] = useState<string>('technicien');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [apporteurBlocks, setApporteurBlocks] = useState<Block[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -122,12 +121,23 @@ export default function AdminRolePermissions() {
   };
 
   const togglePermission = async (blockId: string, newValue: boolean) => {
-    try {
-      // Vérifier si une permission existe déjà
-      const existingPermission = permissions.find(p => p.block_id === blockId);
+    // Mise à jour optimiste de l'UI
+    const existingPermission = permissions.find(p => p.block_id === blockId);
+    
+    if (existingPermission) {
+      setPermissions(prev => 
+        prev.map(p => p.block_id === blockId ? { ...p, can_access: newValue } : p)
+      );
+    } else {
+      setPermissions(prev => [...prev, {
+        role_agence: selectedRole,
+        block_id: blockId,
+        can_access: newValue,
+      }]);
+    }
 
+    try {
       if (existingPermission) {
-        // Mettre à jour
         const { error } = await supabase
           .from('role_permissions')
           .update({ can_access: newValue })
@@ -136,7 +146,6 @@ export default function AdminRolePermissions() {
 
         if (error) throw error;
       } else {
-        // Créer
         const { error } = await supabase
           .from('role_permissions')
           .insert({
@@ -147,11 +156,10 @@ export default function AdminRolePermissions() {
 
         if (error) throw error;
       }
-
-      // Recharger les permissions
-      await loadData();
     } catch (error) {
       console.error('Error toggling permission:', error);
+      // Rollback en cas d'erreur
+      await loadData();
       toast({
         title: 'Erreur',
         description: 'Impossible de modifier la permission',
@@ -161,20 +169,28 @@ export default function AdminRolePermissions() {
   };
 
   const toggleCategoryAndChildren = async (categoryId: string, newValue: boolean) => {
-    setSaving(true);
-    try {
-      const allBlocks = [...blocks, ...apporteurBlocks];
-      const childBlocks = allBlocks.filter(b => b.parentId === categoryId);
-      const blockIds = [categoryId, ...childBlocks.map(b => b.id)];
+    const allBlocks = [...blocks, ...apporteurBlocks];
+    const childBlocks = allBlocks.filter(b => b.parentId === categoryId);
+    const blockIds = [categoryId, ...childBlocks.map(b => b.id)];
 
-      // Supprimer les anciennes permissions
+    // Mise à jour optimiste de l'UI
+    setPermissions(prev => {
+      const filtered = prev.filter(p => !blockIds.includes(p.block_id));
+      const newPerms = blockIds.map(id => ({
+        role_agence: selectedRole,
+        block_id: id,
+        can_access: newValue,
+      }));
+      return [...filtered, ...newPerms];
+    });
+
+    try {
       await supabase
         .from('role_permissions')
         .delete()
         .eq('role_agence', selectedRole)
         .in('block_id', blockIds);
 
-      // Créer les nouvelles permissions
       const newPermissions = blockIds.map(id => ({
         role_agence: selectedRole,
         block_id: id,
@@ -189,35 +205,40 @@ export default function AdminRolePermissions() {
 
       toast({
         title: 'Succès',
-        description: `Permissions ${newValue ? 'activées' : 'désactivées'} pour la catégorie et ses enfants`,
+        description: `Permissions ${newValue ? 'activées' : 'désactivées'}`,
       });
-
-      await loadData();
     } catch (error) {
       console.error('Error toggling category:', error);
+      await loadData();
       toast({
         title: 'Erreur',
         description: 'Impossible de modifier les permissions',
         variant: 'destructive',
       });
-    } finally {
-      setSaving(false);
     }
   };
 
   const toggleAllInSection = async (blocksList: Block[], newValue: boolean) => {
-    setSaving(true);
-    try {
-      const allBlockIds = blocksList.map(b => b.id);
+    const allBlockIds = blocksList.map(b => b.id);
 
-      // Supprimer les anciennes permissions
+    // Mise à jour optimiste de l'UI
+    setPermissions(prev => {
+      const filtered = prev.filter(p => !allBlockIds.includes(p.block_id));
+      const newPerms = allBlockIds.map(id => ({
+        role_agence: selectedRole,
+        block_id: id,
+        can_access: newValue,
+      }));
+      return [...filtered, ...newPerms];
+    });
+
+    try {
       await supabase
         .from('role_permissions')
         .delete()
         .eq('role_agence', selectedRole)
         .in('block_id', allBlockIds);
 
-      // Créer les nouvelles permissions
       const newPermissions = allBlockIds.map(id => ({
         role_agence: selectedRole,
         block_id: id,
@@ -234,17 +255,14 @@ export default function AdminRolePermissions() {
         title: 'Succès',
         description: `Toutes les permissions ${newValue ? 'activées' : 'désactivées'}`,
       });
-
-      await loadData();
     } catch (error) {
       console.error('Error toggling all:', error);
+      await loadData();
       toast({
         title: 'Erreur',
         description: 'Impossible de modifier les permissions',
         variant: 'destructive',
       });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -284,7 +302,6 @@ export default function AdminRolePermissions() {
                 <Checkbox
                   checked={categoryPermission}
                   onCheckedChange={(checked) => toggleCategoryAndChildren(category.id, !!checked)}
-                  disabled={saving}
                 />
                 <CollapsibleTrigger className="flex items-center gap-2 hover:text-primary">
                   {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -302,7 +319,6 @@ export default function AdminRolePermissions() {
                     <Checkbox
                       checked={sectionPermission}
                       onCheckedChange={(checked) => togglePermission(section.id, !!checked)}
-                      disabled={saving}
                     />
                     <span className="text-sm">{section.title}</span>
                   </div>
@@ -374,7 +390,6 @@ export default function AdminRolePermissions() {
                   onCheckedChange={(checked) => 
                     toggleAllInSection(blocks.filter(b => !b.slug.startsWith('helpconfort-')), !!checked)
                   }
-                  disabled={saving}
                 />
                 <span className="text-sm font-medium">Tout sélectionner</span>
               </div>
@@ -400,7 +415,6 @@ export default function AdminRolePermissions() {
                   onCheckedChange={(checked) => 
                     toggleAllInSection(apporteurBlocks, !!checked)
                   }
-                  disabled={saving}
                 />
                 <span className="text-sm font-medium">Tout sélectionner</span>
               </div>
@@ -426,7 +440,6 @@ export default function AdminRolePermissions() {
                   onCheckedChange={(checked) => 
                     toggleAllInSection(blocks.filter(b => b.slug.startsWith('helpconfort-')), !!checked)
                   }
-                  disabled={saving}
                 />
                 <span className="text-sm font-medium">Tout sélectionner</span>
               </div>
