@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Settings, Plus } from 'lucide-react';
 import { LoginDialog } from '@/components/LoginDialog';
 import { Header } from '@/components/Header';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
+import helpConfortServicesImg from '@/assets/help-confort-services.png';
 import { FavoritesWidget } from '@/components/widgets/FavoritesWidget';
 import { RecentHistoryWidget } from '@/components/widgets/RecentHistoryWidget';
 import { QuickSearchWidget } from '@/components/widgets/QuickSearchWidget';
@@ -194,10 +195,21 @@ export default function Dashboard() {
           
           <main className="flex-1 p-6">
             <div className="max-w-7xl mx-auto">
+              {/* En-tête avec logo HelpConfort Services */}
+              <div className="mb-8 text-center">
+                <img 
+                  src={helpConfortServicesImg} 
+                  alt="HelpConfort Services" 
+                  className="h-24 mx-auto mb-4"
+                />
+                <h1 className="text-3xl font-bold mb-2">Bienvenue sur Helpogée</h1>
+                <p className="text-muted-foreground">Votre plateforme centrale de ressources et documentation</p>
+              </div>
+
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h1 className="text-3xl font-bold">Dashboard</h1>
-                  <p className="text-muted-foreground">Accédez rapidement à vos ressources</p>
+                  <h2 className="text-2xl font-semibold">Mes widgets</h2>
+                  <p className="text-sm text-muted-foreground">Personnalisez votre espace de travail</p>
                 </div>
                 
                 <div className="flex gap-2">

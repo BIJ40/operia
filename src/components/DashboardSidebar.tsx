@@ -103,16 +103,10 @@ export function DashboardSidebar() {
     return `/apogee/category/${category.slug}`;
   };
 
-  // Filtrer selon les permissions
-  const accessibleApogeeCategories = categories.filter(
-    cat => cat.scope === 'apogee' && !isLocked(cat.id)
-  );
-  const accessibleHelpconfortCategories = categories.filter(
-    cat => cat.scope === 'helpconfort' && !isLocked(cat.id)
-  );
-  const accessibleApporteurCategories = apporteurCategories.filter(
-    cat => !isLocked(cat.id)
-  );
+  // Ne pas filtrer - afficher toutes les catégories avec indication de verrouillage
+  const allApogeeCategories = categories.filter(cat => cat.scope === 'apogee');
+  const allHelpconfortCategories = categories.filter(cat => cat.scope === 'helpconfort');
+  const allApporteurCategories = apporteurCategories;
 
   return (
     <Sidebar className="border-r">
@@ -123,101 +117,72 @@ export function DashboardSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {accessibleApogeeCategories.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Guide Apogée</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {accessibleApogeeCategories.map((category) => {
-                  const IconComponent = getIconComponent(category.icon);
-                  const locked = isLocked(category.id);
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/" className="flex items-center gap-2">
+                    <Icons.Home className="h-4 w-4" />
+                    <span>Accueil</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              {allApogeeCategories.length > 0 && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/apogee" className="flex items-center gap-2">
+                      <Icons.BookOpen className="h-4 w-4" />
+                      <span>Guide Apogée</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
 
-                  return (
-                    <SidebarMenuItem key={category.id}>
-                      <SidebarMenuButton asChild disabled={locked}>
-                        {locked ? (
-                          <div className="flex items-center gap-2 opacity-50">
-                            <Lock className="h-4 w-4" />
-                            <span>{category.title}</span>
-                          </div>
-                        ) : (
-                          <Link to={getCategoryUrl(category)} className="flex items-center gap-2">
-                            <IconComponent className="h-4 w-4" />
-                            <span>{category.title}</span>
-                          </Link>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+              {allApporteurCategories.length > 0 && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/apporteurs" className="flex items-center gap-2">
+                      <Icons.Users className="h-4 w-4" />
+                      <span>Guide Apporteurs</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
 
-        {accessibleApporteurCategories.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Guide Apporteurs</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {accessibleApporteurCategories.map((category) => {
-                  const IconComponent = getIconComponent(category.icon);
-                  const locked = isLocked(category.id);
+              {allHelpconfortCategories.length > 0 && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/helpconfort" className="flex items-center gap-2">
+                      <Icons.FileText className="h-4 w-4" />
+                      <span>Base Documentaire</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
 
-                  return (
-                    <SidebarMenuItem key={category.id}>
-                      <SidebarMenuButton asChild disabled={locked}>
-                        {locked ? (
-                          <div className="flex items-center gap-2 opacity-50">
-                            <Lock className="h-4 w-4" />
-                            <span>{category.title}</span>
-                          </div>
-                        ) : (
-                          <Link to={getCategoryUrl(category)} className="flex items-center gap-2">
-                            <IconComponent className="h-4 w-4" />
-                            <span>{category.title}</span>
-                          </Link>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/favorites" className="flex items-center gap-2">
+                    <Icons.Star className="h-4 w-4" />
+                    <span>Favoris</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-        {accessibleHelpconfortCategories.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Base Documentaire</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {accessibleHelpconfortCategories.map((category) => {
-                  const IconComponent = getIconComponent(category.icon);
-                  const locked = isLocked(category.id);
-
-                  return (
-                    <SidebarMenuItem key={category.id}>
-                      <SidebarMenuButton asChild disabled={locked}>
-                        {locked ? (
-                          <div className="flex items-center gap-2 opacity-50">
-                            <Lock className="h-4 w-4" />
-                            <span>{category.title}</span>
-                          </div>
-                        ) : (
-                          <Link to={getCategoryUrl(category)} className="flex items-center gap-2">
-                            <IconComponent className="h-4 w-4" />
-                            <span>{category.title}</span>
-                          </Link>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/documents" className="flex items-center gap-2">
+                    <Icons.FolderOpen className="h-4 w-4" />
+                    <span>Documents</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
