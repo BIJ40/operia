@@ -89,6 +89,17 @@ export function Chatbot() {
         (payload) => {
           console.log('New support message:', payload);
           setSupportMessages(prev => [...prev, payload.new]);
+          
+          // Jouer un son si c'est un message du support
+          if (payload.new.is_from_support) {
+            playNotificationSound();
+            
+            // Afficher une notification toast
+            toast({
+              title: 'Nouveau message',
+              description: 'Le support a répondu à votre demande',
+            });
+          }
         }
       )
       .subscribe();
@@ -96,7 +107,35 @@ export function Chatbot() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeTicket]);
+  }, [activeTicket, toast]);
+
+  // Fonction pour jouer un son de notification
+  const playNotificationSound = () => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Créer une séquence de deux notes (ding-dong)
+    const playTone = (frequency: number, startTime: number, duration: number) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = frequency;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration);
+    };
+    
+    const now = audioContext.currentTime;
+    playTone(800, now, 0.15);        // Première note
+    playTone(600, now + 0.15, 0.15); // Deuxième note
+  };
 
   // Écouter les changements de statut du ticket
   useEffect(() => {
