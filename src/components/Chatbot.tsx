@@ -123,7 +123,7 @@ export function Chatbot() {
           },
           body: JSON.stringify({
             query,
-            topK: 5, // Get top 5 most relevant chunks
+            topK: 15, // Augmenté à 15 pour plus de contexte
           }),
         }
       );
