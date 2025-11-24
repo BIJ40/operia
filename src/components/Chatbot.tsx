@@ -375,6 +375,32 @@ export function Chatbot() {
             <div ref={messagesEndRef} />
           </ScrollArea>
 
+          {/* Support button - juste avant l'input */}
+          {messages.length > 0 && (
+            <div className="px-4 pt-2 pb-2 border-t">
+              <Button
+                onClick={async () => {
+                  const ticketId = await createSupportTicket(messages);
+                  if (ticketId) {
+                    setMessages([]);
+                    setIsOpen(false);
+                    toast({
+                      title: 'Ticket créé',
+                      description: 'Un conseiller va vous contacter rapidement.',
+                    });
+                  }
+                }}
+                disabled={isCreating}
+                variant="outline"
+                size="sm"
+                className="w-full"
+              >
+                <UserCircle className="h-4 w-4 mr-2" />
+                {isCreating ? 'Création...' : 'Parler à un conseiller'}
+              </Button>
+            </div>
+          )}
+
           {/* Input */}
           <div className="p-4 border-t">
             <form
@@ -395,30 +421,6 @@ export function Chatbot() {
                 <Send className="h-4 w-4" />
               </Button>
             </form>
-          </div>
-
-          {/* Support button - toujours visible */}
-          <div className="px-4 pb-4">
-            <Button
-              onClick={async () => {
-                const ticketId = await createSupportTicket(messages);
-                if (ticketId) {
-                  setMessages([]);
-                  setIsOpen(false);
-                  toast({
-                    title: 'Ticket créé',
-                    description: 'Un conseiller va vous contacter rapidement.',
-                  });
-                }
-              }}
-              disabled={isCreating || messages.length === 0}
-              variant="outline"
-              size="sm"
-              className="w-full"
-            >
-              <UserCircle className="h-4 w-4 mr-2" />
-              {isCreating ? 'Création...' : 'Parler à un conseiller'}
-            </Button>
           </div>
 
         </div>
