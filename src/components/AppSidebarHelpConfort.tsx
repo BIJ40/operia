@@ -103,6 +103,16 @@ export function AppSidebarHelpConfort() {
     navigate(`/helpconfort/category/${categoryIdentifier}#${sectionId}`);
   };
 
+  // Déterminer la page parent basée sur la route actuelle
+  const getParentPath = () => {
+    const path = location.pathname;
+    if (path === '/helpconfort' || path === '/') return null; // Déjà sur la page d'accueil
+    if (path.startsWith('/helpconfort/category/')) return '/helpconfort';
+    return '/';
+  };
+
+  const parentPath = getParentPath();
+
   return (
     <Sidebar className="border-r" collapsible="icon">
       <SidebarHeader className="p-2 border-b">
@@ -119,13 +129,15 @@ export function AppSidebarHelpConfort() {
       
       <SidebarContent className="pt-1">
         <SidebarGroup>
-          <Link 
-            to="/helpconfort" 
-            className="mx-2 mb-3 px-4 py-2 text-sm font-semibold bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
-          >
-            <Icons.Home className="w-4 h-4 text-primary" />
-            <span>Retour accueil</span>
-          </Link>
+          {parentPath && (
+            <Link 
+              to={parentPath}
+              className="mx-2 mb-3 px-4 py-2 text-sm font-semibold bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
+            >
+              <Icons.ArrowLeft className="w-4 h-4 text-primary" />
+              <span>Retour</span>
+            </Link>
+          )}
 
           <SidebarGroupContent>
             <SidebarMenu>
