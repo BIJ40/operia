@@ -102,14 +102,14 @@ serve(async (req) => {
       throw new Error('Admin access required');
     }
 
-    const { blockIds, batchSize = 50 } = await req.json();
+    const { blockIds, batchSize = 50, offset = 0 } = await req.json();
 
     // Fetch blocks to index
     let query = supabase
       .from('blocks')
       .select('*')
       .order('created_at')
-      .limit(batchSize); // Limiter pour éviter les timeouts
+      .range(offset, offset + batchSize - 1); // Utiliser range pour pagination
 
     if (blockIds && blockIds.length > 0) {
       query = query.in('id', blockIds);

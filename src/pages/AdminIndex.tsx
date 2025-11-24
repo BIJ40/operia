@@ -14,6 +14,7 @@ export default function AdminIndex() {
   const [exportingJson, setExportingJson] = useState(false);
   const [exportingTxt, setExportingTxt] = useState(false);
   const [indexing, setIndexing] = useState(false);
+  const [indexProgress, setIndexProgress] = useState({ current: 0, total: 0 });
 
   if (!isAdmin) {
     return <Navigate to="/" replace />;
@@ -234,48 +235,75 @@ export default function AdminIndex() {
     }
   };
 
-  // Indexation du chatbot
+  // Indexation automatique par batch
   const handleIndexChatbot = async () => {
     setIndexing(true);
+    setIndexProgress({ current: 0, total: 0 });
     
-    toast({
-      title: 'Indexation démarrée',
-      description: 'Ce processus peut prendre plusieurs minutes (5-10 min pour 288 blocs)...',
-    });
-
     try {
-      // Augmenter le timeout à 15 minutes pour OpenAI embeddings
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 900000); // 15 minutes
+      // 1. Récupérer le nombre total de blocs à indexer
+      const { count: totalBlocks, error: countError } = await supabase
+        .from('blocks')
+        .select('*', { count: 'exact', head: true });
 
-      const { data, error } = await supabase.functions.invoke('generate-embeddings', {
-        body: { blockIds: [] },
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      if (countError) throw countError;
+
+      const total = totalBlocks || 0;
+      setIndexProgress({ current: 0, total });
+
+      toast({
+        title: 'Indexation démarrée',
+        description: `${total} blocs à indexer par batches de 50...`,
       });
 
-      clearTimeout(timeoutId);
+      // 2. Lancer l'indexation par batches successifs
+      const batchSize = 50;
+      const totalBatches = Math.ceil(total / batchSize);
+      let processedBlocks = 0;
+      let totalChunks = 0;
 
-      if (error) throw error;
+      for (let batch = 0; batch < totalBatches; batch++) {
+        console.log(`Processing batch ${batch + 1}/${totalBatches}`);
+
+        const { data, error } = await supabase.functions.invoke('generate-embeddings', {
+          body: { 
+            blockIds: [], 
+            batchSize,
+            offset: batch * batchSize 
+          },
+        });
+
+        if (error) {
+          console.error(`Erreur batch ${batch + 1}:`, error);
+          // Continuer avec le prochain batch même en cas d'erreur
+        } else {
+          processedBlocks += data.blocks_processed || 0;
+          totalChunks += data.chunks_created || 0;
+        }
+
+        // Mettre à jour la progression
+        setIndexProgress({ current: processedBlocks, total });
+
+        // Petite pause entre les batches pour éviter de surcharger
+        if (batch < totalBatches - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
 
       toast({
         title: 'Indexation terminée',
-        description: `${data.blocks_processed} blocs traités, ${data.chunks_created} chunks créés`,
+        description: `${processedBlocks} blocs traités, ${totalChunks} chunks créés`,
       });
+      
+      setIndexProgress({ current: 0, total: 0 });
     } catch (error) {
       console.error('Erreur indexation:', error);
-      
-      // Message différent si timeout
-      const isTimeout = error instanceof Error && error.message.includes('aborted');
-      
       toast({
-        title: isTimeout ? 'Timeout' : 'Erreur',
-        description: isTimeout 
-          ? 'L\'indexation prend trop de temps. Elle continue en arrière-plan, réessayez dans quelques minutes.'
-          : 'L\'indexation a peut-être réussi en arrière-plan. Vérifiez dans le chatbot.',
-        variant: isTimeout ? 'default' : 'destructive',
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Erreur lors de l\'indexation',
+        variant: 'destructive',
       });
+      setIndexProgress({ current: 0, total: 0 });
     } finally {
       setIndexing(false);
     }
@@ -391,7 +419,7 @@ export default function AdminIndex() {
                 Réindexer le contenu pour mettre à jour le chatbot après modification des guides
               </CardDescription>
             </CardHeader>
-            <div className="px-6 pb-6">
+            <div className="px-6 pb-6 space-y-4">
               <Button
                 onClick={handleIndexChatbot}
                 disabled={indexing}
@@ -401,6 +429,32 @@ export default function AdminIndex() {
                 <RefreshCw className="w-4 h-4 mr-2" />
                 {indexing ? 'Indexation en cours...' : 'Lancer la mise à jour'}
               </Button>
+
+              {/* Barre de progression avec 20 mini-blocs */}
+              {indexing && indexProgress.total > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>{indexProgress.current} / {indexProgress.total} blocs</span>
+                    <span>{Math.round((indexProgress.current / indexProgress.total) * 100)}%</span>
+                  </div>
+                  <div className="grid grid-cols-20 gap-1">
+                    {Array.from({ length: 20 }).map((_, i) => {
+                      const blockThreshold = (indexProgress.total / 20) * (i + 1);
+                      const isFilled = indexProgress.current >= blockThreshold;
+                      return (
+                        <div
+                          key={i}
+                          className={`h-3 rounded transition-all duration-300 ${
+                            isFilled 
+                              ? 'bg-primary shadow-sm' 
+                              : 'bg-muted'
+                          }`}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         </div>
