@@ -37,12 +37,23 @@ export function Chatbot() {
   const [activeTicket, setActiveTicket] = useState<any>(null);
   const [supportMessages, setSupportMessages] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isUserTyping, setIsUserTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { blocks } = useEditor();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { createSupportTicket, isCreating } = useSupportTicket();
+
+  // Nettoyer le timeout de frappe au démontage
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -119,6 +130,38 @@ export function Chatbot() {
       supabase.removeChannel(channel);
     };
   }, [activeTicket, isOpen]);
+
+  // Gérer l'indicateur de frappe en temps réel
+  useEffect(() => {
+    if (!activeTicket) return;
+
+    const typingChannel = supabase.channel(`typing:${activeTicket.id}`);
+
+    typingChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = typingChannel.presenceState();
+        // Vérifier si un utilisateur support est en train de taper
+        const supportTyping = Object.values(state).some((presences: any) => 
+          presences.some((p: any) => p.is_support && p.typing)
+        );
+        setIsUserTyping(supportTyping);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Envoyer l'état initial (pas en train de taper)
+          await typingChannel.track({
+            user_id: user?.id,
+            is_support: false,
+            typing: false,
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(typingChannel);
+    };
+  }, [activeTicket, user]);
 
   // Fonction pour jouer un son de notification
   const playNotificationSound = () => {
@@ -335,6 +378,36 @@ export function Chatbot() {
       }
       return <span key={index}>{part}</span>;
     });
+  };
+
+  // Gérer l'indicateur de frappe
+  const handleTyping = async () => {
+    if (!activeTicket) return;
+
+    const typingChannel = supabase.channel(`typing:${activeTicket.id}`);
+    
+    // Envoyer l'état "en train de taper"
+    await typingChannel.track({
+      user_id: user?.id,
+      is_support: false,
+      typing: true,
+      online_at: new Date().toISOString(),
+    });
+
+    // Annuler le timeout précédent
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Réinitialiser l'état après 3 secondes d'inactivité
+    typingTimeoutRef.current = setTimeout(async () => {
+      await typingChannel.track({
+        user_id: user?.id,
+        is_support: false,
+        typing: false,
+        online_at: new Date().toISOString(),
+      });
+    }, 3000);
   };
 
   const sendMessage = async () => {
@@ -685,6 +758,13 @@ export function Chatbot() {
             </div>
           )}
 
+          {/* Indicateur de frappe */}
+          {activeTicket && isUserTyping && (
+            <div className="px-4 py-2 text-xs text-muted-foreground italic">
+              Le conseiller est en train de taper...
+            </div>
+          )}
+
           {/* Input */}
           <div className="p-4 border-t">
             <form
@@ -697,7 +777,10 @@ export function Chatbot() {
             >
               <Input
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  handleTyping(); // Envoyer l'état de frappe
+                }}
                 placeholder="Posez votre question..."
                 disabled={isLoading}
               />

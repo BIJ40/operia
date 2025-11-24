@@ -46,7 +46,9 @@ export default function AdminSupport() {
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [filter, setFilter] = useState<'waiting' | 'in_progress' | 'resolved'>('waiting');
+  const [isUserTyping, setIsUserTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!isAdmin && !user) {
@@ -128,6 +130,47 @@ export default function AdminSupport() {
     };
   }, [selectedTicket]);
 
+  // Gérer l'indicateur de frappe en temps réel
+  useEffect(() => {
+    if (!selectedTicket) return;
+
+    const typingChannel = supabase.channel(`typing:${selectedTicket.id}`);
+
+    typingChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = typingChannel.presenceState();
+        // Vérifier si l'utilisateur (non support) est en train de taper
+        const userTyping = Object.values(state).some((presences: any) => 
+          presences.some((p: any) => !p.is_support && p.typing)
+        );
+        setIsUserTyping(userTyping);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Envoyer l'état initial (pas en train de taper)
+          await typingChannel.track({
+            user_id: user?.id,
+            is_support: true,
+            typing: false,
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(typingChannel);
+    };
+  }, [selectedTicket, user]);
+
+  // Nettoyer le timeout de frappe au démontage
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -200,6 +243,36 @@ export default function AdminSupport() {
         variant: 'destructive',
       });
     }
+  };
+
+  // Gérer l'indicateur de frappe
+  const handleTyping = async () => {
+    if (!selectedTicket) return;
+
+    const typingChannel = supabase.channel(`typing:${selectedTicket.id}`);
+    
+    // Envoyer l'état "en train de taper"
+    await typingChannel.track({
+      user_id: user?.id,
+      is_support: true,
+      typing: true,
+      online_at: new Date().toISOString(),
+    });
+
+    // Annuler le timeout précédent
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Réinitialiser l'état après 3 secondes d'inactivité
+    typingTimeoutRef.current = setTimeout(async () => {
+      await typingChannel.track({
+        user_id: user?.id,
+        is_support: true,
+        typing: false,
+        online_at: new Date().toISOString(),
+      });
+    }, 3000);
   };
 
   const sendMessage = async () => {
@@ -433,6 +506,13 @@ export default function AdminSupport() {
                   <div ref={messagesEndRef} />
                 </ScrollArea>
 
+                {/* Indicateur de frappe */}
+                {isUserTyping && (
+                  <div className="px-4 py-2 text-xs text-muted-foreground italic border-t">
+                    L'utilisateur est en train de taper...
+                  </div>
+                )}
+
                 {/* Input message */}
                 {selectedTicket.status !== 'resolved' && (
                   <div className="p-4 border-t">
@@ -445,7 +525,10 @@ export default function AdminSupport() {
                     >
                       <Input
                         value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
+                        onChange={(e) => {
+                          setNewMessage(e.target.value);
+                          handleTyping(); // Envoyer l'état de frappe
+                        }}
                         placeholder="Écrire votre réponse..."
                         className="flex-1"
                       />
