@@ -9,6 +9,7 @@ import { IconPicker } from '@/components/IconPicker';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { LoginDialog } from '@/components/LoginDialog';
+import { Header } from '@/components/Header';
 import helpConfortServicesImg from '@/assets/help-confort-services.png';
 
 const supabaseAny = supabase as any;
@@ -491,7 +492,9 @@ export default function Landing() {
           </div>
         </div>
       ) : (
-        <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+        <>
+          <Header />
+          <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
           <div className="container max-w-6xl mx-auto px-4 py-12">
             {isEditMode && isAdmin ? (
               <DndContext
@@ -569,24 +572,25 @@ export default function Landing() {
               </div>
             )}
           </div>
-
-          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Êtes-vous sûr de vouloir supprimer cette carte ?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Supprimer
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
         </div>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+              <AlertDialogDescription>
+                Êtes-vous sûr de vouloir supprimer cette carte ?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        </>
       )}
     </>
   );
