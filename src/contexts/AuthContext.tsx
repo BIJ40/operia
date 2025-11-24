@@ -9,6 +9,7 @@ interface AuthContextType {
   mustChangePassword: boolean;
   roleAgence: string | null;
   userPermissions: string[];
+  hasRolePermissionsConfig: boolean;
   isLoggingOut: boolean;
   hasAccessToBlock: (blockId: string) => boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const [hasRolePermissionsConfig, setHasRolePermissionsConfig] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -60,10 +62,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const { data: permissions } = await supabase
                 .from('role_permissions')
                 .select('block_id, can_access')
-                .eq('role_agence', profile.role_agence)
-                .eq('can_access', true);
+                .eq('role_agence', profile.role_agence);
 
-              setUserPermissions(permissions?.map(p => p.block_id) || []);
+              const allowedPermissions = permissions?.filter(p => p.can_access) || [];
+
+              setUserPermissions(allowedPermissions.map(p => p.block_id));
+              setHasRolePermissionsConfig((permissions?.length || 0) > 0);
             }
           }, 0);
         } else {
@@ -71,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setMustChangePassword(false);
           setRoleAgence(null);
           setUserPermissions([]);
+          setHasRolePermissionsConfig(false);
         }
         
         setLoading(false);
@@ -108,15 +113,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const { data: permissions } = await supabase
                 .from('role_permissions')
                 .select('block_id, can_access')
-                .eq('role_agence', data.role_agence)
-                .eq('can_access', true);
+                .eq('role_agence', data.role_agence);
 
-              setUserPermissions(permissions?.map(p => p.block_id) || []);
+              const allowedPermissions = permissions?.filter(p => p.can_access) || [];
+
+              setUserPermissions(allowedPermissions.map(p => p.block_id));
+              setHasRolePermissionsConfig((permissions?.length || 0) > 0);
             }
 
             setLoading(false);
           });
       } else {
+        setHasRolePermissionsConfig(false);
         setLoading(false);
       }
     });
@@ -181,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setMustChangePassword(false);
       setRoleAgence(null);
       setUserPermissions([]);
+      setHasRolePermissionsConfig(false);
       setUser(null);
 
       // Redirection immédiate vers la page d'accueil
@@ -195,11 +204,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasAccessToBlock = (blockId: string): boolean => {
     // Les admins ont accès à tout
     if (isAdmin) return true;
-    
-    // Si aucune permission n'est définie pour ce rôle, l'accès est accordé par défaut
-    if (userPermissions.length === 0) return true;
-    
-    // Sinon, vérifier si le block est dans la liste des permissions
+
+    // Les utilisateurs sans rôle spécifique ont accès à tout
+    if (!roleAgence) return true;
+
+    // Si aucune permission n'est configurée pour ce rôle, accès total (compatibilité)
+    if (!hasRolePermissionsConfig) return true;
+
+    // Sinon, accès uniquement si le block est dans la liste des permissions autorisées
     return userPermissions.includes(blockId);
   };
 
@@ -213,6 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         mustChangePassword,
         roleAgence,
         userPermissions,
+        hasRolePermissionsConfig,
         isLoggingOut,
         hasAccessToBlock,
         login, 
@@ -232,6 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mustChangePassword,
       roleAgence,
       userPermissions,
+      hasRolePermissionsConfig,
       isLoggingOut,
       hasAccessToBlock,
       login, 
