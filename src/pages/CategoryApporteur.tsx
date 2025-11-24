@@ -133,10 +133,11 @@ export default function CategoryApporteur() {
   };
 
   const handleSaveSection = async (id: string, updates: any) => {
-    // S'assurer que isSingleSection est bien passé
+    // S'assurer que les flags booléens sont bien passés
     const sectionUpdates = {
       ...updates,
       isSingleSection: updates.isSingleSection || false,
+      hideTitle: updates.hideTitle || false,
     };
     await updateBlock(id, sectionUpdates);
     setEditingId(null);
@@ -229,9 +230,76 @@ export default function CategoryApporteur() {
       zIndex: isDragging ? 50 : 'auto',
     };
 
-    // Si c'est une section figée OU un TIPS avec titre masqué, l'afficher sans accordéon
-    // Si c'est une section figée OU un TIPS avec titre masqué, l'afficher sans accordéon
-    if (section.isSingleSection || section.hideTitle) {
+    // Si hideTitle est activé, afficher juste un encart simple avec bordure
+    if (section.hideTitle && !section.hideFromSidebar && section.contentType !== 'tips') {
+      return (
+        <div ref={setNodeRef} style={style} className="mb-4">
+          <div className="rounded-lg border-2 border-border bg-card shadow-sm p-6">
+            {isEditMode && (
+              <div className="flex gap-2 mb-4 justify-end bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="cursor-move"
+                  {...attributes}
+                  {...listeners}
+                >
+                  <GripVertical className="w-4 h-4" />
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      title="Changer de sous-catégorie"
+                    >
+                      <FolderInput className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-background border shadow-md z-[200]">
+                    {availableSubcategories
+                      .filter(sub => sub.id !== subcategory?.id)
+                      .map((sub) => (
+                        <DropdownMenuItem
+                          key={sub.id}
+                          onClick={async () => await updateBlock(section.id, { parentId: sub.id })}
+                        >
+                          {sub.title}
+                        </DropdownMenuItem>
+                      ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleEdit(section.id)}
+                >
+                  <Edit2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleDelete(section.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+            <div
+              className="prose prose-sm max-w-none break-words overflow-visible dark:prose-invert"
+              dangerouslySetInnerHTML={{ __html: section.content }}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // Si c'est une section figée OU un TIPS, l'afficher avec styling spécial
+    if (section.isSingleSection || section.hideFromSidebar) {
       const isTips = section.hideFromSidebar || section.contentType === 'tips';
       return (
         <div ref={setNodeRef} style={style} className="mb-4">
@@ -292,7 +360,7 @@ export default function CategoryApporteur() {
             )}
             {!section.hideTitle && section.title && section.title.trim() !== '' ? (
               <h3 className="text-lg font-semibold mb-4 text-foreground">{section.title}</h3>
-            ) : !section.hideTitle && section.hideFromSidebar ? (
+            ) : !section.hideTitle && (section.hideFromSidebar || section.contentType === 'tips') ? (
               <h3 className="text-lg font-semibold mb-4 text-foreground">💡 Information / Astuce</h3>
             ) : null}
             <div 
@@ -592,6 +660,7 @@ export default function CategoryApporteur() {
               initialTitle={sections.find(s => s.id === editingId)?.title || ''}
               initialContent={sections.find(s => s.id === editingId)?.content || ''}
               initialColor={sections.find(s => s.id === editingId)?.colorPreset || 'blue'}
+              initialHideTitle={sections.find(s => s.id === editingId)?.hideTitle || false}
               onSave={(data) => handleSaveSection(editingId, data)}
               onCancel={() => {
                 setEditDialogOpen(false);
