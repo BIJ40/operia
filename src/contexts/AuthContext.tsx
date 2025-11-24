@@ -127,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setIsAdmin(false);
     setMustChangePassword(false);
+    window.location.href = '/';
   };
 
   if (loading) {
