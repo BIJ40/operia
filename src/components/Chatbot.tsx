@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEditor } from '@/contexts/EditorContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import chatIcon from '@/assets/logo_chat.png';
 
 type Message = {
@@ -23,6 +25,7 @@ export function Chatbot() {
   const { blocks } = useEditor();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -196,6 +199,17 @@ export function Chatbot() {
       const relevantContent = await searchRelevantContent(input);
       console.log('Relevant content found:', relevantContent.length, 'characters');
       
+      // Récupérer le pseudo de l'utilisateur
+      let userPseudo = 'Utilisateur';
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('pseudo')
+          .eq('id', user.id)
+          .single();
+        userPseudo = profile?.pseudo || user.email?.split('@')[0] || 'Utilisateur';
+      }
+      
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-guide`,
         {
@@ -207,6 +221,8 @@ export function Chatbot() {
           body: JSON.stringify({
             messages: [...messages, userMessage],
             guideContent: relevantContent,
+            userId: user?.id || null,
+            userPseudo: userPseudo,
           }),
         }
       );

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Database, FileText, Shield, FileJson, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Users, Database, FileText, Shield, FileJson, RefreshCw, ArrowLeft, MessageSquare } from 'lucide-react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -353,10 +353,10 @@ export default function AdminIndex() {
         </div>
       </div>
 
-      {/* Gestion des documents */}
+      {/* Mme MICHU */}
       <div>
-        <h2 className="text-xl font-semibold text-muted-foreground mb-4">Gestion des documents</h2>
-        <div className="grid grid-cols-1 gap-6">
+        <h2 className="text-xl font-semibold text-muted-foreground mb-4">Mme MICHU</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Link to="/admin/documents">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
@@ -365,7 +365,21 @@ export default function AdminIndex() {
                   Documents
                 </CardTitle>
                 <CardDescription>
-                  Uploader des fichiers (PDF, Word, etc.) pour les rendre accessibles dans les sections du guide. Ils apparaîtront dans l'onglet "Documents" de chaque catégorie.
+                  Uploader des fichiers (PDF, Word, etc.) pour enrichir la connaissance du chatbot. Ces documents sont indexés pour améliorer les réponses de Mme MICHU.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link to="/admin/chatbot-queries">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-primary" />
+                  Questions reçues
+                </CardTitle>
+                <CardDescription>
+                  Consulter les questions posées à Mme MICHU et gérer les demandes de clarification du guide
                 </CardDescription>
               </CardHeader>
             </Card>

@@ -14,6 +14,7 @@ import HelpConfort from "./pages/HelpConfort";
 import CategoryHelpConfort from "./pages/CategoryHelpConfort";
 import Documents from "./pages/Documents";
 import AdminDocuments from "./pages/AdminDocuments";
+import AdminChatbotQueries from "./pages/AdminChatbotQueries";
 import AdminBackup from "./pages/AdminBackup";
 import AdminHelpConfortBackup from "./pages/AdminHelpConfortBackup";
 import AdminUsers from "./pages/AdminUsers";
@@ -53,6 +54,7 @@ function AppContent() {
         <Route path="/documents" element={<Layout showHeader showSidebar={false}><Documents /></Layout>} />
         <Route path="/admin" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminIndex /></Layout>} />
         <Route path="/admin/documents" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminDocuments /></Layout>} />
+        <Route path="/admin/chatbot-queries" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminChatbotQueries /></Layout>} />
         <Route path="/admin/backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminBackup /></Layout>} />
         <Route path="/admin/helpconfort-backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminHelpConfortBackup /></Layout>} />
         <Route path="/admin/users" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUsers /></Layout>} />
