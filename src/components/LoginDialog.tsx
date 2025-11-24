@@ -51,10 +51,19 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     setLoading(true);
     try {
       const trimmedPseudo = pseudo.trim();
-      // Si le pseudo ressemble à un email, on l'utilise directement ; sinon on génère l'email interne
-      const email = trimmedPseudo.includes('@')
-        ? trimmedPseudo
-        : `${trimmedPseudo}@internal.helpogee.local`;
+      let email = trimmedPseudo;
+      
+      // Si ce n'est pas un email, chercher dans la base de données
+      if (!trimmedPseudo.includes('@')) {
+        const { data: emailFromPseudo, error: rpcError } = await supabase
+          .rpc('get_email_from_pseudo', { _pseudo: trimmedPseudo });
+        
+        if (!rpcError && emailFromPseudo) {
+          email = emailFromPseudo;
+        } else {
+          email = `${trimmedPseudo}@internal.helpogee.local`;
+        }
+      }
       
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
