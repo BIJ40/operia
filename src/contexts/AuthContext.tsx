@@ -164,25 +164,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       setIsLoggingOut(true);
-      
-      // Petite pause pour laisser l'animation se voir
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       // Déconnexion complète de Supabase
       await supabase.auth.signOut();
-      
-      // Nettoyer les états
+
+      // Fallback de sécurité : supprimer manuellement les sessions locales Supabase
+      try {
+        Object.keys(localStorage)
+          .filter((key) => key.startsWith('sb-'))
+          .forEach((key) => localStorage.removeItem(key));
+      } catch (e) {
+        console.warn('Impossible de nettoyer complètement le localStorage Supabase', e);
+      }
+
+      // Nettoyer les états en mémoire
       setIsAdmin(false);
       setMustChangePassword(false);
       setRoleAgence(null);
       setUserPermissions([]);
       setUser(null);
-      
-      // Forcer un rechargement complet de la page pour nettoyer tous les états
+
+      // Petite pause pour laisser l'animation se voir
+      await new Promise((resolve) => setTimeout(resolve, 600));
+
+      // Rechargement complet de l'app
       window.location.href = '/';
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
-      // En cas d'erreur, forcer quand même la redirection
       window.location.href = '/';
     } finally {
       setIsLoggingOut(false);
