@@ -640,9 +640,9 @@ export function Chatbot() {
           <ScrollArea className="flex-1 p-4">
             {showChoiceMode && !activeTicket && messages.length === 0 ? (
               // Mode de choix initial
-              <div className="flex flex-col items-center justify-center h-full gap-6 px-6 py-8">
+              <div className="flex flex-col items-center justify-center h-full gap-4 px-4 py-6">
                 <div className="text-center mb-2">
-                  <h4 className="font-semibold text-lg mb-1">Comment puis-je vous aider ?</h4>
+                  <h4 className="font-semibold text-base mb-1">Comment puis-je vous aider ?</h4>
                   <p className="text-xs text-muted-foreground">Choisissez le type d'assistance</p>
                 </div>
                 
@@ -650,13 +650,13 @@ export function Chatbot() {
                   onClick={() => {
                     setShowChoiceMode(false);
                   }}
-                  className="w-full group relative border-2 border-primary/30 bg-gradient-to-r from-helpconfort-blue-light/20 to-helpconfort-blue-dark/20 rounded-full px-6 py-4 hover:shadow-lg hover:border-primary/60 hover:scale-[1.03] transition-all duration-300 flex items-center gap-4"
+                  className="w-full group relative border-2 border-primary/30 bg-gradient-to-r from-helpconfort-blue-light/20 to-helpconfort-blue-dark/20 rounded-full px-4 py-3 hover:shadow-lg hover:border-primary/60 hover:scale-[1.03] transition-all duration-300 flex items-center gap-3"
                 >
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                    <img src={chatIcon} alt="IA" className="h-7 w-7" />
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <img src={chatIcon} alt="IA" className="h-6 w-6" />
                   </div>
                   <div className="flex-1 text-left">
-                    <div className="font-bold text-base text-foreground">Mme MICHU</div>
+                    <div className="font-bold text-sm text-foreground">Mme MICHU</div>
                     <div className="text-xs text-muted-foreground">Intelligence artificielle</div>
                   </div>
                 </button>
@@ -671,13 +671,13 @@ export function Chatbot() {
                     }
                   }}
                   disabled={isCreating}
-                  className="w-full group relative border-2 border-primary/30 bg-gradient-to-r from-helpconfort-blue-light/20 to-helpconfort-blue-dark/20 rounded-full px-6 py-4 hover:shadow-lg hover:border-primary/60 hover:scale-[1.03] transition-all duration-300 flex items-center gap-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full group relative border-2 border-primary/30 bg-gradient-to-r from-helpconfort-blue-light/20 to-helpconfort-blue-dark/20 rounded-full px-4 py-3 hover:shadow-lg hover:border-primary/60 hover:scale-[1.03] transition-all duration-300 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                    <UserCircle className="h-7 w-7 text-primary" />
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <UserCircle className="h-6 w-6 text-primary" />
                   </div>
                   <div className="flex-1 text-left">
-                    <div className="font-bold text-base text-foreground">
+                    <div className="font-bold text-sm text-foreground">
                       {isCreating ? 'Connexion...' : 'Conseiller humain'}
                     </div>
                     <div className="text-xs text-muted-foreground">Support en direct</div>
