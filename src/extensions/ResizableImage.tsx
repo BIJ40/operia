@@ -229,32 +229,52 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
           <>
             {/* Corner resize handles */}
             <div
-              className="absolute bottom-0 right-0 w-4 h-4 bg-primary rounded-full cursor-se-resize border-2 border-background shadow-md z-10"
-              style={{ transform: 'translate(50%, 50%)' }}
+              className="absolute bg-primary rounded-full cursor-se-resize border-2 border-background shadow-md z-10"
+              style={{ 
+                width: '16px', 
+                height: '16px',
+                bottom: '-8px',
+                right: '-8px'
+              }}
               onMouseDown={(e) => {
                 e.stopPropagation();
                 handleMouseDown(e, 'bottom-right');
               }}
             />
             <div
-              className="absolute top-0 right-0 w-4 h-4 bg-primary rounded-full cursor-ne-resize border-2 border-background shadow-md z-10"
-              style={{ transform: 'translate(50%, -50%)' }}
+              className="absolute bg-primary rounded-full cursor-ne-resize border-2 border-background shadow-md z-10"
+              style={{ 
+                width: '16px', 
+                height: '16px',
+                top: '-8px',
+                right: '-8px'
+              }}
               onMouseDown={(e) => {
                 e.stopPropagation();
                 handleMouseDown(e, 'top-right');
               }}
             />
             <div
-              className="absolute bottom-0 left-0 w-4 h-4 bg-primary rounded-full cursor-sw-resize border-2 border-background shadow-md z-10"
-              style={{ transform: 'translate(-50%, 50%)' }}
+              className="absolute bg-primary rounded-full cursor-sw-resize border-2 border-background shadow-md z-10"
+              style={{ 
+                width: '16px', 
+                height: '16px',
+                bottom: '-8px',
+                left: '-8px'
+              }}
               onMouseDown={(e) => {
                 e.stopPropagation();
                 handleMouseDown(e, 'bottom-left');
               }}
             />
             <div
-              className="absolute top-0 left-0 w-4 h-4 bg-primary rounded-full cursor-nw-resize border-2 border-background shadow-md z-10"
-              style={{ transform: 'translate(-50%, -50%)' }}
+              className="absolute bg-primary rounded-full cursor-nw-resize border-2 border-background shadow-md z-10"
+              style={{ 
+                width: '16px', 
+                height: '16px',
+                top: '-8px',
+                left: '-8px'
+              }}
               onMouseDown={(e) => {
                 e.stopPropagation();
                 handleMouseDown(e, 'top-left');
