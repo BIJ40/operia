@@ -713,7 +713,9 @@ export default function AdminDocuments() {
                           <Button
                             size="sm"
                             onClick={() => updateQueryStatus(query.id, 'resolved')}
+                            disabled={query.is_incomplete}
                             className="h-7 text-xs"
+                            title={query.is_incomplete ? "Impossible de résoudre une réponse incomplète" : "Marquer comme résolue"}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                             Résoudre
