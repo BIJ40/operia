@@ -6,6 +6,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   user: User | null;
+  mustChangePassword: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,9 +37,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .maybeSingle();
             
             setIsAdmin(!!data);
+
+            // Check if user must change password
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('must_change_password')
+              .eq('id', session.user.id)
+              .single();
+            
+            setMustChangePassword(profile?.must_change_password || false);
           }, 0);
         } else {
           setIsAdmin(false);
+          setMustChangePassword(false);
         }
         
         setLoading(false);
@@ -58,6 +70,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle()
           .then(({ data }) => {
             setIsAdmin(!!data);
+          });
+
+        // Check if user must change password
+        supabase
+          .from('profiles')
+          .select('must_change_password')
+          .eq('id', session.user.id)
+          .single()
+          .then(({ data }) => {
+            setMustChangePassword(data?.must_change_password || false);
             setLoading(false);
           });
       } else {
@@ -108,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await supabase.auth.signOut();
     setIsAdmin(false);
+    setMustChangePassword(false);
   };
 
   if (loading) {
@@ -119,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: !!user, 
       isAdmin,
       user,
+      mustChangePassword,
       login, 
       logout,
       signup 

@@ -81,16 +81,16 @@ serve(async (req) => {
       throw new Error('Utilisateur non créé')
     }
 
-    // Marquer que l'utilisateur doit changer son mot de passe (commenté temporairement car le champ n'existe pas encore)
-    // const { error: updateError } = await supabaseAdmin
-    //   .from('profiles')
-    //   .update({ must_change_password: true })
-    //   .eq('id', newUser.user.id)
-    //
-    // if (updateError) {
-    //   console.error('Erreur mise à jour profil:', updateError)
-    //   // On ne throw pas car l'utilisateur est déjà créé
-    // }
+    // Marquer que l'utilisateur doit changer son mot de passe
+    const { error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({ must_change_password: true })
+      .eq('id', newUser.user.id)
+
+    if (updateError) {
+      console.error('Erreur mise à jour profil:', updateError)
+      // On ne throw pas car l'utilisateur est déjà créé
+    }
 
     console.log('Utilisateur créé avec succès:', newUser.user.email)
 

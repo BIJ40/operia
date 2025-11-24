@@ -48,16 +48,16 @@ export function ChangePasswordDialog({ open, onOpenChange, onSuccess }: ChangePa
 
       if (updateError) throw updateError;
 
-      // Mettre à jour le flag must_change_password (commenté temporairement car le champ n'existe pas encore)
-      // const { data: { user } } = await supabase.auth.getUser();
-      // if (user) {
-      //   const { error: profileError } = await supabase
-      //     .from('profiles')
-      //     .update({ must_change_password: false })
-      //     .eq('id', user.id);
-      //
-      //   if (profileError) console.error('Erreur mise à jour profil:', profileError);
-      // }
+      // Mettre à jour le flag must_change_password
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ must_change_password: false } as any)
+          .eq('id', user.id);
+
+        if (profileError) console.error('Erreur mise à jour profil:', profileError);
+      }
 
       toast({
         title: 'Mot de passe changé',
