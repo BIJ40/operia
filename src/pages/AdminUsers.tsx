@@ -132,18 +132,24 @@ export default function AdminUsers() {
 
     setLoading(true);
     try {
-      // Récupérer la session courante pour passer le JWT à la fonction edge
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !sessionData.session) {
+      // Vérifier la session avant d'appeler la fonction
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
         toast({
           title: 'Session expirée',
-          description: 'Veuillez vous reconnecter puis réessayer.',
+          description: 'Votre session a expiré. Veuillez vous reconnecter.',
           variant: 'destructive',
         });
         setLoading(false);
+        // Redirection vers la page de connexion après un court délai
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
         return;
       }
 
+      // Appel de la fonction edge (le SDK Supabase envoie automatiquement le token)
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: { 
           pseudo: pseudo.trim(),
@@ -152,10 +158,7 @@ export default function AdminUsers() {
           lastName: lastName.trim(),
           agence: agence.trim() || null,
           roleAgence: roleAgence.trim() || null
-        },
-        headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`,
-        },
+        }
       });
 
       if (error) throw error;
