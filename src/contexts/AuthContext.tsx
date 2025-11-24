@@ -134,7 +134,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   if (loading) {
-    return null;
+    // Afficher l'application même pendant le chargement, en considérant l'utilisateur comme non connecté
+    return (
+      <AuthContext.Provider value={{ 
+        isAuthenticated: !!user, 
+        isAdmin,
+        user,
+        mustChangePassword,
+        login, 
+        logout,
+        signup 
+      }}>
+        {children}
+      </AuthContext.Provider>
+    );
   }
 
   return (
