@@ -540,6 +540,104 @@ export type Database = {
           },
         ]
       }
+      support_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_from_support: boolean
+          message: string
+          read_at: string | null
+          sender_id: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_from_support?: boolean
+          message: string
+          read_at?: string | null
+          sender_id: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_from_support?: boolean
+          message?: string
+          read_at?: string | null
+          sender_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_presence: {
+        Row: {
+          last_seen: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          last_seen?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          last_seen?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          chatbot_conversation: Json | null
+          created_at: string
+          id: string
+          priority: string
+          resolved_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          user_pseudo: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          chatbot_conversation?: Json | null
+          created_at?: string
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          user_pseudo: string
+        }
+        Update: {
+          assigned_to?: string | null
+          chatbot_conversation?: Json | null
+          created_at?: string
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          user_pseudo?: string
+        }
+        Relationships: []
+      }
       user_history: {
         Row: {
           block_id: string
@@ -642,7 +740,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "support"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -770,7 +868,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "support"],
     },
   },
 } as const
