@@ -11,7 +11,6 @@ import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, FileText, Trash2, Download, Edit2, Database } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RAGIndexManager } from '@/components/RAGIndexManager';
 
 interface Block {
   id: string;
@@ -475,11 +474,6 @@ export default function AdminDocuments() {
             )}
           </div>
         </div>
-      </div>
-
-      {/* RAG Index Management */}
-      <div className="mt-8">
-        <RAGIndexManager />
       </div>
     </div>
   );
