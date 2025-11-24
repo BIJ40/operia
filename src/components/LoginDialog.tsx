@@ -50,11 +50,14 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
 
     setLoading(true);
     try {
-      // Utiliser l'email interne pour se connecter
-      const internalEmail = `${pseudo.trim()}@internal.helpogee.local`;
+      const trimmedPseudo = pseudo.trim();
+      // Si le pseudo ressemble à un email, on l'utilise directement ; sinon on génère l'email interne
+      const email = trimmedPseudo.includes('@')
+        ? trimmedPseudo
+        : `${trimmedPseudo}@internal.helpogee.local`;
       
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: internalEmail,
+        email,
         password,
       });
 
