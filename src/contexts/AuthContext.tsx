@@ -28,56 +28,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (session?.user) {
           // Check if user is admin
-          const { data } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', session.user.id)
-            .eq('role', 'admin')
-            .maybeSingle();
-          
-          setIsAdmin(!!data);
+          setTimeout(async () => {
+            const { data } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', session.user.id)
+              .eq('role', 'admin')
+              .maybeSingle();
+            
+            setIsAdmin(!!data);
 
-          // Check if user must change password
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('must_change_password')
-            .eq('id', session.user.id)
-            .single();
-          
-          setMustChangePassword(profile?.must_change_password || false);
-          setLoading(false);
+            // Check if user must change password
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('must_change_password')
+              .eq('id', session.user.id)
+              .single();
+            
+            setMustChangePassword(profile?.must_change_password || false);
+          }, 0);
         } else {
           setIsAdmin(false);
           setMustChangePassword(false);
-          setLoading(false);
         }
+        
+        setLoading(false);
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
         // Check if user is admin
-        const { data: roleData } = await supabase
+        supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', session.user.id)
           .eq('role', 'admin')
-          .maybeSingle();
-        
-        setIsAdmin(!!roleData);
+          .maybeSingle()
+          .then(({ data }) => {
+            setIsAdmin(!!data);
+          });
 
         // Check if user must change password
-        const { data: profileData } = await supabase
+        supabase
           .from('profiles')
           .select('must_change_password')
           .eq('id', session.user.id)
-          .single();
-        
-        setMustChangePassword(profileData?.must_change_password || false);
-        setLoading(false);
+          .single()
+          .then(({ data }) => {
+            setMustChangePassword(data?.must_change_password || false);
+            setLoading(false);
+          });
       } else {
         setLoading(false);
       }
@@ -127,24 +131,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setIsAdmin(false);
     setMustChangePassword(false);
-    window.location.href = '/';
   };
 
   if (loading) {
-    // Ne pas bloquer l'affichage, juste passer l'état de chargement
-    return (
-      <AuthContext.Provider value={{ 
-        isAuthenticated: false, 
-        isAdmin: false,
-        user: null,
-        mustChangePassword: false,
-        login, 
-        logout,
-        signup 
-      }}>
-        {children}
-      </AuthContext.Provider>
-    );
+    return null;
   }
 
   return (
