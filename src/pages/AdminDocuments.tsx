@@ -39,7 +39,7 @@ export default function AdminDocuments() {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
 
-  const [scope, setScope] = useState<'apogee' | 'apporteur'>('apogee');
+  const [scope, setScope] = useState<'apogee' | 'apporteur' | 'helpconfort'>('apogee');
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selectedBlockId, setSelectedBlockId] = useState<string>('');
   const [title, setTitle] = useState('');
@@ -63,15 +63,32 @@ export default function AdminDocuments() {
 
   const loadBlocks = async () => {
     try {
-      const tableName = scope === 'apogee' ? 'blocks' : 'apporteur_blocks';
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('id, title, slug, type, parent_id')
-        .in('type', ['category', 'subcategory'])
-        .order('order');
+      let data: Block[] = [];
+      
+      if (scope === 'helpconfort') {
+        // Pour HelpConfort, on charge depuis la table blocks avec le préfixe helpconfort-
+        const { data: blocksData, error } = await supabase
+          .from('blocks')
+          .select('id, title, slug, type, parent_id')
+          .like('slug', 'helpconfort-%')
+          .in('type', ['category', 'section'])
+          .order('order');
+        
+        if (error) throw error;
+        data = blocksData || [];
+      } else {
+        const tableName = scope === 'apogee' ? 'blocks' : 'apporteur_blocks';
+        const { data: blocksData, error } = await supabase
+          .from(tableName)
+          .select('id, title, slug, type, parent_id')
+          .in('type', ['category', 'subcategory'])
+          .order('order');
 
-      if (error) throw error;
-      setBlocks(data || []);
+        if (error) throw error;
+        data = blocksData || [];
+      }
+      
+      setBlocks(data);
     } catch (error) {
       console.error('Error loading blocks:', error);
       toast({
@@ -127,23 +144,47 @@ export default function AdminDocuments() {
       if (uploadError) throw uploadError;
 
       // Insert document metadata
-      const { error: insertError } = await supabase.from('documents').insert({
+      const { data: insertedDoc, error: insertError } = await supabase.from('documents').insert({
         title,
         description: description || null,
         file_path: filePath,
         file_type: file.type,
         file_size: file.size,
         scope,
-        block_id: scope === 'apogee' ? selectedBlockId : null,
+        block_id: scope === 'apogee' || scope === 'helpconfort' ? selectedBlockId : null,
         apporteur_block_id: scope === 'apporteur' ? selectedBlockId : null,
-      });
+      }).select().single();
 
       if (insertError) throw insertError;
 
-      toast({
-        title: 'Succès',
-        description: 'Document uploadé avec succès',
-      });
+      // Auto-index text documents
+      if (file.type.includes('text') || file.type.includes('plain')) {
+        try {
+          await supabase.functions.invoke('index-document', {
+            body: { 
+              documentId: insertedDoc.id,
+              filePath: filePath
+            }
+          });
+          
+          toast({
+            title: 'Succès',
+            description: 'Document uploadé et indexé automatiquement',
+          });
+        } catch (indexError) {
+          console.error('Auto-indexing error:', indexError);
+          toast({
+            title: 'Attention',
+            description: 'Document uploadé mais l\'indexation automatique a échoué. Utilisez le bouton "Indexer" manuellement.',
+            variant: 'default',
+          });
+        }
+      } else {
+        toast({
+          title: 'Succès',
+          description: 'Document uploadé. Utilisez le bouton "Indexer" pour le rendre accessible au chatbot.',
+        });
+      }
 
       // Reset form
       setTitle('');
@@ -265,30 +306,44 @@ export default function AdminDocuments() {
     return data.publicUrl;
   };
 
+  const handleIndex = async (doc: Document) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('index-document', {
+        body: { 
+          documentId: doc.id,
+          filePath: doc.file_path
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: `Document indexé: ${data.chunks_created} chunks créés`,
+      });
+    } catch (error) {
+      console.error('Indexing error:', error);
+      toast({
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Impossible d\'indexer le document',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getBlockTitle = (doc: Document) => {
-    const blockId = doc.scope === 'apogee' ? doc.block_id : doc.apporteur_block_id;
+    const blockId = doc.scope === 'apporteur' ? doc.apporteur_block_id : doc.block_id;
     const block = blocks.find(b => b.id === blockId);
     return block?.title || 'Section inconnue';
   };
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Administration</h1>
-        <div className="flex gap-2">
-          <Link to="/admin/documents">
-            <Button variant="outline" size="sm">
-              <FileText className="w-4 h-4 mr-2" />
-              Documents
-            </Button>
-          </Link>
-          <Link to="/admin/backup">
-            <Button variant="outline" size="sm">
-              <Database className="w-4 h-4 mr-2" />
-              Sauvegarde
-            </Button>
-          </Link>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Gestion des Documents pour Mme MICHU</h1>
+        <p className="text-muted-foreground mt-2">
+          Uploadez des documents qui seront indexés et utilisés par le chatbot pour affiner ses réponses
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -298,14 +353,15 @@ export default function AdminDocuments() {
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="scope">Thème</Label>
-              <Select value={scope} onValueChange={(v) => setScope(v as 'apogee' | 'apporteur')}>
+              <Label htmlFor="scope">Grande catégorie</Label>
+              <Select value={scope} onValueChange={(v) => setScope(v as 'apogee' | 'apporteur' | 'helpconfort')}>
                 <SelectTrigger id="scope">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="apogee">APOGEE</SelectItem>
-                  <SelectItem value="apporteur">APPORTEURS</SelectItem>
+                  <SelectItem value="apogee">Guide Apogée</SelectItem>
+                  <SelectItem value="apporteur">Guide Apporteurs</SelectItem>
+                  <SelectItem value="helpconfort">Base HelpConfort</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -436,6 +492,15 @@ export default function AdminDocuments() {
                       </div>
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        onClick={() => handleIndex(doc)}
+                        title="Indexer pour le chatbot"
+                      >
+                        <Database className="w-3.5 h-3.5" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
