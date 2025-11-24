@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, UserCircle } from 'lucide-react';
+import { X, Send, UserCircle, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,8 +12,9 @@ import { useSupportTicket } from '@/hooks/use-support-ticket';
 import chatIcon from '@/assets/logo_chat.png';
 
 type Message = {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'support';
   content: string;
+  created_at?: string;
 };
 
 export function Chatbot() {
@@ -22,6 +23,8 @@ export function Chatbot() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
+  const [activeTicket, setActiveTicket] = useState<any>(null);
+  const [supportMessages, setSupportMessages] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { blocks } = useEditor();
   const { toast } = useToast();
@@ -35,7 +38,100 @@ export function Chatbot() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, supportMessages]);
+
+  // Vérifier si l'utilisateur a un ticket actif
+  useEffect(() => {
+    if (!user) return;
+
+    const checkActiveTicket = async () => {
+      const { data } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('status', ['waiting', 'in_progress'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (data) {
+        setActiveTicket(data);
+        // Charger les messages du ticket
+        const { data: msgs } = await supabase
+          .from('support_messages')
+          .select('*')
+          .eq('ticket_id', data.id)
+          .order('created_at', { ascending: true });
+        
+        if (msgs) {
+          setSupportMessages(msgs);
+        }
+      }
+    };
+
+    checkActiveTicket();
+  }, [user]);
+
+  // Écouter les nouveaux messages support en temps réel
+  useEffect(() => {
+    if (!activeTicket) return;
+
+    const channel = supabase
+      .channel('support-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'support_messages',
+          filter: `ticket_id=eq.${activeTicket.id}`,
+        },
+        (payload) => {
+          console.log('New support message:', payload);
+          setSupportMessages(prev => [...prev, payload.new]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeTicket]);
+
+  // Écouter les changements de statut du ticket
+  useEffect(() => {
+    if (!activeTicket) return;
+
+    const channel = supabase
+      .channel('ticket-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'support_tickets',
+          filter: `id=eq.${activeTicket.id}`,
+        },
+        (payload) => {
+          console.log('Ticket updated:', payload);
+          if (payload.new.status === 'resolved') {
+            toast({
+              title: 'Ticket résolu',
+              description: 'Votre demande a été résolue par le support.',
+            });
+            setActiveTicket(null);
+            setSupportMessages([]);
+          } else {
+            setActiveTicket(payload.new);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeTicket, toast]);
 
   // Ouverture automatique après 30 secondes avec message de bienvenue (une fois par session)
   useEffect(() => {
@@ -191,6 +287,32 @@ export function Chatbot() {
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
+    // Mode support : envoyer un message au ticket
+    if (activeTicket) {
+      try {
+        const { error } = await supabase
+          .from('support_messages')
+          .insert({
+            ticket_id: activeTicket.id,
+            sender_id: user!.id,
+            message: input.trim(),
+            is_from_support: false,
+          } as any);
+
+        if (error) throw error;
+        setInput('');
+      } catch (error) {
+        console.error('Error sending support message:', error);
+        toast({
+          title: 'Erreur',
+          description: 'Impossible d\'envoyer le message',
+          variant: 'destructive',
+        });
+      }
+      return;
+    }
+
+    // Mode Mme Michu
     const userMessage: Message = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
@@ -324,8 +446,22 @@ export function Chatbot() {
           {/* Header */}
           <div className="flex items-center justify-between p-3 border-b">
             <div className="flex items-center gap-2">
-              <img src={chatIcon} alt="Chat" className="h-6 w-6" />
-              <h3 className="font-semibold text-sm">Mme MICHU</h3>
+              {activeTicket ? (
+                <>
+                  <Headphones className="h-6 w-6 text-primary" />
+                  <div>
+                    <h3 className="font-semibold text-sm">Support Client</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {activeTicket.status === 'waiting' ? 'En attente...' : 'Conseiller connecté'}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <img src={chatIcon} alt="Chat" className="h-6 w-6" />
+                  <h3 className="font-semibold text-sm">Mme MICHU</h3>
+                </>
+              )}
             </div>
             <Button onClick={() => setIsOpen(false)} variant="ghost" size="icon">
               <X className="h-4 w-4" />
@@ -334,60 +470,92 @@ export function Chatbot() {
 
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
-            {messages.length === 0 && (
-              <div className="text-center text-muted-foreground text-sm py-8">
-                Demandez à Mme Michu !
-              </div>
-            )}
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`mb-4 ${
-                  msg.role === 'user' ? 'text-right' : 'text-left'
-                }`}
-              >
-                <div
-                  className={`inline-block max-w-[80%] p-3 rounded-lg ${
-                    msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
-                  }`}
-                >
-                  <div className="text-sm whitespace-pre-wrap">
-                    {msg.role === 'assistant'
-                      ? renderMessageWithLinks(msg.content)
-                      : msg.content}
+            {activeTicket ? (
+              // Mode support
+              <>
+                {supportMessages.length === 0 && (
+                  <div className="text-center text-muted-foreground text-sm py-8">
+                    {activeTicket.status === 'waiting' 
+                      ? 'Un conseiller va bientôt vous répondre...'
+                      : 'Discutez avec le support'}
                   </div>
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="text-left">
-                <div className="inline-block bg-muted p-3 rounded-lg">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
+                )}
+                {supportMessages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`mb-4 ${
+                      msg.is_from_support ? 'text-left' : 'text-right'
+                    }`}
+                  >
+                    <div
+                      className={`inline-block max-w-[80%] p-3 rounded-lg ${
+                        msg.is_from_support
+                          ? 'bg-muted'
+                          : 'bg-primary text-primary-foreground'
+                      }`}
+                    >
+                      <div className="text-sm whitespace-pre-wrap">
+                        {msg.message}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                ))}
+              </>
+            ) : (
+              // Mode Mme Michu
+              <>
+                {messages.length === 0 && (
+                  <div className="text-center text-muted-foreground text-sm py-8">
+                    Demandez à Mme Michu !
+                  </div>
+                )}
+                {messages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`mb-4 ${
+                      msg.role === 'user' ? 'text-right' : 'text-left'
+                    }`}
+                  >
+                    <div
+                      className={`inline-block max-w-[80%] p-3 rounded-lg ${
+                        msg.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      <div className="text-sm whitespace-pre-wrap">
+                        {msg.role === 'assistant'
+                          ? renderMessageWithLinks(msg.content)
+                          : msg.content}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="text-left">
+                    <div className="inline-block bg-muted p-3 rounded-lg">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
             <div ref={messagesEndRef} />
           </ScrollArea>
 
           {/* Support button - juste avant l'input */}
-          {messages.length > 0 && (
+          {messages.length > 0 && !activeTicket && (
             <div className="px-4 pt-2 pb-2 border-t">
               <Button
                 onClick={async () => {
                   const ticketId = await createSupportTicket(messages);
                   if (ticketId) {
-                    setMessages([]);
-                    setIsOpen(false);
-                    toast({
-                      title: 'Ticket créé',
-                      description: 'Un conseiller va vous contacter rapidement.',
-                    });
+                    // Recharger pour basculer en mode support
+                    window.location.reload();
                   }
                 }}
                 disabled={isCreating}
