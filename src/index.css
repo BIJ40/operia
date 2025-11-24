@@ -117,14 +117,13 @@ All colors MUST be HSL.
 .ProseMirror {
   min-height: 200px;
   outline: none;
+}
+
+.ProseMirror p {
   color: #000000;
 }
 
-.ProseMirror p:not([style*="color"]) {
-  color: #000000;
-}
-
-.prose:not([style*="color"]) {
+.prose {
   color: #000000;
 }
 
