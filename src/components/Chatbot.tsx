@@ -42,7 +42,7 @@ export function Chatbot() {
 
   // Vérifier si l'utilisateur a un ticket actif
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isOpen) return;
 
     const checkActiveTicket = async () => {
       const { data } = await supabase
@@ -51,16 +51,15 @@ export function Chatbot() {
         .eq('user_id', user.id)
         .in('status', ['waiting', 'in_progress'])
         .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
 
-      if (data) {
-        setActiveTicket(data);
+      if (data && data.length > 0) {
+        setActiveTicket(data[0]);
         // Charger les messages du ticket
         const { data: msgs } = await supabase
           .from('support_messages')
           .select('*')
-          .eq('ticket_id', data.id)
+          .eq('ticket_id', data[0].id)
           .order('created_at', { ascending: true });
         
         if (msgs) {
@@ -70,7 +69,7 @@ export function Chatbot() {
     };
 
     checkActiveTicket();
-  }, [user]);
+  }, [user, isOpen]);
 
   // Écouter les nouveaux messages support en temps réel
   useEffect(() => {
@@ -510,13 +509,49 @@ export function Chatbot() {
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
             {activeTicket ? (
-              // Mode support
+              // Mode support - afficher d'abord l'historique Mme Michu puis les messages support
               <>
-                {supportMessages.length === 0 && (
+                {/* Historique de la conversation Mme Michu */}
+                {activeTicket.chatbot_conversation && activeTicket.chatbot_conversation.length > 0 && (
+                  <div className="mb-6">
+                    <div className="text-xs text-muted-foreground text-center mb-3 py-2 border-b">
+                      Conversation avec Mme MICHU
+                    </div>
+                    {activeTicket.chatbot_conversation.map((msg: any, idx: number) => (
+                      <div
+                        key={`history-${idx}`}
+                        className={`mb-4 ${
+                          msg.role === 'user' ? 'text-right' : 'text-left'
+                        }`}
+                      >
+                        <div
+                          className={`inline-block max-w-[80%] p-3 rounded-lg opacity-70 ${
+                            msg.role === 'user'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted'
+                          }`}
+                        >
+                          <div className="text-sm whitespace-pre-wrap">
+                            {msg.content}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Messages du support */}
+                {supportMessages.length === 0 ? (
                   <div className="text-center text-muted-foreground text-sm py-8">
                     {activeTicket.status === 'waiting' 
                       ? 'Un conseiller va bientôt vous répondre...'
                       : 'Discutez avec le support'}
+                  </div>
+                ) : (
+                  <div className="mb-4">
+                    <div className="text-xs text-muted-foreground text-center mb-3 py-2 border-b">
+                      Conversation avec le support
+                    </div>
                   </div>
                 )}
                 {supportMessages.map((msg, idx) => (
@@ -593,8 +628,21 @@ export function Chatbot() {
                 onClick={async () => {
                   const ticketId = await createSupportTicket(messages);
                   if (ticketId) {
-                    // Recharger pour basculer en mode support
-                    window.location.reload();
+                    // Recharger le ticket actif sans fermer le chat
+                    const { data } = await supabase
+                      .from('support_tickets')
+                      .select('*')
+                      .eq('id', ticketId)
+                      .single();
+                    
+                    if (data) {
+                      setActiveTicket(data);
+                      setSupportMessages([]);
+                      toast({
+                        title: 'Conseiller contacté',
+                        description: 'Vous allez recevoir une réponse rapidement.',
+                      });
+                    }
                   }
                 }}
                 disabled={isCreating}
