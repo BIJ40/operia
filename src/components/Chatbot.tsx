@@ -42,7 +42,7 @@ export function Chatbot() {
 
   // Vérifier si l'utilisateur a un ticket actif
   useEffect(() => {
-    if (!user || !isOpen) return;
+    if (!user) return;
 
     const checkActiveTicket = async () => {
       const { data } = await supabase
@@ -55,6 +55,9 @@ export function Chatbot() {
 
       if (data && data.length > 0) {
         setActiveTicket(data[0]);
+        // Ouvrir automatiquement le chatbot si un ticket est actif
+        setIsOpen(true);
+        
         // Charger les messages du ticket
         const { data: msgs } = await supabase
           .from('support_messages')
@@ -69,7 +72,7 @@ export function Chatbot() {
     };
 
     checkActiveTicket();
-  }, [user, isOpen]);
+  }, [user]);
 
   // Écouter les nouveaux messages support en temps réel
   useEffect(() => {
@@ -159,6 +162,8 @@ export function Chatbot() {
             });
             setActiveTicket(null);
             setSupportMessages([]);
+            // Fermer le chatbot quand le ticket est résolu
+            setIsOpen(false);
           } else {
             setActiveTicket(payload.new);
           }
@@ -501,7 +506,18 @@ export function Chatbot() {
                 </>
               )}
             </div>
-            <Button onClick={() => setIsOpen(false)} variant="ghost" size="icon">
+            <Button onClick={() => {
+              // Empêcher la fermeture si un ticket est actif
+              if (activeTicket) {
+                toast({
+                  title: 'Ticket en cours',
+                  description: 'Vous avez une conversation active avec le support. Le ticket doit être résolu avant de fermer.',
+                  variant: 'destructive',
+                });
+                return;
+              }
+              setIsOpen(false);
+            }} variant="ghost" size="icon">
               <X className="h-4 w-4" />
             </Button>
           </div>
