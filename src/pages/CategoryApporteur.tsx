@@ -312,7 +312,7 @@ export default function CategoryApporteur() {
               </div>
             )}
             <div
-              className="prose prose-sm max-w-none break-words overflow-visible dark:prose-invert"
+              className="prose prose-sm max-w-none break-words overflow-visible"
               dangerouslySetInnerHTML={{ __html: section.content }}
             />
           </div>
@@ -386,7 +386,7 @@ export default function CategoryApporteur() {
               <h3 className="text-lg font-semibold mb-4 text-foreground">💡 Information / Astuce</h3>
             ) : null}
             <div 
-              className="prose prose-sm max-w-none dark:prose-invert"
+              className="prose prose-sm max-w-none"
               dangerouslySetInnerHTML={{ __html: section.content }}
             />
           </div>
