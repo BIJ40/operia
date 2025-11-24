@@ -564,11 +564,16 @@ export function Chatbot() {
         <button
           onClick={() => {
             setIsOpen(true);
-            setUnreadCount(0); // Réinitialiser le compteur quand on ouvre le chat
+            setUnreadCount(0);
           }}
           data-chatbot-trigger
-          style={{ bottom: '1.5rem', right: '1.5rem' }}
-          className="fixed h-16 w-16 rounded-full shadow-lg z-50 hover:scale-110 transition-transform overflow-hidden bg-white relative"
+          style={{ 
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 9999
+          }}
+          className="h-16 w-16 rounded-full shadow-lg hover:scale-110 transition-transform overflow-hidden bg-white"
         >
           <img 
             src={chatIcon} 
@@ -586,7 +591,12 @@ export function Chatbot() {
 
       {/* Chat window */}
       {isOpen && (
-        <div style={{ bottom: '1.5rem', right: '1.5rem' }} className="fixed w-80 h-[400px] bg-card border-2 rounded-lg shadow-xl flex flex-col z-50">
+        <div style={{ 
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          zIndex: 9999
+        }} className="w-80 h-[400px] bg-card border-2 rounded-lg shadow-xl flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between p-3 border-b">
             <div className="flex items-center gap-2">
