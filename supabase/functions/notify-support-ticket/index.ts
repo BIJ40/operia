@@ -2,6 +2,12 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// AllMySMS API configuration
+const ALLMYSMS_API_URL = "https://api.allmysms.com/http/9.0/";
+const ALLMYSMS_LOGIN = Deno.env.get('ALLMYSMS_LOGIN');
+const ALLMYSMS_API_KEY = Deno.env.get('ALLMYSMS_API_KEY');
+const ALLMYSMS_SUPPORT_PHONES = Deno.env.get('ALLMYSMS_SUPPORT_PHONES');
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -210,10 +216,64 @@ serve(async (req) => {
 
     console.log('Notification emails sent successfully:', data);
 
+    // Envoyer les SMS aux supports via AllMySMS
+    let smsSent = 0;
+    if (ALLMYSMS_LOGIN && ALLMYSMS_API_KEY && ALLMYSMS_SUPPORT_PHONES) {
+      try {
+        const supportPhones = ALLMYSMS_SUPPORT_PHONES.split(',').map(p => p.trim());
+        const smsMessage = `🚨 Nouveau ticket support de ${userPseudo}: "${lastQuestion.substring(0, 100)}${lastQuestion.length > 100 ? '...' : ''}"\n\nRépondre: ${appUrl}/admin/support?ticket=${ticketId}`;
+        
+        console.log(`Sending SMS to ${supportPhones.length} support phone(s)`);
+        
+        // Envoyer un SMS à chaque numéro de support
+        const smsPromises = supportPhones.map(async (phone) => {
+          const params = new URLSearchParams({
+            login: ALLMYSMS_LOGIN!,
+            apiKey: ALLMYSMS_API_KEY!,
+            smsData: JSON.stringify({
+              DATA: {
+                MESSAGE: smsMessage,
+                TPOA: "Helpogee",
+                SMS: [{
+                  MOBILEPHONE: phone
+                }]
+              }
+            })
+          });
+
+          const response = await fetch(`${ALLMYSMS_API_URL}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            console.error(`Failed to send SMS to ${phone}:`, await response.text());
+            return false;
+          }
+
+          const result = await response.json();
+          console.log(`SMS sent to ${phone}:`, result);
+          return true;
+        });
+
+        const results = await Promise.all(smsPromises);
+        smsSent = results.filter(r => r === true).length;
+        console.log(`${smsSent}/${supportPhones.length} SMS notifications sent successfully`);
+      } catch (smsError) {
+        console.error('Error sending SMS notifications:', smsError);
+        // Continue même si les SMS échouent
+      }
+    } else {
+      console.log('AllMySMS not configured, skipping SMS notifications');
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         emailsSent: supportEmails.length,
+        smsSent,
         emailIds: data 
       }),
       {
