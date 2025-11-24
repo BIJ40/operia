@@ -42,6 +42,7 @@ export function Chatbot() {
   const [isUserTyping, setIsUserTyping] = useState(false);
   const [ticketRating, setTicketRating] = useState(0);
   const [ticketComment, setTicketComment] = useState('');
+  const [showChoiceMode, setShowChoiceMode] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { blocks } = useEditor();
@@ -82,6 +83,7 @@ export function Chatbot() {
 
       if (data && data.length > 0) {
         setActiveTicket(data[0]);
+        setShowChoiceMode(false); // Désactiver le mode choix si un ticket existe
         // Ouvrir automatiquement le chatbot si un ticket est actif
         setIsOpen(true);
         
@@ -220,6 +222,7 @@ export function Chatbot() {
             setActiveTicket(null);
             setSupportMessages([]);
             setUnreadCount(0); // Réinitialiser le compteur
+            setShowChoiceMode(true); // Réactiver le mode choix
             // Fermer le chatbot quand le ticket est résolu
             setIsOpen(false);
           } else {
@@ -262,6 +265,7 @@ export function Chatbot() {
       const question = e.detail;
       if (question && typeof question === 'string') {
         setIsOpen(true);
+        setShowChoiceMode(false); // Désactiver le mode choix
         setInput(question);
         // Auto-envoyer la question après un court délai pour laisser le chatbot s'ouvrir
         setTimeout(() => {
@@ -634,7 +638,45 @@ export function Chatbot() {
 
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
-            {activeTicket ? (
+            {showChoiceMode && !activeTicket && messages.length === 0 ? (
+              // Mode de choix initial
+              <div className="flex flex-col items-center justify-center h-full gap-4 px-4">
+                <div className="text-center mb-4">
+                  <h4 className="font-semibold text-lg mb-2">Comment puis-je vous aider ?</h4>
+                  <p className="text-sm text-muted-foreground">Choisissez le type d'assistance</p>
+                </div>
+                
+                <Button
+                  onClick={() => {
+                    setShowChoiceMode(false);
+                  }}
+                  variant="default"
+                  size="lg"
+                  className="w-full h-20 text-lg font-semibold"
+                >
+                  <img src={chatIcon} alt="IA" className="h-8 w-8 mr-3" />
+                  Parler à l'IA (Mme MICHU)
+                </Button>
+                
+                <Button
+                  onClick={async () => {
+                    setShowChoiceMode(false);
+                    const ticket = await createSupportTicket([]);
+                    if (ticket) {
+                      setActiveTicket(ticket);
+                      setSupportMessages([]);
+                    }
+                  }}
+                  disabled={isCreating}
+                  variant="outline"
+                  size="lg"
+                  className="w-full h-20 text-lg font-semibold"
+                >
+                  <UserCircle className="h-8 w-8 mr-3" />
+                  {isCreating ? 'Connexion...' : 'Parler au support'}
+                </Button>
+              </div>
+            ) : activeTicket ? (
               // Mode support - afficher d'abord l'historique Mme Michu puis les messages support
               <>
                 {/* Historique de la conversation Mme Michu */}
@@ -759,7 +801,7 @@ export function Chatbot() {
           </ScrollArea>
 
           {/* Support button - juste avant l'input */}
-          {messages.length > 0 && !activeTicket && (
+          {messages.length > 0 && !activeTicket && !showChoiceMode && (
             <div className="px-4 pt-2 pb-2 border-t">
               <Button
                 onClick={async () => {
@@ -789,29 +831,31 @@ export function Chatbot() {
           )}
 
           {/* Input */}
-          <div className="p-4 border-t">
-            <form
-              id="chatbot-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                sendMessage();
-              }}
-              className="flex gap-2"
-            >
-              <Input
-                value={input}
-                onChange={(e) => {
-                  setInput(e.target.value);
-                  handleTyping(); // Envoyer l'état de frappe
+          {!showChoiceMode && (
+            <div className="p-4 border-t">
+              <form
+                id="chatbot-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  sendMessage();
                 }}
-                placeholder="Posez votre question..."
-                disabled={isLoading}
-              />
-              <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-          </div>
+                className="flex gap-2"
+              >
+                <Input
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    handleTyping(); // Envoyer l'état de frappe
+                  }}
+                  placeholder="Posez votre question..."
+                  disabled={isLoading}
+                />
+                <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </div>
+          )}
 
         </div>
       )}
@@ -875,6 +919,7 @@ export function Chatbot() {
                     setActiveTicket(null);
                     setSupportMessages([]);
                     setUnreadCount(0);
+                    setShowChoiceMode(true); // Réactiver le mode choix
                     toast({
                       title: 'Conversation fermée',
                       description: ticketRating > 0 
