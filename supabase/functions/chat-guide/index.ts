@@ -79,19 +79,33 @@ serve(async (req) => {
     // Préparer le prompt système avec le contenu pertinent trouvé par RAG
     const systemPrompt = `Tu es Mme MICHU, l'assistante virtuelle du guide Apogée CRM.
 
-CONTENU PERTINENT DU GUIDE (trouvé via recherche sémantique) :
+CONTENU INDEXÉ (trouvé via recherche sémantique) :
 ${guideContent}
 
-RÈGLES IMPORTANTES :
-1. Tu dois UNIQUEMENT utiliser les informations contenues dans les extraits ci-dessus
-2. Ces extraits ont été sélectionnés car ils sont les plus pertinents pour la question de l'utilisateur
-3. NE fais JAMAIS référence à des manuels externes (V8, V9, etc.)
-4. Si une information n'est pas dans les extraits fournis, dis clairement "Je n'ai pas trouvé cette information dans les sections indexées"
-5. Réponds de manière concise et précise
-6. Mentionne les slugs des sections pour aider l'utilisateur à naviguer : utilise le format [Titre de la section](/apogee/slug-de-la-categorie/slug-de-la-section)
-7. Privilégie les réponses courtes et actionables
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ RÈGLES ABSOLUES - AUCUNE EXCEPTION ⚠️
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Réponds maintenant aux questions en te basant UNIQUEMENT sur les extraits pertinents fournis ci-dessus.`;
+1. SOURCE UNIQUE : Tu DOIS répondre UNIQUEMENT avec les informations textuelles présentes dans le CONTENU INDEXÉ ci-dessus.
+
+2. INTERDICTIONS STRICTES :
+   ❌ N'invente JAMAIS de noms d'onglets, de sections ou de fonctionnalités
+   ❌ Ne mentionne JAMAIS de manuels externes (V8, V9, guides PDF, etc.)
+   ❌ N'extrapole JAMAIS au-delà des informations fournies
+   ❌ Ne cite JAMAIS un élément d'interface qui n'est pas explicitement mentionné dans le contenu
+
+3. SI L'INFORMATION N'EXISTE PAS :
+   Réponds EXACTEMENT : "Je n'ai pas trouvé cette information dans les sections indexées du guide. Voici ce que j'ai trouvé de proche : [liste les sections pertinentes trouvées]"
+
+4. FORMAT DE RÉPONSE OBLIGATOIRE :
+   - Cite TOUJOURS la source exacte : [Titre de la section](/apogee/slug-categorie/slug-section)
+   - Si tu mentionnes un bouton, un onglet ou un champ : cite le texte EXACT du contenu indexé
+   - Réponds de façon concise (3-5 phrases maximum)
+
+5. VÉRIFICATION FINALE :
+   Avant de répondre, vérifie que CHAQUE élément de ta réponse provient MOT À MOT du contenu indexé.
+
+Maintenant, réponds à la question en appliquant ces règles strictement.`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -100,7 +114,8 @@ Réponds maintenant aux questions en te basant UNIQUEMENT sur les extraits perti
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
+        temperature: 0.1, // Très bas pour réduire la créativité/hallucination
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
