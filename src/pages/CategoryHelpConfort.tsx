@@ -3,6 +3,7 @@ import { useParams, useLocation, Link, Navigate } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { saveAppData } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info, ChevronsDownUp, ChevronsUpDown, Lightbulb } from 'lucide-react';
@@ -75,12 +76,31 @@ export default function CategoryHelpConfort() {
   const { blocks, updateBlock, deleteBlock, addBlock, reorderBlocks, isEditMode } = useEditor();
   const { isAuthenticated, isAdmin, roleAgence } = useAuth();
   const { toast } = useToast();
+  const isBlockLocked = useIsBlockLocked();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
 
-  // Bloquer l'accès pour les assistant(e)s
+  // Bloquer l'accès si non authentifié
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
+  }
+
+  // Vérifier les permissions d'accès à cette catégorie
+  if (category && isBlockLocked(category.id, blocks)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <Icons.Lock className="w-16 h-16 mx-auto mb-4 text-destructive" />
+          <h1 className="text-2xl font-bold mb-2">Accès restreint</h1>
+          <p className="text-muted-foreground mb-6">
+            Vous n'avez pas les permissions nécessaires pour accéder à cette catégorie.
+          </p>
+          <Link to="/helpconfort">
+            <Button>Retour à la base HelpConfort</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
   
   if (roleAgence === 'assistant(e)') {

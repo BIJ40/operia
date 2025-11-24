@@ -2,6 +2,7 @@
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Lightbulb, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 import * as Icons from 'lucide-react';
@@ -59,12 +60,31 @@ export default function CategoryApporteur() {
   const location = useLocation();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useApporteurEditor();
   const { isAuthenticated } = useAuth();
+  const isBlockLocked = useIsBlockLocked();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   const subcategory = blocks.find(b => b.type === 'subcategory' && b.slug === subslug);
   
   if (!category || !subcategory) {
     return <div className="container max-w-4xl mx-auto p-8">Page non trouvée</div>;
+  }
+
+  // Vérifier les permissions d'accès à cette catégorie
+  if (isBlockLocked(category.id, blocks)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <Icons.Lock className="w-16 h-16 mx-auto mb-4 text-destructive" />
+          <h1 className="text-2xl font-bold mb-2">Accès restreint</h1>
+          <p className="text-muted-foreground mb-6">
+            Vous n'avez pas les permissions nécessaires pour accéder à cette catégorie.
+          </p>
+          <Link to="/apporteurs">
+            <Button>Retour au guide Apporteurs</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
   
   const availableSubcategories = useMemo(() =>
