@@ -73,6 +73,9 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       onOpenChange(false);
       setPseudo('');
       setPassword('');
+
+      // Forcer un rafraîchissement de l'interface pour que l'état connecté soit bien pris en compte
+      window.location.href = '/';
     } catch (error: any) {
       toast({
         title: 'Erreur de connexion',
