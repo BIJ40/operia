@@ -231,10 +231,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
             <div
               className="absolute bg-primary rounded-full cursor-se-resize border-2 border-background shadow-md z-10"
               style={{ 
-                width: '16px', 
-                height: '16px',
-                bottom: '-8px',
-                right: '-8px'
+                width: '12px', 
+                height: '12px',
+                bottom: '-6px',
+                right: '-6px',
+                boxSizing: 'content-box'
               }}
               onMouseDown={(e) => {
                 e.stopPropagation();
@@ -244,10 +245,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
             <div
               className="absolute bg-primary rounded-full cursor-ne-resize border-2 border-background shadow-md z-10"
               style={{ 
-                width: '16px', 
-                height: '16px',
-                top: '-8px',
-                right: '-8px'
+                width: '12px', 
+                height: '12px',
+                top: '-6px',
+                right: '-6px',
+                boxSizing: 'content-box'
               }}
               onMouseDown={(e) => {
                 e.stopPropagation();
@@ -257,10 +259,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
             <div
               className="absolute bg-primary rounded-full cursor-sw-resize border-2 border-background shadow-md z-10"
               style={{ 
-                width: '16px', 
-                height: '16px',
-                bottom: '-8px',
-                left: '-8px'
+                width: '12px', 
+                height: '12px',
+                bottom: '-6px',
+                left: '-6px',
+                boxSizing: 'content-box'
               }}
               onMouseDown={(e) => {
                 e.stopPropagation();
@@ -270,10 +273,11 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
             <div
               className="absolute bg-primary rounded-full cursor-nw-resize border-2 border-background shadow-md z-10"
               style={{ 
-                width: '16px', 
-                height: '16px',
-                top: '-8px',
-                left: '-8px'
+                width: '12px', 
+                height: '12px',
+                top: '-6px',
+                left: '-6px',
+                boxSizing: 'content-box'
               }}
               onMouseDown={(e) => {
                 e.stopPropagation();
