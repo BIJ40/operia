@@ -44,15 +44,21 @@ export default function AdminRolePermissions() {
 
   useEffect(() => {
     if (isAdmin) {
-      loadData();
+      loadBlocks();
     }
-  }, [isAdmin, selectedRole]);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (isAdmin && blocks.length > 0) {
+      loadPermissions();
+    }
+  }, [selectedRole, blocks.length]);
 
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
 
-  const loadData = async () => {
+  const loadBlocks = async () => {
     setLoading(true);
     try {
       // Charger les blocks (Apogée et HelpConfort)
@@ -92,8 +98,20 @@ export default function AdminRolePermissions() {
 
       setBlocks(mappedBlocks);
       setApporteurBlocks(mappedApporteurBlocks);
+    } catch (error) {
+      console.error('Error loading blocks:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les données',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // Charger les permissions pour le rôle sélectionné
+  const loadPermissions = async () => {
+    try {
       const { data: permissionsData, error: permissionsError } = await supabase
         .from('role_permissions')
         .select('*')
@@ -103,14 +121,12 @@ export default function AdminRolePermissions() {
 
       setPermissions(permissionsData || []);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading permissions:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de charger les données',
+        description: 'Impossible de charger les permissions',
         variant: 'destructive',
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -159,7 +175,7 @@ export default function AdminRolePermissions() {
     } catch (error) {
       console.error('Error toggling permission:', error);
       // Rollback en cas d'erreur
-      await loadData();
+      await loadPermissions();
       toast({
         title: 'Erreur',
         description: 'Impossible de modifier la permission',
@@ -209,7 +225,7 @@ export default function AdminRolePermissions() {
       });
     } catch (error) {
       console.error('Error toggling category:', error);
-      await loadData();
+      await loadPermissions();
       toast({
         title: 'Erreur',
         description: 'Impossible de modifier les permissions',
@@ -257,7 +273,7 @@ export default function AdminRolePermissions() {
       });
     } catch (error) {
       console.error('Error toggling all:', error);
-      await loadData();
+      await loadPermissions();
       toast({
         title: 'Erreur',
         description: 'Impossible de modifier les permissions',
