@@ -44,12 +44,14 @@ interface SectionEditFormProps {
   initialColor: ColorPreset;
   initialSummary?: string;
   initialShowSummary?: boolean;
+  initialHideTitle?: boolean;
   onSave: (data: {
     title: string;
     content: string;
     colorPreset: ColorPreset;
     summary?: string;
     showSummary?: boolean;
+    hideTitle?: boolean;
   }) => void;
   onCancel: () => void;
 }
@@ -61,6 +63,7 @@ export function SectionEditForm({
   initialColor,
   initialSummary = '',
   initialShowSummary = true,
+  initialHideTitle = false,
   onSave,
   onCancel,
 }: SectionEditFormProps) {
@@ -87,6 +90,10 @@ export function SectionEditForm({
   const [showSummary, setShowSummary] = useState(() => {
     const saved = sessionStorage.getItem(`${storageKey}-showSummary`);
     return saved ? saved === 'true' : initialShowSummary;
+  });
+  const [hideTitle, setHideTitle] = useState(() => {
+    const saved = sessionStorage.getItem(`${storageKey}-hideTitle`);
+    return saved ? saved === 'true' : initialHideTitle;
   });
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
@@ -136,6 +143,15 @@ export function SectionEditForm({
     }
   }, [showSummary, storageKey]);
 
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(`${storageKey}-hideTitle`, hideTitle.toString());
+    } catch (e) {
+      // Silently fail if quota exceeded
+      console.warn('Unable to save draft to sessionStorage:', e);
+    }
+  }, [hideTitle, storageKey]);
+
   // Proposer un titre par défaut quand la couleur change
   useEffect(() => {
     const defaultTitle = getDefaultTitleByColor(color);
@@ -169,10 +185,11 @@ export function SectionEditForm({
     sessionStorage.removeItem(`${storageKey}-color`);
     sessionStorage.removeItem(`${storageKey}-summary`);
     sessionStorage.removeItem(`${storageKey}-showSummary`);
+    sessionStorage.removeItem(`${storageKey}-hideTitle`);
   };
 
   const handleSave = () => {
-    onSave({ title, content, colorPreset: color, summary, showSummary });
+    onSave({ title, content, colorPreset: color, summary, showSummary, hideTitle });
     clearStorage();
   };
 
@@ -261,17 +278,32 @@ export function SectionEditForm({
       </div>
       <div className="flex items-center space-x-2 py-2">
         <Checkbox 
-          id="showSummary" 
-          checked={showSummary}
-          onCheckedChange={(checked) => setShowSummary(checked as boolean)}
+          id="hideTitle" 
+          checked={hideTitle}
+          onCheckedChange={(checked) => setHideTitle(checked as boolean)}
         />
         <label 
-          htmlFor="showSummary" 
+          htmlFor="hideTitle" 
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
         >
-          Afficher l'icône résumé
+          Ne pas afficher le titre (afficher juste un encart avec bordure)
         </label>
       </div>
+      {!hideTitle && (
+        <div className="flex items-center space-x-2 py-2">
+          <Checkbox 
+            id="showSummary" 
+            checked={showSummary}
+            onCheckedChange={(checked) => setShowSummary(checked as boolean)}
+          />
+          <label 
+            htmlFor="showSummary" 
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+          >
+            Afficher l'icône résumé
+          </label>
+        </div>
+      )}
       {showSummary && (
         <div className="space-y-2">
           <label htmlFor="summary" className="text-sm font-medium">
