@@ -15,6 +15,7 @@ import CategoryHelpConfort from "./pages/CategoryHelpConfort";
 import Documents from "./pages/Documents";
 import AdminDocuments from "./pages/AdminDocuments";
 import AdminSupport from "./pages/AdminSupport";
+import Support from "./pages/Support";
 import AdminBackup from "./pages/AdminBackup";
 import AdminHelpConfortBackup from "./pages/AdminHelpConfortBackup";
 import AdminUsers from "./pages/AdminUsers";
@@ -55,6 +56,7 @@ function AppContent() {
         <Route path="/admin" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminIndex /></Layout>} />
         <Route path="/admin/documents" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminDocuments /></Layout>} />
         <Route path="/admin/support" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminSupport /></Layout>} />
+        <Route path="/support" element={<Layout showHeader showSidebar={false}><Support /></Layout>} />
         <Route path="/admin/backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminBackup /></Layout>} />
         <Route path="/admin/helpconfort-backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminHelpConfortBackup /></Layout>} />
         <Route path="/admin/users" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUsers /></Layout>} />
