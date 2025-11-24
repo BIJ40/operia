@@ -24,33 +24,57 @@ function cosineSimilarity(a: number[], b: number[]): number {
   return denominator === 0 ? 0 : dotProduct / denominator;
 }
 
-// Generate embedding using OpenAI's text-embedding model
+// Generate embedding for query (same as in generate-embeddings)
 async function generateEmbedding(text: string): Promise<number[]> {
-  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-  if (!OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY not configured");
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    throw new Error("LOVABLE_API_KEY not configured");
   }
 
-  const response = await fetch("https://api.openai.com/v1/embeddings", {
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${OPENAI_API_KEY}`,
+      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "text-embedding-3-small",
-      input: text.substring(0, 8000), // OpenAI limit
+      model: "google/gemini-2.5-flash",
+      messages: [
+        {
+          role: "system",
+          content: "Extract 10 key semantic features from this text as numbers between -1 and 1, representing: topic relevance, technical depth, action orientation, informational content, problem-solving, step-by-step nature, conceptual complexity, practical examples, troubleshooting focus, and general utility. Respond ONLY with a JSON array of 10 numbers."
+        },
+        {
+          role: "user",
+          content: text.substring(0, 1000)
+        }
+      ],
+      temperature: 0.1,
     }),
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error("OpenAI API error:", error);
     throw new Error(`Failed to generate embedding: ${response.status}`);
   }
 
   const data = await response.json();
-  return data.data[0].embedding;
+  const content = data.choices[0].message.content;
+  
+  try {
+    const embedding = JSON.parse(content);
+    if (Array.isArray(embedding) && embedding.length === 10) {
+      return embedding;
+    }
+  } catch (e) {
+    console.error("Failed to parse embedding:", content);
+  }
+  
+  // Fallback
+  return Array.from({ length: 10 }, (_, i) => {
+    const hash = text.split('').reduce((acc, char, idx) => 
+      acc + char.charCodeAt(0) * (idx + i + 1), 0);
+    return (Math.sin(hash) * 2) - 1;
+  });
 }
 
 serve(async (req) => {
@@ -59,7 +83,7 @@ serve(async (req) => {
   }
 
   try {
-    const { query, topK = 15 } = await req.json();
+    const { query, topK = 5 } = await req.json();
 
     if (!query || typeof query !== 'string') {
       throw new Error('Query is required');
@@ -114,45 +138,13 @@ serve(async (req) => {
       .sort((a, b) => b.similarity_score - a.similarity_score)
       .slice(0, topK);
 
-    console.log('Top guide results:', topResults.map(r => ({
+    console.log('Top results:', topResults.map(r => ({
       title: r.block_title,
       score: r.similarity_score
     })));
 
-    // Rechercher aussi dans les documents (tous les scopes : apogee, apporteur, helpconfort)
-    const { data: documents, error: docsError } = await supabase
-      .from('documents')
-      .select('*')
-      .in('scope', ['apogee', 'apporteur', 'helpconfort']);
-
-    let documentResults: any[] = [];
-    
-    if (documents && !docsError) {
-      // Recherche simple par mots-clés dans les titres et descriptions
-      const queryWords = query.toLowerCase().split(/\s+/);
-      documentResults = documents
-        .filter(doc => {
-          const searchText = `${doc.title} ${doc.description || ''}`.toLowerCase();
-          return queryWords.some(word => searchText.includes(word));
-        })
-        .map(doc => ({
-          type: 'document',
-          title: doc.title,
-          description: doc.description,
-          file_path: doc.file_path,
-          file_type: doc.file_type,
-          block_id: doc.block_id,
-        }))
-        .slice(0, 3); // Max 3 documents
-      
-      console.log('Matching documents:', documentResults.length);
-    }
-
     return new Response(
-      JSON.stringify({ 
-        results: topResults,
-        documents: documentResults,
-      }),
+      JSON.stringify({ results: topResults }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }

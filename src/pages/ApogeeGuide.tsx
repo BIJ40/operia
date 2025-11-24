@@ -348,33 +348,11 @@ export default function ApogeeGuide() {
     }
   };
 
-  // Helper pour extraire le texte d'un contenu HTML
-  const extractTextFromHtml = (html: string): string => {
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
-    return temp.textContent || temp.innerText || '';
-  };
-
   const filteredCategories = searchTerm 
     ? apogeeCategories.filter(cat => {
-        const searchLower = searchTerm.toLowerCase();
-        
-        // Recherche dans le titre de la catégorie
-        const matchesTitle = cat.title.toLowerCase().includes(searchLower);
-        
-        // Recherche dans les sections
+        const matchesTitle = cat.title.toLowerCase().includes(searchTerm.toLowerCase());
         const sections = blocks.filter(b => b.type === 'section' && b.parentId === cat.id);
-        const matchesSection = sections.some(s => {
-          // Recherche dans le titre de la section
-          const matchesSectionTitle = s.title.toLowerCase().includes(searchLower);
-          
-          // Recherche dans le contenu de la section
-          const sectionText = extractTextFromHtml(s.content).toLowerCase();
-          const matchesSectionContent = sectionText.includes(searchLower);
-          
-          return matchesSectionTitle || matchesSectionContent;
-        });
-        
+        const matchesSection = sections.some(s => s.title.toLowerCase().includes(searchTerm.toLowerCase()));
         return matchesTitle || matchesSection;
       })
     : apogeeCategories;
@@ -382,6 +360,11 @@ export default function ApogeeGuide() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-6xl mx-auto px-4 py-8">
+        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
+          <Icons.ArrowLeft className="w-4 h-4" />
+          <span>Retour accueil</span>
+        </Link>
+        
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Guide d'utilisation Apogée

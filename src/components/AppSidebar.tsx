@@ -175,31 +175,6 @@ export function AppSidebar() {
     }
   };
 
-  const handleBackNavigation = () => {
-    // Navigation intelligente vers la page parente
-    const path = location.pathname;
-    
-    if (path.startsWith('/apogee/category/')) {
-      // Depuis une catégorie Apogée → retour au guide Apogée
-      navigate('/apogee');
-    } else if (path.startsWith('/guide-apporteurs/category/')) {
-      // Depuis une catégorie Apporteurs → retour au guide Apporteurs
-      navigate('/guide-apporteurs');
-    } else if (path.startsWith('/help-confort/category/')) {
-      // Depuis une catégorie HelpConfort → retour à HelpConfort
-      navigate('/help-confort');
-    } else if (path === '/apogee' || path === '/guide-apporteurs' || path === '/help-confort' || path === '/favorites') {
-      // Depuis une page principale → retour à l'accueil
-      navigate('/');
-    }
-  };
-
-  // Déterminer si on doit afficher le bouton retour
-  const shouldShowBackButton = () => {
-    const path = location.pathname;
-    return path !== '/';
-  };
-
   if (!scope) return null;
 
   return (
@@ -218,28 +193,28 @@ export function AppSidebar() {
       
       <SidebarContent className="pt-1">
         <SidebarGroup>
-          {shouldShowBackButton() && (
-            <button 
-              onClick={handleBackNavigation}
-              className="mx-2 mb-3 px-4 py-2 text-sm font-semibold bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 w-[calc(100%-1rem)]"
-            >
-              <Icons.ArrowLeft className="w-4 h-4 text-primary" />
-              <span>Retour</span>
-            </button>
-          )}
+          <Link 
+            to="/apogee" 
+            className="mx-2 mb-3 px-4 py-2 text-sm font-semibold bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
+          >
+            <Icons.Home className="w-4 h-4 text-primary" />
+            <span>Retour accueil</span>
+          </Link>
           
           {/* Favoris comme catégorie spéciale */}
           {isApogee && (
             <Link
               to="/favorites"
-              className={`mx-2 mb-3 px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-300 flex items-center gap-2 ${
+              className={`mx-2 mb-4 px-4 py-3 rounded-lg flex items-center gap-3 transition-all duration-200 ${
                 isFavoritesPage
-                  ? 'bg-primary text-primary-foreground border-2 border-primary shadow-sm'
-                  : 'bg-card border-2 border-border hover:bg-accent hover:border-primary/50 hover:scale-[1.02]'
+                  ? 'bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white shadow-md'
+                  : 'bg-white border-2 border-transparent hover:border-helpconfort-orange hover:shadow-sm'
               }`}
             >
-              <Icons.Heart className={`w-4 h-4 ${isFavoritesPage ? 'fill-current' : 'text-red-500 fill-red-500'}`} />
-              <span>Mes Favoris</span>
+              <Icons.Heart className={`w-5 h-5 ${isFavoritesPage ? 'fill-white' : 'text-red-500 fill-red-500'}`} />
+              <span className={`font-semibold ${isFavoritesPage ? 'text-white' : 'text-foreground'}`}>
+                Mes Favoris
+              </span>
             </Link>
           )}
 

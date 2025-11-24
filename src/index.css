@@ -155,22 +155,6 @@ All colors MUST be HSL.
   min-height: 1.5em;
 }
 
-/* CRITICAL: Prevent prose from forcing text colors that override inline styles */
-/* Remove default text color from prose elements to let inline styles work */
-.prose,
-.prose *,
-.dark .prose,
-.dark .prose * {
-  /* Don't set any default text color - let elements use their inline styles or inherit naturally */
-}
-
-/* Ensure prose doesn't force colors in dark mode */
-.dark .prose {
-  --tw-prose-body: inherit;
-  --tw-prose-headings: inherit;
-  --tw-prose-bold: inherit;
-}
-
 .prose p:empty {
   min-height: 1.5em;
   display: block;

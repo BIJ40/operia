@@ -14,7 +14,8 @@ import HelpConfort from "./pages/HelpConfort";
 import CategoryHelpConfort from "./pages/CategoryHelpConfort";
 import Documents from "./pages/Documents";
 import AdminDocuments from "./pages/AdminDocuments";
-import AdminBackups from "./pages/AdminBackups";
+import AdminBackup from "./pages/AdminBackup";
+import AdminHelpConfortBackup from "./pages/AdminHelpConfortBackup";
 import AdminUsers from "./pages/AdminUsers";
 import AdminIndex from "./pages/AdminIndex";
 import AdminRolePermissions from "./pages/AdminRolePermissions";
@@ -51,7 +52,8 @@ function AppContent() {
         <Route path="/documents" element={<Layout showHeader showSidebar={false}><Documents /></Layout>} />
         <Route path="/admin" element={<Layout showHeader showSidebar={false}><AdminIndex /></Layout>} />
         <Route path="/admin/documents" element={<Layout showHeader showSidebar={false}><AdminDocuments /></Layout>} />
-        <Route path="/admin/backups" element={<Layout showHeader showSidebar={false}><AdminBackups /></Layout>} />
+        <Route path="/admin/backup" element={<Layout showHeader showSidebar={false}><AdminBackup /></Layout>} />
+        <Route path="/admin/helpconfort-backup" element={<Layout showHeader showSidebar={false}><AdminHelpConfortBackup /></Layout>} />
         <Route path="/admin/users" element={<Layout showHeader showSidebar={false}><AdminUsers /></Layout>} />
         <Route path="/admin/role-permissions" element={<Layout showHeader showSidebar={false}><AdminRolePermissions /></Layout>} />
         <Route path="/profile" element={<Layout showHeader={false} showSidebar={false}><Profile /></Layout>} />

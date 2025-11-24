@@ -7,12 +7,10 @@ import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical, Edit2, Lock, Library } from 'lucide-react';
+import { Plus, Trash2, Search, GripVertical, Upload, X, Edit2, Lock } from 'lucide-react';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { toast } from 'sonner';
 import { IconPicker } from '@/components/IconPicker';
-import { ColorPicker } from '@/components/ColorPicker';
-import { ImageUploader } from '@/components/ImageUploader';
 import { supabase } from '@/integrations/supabase/client';
 import {
   DndContext,
@@ -57,6 +55,9 @@ interface SortableCategoryProps {
   onEditColorChange: (value: ColorPreset) => void;
   onShowTitleOnCardChange: (value: boolean) => void;
   onShowTitleInMenuChange: (value: boolean) => void;
+  onImageUpload: (file: File) => Promise<void>;
+  onImageRemove: () => void;
+  uploadingImage: boolean;
   onSave: () => void;
   onCancel: () => void;
   onEdit: (id: string) => void;
@@ -80,6 +81,9 @@ const SortableCategory = ({
   onEditColorChange,
   onShowTitleOnCardChange,
   onShowTitleInMenuChange,
+  onImageUpload,
+  onImageRemove,
+  uploadingImage,
   onSave,
   onCancel,
   onEdit,
@@ -109,95 +113,150 @@ const SortableCategory = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 ${getColorClass(category.colorPreset)}`}
+      className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(category.colorPreset)}`}
     >
-      {isEditMode && (
-        <>
-          <div
+      {isEditMode && !editingId && (
+        <div className="absolute top-2 right-2 flex gap-1 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 cursor-grab active:cursor-grabbing"
             {...attributes}
             {...listeners}
-            className="absolute -top-2 -left-2 cursor-grab active:cursor-grabbing z-10 bg-background rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            <GripVertical className="w-4 h-4 text-muted-foreground hover:text-primary" />
-          </div>
-          {editingId !== category.id && (
-            <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-              <Button
-                onClick={() => onEdit(category.id)}
-                size="icon"
-                variant="outline"
-                className="h-7 w-7 bg-background shadow-md"
-              >
-                <Edit2 className="w-3 h-3" />
-              </Button>
-              <Button
-                onClick={() => onDelete(category.id)}
-                size="icon"
-                variant="destructive"
-                className="h-7 w-7 shadow-md"
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
-            </div>
-          )}
-        </>
+            <GripVertical className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            onClick={() => onEdit(category.id)}
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 text-destructive"
+            onClick={() => onDelete(category.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       )}
       
       {editingId === category.id ? (
-        <div className="space-y-3 w-full">
+        <div className="space-y-3">
           <Input
             value={editTitle}
             onChange={(e) => onEditTitleChange(e.target.value)}
             placeholder="Titre de la catégorie"
             autoFocus
           />
-          
-          <ImageUploader
-            currentImage={editIcon.startsWith('http') ? editIcon : undefined}
-            onImageChange={(url) => onEditIconChange(url || 'BookOpen')}
-            bucketName="category-images"
-          />
-          
-          <IconPicker
-            value={editIcon.startsWith('http') ? 'BookOpen' : editIcon}
-            onChange={onEditIconChange}
-          />
-          
-          <ColorPicker
-            value={editColor}
-            onChange={onEditColorChange}
-          />
-          
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="show-title-on-card"
-              checked={editShowTitleOnCard}
-              onChange={(e) => onShowTitleOnCardChange(e.target.checked)}
-              className="w-4 h-4"
-            />
-            <label htmlFor="show-title-on-card" className="text-sm font-medium cursor-pointer">
-              Afficher le titre sur la carte
-            </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="show-title-in-menu"
-              checked={editShowTitleInMenu}
-              onChange={(e) => onShowTitleInMenuChange(e.target.checked)}
-              className="w-4 h-4"
-            />
-            <label htmlFor="show-title-in-menu" className="text-sm font-medium cursor-pointer">
-              Afficher le titre dans le menu
-            </label>
-          </div>
           <div className="flex gap-2">
+            <div className="flex-1">
+              <IconPicker
+                value={editIcon.startsWith('http') ? 'BookOpen' : editIcon}
+                onChange={onEditIconChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) onImageUpload(file);
+                  }}
+                  disabled={uploadingImage}
+                  id="icon-upload"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('icon-upload')?.click()}
+                  disabled={uploadingImage}
+                  className="w-full"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {uploadingImage ? 'Upload...' : 'Image perso'}
+                </Button>
+              </label>
+              {editIcon.startsWith('http') && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={onImageRemove}
+                  className="w-full"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Retirer
+                </Button>
+              )}
+            </div>
+          </div>
+          {editIcon.startsWith('http') && (
+            <div className="p-2 bg-muted rounded-lg">
+              <img src={editIcon} alt="Icône perso" className="w-12 h-12 object-contain mx-auto" />
+            </div>
+          )}
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Affichage du titre</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editShowTitleOnCard}
+                    onChange={(e) => onShowTitleOnCardChange(e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Sur la carte</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editShowTitleInMenu}
+                    onChange={(e) => onShowTitleInMenuChange(e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Dans le menu</span>
+                </label>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Couleur</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
+                  { value: 'blanc', color: 'bg-white border-2 border-gray-300', label: 'Blanc' },
+                  { value: 'blue', color: 'bg-blue-50 border-2 border-blue-200', label: 'Bleu' },
+                  { value: 'green', color: 'bg-green-50 border-2 border-green-200', label: 'Vert' },
+                  { value: 'yellow', color: 'bg-yellow-50 border-2 border-yellow-200', label: 'Jaune' },
+                  { value: 'purple', color: 'bg-purple-50 border-2 border-purple-200', label: 'Violet' },
+                  { value: 'orange', color: 'bg-orange-50 border-2 border-orange-200', label: 'Orange' },
+                ].map((c) => (
+                  <button
+                    key={c.value}
+                    onClick={() => onEditColorChange(c.value as ColorPreset)}
+                    className={`w-12 h-12 rounded-md ${c.color} ${editColor === c.value ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                    title={c.label}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button onClick={onCancel} variant="outline" size="sm">
+              Annuler
+            </Button>
             <Button onClick={onSave} size="sm">
               Enregistrer
-            </Button>
-            <Button onClick={onCancel} size="sm" variant="outline">
-              Annuler
             </Button>
           </div>
         </div>
@@ -206,40 +265,34 @@ const SortableCategory = ({
           onClick={() => {
             toast.error("Accès restreint - Vous n'avez pas les permissions pour accéder à cette section");
           }}
-          className="flex items-center gap-3 flex-1 min-w-0 opacity-60 cursor-pointer relative"
+          className="block opacity-60 cursor-pointer relative"
         >
-          {isCustomImage ? (
-            <img 
-              src={category.icon} 
-              alt={category.title} 
-              className="w-6 h-6 object-contain flex-shrink-0 opacity-50" 
-            />
-          ) : (
-            <Icon className="w-6 h-6 text-primary flex-shrink-0 opacity-50" />
-          )}
-          {(category.showTitleOnCard !== false && category.showTitleInMenu !== false) && (
-            <span className="text-base font-medium text-foreground truncate">
-              {category.title}
-            </span>
-          )}
-          <Lock className="w-4 h-4 text-destructive drop-shadow-lg ml-auto" />
+          <div className="flex flex-col items-center justify-center gap-3">
+            {isCustomImage ? (
+              <img src={category.icon} alt={category.title} className="w-[120px] h-[120px] object-contain opacity-50" />
+            ) : (
+              <Icon className="w-[120px] h-[120px] text-primary opacity-50" />
+            )}
+            {category.showTitleOnCard !== false && (
+              <h3 className="text-xl font-semibold text-center">{category.title}</h3>
+            )}
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <Lock className="w-8 h-8 text-destructive drop-shadow-lg" />
+          </div>
         </div>
       ) : (
-        <Link to={`/apporteurs/category/${category.slug}`} className="flex items-center gap-3 flex-1 min-w-0">
-          {isCustomImage ? (
-            <img 
-              src={category.icon} 
-              alt={category.title} 
-              className="w-6 h-6 object-contain flex-shrink-0" 
-            />
-          ) : (
-            <Icon className="w-6 h-6 text-primary flex-shrink-0" />
-          )}
-          {(category.showTitleOnCard !== false && category.showTitleInMenu !== false) && (
-            <span className="text-base font-medium text-foreground truncate">
-              {category.title}
-            </span>
-          )}
+        <Link to={`/apporteurs/category/${category.slug}`} className="block">
+          <div className="flex flex-col items-center justify-center gap-3">
+            {isCustomImage ? (
+              <img src={category.icon} alt={category.title} className="w-[120px] h-[120px] object-contain" />
+            ) : (
+              <Icon className="w-[120px] h-[120px] text-primary" />
+            )}
+            {category.showTitleOnCard !== false && (
+              <h3 className="text-xl font-semibold text-center">{category.title}</h3>
+            )}
+          </div>
         </Link>
       )}
     </div>
@@ -259,6 +312,7 @@ export default function ApporteurGuide() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -281,20 +335,13 @@ export default function ApporteurGuide() {
 
   const getColorClass = (color?: ColorPreset) => {
     const colors = {
-      red: 'bg-red-50 border-l-red-500 hover:border-l-red-600',
-      blanc: 'bg-white border-l-gray-400 hover:border-l-gray-500',
-      white: 'bg-white border-l-gray-400 hover:border-l-gray-500',
-      blue: 'bg-blue-50 border-l-blue-500 hover:border-l-blue-600',
-      green: 'border-l-accent bg-gradient-to-r from-helpconfort-blue-light/20 to-helpconfort-blue-dark/20 hover:shadow-xl hover:border-l-accent/80',
-      yellow: 'bg-yellow-50 border-l-yellow-500 hover:border-l-yellow-600',
-      purple: 'bg-purple-50 border-l-purple-500 hover:border-l-purple-600',
-      orange: 'bg-orange-50 border-l-orange-500 hover:border-l-orange-600',
-      pink: 'bg-pink-50 border-l-pink-500 hover:border-l-pink-600',
-      cyan: 'bg-cyan-50 border-l-cyan-500 hover:border-l-cyan-600',
-      indigo: 'bg-indigo-50 border-l-indigo-500 hover:border-l-indigo-600',
-      teal: 'bg-teal-50 border-l-teal-500 hover:border-l-teal-600',
-      rose: 'bg-rose-50 border-l-rose-500 hover:border-l-rose-600',
-      gray: 'bg-gray-50 border-l-gray-400 hover:border-l-gray-500',
+      red: 'bg-red-50 border-red-200 hover:border-red-300',
+      blanc: 'bg-white border-gray-300 hover:border-gray-400',
+      blue: 'bg-blue-50 border-blue-200 hover:border-blue-300',
+      green: 'bg-green-50 border-green-200 hover:border-green-300',
+      yellow: 'bg-yellow-50 border-yellow-200 hover:border-yellow-300',
+      purple: 'bg-purple-50 border-purple-200 hover:border-purple-300',
+      orange: 'bg-orange-50 border-orange-200 hover:border-orange-300',
     };
     return colors[color || 'blue'] || colors.blue;
   };
@@ -317,11 +364,40 @@ export default function ApporteurGuide() {
   };
 
   const handleImageUpload = async (file: File) => {
-    // Cette fonction n'est plus utilisée, on utilise ImageUploader
+    if (!editingId) return;
+    
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${editingId}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('category-icons')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('category-icons')
+        .getPublicUrl(filePath);
+
+      setEditIcon(publicUrl);
+      toast.success('Image uploadée avec succès');
+    } catch (error) {
+      console.error('Erreur upload:', error);
+      toast.error('Erreur lors de l\'upload de l\'image');
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleImageRemove = () => {
-    // Cette fonction n'est plus utilisée, on utilise ImageUploader
+    setEditIcon('BookOpen');
+    toast.success('Image retirée');
   };
 
   const handleSave = async () => {
@@ -390,213 +466,104 @@ export default function ApporteurGuide() {
     }
   };
 
-  // Helper pour extraire le texte d'un contenu HTML
-  const extractTextFromHtml = (html: string): string => {
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
-    return temp.textContent || temp.innerText || '';
-  };
-
   const filteredCategories = searchTerm 
     ? apporteurCategories.filter(cat => {
-        const searchLower = searchTerm.toLowerCase();
-        
-        // Recherche dans le titre de la catégorie
-        const matchesTitle = cat.title.toLowerCase().includes(searchLower);
-        
-        // Recherche dans les sections
+        const matchesTitle = cat.title.toLowerCase().includes(searchTerm.toLowerCase());
         const sections = blocks.filter(b => b.type === 'section' && b.parentId === cat.id);
-        const matchesSection = sections.some(s => {
-          // Recherche dans le titre de la section
-          const matchesSectionTitle = s.title.toLowerCase().includes(searchLower);
-          
-          // Recherche dans le contenu de la section
-          const sectionText = extractTextFromHtml(s.content).toLowerCase();
-          const matchesSectionContent = sectionText.includes(searchLower);
-          
-          return matchesSectionTitle || matchesSectionContent;
-        });
-        
+        const matchesSection = sections.some(s => s.title.toLowerCase().includes(searchTerm.toLowerCase()));
         return matchesTitle || matchesSection;
       })
     : apporteurCategories;
 
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="text-center flex-1">
-            <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Guide Apporteurs
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Toutes les informations pour les apporteurs d'affaires
-            </p>
-          </div>
-          <Link to="/">
-            <Button variant="outline" size="sm">
-              <Icons.ArrowLeft className="w-4 h-4 mr-2" />
-              Retour
-            </Button>
-          </Link>
+        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
+          <Icons.ArrowLeft className="w-4 h-4" />
+          <span>Retour accueil</span>
+        </Link>
+        
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Guide Apporteurs
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Toutes les informations pour les apporteurs d'affaires
+          </p>
         </div>
 
-        {!isEditMode && apporteurCategories.length > 0 && (
-          <div className="mb-6 max-w-md mx-auto">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="Rechercher..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+        <div className="mb-6 flex gap-3 items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Input
+              type="text"
+              placeholder="Rechercher un apporteur..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-card border-2"
+            />
           </div>
-        )}
-
-        {apporteurCategories.length === 0 && !isEditMode ? (
-          <div className="text-center py-12">
-            <Icons.Library className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-lg text-muted-foreground mb-2">
-              Le guide apporteurs est en cours de création
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Les catégories et contenus seront bientôt disponibles
-            </p>
-          </div>
-        ) : isEditMode && isAdmin ? (
-          <>
-            {apporteurCategories.length === 0 && (
-              <div className="text-center py-12 mb-8">
-                <Icons.Library className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-lg text-muted-foreground mb-2">
-                  Aucune catégorie pour le moment
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Utilisez le bouton ci-dessous pour créer votre première catégorie
-                </p>
-              </div>
-            )}
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+          {isAdmin && isEditMode && (
+            <Button
+              onClick={handleAddCategory}
+              size="sm"
+              variant="ghost"
+              className="gap-1 text-muted-foreground hover:text-foreground"
             >
-              <SortableContext
-                items={filteredCategories.map(c => c.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                  {filteredCategories.map(category => (
-                    <SortableCategory
-                      key={category.id}
-                      category={category}
-                      editingId={editingId}
-                      editTitle={editTitle}
-                      editIcon={editIcon}
-                      editColor={editColor}
-                      editShowTitleOnCard={editShowTitleOnCard}
-                      editShowTitleInMenu={editShowTitleInMenu}
-                      isEditMode={isEditMode}
-                      isBlockLocked={isBlockLocked}
-                      onEditTitleChange={setEditTitle}
-                      onEditIconChange={setEditIcon}
-                      onEditColorChange={setEditColor}
-                      onShowTitleOnCardChange={setEditShowTitleOnCard}
-                      onShowTitleInMenuChange={setEditShowTitleInMenu}
-                      onSave={handleSave}
-                      onCancel={handleCancel}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      getColorClass={getColorClass}
-                      IconComponent={IconComponent}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          </>
-        ) : filteredCategories.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredCategories.map(category => {
-              const Icon = IconComponent(category.icon || 'BookOpen');
-              const isCustomImage = category.icon?.startsWith('http');
-              const isLocked = isBlockLocked(category.id, [category]);
-              
-              if (isLocked) {
-                return (
-                  <div
-                    key={category.id}
-                    onClick={() => {
-                      toast.error("Accès restreint - Vous n'avez pas les permissions pour accéder à cette section");
-                    }}
-                    className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 cursor-pointer opacity-60 ${getColorClass(category.colorPreset)}`}
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <Lock className="w-8 h-8 text-destructive drop-shadow-lg" />
-                    </div>
-                    
-                    {isCustomImage ? (
-                      <img 
-                        src={category.icon} 
-                        alt={category.title} 
-                        className="w-6 h-6 object-contain flex-shrink-0 opacity-50" 
-                      />
-                    ) : (
-                      <Icon className="w-6 h-6 text-primary flex-shrink-0 opacity-50" />
-                    )}
-                    {(category.showTitleOnCard !== false && category.showTitleInMenu !== false) && (
-                      <span className="text-base font-medium text-foreground truncate">
-                        {category.title}
-                      </span>
-                    )}
-                  </div>
-                );
-              }
-              
-              return (
-                <Link
+              <Plus className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+
+        <DndContext 
+          sensors={sensors} 
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext 
+            items={filteredCategories.map(c => c.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredCategories.map(category => (
+                <SortableCategory
                   key={category.id}
-                  to={`/apporteurs/category/${category.slug}`}
-                  className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 ${getColorClass(category.colorPreset)}`}
-                >
-                  {isCustomImage ? (
-                    <img 
-                      src={category.icon} 
-                      alt={category.title} 
-                      className="w-6 h-6 object-contain flex-shrink-0" 
-                    />
-                  ) : (
-                    <Icon className="w-6 h-6 text-primary flex-shrink-0" />
-                  )}
-                  {(category.showTitleOnCard !== false && category.showTitleInMenu !== false) && (
-                    <span className="text-base font-medium text-foreground truncate">
-                      {category.title}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        ) : (
+                  category={category}
+                  editingId={editingId}
+                  editTitle={editTitle}
+                  editIcon={editIcon}
+                  editColor={editColor}
+                  editShowTitleOnCard={editShowTitleOnCard}
+                  editShowTitleInMenu={editShowTitleInMenu}
+                  isEditMode={isEditMode}
+                  isBlockLocked={isBlockLocked}
+                  onEditTitleChange={setEditTitle}
+                  onEditIconChange={setEditIcon}
+                  onEditColorChange={setEditColor}
+                  onShowTitleOnCardChange={setEditShowTitleOnCard}
+                  onShowTitleInMenuChange={setEditShowTitleInMenu}
+                  onImageUpload={handleImageUpload}
+                  onImageRemove={handleImageRemove}
+                  uploadingImage={uploadingImage}
+                  onSave={handleSave}
+                  onCancel={handleCancel}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  getColorClass={getColorClass}
+                  IconComponent={IconComponent}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+
+        {filteredCategories.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg">
               {searchTerm 
                 ? 'Aucune catégorie trouvée pour cette recherche'
                 : 'Aucune catégorie disponible'}
             </p>
-          </div>
-        )}
-
-        {isEditMode && isAdmin && (
-          <div className="text-center mt-6">
-            <Button onClick={handleAddCategory} size="lg" variant="outline" className="gap-2">
-              <Plus className="w-5 h-5" />
-              Ajouter une catégorie
-            </Button>
           </div>
         )}
       </div>

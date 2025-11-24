@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, UserPlus, Eye, EyeOff, Trash2, Edit, ArrowLeft } from 'lucide-react';
+import { AlertCircle, UserPlus, Eye, EyeOff, Trash2, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { EditUserDialog } from '@/components/EditUserDialog';
 import { z } from 'zod';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 interface UserProfile {
   id: string;
@@ -234,15 +234,7 @@ export default function AdminUsers() {
 
   return (
     <div className="container max-w-6xl mx-auto p-8 space-y-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Gestion des utilisateurs</h1>
-        <Link to="/admin">
-          <Button variant="outline" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour admin
-          </Button>
-        </Link>
-      </div>
+      <h1 className="text-3xl font-bold">Gestion des utilisateurs</h1>
 
       {/* Création d'utilisateur */}
       <Card>

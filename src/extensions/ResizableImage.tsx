@@ -185,23 +185,15 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
         style={{
           cursor: isDragging ? 'grabbing' : (selected ? 'grab' : 'default'),
           display: 'inline-block',
-          margin: '0.5rem 0',
-          padding: 0,
-          width: dimensions.width,
-          height: dimensions.height,
-          verticalAlign: 'top'
+          margin: '0 4px'
         }}
       >
         <div
           ref={containerRef}
-          className={`relative group ${isDragging ? 'opacity-30' : ''}`}
+          className={`relative inline-block group ${selected ? 'ring-2 ring-primary ring-offset-2 rounded-lg' : ''} ${isDragging ? 'opacity-30' : ''}`}
           style={{ 
             width: dimensions.width, 
-            height: dimensions.height,
-            outline: selected ? '2px solid hsl(var(--primary))' : 'none',
-            outlineOffset: '0px',
-            borderRadius: '0.5rem',
-            display: 'block'
+            height: dimensions.height
           }}
           onMouseDown={selected ? handleDragStart : undefined}
         >
@@ -237,56 +229,32 @@ const ResizableImageComponent = ({ node, updateAttributes, selected, editor, get
           <>
             {/* Corner resize handles */}
             <div
-              className="absolute bg-primary rounded-full cursor-se-resize border-2 border-background shadow-md z-10"
-              style={{ 
-                width: '12px', 
-                height: '12px',
-                bottom: '-6px',
-                right: '-6px',
-                boxSizing: 'content-box'
-              }}
+              className="absolute bottom-0 right-0 w-4 h-4 bg-primary rounded-full cursor-se-resize border-2 border-background shadow-md z-10"
+              style={{ transform: 'translate(50%, 50%)' }}
               onMouseDown={(e) => {
                 e.stopPropagation();
                 handleMouseDown(e, 'bottom-right');
               }}
             />
             <div
-              className="absolute bg-primary rounded-full cursor-ne-resize border-2 border-background shadow-md z-10"
-              style={{ 
-                width: '12px', 
-                height: '12px',
-                top: '-6px',
-                right: '-6px',
-                boxSizing: 'content-box'
-              }}
+              className="absolute top-0 right-0 w-4 h-4 bg-primary rounded-full cursor-ne-resize border-2 border-background shadow-md z-10"
+              style={{ transform: 'translate(50%, -50%)' }}
               onMouseDown={(e) => {
                 e.stopPropagation();
                 handleMouseDown(e, 'top-right');
               }}
             />
             <div
-              className="absolute bg-primary rounded-full cursor-sw-resize border-2 border-background shadow-md z-10"
-              style={{ 
-                width: '12px', 
-                height: '12px',
-                bottom: '-6px',
-                left: '-6px',
-                boxSizing: 'content-box'
-              }}
+              className="absolute bottom-0 left-0 w-4 h-4 bg-primary rounded-full cursor-sw-resize border-2 border-background shadow-md z-10"
+              style={{ transform: 'translate(-50%, 50%)' }}
               onMouseDown={(e) => {
                 e.stopPropagation();
                 handleMouseDown(e, 'bottom-left');
               }}
             />
             <div
-              className="absolute bg-primary rounded-full cursor-nw-resize border-2 border-background shadow-md z-10"
-              style={{ 
-                width: '12px', 
-                height: '12px',
-                top: '-6px',
-                left: '-6px',
-                boxSizing: 'content-box'
-              }}
+              className="absolute top-0 left-0 w-4 h-4 bg-primary rounded-full cursor-nw-resize border-2 border-background shadow-md z-10"
+              style={{ transform: 'translate(-50%, -50%)' }}
               onMouseDown={(e) => {
                 e.stopPropagation();
                 handleMouseDown(e, 'top-left');

@@ -9,8 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileText, Trash2, Download, Edit2, ArrowLeft } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, Edit2, Database } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RAGIndexManager } from '@/components/RAGIndexManager';
 
 interface Block {
   id: string;
@@ -38,7 +39,7 @@ export default function AdminDocuments() {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
 
-  const [scope, setScope] = useState<'apogee' | 'apporteur' | 'helpconfort'>('apogee');
+  const [scope, setScope] = useState<'apogee' | 'apporteur'>('apogee');
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selectedBlockId, setSelectedBlockId] = useState<string>('');
   const [title, setTitle] = useState('');
@@ -273,35 +274,38 @@ export default function AdminDocuments() {
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Gestion des documents</h1>
-        <Link to="/admin">
-          <Button variant="outline" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour admin
-          </Button>
-        </Link>
+        <h1 className="text-3xl font-bold">Administration</h1>
+        <div className="flex gap-2">
+          <Link to="/admin/documents">
+            <Button variant="outline" size="sm">
+              <FileText className="w-4 h-4 mr-2" />
+              Documents
+            </Button>
+          </Link>
+          <Link to="/admin/backup">
+            <Button variant="outline" size="sm">
+              <Database className="w-4 h-4 mr-2" />
+              Sauvegarde
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Upload section */}
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-2">Uploader un document</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Les documents uploadés ici apparaissent dans l'onglet "Documents" de chaque catégorie/section. 
-            Formats acceptés : PDF, Word, Excel, TXT, JPG, PNG. Ils sont accessibles aux utilisateurs pour consultation.
-          </p>
+          <h2 className="text-xl font-semibold mb-4">Uploader un document</h2>
 
           <div className="space-y-4">
             <div>
               <Label htmlFor="scope">Thème</Label>
-              <Select value={scope} onValueChange={(v) => setScope(v as 'apogee' | 'apporteur' | 'helpconfort')}>
+              <Select value={scope} onValueChange={(v) => setScope(v as 'apogee' | 'apporteur')}>
                 <SelectTrigger id="scope">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="apogee">APOGEE</SelectItem>
                   <SelectItem value="apporteur">APPORTEURS</SelectItem>
-                  <SelectItem value="helpconfort">HELPCONFORT</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -471,6 +475,11 @@ export default function AdminDocuments() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* RAG Index Management */}
+      <div className="mt-8">
+        <RAGIndexManager />
       </div>
     </div>
   );

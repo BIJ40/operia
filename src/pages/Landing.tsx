@@ -225,11 +225,10 @@ const SortableCard = ({
 };
 
 export default function Landing() {
-  const { isAdmin, isAuthenticated, roleAgence, hasAccessToBlock, refreshPermissions } = useAuth();
+  const { isAdmin, isAuthenticated, roleAgence } = useAuth();
   const { toast } = useToast();
   const { blocks } = useEditor();
   const isBlockLocked = useIsBlockLocked();
-  const [apporteurBlocks, setApporteurBlocks] = useState<any[]>([]);
   const [homeCards, setHomeCards] = useState<HomeCard[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -255,7 +254,6 @@ export default function Landing() {
 
   useEffect(() => {
     loadCards(); // Toujours charger les cartes, même pour les visiteurs
-    loadApporteurBlocks(); // Charger les apporteur_blocks
     
     if (isAuthenticated) {
       setLoginOpen(false);
@@ -300,21 +298,6 @@ export default function Landing() {
       }
     } catch (e) {
       console.error('Exception loading cards:', e);
-    }
-  };
-
-  const loadApporteurBlocks = async () => {
-    try {
-      const { data, error } = await supabaseAny
-        .from('apporteur_blocks')
-        .select('id, type, slug')
-        .eq('type', 'category');
-
-      if (!error && data) {
-        setApporteurBlocks(data);
-      }
-    } catch (e) {
-      console.error('Exception loading apporteur blocks:', e);
     }
   };
 
@@ -553,7 +536,7 @@ export default function Landing() {
               <img 
                 src={helpConfortServicesImg} 
                 alt="Help Confort Services" 
-                className="w-full max-w-2xl mx-auto"
+                className="w-full max-w-3xl mx-auto"
               />
             </div>
           </div>
@@ -606,30 +589,11 @@ export default function Landing() {
                 {homeCards.map(card => {
                   const Icon = IconComponent(card.icon || 'BookOpen');
                   
-                  // Vérifier l'accès en fonction du lien
-                  let isLocked = false;
-                  
-                  if (card.link === '/helpconfort') {
-                    // Pour HelpConfort, vérifier si l'utilisateur a accès à au moins une catégorie
-                    const helpconfortCategories = blocks.filter(b => b.type === 'category' && b.slug.startsWith('helpconfort-'));
-                    const hasAccessToAny = helpconfortCategories.some(cat => !isBlockLocked(cat.id, blocks));
-                    isLocked = !hasAccessToAny;
-                  } else if (card.link === '/apporteurs') {
-                    // Pour Apporteurs, vérifier l'accès aux apporteur_blocks
-                    const hasAccessToAny = apporteurBlocks.some(cat => hasAccessToBlock(cat.id));
-                    isLocked = !hasAccessToAny;
-                  } else if (card.link === '/apogee') {
-                    // Pour Apogée, vérifier l'accès aux catégories Apogée (qui ne sont pas helpconfort)
-                    const apogeeCategories = blocks.filter(b => b.type === 'category' && !b.slug.startsWith('helpconfort-'));
-                    const hasAccessToAny = apogeeCategories.some(cat => hasAccessToBlock(cat.id));
-                    isLocked = !hasAccessToAny;
-                  } else {
-                    // Pour les liens directs vers des catégories
-                    const linkParts = card.link.split('/');
-                    const slug = linkParts[linkParts.length - 1];
-                    const matchingBlock = blocks.find(b => b.slug === slug && b.type === 'category');
-                    isLocked = matchingBlock ? isBlockLocked(matchingBlock.id, blocks) : false;
-                  }
+                  // Trouver le block correspondant à la carte pour vérifier l'accès
+                  const linkParts = card.link.split('/');
+                  const slug = linkParts[linkParts.length - 1];
+                  const matchingBlock = blocks.find(b => b.slug === slug && b.type === 'category');
+                  const isLocked = matchingBlock ? isBlockLocked(matchingBlock.id, blocks) : false;
                   
                   if (isLocked) {
                     return (
@@ -680,7 +644,7 @@ export default function Landing() {
               <img 
                 src={helpConfortServicesImg} 
                 alt="Help Confort Services" 
-                className="w-full max-w-2xl mx-auto"
+                className="w-full max-w-3xl mx-auto"
               />
             </div>
 

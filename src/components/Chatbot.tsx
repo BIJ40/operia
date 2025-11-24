@@ -19,9 +19,6 @@ export function Chatbot() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
-  
-  // Chatbot en maintenance
-  const isUnderMaintenance = false;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { blocks } = useEditor();
   const { toast } = useToast();
@@ -114,7 +111,7 @@ export function Chatbot() {
     return () => window.removeEventListener('chatbot-question', handleChatbotQuestion as EventListener);
   }, [blocks, toast]);
 
-  const searchRelevantContent = async (query: string): Promise<{ guideContent: string; documents: any[] }> => {
+  const searchRelevantContent = async (query: string): Promise<string> => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-embeddings`,
@@ -126,7 +123,7 @@ export function Chatbot() {
           },
           body: JSON.stringify({
             query,
-            topK: 8, // Augmenté pour plus de contexte
+            topK: 5, // Get top 5 most relevant chunks
           }),
         }
       );
@@ -135,29 +132,26 @@ export function Chatbot() {
         throw new Error('Search failed');
       }
 
-      const { results, documents } = await response.json();
+      const { results } = await response.json();
       
       if (!results || results.length === 0) {
-        return { guideContent: 'Aucun contenu indexé trouvé. Veuillez indexer le guide.', documents: [] };
+        return 'Aucun contenu indexé trouvé. Veuillez indexer le guide.';
       }
 
       // Format the results
-      const guideContent = results
+      return results
         .map((result: any, idx: number) => {
           return `[${idx + 1}] ${result.block_title} (slug: ${result.block_slug})\n${result.chunk_text}`;
         })
         .join('\n\n---\n\n');
-      
-      return { guideContent, documents: documents || [] };
         
     } catch (error) {
       console.error('Search error:', error);
       // Fallback to basic content if RAG search fails
-      const fallbackContent = blocks
+      return blocks
         .slice(0, 10)
         .map(block => `${block.title}: ${block.content.substring(0, 200)}`)
         .join('\n\n');
-      return { guideContent: fallbackContent, documents: [] };
     }
   };
 
@@ -199,9 +193,8 @@ export function Chatbot() {
 
     try {
       // Use RAG search to find relevant content
-      const { guideContent, documents } = await searchRelevantContent(input);
-      console.log('Relevant content found:', guideContent.length, 'characters');
-      console.log('Related documents found:', documents.length);
+      const relevantContent = await searchRelevantContent(input);
+      console.log('Relevant content found:', relevantContent.length, 'characters');
       
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-guide`,
@@ -213,8 +206,7 @@ export function Chatbot() {
           },
           body: JSON.stringify({
             messages: [...messages, userMessage],
-            guideContent,
-            documents,
+            guideContent: relevantContent,
           }),
         }
       );
@@ -324,19 +316,12 @@ export function Chatbot() {
 
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
-            {isUnderMaintenance ? (
-              <div className="text-center text-muted-foreground py-8">
-                <p className="text-lg mb-2">🚧</p>
-                <p className="text-sm font-medium">Je suis en travaux pour le moment, revenez plus tard!</p>
+            {messages.length === 0 && (
+              <div className="text-center text-muted-foreground text-sm py-8">
+                Demandez à Mme Michu !
               </div>
-            ) : (
-              <>
-                {messages.length === 0 && (
-                  <div className="text-center text-muted-foreground text-sm py-8">
-                    Demandez à Mme Michu !
-                  </div>
-                )}
-                {messages.map((msg, idx) => (
+            )}
+            {messages.map((msg, idx) => (
               <div
                 key={idx}
                 className={`mb-4 ${
@@ -357,19 +342,17 @@ export function Chatbot() {
                   </div>
                 </div>
               </div>
-                ))}
-                {isLoading && (
-                  <div className="text-left">
-                    <div className="inline-block bg-muted p-3 rounded-lg">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
-                      </div>
-                    </div>
+            ))}
+            {isLoading && (
+              <div className="text-left">
+                <div className="inline-block bg-muted p-3 rounded-lg">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
                   </div>
-                )}
-              </>
+                </div>
+              </div>
             )}
             <div ref={messagesEndRef} />
           </ScrollArea>
@@ -387,10 +370,10 @@ export function Chatbot() {
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={isUnderMaintenance ? "En maintenance..." : "Posez votre question..."}
-                disabled={isLoading || isUnderMaintenance}
+                placeholder="Posez votre question..."
+                disabled={isLoading}
               />
-              <Button type="submit" size="icon" disabled={isLoading || !input.trim() || isUnderMaintenance}>
+              <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
                 <Send className="h-4 w-4" />
               </Button>
             </form>
