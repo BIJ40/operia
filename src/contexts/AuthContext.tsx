@@ -12,6 +12,7 @@ interface AuthContextType {
   hasRolePermissionsConfig: boolean;
   isLoggingOut: boolean;
   hasAccessToBlock: (blockId: string) => boolean;
+  refreshPermissions: () => Promise<void>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -201,6 +202,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshPermissions = async () => {
+    if (!user || !roleAgence) return;
+
+    const { data: permissions } = await supabase
+      .from('role_permissions')
+      .select('block_id, can_access')
+      .eq('role_agence', roleAgence);
+
+    const allowedPermissions = permissions?.filter(p => p.can_access) || [];
+    setUserPermissions(allowedPermissions.map(p => p.block_id));
+    setHasRolePermissionsConfig((permissions?.length || 0) > 0);
+  };
+
   const hasAccessToBlock = (blockId: string): boolean => {
     // Les admins ont accès à tout
     if (isAdmin) return true;
@@ -228,6 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hasRolePermissionsConfig,
         isLoggingOut,
         hasAccessToBlock,
+        refreshPermissions,
         login, 
         logout,
         signup 
@@ -248,6 +263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasRolePermissionsConfig,
       isLoggingOut,
       hasAccessToBlock,
+      refreshPermissions,
       login, 
       logout,
       signup 
