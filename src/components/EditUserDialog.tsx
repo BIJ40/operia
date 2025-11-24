@@ -24,7 +24,12 @@ interface EditUserDialogProps {
   onSuccess: () => void;
 }
 
-const ROLE_OPTIONS = ['Dirigeant(e)', 'Assistant(e)', 'Technicien(ne)', 'Autre'];
+const ROLE_OPTIONS = [
+  { value: 'dirigeant', label: 'Dirigeant(e)' },
+  { value: 'assistant(e)', label: 'Assistant(e)' },
+  { value: 'technicien', label: 'Technicien' },
+  { value: 'commercial', label: 'Commercial' },
+];
 
 export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUserDialogProps) {
   const { toast } = useToast();
@@ -139,10 +144,10 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
             <Label>Rôle dans l'agence</Label>
             <RadioGroup value={roleAgence} onValueChange={setRoleAgence}>
               {ROLE_OPTIONS.map((role) => (
-                <div key={role} className="flex items-center space-x-2">
-                  <RadioGroupItem value={role} id={`edit-role-${role}`} />
-                  <Label htmlFor={`edit-role-${role}`} className="cursor-pointer font-normal">
-                    {role}
+                <div key={role.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={role.value} id={`edit-role-${role.value}`} />
+                  <Label htmlFor={`edit-role-${role.value}`} className="cursor-pointer font-normal">
+                    {role.label}
                   </Label>
                 </div>
               ))}
