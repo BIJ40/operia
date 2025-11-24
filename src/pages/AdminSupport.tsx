@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { MessageSquare, CheckCircle2, Clock, AlertCircle, Send, User } from 'lucide-react';
+import { MessageSquare, CheckCircle2, Clock, AlertCircle, Send, User, Star, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { RatingStars } from '@/components/RatingStars';
 
 interface SupportTicket {
   id: string;
@@ -22,6 +23,8 @@ interface SupportTicket {
   priority: string;
   chatbot_conversation: any;
   created_at: string;
+  rating: number | null;
+  rating_comment: string | null;
 }
 
 interface SupportMessage {
@@ -211,6 +214,33 @@ export default function AdminSupport() {
     }
   };
 
+  // Calculer les statistiques
+  const getStatistics = () => {
+    const resolvedTickets = tickets.filter(t => t.status === 'resolved');
+    const ratedTickets = resolvedTickets.filter(t => t.rating !== null);
+    
+    const averageRating = ratedTickets.length > 0
+      ? ratedTickets.reduce((sum, t) => sum + (t.rating || 0), 0) / ratedTickets.length
+      : 0;
+    
+    const totalTickets = tickets.length;
+    const waitingCount = tickets.filter(t => t.status === 'waiting').length;
+    const inProgressCount = tickets.filter(t => t.status === 'in_progress').length;
+    const resolvedCount = resolvedTickets.length;
+    
+    return {
+      averageRating: averageRating.toFixed(1),
+      totalRatings: ratedTickets.length,
+      totalTickets,
+      waitingCount,
+      inProgressCount,
+      resolvedCount,
+      resolutionRate: totalTickets > 0 ? ((resolvedCount / totalTickets) * 100).toFixed(0) : 0,
+    };
+  };
+
+  const stats = getStatistics();
+
   const takeTicket = async (ticketId: string) => {
     try {
       const { error } = await supabase
@@ -346,6 +376,75 @@ export default function AdminSupport() {
         </p>
       </div>
 
+      {/* Statistiques */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Star className="w-4 h-4 text-yellow-400" />
+              Note moyenne
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-end gap-2">
+              <span className="text-2xl font-bold">{stats.averageRating}</span>
+              <span className="text-sm text-muted-foreground mb-1">/ 5</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.totalRatings} évaluation{stats.totalRatings > 1 ? 's' : ''}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Total tickets
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalTickets}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Tous statuts confondus
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-500" />
+              Taux de résolution
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-end gap-2">
+              <span className="text-2xl font-bold">{stats.resolutionRate}</span>
+              <span className="text-sm text-muted-foreground mb-1">%</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.resolvedCount} résolus
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Clock className="w-4 h-4 text-orange-500" />
+              En cours
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.inProgressCount + stats.waitingCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.waitingCount} en attente
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Liste des tickets */}
         <div className="lg:col-span-1">
@@ -443,6 +542,24 @@ export default function AdminSupport() {
                     <CardDescription className="text-xs">
                       Ticket #{selectedTicket.id.substring(0, 8)} • {format(new Date(selectedTicket.created_at), 'd MMMM yyyy à HH:mm', { locale: fr })}
                     </CardDescription>
+                    {selectedTicket.rating && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <RatingStars 
+                          rating={selectedTicket.rating} 
+                          onRatingChange={() => {}} 
+                          size="sm"
+                          readonly
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          ({selectedTicket.rating}/5)
+                        </span>
+                      </div>
+                    )}
+                    {selectedTicket.rating_comment && (
+                      <p className="text-xs text-muted-foreground mt-1 italic">
+                        "{selectedTicket.rating_comment}"
+                      </p>
+                    )}
                   </div>
                   {selectedTicket.status !== 'resolved' && (
                     <Button
