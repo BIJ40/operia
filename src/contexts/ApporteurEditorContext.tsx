@@ -191,30 +191,51 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
   const deleteBlock = useCallback(async (id: string) => {
     if (!isAdmin) return;
     
+    const blockToDelete = blocks.find(b => b.id === id);
+    const contentLength = blockToDelete?.content?.replace(/<[^>]*>/g, '').trim().length || 0;
+    
+    // Si le contenu est vide ou très court (< 20 caractères), on supprime définitivement
+    // Sinon, on archive pour éviter les pertes accidentelles
+    const shouldDeletePermanently = contentLength < 20;
+    
     try {
-      // Supprimer définitivement de la base de données
-      const { error } = await supabase
-        .from('apporteur_blocks')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Supprimer également tous les enfants (sous-catégories et sections)
-      const childrenIds = blocks.filter(b => b.parentId === id).map(b => b.id);
-      if (childrenIds.length > 0) {
-        const { error: childError } = await supabase
+      if (shouldDeletePermanently) {
+        // Supprimer définitivement de la base de données
+        const { error } = await supabase
           .from('apporteur_blocks')
           .delete()
-          .in('id', childrenIds);
+          .eq('id', id);
         
-        if (childError) throw childError;
+        if (error) throw error;
+        
+        // Supprimer également tous les enfants (sous-catégories et sections)
+        const childrenIds = blocks.filter(b => b.parentId === id).map(b => b.id);
+        if (childrenIds.length > 0) {
+          const { error: childError } = await supabase
+            .from('apporteur_blocks')
+            .delete()
+            .in('id', childrenIds);
+          
+          if (childError) throw childError;
+        }
+        
+        // Mettre à jour l'état local
+        setBlocks(prev => prev.filter(block => 
+          block.id !== id && block.parentId !== id
+        ));
+      } else {
+        // Archivage (pour contenu non vide)
+        const { error } = await supabase
+          .from('apporteur_blocks')
+          .update({ hide_from_sidebar: true })
+          .eq('id', id);
+        
+        if (error) throw error;
+        
+        setBlocks(prev => prev.map(block =>
+          block.id === id ? { ...block, hideFromSidebar: true } : block
+        ));
       }
-      
-      // Mettre à jour l'état local
-      setBlocks(prev => prev.filter(block => 
-        block.id !== id && block.parentId !== id
-      ));
     } catch (error) {
       console.error('Erreur suppression apporteur:', error);
     }
