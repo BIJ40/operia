@@ -412,9 +412,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  editor.chain().focus().setMark('textStyle', { color: '#000000' }).run();
-                }}
+                onClick={() => editor.chain().focus().setColor('#000000').run()}
                 title="Noir"
                 className="p-2"
               >
@@ -424,9 +422,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  editor.chain().focus().setMark('textStyle', { color: '#dc2626' }).run();
-                }}
+                onClick={() => editor.chain().focus().setColor('#dc2626').run()}
                 title="Rouge"
                 className="p-2"
               >
@@ -436,9 +432,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  editor.chain().focus().setMark('textStyle', { color: '#2563eb' }).run();
-                }}
+                onClick={() => editor.chain().focus().setColor('#2563eb').run()}
                 title="Bleu"
                 className="p-2"
               >
@@ -448,9 +442,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  editor.chain().focus().setMark('textStyle', { color: '#06b6d4' }).run();
-                }}
+                onClick={() => editor.chain().focus().setColor('#06b6d4').run()}
                 title="Cyan"
                 className="p-2"
               >
@@ -460,9 +452,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  editor.chain().focus().setMark('textStyle', { color: '#16a34a' }).run();
-                }}
+                onClick={() => editor.chain().focus().setColor('#16a34a').run()}
                 title="Vert"
                 className="p-2"
               >
@@ -472,9 +462,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  editor.chain().focus().setMark('textStyle', { color: '#ea580c' }).run();
-                }}
+                onClick={() => editor.chain().focus().setColor('#ea580c').run()}
                 title="Orange"
                 className="p-2"
               >
@@ -484,9 +472,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  editor.chain().focus().setMark('textStyle', { color: '#9333ea' }).run();
-                }}
+                onClick={() => editor.chain().focus().setColor('#9333ea').run()}
                 title="Violet"
                 className="p-2"
               >
@@ -496,9 +482,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  editor.chain().focus().setMark('textStyle', { color: '#ec4899' }).run();
-                }}
+                onClick={() => editor.chain().focus().setColor('#ec4899').run()}
                 title="Rose"
                 className="p-2"
               >
@@ -508,9 +492,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  editor.chain().focus().unsetMark('textStyle').run();
-                }}
+                onClick={() => editor.chain().focus().unsetColor().run()}
                 title="Par défaut"
                 className="p-2"
               >
