@@ -492,6 +492,39 @@ export type Database = {
           },
         ]
       }
+      user_history: {
+        Row: {
+          block_id: string
+          block_slug: string
+          block_title: string
+          category_slug: string
+          id: string
+          scope: string
+          user_id: string
+          visited_at: string | null
+        }
+        Insert: {
+          block_id: string
+          block_slug: string
+          block_title: string
+          category_slug: string
+          id?: string
+          scope?: string
+          user_id: string
+          visited_at?: string | null
+        }
+        Update: {
+          block_id?: string
+          block_slug?: string
+          block_title?: string
+          category_slug?: string
+          id?: string
+          scope?: string
+          user_id?: string
+          visited_at?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -510,6 +543,39 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_widget_preferences: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          id: string
+          is_enabled: boolean
+          size: string
+          updated_at: string | null
+          user_id: string
+          widget_key: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          is_enabled?: boolean
+          size?: string
+          updated_at?: string | null
+          user_id: string
+          widget_key: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          is_enabled?: boolean
+          size?: string
+          updated_at?: string | null
+          user_id?: string
+          widget_key?: string
         }
         Relationships: []
       }
