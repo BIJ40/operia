@@ -577,16 +577,25 @@ export function Chatbot() {
             right: '24px',
             zIndex: 9999
           }}
-          className="h-16 w-16 rounded-full shadow-lg hover:scale-110 transition-transform overflow-hidden bg-white"
+          className="relative h-20 w-20 rounded-full shadow-2xl hover:scale-110 transition-transform overflow-visible bg-gradient-to-br from-helpconfort-blue-light via-helpconfort-blue-dark to-primary animate-pulse"
         >
-          <img 
-            src={chatIcon} 
-            alt="Chat" 
-            className="w-full h-full pointer-events-none select-none" 
-            draggable="false"
-          />
+          {/* Bordure animée avec gradient tournant */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-helpconfort-blue-light via-primary to-helpconfort-blue-dark animate-spin-slow opacity-75 blur-sm" 
+               style={{ padding: '3px' }}>
+          </div>
+          
+          {/* Contenu du bouton */}
+          <div className="relative h-full w-full rounded-full bg-gradient-to-br from-helpconfort-blue-light to-helpconfort-blue-dark flex items-center justify-center shadow-inner">
+            <img 
+              src={chatIcon} 
+              alt="Chat" 
+              className="w-10 h-10 pointer-events-none select-none drop-shadow-lg" 
+              draggable="false"
+            />
+          </div>
+          
           {unreadCount > 0 && (
-            <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
+            <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-7 w-7 flex items-center justify-center animate-pulse shadow-lg border-2 border-background">
               {unreadCount > 9 ? '9+' : unreadCount}
             </div>
           )}
