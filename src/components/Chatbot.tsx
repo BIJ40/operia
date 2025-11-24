@@ -10,6 +10,16 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupportTicket } from '@/hooks/use-support-ticket';
 import chatIcon from '@/assets/logo_chat.png';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Message = {
   role: 'user' | 'assistant' | 'support';
@@ -22,6 +32,7 @@ export function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
   const [activeTicket, setActiveTicket] = useState<any>(null);
   const [supportMessages, setSupportMessages] = useState<any[]>([]);
@@ -504,17 +515,12 @@ export function Chatbot() {
               )}
             </div>
             <Button onClick={() => {
-              // Empêcher la fermeture si un ticket est actif
+              // Si un ticket est actif, demander confirmation
               if (activeTicket) {
-                toast({
-                  title: 'Ticket en cours',
-                  description: 'Conversation active avec le support.',
-                  variant: 'destructive',
-                  duration: 5000,
-                });
-                return;
+                setShowCloseConfirm(true);
+              } else {
+                setIsOpen(false);
               }
-              setIsOpen(false);
             }} variant="ghost" size="icon">
               <X className="h-4 w-4" />
             </Button>
@@ -693,6 +699,47 @@ export function Chatbot() {
 
         </div>
       )}
+      
+      {/* Dialog de confirmation pour fermer le chat avec ticket actif */}
+      <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Fermer la conversation ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir fermer cette conversation ? Le ticket sera marqué comme résolu.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={async () => {
+              if (activeTicket) {
+                // Marquer le ticket comme résolu
+                const { error } = await supabase
+                  .from('support_tickets')
+                  .update({ 
+                    status: 'resolved',
+                    resolved_at: new Date().toISOString()
+                  })
+                  .eq('id', activeTicket.id);
+                
+                if (!error) {
+                  setActiveTicket(null);
+                  setSupportMessages([]);
+                  toast({
+                    title: 'Conversation fermée',
+                    description: 'Le ticket a été marqué comme résolu.',
+                    duration: 5000,
+                  });
+                }
+              }
+              setIsOpen(false);
+              setShowCloseConfirm(false);
+            }}>
+              Fermer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
