@@ -117,6 +117,19 @@ All colors MUST be HSL.
 .ProseMirror {
   min-height: 200px;
   outline: none;
+  color: #000000; /* Force black text by default */
+}
+
+.ProseMirror p {
+  color: #000000; /* Force black text in paragraphs */
+}
+
+.prose {
+  color: #000000; /* Force black text in prose */
+}
+
+.prose p {
+  color: #000000; /* Force black text in prose paragraphs */
 }
 
 /* Heading styles in editor */
