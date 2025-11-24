@@ -30,6 +30,13 @@ type Message = {
 };
 
 export function Chatbot() {
+  const { isAdmin, isSupport } = useAuth();
+  
+  // Ne pas afficher le chatbot pour les admins et le support
+  if (isAdmin || isSupport) {
+    return null;
+  }
+  
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');

@@ -5,6 +5,7 @@ import { User } from '@supabase/supabase-js';
 interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isSupport: boolean;
   user: User | null;
   mustChangePassword: boolean;
   roleAgence: string | null;
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSupport, setIsSupport] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
@@ -34,16 +36,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Check if user is admin
+          // Check if user is admin or support
           setTimeout(async () => {
-            const { data } = await supabase
+            const { data: roles } = await supabase
               .from('user_roles')
               .select('role')
-              .eq('user_id', session.user.id)
-              .eq('role', 'admin')
-              .maybeSingle();
+              .eq('user_id', session.user.id);
             
-            setIsAdmin(!!data);
+            setIsAdmin(roles?.some(r => r.role === 'admin') || false);
+            setIsSupport(roles?.some(r => r.role === 'support') || false);
 
             // Check if user must change password and get role_agence
             const { data: profile } = await supabase
@@ -68,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }, 0);
         } else {
           setIsAdmin(false);
+          setIsSupport(false);
           setMustChangePassword(false);
           setRoleAgence(null);
           setUserPermissions([]);
@@ -82,15 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Check if user is admin
+        // Check if user is admin or support
         supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', session.user.id)
-          .eq('role', 'admin')
-          .maybeSingle()
-          .then(({ data }) => {
-            setIsAdmin(!!data);
+          .then(({ data: roles }) => {
+            setIsAdmin(roles?.some(r => r.role === 'admin') || false);
+            setIsSupport(roles?.some(r => r.role === 'support') || false);
           });
 
         // Check if user must change password and get role_agence
@@ -178,6 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Nettoyer les états en mémoire
       setIsAdmin(false);
+      setIsSupport(false);
       setMustChangePassword(false);
       setRoleAgence(null);
       setUserPermissions([]);
@@ -209,6 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       <AuthContext.Provider value={{ 
         isAuthenticated: !!user, 
         isAdmin,
+        isSupport,
         user,
         mustChangePassword,
         roleAgence,
@@ -228,6 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{ 
       isAuthenticated: !!user, 
       isAdmin,
+      isSupport,
       user,
       mustChangePassword,
       roleAgence,
