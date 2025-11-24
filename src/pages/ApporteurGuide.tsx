@@ -277,7 +277,7 @@ const SortableCategory = ({
 
 export default function ApporteurGuide() {
   const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, reorderBlocks } = useApporteurEditor();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isAuthenticated } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
@@ -288,6 +288,13 @@ export default function ApporteurGuide() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Rediriger si non authentifié
+  useEffect(() => {
+    if (!isAuthenticated) {
+      window.location.href = '/';
+    }
+  }, [isAuthenticated]);
 
   const apporteurCategories = blocks
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
