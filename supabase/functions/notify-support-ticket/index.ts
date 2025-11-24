@@ -197,7 +197,7 @@ serve(async (req) => {
     `;
 
     const { data, error } = await resend.emails.send({
-      from: 'Helpogée Support <onboarding@resend.dev>',
+      from: 'Support Helpogée <support@helpconfort.services>',
       to: supportEmails,
       subject: `🚨 Nouveau ticket support #${ticketId.substring(0, 8)} - ${userPseudo}`,
       html: emailHtml,
