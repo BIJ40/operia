@@ -662,6 +662,7 @@ export default function CategoryApporteur() {
               initialContent={sections.find(s => s.id === editingId)?.content || ''}
               initialColor={sections.find(s => s.id === editingId)?.colorPreset || 'blue'}
               initialHideTitle={sections.find(s => s.id === editingId)?.hideTitle || false}
+              initialHideFromSidebar={sections.find(s => s.id === editingId)?.hideFromSidebar || false}
               onSave={(data) => handleSaveSection(editingId, data)}
               onCancel={() => {
                 setEditDialogOpen(false);
