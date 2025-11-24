@@ -13,6 +13,7 @@ import { MessageSquare, CheckCircle2, Clock, AlertCircle, Send, User, Star, Tren
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { RatingStars } from '@/components/RatingStars';
+import { SatisfactionChart } from '@/components/SatisfactionChart';
 
 interface SupportTicket {
   id: string;
@@ -23,6 +24,7 @@ interface SupportTicket {
   priority: string;
   chatbot_conversation: any;
   created_at: string;
+  resolved_at: string | null;
   rating: number | null;
   rating_comment: string | null;
 }
@@ -443,6 +445,11 @@ export default function AdminSupport() {
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Graphique d'évolution */}
+      <div className="mb-6">
+        <SatisfactionChart tickets={tickets} period="month" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
