@@ -506,30 +506,11 @@ export default function CategoryApporteur() {
           </div>
 
           <div className="mb-6 flex gap-3">
-            {sections.some(s => s.hideFromSidebar) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (showTips && !showSections) {
-                    setShowSections(true);
-                  }
-                  setShowTips(!showTips);
-                }}
-                className="gap-2"
-              >
-                <Lightbulb className="w-4 h-4" />
-                {showTips ? 'Masquer les TIPS' : 'Afficher les TIPS'}
-              </Button>
-            )}
             {sections.some(s => !s.hideFromSidebar) && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (showSections && !showTips) {
-                    setShowTips(true);
-                  }
                   setShowSections(!showSections);
                 }}
                 className="gap-2"
@@ -610,8 +591,6 @@ export default function CategoryApporteur() {
               >
                 {sections
                   .filter(section => {
-                    const isTip = section.hideFromSidebar;
-                    if (isTip) return showTips;
                     return showSections;
                   })
                   .map((section, index) => (
