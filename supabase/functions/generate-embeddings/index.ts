@@ -102,13 +102,14 @@ serve(async (req) => {
       throw new Error('Admin access required');
     }
 
-    const { blockIds } = await req.json();
+    const { blockIds, batchSize = 50 } = await req.json();
 
     // Fetch blocks to index
     let query = supabase
       .from('blocks')
       .select('*')
-      .order('created_at');
+      .order('created_at')
+      .limit(batchSize); // Limiter pour éviter les timeouts
 
     if (blockIds && blockIds.length > 0) {
       query = query.in('id', blockIds);
@@ -120,62 +121,78 @@ serve(async (req) => {
       throw blocksError;
     }
 
-    console.log(`Indexing ${blocks?.length || 0} blocks`);
+    console.log(`Indexing ${blocks?.length || 0} blocks (batch size: ${batchSize})`);
 
     let totalChunks = 0;
+    let processedBlocks = 0;
 
     for (const block of blocks || []) {
-      // Delete existing chunks for this block
-      await supabase
-        .from('guide_chunks')
-        .delete()
-        .eq('block_id', block.id);
-
-      // Clean and prepare content
-      const cleanContent = cleanHtml(block.content);
-      if (!cleanContent || cleanContent.length < 50) {
-        console.log(`Skipping block ${block.id} - insufficient content`);
-        continue;
-      }
-
-      // Create chunks
-      const chunks = chunkText(cleanContent, 500);
-      console.log(`Block ${block.id} split into ${chunks.length} chunks`);
-
-      // Generate embeddings and store chunks
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-        const embedding = await generateEmbedding(chunk);
-
-        const { error: insertError } = await supabase
+      try {
+        // Delete existing chunks for this block
+        await supabase
           .from('guide_chunks')
-          .insert({
-            block_id: block.id,
-            block_type: block.type,
-            block_title: block.title,
-            block_slug: block.slug,
-            chunk_text: chunk,
-            chunk_index: i,
-            embedding: embedding,
-            metadata: {
-              parent_id: block.parent_id,
-              content_type: block.content_type,
-            }
-          });
+          .delete()
+          .eq('block_id', block.id);
 
-        if (insertError) {
-          console.error(`Error inserting chunk ${i} for block ${block.id}:`, insertError);
-        } else {
-          totalChunks++;
+        // Clean and prepare content
+        const cleanContent = cleanHtml(block.content);
+        if (!cleanContent || cleanContent.length < 50) {
+          console.log(`Skipping block ${block.id} - insufficient content`);
+          continue;
         }
+
+        // Create chunks
+        const chunks = chunkText(cleanContent, 500);
+        console.log(`Block ${block.id} split into ${chunks.length} chunks`);
+
+        // Generate embeddings and store chunks
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
+          
+          try {
+            const embedding = await generateEmbedding(chunk);
+
+            const { error: insertError } = await supabase
+              .from('guide_chunks')
+              .insert({
+                block_id: block.id,
+                block_type: block.type,
+                block_title: block.title,
+                block_slug: block.slug,
+                chunk_text: chunk,
+                chunk_index: i,
+                embedding: embedding,
+                metadata: {
+                  parent_id: block.parent_id,
+                  content_type: block.content_type,
+                }
+              });
+
+            if (insertError) {
+              console.error(`Error inserting chunk ${i} for block ${block.id}:`, insertError);
+            } else {
+              totalChunks++;
+            }
+          } catch (embeddingError) {
+            console.error(`Error generating embedding for chunk ${i} of block ${block.id}:`, embeddingError);
+            // Continue avec le prochain chunk même en cas d'erreur
+          }
+        }
+        
+        processedBlocks++;
+      } catch (blockError) {
+        console.error(`Error processing block ${block.id}:`, blockError);
+        // Continue avec le prochain bloc
       }
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        blocks_processed: blocks?.length || 0,
+        blocks_processed: processedBlocks,
         chunks_created: totalChunks,
+        total_blocks_in_db: blocks?.length || 0,
+        message: processedBlocks < (blocks?.length || 0) ? 'Some blocks were skipped due to errors' : 'All blocks processed successfully'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -185,7 +202,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Check edge function logs for more information'
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

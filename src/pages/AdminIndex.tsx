@@ -237,10 +237,25 @@ export default function AdminIndex() {
   // Indexation du chatbot
   const handleIndexChatbot = async () => {
     setIndexing(true);
+    
+    toast({
+      title: 'Indexation démarrée',
+      description: 'Ce processus peut prendre plusieurs minutes (5-10 min pour 288 blocs)...',
+    });
+
     try {
+      // Augmenter le timeout à 15 minutes pour OpenAI embeddings
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 900000); // 15 minutes
+
       const { data, error } = await supabase.functions.invoke('generate-embeddings', {
         body: { blockIds: [] },
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
+
+      clearTimeout(timeoutId);
 
       if (error) throw error;
 
@@ -250,10 +265,16 @@ export default function AdminIndex() {
       });
     } catch (error) {
       console.error('Erreur indexation:', error);
+      
+      // Message différent si timeout
+      const isTimeout = error instanceof Error && error.message.includes('aborted');
+      
       toast({
-        title: 'Erreur',
-        description: error instanceof Error ? error.message : 'Erreur lors de l\'indexation',
-        variant: 'destructive',
+        title: isTimeout ? 'Timeout' : 'Erreur',
+        description: isTimeout 
+          ? 'L\'indexation prend trop de temps. Elle continue en arrière-plan, réessayez dans quelques minutes.'
+          : 'L\'indexation a peut-être réussi en arrière-plan. Vérifiez dans le chatbot.',
+        variant: isTimeout ? 'default' : 'destructive',
       });
     } finally {
       setIndexing(false);
