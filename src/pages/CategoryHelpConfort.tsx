@@ -4,7 +4,6 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
-import { usePageVisitTracker } from '@/hooks/usePageVisitTracker';
 import { saveAppData } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info, ChevronsDownUp, ChevronsUpDown, Lightbulb } from 'lucide-react';
@@ -145,17 +144,6 @@ export default function CategoryHelpConfort() {
       return [...prev, ...newIds];
     });
   }, [sections]);
-
-  // Tracking automatique de l'historique de navigation
-  usePageVisitTracker(
-    category ? {
-      blockId: category.id,
-      blockTitle: category.title,
-      blockSlug: category.slug,
-      categorySlug: category.slug,
-      scope: 'helpconfort'
-    } : null
-  );
 
   // Réinitialiser les filtres quand on change de catégorie
   useEffect(() => {

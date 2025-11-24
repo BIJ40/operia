@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
-import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
 import ApogeeGuide from "./pages/ApogeeGuide";
 import ApporteurGuide from "./pages/ApporteurGuide";
@@ -42,8 +41,7 @@ function AppContent() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/old-landing" element={<Layout showHeader={false} showSidebar={false}><Landing /></Layout>} />
+        <Route path="/" element={<Layout showHeader={false} showSidebar={false}><Landing /></Layout>} />
         <Route path="/apogee" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><ApogeeGuide /></Layout>} />
         <Route path="/apogee/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><Category /></Layout>} />
         <Route path="/apporteurs" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><ApporteurGuide /></Layout>} />
