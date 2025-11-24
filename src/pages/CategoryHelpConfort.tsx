@@ -636,7 +636,7 @@ export default function CategoryHelpConfort() {
               </div>
             )}
             <div
-              className="prose prose-sm max-w-none break-words overflow-visible dark:prose-invert"
+              className="prose prose-sm max-w-none break-words overflow-visible"
               dangerouslySetInnerHTML={{ __html: section.content }}
             />
           </div>

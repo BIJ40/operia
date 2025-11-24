@@ -155,20 +155,20 @@ All colors MUST be HSL.
   min-height: 1.5em;
 }
 
-/* CRITICAL: Force inline color styles to always take precedence */
-/* This ensures colors are preserved in dialogs, sheets, and all contexts */
-.prose [style*="color:"],
-.prose span[style*="color:"],
-.prose p[style*="color:"],
-.prose div[style*="color:"],
-.prose strong[style*="color:"],
-.prose em[style*="color:"],
-.prose b[style*="color:"],
-.prose i[style*="color:"],
-.prose h1[style*="color:"],
-.prose h2[style*="color:"],
-.prose h3[style*="color:"] {
-  /* Inline styles have natural precedence, this is just defensive */
+/* CRITICAL: Prevent prose from forcing text colors that override inline styles */
+/* Remove default text color from prose elements to let inline styles work */
+.prose,
+.prose *,
+.dark .prose,
+.dark .prose * {
+  /* Don't set any default text color - let elements use their inline styles or inherit naturally */
+}
+
+/* Ensure prose doesn't force colors in dark mode */
+.dark .prose {
+  --tw-prose-body: inherit;
+  --tw-prose-headings: inherit;
+  --tw-prose-bold: inherit;
 }
 
 .prose p:empty {
