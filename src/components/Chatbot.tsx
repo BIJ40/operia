@@ -92,15 +92,9 @@ export function Chatbot() {
           console.log('New support message:', payload);
           setSupportMessages(prev => [...prev, payload.new]);
           
-          // Jouer un son si c'est un message du support
+          // Jouer un son si c'est un message du support (pas de toast)
           if (payload.new.is_from_support) {
             playNotificationSound();
-            
-            // Afficher une notification toast
-            toast({
-              title: 'Nouveau message',
-              description: 'Le support a répondu à votre demande',
-            });
           }
         }
       )
@@ -109,7 +103,7 @@ export function Chatbot() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeTicket, toast]);
+  }, [activeTicket]);
 
   // Fonction pour jouer un son de notification
   const playNotificationSound = () => {
@@ -158,7 +152,8 @@ export function Chatbot() {
           if (payload.new.status === 'resolved') {
             toast({
               title: 'Ticket résolu',
-              description: 'Votre demande a été résolue par le support.',
+              description: 'Votre demande a été résolue.',
+              duration: 5000,
             });
             setActiveTicket(null);
             setSupportMessages([]);
@@ -350,6 +345,7 @@ export function Chatbot() {
           title: 'Erreur',
           description: 'Impossible d\'envoyer le message',
           variant: 'destructive',
+          duration: 5000,
         });
       }
       return;
@@ -459,6 +455,7 @@ export function Chatbot() {
         title: 'Erreur',
         description: 'Impossible de se connecter au chatbot',
         variant: 'destructive',
+        duration: 5000,
       });
     } finally {
       setIsLoading(false);
@@ -511,8 +508,9 @@ export function Chatbot() {
               if (activeTicket) {
                 toast({
                   title: 'Ticket en cours',
-                  description: 'Vous avez une conversation active avec le support. Le ticket doit être résolu avant de fermer.',
+                  description: 'Conversation active avec le support.',
                   variant: 'destructive',
+                  duration: 5000,
                 });
                 return;
               }
