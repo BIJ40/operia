@@ -30,62 +30,33 @@ function chunkText(text: string, maxChunkSize: number = 500): string[] {
   return chunks.length > 0 ? chunks : [text.substring(0, maxChunkSize)];
 }
 
-// Generate embedding using OpenAI
+// Generate embedding using OpenAI's text-embedding model
 async function generateEmbedding(text: string): Promise<number[]> {
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
   if (!OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY not configured");
   }
 
-  // Use a simple text-to-vector approach with AI
-  // We'll ask the AI to generate a semantic representation
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const response = await fetch("https://api.openai.com/v1/embeddings", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${OPENAI_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "Extract 10 key semantic features from this text as numbers between -1 and 1, representing: topic relevance, technical depth, action orientation, informational content, problem-solving, step-by-step nature, conceptual complexity, practical examples, troubleshooting focus, and general utility. Respond ONLY with a JSON array of 10 numbers."
-        },
-        {
-          role: "user",
-          content: text.substring(0, 1000)
-        }
-      ],
-      temperature: 0.1,
+      model: "text-embedding-3-small",
+      input: text.substring(0, 8000), // OpenAI limit
     }),
   });
 
   if (!response.ok) {
+    const error = await response.text();
+    console.error("OpenAI API error:", error);
     throw new Error(`Failed to generate embedding: ${response.status}`);
   }
 
   const data = await response.json();
-  let content = data.choices[0].message.content;
-  
-  // Remove markdown code blocks if present
-  content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-  
-  try {
-    const embedding = JSON.parse(content);
-    if (Array.isArray(embedding) && embedding.length === 10) {
-      return embedding;
-    }
-  } catch (e) {
-    console.error("Failed to parse embedding:", content);
-  }
-  
-  // Fallback: simple character-based hash embedding
-  return Array.from({ length: 10 }, (_, i) => {
-    const hash = text.split('').reduce((acc, char, idx) => 
-      acc + char.charCodeAt(0) * (idx + i + 1), 0);
-    return (Math.sin(hash) * 2) - 1;
-  });
+  return data.data[0].embedding;
 }
 
 // Clean HTML content

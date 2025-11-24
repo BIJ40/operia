@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileText, Trash2, Download, Edit2 } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, Edit2, ArrowLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Block {
@@ -274,12 +274,22 @@ export default function AdminDocuments() {
     <div className="container max-w-6xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Gestion des documents</h1>
+        <Link to="/admin">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour admin
+          </Button>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Upload section */}
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Uploader un document</h2>
+          <h2 className="text-xl font-semibold mb-2">Uploader un document</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Les documents uploadés ici apparaissent dans l'onglet "Documents" de chaque catégorie/section. 
+            Formats acceptés : PDF, Word, Excel, TXT, JPG, PNG. Ils sont accessibles aux utilisateurs pour consultation.
+          </p>
 
           <div className="space-y-4">
             <div>
