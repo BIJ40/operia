@@ -138,6 +138,7 @@ export default function CategoryApporteur() {
       ...updates,
       isSingleSection: updates.isSingleSection || false,
       hideTitle: updates.hideTitle || false,
+      hideFromSidebar: updates.hideFromSidebar || false,
     };
     await updateBlock(id, sectionUpdates);
     setEditingId(null);
