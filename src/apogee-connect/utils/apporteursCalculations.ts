@@ -230,6 +230,23 @@ export const calculatePartApporteurs = (
   clients: any[],
   dateRange: { start: Date; end: Date }
 ): number => {
+  // Vérifier si on est sur janvier 2025 avec override manuel
+  const { manualJanuaryData, isManualOverrideMonth } = require('@/apogee-connect/config/manualOverrides');
+  const startYear = dateRange.start.getFullYear();
+  const startMonth = dateRange.start.getMonth() + 1;
+  const endYear = dateRange.end.getFullYear();
+  const endMonth = dateRange.end.getMonth() + 1;
+  
+  // Si la période couvre uniquement janvier 2025
+  if (isManualOverrideMonth(startYear, startMonth) && startYear === endYear && startMonth === endMonth) {
+    const caTotal = manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs;
+    const partApporteurs = caTotal > 0 ? (manualJanuaryData.ca_apporteurs / caTotal) * 100 : 0;
+    if (import.meta.env.DEV) {
+      console.log(`📅 OVERRIDE MANUEL - Part apporteurs janvier ${startYear}: ${partApporteurs.toFixed(1)}%`);
+    }
+    return partApporteurs;
+  }
+  
   const clientsMap = createClientsMap(clients);
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
