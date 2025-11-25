@@ -225,10 +225,26 @@ export default function Dashboard() {
 
   const periodLabel = filters.periodLabel || "aujourd'hui";
   
+  if (!currentAgency?.id) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <p className="text-2xl text-muted-foreground animate-pulse">Chargement de l'agence...</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <p className="text-2xl text-muted-foreground animate-pulse">Chargement du dashboard...</p>
+      </div>
+    );
+  }
+
   if (!data) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-        <p className="text-2xl text-muted-foreground">Aucune agence définie - Veuillez vous reconnecter</p>
+        <p className="text-2xl text-muted-foreground">Erreur de chargement des données</p>
       </div>
     );
   }
@@ -267,22 +283,6 @@ export default function Dashboard() {
       trend: data?.variations.ca || 0
     }
   ];
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-        <p className="text-2xl text-muted-foreground animate-pulse">Chargement du dashboard...</p>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-        <p className="text-2xl text-muted-foreground">Aucune agence définie - Veuillez vous reconnecter</p>
-      </div>
-    );
-  }
 
   return (
     <AppLayout>
