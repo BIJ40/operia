@@ -46,6 +46,11 @@ const adminMenuItems = [
     icon: Shield,
   },
   {
+    title: 'Agences',
+    url: '/admin/agencies',
+    icon: Settings,
+  },
+  {
     title: 'Mme Michu',
     url: '/admin/documents',
     icon: MessageSquare,

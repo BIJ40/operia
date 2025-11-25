@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      apogee_agencies: {
+        Row: {
+          api_base_url: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          api_base_url: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          api_base_url?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      apogee_api_credentials: {
+        Row: {
+          agency_id: string
+          api_key: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          api_key: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          api_key?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apogee_api_credentials_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: true
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apporteur_blocks: {
         Row: {
           attachments: Json | null

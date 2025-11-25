@@ -170,6 +170,16 @@ Colonnes : `user_id`, `widget_key`, `is_enabled`, `size`, `display_order`.
 Base de connaissance supplémentaire (legacy ou usage futur).  
 Colonnes : `title`, `content`, `category`, `metadata`.
 
+#### `apogee_agencies`
+Configuration des agences pour le module "Mes indicateurs".  
+Colonnes : `slug`, `label`, `api_base_url`, `is_active`.  
+Utilisé pour associer chaque utilisateur (`profiles.agence`) à une configuration API Apogée.
+
+#### `apogee_api_credentials`
+Clés API optionnelles par agence (strictement protégées).  
+Colonnes : `agency_id`, `api_key`.  
+**Accès RLS** : Admins uniquement. Ne jamais exposer aux utilisateurs standards.
+
 ---
 
 ## Rôles & permissions
@@ -246,6 +256,18 @@ Les Edge Functions sont des fonctions serverless Deno déployées sur Supabase, 
 **Appelé par** : Frontend automatiquement après création d'un ticket support.  
 **Paramètres** : `ticketId`.
 
+### `get-kpis`
+**Rôle** : Récupérer les indicateurs de performance (KPIs) pour l'agence de l'utilisateur connecté.  
+**Appelé par** : Page "Mes indicateurs" au chargement initial et sur actualisation.  
+**Paramètres** : `period` (month/year, optionnel).  
+**Retour** : JSON contenant CA mensuel/annuel, nombre de factures et interventions pour l'agence.  
+**Fonctionnement** :
+  1. Récupère le profil de l'utilisateur (`profiles.agence`).
+  2. Trouve la configuration de l'agence dans `apogee_agencies`.
+  3. Charge les credentials API depuis `apogee_api_credentials` ou env variables.
+  4. Appelle l'API Apogée de l'agence (actuellement stub/mock).
+  5. Retourne les KPIs structurés pour affichage frontend.
+
 ---
 
 ## Flux principaux
@@ -299,6 +321,24 @@ Les Edge Functions sont des fonctions serverless Deno déployées sur Supabase, 
    - Génération des embeddings OpenAI (`text-embedding-3-small`).
    - Insertion des chunks dans `guide_chunks`.
 6. Le chatbot Mme MICHU peut désormais récupérer ce contenu via `search-embeddings`.
+
+### 5. Consultation des indicateurs de performance (KPIs)
+
+1. Utilisateur accède à "Mes indicateurs" depuis la Landing page.
+2. Page `MyIndicators` charge via hook `useAgencyKpis()`.
+3. Hook appelle edge function `get-kpis` avec le JWT de l'utilisateur.
+4. `get-kpis` :
+   - Vérifie l'authentification et récupère `profiles.agence`.
+   - Charge la configuration depuis `apogee_agencies` (api_base_url).
+   - Charge les credentials depuis `apogee_api_credentials` ou secrets Supabase.
+   - Appelle l'API Apogée de l'agence (actuellement mock).
+   - Retourne les KPIs (CA mensuel, CA annuel, factures, interventions).
+5. Affichage des KPIs dans des cartes shadcn (Euro, TrendingUp, FileText, Wrench).
+6. Bouton "Actualiser" pour recharger les données.
+
+**Admin** : Configuration des agences disponible dans `AdminAgencies` (ajout/modification des slugs, labels, URLs API, statut actif/inactif).
+
+**Extension future** : Dashboard franchiseur (multi-agences) avec agrégation des KPIs.
 
 ---
 
