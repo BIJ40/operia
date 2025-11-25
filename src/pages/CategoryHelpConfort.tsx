@@ -73,17 +73,17 @@ export default function CategoryHelpConfort() {
   const location = useLocation();
 
   const { blocks, updateBlock, deleteBlock, addBlock, reorderBlocks, isEditMode } = useEditor();
-  const { isAuthenticated, isAdmin, roleAgence } = useAuth();
+  const { isAuthenticated, isAdmin, roleAgence, hasAccessToScope } = useAuth();
   const { toast } = useToast();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
 
-  // Bloquer l'accès pour les assistant(e)s
+  // Vérifier l'authentification et les permissions
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
   
-  if (roleAgence === 'assistant(e)') {
+  if (!hasAccessToScope('helpconfort')) {
     return <Navigate to="/" replace />;
   }
   

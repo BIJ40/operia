@@ -78,10 +78,15 @@ export default function Category() {
   }
 
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, hasAccessToScope } = useAuth();
   const { toast } = useToast();
   
   if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  
+  // Vérifier les permissions pour accéder au Guide Apogée
+  if (!hasAccessToScope('apogee')) {
     return <Navigate to="/" replace />;
   }
   

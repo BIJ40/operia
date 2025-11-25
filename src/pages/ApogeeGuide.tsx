@@ -212,7 +212,7 @@ const SortableCategory = ({
 
 export default function ApogeeGuide() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useEditor();
-  const { isAdmin, isAuthenticated } = useAuth();
+  const { isAdmin, isAuthenticated, hasAccessToScope } = useAuth();
   const isBlockLocked = useIsBlockLocked();
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -237,6 +237,11 @@ export default function ApogeeGuide() {
   );
 
   if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Vérifier les permissions pour accéder à cette page
+  if (!hasAccessToScope('apogee')) {
     return <Navigate to="/" replace />;
   }
 
