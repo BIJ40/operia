@@ -657,7 +657,7 @@ export const calculateNbMoyenVisitesParIntervention = (
 ): { nbMoyen: number; totalVisites: number; nbInterventions: number } => {
   
   // 1) Filtrer les interventions par période si fournie
-  let interventionsFiltrees = interventions;
+  let interventionsFiltrees = interventions ?? [];
   
   if (dateRange) {
     interventionsFiltrees = interventions.filter(intervention => {
@@ -673,36 +673,50 @@ export const calculateNbMoyenVisitesParIntervention = (
     });
   }
   
-  // 2) Compter les visites par intervention
-  let totalVisites = 0;
-  let nbInterventionsAvecVisite = 0;
+  // 2) Nombre de visites par intervention (version robuste)
+  const visitesCounts = interventionsFiltrees.map(it => {
+    const visites = it.visites ?? [];
+    return visites.length || 0;
+  });
   
-  for (const intervention of interventionsFiltrees) {
-    const visites = intervention.visites || [];
-    const nbVisites = visites.length;
-    
-    if (nbVisites >= 1) {
-      nbInterventionsAvecVisite += 1;
-      totalVisites += nbVisites;
-    }
+  // Interventions qui ont au moins 1 visite
+  const interventionsAvecVisites = visitesCounts.filter(n => n > 0);
+  
+  // Debug express
+  console.log("🔍 Debug Nb visites/RDV:");
+  console.log("  - nb interventions total:", interventionsFiltrees.length);
+  console.log("  - nb interventions avec visites:", interventionsAvecVisites.length);
+  console.log("  - ex avec visites:", interventionsFiltrees.find(it => (it.visites ?? []).length > 0));
+  
+  // Si aucune intervention avec visite → retour 0 (évite NaN)
+  if (interventionsAvecVisites.length === 0) {
+    console.log("  ⚠️ Aucune intervention avec visite → retour 0");
+    return {
+      nbMoyen: 0,
+      totalVisites: 0,
+      nbInterventions: 0
+    };
   }
   
-  // 3) Calculer la moyenne
-  const nbMoyen = nbInterventionsAvecVisite > 0
-    ? totalVisites / nbInterventionsAvecVisite
-    : 0;
+  // Somme totale des visites
+  const totalVisites = visitesCounts.reduce((acc, n) => acc + n, 0);
   
-  console.log("📊 KPI 11 - Nb Moyen Visites/Intervention:", {
-    nbMoyen: Math.round(nbMoyen * 10) / 10,
+  // Nb moyen visites / RDV
+  const nbMoyenVisitesParRDV = totalVisites / interventionsAvecVisites.length;
+  
+  // Arrondi à 2 décimales
+  const nbMoyen = Number(nbMoyenVisitesParRDV.toFixed(2));
+  
+  console.log("📊 KPI 11 - Nb Moyen Visites/RDV:", {
+    nbMoyen,
     totalVisites,
-    nbInterventions: nbInterventionsAvecVisite,
-    nbInterventionsFiltrees: interventionsFiltrees.length
+    nbInterventions: interventionsAvecVisites.length
   });
   
   return {
-    nbMoyen: Math.round(nbMoyen * 10) / 10, // Arrondir à 1 décimale
+    nbMoyen,
     totalVisites,
-    nbInterventions: nbInterventionsAvecVisite
+    nbInterventions: interventionsAvecVisites.length
   };
 };
 
