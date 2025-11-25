@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DataService } from "@/apogee-connect/services/dataService";
 import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
@@ -19,6 +20,13 @@ import {
 import { calculateTypesApporteursStats } from "@/apogee-connect/utils/typesApporteursCalculations";
 import { calculateParticuliersStats } from "@/apogee-connect/utils/particuliersCalculations";
 import { calculateMonthlySegmentation } from "@/apogee-connect/utils/segmentationCalculations";
+import {
+  calculateApporteursActifs,
+  calculateCAMoyenParApporteur,
+  calculateDelaiMoyenPaiement,
+  calculateTauxFidelite,
+  calculateCroissanceCA
+} from "@/apogee-connect/utils/apporteursExtendedCalculations";
 import { TopApporteursWidget } from "@/apogee-connect/components/widgets/TopApporteursWidget";
 import { DossiersConfiesWidget } from "@/apogee-connect/components/widgets/DossiersConfiesWidget";
 import { FlopApporteursWidget } from "@/apogee-connect/components/widgets/FlopApporteursWidget";
@@ -135,10 +143,38 @@ export default function IndicateursApporteurs() {
         panierMoyenHT,
         delaiMoyenFacturation,
         rawProjects: apiData.projects || [],
-        rawClients: apiData.clients || []
+        rawClients: apiData.clients || [],
+        apiGetFactures: apiData.factures || [],
+        apiGetProjects: apiData.projects || []
       };
     },
   });
+
+  // Calculs des 5 nouveaux KPI étendus
+  const apporteursActifs = useMemo(() => {
+    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { nbActifs: 0 };
+    return calculateApporteursActifs(data.apiGetFactures, data.apiGetProjects, secondaryFilters.dateRange);
+  }, [data, secondaryFilters.dateRange]);
+
+  const caMoyenApporteur = useMemo(() => {
+    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { caMoyen: 0, caTotal: 0, nbApporteurs: 0 };
+    return calculateCAMoyenParApporteur(data.apiGetFactures, data.apiGetProjects, secondaryFilters.dateRange);
+  }, [data, secondaryFilters.dateRange]);
+
+  const delaiPaiement = useMemo(() => {
+    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { delaiMoyen: 0, nbFactures: 0 };
+    return calculateDelaiMoyenPaiement(data.apiGetFactures, data.apiGetProjects, secondaryFilters.dateRange);
+  }, [data, secondaryFilters.dateRange]);
+
+  const tauxFidelite = useMemo(() => {
+    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { tauxFidelite: 0, nbRecurrents: 0, nbTotal: 0 };
+    return calculateTauxFidelite(data.apiGetFactures, data.apiGetProjects, secondaryFilters.dateRange);
+  }, [data, secondaryFilters.dateRange]);
+
+  const croissanceCA = useMemo(() => {
+    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { croissance: 0, caPeriodeN: 0, caPeriodeN1: 0 };
+    return calculateCroissanceCA(data.apiGetFactures, data.apiGetProjects, secondaryFilters.dateRange);
+  }, [data, secondaryFilters.dateRange]);
 
   if (!isAgencyReady) {
     return (
@@ -257,7 +293,7 @@ export default function IndicateursApporteurs() {
         </Card>
       </div>
 
-      {/* 5 nouveaux KPI temporaires */}
+      {/* 5 nouveaux KPI avec données réelles */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         {/* KPI 6: Nombre d'apporteurs actifs */}
         <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-cyan-500/50 shadow-lg">
@@ -268,7 +304,7 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">Apporteurs actifs</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-cyan-500">42</p>
+            <p className="text-2xl font-bold text-cyan-500">{apporteursActifs.nbActifs}</p>
             <p className="text-xs text-muted-foreground">sur la période</p>
           </div>
         </Card>
@@ -282,7 +318,7 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">CA moyen / Apporteur</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-pink-500">12 500 €</p>
+            <p className="text-2xl font-bold text-pink-500">{formatEuros(caMoyenApporteur.caMoyen)}</p>
             <p className="text-xs text-muted-foreground">moyenne HT</p>
           </div>
         </Card>
@@ -296,7 +332,7 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">Délai paiement</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-amber-500">45 j</p>
+            <p className="text-2xl font-bold text-amber-500">{delaiPaiement.delaiMoyen} j</p>
             <p className="text-xs text-muted-foreground">moyen</p>
           </div>
         </Card>
@@ -310,7 +346,7 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">Taux de fidélité</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-emerald-500">78%</p>
+            <p className="text-2xl font-bold text-emerald-500">{tauxFidelite.tauxFidelite}%</p>
             <p className="text-xs text-muted-foreground">apporteurs récurrents</p>
           </div>
         </Card>
@@ -324,7 +360,9 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">Croissance CA</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-violet-500">+15%</p>
+            <p className={`text-2xl font-bold ${croissanceCA.croissance >= 0 ? 'text-violet-500' : 'text-red-500'}`}>
+              {croissanceCA.croissance >= 0 ? '+' : ''}{croissanceCA.croissance}%
+            </p>
             <p className="text-xs text-muted-foreground">vs période N-1</p>
           </div>
         </Card>
