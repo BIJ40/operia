@@ -707,6 +707,157 @@ export const calculateNbMoyenVisitesParIntervention = (
 };
 
 // ====================================================================
+// KPI 12 - TAUX DE DOSSIERS MULTI-UNIVERS
+// ====================================================================
+
+export const calculateTauxDossiersMultiUnivers = (
+  projects: any[],
+  dateRange?: { start: Date; end: Date }
+): { tauxMultiUnivers: number; nbMultiUnivers: number; nbTotal: number } => {
+  
+  // 1) Filtrer les projets par période si fournie
+  let projectsFiltres = projects;
+  
+  if (dateRange) {
+    projectsFiltres = projects.filter(project => {
+      const date = project.createdAt || project.data?.createdAt;
+      if (!date) return false;
+      
+      try {
+        const projectDate = parseISO(date);
+        return isWithinInterval(projectDate, dateRange);
+      } catch {
+        return false;
+      }
+    });
+  }
+  
+  // 2) Compter les univers par projet
+  let projetsAvecUnivers = 0;
+  let projetsMultiUnivers = 0;
+  
+  for (const project of projectsFiltres) {
+    const universes = project.universes || project.data?.universes || [];
+    const nbUnivers = universes.length;
+    
+    if (nbUnivers >= 1) {
+      projetsAvecUnivers += 1;
+      
+      if (nbUnivers >= 2) {
+        projetsMultiUnivers += 1;
+      }
+    }
+  }
+  
+  // 3) Calculer le taux
+  const tauxMultiUnivers = projetsAvecUnivers > 0
+    ? (projetsMultiUnivers / projetsAvecUnivers) * 100
+    : 0;
+  
+  console.log("📊 KPI 12 - Taux Multi-Univers:", {
+    tauxMultiUnivers: Math.round(tauxMultiUnivers * 10) / 10,
+    projetsMultiUnivers,
+    projetsAvecUnivers
+  });
+  
+  return {
+    tauxMultiUnivers: Math.round(tauxMultiUnivers * 10) / 10,
+    nbMultiUnivers: projetsMultiUnivers,
+    nbTotal: projetsAvecUnivers
+  };
+};
+
+// ====================================================================
+// KPI 13 - TAUX DE DOSSIERS SANS DEVIS (INTERVENTIONS DIRECTES)
+// ====================================================================
+
+export const calculateTauxDossiersSansDevis = (
+  projects: any[],
+  factures: any[],
+  devis: any[],
+  dateRange?: { start: Date; end: Date }
+): { tauxSansDevis: number; nbSansDevis: number; nbFactures: number } => {
+  
+  // 1) Set des projectId facturés (factures définitives)
+  const projetsFactures = new Set<string>();
+  
+  for (const facture of factures) {
+    const type = facture.type || facture.data?.type;
+    if (type?.toLowerCase() === "avoir") continue;
+    
+    // Filtrer par période si fournie
+    if (dateRange) {
+      const date = facture.dateEmission || facture.dateReelle || facture.date || facture.data?.dateEmission || facture.data?.dateReelle;
+      if (!date) continue;
+      
+      try {
+        const factureDate = parseISO(date);
+        if (!isWithinInterval(factureDate, dateRange)) {
+          continue;
+        }
+      } catch {
+        continue;
+      }
+    }
+    
+    const projectId = facture.projectId || facture.data?.projectId;
+    if (projectId) {
+      projetsFactures.add(projectId);
+    }
+  }
+  
+  // 2) Set des projectId avec devis
+  const projetsAvecDevis = new Set<string>();
+  
+  for (const d of devis) {
+    // Filtrer par période si fournie
+    if (dateRange) {
+      const date = d.dateReelle || d.date || d.dateCreation || d.data?.dateReelle || d.data?.date;
+      if (!date) continue;
+      
+      try {
+        const devisDate = parseISO(date);
+        if (!isWithinInterval(devisDate, dateRange)) {
+          continue;
+        }
+      } catch {
+        continue;
+      }
+    }
+    
+    const projectId = d.projectId || d.data?.projectId;
+    if (projectId) {
+      projetsAvecDevis.add(projectId);
+    }
+  }
+  
+  // 3) Dossiers facturés sans devis
+  const projetsFacturesSansDevis = new Set(
+    [...projetsFactures].filter(pid => !projetsAvecDevis.has(pid))
+  );
+  
+  // 4) Calculer le taux
+  const nbFactures = projetsFactures.size;
+  const nbSansDevis = projetsFacturesSansDevis.size;
+  const tauxSansDevis = nbFactures > 0
+    ? (nbSansDevis / nbFactures) * 100
+    : 0;
+  
+  console.log("📊 KPI 13 - Taux Sans Devis:", {
+    tauxSansDevis: Math.round(tauxSansDevis * 10) / 10,
+    nbSansDevis,
+    nbFactures,
+    exemplesProjectsSansDevis: [...projetsFacturesSansDevis].slice(0, 3)
+  });
+  
+  return {
+    tauxSansDevis: Math.round(tauxSansDevis * 10) / 10,
+    nbSansDevis,
+    nbFactures
+  };
+};
+
+// ====================================================================
 // KPI 8 - PANIER MOYEN PAR DOSSIER FACTURÉ
 // ====================================================================
 
