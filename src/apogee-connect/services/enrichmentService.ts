@@ -134,7 +134,7 @@ export class EnrichmentService {
 
     // Mapping des icônes Lucide pour chaque univers
     const iconMapping: Record<string, string> = {
-      'pmr': 'PaintRoller',
+      'pmr': 'Accessibility',
       'volet_roulant': 'Blinds',
       'electricite': 'Zap',
       'plomberie': 'Droplets',
