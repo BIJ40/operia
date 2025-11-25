@@ -12,7 +12,7 @@ interface AuthContextType {
   userPermissions: string[];
   isLoggingOut: boolean;
   hasAccessToBlock: (blockId: string) => boolean;
-  hasAccessToScope: (scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'indicateurs') => boolean;
+  hasAccessToScope: (scope: 'apogee' | 'apporteurs' | 'helpconfort') => boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -207,7 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return userPermissions.includes(blockId);
   };
 
-  const hasAccessToScope = (scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'indicateurs'): boolean => {
+  const hasAccessToScope = (scope: 'apogee' | 'apporteurs' | 'helpconfort'): boolean => {
     // Les admins ont accès à tout
     if (isAdmin) return true;
     

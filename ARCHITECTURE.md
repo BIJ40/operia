@@ -194,18 +194,8 @@ Indépendant des rôles applicatifs, utilisé pour filtrer les permissions granu
 ### Mécanisme de permissions
 
 - **Table `user_roles`** : Associe chaque utilisateur à un ou plusieurs rôles applicatifs (`admin`, `support`, `user`).
-- **Table `role_permissions`** : Définit quels postes (`role_agence`) peuvent accéder à quels scopes/blocs (`block_id`).
+- **Table `role_permissions`** : Définit quels postes (`role_agence`) peuvent accéder à quels blocs (`block_id`).
 - **Fonction SQL `has_role(_user_id, _role)`** : Fonction SECURITY DEFINER pour vérifier les rôles sans déclencher de récursion RLS.
-- **Système dynamique** : Les permissions sont gérées au niveau des "super catégories" (scopes) :
-  - Les scopes sont automatiquement détectés depuis la table `home_cards` via leurs URLs (`/apogee`, `/apporteurs`, `/helpconfort`, `/mes-indicateurs`)
-  - Quand une nouvelle super catégorie est ajoutée dans `home_cards`, le système crée automatiquement les permissions pour tous les rôles avec `can_access=false` (bloqué par défaut)
-  - L'interface admin (`AdminRolePermissions`) charge dynamiquement les catégories et permet de basculer l'accès pour chaque rôle
-
-### Scopes disponibles
-- `apogee` : Guide Apogée
-- `apporteurs` : Guide Apporteurs  
-- `helpconfort` : Base documentaire HelpConfort
-- `indicateurs` : Mes indicateurs (KPIs agence)
 
 ### Row Level Security (RLS)
 

@@ -591,11 +591,10 @@ export default function Landing() {
                   const Icon = IconComponent(card.icon || 'BookOpen');
                   
                   // Déterminer le scope basé sur le lien de la carte
-                  let scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'indicateurs' | null = null;
+                  let scope: 'apogee' | 'apporteurs' | 'helpconfort' | null = null;
                   if (card.link.includes('/apogee')) scope = 'apogee';
                   else if (card.link.includes('/apporteur')) scope = 'apporteurs';
                   else if (card.link.includes('/helpconfort')) scope = 'helpconfort';
-                  else if (card.link.includes('/mes-indicateurs')) scope = 'indicateurs';
                   
                   // Vérifier l'accès basé sur le scope
                   const { hasAccessToScope } = useAuth();

@@ -6,12 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TrendingUp, FileText, Wrench, Euro, RefreshCw } from 'lucide-react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 export default function MyIndicators() {
-  const { isAuthenticated, user, hasAccessToScope } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { data, isLoading, isError, error, refetch } = useAgencyKpis({ period: 'month' });
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -21,24 +20,6 @@ export default function MyIndicators() {
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
-  }
-
-  // Vérification des permissions d'accès au scope 'indicateurs'
-  const hasAccess = hasAccessToScope('indicateurs');
-
-  if (!hasAccess) {
-    return (
-      <div className="container mx-auto p-6">
-        <Alert variant="destructive">
-          <AlertDescription>
-            Vous n'avez pas les permissions nécessaires pour accéder aux indicateurs.
-          </AlertDescription>
-        </Alert>
-        <Button onClick={() => navigate('/')} variant="outline" className="mt-4">
-          Retour à l'accueil
-        </Button>
-      </div>
-    );
   }
 
   const formatCurrency = (value: number) => {
