@@ -480,19 +480,13 @@ export const calculateTauxDossiersComplexes = (
   interventions: any[],
   dateRange?: { start: Date; end: Date }
 ): { tauxComplexite: number; nbComplexes: number; nbTotal: number } => {
-  // Filtrer les interventions techniques validées
+  // Filtrer les interventions techniques terminées
   const interventionsTechniques = interventions.filter(intervention => {
-    // Vérifier le type "technique"
-    const isTechnique = 
-      intervention.type?.toLowerCase().includes("technique") ||
-      intervention.type2?.toLowerCase().includes("technique");
+    // Vérifier le type "technique" (valeur exacte)
+    const isTechnique = intervention.type === "technique";
     
-    // Vérifier l'état completed/validated
-    const isCompleted = 
-      intervention.state?.toLowerCase() === "completed" ||
-      intervention.state?.toLowerCase() === "validated" ||
-      intervention.status?.toLowerCase() === "completed" ||
-      intervention.status?.toLowerCase() === "validated";
+    // Vérifier l'état "completed" (valeur exacte)
+    const isCompleted = intervention.state === "completed";
     
     // Filtrer par date si dateRange fourni
     if (dateRange) {
