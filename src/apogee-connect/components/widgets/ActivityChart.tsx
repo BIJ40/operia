@@ -66,7 +66,7 @@ export const ActivityChart = ({ data, variation, apporteurFilter }: ActivityChar
                 tickLine={{ stroke: '#0e7490' }}
                 allowDecimals={false}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(6, 182, 212, 0.1)' }} wrapperStyle={{ zIndex: 100 }} />
               <Bar 
                 dataKey="dossiers" 
                 fill="#06b6d4" 

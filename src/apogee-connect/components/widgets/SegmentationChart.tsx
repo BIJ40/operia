@@ -24,8 +24,8 @@ export const SegmentationChart = ({ data, loading }: SegmentationChartProps) => 
       const partApp = total > 0 ? ((apporteurs / total) * 100).toFixed(1) : "0.0";
 
       return (
-        <div className="bg-background border border-border rounded-lg shadow-lg p-3">
-          <p className="font-semibold mb-2">{label}</p>
+        <div className="bg-white dark:bg-gray-800 border-2 border-primary rounded-lg shadow-xl p-3 z-50">
+          <p className="font-semibold mb-2 text-foreground">{label}</p>
           <div className="space-y-1 text-sm">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
@@ -128,7 +128,7 @@ export const SegmentationChart = ({ data, loading }: SegmentationChartProps) => 
                 tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 tickFormatter={formatCurrency}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} wrapperStyle={{ zIndex: 100 }} />
               <Legend 
                 wrapperStyle={{ paddingTop: '20px' }}
                 formatter={(value) => {
