@@ -7,6 +7,7 @@ import { useApiToggle } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { Card } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, FolderOpen, ClipboardCheck, FileText, Euro } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { calculateDashboardStats } from "@/apogee-connect/utils/dashboardCalculations";
 import { PeriodSelector } from "@/apogee-connect/components/filters/PeriodSelector";
@@ -314,9 +315,18 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-blue-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
-                  <FolderOpen className="w-3.5 h-3.5 text-white" />
-                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
+                        <FolderOpen className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Nombre de projets créés sur la période</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <div className="flex items-center gap-1">
                   {(data?.variations.dossiers || 0) > 0 ? (
                     <TrendingUp className="w-2.5 h-2.5 text-green-500" />
@@ -335,9 +345,18 @@ export default function Dashboard() {
             {/* KPI 2: RT */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-green-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
-                  <ClipboardCheck className="w-3.5 h-3.5 text-white" />
-                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
+                        <ClipboardCheck className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Nombre de relevés techniques réalisés sur la période</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">RT réalisés</p>
               <div className="flex items-baseline gap-1">
@@ -351,9 +370,18 @@ export default function Dashboard() {
             {/* KPI 3: Devis */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-purple-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
-                  <FileText className="w-3.5 h-3.5 text-white" />
-                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
+                        <FileText className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Nombre de devis envoyés (state != draft) sur la période</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Devis émis</p>
               <div className="flex items-baseline gap-1">
@@ -367,9 +395,18 @@ export default function Dashboard() {
             {/* KPI 4: CA */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-orange-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
-                  <Euro className="w-3.5 h-3.5 text-white" />
-                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
+                        <Euro className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Somme des factures HT (type = facture) sur la période</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <div className="flex items-center gap-1">
                   {(data?.variations.ca || 0) > 0 ? (
                     <TrendingUp className="w-2.5 h-2.5 text-green-500" />
@@ -393,9 +430,18 @@ export default function Dashboard() {
             {/* KPI 5: Taux de SAV */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-red-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <div className="bg-gradient-to-br from-red-500 to-red-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">SAV</span>
-                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-red-500 to-red-600 p-1.5 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-xs">SAV</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">% d'interventions SAV par rapport au total sur la période</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Taux de SAV</p>
               <div className="flex items-baseline gap-1">
