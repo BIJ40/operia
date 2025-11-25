@@ -971,105 +971,128 @@ export const calculatePolyvalenceTechniciens = (
   users: any[]
 ): { polyvalenceMoyenne: number; nbTechniciens: number; detailsTechs: Array<{ techId: string; nom: string; nbUnivers: number }> } => {
   
-  // 1) Créer un index des projets pour accès rapide
-  const projectsMap: Record<string, any> = {};
-  for (const project of projects) {
-    const id = project.id || project.data?.id;
+  // 1) Helper - Extraction des univers d'un projet
+  const extractUnivers = (project: any): string[] => {
+    return project?.universes ?? project?.data?.universes ?? [];
+  };
+
+  // 2) Helper - Extraction des techniciens d'une intervention (même logique que KPI 14)
+  const extractUsers = (it: any): Set<string> => {
+    const techs = new Set<string>();
+
+    // visites racine
+    (it.visites ?? []).forEach((v: any) => {
+      (v.usersIds ?? []).forEach((u: string) => techs.add(u));
+    });
+
+    // data.visites
+    (it.data?.visites ?? []).forEach((v: any) => {
+      (v.usersIds ?? []).forEach((u: string) => techs.add(u));
+    });
+
+    // blocs BI (Depan, Tvx, Rt)
+    (it.data?.biDepan?.items ?? []).forEach((v: any) => {
+      (v.usersIds ?? []).forEach((u: string) => techs.add(u));
+    });
+
+    (it.data?.biTvx?.items ?? []).forEach((v: any) => {
+      (v.usersIds ?? []).forEach((u: string) => techs.add(u));
+    });
+
+    (it.data?.biRt?.items ?? []).forEach((v: any) => {
+      (v.usersIds ?? []).forEach((u: string) => techs.add(u));
+    });
+
+    return techs;
+  };
+
+  // 3) Indexer les projets par id
+  const projectById: Record<string, any> = {};
+  projects.forEach(p => {
+    const id = p.id ?? p.data?.id;
     if (id) {
-      projectsMap[id] = project;
+      projectById[id] = p;
     }
-  }
-  
-  // 2) Construire un Set d'univers par technicien
-  const setUniversParTech: Record<string, Set<string>> = {};
-  
-  for (const intervention of interventions) {
-    const projectId = intervention.projectId || intervention.data?.projectId;
-    if (!projectId) continue;
-    
-    const project = projectsMap[projectId];
+  });
+
+  // 4) Construire univers par technicien
+  const universParTech: Record<string, Set<string>> = {};
+
+  for (const it of interventions) {
+    const pid = it.projectId ?? it.data?.projectId;
+    if (!pid) continue;
+
+    const project = projectById[pid];
     if (!project) continue;
-    
-    const universes = project.universes || project.data?.universes || [];
-    if (universes.length === 0) continue;
-    
-    // Liste des techniciens impliqués
-    const techsImpliques = new Set<string>();
-    
-    // Tech principal
-    const userId = intervention.userId || intervention.data?.userId;
-    if (userId) {
-      techsImpliques.add(userId);
-    }
-    
-    // Techs des visites
-    const visites = intervention.visites || [];
-    for (const visite of visites) {
-      const usersIds = visite.usersIds || [];
-      for (const techId of usersIds) {
-        if (techId) {
-          techsImpliques.add(techId);
-        }
+
+    const univers = extractUnivers(project);
+    if (!univers || univers.length === 0) continue;
+
+    const techs = extractUsers(it);
+    if (techs.size === 0) continue;
+
+    techs.forEach(techId => {
+      if (!universParTech[techId]) {
+        universParTech[techId] = new Set();
       }
-    }
-    
-    // Pour chaque tech, ajouter tous les univers du projet
-    for (const techId of techsImpliques) {
-      if (!setUniversParTech[techId]) {
-        setUniversParTech[techId] = new Set<string>();
-      }
-      
-      for (const univers of universes) {
-        if (univers) {
-          setUniversParTech[techId].add(univers);
-        }
-      }
-    }
+      univers.forEach(u => universParTech[techId].add(u));
+    });
   }
-  
-  // 3) Créer un index des users pour récupérer les noms
+
+  // 5) Indexer les users pour récupérer les noms
   const usersMap: Record<string, any> = {};
   for (const user of users) {
-    const id = user.id || user.data?.id;
+    const id = user.id ?? user.data?.id;
     if (id) {
       usersMap[id] = user;
     }
   }
-  
-  // 4) Calculer le nombre d'univers par tech et la moyenne
-  const detailsTechs: Array<{ techId: string; nom: string; nbUnivers: number }> = [];
-  let totalUnivers = 0;
-  
-  for (const techId in setUniversParTech) {
-    const nbUnivers = setUniversParTech[techId].size;
-    totalUnivers += nbUnivers;
-    
+
+  // 6) Transformer en résultats par technicien
+  const resultParTech = Object.entries(universParTech).map(([techId, setUnivers]) => {
     const user = usersMap[techId];
-    const firstname = user?.firstname || user?.data?.firstname || "";
-    const lastname = user?.lastname || user?.data?.lastname || "";
+    const firstname = user?.firstname ?? user?.data?.firstname ?? "";
+    const lastname = user?.lastname ?? user?.data?.lastname ?? "";
     const nom = `${firstname} ${lastname}`.trim() || techId;
-    
-    detailsTechs.push({ techId, nom, nbUnivers });
-  }
-  
-  // Trier par nombre d'univers décroissant
-  detailsTechs.sort((a, b) => b.nbUnivers - a.nbUnivers);
-  
-  const nbTechniciens = detailsTechs.length;
-  const polyvalenceMoyenne = nbTechniciens > 0
-    ? totalUnivers / nbTechniciens
-    : 0;
-  
-  console.log("📊 KPI 15 - Polyvalence Techniciens:", {
-    polyvalenceMoyenne: Math.round(polyvalenceMoyenne * 10) / 10,
-    nbTechniciens,
-    top5: detailsTechs.slice(0, 5)
+
+    return {
+      techId,
+      nom,
+      nbUnivers: setUnivers.size
+    };
   });
-  
+
+  // Trier par nombre d'univers décroissant
+  resultParTech.sort((a, b) => b.nbUnivers - a.nbUnivers);
+
+  // 7) Polyvalence moyenne globale
+  if (resultParTech.length === 0) {
+    console.log("📊 KPI 15 - Polyvalence Techniciens:", {
+      polyvalenceMoyenne: 0,
+      nbTechniciens: 0,
+      top5: []
+    });
+    
+    return {
+      polyvalenceMoyenne: 0,
+      nbTechniciens: 0,
+      detailsTechs: []
+    };
+  }
+
+  const sommeUnivers = resultParTech.reduce((acc, t) => acc + t.nbUnivers, 0);
+  const polyvalenceMoyenne = sommeUnivers / resultParTech.length;
+
+  console.log("📊 KPI 15 - Polyvalence Techniciens:", {
+    polyvalenceMoyenne: Number(polyvalenceMoyenne.toFixed(2)),
+    nbTechniciens: resultParTech.length,
+    top5: resultParTech.slice(0, 5)
+  });
+
   return {
-    polyvalenceMoyenne: Math.round(polyvalenceMoyenne * 10) / 10,
-    nbTechniciens,
-    detailsTechs
+    polyvalenceMoyenne: Number(polyvalenceMoyenne.toFixed(2)),
+    nbTechniciens: resultParTech.length,
+    detailsTechs: resultParTech
   };
 };
 
