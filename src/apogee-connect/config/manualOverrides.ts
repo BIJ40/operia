@@ -1,6 +1,6 @@
 /**
  * Configuration manuelle pour les données historiques de janvier 2025
- * 
+ *
  * CONTEXTE:
  * - L'activité Apogée n'a commencé qu'en février 2025
  * - En janvier 2025, l'ancien logiciel contenait toutes les interventions
@@ -8,7 +8,7 @@
  *   d'environ 90 000 € sans apporteur
  * - Cette facture est fictive pour Apogée et ne doit jamais être prise en compte
  *   dans les calculs statistiques
- * 
+ *
  * USAGE:
  * - Renseigner les valeurs réelles de CA pour janvier 2025 ci-dessous
  * - Ces valeurs seront automatiquement injectées dans tous les calculs du dashboard
@@ -17,15 +17,15 @@
 
 export interface ManualJanuaryData {
   enabled: boolean;
-  agency: string; // Slug de l'agence concernée (ex: "dax")
-  year: number;
-  month: number; // 1 = janvier
-  ca_particuliers: number;
-  ca_apporteurs: number;
-  nb_factures_particuliers: number;
-  nb_factures_apporteurs: number;
-  nb_projets: number;
-  nb_devis: number;
+  agency: dax; // Slug de l'agence concernée (ex: "dax")
+  year: 2025;
+  month: 1; // 1 = janvier
+  ca_particuliers: 19419;
+  ca_apporteurs: 68460;
+  nb_factures_particuliers: 30;
+  nb_factures_apporteurs: 214;
+  nb_projets: 379;
+  nb_devis: 111;
 }
 
 export const manualJanuaryData: ManualJanuaryData = {
@@ -44,7 +44,7 @@ export const manualJanuaryData: ManualJanuaryData = {
 /**
  * Vérifie si une date correspond au mois manuel (janvier 2025)
  * ET si l'agence de l'utilisateur correspond
- * 
+ *
  * @param year Année à vérifier
  * @param month Mois à vérifier (1-12)
  * @param userAgency Slug de l'agence de l'utilisateur (ex: "dax")
@@ -61,25 +61,25 @@ export const isManualOverrideMonth = (year: number, month: number, userAgency: s
  */
 export const isFictitiousTransferInvoice = (facture: any): boolean => {
   if (!facture) return false;
-  
+
   // Critère 1: Montant très élevé (> 85 000 €)
   const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
-  const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-  
+  const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ""));
+
   if (!isNaN(montant) && montant > 85000) {
     return true;
   }
-  
+
   // Critère 2: ID spécifique si connu
   // À adapter selon l'identifiant exact de la facture
   if (facture.id === "FACTURE_TRANSFERT_JANVIER_2025") {
     return true;
   }
-  
+
   // Critère 3: Référence spécifique
   if (facture.reference === "TRANSFERT_2025" || facture.numeroFacture === "TRANSFERT_2025") {
     return true;
   }
-  
+
   return false;
 };
