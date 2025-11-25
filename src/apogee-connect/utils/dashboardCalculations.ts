@@ -127,7 +127,7 @@ export const INIT_INVOICE_PARTICULIERS = 19419.94;
  * Calcule la part APPORTEURS de la facture d'init JANVIER 2025
  */
 export const getInitInvoiceApporteursAmount = (facture: any): number => {
-  const montantRaw = facture.data?.totalHT || facture.totalHT || "0";
+  const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
   const montantTotal = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
   
   if (isNaN(montantTotal)) return 0;
