@@ -9,12 +9,21 @@ const ApiToggleContext = createContext<ApiToggleContextType | undefined>(undefin
 
 export function ApiToggleProvider({ children }: { children: ReactNode }) {
   const [isApiEnabled, setIsApiEnabled] = useState(() => {
-    const stored = localStorage.getItem('apiEnabled');
-    return stored === null ? true : stored === 'true';
+    try {
+      const stored = localStorage.getItem('apiEnabled');
+      return stored === null ? true : stored === 'true';
+    } catch (e) {
+      console.warn('Erreur lecture localStorage apiEnabled:', e);
+      return true; // Valeur par défaut si erreur
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('apiEnabled', String(isApiEnabled));
+    try {
+      localStorage.setItem('apiEnabled', String(isApiEnabled));
+    } catch (e) {
+      console.warn('Erreur écriture localStorage apiEnabled:', e);
+    }
   }, [isApiEnabled]);
 
   const toggleApi = () => {
