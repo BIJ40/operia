@@ -858,6 +858,100 @@ export const calculateTauxDossiersSansDevis = (
 };
 
 // ====================================================================
+// KPI 14 - TAUX DE DOSSIERS MULTI-TECHNICIENS
+// ====================================================================
+
+export const calculateTauxDossiersMultiTechniciens = (
+  interventions: any[],
+  dateRange?: { start: Date; end: Date }
+): { tauxMultiTech: number; nbMultiTech: number; nbTotal: number } => {
+  
+  // 1) Filtrer les interventions par période si fournie
+  let interventionsFiltrees = interventions;
+  
+  if (dateRange) {
+    interventionsFiltrees = interventions.filter(intervention => {
+      const date = intervention.date || intervention.data?.date;
+      if (!date) return false;
+      
+      try {
+        const interventionDate = parseISO(date);
+        return isWithinInterval(interventionDate, dateRange);
+      } catch {
+        return false;
+      }
+    });
+  }
+  
+  // 2) Construire un Set de techniciens par projectId
+  const setTechParProjet: Record<string, Set<string>> = {};
+  
+  for (const intervention of interventionsFiltrees) {
+    const projectId = intervention.projectId || intervention.data?.projectId;
+    if (!projectId) continue;
+    
+    // Initialiser le set si non existant
+    if (!setTechParProjet[projectId]) {
+      setTechParProjet[projectId] = new Set<string>();
+    }
+    
+    // Ajouter le tech principal (userId de l'intervention)
+    const userId = intervention.userId || intervention.data?.userId;
+    if (userId) {
+      setTechParProjet[projectId].add(userId);
+    }
+    
+    // Ajouter les techs des visites
+    const visites = intervention.visites || [];
+    for (const visite of visites) {
+      const usersIds = visite.usersIds || [];
+      for (const techId of usersIds) {
+        if (techId) {
+          setTechParProjet[projectId].add(techId);
+        }
+      }
+    }
+  }
+  
+  // 3) Compter les projets avec tech et multi-tech
+  let projetsAvecTech = 0;
+  let projetsMultiTech = 0;
+  
+  for (const projectId in setTechParProjet) {
+    const nbTech = setTechParProjet[projectId].size;
+    
+    if (nbTech >= 1) {
+      projetsAvecTech += 1;
+      
+      if (nbTech >= 2) {
+        projetsMultiTech += 1;
+      }
+    }
+  }
+  
+  // 4) Calculer le taux
+  const tauxMultiTech = projetsAvecTech > 0
+    ? (projetsMultiTech / projetsAvecTech) * 100
+    : 0;
+  
+  console.log("📊 KPI 14 - Taux Multi-Techniciens:", {
+    tauxMultiTech: Math.round(tauxMultiTech * 10) / 10,
+    projetsMultiTech,
+    projetsAvecTech,
+    exemples: Object.entries(setTechParProjet)
+      .filter(([_, techs]) => techs.size >= 2)
+      .slice(0, 3)
+      .map(([projectId, techs]) => ({ projectId, nbTechs: techs.size }))
+  });
+  
+  return {
+    tauxMultiTech: Math.round(tauxMultiTech * 10) / 10,
+    nbMultiTech: projetsMultiTech,
+    nbTotal: projetsAvecTech
+  };
+};
+
+// ====================================================================
 // KPI 8 - PANIER MOYEN PAR DOSSIER FACTURÉ
 // ====================================================================
 
