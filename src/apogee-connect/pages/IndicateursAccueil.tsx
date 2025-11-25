@@ -39,9 +39,8 @@ export default function IndicateursAccueil() {
         users: apiData.users || [],
       }, filters.dateRange, userAgency);
       
-      // Calculer les données mensuelles CA - année dynamique basée sur les filtres
-      const start = filters.dateRange?.start;
-      const year = start instanceof Date ? start.getFullYear() : new Date().getFullYear();
+      // Calculer les données mensuelles CA pour l'année 2025 (spécification fonctionnelle)
+      const year = 2025;
       const monthlyCAData = calculateMonthlyCA(
         apiData.factures || [],
         apiData.clients || [],
