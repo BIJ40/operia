@@ -160,46 +160,46 @@ export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetPr
       </div>
 
       {/* Graphique global */}
-      <div className="flex justify-center">
-        <Card className="max-w-2xl w-full">
+      <div className="flex justify-center h-full">
+        <Card className="max-w-2xl w-full h-full">
           <CardHeader>
             <CardTitle className="text-base">Répartition du CA par type</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis 
-                dataKey="name" 
-                className="text-xs"
-                angle={-45}
-                textAnchor="end"
-                height={100}
-              />
-              <YAxis 
-                className="text-xs"
-                tickFormatter={(value) => `${(value / 1000).toFixed(0)}k€`}
-              />
-              <Tooltip 
-                formatter={(value: number) => formatEuros(value)}
-                contentStyle={{ 
-                  backgroundColor: 'white',
-                  border: '2px solid hsl(var(--primary))',
-                  borderRadius: '8px',
-                  zIndex: 100
-                }}
-                wrapperStyle={{ zIndex: 100 }}
-                cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
-              />
-              <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="name" 
+                  className="text-xs"
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                />
+                <YAxis 
+                  className="text-xs"
+                  tickFormatter={(value) => `${(value / 1000).toFixed(0)}k€`}
+                />
+                <Tooltip 
+                  formatter={(value: number) => formatEuros(value)}
+                  contentStyle={{ 
+                    backgroundColor: 'white',
+                    border: '2px solid hsl(var(--primary))',
+                    borderRadius: '8px',
+                    zIndex: 100
+                  }}
+                  wrapperStyle={{ zIndex: 100 }}
+                  cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
+                />
+                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Grille compacte avec cartes cliquables */}
