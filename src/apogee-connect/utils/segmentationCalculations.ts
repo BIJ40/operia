@@ -13,6 +13,7 @@ export interface MonthlySegmentData {
 
 /**
  * Calcule l'évolution mensuelle du CA par segment (Particuliers vs Apporteurs)
+ * en se basant STRICTEMENT sur les factures (même logique que le CA global).
  */
 export const calculateMonthlySegmentation = (
   factures: any[],
@@ -20,100 +21,78 @@ export const calculateMonthlySegmentation = (
   projects: any[],
   year: number
 ): MonthlySegmentData[] => {
-  const clientsMap = new Map(clients.map(c => [c.id, c]));
   const projectsMap = new Map(projects.map(p => [p.id, p]));
-  
-  const monthlyData: MonthlySegmentData[] = [];
-  
-  // Pour chaque mois de l'année
-  for (let month = 0; month < 12; month++) {
-    const date = new Date(year, month, 1);
-    const monthStart = startOfMonth(date);
-    const monthEnd = endOfMonth(date);
-    const monthLabel = format(date, "MMM", { locale: fr });
-    
-    let caParticuliers = 0;
-    let caApporteurs = 0;
-    
-    // Traiter d'abord les factures normales
-    const initInvoiceProcessed = new Set(); // Éviter de compter la facture d'init plusieurs fois
-    
-    factures.forEach(facture => {
-      const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
-      if (!dateReelle) return;
-      
-      try {
-        const factureDate = parseISO(dateReelle);
-        if (!isWithinInterval(factureDate, { start: monthStart, end: monthEnd })) return;
-        
-        // Récupérer le projet et client
-        const project = projectsMap.get(facture.projectId);
-        if (!project) return;
-        
-        const client = clientsMap.get(facture.clientId);
-        
-        // Vérifier si c'est la facture d'init JANVIER 2025
-        const isInit = isInitInvoice(facture, client, project);
-        
-        if (isInit) {
-          // Répartir la facture d'init UNE SEULE FOIS entre les deux segments
-          const factureId = facture.id || facture.numeroFacture;
-          if (!initInvoiceProcessed.has(factureId)) {
-            initInvoiceProcessed.add(factureId);
-            
-             // Montant total de la facture
-             const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
-             const montantTotal = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-            
-            if (!isNaN(montantTotal)) {
-              // Répartition fixe selon les règles métier
-              caParticuliers += INIT_INVOICE_PARTICULIERS; // 19 419,94 €
-              caApporteurs += (montantTotal - INIT_INVOICE_PARTICULIERS); // Le reste
-            }
-          }
-          return;
-        }
-        
-        // Traitement des factures normales (non-init)
-        const commanditaireId = project.data?.commanditaireId || project.commanditaireId;
-        const estParticulier = !commanditaireId;
-        
-         // Calculer le montant
-         const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
-         let montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-        
-        if (isNaN(montant)) return;
-        
-        // Vérifier type de facture (avoir = négatif)
-        const typeFacture = (facture.type || facture.typeFacture || facture.data?.type || facture.state || "").toLowerCase();
-        if (typeFacture === "avoir") {
-          montant = -Math.abs(montant);
-        }
-        
-        // Ajouter au bon segment
-        if (estParticulier) {
-          caParticuliers += montant;
-        } else {
-          caApporteurs += montant;
-        }
-      } catch {
-        return;
-      }
-    });
-    
-    const totalCA = caParticuliers + caApporteurs;
-    const partParticuliers = totalCA > 0 ? (caParticuliers / totalCA) * 100 : 0;
-    const partApporteurs = totalCA > 0 ? (caApporteurs / totalCA) * 100 : 0;
-    
-    monthlyData.push({
-      month: monthLabel,
-      caParticuliers,
-      caApporteurs,
-      totalCA,
-      partParticuliers,
-      partApporteurs
-    });
-  }
-  
+
+  // Préparer les 12 mois de l'année
+  const monthlyData: MonthlySegmentData[] = Array.from({ length: 12 }, (_, monthIndex) => {
+    const date = new Date(year, monthIndex, 1);
+    return {
+      month: format(date, "MMM", { locale: fr }),
+      caParticuliers: 0,
+      caApporteurs: 0,
+      totalCA: 0,
+      partParticuliers: 0,
+      partApporteurs: 0,
+    };
+  });
+
+  factures.forEach((facture) => {
+    // Exclure les avoirs
+    const typeFacture = (facture.type || facture.typeFacture || facture.data?.type || facture.state || "").toLowerCase();
+    if (typeFacture === "avoir") return;
+
+    // Date de référence de la facture (même logique que les autres KPIs)
+    const dateStr = facture.dateReelle || facture.dateEmission || facture.date || facture.created_at;
+    if (!dateStr) return;
+
+    let factureDate: Date;
+    try {
+      factureDate = parseISO(dateStr);
+    } catch {
+      return;
+    }
+
+    if (factureDate.getFullYear() !== year) return;
+
+    const monthIndex = factureDate.getMonth(); // 0-11
+    const monthData = monthlyData[monthIndex];
+    if (!monthData) return;
+
+    // Récupérer le projet lié à la facture
+    const project = projectsMap.get(facture.projectId);
+    if (!project) return;
+
+    const commanditaireId = project.data?.commanditaireId || project.commanditaireId;
+    const estParticulier = !commanditaireId;
+
+    // Montant HT de la facture (aligné avec les autres calculs CA)
+    const montantRaw =
+      facture.totalHT ||
+      facture.montantHT ||
+      facture.data?.totalHT ||
+      facture.data?.montantHT ||
+      "0";
+    let montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ""));
+    if (isNaN(montant)) return;
+
+    if (estParticulier) {
+      monthData.caParticuliers += montant;
+    } else {
+      monthData.caApporteurs += montant;
+    }
+  });
+
+  // Calculer totaux et pourcentages par mois
+  monthlyData.forEach((m) => {
+    m.totalCA = m.caParticuliers + m.caApporteurs;
+    if (m.totalCA > 0) {
+      m.partParticuliers = (m.caParticuliers / m.totalCA) * 100;
+      m.partApporteurs = (m.caApporteurs / m.totalCA) * 100;
+    } else {
+      m.partParticuliers = 0;
+      m.partApporteurs = 0;
+    }
+  });
+
   return monthlyData;
 };
