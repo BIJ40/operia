@@ -121,17 +121,7 @@ export default function MyIndicators() {
               isLoading={isLoading}
             />
 
-            {/* T6 - Rendez-Vous (temporel) - réalisés sur la période */}
-            <KpiTile
-              title="Rendez-Vous"
-              value={data ? data.kpis.interventions_count : '-'}
-              subtitle="Réalisés sur la période"
-              icon={Wrench}
-              isLoading={isLoading}
-              tooltip="Nombre de rendez-vous terminés sur la période sélectionnée"
-            />
-
-            {/* T7 - Rendez-Vous (temporel) */}
+            {/* T6 - Rendez-Vous (temporel) */}
             <KpiTile
               title="Rendez-Vous"
               value={data ? data.kpis.interventions_count : '-'}
