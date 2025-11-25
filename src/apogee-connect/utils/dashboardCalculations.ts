@@ -1324,6 +1324,26 @@ export const calculateTauxTransformationDevis = (
 // ====================================================================
 
 /**
+ * Parser pour les dates françaises "dd/MM/yyyy HH:mm:ss"
+ */
+function parseHistoryDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  
+  // Format attendu: "09/02/2025 22:00:50"
+  const [datePart, timePart] = dateStr.split(" ");
+  if (!datePart) return null;
+  
+  const [day, month, year] = datePart.split("/");
+  if (!day || !month || !year) return null;
+  
+  // Construire une date ISO: "2025-02-09T22:00:50"
+  const isoStr = `${year}-${month}-${day}${timePart ? "T" + timePart : ""}`;
+  const date = new Date(isoStr);
+  
+  return isNaN(date.getTime()) ? null : date;
+}
+
+/**
  * Calculer le délai moyen entre ouverture dossier et envoi du premier devis
  * BASÉ SUR L'HISTORIQUE DES INTERVENTIONS
  */
@@ -1331,6 +1351,17 @@ export function calculateDelaiMoyenDossierPremierDevis(
   projects: any[],
   interventions: any[]
 ): { delaiMoyen: number; nbDossiers: number } {
+  // Debug: vérifier les données
+  const interventionsAvecHistory = interventions.filter(it => (it.history ?? []).length > 0);
+  console.log("📊 KPI 16 - Interventions avec history:", interventionsAvecHistory.length);
+  
+  if (interventionsAvecHistory.length > 0) {
+    const allLabels = new Set(
+      interventions.flatMap(it => (it.history ?? []).map((h: any) => h.labelKind))
+    );
+    console.log("📊 KPI 16 - LabelKind trouvés:", Array.from(allLabels));
+  }
+
   // Étape 1 : Indexer les projets par ID
   const projectById: Record<string, any> = {};
   projects.forEach(p => {
@@ -1354,13 +1385,14 @@ export function calculateDelaiMoyenDossierPremierDevis(
     let dateEnvoiDevis: Date | null = null;
 
     for (const intervention of interventionsProjet) {
-      const history = intervention.data?.history || [];
+      // CORRECTION: utiliser intervention.history directement, pas intervention.data.history
+      const history = intervention.history ?? [];
       
       for (const event of history) {
         if (event.labelKind === "Devis à faire => Devis envoyé") {
-          // Événement trouvé, récupérer la date
-          const eventDate = new Date(event.dateModif);
-          if (isNaN(eventDate.getTime())) continue;
+          // CORRECTION: utiliser parseHistoryDate pour le format français
+          const eventDate = parseHistoryDate(event.dateModif);
+          if (!eventDate) continue;
 
           // Garder la date la plus ancienne (premier envoi)
           if (!dateEnvoiDevis || eventDate < dateEnvoiDevis) {
@@ -1380,6 +1412,8 @@ export function calculateDelaiMoyenDossierPremierDevis(
       }
     }
   }
+
+  console.log("📊 KPI 16 - Dossiers avec délai calculé:", delais.length);
 
   // Étape 3 : KPI final
   if (delais.length === 0) {
