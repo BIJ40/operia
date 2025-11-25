@@ -61,9 +61,9 @@ export const calculateMonthlySegmentation = (
           if (!initInvoiceProcessed.has(factureId)) {
             initInvoiceProcessed.add(factureId);
             
-            // Montant total de la facture
-            const montantRaw = facture.data?.totalHT || facture.totalHT || "0";
-            const montantTotal = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+             // Montant total de la facture
+             const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
+             const montantTotal = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
             
             if (!isNaN(montantTotal)) {
               // Répartition fixe selon les règles métier
@@ -78,9 +78,9 @@ export const calculateMonthlySegmentation = (
         const commanditaireId = project.data?.commanditaireId || project.commanditaireId;
         const estParticulier = !commanditaireId;
         
-        // Calculer le montant
-        const montantRaw = facture.data?.totalHT || facture.totalHT || "0";
-        let montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+         // Calculer le montant
+         const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
+         let montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
         
         if (isNaN(montant)) return;
         
