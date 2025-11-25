@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { RefreshCw, Copy } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface UserProfile {
   id: string;
@@ -38,6 +40,8 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
   const [lastName, setLastName] = useState('');
   const [agence, setAgence] = useState('');
   const [roleAgence, setRoleAgence] = useState('');
+  const [generatedPassword, setGeneratedPassword] = useState('');
+  const [generatingPassword, setGeneratingPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -48,6 +52,58 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
       setRoleAgence(user.role_agence || '');
     }
   }, [user]);
+
+  const generateRandomPassword = () => {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return password;
+  };
+
+  const handleGeneratePassword = async () => {
+    if (!user) return;
+
+    setGeneratingPassword(true);
+    try {
+      const newPassword = generateRandomPassword();
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Non authentifié');
+
+      const response = await supabase.functions.invoke('reset-user-password', {
+        body: { userId: user.id, newPassword }
+      });
+
+      if (response.error) throw response.error;
+
+      setGeneratedPassword(newPassword);
+      
+      toast({
+        title: 'Mot de passe généré',
+        description: 'Le mot de passe temporaire a été créé. L\'utilisateur devra le changer à la prochaine connexion.',
+      });
+    } catch (error: any) {
+      console.error('Erreur génération mot de passe:', error);
+      toast({
+        title: 'Erreur',
+        description: error.message || 'Impossible de générer le mot de passe',
+        variant: 'destructive',
+      });
+    } finally {
+      setGeneratingPassword(false);
+    }
+  };
+
+  const copyPasswordToClipboard = () => {
+    navigator.clipboard.writeText(generatedPassword);
+    toast({
+      title: 'Copié',
+      description: 'Le mot de passe a été copié dans le presse-papiers',
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,6 +208,52 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
               ))}
             </RadioGroup>
           </div>
+
+          <Card className="border-destructive/50 bg-destructive/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Réinitialisation mot de passe</CardTitle>
+              <CardDescription className="text-xs">
+                Génère un mot de passe temporaire et force le changement à la prochaine connexion
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={handleGeneratePassword}
+                disabled={generatingPassword}
+                className="w-full"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${generatingPassword ? 'animate-spin' : ''}`} />
+                {generatingPassword ? 'Génération...' : 'Générer mot de passe'}
+              </Button>
+              
+              {generatedPassword && (
+                <div className="space-y-2">
+                  <Label className="text-xs">Mot de passe généré :</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={generatedPassword}
+                      readOnly
+                      className="font-mono text-sm"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={copyPasswordToClipboard}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Communiquez ce mot de passe à l'utilisateur. Il devra le changer à la connexion.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <div className="flex gap-2 pt-4">
             <Button type="submit" disabled={loading} className="flex-1">
