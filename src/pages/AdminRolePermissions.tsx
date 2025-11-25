@@ -13,17 +13,25 @@ interface Permission {
   can_access: boolean;
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 const AVAILABLE_ROLES = [
   { value: 'dirigeant', label: 'Dirigeant(e)' },
   { value: 'assistant(e)', label: 'Assistant(e)' },
   { value: 'commercial', label: 'Commercial' },
 ];
 
-const MAIN_CATEGORIES = [
-  { id: 'apogee', name: 'Guide Apogée' },
-  { id: 'apporteurs', name: 'Guide Apporteurs' },
-  { id: 'helpconfort', name: 'Base HelpConfort' },
-];
+// Fonction pour extraire le scope depuis l'URL
+function extractScopeFromLink(link: string): string | null {
+  if (link.includes('/apogee')) return 'apogee';
+  if (link.includes('/apporteur')) return 'apporteurs';
+  if (link.includes('/helpconfort')) return 'helpconfort';
+  if (link.includes('/mes-indicateurs')) return 'indicateurs';
+  return null;
+}
 
 export default function AdminRolePermissions() {
   const { isAdmin } = useAuth();
@@ -31,10 +39,11 @@ export default function AdminRolePermissions() {
   const [selectedRole, setSelectedRole] = useState<string>('dirigeant');
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     if (isAdmin) {
-      loadPermissions();
+      loadCategoriesAndPermissions();
     }
   }, [isAdmin, selectedRole]);
 
@@ -42,23 +51,82 @@ export default function AdminRolePermissions() {
     return <Navigate to="/" replace />;
   }
 
-  const loadPermissions = async () => {
+  const loadCategoriesAndPermissions = async () => {
     setLoading(true);
     try {
+      // Charger les home_cards pour récupérer dynamiquement les catégories
+      const { data: homeCards, error: homeCardsError } = await supabase
+        .from('home_cards')
+        .select('*')
+        .order('display_order');
+
+      if (homeCardsError) throw homeCardsError;
+
+      // Extraire les scopes depuis les liens
+      const extractedCategories: Category[] = [];
+      homeCards?.forEach(card => {
+        const scope = extractScopeFromLink(card.link);
+        if (scope) {
+          extractedCategories.push({
+            id: scope,
+            name: card.title,
+          });
+        }
+      });
+
+      setCategories(extractedCategories);
+
+      // Charger les permissions existantes
+      const categoryIds = extractedCategories.map(c => c.id);
       const { data: permissionsData, error: permissionsError } = await supabase
         .from('role_permissions')
         .select('*')
         .eq('role_agence', selectedRole)
-        .in('block_id', MAIN_CATEGORIES.map(c => c.id));
+        .in('block_id', categoryIds);
 
       if (permissionsError) throw permissionsError;
 
       setPermissions(permissionsData || []);
+
+      // Créer automatiquement les permissions manquantes avec can_access=false
+      const existingBlockIds = new Set(permissionsData?.map(p => p.block_id) || []);
+      const missingCategories = extractedCategories.filter(cat => !existingBlockIds.has(cat.id));
+
+      if (missingCategories.length > 0) {
+        // Créer les permissions pour tous les rôles avec accès bloqué par défaut
+        const newPermissions = AVAILABLE_ROLES.flatMap(role =>
+          missingCategories.map(cat => ({
+            role_agence: role.value,
+            block_id: cat.id,
+            can_access: false, // Bloqué par défaut
+          }))
+        );
+
+        const { error: insertError } = await supabase
+          .from('role_permissions')
+          .insert(newPermissions);
+
+        if (insertError) {
+          console.error('Error creating default permissions:', insertError);
+        } else {
+          console.log(`Created ${newPermissions.length} default permissions (blocked) for new categories`);
+          // Recharger les permissions après insertion
+          const { data: updatedPermissions } = await supabase
+            .from('role_permissions')
+            .select('*')
+            .eq('role_agence', selectedRole)
+            .in('block_id', categoryIds);
+
+          if (updatedPermissions) {
+            setPermissions(updatedPermissions);
+          }
+        }
+      }
     } catch (error) {
-      console.error('Error loading permissions:', error);
+      console.error('Error loading categories and permissions:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de charger les permissions',
+        description: 'Impossible de charger les catégories et permissions',
         variant: 'destructive',
       });
     } finally {
@@ -115,7 +183,7 @@ export default function AdminRolePermissions() {
       });
     } catch (error) {
       console.error('Error toggling permission:', error);
-      await loadPermissions();
+      await loadCategoriesAndPermissions();
       toast({
         title: 'Erreur',
         description: 'Impossible de modifier la permission',
@@ -171,7 +239,7 @@ export default function AdminRolePermissions() {
         </p>
         
         <div className="grid grid-cols-1 gap-4">
-          {MAIN_CATEGORIES.map(category => {
+          {categories.map(category => {
             const isAllowed = hasPermission(category.id);
             
             return (
