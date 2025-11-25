@@ -35,6 +35,9 @@ export const calculateMonthlySegmentation = (
     let caParticuliers = 0;
     let caApporteurs = 0;
     
+    // Traiter d'abord les factures normales
+    const initInvoiceProcessed = new Set(); // Éviter de compter la facture d'init plusieurs fois
+    
     factures.forEach(facture => {
       const dateEmission = facture.dateEmission || facture.dateReelle || facture.created_at;
       if (!dateEmission) return;
@@ -43,44 +46,51 @@ export const calculateMonthlySegmentation = (
         const factureDate = parseISO(dateEmission);
         if (!isWithinInterval(factureDate, { start: monthStart, end: monthEnd })) return;
         
-        // Récupérer le projet
+        // Récupérer le projet et client
         const project = projectsMap.get(facture.projectId);
         if (!project) return;
         
-        // Déterminer si c'est un particulier ou apporteur
-        const commanditaireId = project.data?.commanditaireId || project.commanditaireId;
-        const estParticulier = !commanditaireId;
-        
-        // Récupérer le client
         const client = clientsMap.get(facture.clientId);
         
         // Vérifier si c'est la facture d'init JANVIER 2025
         const isInit = isInitInvoice(facture, client, project);
         
-        // Vérifier type de facture
-        const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-        
-        let montant = 0;
         if (isInit) {
-          // Répartir la facture d'init entre particuliers et apporteurs
-          if (estParticulier) {
-            montant = INIT_INVOICE_PARTICULIERS; // 19 419,94 € pour les particuliers
-          } else {
-            montant = getInitInvoiceApporteursAmount(facture); // Le reste pour les apporteurs
+          // Répartir la facture d'init UNE SEULE FOIS entre les deux segments
+          const factureId = facture.id || facture.numeroFacture;
+          if (!initInvoiceProcessed.has(factureId)) {
+            initInvoiceProcessed.add(factureId);
+            
+            // Montant total de la facture
+            const montantRaw = facture.data?.totalHT || facture.totalHT || "0";
+            const montantTotal = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+            
+            if (!isNaN(montantTotal)) {
+              // Répartition fixe selon les règles métier
+              caParticuliers += INIT_INVOICE_PARTICULIERS; // 19 419,94 €
+              caApporteurs += (montantTotal - INIT_INVOICE_PARTICULIERS); // Le reste
+            }
           }
-        } else {
-          // Calculer le montant normal
-          const montantRaw = facture.data?.totalHT || facture.totalHT || "0";
-          montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+          return;
         }
+        
+        // Traitement des factures normales (non-init)
+        const commanditaireId = project.data?.commanditaireId || project.commanditaireId;
+        const estParticulier = !commanditaireId;
+        
+        // Calculer le montant
+        const montantRaw = facture.data?.totalHT || facture.totalHT || "0";
+        let montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
         
         if (isNaN(montant)) return;
         
-        // Ajouter au bon segment (déduire les avoirs)
+        // Vérifier type de facture (avoir = négatif)
+        const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
         if (typeFacture === "avoir") {
-          montant = -Math.abs(montant); // Avoirs sont négatifs
+          montant = -Math.abs(montant);
         }
         
+        // Ajouter au bon segment
         if (estParticulier) {
           caParticuliers += montant;
         } else {
