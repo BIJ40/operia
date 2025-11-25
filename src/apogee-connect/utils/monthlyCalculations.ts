@@ -30,11 +30,21 @@ export const calculateMonthlyCA = (
     };
   });
   
+  if (import.meta.env.DEV) {
+    console.log('📊 calculateMonthlyCA - Début', {
+      nbFactures: factures.length,
+      year,
+      userAgency
+    });
+  }
+  
   // Filtrer et traiter les factures
   factures.forEach(facture => {
-    // 1. Filtrer sur type == "facture" (exclure les avoirs)
-    const type = facture.type || facture.data?.type || facture.typeFacture;
-    if (type !== "facture" && type !== "Facture") return;
+    // 1. Le type est dans data.type pour l'API Apogée
+    const type = facture.data?.type || facture.type || facture.typeFacture;
+    
+    // Exclure les avoirs
+    if (type === "avoir" || type === "Avoir") return;
     
     // 2. Filtrer sur dateReelle et année
     const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
@@ -51,8 +61,8 @@ export const calculateMonthlyCA = (
       const month = factureDate.getMonth();
       const monthData = monthlyData[month];
       
-      // 4. Récupérer le montant totalHT
-      const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
+      // 4. Le montant totalHT est dans data.totalHT pour l'API Apogée
+      const montantRaw = facture.data?.totalHT || facture.totalHT || "0";
       const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
       
       if (isNaN(montant) || montant === 0) return;
@@ -61,12 +71,30 @@ export const calculateMonthlyCA = (
       monthData.caTotal += montant;
       monthData.nbFactures++;
       
+      if (import.meta.env.DEV && monthData.nbFactures <= 3) {
+        console.log('✅ Facture ajoutée:', {
+          ref: facture.reference,
+          mois: monthData.monthLabel,
+          montant,
+          date: dateReelle,
+          type
+        });
+      }
+      
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error('❌ Erreur parsing date facture:', dateReelle, error);
       }
     }
   });
+  
+  if (import.meta.env.DEV) {
+    console.log('📊 calculateMonthlyCA - Résultat:', monthlyData.map(m => ({
+      mois: m.monthLabel,
+      ca: m.caTotal,
+      nbFactures: m.nbFactures
+    })));
+  }
   
   // Retourner dans le format attendu par MonthlyCAChart
   return monthlyData.map(m => ({
