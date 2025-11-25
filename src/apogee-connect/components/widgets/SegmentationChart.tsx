@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { MonthlySegmentData } from "@/apogee-connect/utils/segmentationCalculations";
 
@@ -76,7 +76,7 @@ export const SegmentationChart = ({ data, loading }: SegmentationChartProps) => 
   const partGlobaleApporteurs = totalCA > 0 ? ((totalApporteurs / totalCA) * 100).toFixed(1) : "0.0";
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
+    <div className="space-y-6">
       {/* Titre de la section */}
       <div>
         <h3 className="text-xl font-bold">Évolution CA : Particuliers vs Apporteurs</h3>
@@ -85,77 +85,79 @@ export const SegmentationChart = ({ data, loading }: SegmentationChartProps) => 
         </p>
       </div>
 
-      <Card className="p-6 flex-1 flex flex-col">
-        <div className="space-y-4 flex-1 flex flex-col">
-          {/* Indicateurs globaux */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground mb-1">CA Total Année</p>
-              <p className="text-xl font-bold">{formatCurrency(totalCA)}</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                <p className="text-xs text-muted-foreground">Particuliers</p>
+      <div className="flex justify-center">
+        <Card className="max-w-2xl w-full">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {/* Indicateurs globaux */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground mb-1">CA Total Année</p>
+                  <p className="text-xl font-bold">{formatCurrency(totalCA)}</p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <p className="text-xs text-muted-foreground">Particuliers</p>
+                  </div>
+                  <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                    {formatCurrency(totalParticuliers)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">{partGlobaleParticuliers}% du CA</p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                    <p className="text-xs text-muted-foreground">Apporteurs</p>
+                  </div>
+                  <p className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                    {formatCurrency(totalApporteurs)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">{partGlobaleApporteurs}% du CA</p>
+                </div>
               </div>
-              <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                {formatCurrency(totalParticuliers)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">{partGlobaleParticuliers}% du CA</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                <p className="text-xs text-muted-foreground">Apporteurs</p>
-              </div>
-              <p className="text-xl font-bold text-purple-600 dark:text-purple-400">
-                {formatCurrency(totalApporteurs)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">{partGlobaleApporteurs}% du CA</p>
-            </div>
-          </div>
 
-          {/* Graphique */}
-          <div className="flex-1 min-h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis 
-                  dataKey="month" 
-                  className="text-xs"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                />
-                <YAxis 
-                  className="text-xs"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  tickFormatter={formatCurrency}
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} wrapperStyle={{ zIndex: 100 }} />
-                <Legend 
-                  wrapperStyle={{ paddingTop: '20px' }}
-                  formatter={(value) => {
-                    if (value === 'caParticuliers') return 'Particuliers';
-                    if (value === 'caApporteurs') return 'Apporteurs';
-                    return value;
-                  }}
-                />
-                <Bar 
-                  dataKey="caParticuliers" 
-                  fill="hsl(221, 83%, 53%)" 
-                  radius={[4, 4, 0, 0]}
-                  name="caParticuliers"
-                />
-                <Bar 
-                  dataKey="caApporteurs" 
-                  fill="hsl(271, 91%, 65%)" 
-                  radius={[4, 4, 0, 0]}
-                  name="caApporteurs"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </Card>
+              {/* Graphique */}
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={data}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="month" 
+                    className="text-xs"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    className="text-xs"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    tickFormatter={formatCurrency}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} wrapperStyle={{ zIndex: 100 }} />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px' }}
+                    formatter={(value) => {
+                      if (value === 'caParticuliers') return 'Particuliers';
+                      if (value === 'caApporteurs') return 'Apporteurs';
+                      return value;
+                    }}
+                  />
+                  <Bar 
+                    dataKey="caParticuliers" 
+                    fill="hsl(221, 83%, 53%)" 
+                    radius={[4, 4, 0, 0]}
+                    name="caParticuliers"
+                  />
+                  <Bar 
+                    dataKey="caApporteurs" 
+                    fill="hsl(271, 91%, 65%)" 
+                    radius={[4, 4, 0, 0]}
+                    name="caApporteurs"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
