@@ -302,124 +302,12 @@ export default function IndicateursAccueil() {
       </Card>
 
       {/* KPI Indépendants (non soumis au sélecteur de période) */}
-      <div>
-        <h2 className="text-lg font-semibold text-foreground mb-4">Indicateurs Globaux (historique complet)</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {/* KPI 1: Dossiers reçus */}
-        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-blue-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
-              <FolderOpen className="w-3.5 h-3.5 text-white" />
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">Dossiers reçus</p>
-          </div>
-          <p className="text-xl font-bold">{data?.dossiersJour || 0}</p>
-        </Card>
-
-        {/* KPI 2: RT réalisés */}
-        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-green-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
-              <ClipboardCheck className="w-3.5 h-3.5 text-white" />
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">RT réalisés</p>
-          </div>
-          <p className="text-xl font-bold">{data?.rtJour || 0}</p>
-        </Card>
-
-        {/* KPI 3: Devis émis */}
-        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-purple-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
-              <FileText className="w-3.5 h-3.5 text-white" />
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">Devis émis</p>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <p className="text-xl font-bold">{data?.devisJour || 0}</p>
-            {data?.caDevis !== undefined && (
-              <span className="text-[10px] text-muted-foreground">({formatEuros(data.caDevis)})</span>
-            )}
-          </div>
-        </Card>
-
-        {/* KPI 4: CA période */}
-        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-orange-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
-              <Euro className="w-3.5 h-3.5 text-white" />
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">CA période</p>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <p className="text-xl font-bold">{formatEuros(data?.caJour || 0)}</p>
-            {data?.nbFacturesCA !== undefined && (
-              <span className="text-[10px] text-muted-foreground">({data.nbFacturesCA})</span>
-            )}
-          </div>
-        </Card>
-
-        {/* KPI 5: Taux de SAV */}
-        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-red-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-gradient-to-br from-red-500 to-red-600 p-1.5 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs">SAV</span>
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">Taux de SAV</p>
-          </div>
-          <p className="text-xl font-bold">{(data?.tauxSAVGlobal || 0).toFixed(1)}%</p>
-        </Card>
-
-        {/* KPI 6: Dossiers complexes */}
-        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-indigo-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-1.5 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs">📊</span>
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">Dossiers complexes</p>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <p className="text-xl font-bold">{data?.dossiersComplexes?.tauxComplexite || 0}%</p>
-            {data?.dossiersComplexes?.nbComplexes !== undefined && (
-              <span className="text-[10px] text-muted-foreground">({data.dossiersComplexes.nbComplexes}/{data.dossiersComplexes.nbTotal})</span>
-            )}
-          </div>
-        </Card>
-
-        {/* KPI 7: Panier moyen */}
-        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-pink-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-gradient-to-br from-pink-500 to-pink-600 p-1.5 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs">🛒</span>
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">Panier moyen</p>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <p className="text-xl font-bold">{formatEuros(data?.panierMoyen?.panierMoyen || 0)}</p>
-            {data?.panierMoyen?.nbDossiers !== undefined && (
-              <span className="text-[10px] text-muted-foreground">({data.panierMoyen.nbDossiers})</span>
-            )}
-          </div>
-        </Card>
-
-        {/* KPI 8: Taux de transformation */}
-        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-cyan-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 p-1.5 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs">📈</span>
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">Taux transfo devis</p>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <p className="text-xl font-bold">{data?.tauxTransformationDevis?.tauxTransformation || 0}%</p>
-            {data?.tauxTransformationDevis?.nbAcceptes !== undefined && (
-              <span className="text-[10px] text-muted-foreground">({data.tauxTransformationDevis.nbAcceptes}/{data.tauxTransformationDevis.nbEnvoyes})</span>
-            )}
-          </div>
-        </Card>
-
-          {/* KPI 9: Délai moyen (NON soumis au filtre période) */}
-          <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-teal-500/50 shadow-lg">
+      <Card className="p-6 border-2 border-primary/20 bg-gradient-to-br from-background to-muted/20">
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Indicateurs Globaux (historique complet)</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* KPI 9: Délai moyen (NON soumis au filtre période) */}
+            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-teal-500/50 shadow-lg">
             <div className="flex items-center gap-2 mb-2">
               <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-1.5 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xs">⏱️</span>
@@ -528,9 +416,10 @@ export default function IndicateursAccueil() {
                 <span className="text-[10px] text-muted-foreground">({data.polyvalenceTechniciens.nbTechniciens} techs)</span>
               )}
             </div>
-          </Card>
+            </Card>
+          </div>
         </div>
-      </div>
+      </Card>
 
       {/* Graphique CA Mensuel */}
       <div>
