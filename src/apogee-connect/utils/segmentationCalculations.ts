@@ -1,7 +1,6 @@
 import { parseISO, isWithinInterval, startOfMonth, endOfMonth, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { isInitInvoice, INIT_INVOICE_PARTICULIERS, getInitInvoiceApporteursAmount } from "./dashboardCalculations";
-import { manualJanuaryData, isManualOverrideMonth } from "@/apogee-connect/config/manualOverrides";
 
 export interface MonthlySegmentData {
   month: string;
@@ -19,8 +18,7 @@ export const calculateMonthlySegmentation = (
   factures: any[],
   clients: any[],
   projects: any[],
-  year: number,
-  userAgency: string
+  year: number
 ): MonthlySegmentData[] => {
   const clientsMap = new Map(clients.map(c => [c.id, c]));
   const projectsMap = new Map(projects.map(p => [p.id, p]));
@@ -33,28 +31,6 @@ export const calculateMonthlySegmentation = (
     const monthStart = startOfMonth(date);
     const monthEnd = endOfMonth(date);
     const monthLabel = format(date, "MMM", { locale: fr });
-    
-    // Vérifier si c'est janvier 2025 avec override manuel pour cette agence
-    if (isManualOverrideMonth(year, month + 1, userAgency)) {
-      if (import.meta.env.DEV) {
-        console.log(`📅 OVERRIDE MANUEL - Janvier ${year} (agence: ${userAgency}): Particuliers = ${manualJanuaryData.ca_particuliers}€, Apporteurs = ${manualJanuaryData.ca_apporteurs}€`);
-      }
-      
-      // Utiliser les valeurs manuelles configurées
-      const totalCA = manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs;
-      const partParticuliers = totalCA > 0 ? (manualJanuaryData.ca_particuliers / totalCA) * 100 : 0;
-      const partApporteurs = totalCA > 0 ? (manualJanuaryData.ca_apporteurs / totalCA) * 100 : 0;
-      
-      monthlyData.push({
-        month: monthLabel,
-        caParticuliers: manualJanuaryData.ca_particuliers,
-        caApporteurs: manualJanuaryData.ca_apporteurs,
-        totalCA,
-        partParticuliers,
-        partApporteurs
-      });
-      continue; // Passer au mois suivant
-    }
     
     let caParticuliers = 0;
     let caApporteurs = 0;

@@ -1,6 +1,5 @@
 import { parseISO, isWithinInterval } from "date-fns";
 import { isInitInvoice, isApporteur, getInitInvoiceApporteursAmount, INIT_INVOICE_PARTICULIERS } from "./dashboardCalculations";
-import { manualJanuaryData, isManualOverrideMonth } from '@/apogee-connect/config/manualOverrides';
 
 export interface ApporteurStats {
   apporteurId: number;
@@ -237,16 +236,6 @@ export const calculatePartApporteurs = (
   const startMonth = dateRange.start.getMonth() + 1;
   const endYear = dateRange.end.getFullYear();
   const endMonth = dateRange.end.getMonth() + 1;
-  
-  // Si la période couvre uniquement janvier 2025
-  if (isManualOverrideMonth(startYear, startMonth, userAgency) && startYear === endYear && startMonth === endMonth) {
-    const caTotal = manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs;
-    const partApporteurs = caTotal > 0 ? (manualJanuaryData.ca_apporteurs / caTotal) * 100 : 0;
-    if (import.meta.env.DEV) {
-      console.log(`📅 OVERRIDE MANUEL - Part apporteurs janvier ${startYear}: ${partApporteurs.toFixed(1)}%`);
-    }
-    return partApporteurs;
-  }
   
   const clientsMap = createClientsMap(clients);
   const projectsMap = new Map(projects.map(p => [p.id, p]));

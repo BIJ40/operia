@@ -183,8 +183,7 @@ export default function Dashboard() {
         apiData.devis || [],
         apiData.interventions || [],
         apiData.clients || [],
-        secondaryFilters.dateRange,
-        userAgency
+        secondaryFilters.dateRange
       );
       
       // Calculer l'évolution mensuelle Particuliers vs Apporteurs - année dynamique
@@ -192,8 +191,7 @@ export default function Dashboard() {
         apiData.factures || [],
         apiData.clients || [],
         apiData.projects || [],
-        year,
-        userAgency
+        year
       );
       
       if (import.meta.env.DEV) {

@@ -1,5 +1,4 @@
 import { isToday, parseISO, differenceInDays, startOfDay, endOfDay, subDays, isWithinInterval } from "date-fns";
-import { manualJanuaryData, isManualOverrideMonth } from '@/apogee-connect/config/manualOverrides';
 
 // ====================================================================
 // FONCTIONS UTILITAIRES
@@ -145,20 +144,6 @@ export const getInitInvoiceApporteursAmount = (facture: any): number => {
 export const calculateDossiersJour = (projects: any[], dateRange: { start: Date; end: Date }, userAgency: string): number => {
   if (!projects || projects.length === 0) return 0;
   
-  // Vérifier si on est sur janvier 2025 avec override manuel
-  const startYear = dateRange.start.getFullYear();
-  const startMonth = dateRange.start.getMonth() + 1;
-  const endYear = dateRange.end.getFullYear();
-  const endMonth = dateRange.end.getMonth() + 1;
-  
-  // Si la période couvre uniquement janvier 2025
-  if (isManualOverrideMonth(startYear, startMonth, userAgency) && startYear === endYear && startMonth === endMonth) {
-    if (import.meta.env.DEV) {
-      console.log(`📅 OVERRIDE MANUEL - Projets janvier ${startYear}: ${manualJanuaryData.nb_projets}`);
-    }
-    return manualJanuaryData.nb_projets;
-  }
-  
   return projects.filter(project => {
     const dateCreation = project.created_at || project.date || project.dateCréationDossier;
     if (!dateCreation) return false;
@@ -212,15 +197,6 @@ export const calculateDevisJour = (devis: any[], dateRange: { start: Date; end: 
   const endYear = dateRange.end.getFullYear();
   const endMonth = dateRange.end.getMonth() + 1;
   
-  // Si la période couvre uniquement janvier 2025
-  if (isManualOverrideMonth(startYear, startMonth, userAgency) && startYear === endYear && startMonth === endMonth) {
-    if (import.meta.env.DEV) {
-      console.log(`📅 OVERRIDE MANUEL - Devis janvier ${startYear}: ${manualJanuaryData.nb_devis}`);
-    }
-    // Pour janvier, on retourne le nombre de devis mais pas de CA (non disponible)
-    return { nbDevis: manualJanuaryData.nb_devis, caDevis: 0 };
-  }
-  
   let nbDevis = 0;
   let caDevis = 0;
   
@@ -257,16 +233,6 @@ export const calculateCaJour = (factures: any[], clients: any[], projects: any[]
   const startMonth = dateRange.start.getMonth() + 1;
   const endYear = dateRange.end.getFullYear();
   const endMonth = dateRange.end.getMonth() + 1;
-  
-  // Si la période couvre uniquement janvier 2025
-  if (isManualOverrideMonth(startYear, startMonth, userAgency) && startYear === endYear && startMonth === endMonth) {
-    const caTotal = manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs;
-    const nbFactures = manualJanuaryData.nb_factures_particuliers + manualJanuaryData.nb_factures_apporteurs;
-    if (import.meta.env.DEV) {
-      console.log(`📅 OVERRIDE MANUEL - CA janvier ${startYear}: CA=${caTotal}€, Factures=${nbFactures}`);
-    }
-    return { caTotal, nbFactures };
-  }
   
   if (import.meta.env.DEV) {
     console.log("💶 calculateCaJour - entrée", {

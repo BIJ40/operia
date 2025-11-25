@@ -82,41 +82,14 @@ const filterFacturesPeriodeParticuliers = (
 };
 
 // Calculer les statistiques des PARTICULIERS
-import { manualJanuaryData, isManualOverrideMonth } from '@/apogee-connect/config/manualOverrides';
-
 export const calculateParticuliersStats = (
   factures: any[],
   projects: any[],
   devis: any[],
   interventions: any[],
   clients: any[],
-  dateRange: { start: Date; end: Date },
-  userAgency: string
+  dateRange: { start: Date; end: Date }
 ): ParticuliersStats => {
-  // Vérifier si on est sur janvier 2025 avec override manuel
-  const startYear = dateRange.start.getFullYear();
-  const startMonth = dateRange.start.getMonth() + 1;
-  const endYear = dateRange.end.getFullYear();
-  const endMonth = dateRange.end.getMonth() + 1;
-  
-  // Si la période couvre uniquement janvier 2025
-  if (isManualOverrideMonth(startYear, startMonth, userAgency) && startYear === endYear && startMonth === endMonth) {
-    if (import.meta.env.DEV) {
-      console.log(`📅 OVERRIDE MANUEL - Particuliers janvier ${startYear}:`, {
-        caHT: manualJanuaryData.ca_particuliers,
-        nbFactures: manualJanuaryData.nb_factures_particuliers
-      });
-    }
-    return {
-      caHT: manualJanuaryData.ca_particuliers,
-      nbDossiers: 0, // Non calculable avec les données manuelles
-      nbFactures: manualJanuaryData.nb_factures_particuliers,
-      panierMoyen: 0,
-      tauxTransformation: null,
-      tauxSAV: null
-    };
-  }
-  
   if (import.meta.env.DEV) {
     console.log("🔍 PARTICULIERS - Début du calcul", {
       nbFactures: factures.length,

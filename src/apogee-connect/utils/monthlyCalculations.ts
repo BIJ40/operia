@@ -1,6 +1,5 @@
 import { parseISO, format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { manualJanuaryData, isManualOverrideMonth, isFictitiousTransferInvoice } from "@/apogee-connect/config/manualOverrides";
 
 export interface MonthlyCA {
   month: string;
@@ -19,16 +18,8 @@ export const calculateMonthlyCA = (
   const clientsMap = new Map(clients.map(c => [String(c.id), c]));
   const projectsMap = new Map(projects.map(p => [String(p.id), p]));
   
-  // Filtrer les factures de l'année demandée et exclure la facture de transfert
+  // Filtrer les factures de l'année demandée
   const facturesFiltered = factures.filter(facture => {
-    // Exclure la facture de transfert fictive
-    if (isFictitiousTransferInvoice(facture)) {
-      if (import.meta.env.DEV) {
-        console.log('🚫 Facture de transfert exclue:', facture.reference, facture.totalHT);
-      }
-      return false;
-    }
-    
     // Filtrer sur l'année
     const dateEmission = facture.dateEmission || facture.dateReelle || facture.created_at;
     if (!dateEmission) return false;
@@ -105,25 +96,6 @@ export const calculateMonthlyCA = (
       }
       continue;
     }
-  }
-  
-  // Appliquer les overrides manuels pour janvier si applicable
-  if (isManualOverrideMonth(year, 1, userAgency)) {
-    const januaryData = monthlyData[0]; // index 0 = janvier
-    
-    if (import.meta.env.DEV) {
-      console.log(`📅 OVERRIDE MANUEL - Janvier ${year} (agence: ${userAgency}):`, {
-        ca_particuliers: manualJanuaryData.ca_particuliers,
-        ca_apporteurs: manualJanuaryData.ca_apporteurs,
-        ca_total: manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs,
-        nb_factures: manualJanuaryData.nb_factures_particuliers + manualJanuaryData.nb_factures_apporteurs
-      });
-    }
-    
-    januaryData.caParticuliers = manualJanuaryData.ca_particuliers;
-    januaryData.caApporteurs = manualJanuaryData.ca_apporteurs;
-    januaryData.caTotal = manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs;
-    januaryData.nbFactures = manualJanuaryData.nb_factures_particuliers + manualJanuaryData.nb_factures_apporteurs;
   }
   
   // Retourner dans le format attendu par MonthlyCAChart
