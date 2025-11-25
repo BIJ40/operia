@@ -96,6 +96,7 @@ export const useCategory = () => {
           show_summary: updatedSection.showSummary,
           summary: updatedSection.summary,
           attachments: updatedSection.attachments as any || [],
+          hide_from_sidebar: updatedSection.hideFromSidebar,
         })
         .eq('id', updatedSection.id);
 
@@ -125,6 +126,7 @@ export const useCategory = () => {
           tips_type: updatedSection.tipsType,
           hide_title: updatedSection.hideTitle,
           attachments: updatedSection.attachments as any || [],
+          hide_from_sidebar: updatedSection.hideFromSidebar,
         })
         .eq('id', updatedSection.id);
 
