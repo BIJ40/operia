@@ -167,7 +167,7 @@ export const calculateTauxFidelite = (
   factures: any[],
   projects: any[],
   dateRange?: { start: Date; end: Date }
-): { tauxFidelite: number; nbRecurrents: number; nbTotal: number } => {
+): { tauxFidelite: number; nbRecurrents: number; nbTotal: number; hasDataN1: boolean } => {
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
   // Apporteurs période actuelle
@@ -224,9 +224,10 @@ export const calculateTauxFidelite = (
 
   const nbTotal = apporteursPeriodeN.size;
   const nbRecurrents = apporteursRecurrents.size;
-  const tauxFidelite = nbTotal > 0 ? Math.round((nbRecurrents / nbTotal) * 100) : 0;
+  const hasDataN1 = apporteursPeriodeN1.size > 0;
+  const tauxFidelite = nbTotal > 0 && hasDataN1 ? Math.round((nbRecurrents / nbTotal) * 100) : 0;
 
-  return { tauxFidelite, nbRecurrents, nbTotal };
+  return { tauxFidelite, nbRecurrents, nbTotal, hasDataN1 };
 };
 
 /**
@@ -236,7 +237,7 @@ export const calculateCroissanceCA = (
   factures: any[],
   projects: any[],
   dateRange?: { start: Date; end: Date }
-): { croissance: number; caPeriodeN: number; caPeriodeN1: number } => {
+): { croissance: number; caPeriodeN: number; caPeriodeN1: number; hasDataN1: boolean } => {
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
   let caPeriodeN = 0;
@@ -287,9 +288,10 @@ export const calculateCroissanceCA = (
     }
   });
 
-  const croissance = caPeriodeN1 > 0 
+  const hasDataN1 = caPeriodeN1 > 0;
+  const croissance = hasDataN1 
     ? Math.round(((caPeriodeN - caPeriodeN1) / caPeriodeN1) * 100) 
     : 0;
 
-  return { croissance, caPeriodeN: Math.round(caPeriodeN), caPeriodeN1: Math.round(caPeriodeN1) };
+  return { croissance, caPeriodeN: Math.round(caPeriodeN), caPeriodeN1: Math.round(caPeriodeN1), hasDataN1 };
 };

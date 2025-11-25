@@ -167,12 +167,12 @@ export default function IndicateursApporteurs() {
   }, [data, secondaryFilters.dateRange]);
 
   const tauxFidelite = useMemo(() => {
-    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { tauxFidelite: 0, nbRecurrents: 0, nbTotal: 0 };
+    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { tauxFidelite: 0, nbRecurrents: 0, nbTotal: 0, hasDataN1: false };
     return calculateTauxFidelite(data.apiGetFactures, data.apiGetProjects, secondaryFilters.dateRange);
   }, [data, secondaryFilters.dateRange]);
 
   const croissanceCA = useMemo(() => {
-    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { croissance: 0, caPeriodeN: 0, caPeriodeN1: 0 };
+    if (!data || !data.apiGetFactures || !data.apiGetProjects) return { croissance: 0, caPeriodeN: 0, caPeriodeN1: 0, hasDataN1: false };
     return calculateCroissanceCA(data.apiGetFactures, data.apiGetProjects, secondaryFilters.dateRange);
   }, [data, secondaryFilters.dateRange]);
 
@@ -346,8 +346,14 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">Taux de fidélité</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-emerald-500">{tauxFidelite.tauxFidelite}%</p>
-            <p className="text-xs text-muted-foreground">apporteurs récurrents</p>
+            {tauxFidelite.hasDataN1 ? (
+              <>
+                <p className="text-2xl font-bold text-emerald-500">{tauxFidelite.tauxFidelite}%</p>
+                <p className="text-xs text-muted-foreground">apporteurs récurrents</p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Données N-1 indisponibles</p>
+            )}
           </div>
         </Card>
 
@@ -360,10 +366,16 @@ export default function IndicateursApporteurs() {
             <p className="text-sm font-bold text-muted-foreground">Croissance CA</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className={`text-2xl font-bold ${croissanceCA.croissance >= 0 ? 'text-violet-500' : 'text-red-500'}`}>
-              {croissanceCA.croissance >= 0 ? '+' : ''}{croissanceCA.croissance}%
-            </p>
-            <p className="text-xs text-muted-foreground">vs période N-1</p>
+            {croissanceCA.hasDataN1 ? (
+              <>
+                <p className={`text-2xl font-bold ${croissanceCA.croissance >= 0 ? 'text-violet-500' : 'text-red-500'}`}>
+                  {croissanceCA.croissance >= 0 ? '+' : ''}{croissanceCA.croissance}%
+                </p>
+                <p className="text-xs text-muted-foreground">vs période N-1</p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Données N-1 indisponibles</p>
+            )}
           </div>
         </Card>
       </div>
