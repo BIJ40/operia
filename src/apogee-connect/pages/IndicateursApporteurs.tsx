@@ -87,8 +87,7 @@ export default function IndicateursApporteurs() {
         apiData.devis || [],
         apiData.interventions || [],
         apiData.clients || [],
-        secondaryFilters.dateRange,
-        userAgency
+        secondaryFilters.dateRange
       );
       
       // Calculer l'évolution mensuelle Particuliers vs Apporteurs - année dynamique
@@ -98,8 +97,7 @@ export default function IndicateursApporteurs() {
         apiData.factures || [],
         apiData.clients || [],
         apiData.projects || [],
-        year,
-        userAgency
+        year
       );
       
       const tauxTransformationMoyen = calculateTauxTransformationMoyen(
