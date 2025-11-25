@@ -1,7 +1,6 @@
-import { parseISO, isWithinInterval, startOfMonth, endOfMonth, format } from "date-fns";
+import { parseISO, format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { isInitInvoice } from "./dashboardCalculations";
-import { manualJanuaryData, isManualOverrideMonth } from "@/apogee-connect/config/manualOverrides";
+import { manualJanuaryData, isManualOverrideMonth, isFictitiousTransferInvoice } from "@/apogee-connect/config/manualOverrides";
 
 export interface MonthlyCA {
   month: string;
@@ -16,74 +15,121 @@ export const calculateMonthlyCA = (
   year: number,
   userAgency: string
 ): MonthlyCA[] => {
-  const clientsMap = new Map(clients.map(c => [c.id, c]));
-  const projectsMap = new Map(projects.map(p => [p.id, p]));
+  // Créer les maps pour accès rapide
+  const clientsMap = new Map(clients.map(c => [String(c.id), c]));
+  const projectsMap = new Map(projects.map(p => [String(p.id), p]));
   
-  const monthlyData: MonthlyCA[] = [];
-  
-  // Pour chaque mois de l'année
-  for (let month = 0; month < 12; month++) {
-    const date = new Date(year, month, 1);
-    const monthStart = startOfMonth(date);
-    const monthEnd = endOfMonth(date);
-    const monthLabel = format(date, "MMM", { locale: fr });
-    
-    // Vérifier si c'est janvier 2025 avec override manuel pour cette agence
-    if (isManualOverrideMonth(year, month + 1, userAgency)) {
+  // Filtrer les factures de l'année demandée et exclure la facture de transfert
+  const facturesFiltered = factures.filter(facture => {
+    // Exclure la facture de transfert fictive
+    if (isFictitiousTransferInvoice(facture)) {
       if (import.meta.env.DEV) {
-        console.log(`📅 OVERRIDE MANUEL - Janvier ${year} (agence: ${userAgency}): CA manuel = ${manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs}€`);
+        console.log('🚫 Facture de transfert exclue:', facture.reference, facture.totalHT);
       }
-      
-      // Utiliser les valeurs manuelles configurées
-      monthlyData.push({
-        month: monthLabel,
-        ca: manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs,
-        nbFactures: manualJanuaryData.nb_factures_particuliers + manualJanuaryData.nb_factures_apporteurs
-      });
-      continue; // Passer au mois suivant
+      return false;
     }
     
-    let caMonth = 0;
-    let nbFacturesMonth = 0;
+    // Filtrer sur l'année
+    const dateEmission = facture.dateEmission || facture.dateReelle || facture.created_at;
+    if (!dateEmission) return false;
     
-    factures.forEach(facture => {
-      const dateEmission = facture.dateEmission || facture.dateReelle || facture.created_at;
-      if (!dateEmission) return;
+    try {
+      const factureDate = parseISO(dateEmission);
+      return factureDate.getFullYear() === year;
+    } catch {
+      return false;
+    }
+  });
+  
+  // Initialiser les données mensuelles
+  const monthlyData: Array<{
+    month: number;
+    monthLabel: string;
+    caTotal: number;
+    caParticuliers: number;
+    caApporteurs: number;
+    nbFactures: number;
+  }> = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date(year, i, 1);
+    return {
+      month: i + 1,
+      monthLabel: format(date, "MMM", { locale: fr }),
+      caTotal: 0,
+      caParticuliers: 0,
+      caApporteurs: 0,
+      nbFactures: 0
+    };
+  });
+  
+  // Traiter chaque facture
+  for (const facture of facturesFiltered) {
+    const dateEmission = facture.dateEmission || facture.dateReelle || facture.created_at;
+    if (!dateEmission) continue;
+    
+    try {
+      const factureDate = parseISO(dateEmission);
+      const month = factureDate.getMonth(); // 0-11
+      const monthData = monthlyData[month];
       
-      try {
-        const factureDate = parseISO(dateEmission);
-        if (!isWithinInterval(factureDate, { start: monthStart, end: monthEnd })) return;
-        
-        // Exclure les factures d'initialisation
-        const client = clientsMap.get(facture.clientId);
-        const project = projectsMap.get(facture.projectId);
-        if (isInitInvoice(facture, client, project)) return;
-        
-        // Calculer le montant
-        const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
-        const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-        
-        if (isNaN(montant)) return;
-        
-        const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-        
-        nbFacturesMonth++;
-        if (typeFacture === "avoir") {
-          caMonth -= Math.abs(montant);
-        } else {
-          caMonth += montant;
-        }
-      } catch {
-        return;
+      // Récupérer le montant
+      const montantRaw = facture.totalHT || facture.montantHT || facture.data?.totalHT || "0";
+      const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+      
+      if (isNaN(montant) || montant === 0) continue;
+      
+      // Gérer les avoirs (montants négatifs)
+      const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
+      const montantFinal = typeFacture === "avoir" ? -Math.abs(montant) : montant;
+      
+      // Déterminer si c'est un particulier ou un apporteur
+      // via le projet → commanditaireId
+      const project = projectsMap.get(String(facture.projectId));
+      const commanditaireId = project?.data?.commanditaireId || project?.commanditaireId;
+      
+      const isParticulier = !commanditaireId;
+      const isApporteur = !!commanditaireId;
+      
+      // Accumuler les montants
+      monthData.caTotal += montantFinal;
+      monthData.nbFactures++;
+      
+      if (isParticulier) {
+        monthData.caParticuliers += montantFinal;
+      } else if (isApporteur) {
+        monthData.caApporteurs += montantFinal;
       }
-    });
-    
-    monthlyData.push({
-      month: monthLabel,
-      ca: caMonth,
-      nbFactures: nbFacturesMonth
-    });
+      
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('❌ Erreur parsing facture:', facture.reference, error);
+      }
+      continue;
+    }
   }
   
-  return monthlyData;
+  // Appliquer les overrides manuels pour janvier si applicable
+  if (isManualOverrideMonth(year, 1, userAgency)) {
+    const januaryData = monthlyData[0]; // index 0 = janvier
+    
+    if (import.meta.env.DEV) {
+      console.log(`📅 OVERRIDE MANUEL - Janvier ${year} (agence: ${userAgency}):`, {
+        ca_particuliers: manualJanuaryData.ca_particuliers,
+        ca_apporteurs: manualJanuaryData.ca_apporteurs,
+        ca_total: manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs,
+        nb_factures: manualJanuaryData.nb_factures_particuliers + manualJanuaryData.nb_factures_apporteurs
+      });
+    }
+    
+    januaryData.caParticuliers = manualJanuaryData.ca_particuliers;
+    januaryData.caApporteurs = manualJanuaryData.ca_apporteurs;
+    januaryData.caTotal = manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs;
+    januaryData.nbFactures = manualJanuaryData.nb_factures_particuliers + manualJanuaryData.nb_factures_apporteurs;
+  }
+  
+  // Retourner dans le format attendu par MonthlyCAChart
+  return monthlyData.map(m => ({
+    month: m.monthLabel,
+    ca: m.caTotal,
+    nbFactures: m.nbFactures
+  }));
 };
