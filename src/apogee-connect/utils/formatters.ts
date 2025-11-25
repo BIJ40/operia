@@ -83,3 +83,26 @@ export function getInitials(fullName: string): string {
     .toUpperCase()
     .slice(0, 2);
 }
+
+/**
+ * Formater le type d'apporteur pour l'affichage
+ * Transforme les types techniques en libellés lisibles
+ * 
+ * @param type - Type technique d'apporteur
+ * @returns Libellé formaté pour l'affichage
+ */
+export function formatApporteurType(type: string | undefined | null): string {
+  if (!type) return 'Non défini';
+  
+  const typeLower = type.toLowerCase().trim();
+  
+  // Mapping des types techniques vers les libellés d'affichage
+  const typeMapping: Record<string, string> = {
+    'agence_immo': 'Gestion locative',
+    'facility_services': 'Maintenanceur',
+    'gestion_syndic': 'Syndic',
+  };
+  
+  // Retourner le libellé mappé ou le type original si pas de correspondance
+  return typeMapping[typeLower] || type;
+}

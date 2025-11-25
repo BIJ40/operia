@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TypeApporteurStats } from "@/apogee-connect/utils/typesApporteursCalculations";
-import { formatEuros, formatPercent } from "@/apogee-connect/utils/formatters";
+import { formatEuros, formatPercent, formatApporteurType } from "@/apogee-connect/utils/formatters";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { TrendingUp, Package, Euro, Percent, Wrench, Maximize2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,7 +55,7 @@ export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetPr
 
   // Préparer les données pour le graphique
   const chartData = data.map((stat, index) => ({
-    name: stat.type,
+    name: formatApporteurType(stat.type),
     value: stat.caHT,
     fill: COLORS[index % COLORS.length]
   }));
@@ -72,7 +72,7 @@ export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetPr
           {/* En-tête avec nom du type */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold truncate flex-1" title={stat.type}>{stat.type}</h4>
+              <h4 className="text-sm font-bold truncate flex-1" title={formatApporteurType(stat.type)}>{formatApporteurType(stat.type)}</h4>
               {compact && (
                 <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={(e) => { e.stopPropagation(); setSelectedType(stat); }}>
                   <Maximize2 className="w-3 h-3" />
@@ -212,7 +212,7 @@ export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetPr
         <WidgetDialog
           open={!!selectedType}
           onOpenChange={(open) => !open && setSelectedType(null)}
-          title={`Détails - ${selectedType.type}`}
+          title={`Détails - ${formatApporteurType(selectedType.type)}`}
           maxWidth="xl"
         >
           <TypeCard 
