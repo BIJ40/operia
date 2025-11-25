@@ -301,17 +301,21 @@ Deno.serve(async (req) => {
     const interventions_count = interventionsPeriode.length;
 
     // ===== Tuile 8: Devis (période sélectionnée) =====
-    // Règle: devis.dateCreation dans [startDate, endDate]
+    // Règle: devis.dateCreation (ou champs alternatifs) dans [startDate, endDate]
     const devisPeriode = (devis || []).filter((d: any) => {
-      const devisDate = parseDate(d.dateCreation || d.date);
+      let rawDate = d.dateCreation || d.dateEmission || d.dateReelle || d.date || d.created_at;
+      if (!rawDate && d.data?.date) rawDate = d.data.date;
+      const devisDate = parseDate(rawDate);
       return devisDate && devisDate >= dates.start && devisDate <= dates.end;
     });
     const devis_count = devisPeriode.length;
 
     // ===== Tuile 9: Projets (nouveaux sur la période) =====
-    // Règle: project.createdAt dans [startDate, endDate]
+    // Règle: project.createdAt (ou champs alternatifs) dans [startDate, endDate]
     const projetsPeriode = (projects || []).filter((p: any) => {
-      const projectDate = parseDate(p.createdAt || p.dateCreation);
+      let rawDate = p.createdAt || p.dateCreation || p.dateCréationDossier || p.date || p.created_at;
+      if (!rawDate && p.data?.dateCreation) rawDate = p.data.dateCreation;
+      const projectDate = parseDate(rawDate);
       return projectDate && projectDate >= dates.start && projectDate <= dates.end;
     });
     const projects_count = projetsPeriode.length;
