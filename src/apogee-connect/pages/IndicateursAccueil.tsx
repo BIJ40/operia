@@ -110,6 +110,13 @@ export default function IndicateursAccueil() {
         apiData.users || []
       );
       
+      // Calculer le délai moyen Dossier → Premier Devis (NON soumis au sélecteur temporel)
+      const { calculateDelaiMoyenDossierPremierDevis } = await import("@/apogee-connect/utils/dashboardCalculations");
+      const delaiDossierPremierDevis = calculateDelaiMoyenDossierPremierDevis(
+        apiData.projects || [],
+        apiData.devis || []
+      );
+      
       // Calculer les données mensuelles CA pour l'année sélectionnée
       const monthlyCAData = calculateMonthlyCA(
         apiData.factures || [],
@@ -127,7 +134,7 @@ export default function IndicateursAccueil() {
         filters.dateRange
       );
       
-      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture, dossiersComplexes, panierMoyen, tauxTransformationDevis, nbMoyenInterventionsParDossier, nbMoyenVisitesParIntervention, tauxDossiersMultiUnivers, tauxDossiersSansDevis, tauxDossiersMultiTechniciens, polyvalenceTechniciens };
+      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture, dossiersComplexes, panierMoyen, tauxTransformationDevis, nbMoyenInterventionsParDossier, nbMoyenVisitesParIntervention, tauxDossiersMultiUnivers, tauxDossiersSansDevis, tauxDossiersMultiTechniciens, polyvalenceTechniciens, delaiDossierPremierDevis };
     },
   });
 
@@ -426,15 +433,20 @@ export default function IndicateursAccueil() {
               </div>
             </Card>
 
-            {/* KPI 16: Placeholder - à définir */}
-            <Card className="p-3 border-2 border-dashed border-muted-foreground/20 bg-muted/10 shadow-lg">
+            {/* KPI 16: Délai Dossier → 1er Devis */}
+            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-sky-500/50 shadow-lg">
               <div className="flex items-center gap-2 mb-2">
-                <div className="bg-muted p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-xs text-muted-foreground">?</span>
+                <div className="bg-gradient-to-br from-sky-500 to-sky-600 p-1.5 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">📝</span>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">KPI à définir</p>
+                <p className="text-xs font-medium text-muted-foreground">Délai Dossier → 1er Devis</p>
               </div>
-              <p className="text-xl font-bold text-muted-foreground">-</p>
+              <div className="flex items-baseline gap-1">
+                <p className="text-xl font-bold">{data?.delaiDossierPremierDevis?.delaiMoyen || 0}j</p>
+                {data?.delaiDossierPremierDevis?.nbDossiers !== undefined && (
+                  <span className="text-[10px] text-muted-foreground">({data.delaiDossierPremierDevis.nbDossiers})</span>
+                )}
+              </div>
             </Card>
           </div>
         </div>
