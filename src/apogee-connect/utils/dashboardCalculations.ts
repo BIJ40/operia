@@ -1351,15 +1351,32 @@ export function calculateDelaiMoyenDossierPremierDevis(
   projects: any[],
   interventions: any[]
 ): { delaiMoyen: number; nbDossiers: number } {
-  // Debug: vérifier les données
-  const interventionsAvecHistory = interventions.filter(it => (it.history ?? []).length > 0);
-  console.log("📊 KPI 16 - Interventions avec history:", interventionsAvecHistory.length);
+  // DEBUG EXHAUSTIF
+  console.log("📊 KPI 16 - Nb interventions:", interventions.length);
+  console.log("📊 KPI 16 - Nb projets:", projects.length);
   
-  if (interventionsAvecHistory.length > 0) {
-    const allLabels = new Set(
-      interventions.flatMap(it => (it.history ?? []).map((h: any) => h.labelKind))
-    );
-    console.log("📊 KPI 16 - LabelKind trouvés:", Array.from(allLabels));
+  if (interventions.length > 0) {
+    // Log structure de la première intervention
+    const firstIt = interventions[0];
+    console.log("📊 KPI 16 - Première intervention keys:", Object.keys(firstIt));
+    console.log("📊 KPI 16 - intervention.history existe:", !!firstIt.history);
+    console.log("📊 KPI 16 - intervention.data?.history existe:", !!firstIt.data?.history);
+    
+    // Vérifier les deux chemins
+    const historyDirect = interventions.filter(it => (it.history ?? []).length > 0).length;
+    const historyNested = interventions.filter(it => (it.data?.history ?? []).length > 0).length;
+    console.log("📊 KPI 16 - intervention.history count:", historyDirect);
+    console.log("📊 KPI 16 - intervention.data.history count:", historyNested);
+
+    // Collecter tous les labelKind pour debug
+    const allLabels = new Set<string>();
+    interventions.forEach(it => {
+      const history = it.history ?? it.data?.history ?? [];
+      history.forEach((h: any) => {
+        if (h.labelKind) allLabels.add(h.labelKind);
+      });
+    });
+    console.log("📊 KPI 16 - Tous les labelKind:", Array.from(allLabels));
   }
 
   // Étape 1 : Indexer les projets par ID
@@ -1368,54 +1385,64 @@ export function calculateDelaiMoyenDossierPremierDevis(
     if (p.id) projectById[p.id] = p;
   });
 
-  // Étape 2 : Pour chaque projet, trouver le premier événement "Devis envoyé" dans l'historique des interventions
-  const delais: number[] = [];
+  // Étape 2 : Map projectId -> date du 1er envoi de devis
+  const firstDevisSentByProject: Record<string, Date> = {};
 
-  for (const project of projects) {
-    if (!project.id || !project.createdAt) continue;
+  for (const intervention of interventions) {
+    const pid = intervention.projectId;
+    if (!pid) continue;
 
-    const dateCreation = new Date(project.createdAt);
-    if (isNaN(dateCreation.getTime())) continue;
+    // ESSAYER LES DEUX CHEMINS avec fallback
+    const history = intervention.history ?? intervention.data?.history ?? [];
+    if (!Array.isArray(history) || history.length === 0) continue;
 
-    // Trouver toutes les interventions de ce projet
-    const interventionsProjet = interventions.filter(i => i.projectId === project.id);
-    if (interventionsProjet.length === 0) continue;
-
-    // Chercher dans l'historique de toutes les interventions du projet
-    let dateEnvoiDevis: Date | null = null;
-
-    for (const intervention of interventionsProjet) {
-      // CORRECTION: utiliser intervention.history directement, pas intervention.data.history
-      const history = intervention.history ?? [];
+    for (const event of history) {
+      const labelKind = event.labelKind || "";
       
-      for (const event of history) {
-        if (event.labelKind === "Devis à faire => Devis envoyé") {
-          // CORRECTION: utiliser parseHistoryDate pour le format français
-          const eventDate = parseHistoryDate(event.dateModif);
-          if (!eventDate) continue;
+      // Condition stricte OU tolérante
+      if (labelKind === "Devis à faire => Devis envoyé" || 
+          (labelKind.includes("Devis à faire") && labelKind.includes("Devis envoyé"))) {
+        
+        const eventDate = parseHistoryDate(event.dateModif);
+        if (!eventDate) continue;
 
-          // Garder la date la plus ancienne (premier envoi)
-          if (!dateEnvoiDevis || eventDate < dateEnvoiDevis) {
-            dateEnvoiDevis = eventDate;
-          }
+        const existing = firstDevisSentByProject[pid];
+        if (!existing || eventDate < existing) {
+          firstDevisSentByProject[pid] = eventDate;
         }
-      }
-    }
-
-    // Si on a trouvé un événement d'envoi de devis
-    if (dateEnvoiDevis) {
-      const diffJours = (dateEnvoiDevis.getTime() - dateCreation.getTime()) / (1000 * 3600 * 24);
-
-      // Sécurité: délai cohérent (entre 0 et 10000 jours)
-      if (diffJours >= 0 && diffJours < 10000) {
-        delais.push(diffJours);
       }
     }
   }
 
-  console.log("📊 KPI 16 - Dossiers avec délai calculé:", delais.length);
+  console.log("📊 KPI 16 - Projets avec devis envoyé:", Object.keys(firstDevisSentByProject).length);
 
-  // Étape 3 : KPI final
+  // Étape 3 : Calcul des délais
+  const delais: number[] = [];
+
+  for (const [projectId, dateFirstDevis] of Object.entries(firstDevisSentByProject)) {
+    const project = projectById[projectId];
+    if (!project) continue;
+
+    // Date de création avec fallback robuste
+    const rawDate = project.createdAt || project.date || project.data?.dateCreation;
+    if (!rawDate) continue;
+    
+    const dateCreation = new Date(rawDate);
+    if (isNaN(dateCreation.getTime())) continue;
+
+    const diffJours = (dateFirstDevis.getTime() - dateCreation.getTime()) / (1000 * 3600 * 24);
+
+    if (diffJours >= 0 && diffJours < 10000) {
+      delais.push(diffJours);
+    }
+  }
+
+  console.log("📊 KPI 16 - Dossiers avec délai calculé:", delais.length);
+  if (delais.length > 0) {
+    console.log("📊 KPI 16 - Exemples de délais (premiers 5):", delais.slice(0, 5));
+  }
+
+  // Étape 4 : KPI final
   if (delais.length === 0) {
     return { delaiMoyen: 0, nbDossiers: 0 };
   }
