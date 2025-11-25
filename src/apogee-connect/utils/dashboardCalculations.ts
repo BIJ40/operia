@@ -1355,26 +1355,34 @@ export function calculateDelaiMoyenDossierPremierDevis(
   console.log("📊 KPI 16 - Nb interventions:", interventions.length);
   console.log("📊 KPI 16 - Nb projets:", projects.length);
   
+  if (projects.length > 0) {
+    console.log("📊 KPI 16 - Première projet keys:", Object.keys(projects[0]));
+    console.log("📊 KPI 16 - project.date existe:", !!projects[0].date);
+    console.log("📊 KPI 16 - project.created_at existe:", !!projects[0].created_at);
+    console.log("📊 KPI 16 - project.createdAt existe:", !!projects[0].createdAt);
+  }
+  
   if (interventions.length > 0) {
-    // Log structure de la première intervention
     const firstIt = interventions[0];
     console.log("📊 KPI 16 - Première intervention keys:", Object.keys(firstIt));
     console.log("📊 KPI 16 - intervention.history existe:", !!firstIt.history);
     console.log("📊 KPI 16 - intervention.data?.history existe:", !!firstIt.data?.history);
     
     // Vérifier les deux chemins
-    const historyDirect = interventions.filter(it => (it.history ?? []).length > 0).length;
-    const historyNested = interventions.filter(it => (it.data?.history ?? []).length > 0).length;
+    const historyDirect = interventions.filter(it => Array.isArray(it.history) && it.history.length > 0).length;
+    const historyNested = interventions.filter(it => Array.isArray(it.data?.history) && it.data.history.length > 0).length;
     console.log("📊 KPI 16 - intervention.history count:", historyDirect);
     console.log("📊 KPI 16 - intervention.data.history count:", historyNested);
 
     // Collecter tous les labelKind pour debug
     const allLabels = new Set<string>();
     interventions.forEach(it => {
-      const history = it.history ?? it.data?.history ?? [];
-      history.forEach((h: any) => {
-        if (h.labelKind) allLabels.add(h.labelKind);
-      });
+      const history = it.data?.history ?? it.history ?? [];
+      if (Array.isArray(history)) {
+        history.forEach((h: any) => {
+          if (h.labelKind) allLabels.add(h.labelKind);
+        });
+      }
     });
     console.log("📊 KPI 16 - Tous les labelKind:", Array.from(allLabels));
   }
@@ -1385,30 +1393,29 @@ export function calculateDelaiMoyenDossierPremierDevis(
     if (p.id) projectById[p.id] = p;
   });
 
-  // Étape 2 : Map projectId -> date du 1er envoi de devis
+  // Étape 2 : Map projectId -> date du 1er envoi de devis (recherche dans intervention.data.history)
   const firstDevisSentByProject: Record<string, Date> = {};
 
   for (const intervention of interventions) {
     const pid = intervention.projectId;
     if (!pid) continue;
 
-    // ESSAYER LES DEUX CHEMINS avec fallback
-    const history = intervention.history ?? intervention.data?.history ?? [];
+    // PRIORISER intervention.data.history puis fallback sur intervention.history
+    const history = intervention.data?.history ?? intervention.history ?? [];
     if (!Array.isArray(history) || history.length === 0) continue;
 
     for (const event of history) {
       const labelKind = event.labelKind || "";
       
-      // Condition stricte OU tolérante
-      if (labelKind === "Devis à faire => Devis envoyé" || 
-          (labelKind.includes("Devis à faire") && labelKind.includes("Devis envoyé"))) {
-        
+      // Condition stricte UNIQUEMENT
+      if (labelKind === "Devis à faire => Devis envoyé") {
         const eventDate = parseHistoryDate(event.dateModif);
         if (!eventDate) continue;
 
         const existing = firstDevisSentByProject[pid];
         if (!existing || eventDate < existing) {
           firstDevisSentByProject[pid] = eventDate;
+          console.log(`📊 KPI 16 - Trouvé devis envoyé pour projet ${pid}:`, event.dateModif);
         }
       }
     }
@@ -1416,30 +1423,37 @@ export function calculateDelaiMoyenDossierPremierDevis(
 
   console.log("📊 KPI 16 - Projets avec devis envoyé:", Object.keys(firstDevisSentByProject).length);
 
-  // Étape 3 : Calcul des délais
+  // Étape 3 : Calcul des délais (utiliser project.date ou project.created_at)
   const delais: number[] = [];
 
   for (const [projectId, dateFirstDevis] of Object.entries(firstDevisSentByProject)) {
     const project = projectById[projectId];
     if (!project) continue;
 
-    // Date de création avec fallback robuste
-    const rawDate = project.createdAt || project.date || project.data?.dateCreation;
-    if (!rawDate) continue;
+    // Date de création avec PRIORITÉ sur project.date puis project.created_at
+    const rawDate = project.date || project.created_at || project.createdAt;
+    if (!rawDate) {
+      console.log(`📊 KPI 16 - Projet ${projectId} sans date de création`);
+      continue;
+    }
     
     const dateCreation = new Date(rawDate);
-    if (isNaN(dateCreation.getTime())) continue;
+    if (isNaN(dateCreation.getTime())) {
+      console.log(`📊 KPI 16 - Projet ${projectId} date invalide:`, rawDate);
+      continue;
+    }
 
     const diffJours = (dateFirstDevis.getTime() - dateCreation.getTime()) / (1000 * 3600 * 24);
 
     if (diffJours >= 0 && diffJours < 10000) {
       delais.push(diffJours);
+      console.log(`📊 KPI 16 - Projet ${projectId}: délai = ${diffJours.toFixed(1)} jours`);
     }
   }
 
   console.log("📊 KPI 16 - Dossiers avec délai calculé:", delais.length);
   if (delais.length > 0) {
-    console.log("📊 KPI 16 - Exemples de délais (premiers 5):", delais.slice(0, 5));
+    console.log("📊 KPI 16 - Exemples de délais (premiers 5):", delais.slice(0, 5).map(d => d.toFixed(1)));
   }
 
   // Étape 4 : KPI final
