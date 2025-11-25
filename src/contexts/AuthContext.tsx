@@ -205,28 +205,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasAccessToBlock = (blockId: string): boolean => {
     console.log('🔐 hasAccessToBlock appelé:', { blockId, isAdmin, roleAgence, userPermissionsCount: userPermissions.length });
     
+    // POLITIQUE STRICTE : DENY PAR DÉFAUT
+    
     // Les admins ont accès à tout
     if (isAdmin) {
       console.log('✅ Accès accordé (admin)');
       return true;
     }
     
-    // Si l'utilisateur n'a pas de rôle agence, accès accordé par défaut
+    // Si l'utilisateur n'a pas de rôle agence, accès accordé par défaut (utilisateur normal sans restriction)
     if (!roleAgence) {
-      console.log('✅ Accès accordé (pas de role_agence)');
+      console.log('✅ Accès accordé (pas de role_agence - utilisateur sans restriction)');
       return true;
     }
     
-    // Si l'utilisateur a un rôle mais aucune permission définie, refuser l'accès
-    if (userPermissions.length === 0) {
-      console.log('❌ Accès refusé (role_agence défini mais aucune permission)');
+    // DENY PAR DÉFAUT : Si l'utilisateur a un rôle, il DOIT avoir une permission explicite
+    const hasPermission = userPermissions.includes(blockId);
+    
+    if (!hasPermission) {
+      console.log('❌ Accès REFUSÉ (aucune permission explicite pour ce block)');
       return false;
     }
     
-    // Sinon, vérifier si le block est dans la liste des permissions
-    const hasAccess = userPermissions.includes(blockId);
-    console.log(hasAccess ? '✅ Accès accordé (permission trouvée)' : '❌ Accès refusé (permission non trouvée)');
-    return hasAccess;
+    console.log('✅ Accès accordé (permission explicite trouvée)');
+    return true;
   };
 
   if (loading) {
