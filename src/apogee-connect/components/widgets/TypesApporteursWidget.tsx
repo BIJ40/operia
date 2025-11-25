@@ -150,6 +150,33 @@ export const TypesApporteursWidget = ({ data, loading, mode = "full" }: TypesApp
     </Card>
   );
 
+  if (mode === "cardsOnly") {
+    return (
+      <>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data.map((stat, index) => (
+            <TypeCard key={stat.type} stat={stat} index={index} compact={true} />
+          ))}
+        </div>
+
+        {selectedType && (
+          <WidgetDialog
+            open={!!selectedType}
+            onOpenChange={(open) => !open && setSelectedType(null)}
+            title={`Détails - ${formatApporteurType(selectedType.type)}`}
+            maxWidth="xl"
+          >
+            <TypeCard 
+              stat={selectedType} 
+              index={data.findIndex(d => d.type === selectedType.type)} 
+              compact={false} 
+            />
+          </WidgetDialog>
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Titre de la section */}
