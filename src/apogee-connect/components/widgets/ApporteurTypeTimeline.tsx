@@ -89,12 +89,14 @@ function buildChartData(projects: any[], clients: any[]) {
 }
 
 const COLORS = [
-  "hsl(var(--primary))",      // Bleu Help Confort
-  "hsl(var(--accent))",        // Orange Help Confort
-  "hsl(var(--blue-dark))",     // Bleu foncé
-  "hsl(221, 83%, 53%)",        // Bleu vif
-  "hsl(271, 91%, 65%)",        // Violet
-  "hsl(142, 71%, 45%)",        // Vert
+  "hsl(var(--primary))",       // Bleu Help Confort
+  "hsl(var(--accent))",         // Orange Help Confort
+  "hsl(271, 91%, 65%)",         // Violet
+  "hsl(142, 71%, 45%)",         // Vert
+  "hsl(340, 82%, 52%)",         // Rose/Rouge
+  "hsl(45, 93%, 47%)",          // Jaune/Or
+  "hsl(180, 77%, 44%)",         // Cyan
+  "hsl(16, 90%, 55%)",          // Orange corail
 ];
 
 export const ApporteurTypeTimeline = ({ projects, clients }: ApporteurTypeTimelineProps) => {
