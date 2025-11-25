@@ -101,6 +101,9 @@ export function formatApporteurType(type: string | undefined | null): string {
     'agence_immo': 'Gestion locative',
     'facility_services': 'Maintenanceur',
     'gestion_syndic': 'Syndic',
+    'assurance': 'Assurance',
+    'professionnel': 'Professionnel',
+    'association': 'Association',
   };
   
   // Retourner le libellé mappé ou le type original si pas de correspondance
