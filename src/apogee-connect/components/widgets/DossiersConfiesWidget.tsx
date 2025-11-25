@@ -11,7 +11,7 @@ interface DossiersConfiesWidgetProps {
 
 export const DossiersConfiesWidget = ({ dossiers }: DossiersConfiesWidgetProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const top10 = dossiers.slice(0, 10);
+  const top10 = dossiers.slice(0, 5);
   
   const WidgetContent = ({ showAll = false }: { showAll?: boolean }) => {
     const displayData = showAll ? dossiers : top10;
@@ -47,7 +47,7 @@ export const DossiersConfiesWidget = ({ dossiers }: DossiersConfiesWidgetProps) 
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold flex items-center gap-2">
             <FolderOpen className="w-5 h-5" />
-            Top 10 Dossiers confiés
+            Top 5 Dossiers confiés
           </h3>
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <Maximize2 className="w-4 h-4" />
