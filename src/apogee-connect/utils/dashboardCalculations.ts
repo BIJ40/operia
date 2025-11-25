@@ -592,3 +592,57 @@ export const calculatePanierMoyen = (
     nbDossiers
   };
 };
+
+// ====================================================================
+// KPI 9 - TAUX DE TRANSFORMATION DES DEVIS
+// ====================================================================
+
+export const calculateTauxTransformationDevis = (
+  devis: any[],
+  dateRange?: { start: Date; end: Date }
+): { tauxTransformation: number; nbEnvoyes: number; nbAcceptes: number } => {
+  // Filtrer les devis par période si fournie
+  let devisPeriode = devis;
+  
+  if (dateRange) {
+    devisPeriode = devis.filter(d => {
+      const date = d.dateReelle || d.date || d.dateCreation || d.data?.dateReelle || d.data?.date;
+      if (!date) return false;
+
+      try {
+        const devisDate = parseISO(date);
+        return isWithinInterval(devisDate, dateRange);
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  // Devis envoyés = state === "sent" (ou acceptés/facturés qui ont forcément été envoyés)
+  const devisEnvoyes = devisPeriode.filter(d => {
+    const state = d.state || d.statut || d.data?.state || d.data?.statut;
+    const stateStr = String(state).toLowerCase();
+    return stateStr === "sent" || stateStr === "accepted" || stateStr === "invoice";
+  });
+
+  // Devis acceptés = state === "invoice" ou "accepted"
+  const devisAcceptes = devisPeriode.filter(d => {
+    const state = d.state || d.statut || d.data?.state || d.data?.statut;
+    const stateStr = String(state).toLowerCase();
+    return stateStr === "invoice" || stateStr === "accepted";
+  });
+
+  const nbEnvoyes = devisEnvoyes.length;
+  const nbAcceptes = devisAcceptes.length;
+
+  // Calculer le taux
+  const tauxTransformation = nbEnvoyes > 0 
+    ? (nbAcceptes / nbEnvoyes) * 100 
+    : 0;
+
+  return {
+    tauxTransformation: Math.round(tauxTransformation * 10) / 10, // Arrondir à 1 décimale
+    nbEnvoyes,
+    nbAcceptes
+  };
+};

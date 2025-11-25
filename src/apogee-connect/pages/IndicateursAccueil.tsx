@@ -43,7 +43,7 @@ export default function IndicateursAccueil() {
       }, filters.dateRange, userAgency);
       
       // Calculer le délai moyen Dossier → Facture
-      const { calculateDelaiMoyenDossierFacture, calculateTauxDossiersComplexes, calculatePanierMoyen } = await import("@/apogee-connect/utils/dashboardCalculations");
+      const { calculateDelaiMoyenDossierFacture, calculateTauxDossiersComplexes, calculatePanierMoyen, calculateTauxTransformationDevis } = await import("@/apogee-connect/utils/dashboardCalculations");
       const delaiDossierFacture = calculateDelaiMoyenDossierFacture(
         apiData.factures || [],
         apiData.projects || [],
@@ -59,6 +59,12 @@ export default function IndicateursAccueil() {
       // Calculer le panier moyen
       const panierMoyen = calculatePanierMoyen(
         apiData.factures || [],
+        filters.dateRange
+      );
+      
+      // Calculer le taux de transformation des devis
+      const tauxTransformationDevis = calculateTauxTransformationDevis(
+        apiData.devis || [],
         filters.dateRange
       );
       
@@ -79,7 +85,7 @@ export default function IndicateursAccueil() {
         filters.dateRange
       );
       
-      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture, dossiersComplexes, panierMoyen };
+      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture, dossiersComplexes, panierMoyen, tauxTransformationDevis };
     },
   });
 
@@ -240,8 +246,24 @@ export default function IndicateursAccueil() {
           </div>
         </Card>
 
-        {/* KPI 9-12: Placeholders */}
-        {[9, 10, 11, 12].map((num) => (
+        {/* KPI 9: Taux de transformation */}
+        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-cyan-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 p-1.5 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xs">📈</span>
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">Taux transfo devis</p>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <p className="text-xl font-bold">{data?.tauxTransformationDevis?.tauxTransformation || 0}%</p>
+            {data?.tauxTransformationDevis?.nbAcceptes !== undefined && (
+              <span className="text-[10px] text-muted-foreground">({data.tauxTransformationDevis.nbAcceptes}/{data.tauxTransformationDevis.nbEnvoyes})</span>
+            )}
+          </div>
+        </Card>
+
+        {/* KPI 10-12: Placeholders */}
+        {[10, 11, 12].map((num) => (
           <Card key={num} className="p-3 border-2 border-dashed border-muted">
             <p className="text-[10px] text-muted-foreground mb-0.5">KPI #{num}</p>
             <p className="text-xl font-bold text-muted-foreground">--</p>
