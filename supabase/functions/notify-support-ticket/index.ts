@@ -61,24 +61,6 @@ serve(async (req) => {
     // Create admin client for privileged operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify user has admin or support role
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .in('role', ['admin', 'support'])
-      .maybeSingle();
-
-    if (!roleData) {
-      return new Response(
-        JSON.stringify({ error: 'Accès refusé - Réservé aux administrateurs et au support' }),
-        {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
     const { ticketId, userPseudo, lastQuestion, appUrl }: NotificationRequest = await req.json();
