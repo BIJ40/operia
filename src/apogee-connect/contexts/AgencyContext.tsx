@@ -29,10 +29,14 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
     : null;
 
   useEffect(() => {
-    if (currentAgency) {
+    if (currentAgency?.baseUrl) {
+      console.log(`🏢 Configuration de l'agence: ${currentAgency.id}`);
       setApiBaseUrl(currentAgency.baseUrl);
       // Vider le cache pour forcer le rechargement des données
       DataService.clearCache();
+    } else {
+      console.log('⚠️ Aucune agence définie - Appels API bloqués');
+      setApiBaseUrl(""); // Réinitialiser BASE_URL
     }
   }, [currentAgency?.id]);
 

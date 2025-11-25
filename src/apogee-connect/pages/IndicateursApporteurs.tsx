@@ -34,7 +34,14 @@ export default function IndicateursApporteurs() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["apporteurs-stats", secondaryFilters, isApiEnabled, agencyChangeCounter],
+    enabled: !!currentAgency?.id, // Ne lancer la query que si l'agence est définie
     queryFn: async () => {
+      // GUARD: Ne pas charger si l'agence n'est pas définie
+      if (!currentAgency?.id) {
+        console.warn('⚠️ Agence non définie - Chargement des données annulé');
+        return null;
+      }
+      
       const apiData = await DataService.loadAllData(isApiEnabled);
       
       const top10Apporteurs = calculateTop10Apporteurs(
@@ -135,6 +142,14 @@ export default function IndicateursApporteurs() {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
         <p className="text-2xl text-muted-foreground animate-pulse">Chargement des données apporteurs...</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <p className="text-2xl text-muted-foreground">Aucune agence définie - Veuillez vous reconnecter</p>
       </div>
     );
   }
