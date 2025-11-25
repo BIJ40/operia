@@ -77,20 +77,17 @@ export default function IndicateursUnivers() {
         <SecondaryPeriodSelector />
       </div>
 
-      {/* Layout avec tuiles à gauche et graphique à droite */}
+      {/* Layout avec 4 tuiles (2x2) à gauche et graphique à droite */}
       {isLoading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-1 grid grid-cols-1 gap-4">
-            {[...Array(2)].map((_, i) => (
-              <Skeleton key={i} className="h-64" />
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-48" />
             ))}
           </div>
-          <div className="lg:col-span-2 lg:row-span-2">
-            <Skeleton className="h-full min-h-[536px]" />
+          <div className="lg:col-span-3">
+            <Skeleton className="h-full min-h-[400px]" />
           </div>
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i + 2} className="h-64" />
-          ))}
         </div>
       ) : stats.length === 0 ? (
         <div className="flex items-center justify-center min-h-[400px] border-2 border-dashed border-muted rounded-2xl">
@@ -102,10 +99,10 @@ export default function IndicateursUnivers() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* 2 premières tuiles */}
-          <div className="lg:col-span-1 grid grid-cols-1 gap-4">
-            {stats.slice(0, 2).map((stat) => {
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          {/* 4 tuiles en grille 2x2 */}
+          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+            {stats.slice(0, 4).map((stat) => {
               const universeRef = universesMap.get(stat.univers);
               return (
                 <UniversKpiCard
@@ -119,28 +116,14 @@ export default function IndicateursUnivers() {
             })}
           </div>
 
-          {/* Graphique empilé sur 2 lignes */}
-          <div className="lg:col-span-2 lg:row-span-2">
+          {/* Graphique empilé à droite */}
+          <div className="lg:col-span-3">
             <UniversStackedChart 
               data={monthlyCA}
               universes={data?.universes || []}
               loading={isLoading}
             />
           </div>
-
-          {/* 6 tuiles restantes */}
-          {stats.slice(2).map((stat) => {
-            const universeRef = universesMap.get(stat.univers);
-            return (
-              <UniversKpiCard
-                key={stat.univers}
-                stat={stat}
-                color={universeRef?.colorHex || '#6B7280'}
-                label={universeRef?.label || stat.univers}
-                icon={universeRef?.icon || 'HelpCircle'}
-              />
-            );
-          })}
         </div>
       )}
     </div>
