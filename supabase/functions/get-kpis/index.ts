@@ -301,9 +301,9 @@ Deno.serve(async (req) => {
     const interventions_count = interventionsPeriode.length;
 
     // ===== Tuile 8: Devis (période sélectionnée) =====
-    // Règle: devis.dateCreation (ou champs alternatifs) dans [startDate, endDate]
+    // Règle: devis.dateReelle (date principale) dans [startDate, endDate]
     const devisPeriode = (devis || []).filter((d: any) => {
-      let rawDate = d.dateCreation || d.dateEmission || d.dateReelle || d.date || d.created_at;
+      let rawDate = d.dateReelle || d.dateCreation || d.dateEmission || d.date || d.created_at;
       if (!rawDate && d.data?.date) rawDate = d.data.date;
       const devisDate = parseDate(rawDate);
       return devisDate && devisDate >= dates.start && devisDate <= dates.end;
@@ -321,30 +321,30 @@ Deno.serve(async (req) => {
     const projects_count = projetsPeriode.length;
 
     // ===== Tuile 10: Taux Conversion (Devis → Accepté/Commandé) =====
-    // Règle: Utiliser uniquement les devis de la période
-    // Devis envoyés = statut différent de brouillon/supprimé
-    // Devis acceptés = statut Accepté ou Commandé
+    // Règle: Utiliser state (pas statut), dateReelle pour la période
+    // Devis envoyés = state différent de 'draft'
+    // Devis acceptés = state 'invoice' (facturé = commandé/accepté)
     // Taux = (acceptés / envoyés) × 100
     
-    const getStatus = (d: any) => (d.statut || d.status || '').toLowerCase();
+    const getState = (d: any) => (d.state || '').toLowerCase();
     
-    // Devis envoyés = tous sauf brouillon et supprimé
+    // Devis envoyés = tous sauf draft (brouillon)
     const devisEnvoyes = devisPeriode.filter((d: any) => {
-      const s = getStatus(d);
-      return s !== 'brouillon' && s !== 'supprimé' && s !== 'draft' && s !== 'deleted';
+      const s = getState(d);
+      return s !== 'draft' && s !== 'brouillon';
     });
     
-    // Devis acceptés = statut Accepté ou Commandé
+    // Devis acceptés = state "invoice" (facturé) ou "accepted"/"ordered"
     const devisAcceptes = devisEnvoyes.filter((d: any) => {
-      const s = getStatus(d);
-      return s === 'accepté' || s === 'commandé' || s === 'accepted' || s === 'ordered';
+      const s = getState(d);
+      return s === 'invoice' || s === 'accepted' || s === 'ordered';
     });
     
     const conversion_rate = devisEnvoyes.length > 0 
       ? (devisAcceptes.length / devisEnvoyes.length) * 100 
       : 0;
     
-    console.log(`[get-kpis] Devis période: ${devisPeriode.length}, Envoyés: ${devisEnvoyes.length}, Acceptés: ${devisAcceptes.length}, Taux: ${conversion_rate.toFixed(1)}%`);
+    console.log(`[get-kpis] Devis: ${(devis || []).length} total, ${devisPeriode.length} dans période (dateReelle), ${devisEnvoyes.length} envoyés (hors draft), ${devisAcceptes.length} acceptés (invoice), Taux: ${conversion_rate.toFixed(1)}%`);
 
     // ===== Tuile 11: Techniciens (hors sélecteur) =====
     // Règle: Filtrer users: active === true, role technicien/tech
