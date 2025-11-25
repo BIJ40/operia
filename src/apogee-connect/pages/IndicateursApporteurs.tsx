@@ -396,6 +396,7 @@ export default function IndicateursApporteurs() {
 
       {/* Stats détaillées par type d'apporteur + Clients directs */}
       <div className="grid grid-cols-1 gap-6">
+        <TypesApporteursWidget data={data?.typesApporteursStats || []} mode="full" />
         <ParticuliersWidget stats={data?.particuliersStats} />
       </div>
 
