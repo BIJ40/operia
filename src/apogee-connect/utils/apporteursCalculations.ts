@@ -54,7 +54,7 @@ const filterFacturesPeriode = (
   });
 };
 
-// Calculer le TOP 10 des apporteurs
+// Calculer le TOP 5 des apporteurs
 export const calculateTop10Apporteurs = (
   factures: any[],
   projects: any[],
@@ -160,10 +160,10 @@ export const calculateTop10Apporteurs = (
     });
   });
   
-// Trier par CA décroissant et garder le TOP 10
+// Trier par CA décroissant et garder le TOP 5
   return liste
     .sort((a, b) => b.caHT - a.caHT)
-    .slice(0, 10);
+    .slice(0, 5);
 };
 
 // Interface pour les dossiers par apporteur
@@ -611,7 +611,7 @@ export interface FlopApporteurStats {
 }
 
 /**
- * Calcule le FLOP 10 des apporteurs avec le plus de dû (factures non payées)
+ * Calcule le FLOP 5 des apporteurs avec le plus de dû (factures non payées)
  */
 export const calculateFlop10Apporteurs = (
   factures: any[],
@@ -675,8 +675,8 @@ export const calculateFlop10Apporteurs = (
     });
   });
   
-  // Trier par dû décroissant et garder le TOP 10
+  // Trier par dû décroissant et garder le TOP 5
   return liste
     .sort((a, b) => b.duTotal - a.duTotal)
-    .slice(0, 10);
+    .slice(0, 5);
 };

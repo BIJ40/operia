@@ -16,7 +16,7 @@ export const FlopApporteursWidget = ({ data }: FlopApporteursWidgetProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const ApporteursList = ({ items, showAll = false }: { items: FlopApporteurStats[], showAll?: boolean }) => {
-    const displayData = showAll ? items : items.slice(0, 10);
+    const displayData = showAll ? items : items.slice(0, 5);
     
     return (
       <TooltipProvider>
@@ -67,7 +67,7 @@ export const FlopApporteursWidget = ({ data }: FlopApporteursWidgetProps) => {
       <Card className="p-6">
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-orange-500" />
-          Flop 10 Apporteurs
+          Flop 5 Apporteurs
         </h3>
         <p className="text-sm text-muted-foreground text-center py-8">
           Aucun apporteur avec des factures impayées
@@ -82,7 +82,7 @@ export const FlopApporteursWidget = ({ data }: FlopApporteursWidgetProps) => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-orange-500" />
-            Flop 10 Apporteurs
+            Flop 5 Apporteurs
           </h3>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setIsDialogOpen(true); }}>
             <Maximize2 className="w-4 h-4" />
