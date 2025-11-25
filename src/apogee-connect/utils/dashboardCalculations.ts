@@ -673,20 +673,31 @@ export const calculateNbMoyenVisitesParIntervention = (
     });
   }
   
-  // 2) Nombre de visites par intervention (version robuste)
+  // 2) Aplatir toutes les visites / RDV (version finale corrigée)
+  const extractVisites = (it: any) => {
+    const v1 = it.visites ?? [];
+    const v2 = it.data?.visites ?? [];
+    const v3 = it.data?.biDepan?.items ?? [];
+    const v4 = it.data?.biTvx?.items ?? [];
+    const v5 = it.data?.biRt?.items ?? [];
+    
+    return [...v1, ...v2, ...v3, ...v4, ...v5];
+  };
+  
+  // 3) Nombre total de visites par intervention
   const visitesCounts = interventionsFiltrees.map(it => {
-    const visites = it.visites ?? [];
-    return visites.length || 0;
+    const all = extractVisites(it);
+    return all.length;
   });
   
-  // Interventions qui ont au moins 1 visite
+  // 4) Interventions ayant au moins 1 visite
   const interventionsAvecVisites = visitesCounts.filter(n => n > 0);
   
   // Debug express
   console.log("🔍 Debug Nb visites/RDV:");
   console.log("  - nb interventions total:", interventionsFiltrees.length);
   console.log("  - nb interventions avec visites:", interventionsAvecVisites.length);
-  console.log("  - ex avec visites:", interventionsFiltrees.find(it => (it.visites ?? []).length > 0));
+  console.log("  - ex avec visites:", interventionsFiltrees.find(it => extractVisites(it).length > 0));
   
   // Si aucune intervention avec visite → retour 0 (évite NaN)
   if (interventionsAvecVisites.length === 0) {
@@ -698,14 +709,12 @@ export const calculateNbMoyenVisitesParIntervention = (
     };
   }
   
-  // Somme totale des visites
+  // 5) Nombre moyen visites / RDV
   const totalVisites = visitesCounts.reduce((acc, n) => acc + n, 0);
-  
-  // Nb moyen visites / RDV
-  const nbMoyenVisitesParRDV = totalVisites / interventionsAvecVisites.length;
+  const nbMoyenVisites = totalVisites / interventionsAvecVisites.length;
   
   // Arrondi à 2 décimales
-  const nbMoyen = Number(nbMoyenVisitesParRDV.toFixed(2));
+  const nbMoyen = Number(nbMoyenVisites.toFixed(2));
   
   console.log("📊 KPI 11 - Nb Moyen Visites/RDV:", {
     nbMoyen,
