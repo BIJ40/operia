@@ -12,6 +12,56 @@ serve(async (req) => {
   }
 
   try {
+    // Créer un client Supabase avec les credentials de la requête pour vérifier l'auth
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        global: {
+          headers: { Authorization: req.headers.get("Authorization")! },
+        },
+      }
+    );
+
+    // Vérifier que l'utilisateur est authentifié
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    
+    if (userError || !user) {
+      console.error("User authentication failed:", userError);
+      throw new Error("Non authentifié");
+    }
+
+    console.log("Authenticated user:", user.id);
+
+    // Vérifier que l'utilisateur est admin
+    const { data: roles, error: rolesError } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    if (rolesError) {
+      console.error("Error fetching roles:", rolesError);
+      throw new Error("Erreur de vérification des rôles");
+    }
+
+    const isAdmin = roles?.some((r) => r.role === "admin");
+    if (!isAdmin) {
+      console.error("User is not admin:", user.id);
+      throw new Error("Accès refusé - Admin uniquement");
+    }
+
+    console.log("Admin verified:", user.id);
+
+    // Parser le body
+    const { userId, newPassword } = await req.json();
+
+    if (!userId || !newPassword) {
+      throw new Error("userId et newPassword sont requis");
+    }
+
+    console.log("Resetting password for user:", userId);
+
+    // Créer un client admin pour les opérations privilégiées
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -23,42 +73,18 @@ serve(async (req) => {
       }
     );
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("No authorization header");
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-
-    if (authError || !user) {
-      throw new Error("Unauthorized");
-    }
-
-    // Vérifier que l'utilisateur est admin
-    const { data: roles } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
-
-    const isAdmin = roles?.some((r) => r.role === "admin");
-    if (!isAdmin) {
-      throw new Error("Unauthorized - Admin only");
-    }
-
-    const { userId, newPassword } = await req.json();
-
-    if (!userId || !newPassword) {
-      throw new Error("userId and newPassword are required");
-    }
-
-    // Réinitialiser le mot de passe
+    // Réinitialiser le mot de passe avec le client admin
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
       userId,
       { password: newPassword }
     );
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error("Error updating password:", updateError);
+      throw updateError;
+    }
+
+    console.log("Password updated successfully");
 
     // Forcer le changement de mot de passe
     const { error: profileError } = await supabaseAdmin
@@ -66,7 +92,12 @@ serve(async (req) => {
       .update({ must_change_password: true })
       .eq("id", userId);
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error("Error updating profile:", profileError);
+      throw profileError;
+    }
+
+    console.log("Profile updated - must_change_password set to true");
 
     return new Response(
       JSON.stringify({ success: true }),
@@ -76,7 +107,7 @@ serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error("Error:", error);
+    console.error("Error in reset-user-password:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
