@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { RefreshCw, Copy } from 'lucide-react';
+import { RefreshCw, Copy, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface UserProfile {
@@ -42,6 +43,8 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
   const [roleAgence, setRoleAgence] = useState('');
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [generatingPassword, setGeneratingPassword] = useState(false);
+  const [hasIndicateursAccess, setHasIndicateursAccess] = useState(false);
+  const [loadingPermissions, setLoadingPermissions] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -50,8 +53,28 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
       setLastName(user.last_name || '');
       setAgence(user.agence || '');
       setRoleAgence(user.role_agence || '');
+      loadUserPermissions(user.id);
     }
   }, [user]);
+
+  const loadUserPermissions = async (userId: string) => {
+    setLoadingPermissions(true);
+    try {
+      const { data, error } = await supabase
+        .from('role_permissions')
+        .select('block_id, can_access')
+        .eq('role_agence', user?.role_agence || '')
+        .eq('block_id', 'mes_indicateurs');
+
+      if (error) throw error;
+
+      setHasIndicateursAccess(data && data.length > 0 && data[0].can_access);
+    } catch (error) {
+      console.error('Erreur chargement permissions:', error);
+    } finally {
+      setLoadingPermissions(false);
+    }
+  };
 
   const generateRandomPassword = () => {
     const length = 12;
@@ -103,6 +126,54 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
       title: 'Copié',
       description: 'Le mot de passe a été copié dans le presse-papiers',
     });
+  };
+
+  const handleToggleIndicateurs = async (checked: boolean) => {
+    if (!user?.role_agence) {
+      toast({
+        title: 'Erreur',
+        description: 'L\'utilisateur doit avoir un rôle pour gérer les permissions',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      if (checked) {
+        // Ajouter la permission
+        const { error } = await supabase
+          .from('role_permissions')
+          .upsert({
+            role_agence: user.role_agence,
+            block_id: 'mes_indicateurs',
+            can_access: true
+          }, { onConflict: 'role_agence,block_id' });
+
+        if (error) throw error;
+      } else {
+        // Retirer la permission
+        const { error } = await supabase
+          .from('role_permissions')
+          .delete()
+          .eq('role_agence', user.role_agence)
+          .eq('block_id', 'mes_indicateurs');
+
+        if (error) throw error;
+      }
+
+      setHasIndicateursAccess(checked);
+      toast({
+        title: 'Permission mise à jour',
+        description: `Accès aux indicateurs ${checked ? 'activé' : 'désactivé'}`,
+      });
+    } catch (error: any) {
+      console.error('Erreur modification permission:', error);
+      toast({
+        title: 'Erreur',
+        description: error.message || 'Impossible de modifier la permission',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -208,6 +279,36 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
               ))}
             </RadioGroup>
           </div>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Accès aux indicateurs
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Autoriser l'utilisateur à consulter les KPIs de son agence
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="indicateurs-toggle" className="text-sm font-normal">
+                  Activer "Mes indicateurs"
+                </Label>
+                <Switch
+                  id="indicateurs-toggle"
+                  checked={hasIndicateursAccess}
+                  onCheckedChange={handleToggleIndicateurs}
+                  disabled={loadingPermissions || !user?.role_agence}
+                />
+              </div>
+              {!user?.role_agence && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  L'utilisateur doit avoir un rôle pour gérer les permissions
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
           <Card className="border-destructive/50 bg-destructive/5">
             <CardHeader className="pb-3">
