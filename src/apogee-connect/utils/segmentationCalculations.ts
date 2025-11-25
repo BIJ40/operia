@@ -39,11 +39,11 @@ export const calculateMonthlySegmentation = (
     const initInvoiceProcessed = new Set(); // Éviter de compter la facture d'init plusieurs fois
     
     factures.forEach(facture => {
-      const dateEmission = facture.dateEmission || facture.dateReelle || facture.created_at;
-      if (!dateEmission) return;
+      const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
+      if (!dateReelle) return;
       
       try {
-        const factureDate = parseISO(dateEmission);
+        const factureDate = parseISO(dateReelle);
         if (!isWithinInterval(factureDate, { start: monthStart, end: monthEnd })) return;
         
         // Récupérer le projet et client
