@@ -4,14 +4,17 @@ import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersC
 import { useApiToggle } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { Card } from "@/components/ui/card";
-import { FolderOpen, Euro } from "lucide-react";
+import { FolderOpen, Euro, Percent, ShoppingCart, Clock } from "lucide-react";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
 import { 
   calculateTop10Apporteurs, 
   calculateDossiersConfiesParApporteur, 
   calculateDuGlobal, 
-  calculateFlop10Apporteurs
+  calculateFlop10Apporteurs,
+  calculateTauxTransformationMoyen,
+  calculatePanierMoyenHT,
+  calculateDelaiMoyenFacturation
 } from "@/apogee-connect/utils/apporteursCalculations";
 import { calculateTypesApporteursStats } from "@/apogee-connect/utils/typesApporteursCalculations";
 import { calculateParticuliersStats } from "@/apogee-connect/utils/particuliersCalculations";
@@ -87,6 +90,28 @@ export default function IndicateursApporteurs() {
         2025
       );
       
+      const tauxTransformationMoyen = calculateTauxTransformationMoyen(
+        apiData.devis || [],
+        apiData.factures || [],
+        apiData.projects || [],
+        apiData.clients || [],
+        secondaryFilters.dateRange
+      );
+      
+      const panierMoyenHT = calculatePanierMoyenHT(
+        apiData.factures || [],
+        apiData.projects || [],
+        apiData.clients || [],
+        secondaryFilters.dateRange
+      );
+      
+      const delaiMoyenFacturation = calculateDelaiMoyenFacturation(
+        apiData.factures || [],
+        apiData.projects || [],
+        apiData.clients || [],
+        secondaryFilters.dateRange
+      );
+      
       return {
         top10Apporteurs,
         dossiersConfiesParApporteur,
@@ -94,7 +119,10 @@ export default function IndicateursApporteurs() {
         flop10Apporteurs,
         typesApporteursStats,
         particuliersStats,
-        segmentationData
+        segmentationData,
+        tauxTransformationMoyen,
+        panierMoyenHT,
+        delaiMoyenFacturation
       };
     },
   });
@@ -144,14 +172,41 @@ export default function IndicateursApporteurs() {
           <p className="text-xs text-muted-foreground mt-1">total période</p>
         </Card>
 
-        {/* Cartes 3-5: Placeholders */}
-        {[3, 4, 5].map((num) => (
-          <Card key={num} className="p-4 border-2 border-dashed border-muted">
-            <p className="text-xs text-muted-foreground mb-1">Métrique #{num}</p>
-            <p className="text-2xl font-bold text-muted-foreground">--</p>
-            <p className="text-xs text-muted-foreground mt-1">À définir</p>
-          </Card>
-        ))}
+        {/* Carte 3: Taux de transformation moyen */}
+        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-purple-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
+              <Percent className="w-4 h-4 text-white" />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mb-1">Taux de transfo moyen</p>
+          <p className="text-2xl font-bold text-purple-500">{(data?.tauxTransformationMoyen || 0).toFixed(0)}%</p>
+          <p className="text-xs text-muted-foreground mt-1">Devis → Factures</p>
+        </Card>
+
+        {/* Carte 4: Panier moyen HT */}
+        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-green-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
+              <ShoppingCart className="w-4 h-4 text-white" />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mb-1">Panier moyen HT</p>
+          <p className="text-2xl font-bold text-green-500">{formatEuros(data?.panierMoyenHT || 0)}</p>
+          <p className="text-xs text-muted-foreground mt-1">Dossier apporteur</p>
+        </Card>
+
+        {/* Carte 5: Délai moyen */}
+        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-indigo-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-1.5 rounded-lg">
+              <Clock className="w-4 h-4 text-white" />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mb-1">Délai moyen</p>
+          <p className="text-2xl font-bold text-indigo-500">{Math.round(data?.delaiMoyenFacturation || 0)} j</p>
+          <p className="text-xs text-muted-foreground mt-1">Dossier → Facture</p>
+        </Card>
       </div>
 
       {/* Widgets TOP/FLOP + Dossiers confiés */}
