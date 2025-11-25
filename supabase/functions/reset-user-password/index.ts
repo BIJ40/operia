@@ -24,50 +24,52 @@ serve(async (req) => {
       }
     )
 
-    // Vérifier l'authentification
+    // IMPORTANT: Comme verify_jwt = true dans config.toml, 
+    // Supabase a déjà vérifié le JWT et le user est dans le header
+    // On peut récupérer le user_id depuis le JWT décodé
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       throw new Error('Non autorisé')
     }
 
-    // Extraire et vérifier le JWT avec le client admin
+    // Décoder le JWT pour extraire le user_id (le JWT a déjà été vérifié par Supabase)
     const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
-    
-    if (userError || !user) {
-      console.error('User authentication failed:', userError)
-      throw new Error('Non authentifié')
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    const userId = payload.sub
+
+    if (!userId) {
+      throw new Error('Token invalide')
     }
 
-    console.log('Authenticated user:', user.id)
+    console.log('Authenticated user from JWT:', userId)
 
     // Vérifier le rôle admin
     const { data: roleData } = await supabaseAdmin
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('role', 'admin')
       .single()
 
     if (!roleData) {
-      console.error('User is not admin:', user.id)
+      console.error('User is not admin:', userId)
       throw new Error('Accès refusé - Réservé aux administrateurs')
     }
 
-    console.log('Admin verified:', user.id)
+    console.log('Admin verified:', userId)
 
     // Récupérer les données de la requête
-    const { userId, newPassword } = await req.json()
+    const { userId: targetUserId, newPassword } = await req.json()
 
-    if (!userId || !newPassword) {
+    if (!targetUserId || !newPassword) {
       throw new Error('userId et newPassword sont requis')
     }
 
-    console.log('Resetting password for user:', userId)
+    console.log('Resetting password for user:', targetUserId)
 
     // Réinitialiser le mot de passe
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      userId,
+      targetUserId,
       { password: newPassword }
     )
 
@@ -82,7 +84,7 @@ serve(async (req) => {
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({ must_change_password: true })
-      .eq('id', userId)
+      .eq('id', targetUserId)
 
     if (profileError) {
       console.error('Error updating profile:', profileError)
