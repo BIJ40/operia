@@ -162,9 +162,10 @@ export default function MyIndicators() {
             <KpiTile
               title="Taux Conversion"
               value={data ? `${data.kpis.conversion_rate.toFixed(1)}%` : '-'}
-              subtitle="Devis → Projets"
+              subtitle="Devis envoyés → Acceptés"
               icon={Target}
               isLoading={isLoading}
+              tooltip="Pourcentage de devis envoyés (hors brouillon) qui ont été acceptés ou commandés sur la période"
             />
 
             {/* T11 - Techniciens (structurel) */}

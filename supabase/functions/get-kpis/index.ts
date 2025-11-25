@@ -321,9 +321,30 @@ Deno.serve(async (req) => {
     const projects_count = projetsPeriode.length;
 
     // ===== Tuile 10: Taux Conversion (Devis → Accepté/Commandé) =====
-    // Règle: basé sur la date du devis, même filtre que tuile 8
-    // On compte les devis qui ont abouti à un projet (simplifié: devis_count vs projects_count)
-    const conversion_rate = devis_count > 0 ? (projects_count / devis_count) * 100 : 0;
+    // Règle: Utiliser uniquement les devis de la période
+    // Devis envoyés = statut différent de brouillon/supprimé
+    // Devis acceptés = statut Accepté ou Commandé
+    // Taux = (acceptés / envoyés) × 100
+    
+    const getStatus = (d: any) => (d.statut || d.status || '').toLowerCase();
+    
+    // Devis envoyés = tous sauf brouillon et supprimé
+    const devisEnvoyes = devisPeriode.filter((d: any) => {
+      const s = getStatus(d);
+      return s !== 'brouillon' && s !== 'supprimé' && s !== 'draft' && s !== 'deleted';
+    });
+    
+    // Devis acceptés = statut Accepté ou Commandé
+    const devisAcceptes = devisEnvoyes.filter((d: any) => {
+      const s = getStatus(d);
+      return s === 'accepté' || s === 'commandé' || s === 'accepted' || s === 'ordered';
+    });
+    
+    const conversion_rate = devisEnvoyes.length > 0 
+      ? (devisAcceptes.length / devisEnvoyes.length) * 100 
+      : 0;
+    
+    console.log(`[get-kpis] Devis période: ${devisPeriode.length}, Envoyés: ${devisEnvoyes.length}, Acceptés: ${devisAcceptes.length}, Taux: ${conversion_rate.toFixed(1)}%`);
 
     // ===== Tuile 11: Techniciens (hors sélecteur) =====
     // Règle: Filtrer users: active === true, role technicien/tech
