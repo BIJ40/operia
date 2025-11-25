@@ -490,6 +490,9 @@ export const calculateDashboardStats = (
   // KPI 15: Polyvalence techniciens
   const { polyvalenceMoyenne: polyvalenceTechniciens } = calculatePolyvalenceTechniciens(interventions, projects, users);
   
+  // KPI 16: Délai moyen dossier → premier devis
+  const { delaiMoyen: delaiDossierPremierDevis, nbDossiers: nbDossiersAvecDevis } = calculateDelaiMoyenDossierPremierDevis(projects, devis);
+  
   return {
     dossiersJour,
     rtJour,
@@ -508,6 +511,8 @@ export const calculateDashboardStats = (
     tauxDossiersSansDevis,
     tauxDossiersMultiTechniciens,
     polyvalenceTechniciens,
+    delaiDossierPremierDevis,
+    nbDossiersAvecDevis,
     variations: {
       dossiers: calculateVariationDossiers(projects, dateRange, userAgency),
       rt: null, // Non implémenté - null indique l'absence de données
@@ -1313,3 +1318,82 @@ export const calculateTauxTransformationDevis = (
     nbAcceptes
   };
 };
+
+// ====================================================================
+// KPI 16 - DÉLAI MOYEN DOSSIER → PREMIER DEVIS
+// ====================================================================
+
+/**
+ * Calculer le délai moyen entre ouverture dossier et envoi du premier devis
+ */
+export function calculateDelaiMoyenDossierPremierDevis(
+  projects: any[],
+  devis: any[]
+): { delaiMoyen: number; nbDossiers: number } {
+  // Indexer les projets par ID
+  const projectsById: Record<string, any> = {};
+  projects.forEach(p => {
+    if (p.id) projectsById[p.id] = p;
+  });
+
+  // Récupérer les devis envoyés
+  const devisEnvoyes = devis.filter(d => {
+    const state = d.state || d.statut || d.data?.state || d.data?.statut;
+    const stateStr = String(state || '').toLowerCase();
+    return stateStr === "sent" || stateStr === "invoice";
+  });
+
+  // Regrouper par projet
+  const devisParProjet: Record<string, any[]> = {};
+  for (const d of devisEnvoyes) {
+    const pid = d.projectId;
+    if (!pid) continue;
+    if (!devisParProjet[pid]) devisParProjet[pid] = [];
+    devisParProjet[pid].push(d);
+  }
+
+  // Calcul du délai pour chaque dossier
+  const delais: number[] = [];
+
+  for (const [projectId, devisList] of Object.entries(devisParProjet)) {
+    const project = projectsById[projectId];
+    if (!project || !project.createdAt) continue;
+
+    const dateCreation = new Date(project.createdAt);
+
+    // Prendre le PREMIER devis envoyé (date la plus ancienne)
+    const premierDevis = devisList.reduce((min, d) => {
+      const dateField = d.date || d.dateReelle || d.dateCreation || d.data?.date || d.data?.dateReelle;
+      if (!dateField) return min;
+      const dDate = new Date(dateField);
+      if (!min) return d;
+      const minDate = new Date(min.date || min.dateReelle || min.dateCreation || min.data?.date || min.data?.dateReelle);
+      return dDate < minDate ? d : min;
+    }, null as any);
+
+    if (!premierDevis) continue;
+    
+    const dateDevisField = premierDevis.date || premierDevis.dateReelle || premierDevis.dateCreation || premierDevis.data?.date || premierDevis.data?.dateReelle;
+    if (!dateDevisField) continue;
+
+    const dateDevis = new Date(dateDevisField);
+    const diffMs = dateDevis.getTime() - dateCreation.getTime();
+    const diffJours = diffMs / (1000 * 60 * 60 * 24);
+
+    if (diffJours >= 0) {
+      delais.push(diffJours);
+    }
+  }
+
+  if (delais.length === 0) {
+    return { delaiMoyen: 0, nbDossiers: 0 };
+  }
+
+  const somme = delais.reduce((acc, v) => acc + v, 0);
+  const delaiMoyen = somme / delais.length;
+
+  return {
+    delaiMoyen: Number(delaiMoyen.toFixed(1)),
+    nbDossiers: delais.length
+  };
+}
