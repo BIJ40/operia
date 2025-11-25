@@ -252,9 +252,8 @@ const calculateTauxTransformationParType = (
   return tauxParType;
 };
 
-// Calculer le taux de SAV par type
-// Taux SAV type X = (nombre de dossiers facturés de ce type ayant au moins un SAV) 
-//                   / (nombre total de dossiers facturés de ce type)
+// Calculer le taux de SAV par type d'apporteur
+// Taux SAV = (Nb de dossiers avec au moins 1 SAV / Nb total de dossiers du type) × 100
 const calculateTauxSAVParType = (
   interventions: any[],
   statsParType: Map<string, { caHT: number; dossiers: Set<number>; nbFactures: number }>,
@@ -264,64 +263,97 @@ const calculateTauxSAVParType = (
 ): Map<string, number> => {
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
-  // Map pour stocker les dossiers avec SAV par type
-  const dossiersSAVParType = new Map<string, Set<number>>();
+  // ÉTAPE 1: Identifier tous les dossiers SAV via interventions
+  const projectHasSavFromInterv: Record<number, boolean> = {};
   
-  // Initialiser les sets pour chaque type
-  statsParType.forEach((stats, type) => {
-    dossiersSAVParType.set(type, new Set());
+  interventions.forEach(interv => {
+    const pid = interv.projectId;
+    if (!pid) return;
+    
+    const pictos = interv.data?.pictosInterv ?? [];
+    const type2 = interv.data?.type2 ?? null;
+    
+    // Détecter SAV via pictosInterv ou type2
+    if (pictos.includes("SAV") || type2 === "SAV") {
+      projectHasSavFromInterv[pid] = true;
+    }
   });
   
-  // Filtrer les interventions SAV de la période
-  interventions.forEach(intervention => {
-    const dateIntervention = intervention.date || intervention.dateIntervention || intervention.created_at;
-    if (!dateIntervention) return;
+  // ÉTAPE 2: Identifier tous les dossiers SAV via drapeaux project
+  const projectHasSavFromProject: Record<number, boolean> = {};
+  
+  projects.forEach(p => {
+    const pid = p.id;
+    const picto = p.data?.pictoInterv ?? [];
+    const sinistre = p.data?.sinistre ?? null;
     
-    try {
-      const interventionDate = parseISO(dateIntervention);
-      if (!isWithinInterval(interventionDate, { start: dateRange.start, end: dateRange.end })) return;
-    } catch {
-      return;
+    // Détecter SAV via pictoInterv ou sinistre
+    if (picto.includes("SAV") || sinistre === "SAV") {
+      projectHasSavFromProject[pid] = true;
     }
+  });
+  
+  // ÉTAPE 3: Flag final isSAV du project
+  const projectIsSav: Record<number, boolean> = {};
+  
+  projects.forEach(p => {
+    const pid = p.id;
+    const fromInterv = projectHasSavFromInterv[pid] === true;
+    const fromProject = projectHasSavFromProject[pid] === true;
     
-    // Vérifier que c'est un SAV
-    const isSAV = intervention.type2?.toLowerCase().includes("sav") || 
-                  intervention.data?.picto?.toLowerCase().includes("sav") ||
-                  intervention.data?.type?.toLowerCase().includes("sav");
+    projectIsSav[pid] = fromInterv || fromProject;
+  });
+  
+  // ÉTAPE 4: Compter les dossiers par type et les dossiers SAV par type
+  const totalProjectsParType = new Map<string, Set<number>>();
+  const savProjectsParType = new Map<string, Set<number>>();
+  
+  // Initialiser pour chaque type
+  statsParType.forEach((_, type) => {
+    totalProjectsParType.set(type, new Set());
+    savProjectsParType.set(type, new Set());
+  });
+  
+  // Parcourir tous les projects pour les classer par type
+  projects.forEach(p => {
+    const pid = p.id;
     
-    if (!isSAV) return;
+    // Identifier l'apporteur du dossier
+    const commanditaireId = p.data?.commanditaireId || p.commanditaireId;
+    if (!commanditaireId) return;
     
-    // Récupérer le projet et vérifier qu'il a un apporteur
-    const project = projectsMap.get(intervention.projectId);
-    if (!project || !project.data?.commanditaireId) return;
-    
-    const apporteur = apporteursMap.get(project.data.commanditaireId);
+    const apporteur = apporteursMap.get(commanditaireId);
     if (!apporteur) return;
     
     const type = apporteur.type;
     
-    // Vérifier que ce dossier fait partie des dossiers facturés de ce type
-    const dossiersFactures = statsParType.get(type)?.dossiers;
-    if (!dossiersFactures || !dossiersFactures.has(project.id)) return;
-    
-    // Ajouter le dossier aux dossiers avec SAV
-    if (!dossiersSAVParType.has(type)) {
-      dossiersSAVParType.set(type, new Set());
+    // Compter ce dossier dans le total du type
+    if (!totalProjectsParType.has(type)) {
+      totalProjectsParType.set(type, new Set());
     }
-    dossiersSAVParType.get(type)!.add(project.id);
+    totalProjectsParType.get(type)!.add(pid);
+    
+    // Si c'est un dossier SAV, l'ajouter au compteur SAV
+    if (projectIsSav[pid]) {
+      if (!savProjectsParType.has(type)) {
+        savProjectsParType.set(type, new Set());
+      }
+      savProjectsParType.get(type)!.add(pid);
+    }
   });
   
-  // Calculer le taux pour chaque type
+  // ÉTAPE 5: Calculer le taux SAV pour chaque type
   const tauxSAVParType = new Map<string, number>();
   
-  statsParType.forEach((stats, type) => {
-    const nbDossiersFactures = stats.dossiers.size; // Dénominateur
-    const nbDossiersSAV = dossiersSAVParType.get(type)?.size || 0; // Numérateur
+  totalProjectsParType.forEach((projectsSet, type) => {
+    const totalProjects = projectsSet.size;
+    const savProjects = savProjectsParType.get(type)?.size || 0;
     
-    if (nbDossiersFactures === 0) {
+    if (totalProjects === 0) {
       tauxSAVParType.set(type, 0);
     } else {
-      tauxSAVParType.set(type, (nbDossiersSAV / nbDossiersFactures) * 100);
+      const taux = Math.round((savProjects / totalProjects) * 1000) / 10; // ex: 70.9%
+      tauxSAVParType.set(type, taux);
     }
   });
   

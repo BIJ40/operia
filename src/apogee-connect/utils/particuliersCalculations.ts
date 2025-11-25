@@ -250,6 +250,7 @@ const calculateTauxTransformationParticuliers = (
 };
 
 // Calculer le taux de SAV pour les particuliers
+// Taux SAV = (Nb de dossiers particuliers avec au moins 1 SAV / Nb total de dossiers particuliers) × 100
 const calculateTauxSAVParticuliers = (
   interventions: any[],
   projects: any[],
@@ -257,43 +258,72 @@ const calculateTauxSAVParticuliers = (
 ): number | null => {
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
-  const dossiersTotaux = new Set<number>();
-  const dossiersSAV = new Set<number>();
+  // ÉTAPE 1: Identifier tous les dossiers SAV via interventions
+  const projectHasSavFromInterv: Record<number, boolean> = {};
   
-  // Filtrer les interventions de la période
-  interventions.forEach(intervention => {
-    const dateIntervention = intervention.date || intervention.dateIntervention || intervention.created_at;
-    if (!dateIntervention) return;
+  interventions.forEach(interv => {
+    const pid = interv.projectId;
+    if (!pid) return;
     
-    try {
-      const interventionDate = parseISO(dateIntervention);
-      if (!isWithinInterval(interventionDate, { start: dateRange.start, end: dateRange.end })) return;
-    } catch {
-      return;
-    }
+    const pictos = interv.data?.pictosInterv ?? [];
+    const type2 = interv.data?.type2 ?? null;
     
-    const project = projectsMap.get(intervention.projectId);
-    if (!project) return;
-    
-    const commanditaireId = project.data?.commanditaireId || project.commanditaireId;
-    const estParticulier = !commanditaireId;
-    if (!estParticulier) return;
-    
-    // Tous les dossiers particuliers
-    dossiersTotaux.add(project.id);
-    
-    // Dossiers avec SAV
-    const isSAV = intervention.type2?.toLowerCase().includes("sav") || 
-                  intervention.data?.picto?.toLowerCase().includes("sav");
-    
-    if (isSAV) {
-      dossiersSAV.add(project.id);
+    // Détecter SAV via pictosInterv ou type2
+    if (pictos.includes("SAV") || type2 === "SAV") {
+      projectHasSavFromInterv[pid] = true;
     }
   });
   
-  const nbTotal = dossiersTotaux.size;
-  if (nbTotal === 0) return null;
+  // ÉTAPE 2: Identifier tous les dossiers SAV via drapeaux project
+  const projectHasSavFromProject: Record<number, boolean> = {};
   
-  const nbSAV = dossiersSAV.size;
-  return (nbSAV / nbTotal) * 100;
+  projects.forEach(p => {
+    const pid = p.id;
+    const picto = p.data?.pictoInterv ?? [];
+    const sinistre = p.data?.sinistre ?? null;
+    
+    // Détecter SAV via pictoInterv ou sinistre
+    if (picto.includes("SAV") || sinistre === "SAV") {
+      projectHasSavFromProject[pid] = true;
+    }
+  });
+  
+  // ÉTAPE 3: Flag final isSAV du project
+  const projectIsSav: Record<number, boolean> = {};
+  
+  projects.forEach(p => {
+    const pid = p.id;
+    const fromInterv = projectHasSavFromInterv[pid] === true;
+    const fromProject = projectHasSavFromProject[pid] === true;
+    
+    projectIsSav[pid] = fromInterv || fromProject;
+  });
+  
+  // ÉTAPE 4: Compter tous les dossiers particuliers et ceux avec SAV
+  let totalProjectsParticuliers = 0;
+  let savProjectsParticuliers = 0;
+  
+  projects.forEach(p => {
+    const pid = p.id;
+    
+    // Identifier si c'est un particulier
+    const commanditaireId = p.data?.commanditaireId || p.commanditaireId;
+    const estParticulier = !commanditaireId;
+    
+    if (!estParticulier) return;
+    
+    // Compter ce dossier dans le total particuliers
+    totalProjectsParticuliers += 1;
+    
+    // Si c'est un dossier SAV, l'ajouter au compteur SAV
+    if (projectIsSav[pid]) {
+      savProjectsParticuliers += 1;
+    }
+  });
+  
+  // ÉTAPE 5: Calculer le taux SAV
+  if (totalProjectsParticuliers === 0) return null;
+  
+  const taux = Math.round((savProjectsParticuliers / totalProjectsParticuliers) * 1000) / 10; // ex: 70.9%
+  return taux;
 };
