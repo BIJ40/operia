@@ -486,104 +486,99 @@ export const calculateTauxDossiersComplexes = (
   dateRange?: { start: Date; end: Date }
 ): { tauxComplexite: number; nbComplexes: number; nbTotal: number } => {
   
-  // 1) Aplatir toutes les visites avec leur projectId
-  const visitesFlat = [];
-  
-  for (const intervention of interventions) {
-    const projectId = intervention.projectId || intervention.data?.projectId;
-    const visites = intervention.visites || [];
-    
-    for (const visite of visites) {
-      visitesFlat.push({
-        projectId,
-        date: visite.date,
-        type: visite.type,
-        state: visite.state,
-      });
-    }
-  }
-  
   console.log("📊 Dossiers Complexes - START:", {
     nbInterventions: interventions.length,
-    nbVisitesTotal: visitesFlat.length,
-    typesUniques: [...new Set(visitesFlat.map(v => v.type))],
-    statesUniques: [...new Set(visitesFlat.map(v => v.state))],
+    typesUniques: [...new Set(interventions.map(i => i.type || i.data?.type))],
+    statesUniques: [...new Set(interventions.map(i => i.state || i.data?.state))],
     dateRange: dateRange ? {
       start: dateRange.start.toISOString(),
       end: dateRange.end.toISOString()
     } : "undefined"
   });
   
-  // 2) Filtrer les visites techniques dans la période
-  const visitesFiltrees = visitesFlat.filter(v => {
-    // Filtre type: technique
-    if (v.type !== "technique") return false;
-    
-    // Filtre state: validated ou completed (ou absence de state)
-    if (v.state && v.state !== "validated" && v.state !== "completed") {
-      return false;
-    }
-    
-    // Filtre période si fournie
-    if (dateRange) {
-      if (!v.date) return false;
+  // 1) Filtrer les interventions par période si fournie
+  let interventionsFiltrees = interventions;
+  
+  if (dateRange) {
+    interventionsFiltrees = interventions.filter(intervention => {
+      const date = intervention.date || intervention.data?.date;
+      if (!date) return false;
       
       try {
-        const visiteDate = parseISO(v.date);
-        if (!isWithinInterval(visiteDate, dateRange)) {
-          return false;
-        }
+        const interventionDate = parseISO(date);
+        return isWithinInterval(interventionDate, dateRange);
       } catch {
         return false;
       }
-    }
-    
-    return true;
-  });
-  
-  console.log("📊 Visites filtrées:", {
-    nbVisitesFiltrees: visitesFiltrees.length,
-    exemplesVisites: visitesFiltrees.slice(0, 3).map(v => ({
-      projectId: v.projectId,
-      date: v.date,
-      type: v.type,
-      state: v.state
-    }))
-  });
-  
-  // 3) Compter les visites par projectId
-  const visitesParProjet: Record<string, number> = {};
-  
-  for (const visite of visitesFiltrees) {
-    const pid = visite.projectId;
-    if (!pid) continue; // sécurité
-    if (!visitesParProjet[pid]) visitesParProjet[pid] = 0;
-    visitesParProjet[pid] += 1;
+    });
   }
   
-  // 4) Calculer les projets avec au moins 1 visite et multi-visites (≥2)
-  const projetsAvecVisite = Object.keys(visitesParProjet).length;
-  const projetsMultiVisites = Object.values(visitesParProjet).filter(nb => nb >= 2).length;
+  console.log("📊 Interventions filtrées par période:", interventionsFiltrees.length);
   
-  // 5) Calculer le taux
-  const tauxComplexite = projetsAvecVisite > 0
-    ? (projetsMultiVisites / projetsAvecVisite) * 100
+  // 2) Compter les interventions par projectId et par type
+  const interventionsParProjet: Record<string, { 
+    total: number; 
+    travaux: number;
+  }> = {};
+  
+  for (const intervention of interventionsFiltrees) {
+    const projectId = intervention.projectId || intervention.data?.projectId;
+    const type = intervention.type || intervention.data?.type;
+    
+    if (!projectId) continue;
+    
+    if (!interventionsParProjet[projectId]) {
+      interventionsParProjet[projectId] = { total: 0, travaux: 0 };
+    }
+    
+    interventionsParProjet[projectId].total += 1;
+    
+    if (type === "travaux") {
+      interventionsParProjet[projectId].travaux += 1;
+    }
+  }
+  
+  console.log("📊 Projets avec interventions:", Object.keys(interventionsParProjet).length);
+  console.log("📊 Exemples interventions par projet:", 
+    Object.entries(interventionsParProjet)
+      .slice(0, 3)
+      .map(([projectId, counts]) => ({ projectId, ...counts }))
+  );
+  
+  // 3) Déterminer les dossiers complexes
+  // Un dossier est complexe si :
+  // - Plus de 6 interventions au total OU
+  // - Au moins 2 interventions de type "travaux"
+  const projetsAvecIntervention = Object.keys(interventionsParProjet).length;
+  
+  const projetsComplexes = Object.values(interventionsParProjet).filter(counts => 
+    counts.total > 6 || counts.travaux >= 2
+  ).length;
+  
+  // 4) Calculer le taux
+  const tauxComplexite = projetsAvecIntervention > 0
+    ? (projetsComplexes / projetsAvecIntervention) * 100
     : 0;
   
   console.log("📊 Dossiers Complexes - RESULT:", {
     tauxComplexite: Math.round(tauxComplexite * 10) / 10,
-    projetsMultiVisites,
-    projetsAvecVisite,
-    detailVisitesParProjet: Object.entries(visitesParProjet)
-      .filter(([_, count]) => count >= 2)
+    projetsComplexes,
+    projetsAvecIntervention,
+    exemplesDossiersComplexes: Object.entries(interventionsParProjet)
+      .filter(([_, counts]) => counts.total > 6 || counts.travaux >= 2)
       .slice(0, 3)
-      .map(([projectId, count]) => ({ projectId, nbVisites: count }))
+      .map(([projectId, counts]) => ({ 
+        projectId, 
+        total: counts.total, 
+        travaux: counts.travaux,
+        raison: counts.total > 6 ? ">6 interventions" : "≥2 travaux"
+      }))
   });
   
   return {
-    tauxComplexite: Math.round(tauxComplexite * 10) / 10, // Arrondir à 1 décimale
-    nbComplexes: projetsMultiVisites,
-    nbTotal: projetsAvecVisite
+    tauxComplexite: Math.round(tauxComplexite * 10) / 10,
+    nbComplexes: projetsComplexes,
+    nbTotal: projetsAvecIntervention
   };
 };
 
