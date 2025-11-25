@@ -11,15 +11,18 @@ import { calculateTauxSAVGlobal } from "@/apogee-connect/utils/apporteursCalcula
 import { PeriodSelector } from "@/apogee-connect/components/filters/PeriodSelector";
 import { calculateMonthlyCA } from "@/apogee-connect/utils/monthlyCalculations";
 import { MonthlyCAChart } from "@/apogee-connect/components/widgets/MonthlyCAChart";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 
 export default function IndicateursAccueil() {
   const { filters } = useFilters();
   const { isApiEnabled } = useApiToggle();
   const { agencyChangeCounter, currentAgency, isAgencyReady } = useAgency();
   const userAgency = currentAgency?.id || "";
+  const [selectedYear, setSelectedYear] = useState<number>(2025);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["kpis-overview", filters, isApiEnabled, agencyChangeCounter],
+    queryKey: ["kpis-overview", filters, isApiEnabled, agencyChangeCounter, selectedYear],
     enabled: isAgencyReady && isApiEnabled,
     queryFn: async () => {
       // GUARD: Ne pas charger si l'agence n'est pas définie
@@ -39,13 +42,12 @@ export default function IndicateursAccueil() {
         users: apiData.users || [],
       }, filters.dateRange, userAgency);
       
-      // Calculer les données mensuelles CA pour l'année 2025 (spécification fonctionnelle)
-      const year = 2025;
+      // Calculer les données mensuelles CA pour l'année sélectionnée
       const monthlyCAData = calculateMonthlyCA(
         apiData.factures || [],
         apiData.clients || [],
         apiData.projects || [],
-        year,
+        selectedYear,
         userAgency
       );
       
@@ -182,9 +184,22 @@ export default function IndicateursAccueil() {
 
       {/* Graphique CA Mensuel */}
       <div>
-        <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-          Évolution du CA 2025
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+            Évolution du CA {selectedYear}
+          </h2>
+          <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+            <SelectTrigger className="w-[120px] bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white border-none">
+              <SelectValue placeholder="Année" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border border-border z-50">
+              <SelectItem value="2023">2023</SelectItem>
+              <SelectItem value="2024">2024</SelectItem>
+              <SelectItem value="2025">2025</SelectItem>
+              <SelectItem value="2026">2026</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         {data?.monthlyCAData && <MonthlyCAChart data={data.monthlyCAData} />}
       </div>
     </div>
