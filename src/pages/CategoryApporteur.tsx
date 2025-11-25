@@ -1,12 +1,11 @@
 // Page Category pour Apporteurs (utilise apporteur_blocks)
-import { useParams, useLocation, Link, Navigate } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Lightbulb, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
-import { useFilteredBlocks } from '@/hooks/use-permissions';
 import {
   Accordion,
   AccordionContent,
@@ -59,20 +58,13 @@ export default function CategoryApporteur() {
   const { slug, subslug } = useParams<{ slug: string; subslug: string }>();
   const location = useLocation();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useApporteurEditor();
-  const { isAuthenticated, isAdmin, hasAccessToBlock } = useAuth();
+  const { isAuthenticated } = useAuth();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   const subcategory = blocks.find(b => b.type === 'subcategory' && b.slug === subslug);
   
   if (!category || !subcategory) {
     return <div className="container max-w-4xl mx-auto p-8">Page non trouvée</div>;
-  }
-
-  // Protection de route : vérifier si l'utilisateur a accès à cette catégorie et sous-catégorie
-  if (!isAdmin) {
-    if (!hasAccessToBlock(category.id) || !hasAccessToBlock(subcategory.id)) {
-      return <Navigate to="/apporteurs" replace />;
-    }
   }
   
   const availableSubcategories = useMemo(() =>
@@ -82,15 +74,12 @@ export default function CategoryApporteur() {
     [blocks, category.id]
   );
   
-  const allSections = useMemo(() => 
+  const sections = useMemo(() => 
     blocks
       .filter(b => b.type === 'section' && b.parentId === subcategory?.id)
       .sort((a, b) => a.order - b.order),
     [blocks, subcategory?.id]
   );
-
-  // FILTRAGE PAR PERMISSIONS - DENY PAR DÉFAUT
-  const sections = isEditMode && isAdmin ? allSections : useFilteredBlocks(allSections);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

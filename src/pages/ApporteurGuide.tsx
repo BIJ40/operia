@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ColorPreset } from '@/types/block';
 import { Plus, Trash2, Search, GripVertical, Upload, X, Edit2, Lock } from 'lucide-react';
-import { useIsBlockLocked, useFilteredBlocks } from '@/hooks/use-permissions';
+import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { toast } from 'sonner';
 import { IconPicker } from '@/components/IconPicker';
 import { supabase } from '@/integrations/supabase/client';
@@ -318,14 +318,9 @@ export default function ApporteurGuide() {
     return <Navigate to="/" replace />;
   }
 
-  const allApporteurCategories = blocks
+  const apporteurCategories = blocks
     .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
     .sort((a, b) => a.order - b.order);
-
-  // Appliquer le filtrage par permissions (sauf en mode édition admin)
-  const apporteurCategories = isEditMode && isAdmin 
-    ? allApporteurCategories 
-    : useFilteredBlocks(allApporteurCategories);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

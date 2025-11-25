@@ -18,7 +18,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronRight } from 'lucide-react';
 import logoApogee from '@/assets/logo-apogee.png';
 import { useEditor } from '@/contexts/EditorContext';
-import { useFilteredBlocks } from '@/hooks/use-permissions';
 
 interface BlockCategory {
   id: string;
@@ -45,39 +44,35 @@ export function AppSidebarHelpConfort() {
 
   // Charger depuis blocks pour HelpConfort
   useEffect(() => {
-    const allCats = blocks
+    const cats = blocks
       .filter(b => b.type === 'category' && b.slug.startsWith('helpconfort-') && !b.hideFromSidebar)
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => a.order - b.order)
+      .map(b => ({
+        id: b.id,
+        title: b.title,
+        slug: b.slug,
+        icon: b.icon
+      }));
     
-    // FILTRAGE PAR PERMISSIONS - Deny par défaut
-    const filteredCats = useFilteredBlocks(allCats);
+    setBlockCategories(cats);
     
-    setBlockCategories(filteredCats.map(b => ({
-      id: b.id,
-      title: b.title,
-      slug: b.slug,
-      icon: b.icon
-    })));
-    
-    const allSecs = blocks
-      .filter(b => b.type === 'section' && b.parentId && filteredCats.some(c => c.id === b.parentId))
+    const secs = blocks
+      .filter(b => b.type === 'section' && b.parentId && cats.some(c => c.id === b.parentId))
       .filter(b => !b.hideFromSidebar)
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => a.order - b.order)
+      .map(b => ({
+        id: b.id,
+        title: b.title,
+        slug: b.slug,
+        parentId: b.parentId!,
+        hideFromSidebar: b.hideFromSidebar
+      }));
     
-    // FILTRAGE PAR PERMISSIONS - Deny par défaut  
-    const filteredSecs = useFilteredBlocks(allSecs);
-    
-    setBlockSections(filteredSecs.map(b => ({
-      id: b.id,
-      title: b.title,
-      slug: b.slug,
-      parentId: b.parentId!,
-      hideFromSidebar: b.hideFromSidebar
-    })));
+    setBlockSections(secs);
     
     // Ouvrir la catégorie active
     const currentCategorySlug = location.pathname.split('/')[3];
-    const activeCategory = filteredCats.find(c => c.slug === currentCategorySlug);
+    const activeCategory = cats.find(c => c.slug === currentCategorySlug);
     if (activeCategory) {
       setOpenCategories(new Set([activeCategory.id]));
     }

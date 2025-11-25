@@ -9,7 +9,6 @@ import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info
 import * as Icons from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import { FavoriteButton } from '@/components/FavoriteButton';
-import { useFilteredBlocks } from '@/hooks/use-permissions';
 import {
   Accordion,
   AccordionContent,
@@ -79,7 +78,7 @@ export default function Category() {
   }
 
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
-  const { isAuthenticated, isAdmin, hasAccessToBlock } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const { toast } = useToast();
   
   if (!isAuthenticated) {
@@ -87,16 +86,6 @@ export default function Category() {
   }
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
-
-  // Protection de route : vérifier si l'utilisateur a accès à cette catégorie
-  if (category && !isAdmin && !hasAccessToBlock(category.id)) {
-    toast({
-      title: 'Accès refusé',
-      description: 'Vous n\'avez pas les permissions pour accéder à cette catégorie',
-      variant: 'destructive',
-    });
-    return <Navigate to="/apogee" replace />;
-  }
   
   // Liste des catégories disponibles (exclure FAQ)
   const availableCategories = useMemo(() =>
@@ -106,16 +95,13 @@ export default function Category() {
     [blocks]
   );
   
-  // Mémoriser sections avec FILTRAGE PAR PERMISSIONS
-  const allSections = useMemo(() => 
+  // Mémoriser sections pour éviter les recalculs qui causent des scrolls
+  const sections = useMemo(() => 
     blocks
       .filter(b => b.type === 'section' && b.parentId === category?.id)
       .sort((a, b) => a.order - b.order),
     [blocks, category?.id]
   );
-
-  // FILTRAGE PAR PERMISSIONS - DENY PAR DÉFAUT
-  const sections = isEditMode && isAdmin ? allSections : useFilteredBlocks(allSections);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

@@ -7,33 +7,23 @@ interface Block {
   [key: string]: any;
 }
 
-// Filtrer les blocks selon les permissions de l'utilisateur
+// Ne plus filtrer, mais retourner tous les blocks
 export function useFilteredBlocks<T extends Block>(blocks: T[]): T[] {
-  const { hasAccessToBlock, isAdmin, roleAgence } = useAuth();
-
-  return useMemo(() => {
-    // Admins ou utilisateurs sans rôle agence : on laisse tout
-    if (isAdmin || !roleAgence) {
-      return blocks;
-    }
-
-    // On garde uniquement les blocks explicitement autorisés
-    return blocks.filter(block => hasAccessToBlock(block.id));
-  }, [blocks, hasAccessToBlock, isAdmin, roleAgence]);
+  return blocks;
 }
 
-// Vérifier si un block est verrouillé
+// Nouvelle fonction pour vérifier si un block est verrouillé
 export function useIsBlockLocked() {
   const { hasAccessToBlock, isAdmin, roleAgence } = useAuth();
 
   return useMemo(() => {
-    return (blockId: string): boolean => {
-      // Admins ou utilisateurs sans rôle agence : jamais verrouillé
+    return (blockId: string, blocks: Block[] = []): boolean => {
+      // Les admins et les utilisateurs sans rôle spécifique ont accès à tout
       if (isAdmin || !roleAgence) {
         return false;
       }
 
-      // Locked si pas d'accès
+      // Vérifier l'accès au block
       return !hasAccessToBlock(blockId);
     };
   }, [hasAccessToBlock, isAdmin, roleAgence]);

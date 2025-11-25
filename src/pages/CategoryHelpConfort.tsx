@@ -9,7 +9,6 @@ import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info
 import * as Icons from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import { FavoriteButton } from '@/components/FavoriteButton';
-import { useFilteredBlocks } from '@/hooks/use-permissions';
 import {
   Accordion,
   AccordionContent,
@@ -74,24 +73,18 @@ export default function CategoryHelpConfort() {
   const location = useLocation();
 
   const { blocks, updateBlock, deleteBlock, addBlock, reorderBlocks, isEditMode } = useEditor();
-  const { isAuthenticated, isAdmin, roleAgence, hasAccessToBlock } = useAuth();
+  const { isAuthenticated, isAdmin, roleAgence } = useAuth();
   const { toast } = useToast();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
 
-  // Bloquer l'accès pour les utilisateurs non authentifiés
+  // Bloquer l'accès pour les assistant(e)s
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
-
-  // Protection de route : vérifier si l'utilisateur a accès à cette catégorie
-  if (category && !isAdmin && !hasAccessToBlock(category.id)) {
-    toast({
-      title: 'Accès refusé',
-      description: 'Vous n\'avez pas les permissions pour accéder à cette catégorie',
-      variant: 'destructive',
-    });
-    return <Navigate to="/helpconfort" replace />;
+  
+  if (roleAgence === 'assistant(e)') {
+    return <Navigate to="/" replace />;
   }
   
   // Liste des catégories disponibles HelpConfort
@@ -102,16 +95,13 @@ export default function CategoryHelpConfort() {
     [blocks]
   );
   
-  // Mémoriser sections avec FILTRAGE PAR PERMISSIONS
-  const allSections = useMemo(() => 
+  // Mémoriser sections pour éviter les recalculs qui causent des scrolls
+  const sections = useMemo(() => 
     blocks
       .filter(b => b.type === 'section' && b.parentId === category?.id)
       .sort((a, b) => a.order - b.order),
     [blocks, category?.id]
   );
-
-  // FILTRAGE PAR PERMISSIONS - DENY PAR DÉFAUT
-  const sections = isEditMode && isAdmin ? allSections : useFilteredBlocks(allSections);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

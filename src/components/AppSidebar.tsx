@@ -20,7 +20,6 @@ import { ChevronRight } from 'lucide-react';
 import logoApogee from '@/assets/logo-apogee.png';
 import { supabase } from '@/integrations/supabase/client';
 import { useEditor } from '@/contexts/EditorContext';
-import { useFilteredBlocks } from '@/hooks/use-permissions';
 
 interface Category {
   id: string;
@@ -98,39 +97,35 @@ export function AppSidebar() {
       // Trouver la catégorie FAQ principale
       const faqCategory = blocks.find(b => b.type === 'category' && b.slug === 'faq');
       
-      const allCats = blocks
+      const cats = blocks
         .filter(b => 
           b.type === 'category' && 
           b.slug !== 'faq' && // Exclure la catégorie FAQ principale
           !b.slug.startsWith('helpconfort-') && // Exclure les catégories HelpConfort
           b.parentId !== faqCategory?.id // Exclure les sous-catégories FAQ
         )
-        .sort((a, b) => a.order - b.order);
+        .sort((a, b) => a.order - b.order)
+        .map(b => ({
+          id: b.id,
+          title: b.title,
+          slug: b.slug,
+          icon: b.icon
+        }));
       
-      // FILTRAGE PAR PERMISSIONS - Deny par défaut
-      const filteredCats = useFilteredBlocks(allCats);
+      setBlockCategories(cats);
       
-      setBlockCategories(filteredCats.map(b => ({
-        id: b.id,
-        title: b.title,
-        slug: b.slug,
-        icon: b.icon
-      })));
-      
-      const allSecs = blocks
+      const secs = blocks
         .filter(b => b.type === 'section' && !b.hideFromSidebar)
-        .sort((a, b) => a.order - b.order);
+        .sort((a, b) => a.order - b.order)
+        .map(b => ({
+          id: b.id,
+          title: b.title,
+          slug: b.slug,
+          parentId: b.parentId || '',
+          hideFromSidebar: b.hideFromSidebar
+        }));
       
-      // FILTRAGE PAR PERMISSIONS - Deny par défaut
-      const filteredSecs = useFilteredBlocks(allSecs);
-      
-      setBlockSections(filteredSecs.map(b => ({
-        id: b.id,
-        title: b.title,
-        slug: b.slug,
-        parentId: b.parentId || '',
-        hideFromSidebar: b.hideFromSidebar
-      })));
+      setBlockSections(secs);
     }
   }, [blocks, isApogee]);
 

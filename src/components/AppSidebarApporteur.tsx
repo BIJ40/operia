@@ -18,7 +18,6 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronRight } from 'lucide-react';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
-import { useFilteredBlocks } from '@/hooks/use-permissions';
 
 interface BlockCategory {
   id: string;
@@ -55,50 +54,44 @@ export function AppSidebarApporteur() {
   
   // Charger depuis blocks pour Apporteurs
   useEffect(() => {
-    const allCats = blocks
+    const cats = blocks
       .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => a.order - b.order)
+      .map(b => ({
+        id: b.id,
+        title: b.title,
+        slug: b.slug,
+        icon: b.icon,
+        showTitleInMenu: b.showTitleInMenu
+      }));
     
-    // FILTRAGE PAR PERMISSIONS - Deny par défaut
-    const filteredCats = useFilteredBlocks(allCats);
+    setBlockCategories(cats);
     
-    setBlockCategories(filteredCats.map(b => ({
-      id: b.id,
-      title: b.title,
-      slug: b.slug,
-      icon: b.icon,
-      showTitleInMenu: b.showTitleInMenu
-    })));
-    
-    const allSubs = blocks
+    const subs = blocks
       .filter(b => b.type === 'subcategory')
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => a.order - b.order)
+      .map(b => ({
+        id: b.id,
+        title: b.title,
+        slug: b.slug,
+        parentId: b.parentId || '',
+        hideFromSidebar: b.hideFromSidebar
+      }));
     
-    // FILTRAGE PAR PERMISSIONS - Deny par défaut
-    const filteredSubs = useFilteredBlocks(allSubs);
+    setBlockSubcategories(subs);
     
-    setBlockSubcategories(filteredSubs.map(b => ({
-      id: b.id,
-      title: b.title,
-      slug: b.slug,
-      parentId: b.parentId || '',
-      hideFromSidebar: b.hideFromSidebar
-    })));
-    
-    const allSecs = blocks
+    const secs = blocks
       .filter(b => b.type === 'section' && !b.hideFromSidebar)
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => a.order - b.order)
+      .map(b => ({
+        id: b.id,
+        title: b.title,
+        slug: b.slug,
+        parentId: b.parentId || '',
+        hideFromSidebar: b.hideFromSidebar
+      }));
     
-    // FILTRAGE PAR PERMISSIONS - Deny par défaut
-    const filteredSecs = useFilteredBlocks(allSecs);
-    
-    setBlockSections(filteredSecs.map(b => ({
-      id: b.id,
-      title: b.title,
-      slug: b.slug,
-      parentId: b.parentId || '',
-      hideFromSidebar: b.hideFromSidebar
-    })));
+    setBlockSections(secs);
   }, [blocks]);
 
   // Ouvrir automatiquement la catégorie et sous-catégorie actives
