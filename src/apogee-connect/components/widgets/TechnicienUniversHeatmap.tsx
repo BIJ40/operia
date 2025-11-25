@@ -2,12 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { TechnicienUniversStats } from "@/apogee-connect/utils/technicienUniversCalculations";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface TechnicienUniversHeatmapProps {
   data: TechnicienUniversStats[];
   universes: Array<{ slug: string; label: string; colorHex: string }>;
   loading?: boolean;
   mode: "ca" | "heures" | "caParHeure";
+  showInactive: boolean;
+  onToggleInactive: (show: boolean) => void;
 }
 
 export const TechnicienUniversHeatmap = ({
@@ -15,6 +19,8 @@ export const TechnicienUniversHeatmap = ({
   universes,
   loading,
   mode,
+  showInactive,
+  onToggleInactive,
 }: TechnicienUniversHeatmapProps) => {
   if (loading) {
     return (
@@ -29,7 +35,12 @@ export const TechnicienUniversHeatmap = ({
     );
   }
 
-  if (data.length === 0) {
+  // Filtrer les techniciens selon l'état actif/inactif
+  const filteredData = showInactive 
+    ? data 
+    : data.filter(tech => tech.technicienActif);
+
+  if (filteredData.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -46,7 +57,7 @@ export const TechnicienUniversHeatmap = ({
 
   // Calculer les valeurs min/max pour la heatmap
   let maxValue = 0;
-  data.forEach((tech) => {
+  filteredData.forEach((tech) => {
     universes.forEach((univers) => {
       const value =
         mode === "ca"
@@ -78,12 +89,26 @@ export const TechnicienUniversHeatmap = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-          {getTitle()}
-        </CardTitle>
-        <CardDescription>
-          Analyse croisée de la performance par technicien et domaine d'intervention
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+              {getTitle()}
+            </CardTitle>
+            <CardDescription>
+              Analyse croisée de la performance par technicien et domaine d'intervention
+            </CardDescription>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-inactive"
+              checked={showInactive}
+              onCheckedChange={onToggleInactive}
+            />
+            <Label htmlFor="show-inactive" className="text-sm text-muted-foreground cursor-pointer">
+              Afficher inactifs
+            </Label>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -108,10 +133,22 @@ export const TechnicienUniversHeatmap = ({
               </tr>
             </thead>
             <tbody>
-              {data.map((tech) => (
-                <tr key={tech.technicienId} className="hover:bg-muted/50">
+              {filteredData.map((tech) => (
+                <tr 
+                  key={tech.technicienId} 
+                  className="hover:bg-muted/50"
+                  style={{ opacity: tech.technicienActif ? 1 : 0.6 }}
+                >
                   <td className="border border-border p-2 font-medium sticky left-0 bg-background">
-                    {tech.technicienNom}
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: tech.technicienColor }}
+                      />
+                      <span style={{ color: tech.technicienColor }}>
+                        {tech.technicienNom}
+                      </span>
+                    </div>
                   </td>
                   {universes.map((univers) => {
                     const universeData = tech.universes[univers.slug];

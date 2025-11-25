@@ -1,8 +1,11 @@
 import { parseISO, isWithinInterval } from "date-fns";
+import { buildTechMap, resolveTech } from "./techTools";
 
 export interface TechnicienUniversStats {
   technicienId: string;
   technicienNom: string;
+  technicienColor: string;
+  technicienActif: boolean;
   universes: {
     [universSlug: string]: {
       caHT: number;
@@ -98,6 +101,9 @@ export function calculateTechnicienUniversStats(
     projects
   );
 
+  // Construire le dictionnaire des techniciens
+  const TECHS = buildTechMap(users);
+
   // Map des projets pour accès rapide
   const projectsMap = new Map(projects.map((p) => [p.id, p]));
 
@@ -105,6 +111,8 @@ export function calculateTechnicienUniversStats(
   const stats: {
     [techId: string]: {
       nom: string;
+      color: string;
+      actif: boolean;
       universes: {
         [universSlug: string]: {
           caHT: number;
@@ -163,14 +171,12 @@ export function calculateTechnicienUniversStats(
 
       // Initialiser le technicien si nécessaire
       if (!stats[techId]) {
-        const user = users.find((u) => u.id === techId);
-        const userData = user?.data || user;
-        const firstname = userData?.firstname || user?.firstname || '';
-        const name = userData?.name || user?.name || '';
-        const displayName = firstname && name ? `${firstname} ${name}` : name || firstname || `Technicien ${techId.slice(0, 8)}`;
+        const resolved = resolveTech(techId, TECHS);
         
         stats[techId] = {
-          nom: displayName,
+          nom: resolved.label,
+          color: resolved.color,
+          actif: resolved.actif,
           universes: {},
         };
       }
@@ -234,6 +240,8 @@ export function calculateTechnicienUniversStats(
     return {
       technicienId: techId,
       technicienNom: techData.nom,
+      technicienColor: techData.color,
+      technicienActif: techData.actif,
       universes: universesData,
       totaux: {
         caHT: totalCA,

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DataService } from "@/apogee-connect/services/dataService";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
@@ -14,6 +15,7 @@ export default function IndicateursTechniciens() {
   const { isAgencyReady } = useAgency();
   const { isAuthLoading } = useAuth();
   const { filters } = useSecondaryFilters();
+  const [showInactive, setShowInactive] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["apogee-technicien-univers-stats", filters.dateRange],
@@ -90,6 +92,8 @@ export default function IndicateursTechniciens() {
               universes={universes}
               loading={isLoading}
               mode="ca"
+              showInactive={showInactive}
+              onToggleInactive={setShowInactive}
             />
           </TabsContent>
 
@@ -99,6 +103,8 @@ export default function IndicateursTechniciens() {
               universes={universes}
               loading={isLoading}
               mode="heures"
+              showInactive={showInactive}
+              onToggleInactive={setShowInactive}
             />
           </TabsContent>
 
@@ -108,6 +114,8 @@ export default function IndicateursTechniciens() {
               universes={universes}
               loading={isLoading}
               mode="caParHeure"
+              showInactive={showInactive}
+              onToggleInactive={setShowInactive}
             />
           </TabsContent>
         </Tabs>
