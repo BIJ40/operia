@@ -25,8 +25,6 @@ export const calculateMonthlySegmentation = (
   
   const monthlyData: MonthlySegmentData[] = [];
   
-  console.log(`🔵 calculateMonthlySegmentation: ${factures.length} factures, ${projects.length} projets, année ${year}`);
-  
   // Pour chaque mois de l'année
   for (let month = 0; month < 12; month++) {
     const date = new Date(year, month, 1);
@@ -39,7 +37,6 @@ export const calculateMonthlySegmentation = (
     
     // Traiter d'abord les factures normales
     const initInvoiceProcessed = new Set(); // Éviter de compter la facture d'init plusieurs fois
-    let facturesProcessedCount = 0;
     
     factures.forEach(facture => {
       const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
@@ -72,7 +69,6 @@ export const calculateMonthlySegmentation = (
               // Répartition fixe selon les règles métier
               caParticuliers += INIT_INVOICE_PARTICULIERS; // 19 419,94 €
               caApporteurs += (montantTotal - INIT_INVOICE_PARTICULIERS); // Le reste
-              facturesProcessedCount++;
             }
           }
           return;
@@ -100,15 +96,10 @@ export const calculateMonthlySegmentation = (
         } else {
           caApporteurs += montant;
         }
-        facturesProcessedCount++;
       } catch {
         return;
       }
     });
-    
-    if (facturesProcessedCount > 0) {
-      console.log(`📊 ${monthLabel} ${year}: ${facturesProcessedCount} factures → Part: ${caParticuliers.toFixed(0)}€ / App: ${caApporteurs.toFixed(0)}€`);
-    }
     
     const totalCA = caParticuliers + caApporteurs;
     const partParticuliers = totalCA > 0 ? (caParticuliers / totalCA) * 100 : 0;
