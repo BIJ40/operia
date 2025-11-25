@@ -27,14 +27,13 @@ interface Permission {
 const AVAILABLE_ROLES = [
   { value: 'dirigeant', label: 'Dirigeant(e)' },
   { value: 'assistant(e)', label: 'Assistant(e)' },
-  { value: 'technicien', label: 'Technicien' },
   { value: 'commercial', label: 'Commercial' },
 ];
 
 export default function AdminRolePermissions() {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
-  const [selectedRole, setSelectedRole] = useState<string>('technicien');
+  const [selectedRole, setSelectedRole] = useState<string>('dirigeant');
   const [loading, setLoading] = useState(true);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [apporteurBlocks, setApporteurBlocks] = useState<Block[]>([]);
@@ -291,12 +290,10 @@ export default function AdminRolePermissions() {
 
   const renderCategoryGrid = (parentBlocks: Block[], tableName: 'blocks' | 'apporteur_blocks') => {
     const categories = parentBlocks.filter(b => b.type === 'category' && !b.parentId);
-    const allBlocks = tableName === 'blocks' ? blocks : apporteurBlocks;
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {categories.map(category => {
-          const sections = allBlocks.filter(b => b.type === 'section' && b.parentId === category.id);
           const categoryPermission = hasPermission(category.id);
 
           return (
@@ -305,36 +302,14 @@ export default function AdminRolePermissions() {
                 <div className="flex items-start gap-3">
                   <Checkbox
                     checked={categoryPermission}
-                    onCheckedChange={(checked) => toggleCategoryAndChildren(category.id, !!checked)}
+                    onCheckedChange={(checked) => togglePermission(category.id, !!checked)}
                     className="mt-1"
                   />
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-base leading-tight break-words">{category.title}</CardTitle>
-                    <CardDescription className="text-xs mt-1">
-                      {sections.length} section{sections.length > 1 ? 's' : ''}
-                    </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              {categoryPermission && sections.length > 0 && (
-                <CardContent className="pt-0">
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {sections.map(section => {
-                      const sectionPermission = hasPermission(section.id);
-                      return (
-                        <div key={section.id} className="flex items-start gap-2 text-sm">
-                          <Checkbox
-                            checked={sectionPermission}
-                            onCheckedChange={(checked) => togglePermission(section.id, !!checked)}
-                            className="mt-0.5"
-                          />
-                          <span className="leading-tight break-words">{section.title}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              )}
             </Card>
           );
         })}
