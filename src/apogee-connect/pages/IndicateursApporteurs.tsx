@@ -21,7 +21,6 @@ import { calculateParticuliersStats } from "@/apogee-connect/utils/particuliersC
 import { calculateMonthlySegmentation } from "@/apogee-connect/utils/segmentationCalculations";
 import { TopApporteursWidget } from "@/apogee-connect/components/widgets/TopApporteursWidget";
 import { DossiersConfiesWidget } from "@/apogee-connect/components/widgets/DossiersConfiesWidget";
-import { DuGlobalWidget } from "@/apogee-connect/components/widgets/DuGlobalWidget";
 import { FlopApporteursWidget } from "@/apogee-connect/components/widgets/FlopApporteursWidget";
 import { TypesApporteursWidget } from "@/apogee-connect/components/widgets/TypesApporteursWidget";
 import { ParticuliersWidget } from "@/apogee-connect/components/widgets/ParticuliersWidget";
@@ -219,18 +218,15 @@ export default function IndicateursApporteurs() {
         <DossiersConfiesWidget dossiers={data?.dossiersConfiesParApporteur || []} />
       </div>
 
-      {/* Widgets Types + Particuliers + Segmentation */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Widget Types d'apporteurs - Pleine largeur */}
+      <div>
         <TypesApporteursWidget data={data?.typesApporteursStats || []} />
-        <ParticuliersWidget stats={data?.particuliersStats} />
-        <div className="lg:col-span-1">
-          <SegmentationChart data={data?.segmentationData || []} />
-        </div>
       </div>
 
-      {/* Widget Dû global détaillé */}
-      <div>
-        <DuGlobalWidget amount={data?.duGlobal || 0} />
+      {/* Widgets Particuliers + Segmentation */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ParticuliersWidget stats={data?.particuliersStats} />
+        <SegmentationChart data={data?.segmentationData || []} />
       </div>
     </div>
   );
