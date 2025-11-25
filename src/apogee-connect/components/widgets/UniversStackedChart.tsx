@@ -12,7 +12,7 @@ interface UniversStackedChartProps {
 export const UniversStackedChart = ({ data, universes, loading }: UniversStackedChartProps) => {
   if (loading) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle>Évolution du CA par univers</CardTitle>
           <CardDescription>Répartition mensuelle du chiffre d'affaires</CardDescription>
@@ -76,7 +76,7 @@ export const UniversStackedChart = ({ data, universes, loading }: UniversStacked
   };
 
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle className="bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
           Évolution du CA par univers
@@ -85,8 +85,8 @@ export const UniversStackedChart = ({ data, universes, loading }: UniversStacked
           Répartition mensuelle du chiffre d'affaires • Total : {formatCurrency(totalCA)}
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={400}>
+      <CardContent className="flex-1">
+        <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data}>
             <defs>
               {sortedUniverses.map((universe) => (
