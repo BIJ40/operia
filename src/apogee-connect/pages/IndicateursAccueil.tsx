@@ -97,10 +97,17 @@ export default function IndicateursAccueil() {
       );
       
       // Calculer le taux de dossiers multi-techniciens
-      const { calculateTauxDossiersMultiTechniciens } = await import("@/apogee-connect/utils/dashboardCalculations");
+      const { calculateTauxDossiersMultiTechniciens, calculatePolyvalenceTechniciens } = await import("@/apogee-connect/utils/dashboardCalculations");
       const tauxDossiersMultiTechniciens = calculateTauxDossiersMultiTechniciens(
         apiData.interventions || [],
         filters.dateRange
+      );
+      
+      // Calculer la polyvalence réelle des techniciens (historique complet, NON filtré par période)
+      const polyvalenceTechniciens = calculatePolyvalenceTechniciens(
+        apiData.interventions || [],
+        apiData.projects || [],
+        apiData.users || []
       );
       
       // Calculer les données mensuelles CA pour l'année sélectionnée
@@ -120,7 +127,7 @@ export default function IndicateursAccueil() {
         filters.dateRange
       );
       
-      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture, dossiersComplexes, panierMoyen, tauxTransformationDevis, nbMoyenInterventionsParDossier, nbMoyenVisitesParIntervention, tauxDossiersMultiUnivers, tauxDossiersSansDevis, tauxDossiersMultiTechniciens };
+      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture, dossiersComplexes, panierMoyen, tauxTransformationDevis, nbMoyenInterventionsParDossier, nbMoyenVisitesParIntervention, tauxDossiersMultiUnivers, tauxDossiersSansDevis, tauxDossiersMultiTechniciens, polyvalenceTechniciens };
     },
   });
 
@@ -373,6 +380,22 @@ export default function IndicateursAccueil() {
             <p className="text-xl font-bold">{data?.tauxDossiersMultiTechniciens?.tauxMultiTech || 0}%</p>
             {data?.tauxDossiersMultiTechniciens?.nbMultiTech !== undefined && (
               <span className="text-[10px] text-muted-foreground">({data.tauxDossiersMultiTechniciens.nbMultiTech}/{data.tauxDossiersMultiTechniciens.nbTotal})</span>
+            )}
+          </div>
+        </Card>
+
+        {/* KPI 15: Polyvalence Techniciens (historique complet) */}
+        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-emerald-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-1.5 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xs">🎯</span>
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">Polyvalence tech</p>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <p className="text-xl font-bold">{data?.polyvalenceTechniciens?.polyvalenceMoyenne || 0}</p>
+            {data?.polyvalenceTechniciens?.nbTechniciens !== undefined && (
+              <span className="text-[10px] text-muted-foreground">({data.polyvalenceTechniciens.nbTechniciens} techs)</span>
             )}
           </div>
         </Card>
