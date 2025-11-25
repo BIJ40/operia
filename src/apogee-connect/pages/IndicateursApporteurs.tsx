@@ -29,7 +29,8 @@ import { SegmentationChart } from "@/apogee-connect/components/widgets/Segmentat
 export default function IndicateursApporteurs() {
   const { filters: secondaryFilters } = useSecondaryFilters();
   const { isApiEnabled } = useApiToggle();
-  const { agencyChangeCounter } = useAgency();
+  const { agencyChangeCounter, currentAgency } = useAgency();
+  const userAgency = currentAgency?.id || "";
 
   const { data, isLoading } = useQuery({
     queryKey: ["apporteurs-stats", secondaryFilters, isApiEnabled, agencyChangeCounter],
@@ -89,7 +90,8 @@ export default function IndicateursApporteurs() {
         apiData.factures || [],
         apiData.clients || [],
         apiData.projects || [],
-        year
+        year,
+        userAgency
       );
       
       const tauxTransformationMoyen = calculateTauxTransformationMoyen(

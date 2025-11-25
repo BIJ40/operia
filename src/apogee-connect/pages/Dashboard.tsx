@@ -42,7 +42,8 @@ export default function Dashboard() {
   const { filters } = useFilters();
   const { filters: secondaryFilters } = useSecondaryFilters();
   const { isApiEnabled } = useApiToggle();
-  const { agencyChangeCounter } = useAgency();
+  const { agencyChangeCounter, currentAgency } = useAgency();
+  const userAgency = currentAgency?.id || "";
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard-stats", filters, secondaryFilters, isApiEnabled, agencyChangeCounter],
@@ -70,7 +71,8 @@ export default function Dashboard() {
         apiData.factures || [],
         apiData.clients || [],
         apiData.projects || [],
-        year
+        year,
+        userAgency
       );
       
       // Calculer TOP 10 apporteurs - lié au filtre secondaire
@@ -181,7 +183,8 @@ export default function Dashboard() {
         apiData.factures || [],
         apiData.clients || [],
         apiData.projects || [],
-        year
+        year,
+        userAgency
       );
       
       if (import.meta.env.DEV) {

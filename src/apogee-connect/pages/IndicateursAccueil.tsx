@@ -15,7 +15,8 @@ import { MonthlyCAChart } from "@/apogee-connect/components/widgets/MonthlyCACha
 export default function IndicateursAccueil() {
   const { filters } = useFilters();
   const { isApiEnabled } = useApiToggle();
-  const { agencyChangeCounter } = useAgency();
+  const { agencyChangeCounter, currentAgency } = useAgency();
+  const userAgency = currentAgency?.id || "";
 
   const { data, isLoading } = useQuery({
     queryKey: ["kpis-overview", filters, isApiEnabled, agencyChangeCounter],
@@ -38,7 +39,8 @@ export default function IndicateursAccueil() {
         apiData.factures || [],
         apiData.clients || [],
         apiData.projects || [],
-        year
+        year,
+        userAgency
       );
       
       const tauxSAVGlobal = calculateTauxSAVGlobal(
