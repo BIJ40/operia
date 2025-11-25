@@ -210,11 +210,11 @@ export default function IndicateursAccueil() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-            Évolution du CA {selectedYear}
+            Évolution du CA
           </h2>
           <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
             <SelectTrigger className="w-[120px] bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white border-none">
-              <SelectValue placeholder="Année" />
+              <SelectValue>{selectedYear}</SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-background border border-border z-50">
               <SelectItem value="2023">2023</SelectItem>
