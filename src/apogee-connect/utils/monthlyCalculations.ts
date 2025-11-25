@@ -40,59 +40,61 @@ export const calculateMonthlyCA = (
   
   // Filtrer et traiter les factures
   factures.forEach(facture => {
-    // 1. Le type est dans data.type pour l'API Apogée
-    const type = facture.data?.type || facture.type || facture.typeFacture;
-    
-    // Exclure les avoirs
-    if (type === "avoir" || type === "Avoir") return;
-    
-    // 2. Filtrer sur dateReelle et année
-    const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
-    if (!dateReelle) return;
+    // 1. Utiliser la même logique que calculateCaJour pour rester cohérent
+    const dateValue = facture.dateEmission || facture.dateReelle || facture.created_at;
+    if (!dateValue) return;
     
     try {
-      const factureDate = parseISO(dateReelle);
+      const factureDate = parseISO(dateValue);
       const factureYear = factureDate.getFullYear();
       
       // Vérifier que c'est bien l'année demandée
       if (factureYear !== year) return;
       
-      // 3. Récupérer le mois (0-11)
+      // 2. Récupérer le mois (0-11)
       const month = factureDate.getMonth();
       const monthData = monthlyData[month];
       
-      // 4. Le montant totalHT est dans data.totalHT pour l'API Apogée
-      const montantRaw = facture.data?.totalHT || facture.totalHT || "0";
-      const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+      // 3. Extraire le montant HT avec la même stratégie que calculateCaJour
+      const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
+      const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ""));
       
       if (isNaN(montant) || montant === 0) return;
       
-      // 5. Accumuler le CA et compter la facture
-      monthData.caTotal += montant;
+      // 4. Gérer le type de facture (facture / avoir)
+      const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
+      
+      if (typeFacture === "avoir" || typeFacture === "Avoir") {
+        // Avoirs en négatif
+        monthData.caTotal -= Math.abs(montant);
+      } else {
+        monthData.caTotal += montant;
+      }
+      
       monthData.nbFactures++;
       
       if (import.meta.env.DEV && monthData.nbFactures <= 3) {
-        console.log('✅ Facture ajoutée:', {
-          ref: facture.reference,
+        console.log("✅ Facture ajoutée (monthly):", {
+          ref: facture.reference || facture.numeroFacture,
           mois: monthData.monthLabel,
           montant,
-          date: dateReelle,
-          type
+          date: dateValue,
+          type: typeFacture,
         });
       }
       
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error('❌ Erreur parsing date facture:', dateReelle, error);
+        console.error("❌ Erreur parsing date facture (monthly):", dateValue, error);
       }
     }
   });
   
   if (import.meta.env.DEV) {
-    console.log('📊 calculateMonthlyCA - Résultat:', monthlyData.map(m => ({
+    console.log("📊 calculateMonthlyCA - Résultat:", monthlyData.map(m => ({
       mois: m.monthLabel,
       ca: m.caTotal,
-      nbFactures: m.nbFactures
+      nbFactures: m.nbFactures,
     })));
   }
   
