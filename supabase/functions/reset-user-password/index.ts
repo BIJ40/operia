@@ -12,6 +12,7 @@ serve(async (req) => {
   }
 
   try {
+    // Créer un client admin
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -23,22 +24,18 @@ serve(async (req) => {
       }
     )
 
-    // Vérifier que l'utilisateur qui fait la requête est admin
+    // Vérifier l'authentification
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       throw new Error('Non autorisé')
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: { headers: { Authorization: authHeader } }
-      }
-    )
-
-    const { data: { user } } = await supabaseClient.auth.getUser()
-    if (!user) {
+    // Extraire et vérifier le JWT avec le client admin
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
+    
+    if (userError || !user) {
+      console.error('User authentication failed:', userError)
       throw new Error('Non authentifié')
     }
 
@@ -53,6 +50,7 @@ serve(async (req) => {
       .single()
 
     if (!roleData) {
+      console.error('User is not admin:', user.id)
       throw new Error('Accès refusé - Réservé aux administrateurs')
     }
 
