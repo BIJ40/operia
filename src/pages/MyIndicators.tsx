@@ -4,7 +4,7 @@ import { useAgencyKpis } from '@/hooks/use-metrics';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TrendingUp, Euro, Percent, FolderOpen, Calendar, AlertTriangle } from 'lucide-react';
+import { TrendingUp, Euro, Percent, FolderOpen, Calendar, AlertTriangle, FileText, Wrench, FileCheck, BarChart3, Users } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { PeriodSelector } from '@/components/dashboard/PeriodSelector';
 import { KpiTile } from '@/components/dashboard/KpiTile';
@@ -76,88 +76,43 @@ export default function MyIndicators() {
 
       {/* Bandeau de 12 tuiles de pilotage - 6 colonnes x 2 lignes */}
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {/* T1 - CA HT période (sélecteur) */}
+        {/* CA HT période */}
         <KpiTile
-          title="CA HT Période"
+          title="CA HT"
           value={data ? formatCurrency(data.kpis.ca_period) : '-'}
           subtitle={getPeriodLabel(period)}
           icon={Euro}
           isLoading={isLoading}
         />
 
-        {/* T2 - CA HT J-1 */}
-        <KpiTile
-          title="CA HT J-1"
-          value={data ? formatCurrency(data.kpis.ca_yesterday) : '-'}
-          subtitle="Hier"
-          icon={Euro}
-          isLoading={isLoading}
-        />
-
-        {/* T3 - CA HT semaine en cours */}
-        <KpiTile
-          title="CA HT Semaine"
-          value={data ? formatCurrency(data.kpis.ca_week) : '-'}
-          subtitle="Semaine en cours"
-          icon={Euro}
-          isLoading={isLoading}
-        />
-
-        {/* T4 - CA HT mois en cours */}
-        <KpiTile
-          title="CA HT Mois"
-          value={data ? formatCurrency(data.kpis.ca_month) : '-'}
-          subtitle="Mois en cours"
-          icon={Euro}
-          isLoading={isLoading}
-        />
-
-        {/* T5 - CA HT année en cours */}
-        <KpiTile
-          title="CA HT Année"
-          value={data ? formatCurrency(data.kpis.ca_year) : '-'}
-          subtitle="Année en cours"
-          icon={TrendingUp}
-          isLoading={isLoading}
-        />
-
-        {/* T6 - CA HT 12 mois glissants */}
-        <KpiTile
-          title="CA HT 12 Glissants"
-          value={data ? formatCurrency(data.kpis.ca_rolling12) : '-'}
-          subtitle="12 derniers mois"
-          icon={TrendingUp}
-          isLoading={isLoading}
-        />
-
-        {/* T7 - Nombre de factures (période active) */}
+        {/* Nombre de factures */}
         <KpiTile
           title="Factures"
           value={data ? data.kpis.invoices_count : '-'}
-          subtitle={`Période: ${getPeriodLabel(period)}`}
-          icon={Euro}
+          subtitle="Factures émises"
+          icon={FileText}
           isLoading={isLoading}
         />
 
-        {/* T8 - Panier moyen facture (période active) */}
+        {/* Panier moyen */}
         <KpiTile
           title="Panier Moyen"
           value={data ? formatCurrency(data.kpis.avg_invoice) : '-'}
-          subtitle={`Période: ${getPeriodLabel(period)}`}
+          subtitle="Montant moyen"
           icon={Euro}
           isLoading={isLoading}
         />
 
-        {/* T9 - Taux de CA apporteurs (%) */}
+        {/* Taux CA apporteurs */}
         <KpiTile
           title="Taux Apporteurs"
           value={data ? `${data.kpis.apporteurs_rate.toFixed(1)}%` : '-'}
-          subtitle="Part du CA apporteurs"
+          subtitle="Part du CA"
           icon={Percent}
           isLoading={isLoading}
         />
 
-        {/* T10 - Nombre de projets en cours */}
+        {/* Projets en cours */}
         <KpiTile
           title="Projets en Cours"
           value={data ? data.kpis.projects_in_progress : '-'}
@@ -166,20 +121,65 @@ export default function MyIndicators() {
           isLoading={isLoading}
         />
 
-        {/* T11 - Interventions planifiées aujourd'hui */}
+        {/* Interventions aujourd'hui */}
         <KpiTile
-          title="Interventions Aujourd'hui"
+          title="Interventions J"
           value={data ? data.kpis.interventions_today : '-'}
-          subtitle="Créneaux planifiés"
+          subtitle="Planifiées aujourd'hui"
           icon={Calendar}
           isLoading={isLoading}
         />
 
-        {/* T12 - Taux de SAV (en CA) sur la période active */}
+        {/* Interventions période */}
+        <KpiTile
+          title="Interventions"
+          value={data ? data.kpis.interventions_count : '-'}
+          subtitle="Réalisées"
+          icon={Wrench}
+          isLoading={isLoading}
+        />
+
+        {/* Devis */}
+        <KpiTile
+          title="Devis"
+          value={data ? data.kpis.devis_count : '-'}
+          subtitle="Devis émis"
+          icon={FileCheck}
+          isLoading={isLoading}
+        />
+
+        {/* Projets créés */}
+        <KpiTile
+          title="Projets"
+          value={data ? data.kpis.projects_count : '-'}
+          subtitle="Nouveaux projets"
+          icon={BarChart3}
+          isLoading={isLoading}
+        />
+
+        {/* Taux de conversion */}
+        <KpiTile
+          title="Taux Conversion"
+          value={data ? `${data.kpis.conversion_rate.toFixed(1)}%` : '-'}
+          subtitle="Devis → Factures"
+          icon={TrendingUp}
+          isLoading={isLoading}
+        />
+
+        {/* Techniciens actifs */}
+        <KpiTile
+          title="Techniciens"
+          value={data ? data.kpis.active_technicians : '-'}
+          subtitle="Techniciens actifs"
+          icon={Users}
+          isLoading={isLoading}
+        />
+
+        {/* Taux SAV */}
         <KpiTile
           title="Taux SAV"
           value={data ? `${data.kpis.sav_rate.toFixed(1)}%` : '-'}
-          subtitle={`CA SAV / Période: ${getPeriodLabel(period)}`}
+          subtitle="CA SAV"
           icon={AlertTriangle}
           isLoading={isLoading}
         />

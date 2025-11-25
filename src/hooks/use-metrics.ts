@@ -13,17 +13,17 @@ export interface KpiData {
   };
   kpis: {
     ca_period: number;
-    ca_yesterday: number;
-    ca_week: number;
-    ca_month: number;
-    ca_year: number;
-    ca_rolling12: number;
     invoices_count: number;
     avg_invoice: number;
     apporteurs_rate: number;
     projects_in_progress: number;
     interventions_today: number;
     sav_rate: number;
+    interventions_count: number;
+    devis_count: number;
+    projects_count: number;
+    conversion_rate: number;
+    active_technicians: number;
   };
   details: {
     ca_by_universe: Array<{ universe: string; amount: number }>;
