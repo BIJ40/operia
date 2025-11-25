@@ -153,11 +153,9 @@ export const TypesApporteursWidget = ({ data, loading, mode = "full" }: TypesApp
   if (mode === "cardsOnly") {
     return (
       <>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.map((stat, index) => (
-            <TypeCard key={stat.type} stat={stat} index={index} compact={true} />
-          ))}
-        </div>
+        {data.map((stat, index) => (
+          <TypeCard key={stat.type} stat={stat} index={index} compact={true} />
+        ))}
 
         {selectedType && (
           <WidgetDialog
