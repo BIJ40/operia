@@ -69,8 +69,14 @@ export default function IndicateursAccueil() {
       );
       
       // Calculer le nombre moyen d'interventions par dossier
-      const { calculateNbMoyenInterventionsParDossier } = await import("@/apogee-connect/utils/dashboardCalculations");
+      const { calculateNbMoyenInterventionsParDossier, calculateNbMoyenVisitesParIntervention } = await import("@/apogee-connect/utils/dashboardCalculations");
       const nbMoyenInterventionsParDossier = calculateNbMoyenInterventionsParDossier(
+        apiData.interventions || [],
+        filters.dateRange
+      );
+      
+      // Calculer le nombre moyen de visites par intervention
+      const nbMoyenVisitesParIntervention = calculateNbMoyenVisitesParIntervention(
         apiData.interventions || [],
         filters.dateRange
       );
@@ -92,7 +98,7 @@ export default function IndicateursAccueil() {
         filters.dateRange
       );
       
-      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture, dossiersComplexes, panierMoyen, tauxTransformationDevis, nbMoyenInterventionsParDossier };
+      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture, dossiersComplexes, panierMoyen, tauxTransformationDevis, nbMoyenInterventionsParDossier, nbMoyenVisitesParIntervention };
     },
   });
 
@@ -285,8 +291,24 @@ export default function IndicateursAccueil() {
           </div>
         </Card>
 
-        {/* KPI 11-12: Placeholders */}
-        {[11, 12].map((num) => (
+        {/* KPI 11: Nb Moyen Visites/Intervention */}
+        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-lime-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-gradient-to-br from-lime-500 to-lime-600 p-1.5 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xs">📍</span>
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">Nb moyen visites/RDV</p>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <p className="text-xl font-bold">{data?.nbMoyenVisitesParIntervention?.nbMoyen || 0}</p>
+            {data?.nbMoyenVisitesParIntervention?.nbInterventions !== undefined && (
+              <span className="text-[10px] text-muted-foreground">({data.nbMoyenVisitesParIntervention.nbInterventions})</span>
+            )}
+          </div>
+        </Card>
+
+        {/* KPI 12: Placeholder */}
+        {[12].map((num) => (
           <Card key={num} className="p-3 border-2 border-dashed border-muted">
             <p className="text-[10px] text-muted-foreground mb-0.5">KPI #{num}</p>
             <p className="text-xl font-bold text-muted-foreground">--</p>
