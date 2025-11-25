@@ -100,6 +100,7 @@ export default function IndicateursApporteurs() {
       );
       
       // Calculer l'évolution mensuelle Particuliers vs Apporteurs - année dynamique
+      // Ce graphique affiche TOUJOURS l'année complète, pas filtré par le sélecteur de période
       const start = secondaryFilters.dateRange?.start;
       const year = start instanceof Date ? start.getFullYear() : new Date().getFullYear();
       const segmentationData = calculateMonthlySegmentation(
