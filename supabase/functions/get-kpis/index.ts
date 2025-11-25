@@ -173,20 +173,60 @@ Deno.serve(async (req) => {
     const periodType = body.period || 'month';
     const periodDates = getPeriodDates(periodType);
 
-    // Call Apogée API with real implementation
-    // TODO: Replace 'kpis' with actual Apogée endpoint name
-    // TODO: Adjust additionalData filters based on actual Apogée API requirements
-    // Common endpoints might be: 'interventions', 'factures', 'devis', 'stats', etc.
-    const kpiData = await callApogeeApi(
-      agenceSlug, 
-      apiKey, 
-      'kpis', // Replace with actual endpoint
-      {
-        period: periodType,
-        start_date: periodDates.start,
-        end_date: periodDates.end,
+    // Call Apogée API endpoints to get real data
+    console.log(`[get-kpis] Fetching factures for agency ${agenceSlug}`);
+    const facturesResponse = await callApogeeApi(agenceSlug, apiKey, 'apiGetFactures', {});
+    const factures = Array.isArray(facturesResponse) ? facturesResponse : facturesResponse?.data || [];
+    
+    console.log(`[get-kpis] Fetching interventions for agency ${agenceSlug}`);
+    const interventionsResponse = await callApogeeApi(agenceSlug, apiKey, 'apiGetInterventions', {});
+    const interventions = Array.isArray(interventionsResponse) ? interventionsResponse : interventionsResponse?.data || [];
+
+    console.log(`[get-kpis] Received ${factures.length} factures and ${interventions.length} interventions`);
+
+    // Calculate KPIs from raw data
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    let caMonth = 0;
+    let caYear = 0;
+    let invoicesCountMonth = 0;
+
+    // Process factures
+    for (const facture of factures) {
+      if (!facture.date) continue;
+      
+      const factureDate = new Date(facture.date);
+      const amount = parseFloat(facture.totalHT || facture.totalTTC || 0);
+      
+      // Exclure les avoirs
+      if (facture.type === 'avoir') continue;
+      
+      // CA année
+      if (factureDate.getFullYear() === currentYear) {
+        caYear += amount;
       }
-    );
+      
+      // CA mois + comptage factures
+      if (factureDate.getFullYear() === currentYear && factureDate.getMonth() === currentMonth) {
+        caMonth += amount;
+        invoicesCountMonth++;
+      }
+    }
+
+    // Count interventions du mois
+    let interventionsCountMonth = 0;
+    for (const intervention of interventions) {
+      if (!intervention.date) continue;
+      
+      const intDate = new Date(intervention.date);
+      if (intDate.getFullYear() === currentYear && intDate.getMonth() === currentMonth) {
+        interventionsCountMonth++;
+      }
+    }
+
+    console.log(`[get-kpis] Calculated KPIs - CA mois: ${caMonth}, CA année: ${caYear}, Factures: ${invoicesCountMonth}, Interventions: ${interventionsCountMonth}`);
 
     // Build response
     const response: KpiResponse = {
@@ -200,13 +240,10 @@ Deno.serve(async (req) => {
         end: periodDates.end,
       },
       kpis: {
-        // Map Apogée API response to our KPI structure
-        // TODO: Adjust field names based on actual Apogée API response structure
-        // Example: if API returns { chiffre_affaire_mois: 12345 }, map it to ca_month
-        ca_month: kpiData.ca_month || kpiData.chiffre_affaire_mois || 0,
-        ca_year: kpiData.ca_year || kpiData.chiffre_affaire_annee || 0,
-        invoices_count_month: kpiData.invoices_count_month || kpiData.nb_factures_mois || 0,
-        interventions_count_month: kpiData.interventions_count_month || kpiData.nb_interventions_mois || 0,
+        ca_month: Math.round(caMonth * 100) / 100,
+        ca_year: Math.round(caYear * 100) / 100,
+        invoices_count_month: invoicesCountMonth,
+        interventions_count_month: interventionsCountMonth,
       },
     };
 
