@@ -314,20 +314,22 @@ export default function Dashboard() {
         </div>
 
         {/* Section KPIs liés à la période - 15 tuiles compactes */}
-        <TooltipProvider>
+        <div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-blue-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
-                      <FolderOpen className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Nombre de projets créés sur la période</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
+                        <FolderOpen className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Nombre de projets créés sur la période</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <div className="flex items-center gap-1">
                   {(data?.variations.dossiers || 0) > 0 ? (
                     <TrendingUp className="w-2.5 h-2.5 text-green-500" />
@@ -346,16 +348,18 @@ export default function Dashboard() {
             {/* KPI 2: RT */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-green-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
-                      <ClipboardCheck className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Nombre de relevés techniques réalisés</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
+                        <ClipboardCheck className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Nombre de relevés techniques réalisés</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">RT réalisés</p>
               <div className="flex items-baseline gap-1">
@@ -369,16 +373,18 @@ export default function Dashboard() {
             {/* KPI 3: Devis */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-purple-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
-                      <FileText className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Devis envoyés (state != draft)</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
+                        <FileText className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Devis envoyés (state != draft)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Devis émis</p>
               <div className="flex items-baseline gap-1">
@@ -392,16 +398,18 @@ export default function Dashboard() {
             {/* KPI 4: CA */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-orange-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
-                      <Euro className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Somme factures HT (type = facture)</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
+                        <Euro className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Somme factures HT (type = facture)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <div className="flex items-center gap-1">
                   {(data?.variations.ca || 0) > 0 ? (
                     <TrendingUp className="w-2.5 h-2.5 text-green-500" />
@@ -425,16 +433,18 @@ export default function Dashboard() {
             {/* KPI 5: Taux de SAV */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-red-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-red-500 to-red-600 p-1.5 rounded-lg flex items-center justify-center">
-                      <span className="text-white font-bold text-xs">SAV</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">% interventions SAV / total</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-red-500 to-red-600 p-1.5 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-xs">SAV</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">% interventions SAV / total</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Taux de SAV</p>
               <div className="flex items-baseline gap-1">
@@ -445,16 +455,18 @@ export default function Dashboard() {
             {/* KPI 6: Délai moyen */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-cyan-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 p-1.5 rounded-lg">
-                      <Clock className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Délai moyen création → facturation (jours)</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 p-1.5 rounded-lg">
+                        <Clock className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Délai moyen création → facturation (jours)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Délai moyen dossier</p>
               <p className="text-xl font-bold">{data?.delaiMoyenDossier || 0}j</p>
@@ -463,16 +475,18 @@ export default function Dashboard() {
             {/* KPI 7: Dossiers complexes */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-amber-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-1.5 rounded-lg">
-                      <Layers className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">% dossiers {'>'}6 interventions ou ≥2 travaux</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-1.5 rounded-lg">
+                        <Layers className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">% dossiers {'>'}6 interventions ou ≥2 travaux</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Dossiers complexes</p>
               <p className="text-xl font-bold">{(data?.tauxDossiersComplexes || 0).toFixed(1)}%</p>
@@ -481,16 +495,18 @@ export default function Dashboard() {
             {/* KPI 8: Interventions/dossier */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-indigo-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-1.5 rounded-lg">
-                      <BarChart3 className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Moyenne interventions par dossier</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-1.5 rounded-lg">
+                        <BarChart3 className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Moyenne interventions par dossier</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Interventions/dossier</p>
               <p className="text-xl font-bold">{(data?.nbMoyenInterventionsParDossier || 0).toFixed(1)}</p>
@@ -499,16 +515,18 @@ export default function Dashboard() {
             {/* KPI 9: Taux transformation devis */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-teal-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-1.5 rounded-lg">
-                      <Target className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">% devis envoyés → acceptés (invoice)</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-1.5 rounded-lg">
+                        <Target className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">% devis envoyés → acceptés (invoice)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Taux transformation</p>
               <p className="text-xl font-bold">{(data?.tauxTransformationDevis || 0).toFixed(1)}%</p>
@@ -517,16 +535,18 @@ export default function Dashboard() {
             {/* KPI 10: Panier moyen */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-pink-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-pink-500 to-pink-600 p-1.5 rounded-lg">
-                      <Package className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">CA moyen par facture HT</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-pink-500 to-pink-600 p-1.5 rounded-lg">
+                        <Package className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">CA moyen par facture HT</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Panier moyen</p>
               <p className="text-xl font-bold">{formatEuros(data?.panierMoyen || 0)}</p>
@@ -535,16 +555,18 @@ export default function Dashboard() {
             {/* KPI 11: Visites/RDV */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-lime-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-lime-500 to-lime-600 p-1.5 rounded-lg">
-                      <Users className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Nb moyen visites par intervention</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-lime-500 to-lime-600 p-1.5 rounded-lg">
+                        <Users className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Nb moyen visites par intervention</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Visites/RDV</p>
               <p className="text-xl font-bold">{(data?.nbMoyenVisitesParIntervention || 0).toFixed(1)}</p>
@@ -553,16 +575,18 @@ export default function Dashboard() {
             {/* KPI 12: Multi-univers */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-violet-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-violet-500 to-violet-600 p-1.5 rounded-lg">
-                      <Layers className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">% dossiers avec ≥2 univers</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-violet-500 to-violet-600 p-1.5 rounded-lg">
+                        <Layers className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">% dossiers avec ≥2 univers</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Multi-univers</p>
               <p className="text-xl font-bold">{(data?.tauxDossiersMultiUnivers || 0).toFixed(1)}%</p>
@@ -571,16 +595,18 @@ export default function Dashboard() {
             {/* KPI 13: Dossiers sans devis */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-rose-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-rose-500 to-rose-600 p-1.5 rounded-lg">
-                      <FileText className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">% factures sans devis associé</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-rose-500 to-rose-600 p-1.5 rounded-lg">
+                        <FileText className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">% factures sans devis associé</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Sans devis</p>
               <p className="text-xl font-bold">{(data?.tauxDossiersSansDevis || 0).toFixed(1)}%</p>
@@ -589,16 +615,18 @@ export default function Dashboard() {
             {/* KPI 14: Multi-techniciens */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-emerald-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-1.5 rounded-lg">
-                      <UserCheck className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">% dossiers avec ≥2 techniciens</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-1.5 rounded-lg">
+                        <UserCheck className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">% dossiers avec ≥2 techniciens</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Multi-techniciens</p>
               <p className="text-xl font-bold">{(data?.tauxDossiersMultiTechniciens || 0).toFixed(1)}%</p>
@@ -607,22 +635,24 @@ export default function Dashboard() {
             {/* KPI 15: Polyvalence techniciens */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-sky-500/50">
               <div className="flex items-center gap-2 mb-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-gradient-to-br from-sky-500 to-sky-600 p-1.5 rounded-lg">
-                      <Award className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Nb moyen univers par technicien</p>
-                  </TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="bg-gradient-to-br from-sky-500 to-sky-600 p-1.5 rounded-lg">
+                        <Award className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Nb moyen univers par technicien</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <p className="text-[10px] text-muted-foreground mb-0.5">Polyvalence tech</p>
               <p className="text-xl font-bold">{(data?.polyvalenceTechniciens || 0).toFixed(1)}</p>
             </Card>
           </div>
-        </TooltipProvider>
+        </div>
 
         {/* Section Graphiques (toutes données) */}
         <div>
