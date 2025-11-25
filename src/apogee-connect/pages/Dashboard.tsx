@@ -253,8 +253,15 @@ export default function Dashboard() {
     console.error('Erreur de chargement du dashboard:', error);
     return (
       <AppLayout>
-        <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] space-y-4">
           <p className="text-2xl text-muted-foreground">Erreur de chargement des données</p>
+          <p className="text-sm text-muted-foreground">Rechargez la page ou contactez le support si le problème persiste</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+          >
+            Recharger la page
+          </button>
         </div>
       </AppLayout>
     );
