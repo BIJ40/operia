@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
     // ===== Tuile 4: Taux Apporteurs =====
     // Règle: CA_apporteurs = Σ(montantHT) pour factures avec data.commanditaireId non null
     
-    // Debug: Échantillon de projets
+    // Debug: Échantillon de dossiers
     const projectsSample = (projects || []).slice(0, 3);
     console.log('[get-kpis] Sample projects:', JSON.stringify(projectsSample.map((p: any) => ({
       id: p.id,
@@ -241,7 +241,7 @@ Deno.serve(async (req) => {
     })), null, 2));
     
     const projectsWithCommanditaire = (projects || []).filter((p: any) => p.data?.commanditaireId);
-    console.log(`[get-kpis] Projects with commanditaire: ${projectsWithCommanditaire.length} / ${projects.length}`);
+    console.log(`[get-kpis] Dossiers with commanditaire: ${projectsWithCommanditaire.length} / ${projects.length}`);
     
     let ca_apporteurs = 0;
     const apporteursCA: Record<string, { ca: number; projects: Set<string>; type: string; name: string }> = {};
@@ -274,7 +274,7 @@ Deno.serve(async (req) => {
     const apporteurs_rate = ca_period > 0 ? (ca_apporteurs / ca_period) * 100 : 0;
     console.log(`[get-kpis] CA apporteurs: ${ca_apporteurs}, CA total: ${ca_period}, Taux: ${apporteurs_rate.toFixed(2)}%`);
 
-    // ===== Tuile 5: Projets en Cours (hors sélecteur) =====
+    // ===== Tuile 5: Dossiers en Cours (hors sélecteur) =====
     // Règle: Statuts considérés comme "clos" = Terminé, Facturé, Archivé, Annulé. En cours = tous les autres.
     const closedStatuses = ['terminé', 'facturé', 'archivé', 'annulé', 'closed', 'archived', 'cancelled'];
     const projects_in_progress = (projects || []).filter((p: any) => {
@@ -282,8 +282,8 @@ Deno.serve(async (req) => {
       return !closedStatuses.includes(status);
     }).length;
 
-    // ===== Tuile 6: Interventions J (hors sélecteur, toujours aujourd'hui) =====
-    // Règle: Date du jour, interventions dont intervention.date = today
+    // ===== Tuile 6: Rendez-Vous J (hors sélecteur, toujours aujourd'hui) =====
+    // Règle: Date du jour, rendez-vous dont date = today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const interventions_today = (interventions || []).filter((i: any) => {
@@ -291,8 +291,8 @@ Deno.serve(async (req) => {
       return intDate && isSameDay(intDate, today);
     }).length;
 
-    // ===== Tuile 7: Interventions (période sélectionnée) =====
-    // Règle: intervention.date dans [startDate, endDate], status === "Terminée"
+    // ===== Tuile 7: Rendez-Vous (période sélectionnée) =====
+    // Règle: date dans [startDate, endDate], status === "Terminée"
     const interventionsPeriode = (interventions || []).filter((i: any) => {
       const intDate = parseDate(i.date || i.dateDebut);
       if (!intDate || intDate < dates.start || intDate > dates.end) return false;
@@ -310,7 +310,7 @@ Deno.serve(async (req) => {
     });
     const devis_count = devisPeriode.length;
 
-    // ===== Tuile 9: Projets (nouveaux sur la période) =====
+    // ===== Tuile 9: Dossiers (nouveaux sur la période) =====
     // Règle: project.date (champ exact selon dossier.json) dans [startDate, endDate]
     const projetsPeriode = (projects || []).filter((p: any) => {
       const rawDate = p.date || p.created_at;
@@ -355,7 +355,7 @@ Deno.serve(async (req) => {
     }).length;
 
     // ===== Tuile 12: Taux SAV =====
-    // Règle: % de projets facturés sur la période qui ont donné lieu à au moins une intervention SAV
+    // Règle: % de dossiers facturés sur la période qui ont donné lieu à au moins un rendez-vous SAV
     const projectsFactures = new Set(facturesValides.map((f: any) => f.projectId));
     
     const projectsAvecSAV = new Set();
@@ -374,7 +374,7 @@ Deno.serve(async (req) => {
 
     const sav_rate = projectsFactures.size > 0 ? (projectsAvecSAV.size / projectsFactures.size) * 100 : 0;
     
-    console.log(`[get-kpis] Projets facturés: ${projectsFactures.size}, Projets SAV: ${projectsAvecSAV.size}, Taux SAV: ${sav_rate.toFixed(1)}%`);
+    console.log(`[get-kpis] Dossiers facturés: ${projectsFactures.size}, Dossiers SAV: ${projectsAvecSAV.size}, Taux SAV: ${sav_rate.toFixed(1)}%`);
 
     // ===== DÉTAILS: CA par univers =====
     const caByUniverse: Record<string, number> = {};
@@ -402,11 +402,11 @@ Deno.serve(async (req) => {
       const project = projectMap.get(projectId);
       if (!project) return;
 
-      // Récupérer les factures de ce projet dans la période
+      // Récupérer les factures de ce dossier dans la période
       const projectInvoices = facturesValides.filter((f: any) => f.projectId === projectId);
       const projectCA = projectInvoices.reduce((sum, f) => sum + calculateInvoiceTotal(f), 0);
 
-      // Récupérer tous les techniciens de l'intervention
+      // Récupérer tous les techniciens du rendez-vous
       const techIds: string[] = [];
       if (interv.userId) techIds.push(interv.userId);
       if (interv.userIds && Array.isArray(interv.userIds)) techIds.push(...interv.userIds);

@@ -112,30 +112,30 @@ export default function MyIndicators() {
               isLoading={isLoading}
             />
 
-            {/* T5 - Projets en Cours (structurel) */}
+            {/* T5 - Dossiers en Cours (structurel) */}
             <KpiTile
-              title="Projets en Cours"
+              title="Dossiers en Cours"
               value={data ? data.kpis.projects_in_progress : '-'}
               subtitle="⏱ Instantané"
               icon={Briefcase}
               isLoading={isLoading}
             />
 
-            {/* T6 - Interventions (temporel) - réalisées sur la période */}
+            {/* T6 - Rendez-Vous (temporel) - réalisés sur la période */}
             <KpiTile
-              title="Interventions"
+              title="Rendez-Vous"
               value={data ? data.kpis.interventions_count : '-'}
-              subtitle="Réalisées sur la période"
+              subtitle="Réalisés sur la période"
               icon={Wrench}
               isLoading={isLoading}
-              tooltip="Nombre d'interventions terminées sur la période sélectionnée"
+              tooltip="Nombre de rendez-vous terminés sur la période sélectionnée"
             />
 
-            {/* T7 - Interventions (temporel) */}
+            {/* T7 - Rendez-Vous (temporel) */}
             <KpiTile
-              title="Interventions"
+              title="Rendez-Vous"
               value={data ? data.kpis.interventions_count : '-'}
-              subtitle="Réalisées"
+              subtitle="Réalisés"
               icon={Wrench}
               isLoading={isLoading}
             />
@@ -149,9 +149,9 @@ export default function MyIndicators() {
               isLoading={isLoading}
             />
 
-            {/* T9 - Projets (temporel) */}
+            {/* T9 - Dossiers (temporel) */}
             <KpiTile
-              title="Projets"
+              title="Dossiers"
               value={data ? data.kpis.projects_count : '-'}
               subtitle="Nouveaux"
               icon={FolderOpen}
@@ -181,7 +181,7 @@ export default function MyIndicators() {
             <KpiTile
               title="Taux SAV"
               value={data ? `${data.kpis.sav_rate.toFixed(1)}%` : '-'}
-              subtitle="Projets avec SAV"
+              subtitle="Dossiers avec SAV"
               icon={AlertTriangle}
               isLoading={isLoading}
             />
@@ -243,7 +243,7 @@ export default function MyIndicators() {
                         <div key={idx} className="flex items-center justify-between p-2 bg-background/50 rounded">
                           <div className="flex-1">
                             <div className="text-sm font-medium">{apporteur.name}</div>
-                            <div className="text-xs text-muted-foreground">{apporteur.type} · {apporteur.projects} projet(s)</div>
+                            <div className="text-xs text-muted-foreground">{apporteur.type} · {apporteur.projects} dossier(s)</div>
                           </div>
                           <span className="text-sm font-semibold">{formatCurrency(apporteur.ca)}</span>
                         </div>
@@ -291,7 +291,7 @@ export default function MyIndicators() {
                         <div key={idx} className="flex items-center justify-between p-2 bg-background/50 rounded">
                           <div className="flex-1">
                             <div className="text-sm font-medium">{tech.name}</div>
-                            <div className="text-xs text-muted-foreground">{tech.interventions} intervention(s)</div>
+                            <div className="text-xs text-muted-foreground">{tech.interventions} rendez-vous</div>
                           </div>
                           <span className="text-sm font-semibold">{formatCurrency(tech.amount)}</span>
                         </div>
@@ -312,7 +312,7 @@ export default function MyIndicators() {
                             <span className="text-sm font-semibold">{formatCurrency(tech.ca)}</span>
                           </div>
                           <div className="text-xs text-muted-foreground space-y-1">
-                            <div>{tech.interventions} interventions · {tech.sav} SAV</div>
+                            <div>{tech.interventions} rendez-vous · {tech.sav} SAV</div>
                             {tech.universes && tech.universes.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {tech.universes.map((u, i) => (
