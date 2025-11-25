@@ -160,12 +160,13 @@ export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetPr
       </div>
 
       {/* Graphique global */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Répartition du CA par type</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={180}>
+      <div className="flex justify-center">
+        <Card className="max-w-2xl w-full">
+          <CardHeader>
+            <CardTitle className="text-base">Répartition du CA par type</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis 
@@ -199,6 +200,7 @@ export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetPr
           </ResponsiveContainer>
         </CardContent>
       </Card>
+      </div>
 
       {/* Grille compacte avec cartes cliquables */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
