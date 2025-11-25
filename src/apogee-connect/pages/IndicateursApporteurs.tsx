@@ -1,0 +1,179 @@
+import { useQuery } from "@tanstack/react-query";
+import { DataService } from "@/apogee-connect/services/dataService";
+import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
+import { useApiToggle } from "@/apogee-connect/contexts/ApiToggleContext";
+import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
+import { Card } from "@/components/ui/card";
+import { FolderOpen, Euro } from "lucide-react";
+import { formatEuros } from "@/apogee-connect/utils/formatters";
+import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
+import { 
+  calculateTop10Apporteurs, 
+  calculateDossiersConfiesParApporteur, 
+  calculateDuGlobal, 
+  calculateFlop10Apporteurs
+} from "@/apogee-connect/utils/apporteursCalculations";
+import { calculateTypesApporteursStats } from "@/apogee-connect/utils/typesApporteursCalculations";
+import { calculateParticuliersStats } from "@/apogee-connect/utils/particuliersCalculations";
+import { calculateMonthlySegmentation } from "@/apogee-connect/utils/segmentationCalculations";
+import { TopApporteursWidget } from "@/apogee-connect/components/widgets/TopApporteursWidget";
+import { DossiersConfiesWidget } from "@/apogee-connect/components/widgets/DossiersConfiesWidget";
+import { DuGlobalWidget } from "@/apogee-connect/components/widgets/DuGlobalWidget";
+import { FlopApporteursWidget } from "@/apogee-connect/components/widgets/FlopApporteursWidget";
+import { TypesApporteursWidget } from "@/apogee-connect/components/widgets/TypesApporteursWidget";
+import { ParticuliersWidget } from "@/apogee-connect/components/widgets/ParticuliersWidget";
+import { SegmentationChart } from "@/apogee-connect/components/widgets/SegmentationChart";
+
+export default function IndicateursApporteurs() {
+  const { filters: secondaryFilters } = useSecondaryFilters();
+  const { isApiEnabled } = useApiToggle();
+  const { agencyChangeCounter } = useAgency();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["apporteurs-stats", secondaryFilters, isApiEnabled, agencyChangeCounter],
+    queryFn: async () => {
+      const apiData = await DataService.loadAllData(isApiEnabled);
+      
+      const top10Apporteurs = calculateTop10Apporteurs(
+        apiData.factures || [],
+        apiData.projects || [],
+        apiData.devis || [],
+        apiData.clients || [],
+        secondaryFilters.dateRange
+      );
+      
+      const dossiersConfiesParApporteur = calculateDossiersConfiesParApporteur(
+        apiData.projects || [],
+        apiData.clients || [],
+        secondaryFilters.dateRange
+      );
+      
+      const duGlobal = calculateDuGlobal(
+        apiData.factures || [],
+        apiData.projects || [],
+        apiData.clients || [],
+        secondaryFilters.dateRange
+      );
+      
+      const flop10Apporteurs = calculateFlop10Apporteurs(
+        apiData.factures || [],
+        apiData.projects || [],
+        apiData.clients || [],
+        secondaryFilters.dateRange
+      );
+      
+      const typesApporteursStats = calculateTypesApporteursStats(
+        apiData.factures || [],
+        apiData.projects || [],
+        apiData.devis || [],
+        apiData.interventions || [],
+        apiData.clients || [],
+        secondaryFilters.dateRange
+      );
+      
+      const particuliersStats = calculateParticuliersStats(
+        apiData.factures || [],
+        apiData.projects || [],
+        apiData.devis || [],
+        apiData.interventions || [],
+        apiData.clients || [],
+        secondaryFilters.dateRange
+      );
+      
+      const segmentationData = calculateMonthlySegmentation(
+        apiData.factures || [],
+        apiData.clients || [],
+        apiData.projects || [],
+        2025
+      );
+      
+      return {
+        top10Apporteurs,
+        dossiersConfiesParApporteur,
+        duGlobal,
+        flop10Apporteurs,
+        typesApporteursStats,
+        particuliersStats,
+        segmentationData
+      };
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <p className="text-2xl text-muted-foreground animate-pulse">Chargement des données apporteurs...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+          Les apporteurs
+        </h1>
+        <SecondaryPeriodSelector />
+      </div>
+
+      {/* Métriques clés en 5 cartes horizontales */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {/* Carte 1: Dû global */}
+        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-orange-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
+              <Euro className="w-4 h-4 text-white" />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mb-1">Dû global TTC</p>
+          <p className="text-2xl font-bold text-orange-500">{formatEuros(data?.duGlobal || 0)}</p>
+          <p className="text-xs text-muted-foreground mt-1">à encaisser</p>
+        </Card>
+
+        {/* Carte 2: Total dossiers confiés */}
+        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-blue-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
+              <FolderOpen className="w-4 h-4 text-white" />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mb-1">Dossiers confiés</p>
+          <p className="text-2xl font-bold text-blue-500">
+            {data?.dossiersConfiesParApporteur?.reduce((sum, d) => sum + d.nbDossiers, 0) || 0}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">total période</p>
+        </Card>
+
+        {/* Cartes 3-5: Placeholders */}
+        {[3, 4, 5].map((num) => (
+          <Card key={num} className="p-4 border-2 border-dashed border-muted">
+            <p className="text-xs text-muted-foreground mb-1">Métrique #{num}</p>
+            <p className="text-2xl font-bold text-muted-foreground">--</p>
+            <p className="text-xs text-muted-foreground mt-1">À définir</p>
+          </Card>
+        ))}
+      </div>
+
+      {/* Widgets TOP/FLOP + Dossiers confiés */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <TopApporteursWidget data={data?.top10Apporteurs || []} />
+        <FlopApporteursWidget data={data?.flop10Apporteurs || []} />
+        <DossiersConfiesWidget dossiers={data?.dossiersConfiesParApporteur || []} />
+      </div>
+
+      {/* Widgets Types + Particuliers + Segmentation */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <TypesApporteursWidget data={data?.typesApporteursStats || []} />
+        <ParticuliersWidget stats={data?.particuliersStats} />
+        <div className="lg:col-span-1">
+          <SegmentationChart data={data?.segmentationData || []} />
+        </div>
+      </div>
+
+      {/* Widget Dû global détaillé */}
+      <div>
+        <DuGlobalWidget amount={data?.duGlobal || 0} />
+      </div>
+    </div>
+  );
+}

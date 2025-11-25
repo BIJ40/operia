@@ -25,6 +25,11 @@ import AdminRolePermissions from "./pages/AdminRolePermissions";
 import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import MyIndicators from "./pages/MyIndicators";
+import IndicateursLayout from "./apogee-connect/pages/IndicateursLayout";
+import IndicateursAccueil from "./apogee-connect/pages/IndicateursAccueil";
+import IndicateursApporteurs from "./apogee-connect/pages/IndicateursApporteurs";
+import IndicateursUnivers from "./apogee-connect/pages/IndicateursUnivers";
+import IndicateursTechniciens from "./apogee-connect/pages/IndicateursTechniciens";
 import AdminAgencies from "./pages/AdminAgencies";
 import NotFound from "./pages/NotFound";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -65,7 +70,12 @@ function AppContent() {
         <Route path="/admin/users-list" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUsersList /></Layout>} />
         <Route path="/admin/role-permissions" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminRolePermissions /></Layout>} />
         <Route path="/admin/agencies" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminAgencies /></Layout>} />
-        <Route path="/mes-indicateurs" element={<Layout showHeader showSidebar={false}><MyIndicators /></Layout>} />
+        <Route path="/mes-indicateurs" element={<Layout showHeader showSidebar={false}><IndicateursLayout /></Layout>}>
+          <Route index element={<IndicateursAccueil />} />
+          <Route path="apporteurs" element={<IndicateursApporteurs />} />
+          <Route path="univers" element={<IndicateursUnivers />} />
+          <Route path="techniciens" element={<IndicateursTechniciens />} />
+        </Route>
         <Route path="/profile" element={<Layout showHeader={false} showSidebar={false}><Profile /></Layout>} />
         <Route path="/favorites" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><Favorites /></Layout>} />
         <Route path="*" element={<NotFound />} />
