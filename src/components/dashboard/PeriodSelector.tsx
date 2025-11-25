@@ -1,18 +1,17 @@
 import { Button } from '@/components/ui/button';
 
 interface PeriodSelectorProps {
-  value: 'day' | 'yesterday' | 'week' | 'month' | 'year' | 'rolling12';
-  onChange: (period: 'day' | 'yesterday' | 'week' | 'month' | 'year' | 'rolling12') => void;
+  value: 'day' | '7days' | 'month' | 'year' | 'rolling12';
+  onChange: (period: 'day' | '7days' | 'month' | 'year' | 'rolling12') => void;
 }
 
 export function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
   const periods = [
-    { value: 'day', label: 'J' },
-    { value: 'yesterday', label: 'J-1' },
-    { value: 'week', label: 'S' },
-    { value: 'month', label: 'M' },
-    { value: 'year', label: 'A' },
-    { value: 'rolling12', label: '12 Glissants' },
+    { value: 'day', label: 'Jour' },
+    { value: '7days', label: '7 derniers jours' },
+    { value: 'month', label: 'Mois en cours' },
+    { value: 'year', label: 'Année en cours' },
+    { value: 'rolling12', label: '12 mois glissants' },
   ] as const;
 
   return (

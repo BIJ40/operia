@@ -42,7 +42,7 @@ export interface KpiData {
 }
 
 interface UseAgencyKpisParams {
-  period?: 'day' | 'yesterday' | 'week' | 'month' | 'year' | 'rolling12';
+  period?: 'day' | '7days' | 'month' | 'year' | 'rolling12';
 }
 
 export function useAgencyKpis({ period = 'month' }: UseAgencyKpisParams = {}) {

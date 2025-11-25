@@ -6,19 +6,12 @@ const corsHeaders = {
 };
 
 interface KpiRequest {
-  period?: 'day' | 'yesterday' | 'week' | 'month' | 'year' | 'rolling12';
+  period?: 'day' | '7days' | 'month' | 'year' | 'rolling12';
 }
 
 interface KpiResponse {
-  agency: {
-    slug: string;
-    label: string;
-  };
-  period: {
-    type: string;
-    start: string;
-    end: string;
-  };
+  agency: { slug: string; label: string };
+  period: { type: string; start: string; end: string };
   kpis: {
     ca_period: number;
     invoices_count: number;
@@ -55,45 +48,54 @@ function getPeriodDates(period: string): { start: Date; end: Date } {
   let end = new Date();
 
   switch (period) {
-    case 'day':
+    case 'day': // Jour
       start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
       break;
-    case 'yesterday':
-      start.setDate(now.getDate() - 1);
-      start.setHours(0, 0, 0, 0);
-      end.setDate(now.getDate() - 1);
-      end.setHours(23, 59, 59, 999);
-      break;
-    case 'week':
-      const dayOfWeek = now.getDay();
-      const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      start.setDate(now.getDate() + diffToMonday);
+    case '7days': // 7 derniers jours
+      start.setDate(now.getDate() - 7);
       start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
       break;
-    case 'month':
+    case 'month': // Mois en cours
       start.setDate(1);
       start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
       break;
-    case 'year':
+    case 'year': // Année en cours
       start.setMonth(0, 1);
       start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
       break;
-    case 'rolling12':
-      start.setDate(now.getDate() - 365);
+    case 'rolling12': // 12 mois glissants
+      start.setMonth(now.getMonth() - 12);
+      start.setDate(1);
       start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
       break;
-    default:
+    default: // Par défaut : mois en cours
       start.setDate(1);
       start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
   }
 
   return { start, end };
+}
+
+function parseDate(dateStr: any): Date | null {
+  if (!dateStr) return null;
+  try {
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
+}
+
+function isSameDay(d1: Date, d2: Date): boolean {
+  return d1.getFullYear() === d2.getFullYear() &&
+         d1.getMonth() === d2.getMonth() &&
+         d1.getDate() === d2.getDate();
 }
 
 Deno.serve(async (req) => {
@@ -158,16 +160,9 @@ Deno.serve(async (req) => {
     const dates = getPeriodDates(period);
     const now = new Date();
 
-    console.log(`[get-kpis] Fetching data for ${agencySlug} - Period: ${period}`);
+    console.log(`[get-kpis] Agency: ${agencySlug}, Period: ${period}, Dates: ${dates.start.toISOString()} to ${dates.end.toISOString()}`);
 
-    console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetFactures`);
-    console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetInterventions`);
-    console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetProjects`);
-    console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetClients`);
-    console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetInterventionsCreneaux`);
-    console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetDevis`);
-
-    // Fetch all data (allowing partial failures)
+    // Fetch all data in parallel
     const fetchJson = async (url: string, label: string) => {
       try {
         const res = await fetch(url, {
@@ -177,62 +172,29 @@ Deno.serve(async (req) => {
         });
 
         if (!res.ok) {
-          console.error(`[get-kpis] ${label} response not ok:`, res.status, res.statusText);
+          console.error(`[get-kpis] ${label} error:`, res.status);
           return [];
         }
 
         const json = await res.json();
-        const count = Array.isArray(json) ? json.length : 0;
-        console.log(`[get-kpis] ${label} items: ${count}`);
+        console.log(`[get-kpis] ${label}: ${Array.isArray(json) ? json.length : 0} items`);
         return Array.isArray(json) ? json : [];
       } catch (e) {
-        console.error(`[get-kpis] Error fetching ${label}:`, e);
+        console.error(`[get-kpis] ${label} exception:`, e);
         return [];
       }
     };
 
-    const [factures, interventions, projects, clients, creneaux, devis] = await Promise.all([
+    const [factures, interventions, projects, clients, devis, users] = await Promise.all([
       fetchJson(`${apiBaseUrl}apiGetFactures`, 'Factures'),
       fetchJson(`${apiBaseUrl}apiGetInterventions`, 'Interventions'),
       fetchJson(`${apiBaseUrl}apiGetProjects`, 'Projects'),
       fetchJson(`${apiBaseUrl}apiGetClients`, 'Clients'),
-      fetchJson(`${apiBaseUrl}apiGetInterventionsCreneaux`, 'Creneaux'),
       fetchJson(`${apiBaseUrl}apiGetDevis`, 'Devis'),
+      fetchJson(`${apiBaseUrl}apiGetUsers`, 'Users'),
     ]);
 
-    console.log(`[get-kpis] Data received - Factures: ${factures?.length || 0}, Interventions: ${interventions?.length || 0}, Projects: ${projects?.length || 0}`);
-
-    // Debug: check factures structure
-    if (factures && factures.length > 0) {
-      console.log(`[get-kpis] First facture sample:`, JSON.stringify(factures[0]).substring(0, 500));
-    }
-
-    // Helper function to filter invoices by date range
-    const filterInvoicesByPeriod = (invoices: any[], start: Date, end: Date) => {
-      return invoices.filter((f: any) => {
-        const invoiceDate = new Date(f.dateReelle || f.date);
-        return invoiceDate >= start && invoiceDate <= end;
-      });
-    };
-
-    // Filter valid invoices (exclude credits/avoirs)
-    const validInvoices = (factures || []).filter((f: any) => {
-      const isRealInvoice = f.type !== 'avoir' && f.isCreditNote !== true;
-      const isValidStatus = !f.status || (f.status !== 'cancelled' && f.status !== 'draft');
-      return isRealInvoice && isValidStatus;
-    });
-
-    console.log(`[get-kpis] Valid invoices after filtering: ${validInvoices.length}`);
-
-    // CA HT période (sélecteur)
-    const periodInvoices = filterInvoicesByPeriod(validInvoices, dates.start, dates.end);
-    console.log(`[get-kpis] Period invoices count: ${periodInvoices.length}, Period: ${dates.start.toISOString()} to ${dates.end.toISOString()}`);
-    
-    if (periodInvoices.length > 0) {
-      console.log(`[get-kpis] First period invoice sample:`, JSON.stringify(periodInvoices[0]).substring(0, 500));
-    }
-    
-    // Helper function to calculate total HT from invoice items
+    // ===== Helper: Calculate invoice total from items =====
     const calculateInvoiceTotal = (invoice: any): number => {
       if (!invoice.items || !Array.isArray(invoice.items)) return 0;
       return invoice.items.reduce((sum: number, item: any) => {
@@ -240,119 +202,198 @@ Deno.serve(async (req) => {
         return sum + itemTotal;
       }, 0);
     };
-    
-    const ca_period = periodInvoices.reduce((sum: number, f: any) => {
-      const amount = calculateInvoiceTotal(f);
-      return sum + amount;
-    }, 0);
 
-    console.log(`[get-kpis] CA period calculated: ${ca_period}`);
+    // ===== Tuile 1, 2, 3: CA HT, Factures, Panier Moyen =====
+    // Règle: facturesValides = exclure data.isInit === true, exclure avoirs, période [startDate, endDate] sur dateEmission
+    const facturesValides = (factures || []).filter((f: any) => {
+      if (f.data?.isInit === true) return false;
+      if (f.type === 'avoir' || f.isCreditNote === true) return false;
+      if (f.status === 'cancelled' || f.status === 'draft') return false;
+      
+      const factureDate = parseDate(f.dateReelle || f.date || f.dateEmission);
+      if (!factureDate) return false;
+      
+      return factureDate >= dates.start && factureDate <= dates.end;
+    });
 
-    // Nombre de factures (période active)
-    const invoices_count = periodInvoices.length;
-
-    // Panier moyen facture (période active)
+    const ca_period = facturesValides.reduce((sum: number, f: any) => sum + calculateInvoiceTotal(f), 0);
+    const invoices_count = facturesValides.length;
     const avg_invoice = invoices_count > 0 ? ca_period / invoices_count : 0;
 
-    // Taux de CA apporteurs (%)
-    const clientMap = new Map();
-    (clients || []).forEach((c: any) => {
-      clientMap.set(c.id, c);
-    });
+    console.log(`[get-kpis] CA period: ${ca_period}, Factures: ${invoices_count}, Panier moyen: ${avg_invoice}`);
 
-    const projectMap = new Map();
-    (projects || []).forEach((p: any) => {
-      projectMap.set(p.id, p);
-    });
+    // ===== Maps for lookups =====
+    const clientMap = new Map((clients || []).map((c: any) => [c.id, c]));
+    const projectMap = new Map((projects || []).map((p: any) => [p.id, p]));
+    const userMap = new Map((users || []).map((u: any) => [u.id, u]));
 
+    // ===== Tuile 4: Taux Apporteurs =====
+    // Règle: CA_apporteurs = Σ(montantHT) pour factures avec commanditaireId non null
     let ca_apporteurs = 0;
-    periodInvoices.forEach((invoice: any) => {
+    const apporteursCA: Record<string, { ca: number; projects: Set<string>; type: string; name: string }> = {};
+
+    facturesValides.forEach((invoice: any) => {
       const project = projectMap.get(invoice.projectId);
-      if (project) {
-        const client = clientMap.get(project.clientId);
+      if (project && project.commanditaireId) {
+        const client = clientMap.get(project.commanditaireId);
         if (client?.data?.isCommanditaire === true) {
-          ca_apporteurs += calculateInvoiceTotal(invoice);
+          const invoiceCA = calculateInvoiceTotal(invoice);
+          ca_apporteurs += invoiceCA;
+
+          // Pour détails apporteurs
+          const apporteurId = project.commanditaireId;
+          if (!apporteursCA[apporteurId]) {
+            apporteursCA[apporteurId] = {
+              ca: 0,
+              projects: new Set(),
+              type: client.typeClient || client.type || 'Autre',
+              name: client.label || client.name || `Client ${apporteurId}`,
+            };
+          }
+          apporteursCA[apporteurId].ca += invoiceCA;
+          apporteursCA[apporteurId].projects.add(invoice.projectId);
         }
       }
     });
 
     const apporteurs_rate = ca_period > 0 ? (ca_apporteurs / ca_period) * 100 : 0;
 
-    // Nombre de projets en cours
+    // ===== Tuile 5: Projets en Cours (hors sélecteur) =====
+    // Règle: Statuts considérés comme "clos" = Terminé, Facturé, Archivé, Annulé. En cours = tous les autres.
+    const closedStatuses = ['terminé', 'facturé', 'archivé', 'annulé', 'closed', 'archived', 'cancelled'];
     const projects_in_progress = (projects || []).filter((p: any) => {
       const status = (p.status || '').toLowerCase();
-      return status === 'en cours' || status === 'ouvert' || status === 'open' || status === 'in_progress';
+      return !closedStatuses.includes(status);
     }).length;
 
-    // Interventions planifiées aujourd'hui
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-    const interventions_today = (creneaux || []).filter((c: any) => {
-      const creneauDate = new Date(c.date || c.dateDebut || c.start);
-      return creneauDate >= todayStart && creneauDate <= todayEnd;
+    // ===== Tuile 6: Interventions J (hors sélecteur, toujours aujourd'hui) =====
+    // Règle: Date du jour, interventions dont intervention.date = today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const interventions_today = (interventions || []).filter((i: any) => {
+      const intDate = parseDate(i.date || i.dateDebut);
+      return intDate && isSameDay(intDate, today);
     }).length;
 
-    // Taux de SAV (en CA) sur la période active
-    const savInterventions = (interventions || []).filter((i: any) => {
-      const type = (i.type || '').toLowerCase();
-      const labelKind = (i.labelKind || '').toLowerCase();
-      return type.includes('sav') || type.includes('dépannage') || labelKind.includes('sav') || labelKind.includes('dépannage');
+    // ===== Tuile 7: Interventions (période sélectionnée) =====
+    // Règle: intervention.date dans [startDate, endDate], status === "Terminée"
+    const interventionsPeriode = (interventions || []).filter((i: any) => {
+      const intDate = parseDate(i.date || i.dateDebut);
+      if (!intDate || intDate < dates.start || intDate > dates.end) return false;
+      const status = (i.status || '').toLowerCase();
+      return status === 'terminée' || status === 'completed' || status === 'done';
     });
+    const interventions_count = interventionsPeriode.length;
 
-    const savProjectIds = new Set();
-    savInterventions.forEach((i: any) => {
-      const intDate = new Date(i.date);
-      if (intDate >= dates.start && intDate <= dates.end) {
-        savProjectIds.add(i.projectId);
+    // ===== Tuile 8: Devis (période sélectionnée) =====
+    // Règle: devis.dateCreation dans [startDate, endDate]
+    const devisPeriode = (devis || []).filter((d: any) => {
+      const devisDate = parseDate(d.dateCreation || d.date);
+      return devisDate && devisDate >= dates.start && devisDate <= dates.end;
+    });
+    const devis_count = devisPeriode.length;
+
+    // ===== Tuile 9: Projets (nouveaux sur la période) =====
+    // Règle: project.createdAt dans [startDate, endDate]
+    const projetsPeriode = (projects || []).filter((p: any) => {
+      const projectDate = parseDate(p.createdAt || p.dateCreation);
+      return projectDate && projectDate >= dates.start && projectDate <= dates.end;
+    });
+    const projects_count = projetsPeriode.length;
+
+    // ===== Tuile 10: Taux Conversion (Devis → Accepté/Commandé) =====
+    // Règle: basé sur la date du devis, même filtre que tuile 8
+    // On compte les devis qui ont abouti à un projet (simplifié: devis_count vs projects_count)
+    const conversion_rate = devis_count > 0 ? (projects_count / devis_count) * 100 : 0;
+
+    // ===== Tuile 11: Techniciens (hors sélecteur) =====
+    // Règle: Filtrer users: active === true, role technicien/tech
+    const technicianRoles = ['technicien', 'tech', 'intervenant'];
+    const active_technicians = (users || []).filter((u: any) => {
+      const isActive = u.active === true || u.isActive === true;
+      const role = (u.role || u.data?.role || '').toLowerCase();
+      return isActive && technicianRoles.some(r => role.includes(r));
+    }).length;
+
+    // ===== Tuile 12: Taux SAV =====
+    // Règle: % de projets facturés sur la période qui ont donné lieu à au moins une intervention SAV
+    const projectsFactures = new Set(facturesValides.map((f: any) => f.projectId));
+    
+    const projectsAvecSAV = new Set();
+    (interventions || []).forEach((interv: any) => {
+      if (!projectsFactures.has(interv.projectId)) return;
+      
+      const isSAV = interv.isSAV === true ||
+                    (interv.data?.type || '').toLowerCase().includes('sav') ||
+                    (interv.type || '').toLowerCase().includes('sav') ||
+                    (interv.labelKind || '').toLowerCase().includes('dépannage');
+      
+      if (isSAV) {
+        projectsAvecSAV.add(interv.projectId);
       }
     });
 
-    let ca_sav = 0;
-    periodInvoices.forEach((invoice: any) => {
-      if (savProjectIds.has(invoice.projectId)) {
-        ca_sav += calculateInvoiceTotal(invoice);
-      }
-    });
+    const sav_rate = projectsFactures.size > 0 ? (projectsAvecSAV.size / projectsFactures.size) * 100 : 0;
 
-    const sav_rate = ca_period > 0 ? (ca_sav / ca_period) * 100 : 0;
-
-    // Autres KPIs pour les tuiles supplémentaires
-    const periodInterventions = (interventions || []).filter((i: any) => {
-      const intDate = new Date(i.date);
-      return intDate >= dates.start && intDate <= dates.end;
-    });
-    const interventions_count = periodInterventions.length;
-
-    const periodDevis = (devis || []).filter((d: any) => {
-      const devisDate = new Date(d.date);
-      return devisDate >= dates.start && devisDate <= dates.end;
-    });
-    const devis_count = periodDevis.length;
-
-    const periodProjects = (projects || []).filter((p: any) => {
-      const projectDate = new Date(p.createdAt);
-      return projectDate >= dates.start && projectDate <= dates.end;
-    });
-    const projects_count = periodProjects.length;
-
-    const conversion_rate = devis_count > 0 ? (invoices_count / devis_count) * 100 : 0;
-
-    const activeTechnicians = new Set();
-    periodInterventions.forEach((i: any) => {
-      if (i.userId) activeTechnicians.add(i.userId);
-      if (i.userIds) i.userIds.forEach((uid: string) => activeTechnicians.add(uid));
-      if (i.data?.visites?.[0]?.usersIds) {
-        i.data.visites[0].usersIds.forEach((uid: string) => activeTechnicians.add(uid));
-      }
-    });
-    const active_technicians = activeTechnicians.size;
-
-    // Build details for graphs (reusing existing logic)
+    // ===== DÉTAILS: CA par univers =====
     const caByUniverse: Record<string, number> = {};
+    facturesValides.forEach((f: any) => {
+      const project = projectMap.get(f.projectId);
+      if (project) {
+        const universe = project.universe || project.univers || 'Non défini';
+        if (!caByUniverse[universe]) caByUniverse[universe] = 0;
+        caByUniverse[universe] += calculateInvoiceTotal(f);
+      }
+    });
+
+    // ===== DÉTAILS: CA par type d'apporteur =====
     const caByApporteurType: Record<string, number> = {};
+    Object.values(apporteursCA).forEach(({ ca, type }) => {
+      if (!caByApporteurType[type]) caByApporteurType[type] = 0;
+      caByApporteurType[type] += ca;
+    });
 
-    console.log(`[get-kpis] Success - CA période: ${ca_period.toFixed(2)}, Factures: ${invoices_count}`);
+    // ===== DÉTAILS: CA par technicien =====
+    const caByTechnician: Record<string, { ca: number; interventions: number; sav: number; universes: Record<string, number> }> = {};
+    
+    interventionsPeriode.forEach((interv: any) => {
+      const projectId = interv.projectId;
+      const project = projectMap.get(projectId);
+      if (!project) return;
 
+      // Récupérer les factures de ce projet dans la période
+      const projectInvoices = facturesValides.filter((f: any) => f.projectId === projectId);
+      const projectCA = projectInvoices.reduce((sum, f) => sum + calculateInvoiceTotal(f), 0);
+
+      // Récupérer tous les techniciens de l'intervention
+      const techIds: string[] = [];
+      if (interv.userId) techIds.push(interv.userId);
+      if (interv.userIds && Array.isArray(interv.userIds)) techIds.push(...interv.userIds);
+      if (interv.data?.visites?.[0]?.usersIds) techIds.push(...interv.data.visites[0].usersIds);
+
+      const uniqueTechIds = [...new Set(techIds)];
+      const caPerTech = uniqueTechIds.length > 0 ? projectCA / uniqueTechIds.length : 0;
+
+      const universe = project.universe || project.univers || 'Non défini';
+      const isSAV = interv.isSAV === true ||
+                    (interv.data?.type || '').toLowerCase().includes('sav') ||
+                    (interv.type || '').toLowerCase().includes('sav');
+
+      uniqueTechIds.forEach(techId => {
+        if (!caByTechnician[techId]) {
+          caByTechnician[techId] = { ca: 0, interventions: 0, sav: 0, universes: {} };
+        }
+        caByTechnician[techId].ca += caPerTech;
+        caByTechnician[techId].interventions += 1;
+        if (isSAV) caByTechnician[techId].sav += 1;
+        if (!caByTechnician[techId].universes[universe]) {
+          caByTechnician[techId].universes[universe] = 0;
+        }
+        caByTechnician[techId].universes[universe] += caPerTech;
+      });
+    });
+
+    // ===== Construire la réponse finale =====
     const response: KpiResponse = {
       agency: {
         slug: agencySlug,
@@ -378,14 +419,57 @@ Deno.serve(async (req) => {
         active_technicians,
       },
       details: {
-        ca_by_universe: [],
-        ca_by_apporteur_type: [],
-        ca_by_technician: [],
+        ca_by_universe: Object.entries(caByUniverse)
+          .map(([universe, amount]) => ({ universe, amount: Math.round(amount * 100) / 100 }))
+          .sort((a, b) => b.amount - a.amount),
+        
+        ca_by_apporteur_type: Object.entries(caByApporteurType)
+          .map(([type, amount]) => ({ type, amount: Math.round(amount * 100) / 100 }))
+          .sort((a, b) => b.amount - a.amount),
+        
+        ca_by_technician: Object.entries(caByTechnician)
+          .map(([id, stats]) => {
+            const user = userMap.get(id);
+            const name = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name || `Tech ${id}` : `Tech ${id}`;
+            return {
+              name,
+              amount: Math.round(stats.ca * 100) / 100,
+              interventions: stats.interventions,
+            };
+          })
+          .sort((a, b) => b.amount - a.amount),
+        
         invoices_history: [],
-        apporteurs: [],
-        technicians: [],
+        
+        apporteurs: Object.entries(apporteursCA)
+          .map(([id, data]) => ({
+            name: data.name,
+            ca: Math.round(data.ca * 100) / 100,
+            projects: data.projects.size,
+            type: data.type,
+          }))
+          .sort((a, b) => b.ca - a.ca)
+          .slice(0, 10),
+        
+        technicians: Object.entries(caByTechnician)
+          .map(([id, stats]) => {
+            const user = userMap.get(id);
+            const name = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name || `Tech ${id}` : `Tech ${id}`;
+            return {
+              name,
+              ca: Math.round(stats.ca * 100) / 100,
+              interventions: stats.interventions,
+              sav: stats.sav,
+              universes: Object.entries(stats.universes)
+                .map(([universe, amount]) => ({ universe, amount: Math.round(amount * 100) / 100 }))
+                .sort((a, b) => b.amount - a.amount),
+            };
+          })
+          .sort((a, b) => b.ca - a.ca),
       },
     };
+
+    console.log(`[get-kpis] Success - CA: ${ca_period}, Factures: ${invoices_count}, Taux apporteurs: ${apporteurs_rate}%`);
 
     return new Response(JSON.stringify(response), {
       status: 200,
