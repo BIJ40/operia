@@ -12,30 +12,19 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("En-tête d'autorisation manquant");
-    }
-
-    console.log("Auth header present");
-
-    // Extraire le token du header Authorization
-    const token = authHeader.replace("Bearer ", "");
-
-    // Créer un client admin pour vérifier le token
-    const supabaseAdmin = createClient(
+    // Créer un client Supabase avec le contexte Auth de l'utilisateur
+    const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
+        global: {
+          headers: { Authorization: req.headers.get("Authorization")! },
         },
       }
     );
 
-    // Vérifier que l'utilisateur est authentifié avec le client admin
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    // Vérifier que l'utilisateur est authentifié
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     
     if (userError || !user) {
       console.error("User authentication failed:", userError);
@@ -45,7 +34,7 @@ serve(async (req) => {
     console.log("Authenticated user:", user.id);
 
     // Vérifier que l'utilisateur est admin
-    const { data: roles, error: rolesError } = await supabaseAdmin
+    const { data: roles, error: rolesError } = await supabaseClient
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id);
@@ -71,6 +60,18 @@ serve(async (req) => {
     }
 
     console.log("Resetting password for user:", userId);
+
+    // Créer un client admin pour les opérations privilégiées
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
 
     // Réinitialiser le mot de passe avec le client admin
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
