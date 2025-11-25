@@ -25,6 +25,7 @@ import { FlopApporteursWidget } from "@/apogee-connect/components/widgets/FlopAp
 import { TypesApporteursWidget } from "@/apogee-connect/components/widgets/TypesApporteursWidget";
 import { ParticuliersWidget } from "@/apogee-connect/components/widgets/ParticuliersWidget";
 import { SegmentationChart } from "@/apogee-connect/components/widgets/SegmentationChart";
+import { ApporteurTypeTimeline } from "@/apogee-connect/components/widgets/ApporteurTypeTimeline";
 
 export default function IndicateursApporteurs() {
   const { filters: secondaryFilters } = useSecondaryFilters();
@@ -132,7 +133,9 @@ export default function IndicateursApporteurs() {
         segmentationData,
         tauxTransformationMoyen,
         panierMoyenHT,
-        delaiMoyenFacturation
+        delaiMoyenFacturation,
+        rawProjects: apiData.projects || [],
+        rawClients: apiData.clients || []
       };
     },
   });
@@ -261,9 +264,17 @@ export default function IndicateursApporteurs() {
         <DossiersConfiesWidget dossiers={data?.dossiersConfiesParApporteur || []} />
       </div>
 
-      {/* Widget Types d'apporteurs - Pleine largeur */}
-      <div>
-        <TypesApporteursWidget data={data?.typesApporteursStats || []} />
+      {/* Widget Types d'apporteurs + Timeline */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="lg:col-span-1">
+          <TypesApporteursWidget data={data?.typesApporteursStats || []} />
+        </div>
+        <div className="lg:col-span-1">
+          <ApporteurTypeTimeline 
+            projects={data?.rawProjects || []} 
+            clients={data?.rawClients || []} 
+          />
+        </div>
       </div>
 
       {/* Widgets Particuliers + Segmentation */}
