@@ -180,23 +180,6 @@ export function Chatbot() {
     };
   }, [activeTicket]);
 
-  // Auto-open after 30s
-  useEffect(() => {
-    const hasOpenedInSession = sessionStorage.getItem('chatbot-auto-opened');
-
-    if (!hasOpenedInSession) {
-      const timer = setTimeout(() => {
-        setIsOpen(true);
-        sessionStorage.setItem('chatbot-auto-opened', 'true');
-        setMessages([{
-          role: 'assistant',
-          content: "Youhouuuuuu c'est Madame Michu, je peux vous aider ?",
-        }]);
-      }, 30000);
-
-      return () => clearTimeout(timer);
-    }
-  }, []);
 
   // Drag and drop handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
