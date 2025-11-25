@@ -18,7 +18,7 @@ export default function IndicateursAccueil() {
   const { agencyChangeCounter, currentAgency } = useAgency();
   const userAgency = currentAgency?.id || "";
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["kpis-overview", filters, isApiEnabled, agencyChangeCounter],
     enabled: !!currentAgency?.id, // Ne lancer la query que si l'agence est définie
     queryFn: async () => {
@@ -78,10 +78,19 @@ export default function IndicateursAccueil() {
     );
   }
 
-  if (!data) {
+  if (error) {
+    console.error('Erreur de chargement des indicateurs:', error);
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
         <p className="text-2xl text-muted-foreground">Erreur de chargement des données</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <p className="text-2xl text-muted-foreground">Aucune donnée disponible</p>
       </div>
     );
   }
