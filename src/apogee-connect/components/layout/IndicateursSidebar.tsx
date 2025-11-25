@@ -21,7 +21,7 @@ const menuItems = [
 export function IndicateursSidebar() {
   return (
     <Sidebar className="border-r border-border bg-background">
-      <SidebarContent className="pt-6">
+      <SidebarContent className="pt-16">
         <SidebarGroup>
           <Link 
             to="/"
