@@ -67,7 +67,7 @@ export const FlopApporteursWidget = ({ data }: FlopApporteursWidgetProps) => {
       <Card className="p-6">
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-orange-500" />
-          Flop 5 Apporteurs
+          Top 5 Encours
         </h3>
         <p className="text-sm text-muted-foreground text-center py-8">
           Aucun apporteur avec des factures impayées
@@ -82,7 +82,7 @@ export const FlopApporteursWidget = ({ data }: FlopApporteursWidgetProps) => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-orange-500" />
-            Flop 5 Apporteurs
+            Top 5 Encours
           </h3>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setIsDialogOpen(true); }}>
             <Maximize2 className="w-4 h-4" />
@@ -96,7 +96,7 @@ export const FlopApporteursWidget = ({ data }: FlopApporteursWidgetProps) => {
       <WidgetDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        title={`Flop ${data.length} Apporteurs - Classement complet`}
+        title={`Top ${data.length} Encours - Classement complet`}
         maxWidth="full"
       >
         <ApporteursList items={data} showAll={true} />
