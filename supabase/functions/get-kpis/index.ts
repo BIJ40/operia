@@ -232,8 +232,17 @@ Deno.serve(async (req) => {
       console.log(`[get-kpis] First period invoice sample:`, JSON.stringify(periodInvoices[0]).substring(0, 500));
     }
     
+    // Helper function to calculate total HT from invoice items
+    const calculateInvoiceTotal = (invoice: any): number => {
+      if (!invoice.items || !Array.isArray(invoice.items)) return 0;
+      return invoice.items.reduce((sum: number, item: any) => {
+        const itemTotal = parseFloat(item.totalHt || item.totalHT || 0);
+        return sum + itemTotal;
+      }, 0);
+    };
+    
     const ca_period = periodInvoices.reduce((sum: number, f: any) => {
-      const amount = parseFloat(f.totalHT || f.totalTTC || 0);
+      const amount = calculateInvoiceTotal(f);
       return sum + amount;
     }, 0);
 
@@ -262,7 +271,7 @@ Deno.serve(async (req) => {
       if (project) {
         const client = clientMap.get(project.clientId);
         if (client?.data?.isCommanditaire === true) {
-          ca_apporteurs += parseFloat(invoice.totalHT || invoice.totalTTC || 0);
+          ca_apporteurs += calculateInvoiceTotal(invoice);
         }
       }
     });
@@ -301,7 +310,7 @@ Deno.serve(async (req) => {
     let ca_sav = 0;
     periodInvoices.forEach((invoice: any) => {
       if (savProjectIds.has(invoice.projectId)) {
-        ca_sav += parseFloat(invoice.totalHT || invoice.totalTTC || 0);
+        ca_sav += calculateInvoiceTotal(invoice);
       }
     });
 
