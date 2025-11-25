@@ -26,7 +26,6 @@ export const useChatbot = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
-  const [hasAutoOpened, setHasAutoOpened] = useState(false);
   const [activeTicket, setActiveTicket] = useState<any>(null);
   const [supportMessages, setSupportMessages] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
