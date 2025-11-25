@@ -9,7 +9,6 @@ interface ApogeeAgency {
   id: string;
   slug: string;
   label: string;
-  api_base_url: string;
   is_active: boolean;
 }
 
@@ -35,18 +34,41 @@ interface KpiResponse {
   };
 }
 
-async function callApogeeApi(baseUrl: string, apiKey: string | null, endpoint: string): Promise<any> {
-  // TODO: Implement actual Apogée API call
-  // For now, return mock data
-  console.log(`[get-kpis] Would call: ${baseUrl}${endpoint} with key: ${apiKey ? 'present' : 'none'}`);
+async function callApogeeApi(
+  agenceSlug: string, 
+  apiKey: string, 
+  endpoint: string, 
+  additionalData: Record<string, any> = {}
+): Promise<any> {
+  // Construct URL with agency slug: https://{agence}.hc-apogee.fr/api/{endpoint}
+  const baseUrl = `https://${agenceSlug}.hc-apogee.fr/api`;
+  const fullUrl = `${baseUrl}/${endpoint}`;
   
-  // Mock data for development
-  return {
-    ca_month: 12345.67,
-    ca_year: 234567.89,
-    invoices_count_month: 40,
-    interventions_count_month: 85,
-  };
+  console.log(`[get-kpis] Calling Apogée API: ${fullUrl}`);
+  
+  try {
+    const response = await fetch(fullUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        API_KEY: apiKey,
+        ...additionalData,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Apogée API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log(`[get-kpis] API response received`);
+    return data;
+  } catch (error) {
+    console.error(`[get-kpis] Error calling Apogée API:`, error);
+    throw error;
+  }
 }
 
 function getPeriodDates(periodType: 'month' | 'year'): { start: string; end: string } {
@@ -123,60 +145,72 @@ Deno.serve(async (req) => {
 
     console.log(`[get-kpis] User agency: ${profile.agence}`);
 
-    // Get agency configuration
-    const { data: agency, error: agencyError } = await supabase
+    // Get agency configuration (optional - for validation/label)
+    const { data: agency } = await supabase
       .from('apogee_agencies')
-      .select('*')
+      .select('slug, label, is_active')
       .eq('slug', profile.agence)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
-    if (agencyError || !agency) {
+    // Use agency slug from profile (agency table is optional for validation)
+    const agenceSlug = profile.agence;
+    const agenceLabel = agency?.label || profile.agence.toUpperCase();
+
+    console.log(`[get-kpis] Agency: ${agenceLabel} (${agenceSlug})`);
+
+    // Get shared API key from environment
+    const apiKey = Deno.env.get('APOGEE_API_KEY');
+    if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: 'Agency not found or inactive' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'API key not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    console.log(`[get-kpis] Agency found: ${agency.label}`);
-
-    // Optionally get API credentials (admin-only access via service role)
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    const { data: credentials } = await supabaseAdmin
-      .from('apogee_api_credentials')
-      .select('api_key')
-      .eq('agency_id', agency.id)
-      .single();
-
-    const apiKey = credentials?.api_key || Deno.env.get('APOGEE_API_KEY') || null;
 
     // Parse request body
     const body: KpiRequest = req.method === 'POST' ? await req.json() : {};
     const periodType = body.period || 'month';
     const periodDates = getPeriodDates(periodType);
 
-    // Call Apogée API (stubbed for now)
-    const kpiData = await callApogeeApi(agency.api_base_url, apiKey, '/kpis');
+    // Call Apogée API with real implementation
+    // TODO: Replace 'kpis' with actual Apogée endpoint name
+    // TODO: Adjust additionalData filters based on actual Apogée API requirements
+    // Common endpoints might be: 'interventions', 'factures', 'devis', 'stats', etc.
+    const kpiData = await callApogeeApi(
+      agenceSlug, 
+      apiKey, 
+      'kpis', // Replace with actual endpoint
+      {
+        period: periodType,
+        start_date: periodDates.start,
+        end_date: periodDates.end,
+      }
+    );
 
     // Build response
     const response: KpiResponse = {
       agency: {
-        slug: agency.slug,
-        label: agency.label,
+        slug: agenceSlug,
+        label: agenceLabel,
       },
       period: {
         type: periodType,
         start: periodDates.start,
         end: periodDates.end,
       },
-      kpis: kpiData,
+      kpis: {
+        // Map Apogée API response to our KPI structure
+        // TODO: Adjust field names based on actual Apogée API response structure
+        // Example: if API returns { chiffre_affaire_mois: 12345 }, map it to ca_month
+        ca_month: kpiData.ca_month || kpiData.chiffre_affaire_mois || 0,
+        ca_year: kpiData.ca_year || kpiData.chiffre_affaire_annee || 0,
+        invoices_count_month: kpiData.invoices_count_month || kpiData.nb_factures_mois || 0,
+        interventions_count_month: kpiData.interventions_count_month || kpiData.nb_interventions_mois || 0,
+      },
     };
 
-    console.log(`[get-kpis] Success for agency ${agency.slug}`);
+    console.log(`[get-kpis] Success for agency ${agenceSlug}`);
 
     return new Response(JSON.stringify(response), {
       status: 200,

@@ -30,14 +30,12 @@ interface Agency {
   id: string;
   slug: string;
   label: string;
-  api_base_url: string;
   is_active: boolean;
 }
 
 interface AgencyFormData {
   slug: string;
   label: string;
-  api_base_url: string;
   is_active: boolean;
 }
 
@@ -50,7 +48,6 @@ export default function AdminAgencies() {
   const [formData, setFormData] = useState<AgencyFormData>({
     slug: '',
     label: '',
-    api_base_url: '',
     is_active: true,
   });
 
@@ -84,7 +81,6 @@ export default function AdminAgencies() {
       setFormData({
         slug: agency.slug,
         label: agency.label,
-        api_base_url: agency.api_base_url,
         is_active: agency.is_active,
       });
     } else {
@@ -92,7 +88,6 @@ export default function AdminAgencies() {
       setFormData({
         slug: '',
         label: '',
-        api_base_url: '',
         is_active: true,
       });
     }
@@ -161,7 +156,7 @@ export default function AdminAgencies() {
         <div>
           <h1 className="text-3xl font-bold">Gestion des Agences</h1>
           <p className="text-muted-foreground mt-1">
-            Configuration des agences et de leurs connexions à l'API Apogée
+            Configuration des agences. Clé API partagée stockée de manière sécurisée.
           </p>
         </div>
         <Button onClick={() => openDialog()}>
@@ -174,7 +169,7 @@ export default function AdminAgencies() {
         <CardHeader>
           <CardTitle>Agences configurées</CardTitle>
           <CardDescription>
-            Liste des agences avec leurs paramètres de connexion API
+            Liste des agences. L'URL de l'API est construite automatiquement : https://&#123;slug&#125;.hc-apogee.fr/api
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -190,7 +185,6 @@ export default function AdminAgencies() {
                 <TableRow>
                   <TableHead>Slug</TableHead>
                   <TableHead>Nom</TableHead>
-                  <TableHead>URL API</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -200,9 +194,6 @@ export default function AdminAgencies() {
                   <TableRow key={agency.id}>
                     <TableCell className="font-mono text-sm">{agency.slug}</TableCell>
                     <TableCell className="font-medium">{agency.label}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {agency.api_base_url}
-                    </TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -247,7 +238,7 @@ export default function AdminAgencies() {
               {editingAgency ? 'Modifier l\'agence' : 'Nouvelle agence'}
             </DialogTitle>
             <DialogDescription>
-              Configurez les paramètres de connexion à l'API Apogée pour cette agence
+              L'URL de l'API sera automatiquement construite comme https://&#123;slug&#125;.hc-apogee.fr/api
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -262,6 +253,9 @@ export default function AdminAgencies() {
                 placeholder="ex: dax, saint-omer"
                 disabled={!!editingAgency}
               />
+              <p className="text-xs text-muted-foreground">
+                URL de l'API : https://{formData.slug || '{slug}'}.hc-apogee.fr/api
+              </p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="label">Nom de l'agence</Label>
@@ -270,17 +264,6 @@ export default function AdminAgencies() {
                 value={formData.label}
                 onChange={(e) => setFormData({ ...formData, label: e.target.value })}
                 placeholder="ex: DAX, SAINT-OMER"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="api_base_url">URL de base de l'API</Label>
-              <Input
-                id="api_base_url"
-                value={formData.api_base_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, api_base_url: e.target.value })
-                }
-                placeholder="ex: https://dax.hc-apogee.fr/api"
               />
             </div>
             <div className="flex items-center space-x-2">

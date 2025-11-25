@@ -172,13 +172,9 @@ Colonnes : `title`, `content`, `category`, `metadata`.
 
 #### `apogee_agencies`
 Configuration des agences pour le module "Mes indicateurs".  
-Colonnes : `slug`, `label`, `api_base_url`, `is_active`.  
-Utilisé pour associer chaque utilisateur (`profiles.agence`) à une configuration API Apogée.
-
-#### `apogee_api_credentials`
-Clés API optionnelles par agence (strictement protégées).  
-Colonnes : `agency_id`, `api_key`.  
-**Accès RLS** : Admins uniquement. Ne jamais exposer aux utilisateurs standards.
+Colonnes : `slug`, `label`, `is_active`.  
+Utilisé pour associer chaque utilisateur (`profiles.agence`) à une agence. L'URL de l'API est construite dynamiquement : `https://{slug}.hc-apogee.fr/api`.  
+La clé API est unique et partagée par toutes les agences, stockée dans les secrets Supabase (`APOGEE_API_KEY`).
 
 ---
 
@@ -263,10 +259,22 @@ Les Edge Functions sont des fonctions serverless Deno déployées sur Supabase, 
 **Retour** : JSON contenant CA mensuel/annuel, nombre de factures et interventions pour l'agence.  
 **Fonctionnement** :
   1. Récupère le profil de l'utilisateur (`profiles.agence`).
-  2. Trouve la configuration de l'agence dans `apogee_agencies`.
-  3. Charge les credentials API depuis `apogee_api_credentials` ou env variables.
-  4. Appelle l'API Apogée de l'agence (actuellement stub/mock).
+  2. Construit l'URL dynamiquement : `https://{agence}.hc-apogee.fr/api/{endpoint}`.
+  3. Récupère la clé API partagée depuis `APOGEE_API_KEY` (secret Supabase).
+  4. Appelle l'API Apogée avec méthode POST, clé API dans le body JSON.
   5. Retourne les KPIs structurés pour affichage frontend.
+
+**Structure de l'appel API Apogée** :
+```javascript
+fetch(`https://${agence}.hc-apogee.fr/api/${endpoint}`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    API_KEY: 'HC-...',
+    ...additionalData // Filtres optionnels (dates, etc.)
+  })
+})
+```
 
 ---
 
@@ -329,14 +337,14 @@ Les Edge Functions sont des fonctions serverless Deno déployées sur Supabase, 
 3. Hook appelle edge function `get-kpis` avec le JWT de l'utilisateur.
 4. `get-kpis` :
    - Vérifie l'authentification et récupère `profiles.agence`.
-   - Charge la configuration depuis `apogee_agencies` (api_base_url).
-   - Charge les credentials depuis `apogee_api_credentials` ou secrets Supabase.
-   - Appelle l'API Apogée de l'agence (actuellement mock).
-   - Retourne les KPIs (CA mensuel, CA annuel, factures, interventions).
+   - Construit l'URL dynamiquement : `https://{agence}.hc-apogee.fr/api/kpis`.
+   - Récupère la clé API partagée depuis secret `APOGEE_API_KEY`.
+   - Appelle l'API Apogée en POST avec la clé API dans le body JSON + filtres (dates).
+   - Parse et retourne les KPIs (CA mensuel, CA annuel, factures, interventions).
 5. Affichage des KPIs dans des cartes shadcn (Euro, TrendingUp, FileText, Wrench).
 6. Bouton "Actualiser" pour recharger les données.
 
-**Admin** : Configuration des agences disponible dans `AdminAgencies` (ajout/modification des slugs, labels, URLs API, statut actif/inactif).
+**Admin** : Configuration des agences disponible dans `AdminAgencies` (ajout/modification des slugs, labels, statut actif/inactif). L'URL de l'API est automatiquement construite à partir du slug.
 
 **Extension future** : Dashboard franchiseur (multi-agences) avec agrégation des KPIs.
 
