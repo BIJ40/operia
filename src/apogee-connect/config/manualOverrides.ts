@@ -17,15 +17,15 @@
 
 export interface ManualJanuaryData {
   enabled: boolean;
-  agency: dax; // Slug de l'agence concernée (ex: "dax")
-  year: 2025;
-  month: 1; // 1 = janvier
-  ca_particuliers: 19419;
-  ca_apporteurs: 68460;
-  nb_factures_particuliers: 30;
-  nb_factures_apporteurs: 214;
-  nb_projets: 379;
-  nb_devis: 111;
+  agency: string; // Slug de l'agence concernée (ex: "dax")
+  year: number;
+  month: number; // 1 = janvier
+  ca_particuliers: number;
+  ca_apporteurs: number;
+  nb_factures_particuliers: number;
+  nb_factures_apporteurs: number;
+  nb_projets: number;
+  nb_devis: number;
 }
 
 export const manualJanuaryData: ManualJanuaryData = {
@@ -33,12 +33,12 @@ export const manualJanuaryData: ManualJanuaryData = {
   agency: "dax", // CRITIQUE: Ces données ne concernent QUE l'agence DAX
   year: 2025,
   month: 1, // janvier
-  ca_particuliers: 19419.94,
-  ca_apporteurs: 68460.47,
+  ca_particuliers: 19419,
+  ca_apporteurs: 68460,
   nb_factures_particuliers: 30,
   nb_factures_apporteurs: 214,
   nb_projets: 379,
-  nb_devis: 11,
+  nb_devis: 111,
 };
 
 /**
