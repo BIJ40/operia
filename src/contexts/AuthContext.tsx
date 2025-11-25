@@ -198,8 +198,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Les admins ont accès à tout
     if (isAdmin) return true;
     
-    // Si aucune permission n'est définie pour ce rôle, l'accès est accordé par défaut
-    if (userPermissions.length === 0) return true;
+    // Si l'utilisateur n'a pas de rôle agence, accès accordé par défaut
+    if (!roleAgence) return true;
+    
+    // Si l'utilisateur a un rôle mais aucune permission définie, refuser l'accès
+    if (userPermissions.length === 0) return false;
     
     // Sinon, vérifier si le block est dans la liste des permissions
     return userPermissions.includes(blockId);
