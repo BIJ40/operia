@@ -144,7 +144,7 @@ export const getInitInvoiceApporteursAmount = (facture: any): number => {
 export const calculateDelaiMoyenDossierFacture = (
   factures: any[],
   projects: any[],
-  dateRange: { start: Date; end: Date }
+  dateRange?: { start: Date; end: Date }
 ): { delaiMoyen: number; nbFactures: number } => {
   if (!factures || factures.length === 0 || !projects || projects.length === 0) {
     return { delaiMoyen: 0, nbFactures: 0 };
@@ -156,13 +156,17 @@ export const calculateDelaiMoyenDossierFacture = (
   const delais: number[] = [];
 
   factures.forEach(facture => {
-    // 1. Filtrer sur la période (dateEmission ou dateReelle)
+    // 1. Filtrer sur la période (dateEmission ou dateReelle) - optionnel
     const dateFacture = facture.dateEmission || facture.dateReelle || facture.created_at;
     if (!dateFacture) return;
 
     try {
       const factureDate = parseISO(dateFacture);
-      if (!isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end })) return;
+      
+      // Ne filtrer par période que si dateRange est fourni
+      if (dateRange && !isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end })) {
+        return;
+      }
 
       // 2. Exclure les avoirs
       const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
@@ -199,6 +203,7 @@ export const calculateDelaiMoyenDossierFacture = (
       nbFactures: delais.length,
       min: Math.min(...delais),
       max: Math.max(...delais),
+      sansFiltrePeriode: !dateRange
     });
   }
 
