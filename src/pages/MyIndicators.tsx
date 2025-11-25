@@ -35,16 +35,22 @@ export default function MyIndicators() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Mes indicateurs</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+            Mes indicateurs
+          </h1>
           {data && (
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-2">
               Agence {data.agency.label} - {data.period.type === 'month' ? 'Mois en cours' : 'Année en cours'}
             </p>
           )}
         </div>
-        <Button onClick={refetch} disabled={isLoading} variant="outline">
+        <Button 
+          onClick={refetch} 
+          disabled={isLoading}
+          className="bg-gradient-to-r from-primary to-helpconfort-blue-dark hover:from-primary/90 hover:to-helpconfort-blue-dark/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
+        >
           <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
           Actualiser
         </Button>
@@ -60,20 +66,22 @@ export default function MyIndicators() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* CA du mois */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CA du mois</CardTitle>
-            <Euro className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-semibold text-foreground">CA du mois</CardTitle>
+            <div className="p-2 rounded-full bg-accent/20">
+              <Euro className="h-5 w-5 text-accent" />
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-10 w-full rounded-lg" />
             ) : (
               <>
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
                   {data ? formatCurrency(data.kpis.ca_month) : '-'}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-2">
                   Chiffre d'affaires du mois en cours
                 </p>
               </>
@@ -82,20 +90,22 @@ export default function MyIndicators() {
         </Card>
 
         {/* CA de l'année */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CA de l'année</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-semibold text-foreground">CA de l'année</CardTitle>
+            <div className="p-2 rounded-full bg-accent/20">
+              <TrendingUp className="h-5 w-5 text-accent" />
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-10 w-full rounded-lg" />
             ) : (
               <>
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
                   {data ? formatCurrency(data.kpis.ca_year) : '-'}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-2">
                   Chiffre d'affaires cumulé de l'année
                 </p>
               </>
@@ -104,20 +114,22 @@ export default function MyIndicators() {
         </Card>
 
         {/* Nombre de factures */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Factures du mois</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-semibold text-foreground">Factures du mois</CardTitle>
+            <div className="p-2 rounded-full bg-accent/20">
+              <FileText className="h-5 w-5 text-accent" />
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-10 w-full rounded-lg" />
             ) : (
               <>
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
                   {data ? data.kpis.invoices_count_month : '-'}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-2">
                   Nombre de factures émises ce mois
                 </p>
               </>
@@ -126,20 +138,22 @@ export default function MyIndicators() {
         </Card>
 
         {/* Nombre d'interventions */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Interventions du mois</CardTitle>
-            <Wrench className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-semibold text-foreground">Interventions du mois</CardTitle>
+            <div className="p-2 rounded-full bg-accent/20">
+              <Wrench className="h-5 w-5 text-accent" />
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-10 w-full rounded-lg" />
             ) : (
               <>
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
                   {data ? data.kpis.interventions_count_month : '-'}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-2">
                   Nombre d'interventions réalisées
                 </p>
               </>
@@ -149,8 +163,8 @@ export default function MyIndicators() {
       </div>
 
       {!isLoading && !data && !isError && (
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl">
+          <CardContent className="pt-6 pb-6">
             <p className="text-center text-muted-foreground">
               Aucune donnée disponible. Veuillez contacter l'administrateur pour configurer votre agence.
             </p>
