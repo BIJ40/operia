@@ -20,9 +20,9 @@ const AVAILABLE_ROLES = [
 ];
 
 const MAIN_CATEGORIES = [
-  { id: 'guide_apogee', name: 'Guide Apogée' },
-  { id: 'guide_apporteurs', name: 'Guide Apporteurs' },
-  { id: 'base_helpconfort', name: 'Base HelpConfort' },
+  { id: 'apogee', name: 'Guide Apogée' },
+  { id: 'apporteurs', name: 'Guide Apporteurs' },
+  { id: 'helpconfort', name: 'Base HelpConfort' },
 ];
 
 export default function AdminRolePermissions() {

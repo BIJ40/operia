@@ -12,6 +12,7 @@ interface AuthContextType {
   userPermissions: string[];
   isLoggingOut: boolean;
   hasAccessToBlock: (blockId: string) => boolean;
+  hasAccessToScope: (scope: 'apogee' | 'apporteurs' | 'helpconfort') => boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -198,34 +199,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Les admins ont accès à tout
     if (isAdmin) return true;
     
-    // Si aucune permission n'est définie pour ce rôle, l'accès est accordé par défaut
-    if (userPermissions.length === 0) return true;
+    // Si aucun rôle agence, accès à tout
+    if (!roleAgence) return true;
+    
+    // Si aucune permission n'est définie pour ce rôle, REFUSER par défaut
+    if (userPermissions.length === 0) return false;
     
     // Sinon, vérifier si le block est dans la liste des permissions
     return userPermissions.includes(blockId);
   };
 
+  const hasAccessToScope = (scope: 'apogee' | 'apporteurs' | 'helpconfort'): boolean => {
+    // Les admins ont accès à tout
+    if (isAdmin) return true;
+    
+    // Si aucun rôle agence, accès à tout
+    if (!roleAgence) return true;
+    
+    // Si aucune permission n'est définie pour ce rôle, REFUSER par défaut
+    if (userPermissions.length === 0) return false;
+    
+    // Vérifier si le scope est dans la liste des permissions
+    return userPermissions.includes(scope);
+  };
+
   if (loading) {
     // Afficher l'application même pendant le chargement, en considérant l'utilisateur comme non connecté
-    return (
-      <AuthContext.Provider value={{ 
-        isAuthenticated: !!user, 
-        isAdmin,
-        isSupport,
-        user,
-        mustChangePassword,
-        roleAgence,
-        userPermissions,
-        isLoggingOut,
-        hasAccessToBlock,
-        login, 
-        logout,
-        signup 
-      }}>
-        {children}
-      </AuthContext.Provider>
-    );
-  }
+  return (
+    <AuthContext.Provider value={{ 
+      isAuthenticated: !!user, 
+      isAdmin,
+      isSupport,
+      user,
+      mustChangePassword,
+      roleAgence,
+      userPermissions,
+      isLoggingOut,
+      hasAccessToBlock,
+      hasAccessToScope,
+      login, 
+      logout,
+      signup 
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
 
   return (
     <AuthContext.Provider value={{ 
@@ -238,6 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userPermissions,
       isLoggingOut,
       hasAccessToBlock,
+      hasAccessToScope,
       login, 
       logout,
       signup 

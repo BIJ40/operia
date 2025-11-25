@@ -590,11 +590,15 @@ export default function Landing() {
                 {homeCards.map(card => {
                   const Icon = IconComponent(card.icon || 'BookOpen');
                   
-                  // Trouver le block correspondant à la carte pour vérifier l'accès
-                  const linkParts = card.link.split('/');
-                  const slug = linkParts[linkParts.length - 1];
-                  const matchingBlock = blocks.find(b => b.slug === slug && b.type === 'category');
-                  const isLocked = matchingBlock ? isBlockLocked(matchingBlock.id, blocks) : false;
+                  // Déterminer le scope basé sur le lien de la carte
+                  let scope: 'apogee' | 'apporteurs' | 'helpconfort' | null = null;
+                  if (card.link.includes('/apogee')) scope = 'apogee';
+                  else if (card.link.includes('/apporteur')) scope = 'apporteurs';
+                  else if (card.link.includes('/helpconfort')) scope = 'helpconfort';
+                  
+                  // Vérifier l'accès basé sur le scope
+                  const { hasAccessToScope } = useAuth();
+                  const isLocked = scope ? !hasAccessToScope(scope) : false;
                   
                   if (isLocked) {
                     return (
