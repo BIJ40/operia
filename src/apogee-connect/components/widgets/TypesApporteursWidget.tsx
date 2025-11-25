@@ -11,6 +11,7 @@ import { WidgetDialog } from "./WidgetDialog";
 interface TypesApporteursWidgetProps {
   data: TypeApporteurStats[];
   loading?: boolean;
+  mode?: "full" | "chartOnly";
 }
 
 const COLORS = [
@@ -21,7 +22,7 @@ const COLORS = [
   "hsl(40 90% 60%)",             // Orange clair
 ];
 
-export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetProps) => {
+export const TypesApporteursWidget = ({ data, loading, mode = "full" }: TypesApporteursWidgetProps) => {
   const [selectedType, setSelectedType] = useState<TypeApporteurStats | null>(null);
 
   if (loading) {
@@ -203,26 +204,30 @@ export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetPr
       </div>
 
       {/* Grille compacte avec cartes cliquables */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data.map((stat, index) => (
-          <TypeCard key={stat.type} stat={stat} index={index} compact={true} />
-        ))}
-      </div>
+      {mode === "full" && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {data.map((stat, index) => (
+              <TypeCard key={stat.type} stat={stat} index={index} compact={true} />
+            ))}
+          </div>
 
-      {/* Dialog pour afficher les détails complets */}
-      {selectedType && (
-        <WidgetDialog
-          open={!!selectedType}
-          onOpenChange={(open) => !open && setSelectedType(null)}
-          title={`Détails - ${formatApporteurType(selectedType.type)}`}
-          maxWidth="xl"
-        >
-          <TypeCard 
-            stat={selectedType} 
-            index={data.findIndex(d => d.type === selectedType.type)} 
-            compact={false} 
-          />
-        </WidgetDialog>
+          {/* Dialog pour afficher les détails complets */}
+          {selectedType && (
+            <WidgetDialog
+              open={!!selectedType}
+              onOpenChange={(open) => !open && setSelectedType(null)}
+              title={`Détails - ${formatApporteurType(selectedType.type)}`}
+              maxWidth="xl"
+            >
+              <TypeCard 
+                stat={selectedType} 
+                index={data.findIndex(d => d.type === selectedType.type)} 
+                compact={false} 
+              />
+            </WidgetDialog>
+          )}
+        </>
       )}
     </div>
   );
