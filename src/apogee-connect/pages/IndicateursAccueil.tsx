@@ -68,6 +68,13 @@ export default function IndicateursAccueil() {
         filters.dateRange
       );
       
+      // Calculer le nombre moyen d'interventions par dossier
+      const { calculateNbMoyenInterventionsParDossier } = await import("@/apogee-connect/utils/dashboardCalculations");
+      const nbMoyenInterventionsParDossier = calculateNbMoyenInterventionsParDossier(
+        apiData.interventions || [],
+        filters.dateRange
+      );
+      
       // Calculer les données mensuelles CA pour l'année sélectionnée
       const monthlyCAData = calculateMonthlyCA(
         apiData.factures || [],
@@ -85,7 +92,7 @@ export default function IndicateursAccueil() {
         filters.dateRange
       );
       
-      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture, dossiersComplexes, panierMoyen, tauxTransformationDevis };
+      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture, dossiersComplexes, panierMoyen, tauxTransformationDevis, nbMoyenInterventionsParDossier };
     },
   });
 
@@ -262,8 +269,24 @@ export default function IndicateursAccueil() {
           </div>
         </Card>
 
-        {/* KPI 10-12: Placeholders */}
-        {[10, 11, 12].map((num) => (
+        {/* KPI 10: Nb Moyen Interventions/Dossier */}
+        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-amber-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-1.5 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xs">📊</span>
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">Nb moyen RDV/Dossier</p>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <p className="text-xl font-bold">{data?.nbMoyenInterventionsParDossier?.nbMoyen || 0}</p>
+            {data?.nbMoyenInterventionsParDossier?.nbProjets !== undefined && (
+              <span className="text-[10px] text-muted-foreground">({data.nbMoyenInterventionsParDossier.nbProjets})</span>
+            )}
+          </div>
+        </Card>
+
+        {/* KPI 11-12: Placeholders */}
+        {[11, 12].map((num) => (
           <Card key={num} className="p-3 border-2 border-dashed border-muted">
             <p className="text-[10px] text-muted-foreground mb-0.5">KPI #{num}</p>
             <p className="text-xl font-bold text-muted-foreground">--</p>

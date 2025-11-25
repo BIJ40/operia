@@ -583,6 +583,71 @@ export const calculateTauxDossiersComplexes = (
 };
 
 // ====================================================================
+// KPI 10 - NOMBRE MOYEN D'INTERVENTIONS PAR DOSSIER
+// ====================================================================
+
+export const calculateNbMoyenInterventionsParDossier = (
+  interventions: any[],
+  dateRange?: { start: Date; end: Date }
+): { nbMoyen: number; totalInterventions: number; nbProjets: number } => {
+  
+  // 1) Filtrer les interventions par période si fournie
+  let interventionsFiltrees = interventions;
+  
+  if (dateRange) {
+    interventionsFiltrees = interventions.filter(intervention => {
+      const date = intervention.date || intervention.data?.date;
+      if (!date) return false;
+      
+      try {
+        const interventionDate = parseISO(date);
+        return isWithinInterval(interventionDate, dateRange);
+      } catch {
+        return false;
+      }
+    });
+  }
+  
+  // 2) Compter les interventions par projectId
+  const nbInterventionsParProjet: Record<string, number> = {};
+  
+  for (const intervention of interventionsFiltrees) {
+    const projectId = intervention.projectId || intervention.data?.projectId;
+    
+    if (!projectId) continue;
+    
+    if (!nbInterventionsParProjet[projectId]) {
+      nbInterventionsParProjet[projectId] = 0;
+    }
+    
+    nbInterventionsParProjet[projectId] += 1;
+  }
+  
+  // 3) Calculer les statistiques
+  const nbProjetsAvecIntervention = Object.keys(nbInterventionsParProjet).length;
+  const totalInterventions = Object.values(nbInterventionsParProjet).reduce((sum, count) => sum + count, 0);
+  
+  const nbMoyen = nbProjetsAvecIntervention > 0
+    ? totalInterventions / nbProjetsAvecIntervention
+    : 0;
+  
+  console.log("📊 KPI 10 - Nb Moyen Interventions/Dossier:", {
+    nbMoyen: Math.round(nbMoyen * 10) / 10,
+    totalInterventions,
+    nbProjets: nbProjetsAvecIntervention,
+    exemples: Object.entries(nbInterventionsParProjet)
+      .slice(0, 3)
+      .map(([projectId, count]) => ({ projectId, nbInterventions: count }))
+  });
+  
+  return {
+    nbMoyen: Math.round(nbMoyen * 10) / 10, // Arrondir à 1 décimale
+    totalInterventions,
+    nbProjets: nbProjetsAvecIntervention
+  };
+};
+
+// ====================================================================
 // KPI 8 - PANIER MOYEN PAR DOSSIER FACTURÉ
 // ====================================================================
 
