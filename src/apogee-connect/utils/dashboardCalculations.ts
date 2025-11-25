@@ -1,4 +1,5 @@
 import { isToday, parseISO, differenceInDays, startOfDay, endOfDay, subDays, isWithinInterval } from "date-fns";
+import { manualJanuaryData, isManualOverrideMonth } from '@/apogee-connect/config/manualOverrides';
 
 // ====================================================================
 // FONCTIONS UTILITAIRES
@@ -141,18 +142,17 @@ export const getInitInvoiceApporteursAmount = (facture: any): number => {
 // CALCULS KPI HEADER
 // ====================================================================
 
-export const calculateDossiersJour = (projects: any[], dateRange: { start: Date; end: Date }): number => {
+export const calculateDossiersJour = (projects: any[], dateRange: { start: Date; end: Date }, userAgency: string): number => {
   if (!projects || projects.length === 0) return 0;
   
   // Vérifier si on est sur janvier 2025 avec override manuel
-  const { manualJanuaryData, isManualOverrideMonth } = require('@/apogee-connect/config/manualOverrides');
   const startYear = dateRange.start.getFullYear();
   const startMonth = dateRange.start.getMonth() + 1;
   const endYear = dateRange.end.getFullYear();
   const endMonth = dateRange.end.getMonth() + 1;
   
   // Si la période couvre uniquement janvier 2025
-  if (isManualOverrideMonth(startYear, startMonth) && startYear === endYear && startMonth === endMonth) {
+  if (isManualOverrideMonth(startYear, startMonth, userAgency) && startYear === endYear && startMonth === endMonth) {
     if (import.meta.env.DEV) {
       console.log(`📅 OVERRIDE MANUEL - Projets janvier ${startYear}: ${manualJanuaryData.nb_projets}`);
     }
@@ -203,18 +203,17 @@ export const calculateRtJour = (interventions: any[], dateRange: { start: Date; 
   return { nbRT, heuresRT };
 };
 
-export const calculateDevisJour = (devis: any[], dateRange: { start: Date; end: Date }): { nbDevis: number; caDevis: number } => {
+export const calculateDevisJour = (devis: any[], dateRange: { start: Date; end: Date }, userAgency: string): { nbDevis: number; caDevis: number } => {
   if (!devis || devis.length === 0) return { nbDevis: 0, caDevis: 0 };
   
   // Vérifier si on est sur janvier 2025 avec override manuel
-  const { manualJanuaryData, isManualOverrideMonth } = require('@/apogee-connect/config/manualOverrides');
   const startYear = dateRange.start.getFullYear();
   const startMonth = dateRange.start.getMonth() + 1;
   const endYear = dateRange.end.getFullYear();
   const endMonth = dateRange.end.getMonth() + 1;
   
   // Si la période couvre uniquement janvier 2025
-  if (isManualOverrideMonth(startYear, startMonth) && startYear === endYear && startMonth === endMonth) {
+  if (isManualOverrideMonth(startYear, startMonth, userAgency) && startYear === endYear && startMonth === endMonth) {
     if (import.meta.env.DEV) {
       console.log(`📅 OVERRIDE MANUEL - Devis janvier ${startYear}: ${manualJanuaryData.nb_devis}`);
     }
@@ -250,18 +249,17 @@ export const calculateDevisJour = (devis: any[], dateRange: { start: Date; end: 
   return { nbDevis, caDevis };
 };
 
-export const calculateCaJour = (factures: any[], clients: any[], projects: any[], dateRange: { start: Date; end: Date }): { caTotal: number; nbFactures: number } => {
+export const calculateCaJour = (factures: any[], clients: any[], projects: any[], dateRange: { start: Date; end: Date }, userAgency: string): { caTotal: number; nbFactures: number } => {
   if (!factures || factures.length === 0) return { caTotal: 0, nbFactures: 0 };
   
   // Vérifier si on est sur janvier 2025 avec override manuel
-  const { manualJanuaryData, isManualOverrideMonth } = require('@/apogee-connect/config/manualOverrides');
   const startYear = dateRange.start.getFullYear();
   const startMonth = dateRange.start.getMonth() + 1;
   const endYear = dateRange.end.getFullYear();
   const endMonth = dateRange.end.getMonth() + 1;
   
   // Si la période couvre uniquement janvier 2025
-  if (isManualOverrideMonth(startYear, startMonth) && startYear === endYear && startMonth === endMonth) {
+  if (isManualOverrideMonth(startYear, startMonth, userAgency) && startYear === endYear && startMonth === endMonth) {
     const caTotal = manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs;
     const nbFactures = manualJanuaryData.nb_factures_particuliers + manualJanuaryData.nb_factures_apporteurs;
     if (import.meta.env.DEV) {
@@ -370,34 +368,34 @@ export const calculateCaJour = (factures: any[], clients: any[], projects: any[]
 // CALCULS VARIATIONS
 // ====================================================================
 
-export const calculateVariationDossiers = (projects: any[], dateRange: { start: Date; end: Date }): number => {
+export const calculateVariationDossiers = (projects: any[], dateRange: { start: Date; end: Date }, userAgency: string): number => {
   if (!projects || projects.length === 0) return 0;
   
-  const dossiersActuel = calculateDossiersJour(projects, dateRange);
+  const dossiersActuel = calculateDossiersJour(projects, dateRange, userAgency);
   
   // Calculer la période équivalente précédente
   const periodeDays = differenceInDays(dateRange.end, dateRange.start) + 1;
   const previousStart = subDays(dateRange.start, periodeDays);
   const previousEnd = subDays(dateRange.end, periodeDays);
   
-  const dossiersPrecedent = calculateDossiersJour(projects, { start: previousStart, end: previousEnd });
+  const dossiersPrecedent = calculateDossiersJour(projects, { start: previousStart, end: previousEnd }, userAgency);
   
   if (dossiersPrecedent === 0) return dossiersActuel > 0 ? 100 : 0;
   
   return Math.round(((dossiersActuel - dossiersPrecedent) / dossiersPrecedent) * 100);
 };
 
-export const calculateVariationCa = (factures: any[], clients: any[], projects: any[], dateRange: { start: Date; end: Date }): number => {
+export const calculateVariationCa = (factures: any[], clients: any[], projects: any[], dateRange: { start: Date; end: Date }, userAgency: string): number => {
   if (!factures || factures.length === 0) return 0;
   
-  const { caTotal: caActuel } = calculateCaJour(factures, clients, projects, dateRange);
+  const { caTotal: caActuel } = calculateCaJour(factures, clients, projects, dateRange, userAgency);
   
   // Calculer la période équivalente précédente
   const periodeDays = differenceInDays(dateRange.end, dateRange.start) + 1;
   const previousStart = subDays(dateRange.start, periodeDays);
   const previousEnd = subDays(dateRange.end, periodeDays);
   
-  const { caTotal: caPrecedent } = calculateCaJour(factures, clients, projects, { start: previousStart, end: previousEnd });
+  const { caTotal: caPrecedent } = calculateCaJour(factures, clients, projects, { start: previousStart, end: previousEnd }, userAgency);
   
   if (caPrecedent === 0) return caActuel > 0 ? 100 : 0;
   
@@ -417,14 +415,15 @@ export const calculateDashboardStats = (
     clients: any[];
     users: any[];
   },
-  dateRange: { start: Date; end: Date }
+  dateRange: { start: Date; end: Date },
+  userAgency: string
 ) => {
   const { projects, interventions, factures, devis, clients, users } = data;
   
-  const dossiersJour = calculateDossiersJour(projects, dateRange);
+  const dossiersJour = calculateDossiersJour(projects, dateRange, userAgency);
   const { nbRT: rtJour, heuresRT } = calculateRtJour(interventions, dateRange);
-  const { nbDevis: devisJour, caDevis } = calculateDevisJour(devis, dateRange);
-  const { caTotal: caJour, nbFactures: nbFacturesCA } = calculateCaJour(factures, clients, projects, dateRange);
+  const { nbDevis: devisJour, caDevis } = calculateDevisJour(devis, dateRange, userAgency);
+  const { caTotal: caJour, nbFactures: nbFacturesCA } = calculateCaJour(factures, clients, projects, dateRange, userAgency);
   
   return {
     dossiersJour,
@@ -435,10 +434,10 @@ export const calculateDashboardStats = (
     caJour,
     nbFacturesCA,
     variations: {
-      dossiers: calculateVariationDossiers(projects, dateRange),
+      dossiers: calculateVariationDossiers(projects, dateRange, userAgency),
       rt: null, // Non implémenté - null indique l'absence de données
       devis: null, // Non implémenté - null indique l'absence de données
-      ca: calculateVariationCa(factures, clients, projects, dateRange),
+      ca: calculateVariationCa(factures, clients, projects, dateRange, userAgency),
     }
   };
 };

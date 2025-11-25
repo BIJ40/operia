@@ -37,7 +37,7 @@ export default function IndicateursAccueil() {
         devis: apiData.devis || [],
         clients: apiData.clients || [],
         users: apiData.users || [],
-      }, filters.dateRange);
+      }, filters.dateRange, userAgency);
       
       // Calculer les données mensuelles CA - année dynamique basée sur les filtres
       const start = filters.dateRange?.start;
