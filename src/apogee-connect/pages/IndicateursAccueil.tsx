@@ -186,7 +186,7 @@ export default function IndicateursAccueil() {
             <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-1.5 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xs">⏱️</span>
             </div>
-            <p className="text-xs font-medium text-muted-foreground">Délai Dossier→Facture</p>
+            <p className="text-xs font-medium text-muted-foreground">Délai moyen d'un dossier</p>
           </div>
           <div className="flex items-baseline gap-1">
             <p className="text-xl font-bold">{data?.delaiDossierFacture?.delaiMoyen || 0}j</p>
