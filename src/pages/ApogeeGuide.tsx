@@ -211,7 +211,7 @@ const SortableCategory = ({
 };
 
 export default function ApogeeGuide() {
-  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock } = useEditor();
+  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useEditor();
   const { isAdmin, isAuthenticated } = useAuth();
   const isBlockLocked = useIsBlockLocked();
   const { toast } = useToast();
@@ -356,6 +356,28 @@ export default function ApogeeGuide() {
         return matchesTitle || matchesSection;
       })
     : apogeeCategories;
+
+  // Skeleton loader pendant le chargement
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+        <div className="container max-w-6xl mx-auto px-4 py-8">
+          <div className="h-6 w-32 bg-muted animate-pulse rounded mb-6" />
+          
+          <div className="text-center mb-8">
+            <div className="h-10 w-96 bg-muted animate-pulse rounded mx-auto mb-3" />
+            <div className="h-6 w-64 bg-muted animate-pulse rounded mx-auto" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="h-12 bg-muted animate-pulse rounded-full" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
