@@ -29,13 +29,20 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
 
-  // Load data from Supabase on mount with optimized query
+  // Load data from Supabase when user is available
   useEffect(() => {
     const initData = async () => {
-      console.log('🔄 Chargement depuis Supabase...');
-      
+      // Si l'utilisateur n'est pas connecté, on ne charge rien
+      if (!user) {
+        setBlocks([]);
+        setLoading(false);
+        return;
+      }
+
+      console.log('🔄 Chargement depuis Supabase pour l\'utilisateur', user.id);
+
       try {
         // First load metadata without content to avoid timeout
         const { data, error } = await supabase
@@ -45,12 +52,12 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
         if (error) throw error;
 
-        if (data) {
+        if (data && data.length > 0) {
           // Then load content separately in smaller batches to avoid timeout
           const ids = data.map((b: any) => b.id);
           const batchSize = 50;
           const contentMap = new Map();
-          
+
           // Load content in batches
           for (let i = 0; i < ids.length; i += batchSize) {
             const batchIds = ids.slice(i, i + batchSize);
@@ -60,7 +67,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
               .in('id', batchIds);
 
             if (contentError) throw contentError;
-            
+
             // Add to content map
             contentData?.forEach((c: any) => contentMap.set(c.id, c.content));
           }
@@ -87,6 +94,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
           setBlocks(transformedBlocks);
           console.log(`⚡ ${transformedBlocks.length} blocks chargés depuis Supabase`);
+        } else {
+          setBlocks([]);
+          console.log('⚠️ Aucun block retourné par Supabase');
         }
       } catch (error) {
         console.error('Erreur chargement Supabase:', error);
@@ -99,9 +109,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     };
-    
+
     initData();
-  }, [toast]);
+  }, [toast, user?.id]);
 
   // Auto-save DÉSACTIVÉ - sauvegarde uniquement sur action manuelle pour éviter les timeouts
   // La sauvegarde se fait maintenant uniquement via handleSave dans les pages
