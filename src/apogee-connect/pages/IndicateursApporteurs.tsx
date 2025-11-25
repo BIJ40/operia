@@ -187,10 +187,12 @@ export default function IndicateursApporteurs() {
             <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
               <Euro className="w-4 h-4 text-white" />
             </div>
-            <p className="text-xs font-medium text-muted-foreground">Dû global TTC</p>
+            <p className="text-sm font-bold text-muted-foreground">Dû global TTC</p>
           </div>
-          <p className="text-2xl font-bold text-orange-500">{formatEuros(data?.duGlobal || 0)}</p>
-          <p className="text-xs text-muted-foreground">à encaisser</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-orange-500">{formatEuros(data?.duGlobal || 0)}</p>
+            <p className="text-xs text-muted-foreground">à encaisser</p>
+          </div>
         </Card>
 
         {/* Carte 2: Total dossiers confiés */}
@@ -199,12 +201,14 @@ export default function IndicateursApporteurs() {
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
               <FolderOpen className="w-4 h-4 text-white" />
             </div>
-            <p className="text-xs font-medium text-muted-foreground">Dossiers confiés</p>
+            <p className="text-sm font-bold text-muted-foreground">Dossiers confiés</p>
           </div>
-          <p className="text-2xl font-bold text-blue-500">
-            {data?.dossiersConfiesParApporteur?.reduce((sum, d) => sum + d.nbDossiers, 0) || 0}
-          </p>
-          <p className="text-xs text-muted-foreground">total période</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-blue-500">
+              {data?.dossiersConfiesParApporteur?.reduce((sum, d) => sum + d.nbDossiers, 0) || 0}
+            </p>
+            <p className="text-xs text-muted-foreground">total période</p>
+          </div>
         </Card>
 
         {/* Carte 3: Taux de transformation moyen */}
@@ -213,10 +217,12 @@ export default function IndicateursApporteurs() {
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
               <Percent className="w-4 h-4 text-white" />
             </div>
-            <p className="text-xs font-medium text-muted-foreground">Taux de transfo moyen</p>
+            <p className="text-sm font-bold text-muted-foreground">Taux de transfo moyen</p>
           </div>
-          <p className="text-2xl font-bold text-purple-500">{(data?.tauxTransformationMoyen || 0).toFixed(0)}%</p>
-          <p className="text-xs text-muted-foreground">Devis → Factures</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-purple-500">{(data?.tauxTransformationMoyen || 0).toFixed(0)}%</p>
+            <p className="text-xs text-muted-foreground">Devis → Factures</p>
+          </div>
         </Card>
 
         {/* Carte 4: Panier moyen HT */}
@@ -225,10 +231,12 @@ export default function IndicateursApporteurs() {
             <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
               <ShoppingCart className="w-4 h-4 text-white" />
             </div>
-            <p className="text-xs font-medium text-muted-foreground">Panier moyen HT</p>
+            <p className="text-sm font-bold text-muted-foreground">Panier moyen HT</p>
           </div>
-          <p className="text-2xl font-bold text-green-500">{formatEuros(data?.panierMoyenHT || 0)}</p>
-          <p className="text-xs text-muted-foreground">Dossier apporteur</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-green-500">{formatEuros(data?.panierMoyenHT || 0)}</p>
+            <p className="text-xs text-muted-foreground">Dossier apporteur</p>
+          </div>
         </Card>
 
         {/* Carte 5: Délai moyen */}
@@ -237,10 +245,12 @@ export default function IndicateursApporteurs() {
             <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-1.5 rounded-lg">
               <Clock className="w-4 h-4 text-white" />
             </div>
-            <p className="text-xs font-medium text-muted-foreground">Délai moyen</p>
+            <p className="text-sm font-bold text-muted-foreground">Délai moyen</p>
           </div>
-          <p className="text-2xl font-bold text-indigo-500">{Math.round(data?.delaiMoyenFacturation || 0)} j</p>
-          <p className="text-xs text-muted-foreground">Dossier → Facture</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-indigo-500">{Math.round(data?.delaiMoyenFacturation || 0)} j</p>
+            <p className="text-xs text-muted-foreground">Dossier → Facture</p>
+          </div>
         </Card>
       </div>
 
