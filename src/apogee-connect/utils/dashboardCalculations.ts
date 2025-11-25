@@ -648,6 +648,65 @@ export const calculateNbMoyenInterventionsParDossier = (
 };
 
 // ====================================================================
+// KPI 11 - NOMBRE MOYEN DE VISITES PAR INTERVENTION
+// ====================================================================
+
+export const calculateNbMoyenVisitesParIntervention = (
+  interventions: any[],
+  dateRange?: { start: Date; end: Date }
+): { nbMoyen: number; totalVisites: number; nbInterventions: number } => {
+  
+  // 1) Filtrer les interventions par période si fournie
+  let interventionsFiltrees = interventions;
+  
+  if (dateRange) {
+    interventionsFiltrees = interventions.filter(intervention => {
+      const date = intervention.date || intervention.data?.date;
+      if (!date) return false;
+      
+      try {
+        const interventionDate = parseISO(date);
+        return isWithinInterval(interventionDate, dateRange);
+      } catch {
+        return false;
+      }
+    });
+  }
+  
+  // 2) Compter les visites par intervention
+  let totalVisites = 0;
+  let nbInterventionsAvecVisite = 0;
+  
+  for (const intervention of interventionsFiltrees) {
+    const visites = intervention.visites || [];
+    const nbVisites = visites.length;
+    
+    if (nbVisites >= 1) {
+      nbInterventionsAvecVisite += 1;
+      totalVisites += nbVisites;
+    }
+  }
+  
+  // 3) Calculer la moyenne
+  const nbMoyen = nbInterventionsAvecVisite > 0
+    ? totalVisites / nbInterventionsAvecVisite
+    : 0;
+  
+  console.log("📊 KPI 11 - Nb Moyen Visites/Intervention:", {
+    nbMoyen: Math.round(nbMoyen * 10) / 10,
+    totalVisites,
+    nbInterventions: nbInterventionsAvecVisite,
+    nbInterventionsFiltrees: interventionsFiltrees.length
+  });
+  
+  return {
+    nbMoyen: Math.round(nbMoyen * 10) / 10, // Arrondir à 1 décimale
+    totalVisites,
+    nbInterventions: nbInterventionsAvecVisite
+  };
+};
+
+// ====================================================================
 // KPI 8 - PANIER MOYEN PAR DOSSIER FACTURÉ
 // ====================================================================
 
