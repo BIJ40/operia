@@ -202,10 +202,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Si aucun rôle agence, accès à tout
     if (!roleAgence) return true;
     
-    // Si aucune permission n'est définie pour ce rôle, REFUSER par défaut
-    if (userPermissions.length === 0) return false;
-    
     // Sinon, vérifier si le block est dans la liste des permissions
+    // Par défaut, si aucune permission n'est définie, l'accès est accordé
     return userPermissions.includes(blockId);
   };
 
@@ -216,10 +214,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Si aucun rôle agence, accès à tout
     if (!roleAgence) return true;
     
-    // Si aucune permission n'est définie pour ce rôle, REFUSER par défaut
-    if (userPermissions.length === 0) return false;
-    
     // Vérifier si le scope est dans la liste des permissions
+    // Par défaut, si aucune permission n'est définie, l'accès est accordé
     return userPermissions.includes(scope);
   };
 
