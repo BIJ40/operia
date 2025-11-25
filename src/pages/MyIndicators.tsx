@@ -9,7 +9,7 @@ import { TrendingUp, FileText, Wrench, Euro, RefreshCw } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 export default function MyIndicators() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, hasAccessToScope } = useAuth();
   const { data, isLoading, isError, error, refetch } = useAgencyKpis({ period: 'month' });
 
   useEffect(() => {
@@ -19,6 +19,10 @@ export default function MyIndicators() {
   }, [isAuthenticated, user, refetch]);
 
   if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (!hasAccessToScope('mes_indicateurs')) {
     return <Navigate to="/" replace />;
   }
 

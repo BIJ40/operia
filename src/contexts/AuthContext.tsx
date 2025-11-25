@@ -12,7 +12,7 @@ interface AuthContextType {
   userPermissions: string[];
   isLoggingOut: boolean;
   hasAccessToBlock: (blockId: string) => boolean;
-  hasAccessToScope: (scope: 'apogee' | 'apporteurs' | 'helpconfort') => boolean;
+  hasAccessToScope: (scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs') => boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -207,16 +207,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return userPermissions.includes(blockId);
   };
 
-  const hasAccessToScope = (scope: 'apogee' | 'apporteurs' | 'helpconfort'): boolean => {
+  const hasAccessToScope = (scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs'): boolean => {
     // Les admins ont accès à tout
     if (isAdmin) return true;
     
     // Si aucun rôle agence, accès à tout
     if (!roleAgence) return true;
     
-    // Vérifier si le scope est dans la liste des permissions
-    // Par défaut, si aucune permission n'est définie, l'accès est accordé
-    return userPermissions.includes(scope);
+    // Nouveaux scopes (mes_indicateurs) : bloqués par défaut
+    const newScopes = ['mes_indicateurs'];
+    if (newScopes.includes(scope)) {
+      return userPermissions.includes(scope);
+    }
+    
+    // Anciens scopes (apogee, apporteurs, helpconfort) : permissifs par défaut
+    return userPermissions.length === 0 || userPermissions.includes(scope);
   };
 
   if (loading) {
