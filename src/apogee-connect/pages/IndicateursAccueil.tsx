@@ -68,39 +68,39 @@ export default function IndicateursAccueil() {
         filters.dateRange
       );
       
-      // Calculer le nombre moyen d'interventions par dossier
+      // Calculer le nombre moyen d'interventions par dossier (NON soumis au sélecteur temporel)
       const { calculateNbMoyenInterventionsParDossier, calculateNbMoyenVisitesParIntervention } = await import("@/apogee-connect/utils/dashboardCalculations");
       const nbMoyenInterventionsParDossier = calculateNbMoyenInterventionsParDossier(
         apiData.interventions || [],
-        filters.dateRange
+        undefined // Pas de filtre période
       );
       
-      // Calculer le nombre moyen de visites par intervention
+      // Calculer le nombre moyen de visites par intervention (NON soumis au sélecteur temporel)
       const nbMoyenVisitesParIntervention = calculateNbMoyenVisitesParIntervention(
         apiData.interventions || [],
-        filters.dateRange
+        undefined // Pas de filtre période
       );
       
-      // Calculer le taux de dossiers multi-univers
+      // Calculer le taux de dossiers multi-univers (NON soumis au sélecteur temporel)
       const { calculateTauxDossiersMultiUnivers, calculateTauxDossiersSansDevis } = await import("@/apogee-connect/utils/dashboardCalculations");
       const tauxDossiersMultiUnivers = calculateTauxDossiersMultiUnivers(
         apiData.projects || [],
-        filters.dateRange
+        undefined // Pas de filtre période
       );
       
-      // Calculer le taux de dossiers sans devis
+      // Calculer le taux de dossiers sans devis (NON soumis au sélecteur temporel)
       const tauxDossiersSansDevis = calculateTauxDossiersSansDevis(
         apiData.projects || [],
         apiData.factures || [],
         apiData.devis || [],
-        filters.dateRange
+        undefined // Pas de filtre période
       );
       
-      // Calculer le taux de dossiers multi-techniciens
+      // Calculer le taux de dossiers multi-techniciens (NON soumis au sélecteur temporel)
       const { calculateTauxDossiersMultiTechniciens, calculatePolyvalenceTechniciens } = await import("@/apogee-connect/utils/dashboardCalculations");
       const tauxDossiersMultiTechniciens = calculateTauxDossiersMultiTechniciens(
         apiData.interventions || [],
-        filters.dateRange
+        undefined // Pas de filtre période
       );
       
       // Calculer la polyvalence réelle des techniciens (historique complet, NON filtré par période)
