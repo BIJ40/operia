@@ -114,7 +114,7 @@ export default function IndicateursAccueil() {
       const { calculateDelaiMoyenDossierPremierDevis } = await import("@/apogee-connect/utils/dashboardCalculations");
       const delaiDossierPremierDevis = calculateDelaiMoyenDossierPremierDevis(
         apiData.projects || [],
-        apiData.devis || []
+        apiData.interventions || []
       );
       
       // Calculer les données mensuelles CA pour l'année sélectionnée

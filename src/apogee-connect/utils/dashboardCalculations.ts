@@ -1325,11 +1325,11 @@ export const calculateTauxTransformationDevis = (
 
 /**
  * Calculer le délai moyen entre ouverture dossier et envoi du premier devis
- * VERSION CORRIGÉE - Basée sur les données réelles Apogée
+ * BASÉ SUR L'HISTORIQUE DES INTERVENTIONS
  */
 export function calculateDelaiMoyenDossierPremierDevis(
   projects: any[],
-  devis: any[]
+  interventions: any[]
 ): { delaiMoyen: number; nbDossiers: number } {
   // Étape 1 : Indexer les projets par ID
   const projectById: Record<string, any> = {};
@@ -1337,58 +1337,51 @@ export function calculateDelaiMoyenDossierPremierDevis(
     if (p.id) projectById[p.id] = p;
   });
 
-  // Étape 2 : États considérés comme "envoyé"
-  const STATES_ENVOYES = ["sent", "accepted", "invoice", "validated", "factured"];
-
-  const devisEnvoyes = devis.filter(d => {
-    const state = String(d.state || d.statut || d.data?.state || d.data?.statut || '').toLowerCase();
-    return STATES_ENVOYES.includes(state);
-  });
-
-  // Étape 3 : Regrouper les devis envoyés par projet
-  const devisParProjet: Record<string, any[]> = {};
-
-  for (const d of devisEnvoyes) {
-    const pid = d.projectId;
-    if (!pid) continue;
-
-    if (!devisParProjet[pid]) devisParProjet[pid] = [];
-    devisParProjet[pid].push(d);
-  }
-
-  // Étape 4 : Calculer les délais
+  // Étape 2 : Pour chaque projet, trouver le premier événement "Devis envoyé" dans l'historique des interventions
   const delais: number[] = [];
 
-  for (const [pid, devisList] of Object.entries(devisParProjet)) {
-    const project = projectById[pid];
-    if (!project) continue;
+  for (const project of projects) {
+    if (!project.id || !project.createdAt) continue;
 
     const dateCreation = new Date(project.createdAt);
     if (isNaN(dateCreation.getTime())) continue;
 
-    // Trouver le devis envoyé le plus tôt
-    const premierDevis = devisList.reduce((best, d) => {
-      const dDate = new Date(d.date || d.dateReelle || d.dateCreation);
-      if (isNaN(dDate.getTime())) return best;
-      if (!best) return d;
-      const bestDate = new Date(best.date || best.dateReelle || best.dateCreation);
-      return dDate < bestDate ? d : best;
-    }, null as any);
+    // Trouver toutes les interventions de ce projet
+    const interventionsProjet = interventions.filter(i => i.projectId === project.id);
+    if (interventionsProjet.length === 0) continue;
 
-    if (!premierDevis) continue;
+    // Chercher dans l'historique de toutes les interventions du projet
+    let dateEnvoiDevis: Date | null = null;
 
-    const dateDevis = new Date(premierDevis.date || premierDevis.dateReelle || premierDevis.dateCreation);
-    if (isNaN(dateDevis.getTime())) continue;
+    for (const intervention of interventionsProjet) {
+      const history = intervention.data?.history || [];
+      
+      for (const event of history) {
+        if (event.labelKind === "Devis à faire => Devis envoyé") {
+          // Événement trouvé, récupérer la date
+          const eventDate = new Date(event.dateModif);
+          if (isNaN(eventDate.getTime())) continue;
 
-    const diffJours = (dateDevis.getTime() - dateCreation.getTime()) / (1000 * 3600 * 24);
+          // Garder la date la plus ancienne (premier envoi)
+          if (!dateEnvoiDevis || eventDate < dateEnvoiDevis) {
+            dateEnvoiDevis = eventDate;
+          }
+        }
+      }
+    }
 
-    // Sécurité: délai cohérent (entre 0 et 10000 jours)
-    if (diffJours >= 0 && diffJours < 10000) {
-      delais.push(diffJours);
+    // Si on a trouvé un événement d'envoi de devis
+    if (dateEnvoiDevis) {
+      const diffJours = (dateEnvoiDevis.getTime() - dateCreation.getTime()) / (1000 * 3600 * 24);
+
+      // Sécurité: délai cohérent (entre 0 et 10000 jours)
+      if (diffJours >= 0 && diffJours < 10000) {
+        delais.push(diffJours);
+      }
     }
   }
 
-  // Étape 5 : KPI final
+  // Étape 3 : KPI final
   if (delais.length === 0) {
     return { delaiMoyen: 0, nbDossiers: 0 };
   }
