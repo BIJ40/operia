@@ -395,88 +395,12 @@ export default function IndicateursApporteurs() {
       </div>
 
       {/* 7 briques alignées : 6 types d'apporteurs + clients directs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
-        {data?.typesApporteursStats?.map((stat, index) => {
-          const colors = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--blue-dark))', 'hsl(var(--blue-light))', 'hsl(40 90% 60%)'];
-          const color = colors[index % colors.length];
-          
-          return (
-            <Card 
-              key={stat.type}
-              className="hover:shadow-lg transition-shadow cursor-pointer p-4"
-              style={{ borderLeft: `4px solid ${color}` }}
-            >
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs font-bold truncate">{formatApporteurType(stat.type)}</p>
-                  <p className="text-xl font-bold" style={{ color }}>
-                    {formatEuros(stat.caHT)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">CA HT</p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t">
-                  <div>
-                    <p className="text-sm font-semibold">{stat.nbDossiers}</p>
-                    <p className="text-xs text-muted-foreground">Dossiers</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">{formatEuros(stat.panierMoyen)}</p>
-                    <p className="text-xs text-muted-foreground">Panier</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {stat.tauxTransformation !== null ? `${stat.tauxTransformation.toFixed(0)}%` : "--"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Transfo</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {stat.tauxSAV !== null ? `${stat.tauxSAV.toFixed(0)}%` : "--"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">SAV</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-        
-        {/* Carte Clients Directs */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer p-4" style={{ borderLeft: '4px solid hsl(var(--primary))' }}>
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs font-bold">Clients Directs</p>
-              <p className="text-xl font-bold text-primary">
-                {formatEuros(data?.particuliersStats?.caHT || 0)}
-              </p>
-              <p className="text-xs text-muted-foreground">CA HT</p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t">
-              <div>
-                <p className="text-sm font-semibold">{data?.particuliersStats?.nbDossiers || 0}</p>
-                <p className="text-xs text-muted-foreground">Dossiers</p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold">{formatEuros(data?.particuliersStats?.panierMoyen || 0)}</p>
-                <p className="text-xs text-muted-foreground">Panier</p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold">
-                  {data?.particuliersStats?.tauxTransformation !== null ? `${data?.particuliersStats?.tauxTransformation.toFixed(0)}%` : "--"}
-                </p>
-                <p className="text-xs text-muted-foreground">Transfo</p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold">
-                  {data?.particuliersStats?.tauxSAV !== null ? `${data?.particuliersStats?.tauxSAV.toFixed(0)}%` : "--"}
-                </p>
-                <p className="text-xs text-muted-foreground">SAV</p>
-              </div>
-            </div>
-          </div>
-        </Card>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 items-stretch">
+        {/* 6 tuiles par type d'apporteur (avec couleurs + icônes) */}
+        <TypesApporteursWidget data={data?.typesApporteursStats || []} mode="cardsOnly" />
+
+        {/* 1 tuile Clients Directs (Particuliers) */}
+        <ParticuliersWidget stats={data?.particuliersStats} />
       </div>
 
       {/* Timeline Apporteurs */}
