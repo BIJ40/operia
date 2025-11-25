@@ -480,7 +480,7 @@ export default function HelpConfort() {
             {filteredCategories.map(category => {
               const Icon = IconComponent(category.icon || 'BookOpen');
               const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
-              const locked = isBlockLocked(category.id, [category]);
+              const locked = isBlockLocked(category.id);
               
               if (locked) {
                 return (
