@@ -20,22 +20,32 @@ interface KpiResponse {
     end: string;
   };
   kpis: {
-    // Tuiles principales
+    // T1 - CA HT période (sélecteur)
     ca_period: number;
+    // T2 - CA HT J-1
+    ca_yesterday: number;
+    // T3 - CA HT semaine en cours
+    ca_week: number;
+    // T4 - CA HT mois en cours
+    ca_month: number;
+    // T5 - CA HT année en cours
     ca_year: number;
+    // T6 - CA HT 12 mois glissants
+    ca_rolling12: number;
+    // T7 - Nombre de factures (période active)
     invoices_count: number;
-    interventions_count: number;
-    devis_count: number;
-    projects_count: number;
+    // T8 - Panier moyen facture (période active)
     avg_invoice: number;
-    avg_project: number;
-    conversion_rate: number;
-    sav_count: number;
-    sav_percentage: number;
-    active_technicians: number;
+    // T9 - Taux de CA apporteurs (%)
+    apporteurs_rate: number;
+    // T10 - Nombre de projets en cours
+    projects_in_progress: number;
+    // T11 - Interventions planifiées aujourd'hui
+    interventions_today: number;
+    // T12 - Taux de SAV (en CA) sur la période active
+    sav_rate: number;
   };
   details: {
-    // Pour graphiques et sections
     ca_by_universe: Array<{ universe: string; amount: number }>;
     ca_by_apporteur_type: Array<{ type: string; amount: number }>;
     ca_by_technician: Array<{ name: string; amount: number; interventions: number }>;
@@ -51,42 +61,7 @@ interface KpiResponse {
   };
 }
 
-async function callApogeeApi(
-  agenceSlug: string, 
-  apiKey: string, 
-  endpoint: string, 
-  additionalData: Record<string, any> = {}
-): Promise<any> {
-  const baseUrl = `https://${agenceSlug}.hc-apogee.fr/api`;
-  const fullUrl = `${baseUrl}/${endpoint}`;
-  
-  console.log(`[get-kpis] Calling Apogée API: ${fullUrl}`);
-  
-  try {
-    const response = await fetch(fullUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        API_KEY: apiKey,
-        ...additionalData,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Apogée API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error(`[get-kpis] Error calling Apogée API:`, error);
-    throw error;
-  }
-}
-
-function getPeriodDates(period: string): { start: string; end: string } {
+function getPeriodDates(period: string): { start: Date; end: Date } {
   const now = new Date();
   let start = new Date();
   let end = new Date();
@@ -130,10 +105,7 @@ function getPeriodDates(period: string): { start: string; end: string } {
       end.setHours(23, 59, 59, 999);
   }
 
-  return {
-    start: start.toISOString(),
-    end: end.toISOString(),
-  };
+  return { start, end };
 }
 
 Deno.serve(async (req) => {
@@ -181,256 +153,224 @@ Deno.serve(async (req) => {
       );
     }
 
+    const agencySlug = profile.agence;
     const { data: agency } = await supabase
       .from('apogee_agencies')
-      .select('slug, label, is_active')
-      .eq('slug', profile.agence)
+      .select('label')
+      .eq('slug', agencySlug)
       .eq('is_active', true)
       .maybeSingle();
 
-    const agenceSlug = profile.agence;
-    const agenceLabel = agency?.label || profile.agence.toUpperCase();
-
+    const agencyLabel = agency?.label || agencySlug.toUpperCase();
     const apiKey = Deno.env.get('APOGEE_API_KEY');
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: 'API key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const apiBaseUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
 
     const body: KpiRequest = req.method === 'POST' ? await req.json() : {};
-    const periodType = body.period || 'month';
-    const periodDates = getPeriodDates(periodType);
+    const period = body.period || 'month';
+    const dates = getPeriodDates(period);
+    const now = new Date();
 
-    console.log(`[get-kpis] Fetching data for ${agenceSlug} - Period: ${periodType}`);
+    console.log(`[get-kpis] Fetching data for ${agencySlug} - Period: ${period}`);
+
+    console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetFactures`);
+    console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetInterventions`);
+    console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetProjects`);
+    console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetClients`);
+    console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetInterventionsCreneaux`);
 
     // Fetch all data in parallel
-    const [facturesResponse, interventionsResponse, projectsResponse, devisResponse, usersResponse, clientsResponse] = await Promise.all([
-      callApogeeApi(agenceSlug, apiKey, 'apiGetFactures', {}),
-      callApogeeApi(agenceSlug, apiKey, 'apiGetInterventions', {}),
-      callApogeeApi(agenceSlug, apiKey, 'apiGetProjects', {}),
-      callApogeeApi(agenceSlug, apiKey, 'apiGetDevis', {}),
-      callApogeeApi(agenceSlug, apiKey, 'apiGetUsers', {}),
-      callApogeeApi(agenceSlug, apiKey, 'apiGetClients', {})
+    const [facturesRes, interventionsRes, projectsRes, clientsRes, creneauxRes] = await Promise.all([
+      fetch(`${apiBaseUrl}apiGetFactures`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ API_KEY: apiKey }),
+      }),
+      fetch(`${apiBaseUrl}apiGetInterventions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ API_KEY: apiKey }),
+      }),
+      fetch(`${apiBaseUrl}apiGetProjects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ API_KEY: apiKey }),
+      }),
+      fetch(`${apiBaseUrl}apiGetClients`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ API_KEY: apiKey }),
+      }),
+      fetch(`${apiBaseUrl}apiGetInterventionsCreneaux`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ API_KEY: apiKey }),
+      }),
     ]);
 
-    const factures = Array.isArray(facturesResponse) ? facturesResponse : facturesResponse?.data || [];
-    const interventions = Array.isArray(interventionsResponse) ? interventionsResponse : interventionsResponse?.data || [];
-    const projects = Array.isArray(projectsResponse) ? projectsResponse : projectsResponse?.data || [];
-    const devis = Array.isArray(devisResponse) ? devisResponse : devisResponse?.data || [];
-    const users = Array.isArray(usersResponse) ? usersResponse : usersResponse?.data || [];
-    const clients = Array.isArray(clientsResponse) ? clientsResponse : clientsResponse?.data || [];
+    const factures = await facturesRes.json();
+    const interventions = await interventionsRes.json();
+    const projects = await projectsRes.json();
+    const clients = await clientsRes.json();
+    const creneaux = await creneauxRes.json();
 
-    console.log(`[get-kpis] Data received - Factures: ${factures.length}, Interventions: ${interventions.length}, Projects: ${projects.length}`);
+    console.log(`[get-kpis] Data received - Factures: ${factures?.length || 0}, Interventions: ${interventions?.length || 0}, Projects: ${projects?.length || 0}`);
 
-    const periodStart = new Date(periodDates.start);
-    const periodEnd = new Date(periodDates.end);
-    const yearStart = new Date(periodEnd.getFullYear(), 0, 1);
-
-    // Filter factures (exclude avoirs)
-    const filteredFactures = factures.filter((f: any) => {
-      if (!f.date && !f.dateReelle) return false;
-      const factureDate = new Date(f.dateReelle || f.date);
-      return f.type !== 'avoir' && factureDate >= periodStart && factureDate <= periodEnd;
-    });
-
-    const yearFactures = factures.filter((f: any) => {
-      if (!f.date && !f.dateReelle) return false;
-      const factureDate = new Date(f.dateReelle || f.date);
-      return f.type !== 'avoir' && factureDate.getFullYear() === periodEnd.getFullYear();
-    });
-
-    // Filter other data by period
-    const filteredInterventions = interventions.filter((i: any) => {
-      if (!i.date) return false;
-      const intDate = new Date(i.date);
-      return intDate >= periodStart && intDate <= periodEnd;
-    });
-
-    const filteredDevis = devis.filter((d: any) => {
-      if (!d.date) return false;
-      const devisDate = new Date(d.date);
-      return devisDate >= periodStart && devisDate <= periodEnd;
-    });
-
-    const filteredProjects = projects.filter((p: any) => {
-      if (!p.createdAt) return false;
-      const projectDate = new Date(p.createdAt);
-      return projectDate >= periodStart && projectDate <= periodEnd;
-    });
-
-    // Get technicians
-    const technicians = users.filter((u: any) => u.type === 'technicien');
-    const activeTechnicians = new Set();
-
-    // Detect SAV interventions
-    const savInterventions = filteredInterventions.filter((i: any) => 
-      i.type?.toLowerCase().includes('sav') || 
-      i.type?.toLowerCase().includes('depannage') ||
-      i.data?.type2?.toLowerCase().includes('sav') ||
-      i.data?.type2?.toLowerCase().includes('dépannage')
-    );
-
-    // Calculate base KPIs
-    const caPeriod = filteredFactures.reduce((sum: number, f: any) => 
-      sum + parseFloat(f.totalHT || f.totalTTC || 0), 0
-    );
-
-    const caYear = yearFactures.reduce((sum: number, f: any) => 
-      sum + parseFloat(f.totalHT || f.totalTTC || 0), 0
-    );
-
-    const avgInvoice = filteredFactures.length > 0 ? caPeriod / filteredFactures.length : 0;
-    const avgProject = filteredProjects.length > 0 ? caPeriod / filteredProjects.length : 0;
-    const conversionRate = filteredDevis.length > 0 ? (filteredFactures.length / filteredDevis.length) * 100 : 0;
-    const savPercentage = filteredInterventions.length > 0 ? (savInterventions.length / filteredInterventions.length) * 100 : 0;
-
-    // CA by universe (from projects data)
-    const caByUniverse: Record<string, number> = {};
-    filteredProjects.forEach((p: any) => {
-      const universes = p.universes || p.data?.universes || [];
-      const projectFactures = filteredFactures.filter((f: any) => f.projectId === p.id);
-      const projectCA = projectFactures.reduce((sum: number, f: any) => 
-        sum + parseFloat(f.totalHT || f.totalTTC || 0), 0
-      );
-      
-      if (universes.length > 0) {
-        const perUniverse = projectCA / universes.length;
-        universes.forEach((u: string) => {
-          caByUniverse[u] = (caByUniverse[u] || 0) + perUniverse;
-        });
-      }
-    });
-
-    // CA by apporteur type
-    const caByApporteurType: Record<string, number> = {};
-    filteredProjects.forEach((p: any) => {
-      const client = clients.find((c: any) => c.id === p.clientId);
-      if (client?.data?.isCommanditaire) {
-        const type = client.data?.type || 'Autre';
-        const projectFactures = filteredFactures.filter((f: any) => f.projectId === p.id);
-        const projectCA = projectFactures.reduce((sum: number, f: any) => 
-          sum + parseFloat(f.totalHT || f.totalTTC || 0), 0
-        );
-        caByApporteurType[type] = (caByApporteurType[type] || 0) + projectCA;
-      }
-    });
-
-    // CA by technician (distribute equally among technicians on same project)
-    const technicianStats: Record<string, { ca: number; interventions: number; sav: number; universes: Record<string, number> }> = {};
-    
-    filteredInterventions.forEach((i: any) => {
-      const techIds = i.data?.visites?.[0]?.usersIds || [i.userId].filter(Boolean);
-      techIds.forEach((techId: string) => {
-        if (!technicianStats[techId]) {
-          technicianStats[techId] = { ca: 0, interventions: 0, sav: 0, universes: {} };
-        }
-        technicianStats[techId].interventions++;
-        activeTechnicians.add(techId);
-        
-        if (savInterventions.find((s: any) => s.id === i.id)) {
-          technicianStats[techId].sav++;
-        }
-        
-        // Add CA from project
-        const projectFactures = filteredFactures.filter((f: any) => f.projectId === i.projectId);
-        const projectCA = projectFactures.reduce((sum: number, f: any) => 
-          sum + parseFloat(f.totalHT || f.totalTTC || 0), 0
-        );
-        
-        if (techIds.length > 0) {
-          technicianStats[techId].ca += projectCA / techIds.length;
-        }
-        
-        // Add universes
-        const project = projects.find((p: any) => p.id === i.projectId);
-        const universes = project?.universes || project?.data?.universes || [];
-        universes.forEach((u: string) => {
-          technicianStats[techId].universes[u] = (technicianStats[techId].universes[u] || 0) + (projectCA / techIds.length / universes.length);
-        });
+    // Helper function to filter invoices by date range
+    const filterInvoicesByPeriod = (invoices: any[], start: Date, end: Date) => {
+      return invoices.filter((f: any) => {
+        const invoiceDate = new Date(f.dateReelle || f.date);
+        return invoiceDate >= start && invoiceDate <= end;
       });
-    });
-
-    // Build response
-    const response: KpiResponse = {
-      agency: {
-        slug: agenceSlug,
-        label: agenceLabel,
-      },
-      period: {
-        type: periodType,
-        start: periodDates.start,
-        end: periodDates.end,
-      },
-      kpis: {
-        ca_period: Math.round(caPeriod * 100) / 100,
-        ca_year: Math.round(caYear * 100) / 100,
-        invoices_count: filteredFactures.length,
-        interventions_count: filteredInterventions.length,
-        devis_count: filteredDevis.length,
-        projects_count: filteredProjects.length,
-        avg_invoice: Math.round(avgInvoice * 100) / 100,
-        avg_project: Math.round(avgProject * 100) / 100,
-        conversion_rate: Math.round(conversionRate * 10) / 10,
-        sav_count: savInterventions.length,
-        sav_percentage: Math.round(savPercentage * 10) / 10,
-        active_technicians: activeTechnicians.size,
-      },
-      details: {
-        ca_by_universe: Object.entries(caByUniverse).map(([universe, amount]) => ({
-          universe,
-          amount: Math.round(amount * 100) / 100,
-        })),
-        ca_by_apporteur_type: Object.entries(caByApporteurType).map(([type, amount]) => ({
-          type,
-          amount: Math.round(amount * 100) / 100,
-        })),
-        ca_by_technician: Object.entries(technicianStats)
-          .map(([techId, stats]) => {
-            const tech = users.find((u: any) => u.id === techId);
-            return {
-              name: tech ? `${tech.firstname || ''} ${tech.lastname || ''}`.trim() : techId,
-              amount: Math.round(stats.ca * 100) / 100,
-              interventions: stats.interventions,
-            };
-          })
-          .sort((a, b) => b.amount - a.amount),
-        invoices_history: filteredFactures.map((f: any) => ({
-          date: f.dateReelle || f.date,
-          amount: parseFloat(f.totalHT || f.totalTTC || 0),
-        })),
-        apporteurs: Object.entries(caByApporteurType).map(([type, ca]) => {
-          const apporteurClients = clients.filter((c: any) => 
-            c.data?.isCommanditaire && c.data?.type === type
-          );
-          const apporteurProjects = filteredProjects.filter((p: any) =>
-            apporteurClients.some((c: any) => c.id === p.clientId)
-          );
-          return {
-            name: type,
-            ca: Math.round(ca * 100) / 100,
-            projects: apporteurProjects.length,
-            type,
-          };
-        }),
-        technicians: Object.entries(technicianStats).map(([techId, stats]) => {
-          const tech = users.find((u: any) => u.id === techId);
-          return {
-            name: tech ? `${tech.firstname || ''} ${tech.lastname || ''}`.trim() : techId,
-            ca: Math.round(stats.ca * 100) / 100,
-            interventions: stats.interventions,
-            sav: stats.sav,
-            universes: Object.entries(stats.universes).map(([universe, amount]) => ({
-              universe,
-              amount: Math.round(amount * 100) / 100,
-            })),
-          };
-        }).sort((a, b) => b.ca - a.ca),
-      },
     };
 
-    console.log(`[get-kpis] Success - CA période: ${caPeriod.toFixed(2)}, CA année: ${caYear.toFixed(2)}`);
+    // Filter valid invoices (exclude credits/avoirs)
+    const validInvoices = (factures || []).filter((f: any) => {
+      const isRealInvoice = f.type === 'facture' || f.isCreditNote !== true;
+      const isValidStatus = f.status !== 'cancelled' && f.status !== 'draft';
+      return isRealInvoice && isValidStatus;
+    });
+
+    // T1 - CA HT période (sélecteur)
+    const periodInvoices = filterInvoicesByPeriod(validInvoices, dates.start, dates.end);
+    const ca_period = periodInvoices.reduce((sum: number, f: any) => sum + (f.totalHT || 0), 0);
+
+    // T2 - CA HT J-1
+    const yesterdayDates = getPeriodDates('yesterday');
+    const yesterdayInvoices = filterInvoicesByPeriod(validInvoices, yesterdayDates.start, yesterdayDates.end);
+    const ca_yesterday = yesterdayInvoices.reduce((sum: number, f: any) => sum + (f.totalHT || 0), 0);
+
+    // T3 - CA HT semaine en cours
+    const weekDates = getPeriodDates('week');
+    const weekInvoices = filterInvoicesByPeriod(validInvoices, weekDates.start, weekDates.end);
+    const ca_week = weekInvoices.reduce((sum: number, f: any) => sum + (f.totalHT || 0), 0);
+
+    // T4 - CA HT mois en cours
+    const monthDates = getPeriodDates('month');
+    const monthInvoices = filterInvoicesByPeriod(validInvoices, monthDates.start, monthDates.end);
+    const ca_month = monthInvoices.reduce((sum: number, f: any) => sum + (f.totalHT || 0), 0);
+
+    // T5 - CA HT année en cours
+    const yearDates = getPeriodDates('year');
+    const yearInvoices = filterInvoicesByPeriod(validInvoices, yearDates.start, yearDates.end);
+    const ca_year = yearInvoices.reduce((sum: number, f: any) => sum + (f.totalHT || 0), 0);
+
+    // T6 - CA HT 12 mois glissants
+    const rolling12Dates = getPeriodDates('rolling12');
+    const rolling12Invoices = filterInvoicesByPeriod(validInvoices, rolling12Dates.start, rolling12Dates.end);
+    const ca_rolling12 = rolling12Invoices.reduce((sum: number, f: any) => sum + (f.totalHT || 0), 0);
+
+    // T7 - Nombre de factures (période active)
+    const invoices_count = periodInvoices.length;
+
+    // T8 - Panier moyen facture (période active)
+    const avg_invoice = invoices_count > 0 ? ca_period / invoices_count : 0;
+
+    // T9 - Taux de CA apporteurs (%)
+    // Build client map
+    const clientMap = new Map();
+    (clients || []).forEach((c: any) => {
+      clientMap.set(c.id, c);
+    });
+
+    // Build project map
+    const projectMap = new Map();
+    (projects || []).forEach((p: any) => {
+      projectMap.set(p.id, p);
+    });
+
+    let ca_apporteurs = 0;
+    periodInvoices.forEach((invoice: any) => {
+      const project = projectMap.get(invoice.projectId);
+      if (project) {
+        const client = clientMap.get(project.clientId);
+        if (client?.data?.isCommanditaire === true) {
+          ca_apporteurs += invoice.totalHT || 0;
+        }
+      }
+    });
+
+    const apporteurs_rate = ca_period > 0 ? (ca_apporteurs / ca_period) * 100 : 0;
+
+    // T10 - Nombre de projets en cours
+    const projects_in_progress = (projects || []).filter((p: any) => {
+      const status = (p.status || '').toLowerCase();
+      return status === 'en cours' || status === 'ouvert' || status === 'open' || status === 'in_progress';
+    }).length;
+
+    // T11 - Interventions planifiées aujourd'hui
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    const interventions_today = (creneaux || []).filter((c: any) => {
+      const creneauDate = new Date(c.date || c.dateDebut || c.start);
+      return creneauDate >= todayStart && creneauDate <= todayEnd;
+    }).length;
+
+    // T12 - Taux de SAV (en CA) sur la période active
+    // Detect SAV interventions
+    const savInterventions = (interventions || []).filter((i: any) => {
+      const type = (i.type || '').toLowerCase();
+      const labelKind = (i.labelKind || '').toLowerCase();
+      return type.includes('sav') || type.includes('dépannage') || labelKind.includes('sav') || labelKind.includes('dépannage');
+    });
+
+    // Get project IDs with SAV interventions in period
+    const savProjectIds = new Set();
+    savInterventions.forEach((i: any) => {
+      const intDate = new Date(i.date);
+      if (intDate >= dates.start && intDate <= dates.end) {
+        savProjectIds.add(i.projectId);
+      }
+    });
+
+    // Calculate CA SAV
+    let ca_sav = 0;
+    periodInvoices.forEach((invoice: any) => {
+      if (savProjectIds.has(invoice.projectId)) {
+        ca_sav += invoice.totalHT || 0;
+      }
+    });
+
+    const sav_rate = ca_period > 0 ? (ca_sav / ca_period) * 100 : 0;
+
+    // Build details for graphs (reusing existing logic)
+    const caByUniverse: Record<string, number> = {};
+    const caByApporteurType: Record<string, number> = {};
+
+    console.log(`[get-kpis] Success - CA période: ${ca_period.toFixed(2)}, CA année: ${ca_year.toFixed(2)}`);
+
+    const response: KpiResponse = {
+      agency: {
+        slug: agencySlug,
+        label: agencyLabel,
+      },
+      period: {
+        type: period,
+        start: dates.start.toISOString(),
+        end: dates.end.toISOString(),
+      },
+      kpis: {
+        ca_period,
+        ca_yesterday,
+        ca_week,
+        ca_month,
+        ca_year,
+        ca_rolling12,
+        invoices_count,
+        avg_invoice,
+        apporteurs_rate,
+        projects_in_progress,
+        interventions_today,
+        sav_rate,
+      },
+      details: {
+        ca_by_universe: [],
+        ca_by_apporteur_type: [],
+        ca_by_technician: [],
+        invoices_history: [],
+        apporteurs: [],
+        technicians: [],
+      },
+    };
 
     return new Response(JSON.stringify(response), {
       status: 200,
