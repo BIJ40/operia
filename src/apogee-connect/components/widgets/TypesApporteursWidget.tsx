@@ -11,7 +11,7 @@ import { WidgetDialog } from "./WidgetDialog";
 interface TypesApporteursWidgetProps {
   data: TypeApporteurStats[];
   loading?: boolean;
-  mode?: "full" | "chartOnly";
+  mode?: "full" | "chartOnly" | "cardsOnly";
 }
 
 const COLORS = [

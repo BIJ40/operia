@@ -6,7 +6,7 @@ import { useApiToggle } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { Card } from "@/components/ui/card";
 import { FolderOpen, Euro, Percent, ShoppingCart, Clock, Users, TrendingUp, Heart, ArrowUpRight } from "lucide-react";
-import { formatEuros } from "@/apogee-connect/utils/formatters";
+import { formatEuros, formatApporteurType } from "@/apogee-connect/utils/formatters";
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
 import { 
   calculateTop10Apporteurs, 
@@ -394,10 +394,32 @@ export default function IndicateursApporteurs() {
         <SegmentationChart data={data?.segmentationData || []} />
       </div>
 
-      {/* Stats détaillées par type d'apporteur + Clients directs */}
-      <div className="grid grid-cols-1 gap-6">
-        <TypesApporteursWidget data={data?.typesApporteursStats || []} mode="full" />
-        <ParticuliersWidget stats={data?.particuliersStats} />
+      {/* 7 briques alignées : 6 types d'apporteurs + clients directs */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+        {data?.typesApporteursStats?.map((stat, index) => (
+          <Card 
+            key={stat.type}
+            className="hover:shadow-lg transition-shadow cursor-pointer h-full p-3"
+            style={{ borderLeft: `4px solid ${['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--blue-dark))', 'hsl(var(--blue-light))', 'hsl(40 90% 60%)'][index % 5]}` }}
+          >
+            <div className="space-y-2">
+              <p className="text-xs font-bold truncate">{formatApporteurType(stat.type)}</p>
+              <p className="text-lg font-bold" style={{ color: ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--blue-dark))', 'hsl(var(--blue-light))', 'hsl(40 90% 60%)'][index % 5] }}>
+                {formatEuros(stat.caHT)}
+              </p>
+            </div>
+          </Card>
+        ))}
+        
+        {/* Carte Clients Directs */}
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full p-3" style={{ borderLeft: '4px solid hsl(var(--primary))' }}>
+          <div className="space-y-2">
+            <p className="text-xs font-bold">Clients Directs</p>
+            <p className="text-lg font-bold text-primary">
+              {formatEuros(data?.particuliersStats?.caHT || 0)}
+            </p>
+          </div>
+        </Card>
       </div>
 
       {/* Timeline Apporteurs */}
