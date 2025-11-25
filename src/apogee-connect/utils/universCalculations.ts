@@ -10,6 +10,22 @@ export interface UniversStats {
 }
 
 /**
+ * Normaliser les slugs d'univers de l'API vers nos labels
+ * Table de correspondance HARD-CODÉE (identique à enrichmentService)
+ */
+const normalizeUniverseSlug = (slug: string): string => {
+  const normalizationMap: Record<string, string> = {
+    'amelioration_logement': 'pmr',
+    'amelioration-logement': 'pmr',
+    'volets': 'volet_roulant',
+    'volet': 'volet_roulant',
+  };
+
+  const normalized = normalizationMap[slug.toLowerCase()];
+  return normalized || slug.toLowerCase();
+};
+
+/**
  * Calculer les statistiques par univers
  */
 export const calculateUniversStats = (
@@ -47,8 +63,10 @@ export const calculateUniversStats = (
     const project = projectsMap.get(facture.projectId);
     if (!project) return;
 
-    // Extraire les univers du projet
-    const universes = project.data?.universes || project.universes || [];
+    // Extraire les univers du projet ET les normaliser
+    const universes = (project.data?.universes || project.universes || []).map((u: string) => 
+      normalizeUniverseSlug(u)
+    );
     if (universes.length === 0) return;
 
     // Calculer le montant HT
@@ -91,7 +109,9 @@ export const calculateUniversStats = (
     const project = projectsMap.get(interv.projectId);
     if (!project) return;
 
-    const universes = project.data?.universes || project.universes || [];
+    const universes = (project.data?.universes || project.universes || []).map((u: string) => 
+      normalizeUniverseSlug(u)
+    );
     if (universes.length === 0) return;
 
     universes.forEach((univers: string) => {
@@ -188,7 +208,9 @@ const calculateTauxSAVParUnivers = (
   
   projects.forEach(p => {
     const pid = p.id;
-    const universes = p.data?.universes || p.universes || [];
+    const universes = (p.data?.universes || p.universes || []).map((u: string) => 
+      normalizeUniverseSlug(u)
+    );
     if (universes.length === 0) return;
 
     universes.forEach((univers: string) => {

@@ -145,12 +145,13 @@ export class EnrichmentService {
     };
 
     universeSlugs.forEach(slug => {
-      const label = this.formatUniverseLabel(slug);
-      const colorHex = colorPalette[slug.toLowerCase()] || this.getDefaultUniverseColor(slug);
-      const icon = iconMapping[slug.toLowerCase()] || 'HelpCircle';
+      const normalizedSlug = this.normalizeUniverseSlug(slug);
+      const label = this.formatUniverseLabel(normalizedSlug);
+      const colorHex = colorPalette[normalizedSlug] || this.getDefaultUniverseColor(normalizedSlug);
+      const icon = iconMapping[normalizedSlug] || 'HelpCircle';
 
-      this.mapUnivers[slug] = {
-        slug,
+      this.mapUnivers[normalizedSlug] = {
+        slug: normalizedSlug,
         label,
         colorHex,
         icon,
@@ -195,10 +196,11 @@ export class EnrichmentService {
   }
 
   static getUniverse(slug: string): UniverseRef {
-    return this.mapUnivers[slug] || {
-      slug,
-      label: this.formatUniverseLabel(slug),
-      colorHex: this.getDefaultUniverseColor(slug),
+    const normalizedSlug = this.normalizeUniverseSlug(slug);
+    return this.mapUnivers[normalizedSlug] || {
+      slug: normalizedSlug,
+      label: this.formatUniverseLabel(normalizedSlug),
+      colorHex: this.getDefaultUniverseColor(normalizedSlug),
     };
   }
 
@@ -217,6 +219,23 @@ export class EnrichmentService {
   /**
    * HELPERS
    */
+
+  /**
+   * Normaliser les slugs d'univers de l'API vers nos labels
+   * Table de correspondance HARD-CODÉE
+   */
+  private static normalizeUniverseSlug(slug: string): string {
+    const normalizationMap: Record<string, string> = {
+      // Ancien slug → Nouveau slug
+      'amelioration_logement': 'pmr',
+      'amelioration-logement': 'pmr',
+      'volets': 'volet_roulant',
+      'volet': 'volet_roulant',
+    };
+
+    const normalized = normalizationMap[slug.toLowerCase()];
+    return normalized || slug.toLowerCase();
+  }
 
   private static formatUniverseLabel(slug: string): string {
     const labels: Record<string, string> = {
