@@ -398,25 +398,23 @@ export default function IndicateursApporteurs() {
         </div>
       </div>
 
-      {/* Timeline Apporteurs + Particuliers (section suivante) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-6">
-          {/* Titre de la section pour alignement */}
-          <div>
-            <h3 className="text-xl font-bold">Évolution temporelle</h3>
-            <p className="text-sm text-muted-foreground">
-              Nombre de dossiers créés par type d'apporteur, mois par mois
-            </p>
-          </div>
-          <ApporteurTypeTimeline 
-            projects={data?.rawProjects || []} 
-            clients={data?.rawClients || []} 
-          />
-        </div>
+      {/* Stats détaillées par type d'apporteur + Clients directs */}
+      <div className="grid grid-cols-1 gap-6">
+        <ParticuliersWidget stats={data?.particuliersStats} />
+      </div>
 
-        <div className="space-y-6">
-          <ParticuliersWidget stats={data?.particuliersStats} />
+      {/* Timeline Apporteurs */}
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-xl font-bold">Évolution temporelle</h3>
+          <p className="text-sm text-muted-foreground">
+            Nombre de dossiers créés par type d'apporteur, mois par mois
+          </p>
         </div>
+        <ApporteurTypeTimeline 
+          projects={data?.rawProjects || []} 
+          clients={data?.rawClients || []} 
+        />
       </div>
     </div>
   );
