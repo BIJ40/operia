@@ -26,6 +26,7 @@ export function ChangePasswordDialog({ open, onOpenChange, onSuccess }: ChangePa
         title: 'Erreur',
         description: 'Les mots de passe ne correspondent pas',
         variant: 'destructive',
+        duration: 4000,
       });
       return;
     }
@@ -35,6 +36,7 @@ export function ChangePasswordDialog({ open, onOpenChange, onSuccess }: ChangePa
         title: 'Erreur',
         description: 'Le mot de passe doit contenir au moins 6 caractères',
         variant: 'destructive',
+        duration: 4000,
       });
       return;
     }
@@ -69,11 +71,29 @@ export function ChangePasswordDialog({ open, onOpenChange, onSuccess }: ChangePa
       onSuccess();
     } catch (error: any) {
       console.error('Erreur changement mot de passe:', error);
-      toast({
-        title: 'Erreur',
-        description: error.message || 'Impossible de changer le mot de passe',
-        variant: 'destructive',
-      });
+      
+      // Si la session n'existe plus, fermer le dialog pour permettre une reconnexion
+      if (error.message?.includes('session') || error.message?.includes('Session')) {
+        toast({
+          title: 'Session expirée',
+          description: 'Votre session a expiré. Veuillez vous reconnecter.',
+          variant: 'destructive',
+          duration: 4000,
+        });
+        // Fermer le dialog après un court délai
+        setTimeout(() => {
+          onOpenChange(false);
+          // Déconnecter l'utilisateur pour forcer une reconnexion
+          supabase.auth.signOut();
+        }, 1000);
+      } else {
+        toast({
+          title: 'Erreur',
+          description: error.message || 'Impossible de changer le mot de passe',
+          variant: 'destructive',
+          duration: 4000,
+        });
+      }
     } finally {
       setLoading(false);
     }
