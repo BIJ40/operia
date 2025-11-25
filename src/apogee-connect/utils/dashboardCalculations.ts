@@ -141,6 +141,70 @@ export const getInitInvoiceApporteursAmount = (facture: any): number => {
 // CALCULS KPI HEADER
 // ====================================================================
 
+export const calculateDelaiMoyenDossierFacture = (
+  factures: any[],
+  projects: any[],
+  dateRange: { start: Date; end: Date }
+): { delaiMoyen: number; nbFactures: number } => {
+  if (!factures || factures.length === 0 || !projects || projects.length === 0) {
+    return { delaiMoyen: 0, nbFactures: 0 };
+  }
+
+  // Créer un map des projets pour recherche rapide
+  const projectsMap = new Map(projects.map(p => [p.id, p]));
+  
+  const delais: number[] = [];
+
+  factures.forEach(facture => {
+    // 1. Filtrer sur la période (dateEmission ou dateReelle)
+    const dateFacture = facture.dateEmission || facture.dateReelle || facture.created_at;
+    if (!dateFacture) return;
+
+    try {
+      const factureDate = parseISO(dateFacture);
+      if (!isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end })) return;
+
+      // 2. Exclure les avoirs
+      const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
+      if (typeFacture === "avoir" || typeFacture === "Avoir") return;
+
+      // 3. Trouver le projet associé
+      const project = projectsMap.get(facture.projectId);
+      if (!project) return;
+
+      const dateCreation = project.created_at || project.createdAt || project.date;
+      if (!dateCreation) return;
+
+      // 4. Calculer le délai en jours
+      const creationDate = parseISO(dateCreation);
+      const delaiJours = differenceInDays(factureDate, creationDate);
+
+      // Ignorer les délais négatifs (erreurs de données)
+      if (delaiJours >= 0) {
+        delais.push(delaiJours);
+      }
+    } catch (error) {
+      // Ignorer les erreurs de parsing
+    }
+  });
+
+  if (delais.length === 0) return { delaiMoyen: 0, nbFactures: 0 };
+
+  // Calculer la moyenne
+  const delaiMoyen = delais.reduce((sum, d) => sum + d, 0) / delais.length;
+
+  if (import.meta.env.DEV) {
+    console.log("⏱️ Délai moyen Dossier → Facture:", {
+      delaiMoyen: Math.round(delaiMoyen),
+      nbFactures: delais.length,
+      min: Math.min(...delais),
+      max: Math.max(...delais),
+    });
+  }
+
+  return { delaiMoyen: Math.round(delaiMoyen), nbFactures: delais.length };
+};
+
 export const calculateDossiersJour = (projects: any[], dateRange: { start: Date; end: Date }, userAgency: string): number => {
   if (!projects || projects.length === 0) return 0;
   
