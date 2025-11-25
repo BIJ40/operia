@@ -388,12 +388,19 @@ export default function IndicateursApporteurs() {
         <DossiersConfiesWidget dossiers={data?.dossiersConfiesParApporteur || []} />
       </div>
 
-      {/* Widget Types d'apporteurs + Timeline */}
+      {/* Widget Types d'apporteurs + Graphique Segmentation (2 colonnes) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="lg:col-span-1">
+        <div className="flex flex-col">
           <TypesApporteursWidget data={data?.typesApporteursStats || []} />
         </div>
-        <div className="lg:col-span-1 space-y-6">
+        <div className="flex flex-col">
+          <SegmentationChart data={data?.segmentationData || []} />
+        </div>
+      </div>
+
+      {/* Timeline Apporteurs + Particuliers (section suivante) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
           {/* Titre de la section pour alignement */}
           <div>
             <h3 className="text-xl font-bold">Évolution temporelle</h3>
@@ -406,12 +413,10 @@ export default function IndicateursApporteurs() {
             clients={data?.rawClients || []} 
           />
         </div>
-      </div>
 
-      {/* Widgets Particuliers + Segmentation */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ParticuliersWidget stats={data?.particuliersStats} />
-        <SegmentationChart data={data?.segmentationData || []} />
+        <div className="space-y-6">
+          <ParticuliersWidget stats={data?.particuliersStats} />
+        </div>
       </div>
     </div>
   );
