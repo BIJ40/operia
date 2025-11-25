@@ -27,7 +27,6 @@ interface EditUserDialogProps {
 const ROLE_OPTIONS = [
   { value: 'dirigeant', label: 'Dirigeant(e)' },
   { value: 'assistant(e)', label: 'Assistant(e)' },
-  { value: 'technicien', label: 'Technicien' },
   { value: 'commercial', label: 'Commercial' },
 ];
 
