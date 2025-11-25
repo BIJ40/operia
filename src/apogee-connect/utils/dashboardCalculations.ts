@@ -576,9 +576,13 @@ export const calculatePanierMoyen = (
     // 4. Ajouter au set des projets facturés
     projectsFactures.add(projectId);
 
-    // 5. Cumuler le CA HT
-    const montantHT = facture.montantHT || facture.totalHT || facture.data?.montantHT || facture.data?.totalHT || 0;
-    caTotal += Number(montantHT);
+    // 5. Cumuler le CA HT (même logique que calculateCaJour)
+    const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || "0";
+    const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+    
+    if (!isNaN(montant)) {
+      caTotal += montant;
+    }
   });
 
   // 6. Calculer le panier moyen
