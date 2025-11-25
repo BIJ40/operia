@@ -214,7 +214,7 @@ export default function IndicateursAccueil() {
           </h2>
           <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
             <SelectTrigger className="w-[120px] bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white border-none">
-              <SelectValue>{selectedYear}</SelectValue>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-background border border-border z-50">
               <SelectItem value="2023">2023</SelectItem>
