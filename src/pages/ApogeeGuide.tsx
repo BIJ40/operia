@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Lock } from 'lucide-react';
-import { useIsBlockLocked } from '@/hooks/use-permissions';
+import { useIsBlockLocked, useFilteredBlocks } from '@/hooks/use-permissions';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -230,9 +230,14 @@ export default function ApogeeGuide() {
   }
 
   // Filtrer uniquement les catégories Apogée (exclure FAQ et HelpConfort)
-  const apogeeCategories = blocks
+  const allApogeeCategories = blocks
     .filter(b => b.type === 'category' && b.slug !== 'faq' && !b.title.toLowerCase().includes('faq') && !b.slug.startsWith('helpconfort-'))
     .sort((a, b) => a.order - b.order);
+
+  // Appliquer le filtrage par permissions (sauf en mode édition admin)
+  const apogeeCategories = isEditMode && isAdmin 
+    ? allApogeeCategories 
+    : useFilteredBlocks(allApogeeCategories);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

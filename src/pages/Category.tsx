@@ -78,7 +78,7 @@ export default function Category() {
   }
 
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, hasAccessToBlock } = useAuth();
   const { toast } = useToast();
   
   if (!isAuthenticated) {
@@ -86,6 +86,16 @@ export default function Category() {
   }
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
+
+  // Protection de route : vérifier si l'utilisateur a accès à cette catégorie
+  if (category && !isAdmin && !hasAccessToBlock(category.id)) {
+    toast({
+      title: 'Accès refusé',
+      description: 'Vous n\'avez pas les permissions pour accéder à cette catégorie',
+      variant: 'destructive',
+    });
+    return <Navigate to="/apogee" replace />;
+  }
   
   // Liste des catégories disponibles (exclure FAQ)
   const availableCategories = useMemo(() =>

@@ -73,18 +73,24 @@ export default function CategoryHelpConfort() {
   const location = useLocation();
 
   const { blocks, updateBlock, deleteBlock, addBlock, reorderBlocks, isEditMode } = useEditor();
-  const { isAuthenticated, isAdmin, roleAgence } = useAuth();
+  const { isAuthenticated, isAdmin, roleAgence, hasAccessToBlock } = useAuth();
   const { toast } = useToast();
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
 
-  // Bloquer l'accès pour les assistant(e)s
+  // Bloquer l'accès pour les utilisateurs non authentifiés
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
-  
-  if (roleAgence === 'assistant(e)') {
-    return <Navigate to="/" replace />;
+
+  // Protection de route : vérifier si l'utilisateur a accès à cette catégorie
+  if (category && !isAdmin && !hasAccessToBlock(category.id)) {
+    toast({
+      title: 'Accès refusé',
+      description: 'Vous n\'avez pas les permissions pour accéder à cette catégorie',
+      variant: 'destructive',
+    });
+    return <Navigate to="/helpconfort" replace />;
   }
   
   // Liste des catégories disponibles HelpConfort

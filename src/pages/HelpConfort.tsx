@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColorPreset } from '@/types/block';
 import { Plus, Trash2, Search, GripVertical, Lock } from 'lucide-react';
-import { useIsBlockLocked } from '@/hooks/use-permissions';
+import { useIsBlockLocked, useFilteredBlocks } from '@/hooks/use-permissions';
 import { toast } from 'sonner';
 import { IconPicker } from '@/components/IconPicker';
 import { ColorPicker } from '@/components/ColorPicker';
@@ -252,9 +252,14 @@ export default function HelpConfort() {
     return <Navigate to="/" replace />;
   }
 
-  const helpconfortCategories = (blocks as any[])
+  const allHelpconfortCategories = (blocks as any[])
     .filter(b => b.type === 'category' && b.slug.startsWith('helpconfort-') && !b.hideFromSidebar)
     .sort((a, b) => a.order - b.order);
+
+  // Appliquer le filtrage par permissions (sauf en mode édition admin)
+  const helpconfortCategories = isEditMode && isAdmin 
+    ? allHelpconfortCategories 
+    : useFilteredBlocks(allHelpconfortCategories);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
