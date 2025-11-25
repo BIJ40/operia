@@ -9,14 +9,14 @@ interface ApporteurTypeTimelineProps {
 }
 
 /**
- * Normalisation date → clé de mois (YYYY-MM)
+ * Normalisation date → clé de mois (YY-MM)
  */
 function monthKey(dateStr: string | undefined | null): string | null {
   if (!dateStr) return null;
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return null;
 
-  const year = d.getFullYear();
+  const year = d.getFullYear().toString().slice(-2); // 2 derniers chiffres
   const month = (d.getMonth() + 1).toString().padStart(2, "0");
   return `${year}-${month}`;
 }
