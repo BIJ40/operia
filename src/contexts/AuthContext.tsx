@@ -58,13 +58,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // Load permissions for this user's role
             if (profile?.role_agence) {
+              console.log('🔐 Chargement permissions pour role_agence:', profile.role_agence);
               const { data: permissions } = await supabase
                 .from('role_permissions')
                 .select('block_id, can_access')
                 .eq('role_agence', profile.role_agence)
                 .eq('can_access', true);
 
+              console.log('🔐 Permissions trouvées:', permissions);
               setUserPermissions(permissions?.map(p => p.block_id) || []);
+            } else {
+              console.log('🔐 Aucun role_agence défini pour cet utilisateur');
             }
           }, 0);
         } else {
@@ -106,13 +110,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // Load permissions for this user's role
             if (data?.role_agence) {
+              console.log('🔐 [Init] Chargement permissions pour role_agence:', data.role_agence);
               const { data: permissions } = await supabase
                 .from('role_permissions')
                 .select('block_id, can_access')
                 .eq('role_agence', data.role_agence)
                 .eq('can_access', true);
 
+              console.log('🔐 [Init] Permissions trouvées:', permissions);
               setUserPermissions(permissions?.map(p => p.block_id) || []);
+            } else {
+              console.log('🔐 [Init] Aucun role_agence défini pour cet utilisateur');
             }
 
             setLoading(false);
@@ -195,17 +203,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasAccessToBlock = (blockId: string): boolean => {
+    console.log('🔐 hasAccessToBlock appelé:', { blockId, isAdmin, roleAgence, userPermissionsCount: userPermissions.length });
+    
     // Les admins ont accès à tout
-    if (isAdmin) return true;
+    if (isAdmin) {
+      console.log('✅ Accès accordé (admin)');
+      return true;
+    }
     
     // Si l'utilisateur n'a pas de rôle agence, accès accordé par défaut
-    if (!roleAgence) return true;
+    if (!roleAgence) {
+      console.log('✅ Accès accordé (pas de role_agence)');
+      return true;
+    }
     
     // Si l'utilisateur a un rôle mais aucune permission définie, refuser l'accès
-    if (userPermissions.length === 0) return false;
+    if (userPermissions.length === 0) {
+      console.log('❌ Accès refusé (role_agence défini mais aucune permission)');
+      return false;
+    }
     
     // Sinon, vérifier si le block est dans la liste des permissions
-    return userPermissions.includes(blockId);
+    const hasAccess = userPermissions.includes(blockId);
+    console.log(hasAccess ? '✅ Accès accordé (permission trouvée)' : '❌ Accès refusé (permission non trouvée)');
+    return hasAccess;
   };
 
   if (loading) {
