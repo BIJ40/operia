@@ -207,10 +207,11 @@ Deno.serve(async (req) => {
     // Règle: facturesValides = exclure data.isInit === true, exclure avoirs, période [startDate, endDate] sur dateEmission
     const facturesValides = (factures || []).filter((f: any) => {
       if (f.data?.isInit === true) return false;
-      if (f.type === 'avoir' || f.isCreditNote === true) return false;
-      if (f.status === 'cancelled' || f.status === 'draft') return false;
+      if (f.type === 'Avoir' || f.type === 'avoir' || f.isCreditNote === true) return false;
+      if (f.statut === 'cancelled' || f.statut === 'draft') return false;
       
-      const factureDate = parseDate(f.dateReelle || f.date || f.dateEmission);
+      // Date principale = dateEmission (champ exact selon factures.json)
+      const factureDate = parseDate(f.dateEmission || f.date || f.dateReelle);
       if (!factureDate) return false;
       
       return factureDate >= dates.start && factureDate <= dates.end;
@@ -228,19 +229,18 @@ Deno.serve(async (req) => {
     const userMap = new Map((users || []).map((u: any) => [u.id, u]));
 
     // ===== Tuile 4: Taux Apporteurs =====
-    // Règle: CA_apporteurs = Σ(montantHT) pour factures avec commanditaireId non null
+    // Règle: CA_apporteurs = Σ(montantHT) pour factures avec data.commanditaireId non null
     
     // Debug: Échantillon de projets
     const projectsSample = (projects || []).slice(0, 3);
     console.log('[get-kpis] Sample projects:', JSON.stringify(projectsSample.map((p: any) => ({
       id: p.id,
-      commanditaireId: p.commanditaireId,
-      commanditaire_id: p.commanditaire_id,
+      'data.commanditaireId': p.data?.commanditaireId,
       clientId: p.clientId,
-      keys: Object.keys(p).filter(k => k.toLowerCase().includes('command'))
+      keys: Object.keys(p)
     })), null, 2));
     
-    const projectsWithCommanditaire = (projects || []).filter((p: any) => p.commanditaireId || p.commanditaire_id);
+    const projectsWithCommanditaire = (projects || []).filter((p: any) => p.data?.commanditaireId);
     console.log(`[get-kpis] Projects with commanditaire: ${projectsWithCommanditaire.length} / ${projects.length}`);
     
     let ca_apporteurs = 0;
@@ -248,8 +248,9 @@ Deno.serve(async (req) => {
 
     facturesValides.forEach((invoice: any) => {
       const project = projectMap.get(invoice.projectId);
-      if (project && (project.commanditaireId || project.commanditaire_id)) {
-        const commanditaireId = project.commanditaireId || project.commanditaire_id;
+      // Champ exact selon dossier.json: data.commanditaireId
+      if (project?.data?.commanditaireId) {
+        const commanditaireId = project.data.commanditaireId;
         const client = clientMap.get(commanditaireId);
         if (client) {
           const invoiceCA = calculateInvoiceTotal(invoice);
@@ -277,7 +278,7 @@ Deno.serve(async (req) => {
     // Règle: Statuts considérés comme "clos" = Terminé, Facturé, Archivé, Annulé. En cours = tous les autres.
     const closedStatuses = ['terminé', 'facturé', 'archivé', 'annulé', 'closed', 'archived', 'cancelled'];
     const projects_in_progress = (projects || []).filter((p: any) => {
-      const status = (p.status || '').toLowerCase();
+      const status = (p.statut || p.status || '').toLowerCase();
       return !closedStatuses.includes(status);
     }).length;
 
@@ -301,29 +302,27 @@ Deno.serve(async (req) => {
     const interventions_count = interventionsPeriode.length;
 
     // ===== Tuile 8: Devis (période sélectionnée) =====
-    // Règle: devis.dateReelle (date principale) dans [startDate, endDate]
+    // Règle: devis.dateReelle (champ exact selon devis.json) dans [startDate, endDate]
     const devisPeriode = (devis || []).filter((d: any) => {
-      let rawDate = d.dateReelle || d.dateCreation || d.dateEmission || d.date || d.created_at;
-      if (!rawDate && d.data?.date) rawDate = d.data.date;
+      const rawDate = d.dateReelle || d.date || d.created_at;
       const devisDate = parseDate(rawDate);
       return devisDate && devisDate >= dates.start && devisDate <= dates.end;
     });
     const devis_count = devisPeriode.length;
 
     // ===== Tuile 9: Projets (nouveaux sur la période) =====
-    // Règle: project.createdAt (ou champs alternatifs) dans [startDate, endDate]
+    // Règle: project.date (champ exact selon dossier.json) dans [startDate, endDate]
     const projetsPeriode = (projects || []).filter((p: any) => {
-      let rawDate = p.createdAt || p.dateCreation || p.dateCréationDossier || p.date || p.created_at;
-      if (!rawDate && p.data?.dateCreation) rawDate = p.data.dateCreation;
+      const rawDate = p.date || p.created_at;
       const projectDate = parseDate(rawDate);
       return projectDate && projectDate >= dates.start && projectDate <= dates.end;
     });
     const projects_count = projetsPeriode.length;
 
     // ===== Tuile 10: Taux Conversion (Devis → Accepté/Commandé) =====
-    // Règle: Utiliser state (pas statut), dateReelle pour la période
+    // Règle: Utiliser state (champ exact selon devis.json), pas statut
     // Devis envoyés = state différent de 'draft'
-    // Devis acceptés = state 'invoice' (facturé = commandé/accepté)
+    // Devis acceptés = state 'invoice' (facturé = commandé/accepté dans devis.json)
     // Taux = (acceptés / envoyés) × 100
     
     const getState = (d: any) => (d.state || '').toLowerCase();
@@ -331,20 +330,20 @@ Deno.serve(async (req) => {
     // Devis envoyés = tous sauf draft (brouillon)
     const devisEnvoyes = devisPeriode.filter((d: any) => {
       const s = getState(d);
-      return s !== 'draft' && s !== 'brouillon';
+      return s !== 'draft';
     });
     
-    // Devis acceptés = state "invoice" (facturé) ou "accepted"/"ordered"
+    // Devis acceptés = state "invoice" (facturé selon devis.json)
     const devisAcceptes = devisEnvoyes.filter((d: any) => {
       const s = getState(d);
-      return s === 'invoice' || s === 'accepted' || s === 'ordered';
+      return s === 'invoice';
     });
     
     const conversion_rate = devisEnvoyes.length > 0 
       ? (devisAcceptes.length / devisEnvoyes.length) * 100 
       : 0;
     
-    console.log(`[get-kpis] Devis: ${(devis || []).length} total, ${devisPeriode.length} dans période (dateReelle), ${devisEnvoyes.length} envoyés (hors draft), ${devisAcceptes.length} acceptés (invoice), Taux: ${conversion_rate.toFixed(1)}%`);
+    console.log(`[get-kpis] Devis: ${(devis || []).length} total, ${devisPeriode.length} dans période (dateReelle), ${devisEnvoyes.length} envoyés (hors draft), ${devisAcceptes.length} acceptés (state=invoice), Taux: ${conversion_rate.toFixed(1)}%`);
 
     // ===== Tuile 11: Techniciens (hors sélecteur) =====
     // Règle: Filtrer users: active === true, role technicien/tech
@@ -374,6 +373,8 @@ Deno.serve(async (req) => {
     });
 
     const sav_rate = projectsFactures.size > 0 ? (projectsAvecSAV.size / projectsFactures.size) * 100 : 0;
+    
+    console.log(`[get-kpis] Projets facturés: ${projectsFactures.size}, Projets SAV: ${projectsAvecSAV.size}, Taux SAV: ${sav_rate.toFixed(1)}%`);
 
     // ===== DÉTAILS: CA par univers =====
     const caByUniverse: Record<string, number> = {};
