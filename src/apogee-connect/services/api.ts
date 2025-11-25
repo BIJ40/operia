@@ -1,4 +1,9 @@
-const API_KEY = "HC-0fbff339d2a701e86d63f66c1a8c8bf54";
+const API_KEY = import.meta.env.VITE_APOGEE_API_KEY;
+
+if (!API_KEY) {
+  console.warn("⚠️ VITE_APOGEE_API_KEY non définie - les appels à l'API Apogée risquent d'échouer.");
+}
+
 // BASE_URL sera définie dynamiquement par AgencyContext via setApiBaseUrl
 // IMPORTANT: Ne JAMAIS hardcoder d'URL d'agence ici pour des raisons de sécurité
 let BASE_URL = "";

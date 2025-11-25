@@ -24,7 +24,6 @@ import AdminIndex from "./pages/AdminIndex";
 import AdminRolePermissions from "./pages/AdminRolePermissions";
 import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
-import MyIndicators from "./pages/MyIndicators";
 import IndicateursLayout from "./apogee-connect/pages/IndicateursLayout";
 import IndicateursAccueil from "./apogee-connect/pages/IndicateursAccueil";
 import IndicateursApporteurs from "./apogee-connect/pages/IndicateursApporteurs";

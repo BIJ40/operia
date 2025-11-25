@@ -68,7 +68,9 @@ export class EnrichmentService {
       };
     });
 
-    console.log(`✅ Référentiel techniciens créé: ${Object.keys(this.mapTechniciens).length} entrées`);
+    if (import.meta.env.DEV) {
+      console.log(`✅ Référentiel techniciens créé: ${Object.keys(this.mapTechniciens).length} entrées`);
+    }
   }
 
   /**
@@ -93,7 +95,9 @@ export class EnrichmentService {
       };
     });
 
-    console.log(`✅ Référentiel clients créé: ${Object.keys(this.mapClients).length} entrées`);
+    if (import.meta.env.DEV) {
+      console.log(`✅ Référentiel clients créé: ${Object.keys(this.mapClients).length} entrées`);
+    }
   }
 
   /**
@@ -136,7 +140,9 @@ export class EnrichmentService {
       };
     });
 
-    console.log(`✅ Référentiel univers créé: ${Object.keys(this.mapUnivers).length} entrées`);
+    if (import.meta.env.DEV) {
+      console.log(`✅ Référentiel univers créé: ${Object.keys(this.mapUnivers).length} entrées`);
+    }
   }
 
   /**

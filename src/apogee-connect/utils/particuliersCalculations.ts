@@ -19,10 +19,12 @@ const filterFacturesPeriodeParticuliers = (
 ): any[] => {
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
-  console.log("🔍 PARTICULIERS - Filtrage des factures", {
-    nbFactures: factures.length,
-    nbProjects: projects.length
-  });
+  if (import.meta.env.DEV) {
+    console.log("🔍 PARTICULIERS - Filtrage des factures", {
+      nbFactures: factures.length,
+      nbProjects: projects.length
+    });
+  }
   
   const result = factures.filter(facture => {
     // Type facture uniquement (pas les avoirs)
@@ -53,14 +55,17 @@ const filterFacturesPeriodeParticuliers = (
       if (dansLaPeriode) {
         const client = clients.find(c => c.id === facture.clientId);
         const isInit = isInitInvoice(facture, client, project);
-        console.log("✅ Facture particulier trouvée:", {
-          id: facture.id,
-          ref: facture.reference,
-          projectId: facture.projectId,
-          commanditaireId,
-          montant: facture.totalHT || facture.data?.totalHT,
-          isInit
-        });
+        
+        if (import.meta.env.DEV) {
+          console.log("✅ Facture particulier trouvée:", {
+            id: facture.id,
+            ref: facture.reference,
+            projectId: facture.projectId,
+            commanditaireId,
+            montant: facture.totalHT || facture.data?.totalHT,
+            isInit
+          });
+        }
       }
       
       return dansLaPeriode;
@@ -70,7 +75,9 @@ const filterFacturesPeriodeParticuliers = (
     }
   });
   
-  console.log("📋 PARTICULIERS - Résultat filtrage:", result.length);
+  if (import.meta.env.DEV) {
+    console.log("📋 PARTICULIERS - Résultat filtrage:", result.length);
+  }
   return result;
 };
 
@@ -83,28 +90,34 @@ export const calculateParticuliersStats = (
   clients: any[],
   dateRange: { start: Date; end: Date }
 ): ParticuliersStats => {
-  console.log("🔍 PARTICULIERS - Début du calcul", {
-    nbFactures: factures.length,
-    nbProjects: projects.length,
-    dateRange
-  });
+  if (import.meta.env.DEV) {
+    console.log("🔍 PARTICULIERS - Début du calcul", {
+      nbFactures: factures.length,
+      nbProjects: projects.length,
+      dateRange
+    });
+  }
   
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
   // Debug: vérifier quelques projets
-  const sampleProjects = projects.slice(0, 5);
-  console.log("📦 Échantillon de projets:", sampleProjects.map(p => ({
-    id: p.id,
-    commanditaireId: p.data?.commanditaireId || p.commanditaireId,
-    isParticulier: !p.data?.commanditaireId && !p.commanditaireId
-  })));
+  if (import.meta.env.DEV) {
+    const sampleProjects = projects.slice(0, 5);
+    console.log("📦 Échantillon de projets:", sampleProjects.map(p => ({
+      id: p.id,
+      commanditaireId: p.data?.commanditaireId || p.commanditaireId,
+      isParticulier: !p.data?.commanditaireId && !p.commanditaireId
+    })));
+  }
   
   // Filtrer les factures de la période pour particuliers
   const facturesPeriode = filterFacturesPeriodeParticuliers(factures, clients, projects, dateRange);
   
-  console.log("💰 PARTICULIERS - Factures filtrées:", facturesPeriode.length);
-  if (facturesPeriode.length > 0) {
-    console.log("📄 Première facture particulier:", facturesPeriode[0]);
+  if (import.meta.env.DEV) {
+    console.log("💰 PARTICULIERS - Factures filtrées:", facturesPeriode.length);
+    if (facturesPeriode.length > 0) {
+      console.log("📄 Première facture particulier:", facturesPeriode[0]);
+    }
   }
   
   // Agréger CA, dossiers, factures
@@ -118,7 +131,9 @@ export const calculateParticuliersStats = (
     
     // Vérifier si c'est la facture d'init JANVIER 2025
     if (isInitInvoice(facture, client, project)) {
-      console.log("💰 PARTICULIERS - Facture INIT détectée, utilisation part particuliers:", INIT_INVOICE_PARTICULIERS);
+      if (import.meta.env.DEV) {
+        console.log("💰 PARTICULIERS - Facture INIT détectée, utilisation part particuliers:", INIT_INVOICE_PARTICULIERS);
+      }
       // Utiliser la part particuliers fixe
       caHT += INIT_INVOICE_PARTICULIERS;
       nbFactures += 1;
@@ -146,12 +161,14 @@ export const calculateParticuliersStats = (
   const nbDossiers = dossiers.size;
   const panierMoyen = nbDossiers > 0 ? caHT / nbDossiers : 0;
   
-  console.log("📊 PARTICULIERS - Résultats:", {
-    caHT,
-    nbDossiers,
-    nbFactures,
-    panierMoyen
-  });
+  if (import.meta.env.DEV) {
+    console.log("📊 PARTICULIERS - Résultats:", {
+      caHT,
+      nbDossiers,
+      nbFactures,
+      panierMoyen
+    });
+  }
   
   // Calculer le taux de transformation
   const tauxTransformation = calculateTauxTransformationParticuliers(devis, projects, factures, clients, dateRange);

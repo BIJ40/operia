@@ -27,9 +27,6 @@ export const ActivityChart = ({ data, variation, apporteurFilter }: ActivityChar
   const isPositive = variation >= 0;
   const TrendIcon = isPositive ? TrendingUp : TrendingDown;
   
-  console.log("📊 ActivityChart - données:", data);
-  console.log("📊 ActivityChart - variation:", variation);
-  
   return (
     <Card className="p-8 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950 dark:to-blue-950 border-2 border-cyan-200 dark:border-cyan-800 hover:scale-102 transition-all duration-300 cursor-pointer shadow-xl">
       <div className="flex items-start justify-between mb-4">

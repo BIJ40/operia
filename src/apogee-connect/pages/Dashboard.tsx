@@ -63,12 +63,14 @@ export default function Dashboard() {
       const activityData = calculateLast7DaysActivity(apiData.projects || []);
       const activityVariation = calculateVariationVs30Days(apiData.projects || []);
       
-      // Calculer les données mensuelles CA pour 2025 - NON lié au filtre
+      // Calculer les données mensuelles CA - année dynamique basée sur les filtres
+      const start = filters.dateRange?.start;
+      const year = start instanceof Date ? start.getFullYear() : new Date().getFullYear();
       const monthlyCAData = calculateMonthlyCA(
         apiData.factures || [],
         apiData.clients || [],
         apiData.projects || [],
-        2025
+        year
       );
       
       // Calculer TOP 10 apporteurs - lié au filtre secondaire
@@ -174,18 +176,20 @@ export default function Dashboard() {
         secondaryFilters.dateRange
       );
       
-      // Calculer l'évolution mensuelle Particuliers vs Apporteurs pour 2025
+      // Calculer l'évolution mensuelle Particuliers vs Apporteurs - année dynamique
       const segmentationData = calculateMonthlySegmentation(
         apiData.factures || [],
         apiData.clients || [],
         apiData.projects || [],
-        2025
+        year
       );
       
-      console.log("📊 Stats calculées pour la période:", filters.dateRange, stats);
-      console.log("📈 Activité 7 jours:", activityData);
-      console.log("📈 Variation vs 30j:", activityVariation);
-      console.log("📦 Nombre de projets total:", apiData.projects?.length || 0);
+      if (import.meta.env.DEV) {
+        console.log("📊 Stats calculées pour la période:", filters.dateRange, stats);
+        console.log("📈 Activité 7 jours:", activityData);
+        console.log("📈 Variation vs 30j:", activityVariation);
+        console.log("📦 Nombre de projets total:", apiData.projects?.length || 0);
+      }
       
       return {
         ...stats,
