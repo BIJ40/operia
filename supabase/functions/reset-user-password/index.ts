@@ -17,19 +17,19 @@ serve(async (req) => {
       throw new Error("En-tête d'autorisation manquant");
     }
 
-    // Créer un client Supabase avec les credentials de la requête pour vérifier l'auth
+    console.log("Auth header present");
+
+    // Extraire le token du header Authorization
+    const token = authHeader.replace("Bearer ", "");
+
+    // Créer un client Supabase
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
-    // Vérifier que l'utilisateur est authentifié
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Vérifier que l'utilisateur est authentifié en passant le token directement
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError || !user) {
       console.error("User authentication failed:", userError);
