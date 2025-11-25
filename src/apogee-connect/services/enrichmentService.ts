@@ -221,7 +221,7 @@ export class EnrichmentService {
   private static formatUniverseLabel(slug: string): string {
     const labels: Record<string, string> = {
       'pmr': 'PMR',
-      'volet_roulant': 'Volet Roulant',
+      'volet_roulant': 'Volets roulants',
       'electricite': 'Électricité',
       'plomberie': 'Plomberie',
       'serrurerie': 'Serrurerie',
