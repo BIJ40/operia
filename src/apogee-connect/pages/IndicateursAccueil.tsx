@@ -42,12 +42,12 @@ export default function IndicateursAccueil() {
         users: apiData.users || [],
       }, filters.dateRange, userAgency);
       
-      // Calculer le délai moyen Dossier → Facture
+      // Calculer le délai moyen Dossier → Facture (NON soumis au sélecteur temporel)
       const { calculateDelaiMoyenDossierFacture, calculateTauxDossiersComplexes, calculatePanierMoyen, calculateTauxTransformationDevis } = await import("@/apogee-connect/utils/dashboardCalculations");
       const delaiDossierFacture = calculateDelaiMoyenDossierFacture(
         apiData.factures || [],
         apiData.projects || [],
-        filters.dateRange
+        undefined // Pas de filtre période
       );
       
       // Calculer le taux de dossiers complexes
@@ -198,23 +198,7 @@ export default function IndicateursAccueil() {
           <p className="text-xl font-bold">{(data?.tauxSAVGlobal || 0).toFixed(1)}%</p>
         </Card>
 
-        {/* KPI 6: Délai moyen Dossier → Facture */}
-        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-teal-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-1.5 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs">⏱️</span>
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">Délai moyen d'un dossier</p>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <p className="text-xl font-bold">{data?.delaiDossierFacture?.delaiMoyen || 0}j</p>
-            {data?.delaiDossierFacture?.nbFactures !== undefined && (
-              <span className="text-[10px] text-muted-foreground">({data.delaiDossierFacture.nbFactures})</span>
-            )}
-          </div>
-        </Card>
-
-        {/* KPI 7: Dossiers complexes */}
+        {/* KPI 6: Dossiers complexes */}
         <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-indigo-500/50 shadow-lg">
           <div className="flex items-center gap-2 mb-2">
             <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-1.5 rounded-lg flex items-center justify-center">
@@ -230,7 +214,7 @@ export default function IndicateursAccueil() {
           </div>
         </Card>
 
-        {/* KPI 8: Panier moyen */}
+        {/* KPI 7: Panier moyen */}
         <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-pink-500/50 shadow-lg">
           <div className="flex items-center gap-2 mb-2">
             <div className="bg-gradient-to-br from-pink-500 to-pink-600 p-1.5 rounded-lg flex items-center justify-center">
@@ -246,7 +230,7 @@ export default function IndicateursAccueil() {
           </div>
         </Card>
 
-        {/* KPI 9: Taux de transformation */}
+        {/* KPI 8: Taux de transformation */}
         <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-cyan-500/50 shadow-lg">
           <div className="flex items-center gap-2 mb-2">
             <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 p-1.5 rounded-lg flex items-center justify-center">
@@ -258,6 +242,22 @@ export default function IndicateursAccueil() {
             <p className="text-xl font-bold">{data?.tauxTransformationDevis?.tauxTransformation || 0}%</p>
             {data?.tauxTransformationDevis?.nbAcceptes !== undefined && (
               <span className="text-[10px] text-muted-foreground">({data.tauxTransformationDevis.nbAcceptes}/{data.tauxTransformationDevis.nbEnvoyes})</span>
+            )}
+          </div>
+        </Card>
+
+        {/* KPI 9: Délai moyen (NON soumis au filtre période) */}
+        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-teal-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-1.5 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xs">⏱️</span>
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">Délai moyen d'un dossier</p>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <p className="text-xl font-bold">{data?.delaiDossierFacture?.delaiMoyen || 0}j</p>
+            {data?.delaiDossierFacture?.nbFactures !== undefined && (
+              <span className="text-[10px] text-muted-foreground">({data.delaiDossierFacture.nbFactures})</span>
             )}
           </div>
         </Card>
