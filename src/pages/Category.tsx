@@ -9,6 +9,7 @@ import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info
 import * as Icons from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { useFilteredBlocks } from '@/hooks/use-permissions';
 import {
   Accordion,
   AccordionContent,
@@ -105,13 +106,16 @@ export default function Category() {
     [blocks]
   );
   
-  // Mémoriser sections pour éviter les recalculs qui causent des scrolls
-  const sections = useMemo(() => 
+  // Mémoriser sections avec FILTRAGE PAR PERMISSIONS
+  const allSections = useMemo(() => 
     blocks
       .filter(b => b.type === 'section' && b.parentId === category?.id)
       .sort((a, b) => a.order - b.order),
     [blocks, category?.id]
   );
+
+  // FILTRAGE PAR PERMISSIONS - DENY PAR DÉFAUT
+  const sections = isEditMode && isAdmin ? allSections : useFilteredBlocks(allSections);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
