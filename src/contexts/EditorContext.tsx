@@ -31,6 +31,10 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { isAdmin, user } = useAuth();
 
+  // Cache avec TTL de 5 minutes
+  const CACHE_KEY = 'apogee_blocks_cache';
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
   // Load data from Supabase when user is available
   useEffect(() => {
     const initData = async () => {
@@ -42,6 +46,24 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       }
 
       console.log('🔄 Chargement depuis Supabase pour l\'utilisateur', user.id);
+
+      // Vérifier le cache d'abord
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          const age = Date.now() - timestamp;
+          
+          if (age < CACHE_TTL) {
+            console.log(`⚡ Chargement depuis cache (${Math.round(age / 1000)}s)`);
+            setBlocks(data);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Erreur lecture cache:', e);
+      }
 
       try {
         // First load metadata without content to avoid timeout
@@ -93,6 +115,17 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           }));
 
           setBlocks(transformedBlocks);
+          
+          // Sauvegarder dans le cache
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({
+              data: transformedBlocks,
+              timestamp: Date.now()
+            }));
+          } catch (e) {
+            console.warn('Erreur sauvegarde cache:', e);
+          }
+          
           console.log(`⚡ ${transformedBlocks.length} blocks chargés depuis Supabase`);
         } else {
           setBlocks([]);
@@ -345,6 +378,15 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   }, [isAdmin, toast]);
 
   const reloadBlocks = useCallback(async () => {
+    setLoading(true);
+    
+    // Invalider le cache
+    try {
+      localStorage.removeItem(CACHE_KEY);
+    } catch (e) {
+      console.warn('Erreur suppression cache:', e);
+    }
+
     try {
       const { data, error } = await supabase
         .from('blocks')
@@ -365,10 +407,26 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           icon: block.icon,
           colorPreset: block.color_preset,
           hideFromSidebar: block.hide_from_sidebar || false,
+          hideTitle: block.hide_title || false,
           attachments: block.attachments || [],
+          contentType: block.content_type || 'section',
+          tipsType: block.tips_type,
+          summary: block.summary || '',
+          showSummary: block.show_summary !== false,
         }));
 
         setBlocks(transformedBlocks);
+        
+        // Mettre à jour le cache
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+            data: transformedBlocks,
+            timestamp: Date.now()
+          }));
+        } catch (e) {
+          console.warn('Erreur sauvegarde cache:', e);
+        }
+        
         console.log(`🔄 ${transformedBlocks.length} blocks rechargés`);
       }
     } catch (error) {
@@ -378,6 +436,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         description: 'Impossible de recharger les données',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
   }, [toast]);
 
