@@ -1324,101 +1324,91 @@ export const calculateTauxTransformationDevis = (
 // ====================================================================
 
 /**
- * Parser pour les dates françaises "dd/MM/yyyy HH:mm:ss"
+ * Parser pour les dates françaises "dd/MM/yyyy HH:mm:ss" depuis l'historique
  */
-function parseFrenchDate(dateStr: string): Date | null {
+function parseFrHistoryDate(dateStr: string): Date | null {
   if (!dateStr) return null;
-  
-  const [d, m, rest] = dateStr.split("/");
-  if (!d || !m || !rest) return null;
-  
-  const [y, time] = rest.split(" ");
-  if (!y) return null;
-  
-  const isoStr = `${y}-${m}-${d}${time ? "T" + time : ""}`;
-  const date = new Date(isoStr);
-  
-  return isNaN(date.getTime()) ? null : date;
+  // "15/05/2025 11:00:01"
+  const [dPart, tPart] = dateStr.split(" ");
+  if (!dPart || !tPart) return null;
+
+  const [dayStr, monthStr, yearStr] = dPart.split("/");
+  const [hourStr, minStr, secStr] = tPart.split(":");
+
+  const day = Number(dayStr);
+  const month = Number(monthStr) - 1; // JS: mois 0-11
+  const year = Number(yearStr);
+  const hour = Number(hourStr);
+  const minute = Number(minStr);
+  const second = Number(secStr);
+
+  if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) return null;
+
+  return new Date(year, month, day, hour, minute, second);
+}
+
+/**
+ * Calcul du délai pour un projet entre création et premier "Devis envoyé"
+ */
+function getDelayCreationToFirstDevisSent(project: any): number | null {
+  const createdAt = project.created_at ? new Date(project.created_at) : null;
+  if (!createdAt || isNaN(createdAt.getTime())) return null;
+
+  const history = project.data?.history ?? [];
+
+  // On prend le PREMIER événement dont le label contient "Devis envoyé"
+  const devisEvent = history.find((h: any) =>
+    (h.labelKind || "").toLowerCase().includes("devis envoyé".toLowerCase())
+  );
+
+  if (!devisEvent) return null;
+
+  const dateDevis = parseFrHistoryDate(devisEvent.dateModif);
+  if (!dateDevis || isNaN(dateDevis.getTime())) return null;
+
+  const diffMs = dateDevis.getTime() - createdAt.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+  // On ignore les valeurs négatives ou aberrantes
+  if (diffDays < 0) return null;
+
+  return diffDays;
 }
 
 /**
  * Calculer le délai moyen entre ouverture dossier et envoi du premier devis
- * BASÉ SUR apiGetDevis.history (pas intervention.history)
+ * BASÉ SUR project.data.history (événement "Devis envoyé")
  */
 export function calculateDelaiMoyenDossierPremierDevis(
   projects: any[],
-  devis: any[]
+  _devis: any[] // Non utilisé dans cette version
 ): { delaiMoyen: number; nbDossiers: number } {
-  console.log("📊 KPI 16 - Nb projets:", projects.length);
-  console.log("📊 KPI 16 - Nb devis:", devis.length);
+  const deltas: number[] = [];
 
-  const delais: number[] = [];
-
-  // Pour chaque projet, chercher son premier devis envoyé
   for (const project of projects) {
-    const dateCreation = new Date(project.created_at || project.date);
-    if (isNaN(dateCreation.getTime())) continue;
+    // éventuel filtre : on ignore les annulés
+    if (project.state === "canceled") continue;
 
-    // Trouver les devis de ce projet
-    const devisProjet = devis.filter(d => d.projectId === project.id);
-    if (devisProjet.length === 0) continue;
-
-    // Chercher la première date d'envoi dans l'historique des devis
-    let firstSent: Date | null = null;
-
-    for (const d of devisProjet) {
-      const history = d.history ?? d.data?.history ?? [];
-      
-      for (const h of history) {
-        const labelKind = (h.labelKind || "").toLowerCase();
-        
-        // Chercher les événements d'envoi de devis
-        if (['devis envoyé', 'devis emis', 'envoyé', 'sent'].some(keyword => labelKind.includes(keyword))) {
-          // Essayer plusieurs champs de date
-          const rawDate = h.date || h.dateModif || h.created_at;
-          if (!rawDate) continue;
-
-          let eventDate: Date | null = null;
-          
-          // Si c'est une date française, parser
-          if (typeof rawDate === 'string' && rawDate.includes('/')) {
-            eventDate = parseFrenchDate(rawDate);
-          } else {
-            eventDate = new Date(rawDate);
-          }
-          
-          if (!eventDate || isNaN(eventDate.getTime())) continue;
-
-          if (!firstSent || eventDate < firstSent) {
-            firstSent = eventDate;
-          }
-        }
-      }
-    }
-
-    // Si on a trouvé une date d'envoi et qu'elle est après la création
-    if (firstSent && firstSent > dateCreation) {
-      const diff = (firstSent.getTime() - dateCreation.getTime()) / (1000 * 60 * 60 * 24);
-      if (diff >= 0 && diff < 10000) {
-        delais.push(diff);
-        console.log(`📊 KPI 16 - Projet ${project.id}: délai = ${diff.toFixed(1)} jours`);
-      }
-    }
+    const delay = getDelayCreationToFirstDevisSent(project);
+    if (delay !== null) deltas.push(delay);
   }
 
-  console.log("📊 KPI 16 - Projets avec délai calculé:", delais.length);
-  if (delais.length > 0) {
-    console.log("📊 KPI 16 - Exemples de délais:", delais.slice(0, 5).map(d => d.toFixed(1)));
+  console.log("📊 KPI 16 - Projets analysés:", projects.length);
+  console.log("📊 KPI 16 - Projets avec délai calculé:", deltas.length);
+  if (deltas.length > 0) {
+    console.log("📊 KPI 16 - Exemples de délais:", deltas.slice(0, 5).map(d => d.toFixed(1)));
   }
 
-  if (delais.length === 0) {
+  if (deltas.length === 0) {
     return { delaiMoyen: 0, nbDossiers: 0 };
   }
 
-  const moyenne = delais.reduce((a, b) => a + b, 0) / delais.length;
+  const sum = deltas.reduce((a, b) => a + b, 0);
+  const avg = sum / deltas.length;
 
+  // KPI au jour près (arrondi)
   return {
-    delaiMoyen: Number(moyenne.toFixed(1)),
-    nbDossiers: delais.length
+    delaiMoyen: Math.round(avg),
+    nbDossiers: deltas.length
   };
 }
