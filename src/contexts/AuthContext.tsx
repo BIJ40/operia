@@ -213,13 +213,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return true;
     }
     
-    // Si l'utilisateur n'a pas de rôle agence, accès accordé par défaut (utilisateur normal sans restriction)
+    // Si l'utilisateur n'a pas de rôle agence, on ne lui donne pas d'accès fin par défaut
     if (!roleAgence) {
-      console.log('✅ Accès accordé (pas de role_agence - utilisateur sans restriction)');
-      return true;
+      console.log('❌ Accès REFUSÉ (pas de role_agence)');
+      return false;
     }
     
-    // DENY PAR DÉFAUT : Si l'utilisateur a un rôle, il DOIT avoir une permission explicite
+    // Pas de blockId = pas d'accès
+    if (!blockId) {
+      console.log('❌ Accès REFUSÉ (pas de blockId)');
+      return false;
+    }
+    
+    // DENY par défaut : si le blockId n'est pas dans la liste → accès refusé
     const hasPermission = userPermissions.includes(blockId);
     
     if (!hasPermission) {

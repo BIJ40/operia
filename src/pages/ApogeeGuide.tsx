@@ -437,7 +437,7 @@ export default function ApogeeGuide() {
             {filteredCategories.map(category => {
               const Icon = IconComponent(category.icon || 'BookOpen');
               const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
-              const isLocked = isBlockLocked(category.id, blocks);
+              const isLocked = isBlockLocked(category.id);
               
               if (isLocked) {
                 return (
