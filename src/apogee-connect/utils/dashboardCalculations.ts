@@ -952,6 +952,118 @@ export const calculateTauxDossiersMultiTechniciens = (
 };
 
 // ====================================================================
+// KPI 15 - POLYVALENCE RÉELLE DES TECHNICIENS (UNIVERS)
+// ====================================================================
+
+export const calculatePolyvalenceTechniciens = (
+  interventions: any[],
+  projects: any[],
+  users: any[]
+): { polyvalenceMoyenne: number; nbTechniciens: number; detailsTechs: Array<{ techId: string; nom: string; nbUnivers: number }> } => {
+  
+  // 1) Créer un index des projets pour accès rapide
+  const projectsMap: Record<string, any> = {};
+  for (const project of projects) {
+    const id = project.id || project.data?.id;
+    if (id) {
+      projectsMap[id] = project;
+    }
+  }
+  
+  // 2) Construire un Set d'univers par technicien
+  const setUniversParTech: Record<string, Set<string>> = {};
+  
+  for (const intervention of interventions) {
+    const projectId = intervention.projectId || intervention.data?.projectId;
+    if (!projectId) continue;
+    
+    const project = projectsMap[projectId];
+    if (!project) continue;
+    
+    const universes = project.universes || project.data?.universes || [];
+    if (universes.length === 0) continue;
+    
+    // Liste des techniciens impliqués
+    const techsImpliques = new Set<string>();
+    
+    // Tech principal
+    const userId = intervention.userId || intervention.data?.userId;
+    if (userId) {
+      techsImpliques.add(userId);
+    }
+    
+    // Techs des visites
+    const visites = intervention.visites || [];
+    for (const visite of visites) {
+      const usersIds = visite.usersIds || [];
+      for (const techId of usersIds) {
+        if (techId) {
+          techsImpliques.add(techId);
+        }
+      }
+    }
+    
+    // Pour chaque tech, ajouter tous les univers du projet
+    for (const techId of techsImpliques) {
+      if (!setUniversParTech[techId]) {
+        setUniversParTech[techId] = new Set<string>();
+      }
+      
+      for (const univers of universes) {
+        if (univers) {
+          setUniversParTech[techId].add(univers);
+        }
+      }
+    }
+  }
+  
+  // 3) Créer un index des users pour récupérer les noms
+  const usersMap: Record<string, any> = {};
+  for (const user of users) {
+    const id = user.id || user.data?.id;
+    if (id) {
+      usersMap[id] = user;
+    }
+  }
+  
+  // 4) Calculer le nombre d'univers par tech et la moyenne
+  const detailsTechs: Array<{ techId: string; nom: string; nbUnivers: number }> = [];
+  let totalUnivers = 0;
+  
+  for (const techId in setUniversParTech) {
+    const nbUnivers = setUniversParTech[techId].size;
+    totalUnivers += nbUnivers;
+    
+    const user = usersMap[techId];
+    const firstname = user?.firstname || user?.data?.firstname || "";
+    const lastname = user?.lastname || user?.data?.lastname || "";
+    const nom = `${firstname} ${lastname}`.trim() || techId;
+    
+    detailsTechs.push({ techId, nom, nbUnivers });
+  }
+  
+  // Trier par nombre d'univers décroissant
+  detailsTechs.sort((a, b) => b.nbUnivers - a.nbUnivers);
+  
+  const nbTechniciens = detailsTechs.length;
+  const polyvalenceMoyenne = nbTechniciens > 0
+    ? totalUnivers / nbTechniciens
+    : 0;
+  
+  console.log("📊 KPI 15 - Polyvalence Techniciens:", {
+    polyvalenceMoyenne: Math.round(polyvalenceMoyenne * 10) / 10,
+    nbTechniciens,
+    top5: detailsTechs.slice(0, 5)
+  });
+  
+  return {
+    polyvalenceMoyenne: Math.round(polyvalenceMoyenne * 10) / 10,
+    nbTechniciens,
+    detailsTechs
+  };
+};
+
+// ====================================================================
 // KPI 8 - PANIER MOYEN PAR DOSSIER FACTURÉ
 // ====================================================================
 
