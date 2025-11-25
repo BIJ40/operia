@@ -1,22 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgencyKpis } from '@/hooks/use-metrics';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TrendingUp, FileText, Wrench, Euro, RefreshCw } from 'lucide-react';
+import { TrendingUp, FileText, Wrench, Euro, RefreshCw, BarChart3, Target, Users, AlertCircle, Package } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
+import { PeriodSelector } from '@/components/dashboard/PeriodSelector';
+import { KpiTile } from '@/components/dashboard/KpiTile';
 
 export default function MyIndicators() {
   const { isAuthenticated, user, hasAccessToScope } = useAuth();
-  const { data, isLoading, isError, error, refetch } = useAgencyKpis({ period: 'month' });
+  const [period, setPeriod] = useState<'day' | 'yesterday' | 'week' | 'month' | 'year' | 'rolling12'>('month');
+  const { data, isLoading, isError, error, refetch } = useAgencyKpis({ period });
 
   useEffect(() => {
     if (isAuthenticated && user) {
       refetch();
     }
-  }, [isAuthenticated, user, refetch]);
+  }, [isAuthenticated, user, period, refetch]);
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -33,27 +35,35 @@ export default function MyIndicators() {
     }).format(value);
   };
 
+  const getPeriodLabel = (p: string) => {
+    const labels = {
+      day: 'Aujourd\'hui',
+      yesterday: 'Hier',
+      week: 'Semaine en cours',
+      month: 'Mois en cours',
+      year: 'Année en cours',
+      rolling12: '12 mois glissants'
+    };
+    return labels[p as keyof typeof labels] || p;
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between mb-6">
+      {/* En-tête avec sélecteur de période */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
             Mes indicateurs
           </h1>
           {data && (
             <p className="text-muted-foreground mt-2">
-              Agence {data.agency.label} - {data.period.type === 'month' ? 'Mois en cours' : 'Année en cours'}
+              Agence {data.agency.label} - {getPeriodLabel(period)}
             </p>
           )}
         </div>
-        <Button 
-          onClick={refetch} 
-          disabled={isLoading}
-          className="bg-gradient-to-r from-primary to-helpconfort-blue-dark hover:from-primary/90 hover:to-helpconfort-blue-dark/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          Actualiser
-        </Button>
+        <div className="flex items-center gap-4">
+          <PeriodSelector value={period} onChange={setPeriod} />
+        </div>
       </div>
 
       {isError && (
@@ -64,103 +74,160 @@ export default function MyIndicators() {
         </Alert>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* CA du mois */}
-        <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-foreground">CA du mois</CardTitle>
-            <div className="p-2 rounded-full bg-accent/20">
-              <Euro className="h-5 w-5 text-accent" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-10 w-full rounded-lg" />
-            ) : (
-              <>
-                <div className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-                  {data ? formatCurrency(data.kpis.ca_month) : '-'}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Chiffre d'affaires du mois en cours
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+      {/* Bandeau de 12 tuiles de pilotage */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {/* CA Période */}
+        <KpiTile
+          title="CA Période"
+          value={data ? formatCurrency(data.kpis.ca_period) : '-'}
+          subtitle="Chiffre d'affaires de la période"
+          icon={Euro}
+          isLoading={isLoading}
+        />
 
-        {/* CA de l'année */}
-        <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-foreground">CA de l'année</CardTitle>
-            <div className="p-2 rounded-full bg-accent/20">
-              <TrendingUp className="h-5 w-5 text-accent" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-10 w-full rounded-lg" />
-            ) : (
-              <>
-                <div className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-                  {data ? formatCurrency(data.kpis.ca_year) : '-'}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Chiffre d'affaires cumulé de l'année
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        {/* CA Année */}
+        <KpiTile
+          title="CA Année"
+          value={data ? formatCurrency(data.kpis.ca_year) : '-'}
+          subtitle="Chiffre d'affaires annuel cumulé"
+          icon={TrendingUp}
+          isLoading={isLoading}
+        />
 
-        {/* Nombre de factures */}
-        <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-foreground">Factures du mois</CardTitle>
-            <div className="p-2 rounded-full bg-accent/20">
-              <FileText className="h-5 w-5 text-accent" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-10 w-full rounded-lg" />
-            ) : (
-              <>
-                <div className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-                  {data ? data.kpis.invoices_count_month : '-'}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Nombre de factures émises ce mois
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        {/* Factures */}
+        <KpiTile
+          title="Factures"
+          value={data ? data.kpis.invoices_count : '-'}
+          subtitle="Nombre de factures émises"
+          icon={FileText}
+          isLoading={isLoading}
+        />
 
-        {/* Nombre d'interventions */}
-        <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-foreground">Interventions du mois</CardTitle>
-            <div className="p-2 rounded-full bg-accent/20">
-              <Wrench className="h-5 w-5 text-accent" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-10 w-full rounded-lg" />
-            ) : (
-              <>
-                <div className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-                  {data ? data.kpis.interventions_count_month : '-'}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Nombre d'interventions réalisées
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        {/* Interventions */}
+        <KpiTile
+          title="Interventions"
+          value={data ? data.kpis.interventions_count : '-'}
+          subtitle="Nombre d'interventions réalisées"
+          icon={Wrench}
+          isLoading={isLoading}
+        />
+
+        {/* Devis */}
+        <KpiTile
+          title="Devis"
+          value={data ? data.kpis.devis_count : '-'}
+          subtitle="Nombre de devis émis"
+          icon={Package}
+          isLoading={isLoading}
+        />
+
+        {/* Projets */}
+        <KpiTile
+          title="Projets"
+          value={data ? data.kpis.projects_count : '-'}
+          subtitle="Nombre de nouveaux projets"
+          icon={BarChart3}
+          isLoading={isLoading}
+        />
+
+        {/* Facture moyenne */}
+        <KpiTile
+          title="Facture Moyenne"
+          value={data ? formatCurrency(data.kpis.avg_invoice) : '-'}
+          subtitle="Montant moyen par facture"
+          icon={Target}
+          isLoading={isLoading}
+        />
+
+        {/* Projet moyen */}
+        <KpiTile
+          title="Projet Moyen"
+          value={data ? formatCurrency(data.kpis.avg_project) : '-'}
+          subtitle="CA moyen par projet"
+          icon={Target}
+          isLoading={isLoading}
+        />
+
+        {/* Taux de conversion */}
+        <KpiTile
+          title="Taux de Conversion"
+          value={data ? `${data.kpis.conversion_rate}%` : '-'}
+          subtitle="Devis transformés en factures"
+          icon={TrendingUp}
+          isLoading={isLoading}
+        />
+
+        {/* SAV */}
+        <KpiTile
+          title="Interventions SAV"
+          value={data ? data.kpis.sav_count : '-'}
+          subtitle={`${data?.kpis.sav_percentage || 0}% des interventions`}
+          icon={AlertCircle}
+          isLoading={isLoading}
+        />
+
+        {/* Techniciens actifs */}
+        <KpiTile
+          title="Techniciens Actifs"
+          value={data ? data.kpis.active_technicians : '-'}
+          subtitle="Techniciens ayant intervenu"
+          icon={Users}
+          isLoading={isLoading}
+        />
+
+        {/* Placeholder 12ème tuile - à définir */}
+        <KpiTile
+          title="Indicateur personnalisé"
+          value={'-'}
+          subtitle="À définir"
+          icon={BarChart3}
+          isLoading={isLoading}
+        />
       </div>
+
+      {/* Sections à venir : Graphiques, CA par univers, Apporteurs, Techniciens */}
+      {!isLoading && data && (
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Placeholder pour graphiques */}
+          <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-foreground">Graphiques</CardTitle>
+              <CardDescription>Évolutions et répartitions - À venir</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 flex items-center justify-center text-muted-foreground">
+                Graphiques en développement
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Placeholder pour apporteurs */}
+          <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-foreground">Apporteurs</CardTitle>
+              <CardDescription>Top apporteurs - À venir</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 flex items-center justify-center text-muted-foreground">
+                Section apporteurs en développement
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Placeholder pour techniciens */}
+          <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-foreground">Techniciens</CardTitle>
+              <CardDescription>Performance techniciens - À venir</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 flex items-center justify-center text-muted-foreground">
+                Section techniciens en développement
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {!isLoading && !data && !isError && (
         <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl">
