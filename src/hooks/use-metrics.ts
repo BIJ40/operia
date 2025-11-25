@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface AgencyKpis {
+export interface KpiData {
   agency: {
     slug: string;
     label: string;
@@ -12,65 +12,59 @@ export interface AgencyKpis {
     end: string;
   };
   kpis: {
-    ca_month: number;
+    ca_period: number;
     ca_year: number;
-    invoices_count_month: number;
-    interventions_count_month: number;
+    invoices_count: number;
+    interventions_count: number;
+    devis_count: number;
+    projects_count: number;
+    avg_invoice: number;
+    avg_project: number;
+    conversion_rate: number;
+    sav_count: number;
+    sav_percentage: number;
+    active_technicians: number;
+  };
+  details: {
+    ca_by_universe: Array<{ universe: string; amount: number }>;
+    ca_by_apporteur_type: Array<{ type: string; amount: number }>;
+    ca_by_technician: Array<{ name: string; amount: number; interventions: number }>;
+    invoices_history: Array<{ date: string; amount: number }>;
+    apporteurs: Array<{ name: string; ca: number; projects: number; type: string }>;
+    technicians: Array<{
+      name: string;
+      ca: number;
+      interventions: number;
+      sav: number;
+      universes: Array<{ universe: string; amount: number }>;
+    }>;
   };
 }
 
-interface UseAgencyKpisOptions {
-  period?: 'month' | 'year';
+interface UseAgencyKpisParams {
+  period?: 'day' | 'yesterday' | 'week' | 'month' | 'year' | 'rolling12';
 }
 
-interface UseAgencyKpisReturn {
-  data: AgencyKpis | null;
-  isLoading: boolean;
-  isError: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-}
-
-export function useAgencyKpis(options?: UseAgencyKpisOptions): UseAgencyKpisReturn {
-  const [data, setData] = useState<AgencyKpis | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchKpis = useCallback(async () => {
-    setIsLoading(true);
-    setIsError(false);
-    setError(null);
-
-    try {
-      const { data: result, error: invokeError } = await supabase.functions.invoke('get-kpis', {
-        body: { period: options?.period || 'month' },
+export function useAgencyKpis({ period = 'month' }: UseAgencyKpisParams = {}) {
+  return useQuery<KpiData>({
+    queryKey: ['agency-kpis', period],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('get-kpis', {
+        body: { period },
       });
 
-      if (invokeError) {
-        throw new Error(invokeError.message);
+      if (error) {
+        console.error('Error fetching KPIs:', error);
+        throw error;
       }
 
-      if (result.error) {
-        throw new Error(result.error);
+      if (data.error) {
+        throw new Error(data.error);
       }
 
-      setData(result as AgencyKpis);
-    } catch (err) {
-      const errorObj = err instanceof Error ? err : new Error('Unknown error');
-      setError(errorObj);
-      setIsError(true);
-      console.error('[use-metrics] Error fetching KPIs:', errorObj);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [options?.period]);
-
-  return {
-    data,
-    isLoading,
-    isError,
-    error,
-    refetch: fetchKpis,
-  };
+      return data;
+    },
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 }
