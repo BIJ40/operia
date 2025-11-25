@@ -4,6 +4,7 @@ import { User } from '@supabase/supabase-js';
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isAuthLoading: boolean;
   isAdmin: boolean;
   isSupport: boolean;
   user: User | null;
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [agence, setAgence] = useState<string | null>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          setIsAuthLoading(true);
           // Check if user is admin or support
           setTimeout(async () => {
             const { data: roles } = await supabase
@@ -70,6 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
               setUserPermissions(permissions?.map(p => p.block_id) || []);
             }
+            
+            setIsAuthLoading(false);
           }, 0);
         } else {
           setIsAdmin(false);
@@ -78,9 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRoleAgence(null);
           setAgence(null);
           setUserPermissions([]);
+          setIsAuthLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
@@ -89,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
+        setIsAuthLoading(true);
         // Check if user is admin or support
         supabase
           .from('user_roles')
@@ -121,10 +125,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setUserPermissions(permissions?.map(p => p.block_id) || []);
             }
 
-            setLoading(false);
+            setIsAuthLoading(false);
           });
       } else {
-        setLoading(false);
+        setIsAuthLoading(false);
       }
     });
 
@@ -241,33 +245,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return userPermissions.length === 0 || userPermissions.includes(scope);
   };
 
-  if (loading) {
-    // Afficher l'application même pendant le chargement, en considérant l'utilisateur comme non connecté
   return (
     <AuthContext.Provider value={{ 
-      isAuthenticated: !!user, 
-      isAdmin,
-      isSupport,
-      user,
-      mustChangePassword,
-      roleAgence,
-      agence,
-      userPermissions,
-      isLoggingOut,
-      hasAccessToBlock,
-      hasAccessToScope,
-      login, 
-      logout,
-      signup 
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-  return (
-    <AuthContext.Provider value={{ 
-      isAuthenticated: !!user, 
+      isAuthenticated: !!user,
+      isAuthLoading,
       isAdmin,
       isSupport,
       user,

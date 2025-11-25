@@ -12,12 +12,13 @@ interface Agency {
 interface AgencyContextType {
   currentAgency: Agency | null;
   agencyChangeCounter: number;
+  isAgencyReady: boolean;
 }
 
 const AgencyContext = createContext<AgencyContextType | undefined>(undefined);
 
 export function AgencyProvider({ children }: { children: ReactNode }) {
-  const { agence } = useAuth();
+  const { agence, isAuthLoading } = useAuth();
   
   // Construire l'agence à partir du profil utilisateur
   const currentAgency: Agency | null = agence 
@@ -29,19 +30,31 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
     : null;
 
   useEffect(() => {
+    // Ne rien faire tant que l'authentification charge
+    if (isAuthLoading) {
+      console.log('⏳ Authentification en cours - Attente avant configuration API');
+      return;
+    }
+
+    // Auth OK mais aucune agence
+    if (!agence) {
+      console.warn('⚠️ Aucune agence définie pour l\'utilisateur - BASE_URL ne sera pas initialisée');
+      setApiBaseUrl("");
+      return;
+    }
+
+    // Auth OK et agence présente
     if (currentAgency?.baseUrl) {
       console.log(`🏢 Configuration de l'agence: ${currentAgency.id}`);
       setApiBaseUrl(currentAgency.baseUrl);
-      // Vider le cache pour forcer le rechargement des données
       DataService.clearCache();
-    } else {
-      console.log('⚠️ Aucune agence définie - Appels API bloqués');
-      setApiBaseUrl(""); // Réinitialiser BASE_URL
     }
-  }, [currentAgency?.id]);
+  }, [isAuthLoading, agence, currentAgency?.baseUrl]);
+
+  const isAgencyReady = !isAuthLoading && !!agence;
 
   return (
-    <AgencyContext.Provider value={{ currentAgency, agencyChangeCounter: 0 }}>
+    <AgencyContext.Provider value={{ currentAgency, agencyChangeCounter: 0, isAgencyReady }}>
       {children}
     </AgencyContext.Provider>
   );

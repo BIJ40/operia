@@ -15,12 +15,12 @@ import { MonthlyCAChart } from "@/apogee-connect/components/widgets/MonthlyCACha
 export default function IndicateursAccueil() {
   const { filters } = useFilters();
   const { isApiEnabled } = useApiToggle();
-  const { agencyChangeCounter, currentAgency } = useAgency();
+  const { agencyChangeCounter, currentAgency, isAgencyReady } = useAgency();
   const userAgency = currentAgency?.id || "";
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["kpis-overview", filters, isApiEnabled, agencyChangeCounter],
-    enabled: !!currentAgency?.id, // Ne lancer la query que si l'agence est définie
+    enabled: isAgencyReady && isApiEnabled,
     queryFn: async () => {
       // GUARD: Ne pas charger si l'agence n'est pas définie
       if (!currentAgency?.id) {
@@ -62,10 +62,10 @@ export default function IndicateursAccueil() {
     },
   });
 
-  if (!currentAgency?.id) {
+  if (!isAgencyReady) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-        <p className="text-2xl text-muted-foreground animate-pulse">Chargement de l'agence...</p>
+        <p className="text-2xl text-muted-foreground animate-pulse">Chargement de vos données d'agence...</p>
       </div>
     );
   }
