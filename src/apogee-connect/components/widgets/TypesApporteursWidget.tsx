@@ -161,13 +161,13 @@ export const TypesApporteursWidget = ({ data, loading, mode = "full" }: TypesApp
       </div>
 
       {/* Graphique global */}
-      <div className="flex justify-center h-full">
-        <Card className="max-w-2xl w-full h-full">
+      <div className="flex justify-center">
+        <Card className="max-w-2xl w-full">
           <CardHeader>
             <CardTitle className="text-base">Répartition du CA par type</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={260}>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis 
