@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Shield, Check, X } from 'lucide-react';
 
 interface Permission {
@@ -13,16 +13,16 @@ interface Permission {
   can_access: boolean;
 }
 
-interface CategoryPermission {
-  id: string;
-  name: string;
-  slug: string;
-}
-
 const AVAILABLE_ROLES = [
   { value: 'dirigeant', label: 'Dirigeant(e)' },
   { value: 'assistant(e)', label: 'Assistant(e)' },
   { value: 'commercial', label: 'Commercial' },
+];
+
+const MAIN_CATEGORIES = [
+  { id: 'guide_apogee', name: 'Guide Apogée' },
+  { id: 'guide_apporteurs', name: 'Guide Apporteurs' },
+  { id: 'base_helpconfort', name: 'Base HelpConfort' },
 ];
 
 export default function AdminRolePermissions() {
@@ -30,84 +30,26 @@ export default function AdminRolePermissions() {
   const { toast } = useToast();
   const [selectedRole, setSelectedRole] = useState<string>('dirigeant');
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<CategoryPermission[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
 
   useEffect(() => {
     if (isAdmin) {
-      loadCategories();
-    }
-  }, [isAdmin]);
-
-  useEffect(() => {
-    if (isAdmin && categories.length > 0) {
       loadPermissions();
     }
-  }, [selectedRole, categories.length]);
+  }, [isAdmin, selectedRole]);
 
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
 
-  const loadCategories = async () => {
-    setLoading(true);
-    try {
-      // Charger les catégories principales uniquement
-      const { data: blocksData, error: blocksError } = await supabase
-        .from('blocks')
-        .select('id, title, slug')
-        .eq('type', 'category')
-        .is('parent_id', null)
-        .order('order', { ascending: true });
-
-      if (blocksError) throw blocksError;
-
-      const { data: apporteurData, error: apporteurError } = await supabase
-        .from('apporteur_blocks')
-        .select('id, title, slug')
-        .eq('type', 'category')
-        .is('parent_id', null)
-        .order('order', { ascending: true });
-
-      if (apporteurError) throw apporteurError;
-
-      const allCategories: CategoryPermission[] = [
-        ...(blocksData || []).filter(b => !b.slug.startsWith('helpconfort-')).map(b => ({
-          id: b.id,
-          name: b.title,
-          slug: b.slug
-        })),
-        ...(apporteurData || []).map(b => ({
-          id: b.id,
-          name: b.title,
-          slug: b.slug
-        })),
-        ...(blocksData || []).filter(b => b.slug.startsWith('helpconfort-')).map(b => ({
-          id: b.id,
-          name: b.title,
-          slug: b.slug
-        }))
-      ];
-
-      setCategories(allCategories);
-    } catch (error) {
-      console.error('Error loading categories:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les catégories',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const loadPermissions = async () => {
+    setLoading(true);
     try {
       const { data: permissionsData, error: permissionsError } = await supabase
         .from('role_permissions')
         .select('*')
-        .eq('role_agence', selectedRole);
+        .eq('role_agence', selectedRole)
+        .in('block_id', MAIN_CATEGORIES.map(c => c.id));
 
       if (permissionsError) throw permissionsError;
 
@@ -119,6 +61,8 @@ export default function AdminRolePermissions() {
         description: 'Impossible de charger les permissions',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -227,7 +171,7 @@ export default function AdminRolePermissions() {
         </p>
         
         <div className="grid grid-cols-1 gap-4">
-          {categories.map(category => {
+          {MAIN_CATEGORIES.map(category => {
             const isAllowed = hasPermission(category.id);
             
             return (
