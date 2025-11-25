@@ -62,6 +62,14 @@ export default function IndicateursAccueil() {
     },
   });
 
+  if (!currentAgency?.id) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <p className="text-2xl text-muted-foreground animate-pulse">Chargement de l'agence...</p>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
@@ -73,7 +81,7 @@ export default function IndicateursAccueil() {
   if (!data) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-        <p className="text-2xl text-muted-foreground">Aucune agence définie - Veuillez vous reconnecter</p>
+        <p className="text-2xl text-muted-foreground">Erreur de chargement des données</p>
       </div>
     );
   }
