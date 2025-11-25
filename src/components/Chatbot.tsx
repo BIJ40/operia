@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { X, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useChatbot } from '@/hooks/use-chatbot';
 import { ChatHistory } from '@/components/chatbot/ChatHistory';
 import { ChatInput } from '@/components/chatbot/ChatInput';
@@ -10,9 +11,12 @@ import { SupportTicketDialog } from '@/components/chatbot/SupportTicketDialog';
 import chatIcon from '@/assets/logo_chat.png';
 
 export function Chatbot() {
+  const { isAdmin, isSupport } = useAuth();
+
+  // Hide chatbot for admins and support
+  if (isAdmin || isSupport) return null;
+
   const {
-    isAdmin,
-    isSupport,
     user,
     isOpen,
     messages,
@@ -51,9 +55,6 @@ export function Chatbot() {
     dragOffset,
     setMessages,
   } = useChatbot();
-
-  // Hide chatbot for admins and support
-  if (isAdmin || isSupport) return null;
 
   // Check for active ticket
   useEffect(() => {

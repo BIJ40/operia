@@ -13,7 +13,7 @@ type Message = {
 };
 
 export const useChatbot = () => {
-  const { isAdmin, isSupport, user } = useAuth();
+  const { user } = useAuth();
   const { blocks } = useEditor();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -288,8 +288,6 @@ export const useChatbot = () => {
   };
 
   return {
-    isAdmin,
-    isSupport,
     user,
     isOpen,
     messages,
