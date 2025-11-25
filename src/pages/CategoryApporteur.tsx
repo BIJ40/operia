@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Lightbulb, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
+import { useFilteredBlocks } from '@/hooks/use-permissions';
 import {
   Accordion,
   AccordionContent,
@@ -81,12 +82,15 @@ export default function CategoryApporteur() {
     [blocks, category.id]
   );
   
-  const sections = useMemo(() => 
+  const allSections = useMemo(() => 
     blocks
       .filter(b => b.type === 'section' && b.parentId === subcategory?.id)
       .sort((a, b) => a.order - b.order),
     [blocks, subcategory?.id]
   );
+
+  // FILTRAGE PAR PERMISSIONS - DENY PAR DÉFAUT
+  const sections = isEditMode && isAdmin ? allSections : useFilteredBlocks(allSections);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
