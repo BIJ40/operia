@@ -320,7 +320,7 @@ export default function Dashboard() {
           <PeriodSelector />
         </div>
 
-        {/* Section KPIs liés à la période - 16 tuiles compactes */}
+        {/* Section KPIs liés à la période - 15 tuiles compactes + 1 placeholder */}
         <div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <TooltipProvider>
@@ -659,25 +659,16 @@ export default function Dashboard() {
               </Tooltip>
             </TooltipProvider>
 
-            {/* KPI 16: Délai dossier → 1er devis */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-amber-500/50">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-1.5 rounded-lg">
-                        <Clock className="w-3.5 h-3.5 text-white" />
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mb-0.5">Dossier → 1er devis</p>
-                    <p className="text-xl font-bold">{(data?.delaiDossierPremierDevis || 0).toFixed(1)} j</p>
-                  </Card>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Délai moyen ouverture → envoi 1er devis</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {/* KPI 16: Placeholder - À définir */}
+            <Card className="p-3 border-2 border-dashed border-muted-foreground/20 bg-muted/10">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="bg-muted p-1.5 rounded-lg">
+                  <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground mb-0.5">KPI à définir</p>
+              <p className="text-xl font-bold text-muted-foreground">-</p>
+            </Card>
           </div>
         </div>
 
