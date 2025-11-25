@@ -1,5 +1,6 @@
-import { Home, Users, Layers, Wrench } from "lucide-react";
+import { Home, Users, Layers, Wrench, ArrowLeft } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { Link } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -20,8 +21,16 @@ const menuItems = [
 export function IndicateursSidebar() {
   return (
     <Sidebar className="border-r border-border bg-background">
-      <SidebarContent className="pt-24">
+      <SidebarContent className="pt-6">
         <SidebarGroup>
+          <Link 
+            to="/"
+            className="mx-2 mb-6 px-4 py-2 text-sm font-semibold bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4 text-primary" />
+            <span>Retour</span>
+          </Link>
+          
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
