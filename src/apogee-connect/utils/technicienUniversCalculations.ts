@@ -164,8 +164,13 @@ export function calculateTechnicienUniversStats(
       // Initialiser le technicien si nécessaire
       if (!stats[techId]) {
         const user = users.find((u) => u.id === techId);
+        const userData = user?.data || user;
+        const firstname = userData?.firstname || user?.firstname || '';
+        const name = userData?.name || user?.name || '';
+        const displayName = firstname && name ? `${firstname} ${name}` : name || firstname || `Technicien ${techId.slice(0, 8)}`;
+        
         stats[techId] = {
-          nom: user?.name || user?.firstName || `Technicien ${techId.slice(0, 8)}`,
+          nom: displayName,
           universes: {},
         };
       }
