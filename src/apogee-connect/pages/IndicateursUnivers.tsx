@@ -4,9 +4,10 @@ import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
-import { calculateUniversStats } from "@/apogee-connect/utils/universCalculations";
+import { calculateUniversStats, calculateMonthlyUniversCA } from "@/apogee-connect/utils/universCalculations";
 import { EnrichmentService } from "@/apogee-connect/services/enrichmentService";
 import { UniversKpiCard } from "@/apogee-connect/components/widgets/UniversKpiCard";
+import { UniversStackedChart } from "@/apogee-connect/components/widgets/UniversStackedChart";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function IndicateursUnivers() {
@@ -30,7 +31,14 @@ export default function IndicateursUnivers() {
         filters.dateRange
       );
       
-      return { stats, universes: EnrichmentService.getAllUniverses() };
+      // Calculer le CA mensuel par univers
+      const monthlyCA = calculateMonthlyUniversCA(
+        rawData.factures,
+        rawData.projects,
+        filters.dateRange
+      );
+      
+      return { stats, monthlyCA, universes: EnrichmentService.getAllUniverses() };
     },
     enabled: isAgencyReady && !isAuthLoading,
   });
@@ -49,6 +57,7 @@ export default function IndicateursUnivers() {
   }
 
   const stats = data?.stats || [];
+  const monthlyCA = data?.monthlyCA || [];
   const universesMap = new Map(
     data?.universes.map(u => [u.slug, u]) || []
   );
@@ -67,6 +76,13 @@ export default function IndicateursUnivers() {
         </div>
         <SecondaryPeriodSelector />
       </div>
+
+      {/* Graphique empilé */}
+      <UniversStackedChart 
+        data={monthlyCA}
+        universes={data?.universes || []}
+        loading={isLoading}
+      />
 
       {/* Grille de 8 tuiles KPI */}
       {isLoading ? (
