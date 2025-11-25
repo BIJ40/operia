@@ -167,46 +167,38 @@ Deno.serve(async (req) => {
     console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetInterventionsCreneaux`);
     console.log(`[get-kpis] Calling Apogée API: ${apiBaseUrl}apiGetDevis`);
 
-    // Fetch all data in parallel
-    const [facturesRes, interventionsRes, projectsRes, clientsRes, creneauxRes, devisRes] = await Promise.all([
-      fetch(`${apiBaseUrl}apiGetFactures`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-      fetch(`${apiBaseUrl}apiGetInterventions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-      fetch(`${apiBaseUrl}apiGetProjects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-      fetch(`${apiBaseUrl}apiGetClients`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-      fetch(`${apiBaseUrl}apiGetInterventionsCreneaux`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-      fetch(`${apiBaseUrl}apiGetDevis`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      }),
-    ]);
+    // Fetch all data (allowing partial failures)
+    const fetchJson = async (url: string, label: string) => {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ API_KEY: apiKey }),
+        });
 
-    const factures = await facturesRes.json();
-    const interventions = await interventionsRes.json();
-    const projects = await projectsRes.json();
-    const clients = await clientsRes.json();
-    const creneaux = await creneauxRes.json();
-    const devis = await devisRes.json();
+        if (!res.ok) {
+          console.error(`[get-kpis] ${label} response not ok:`, res.status, res.statusText);
+          return [];
+        }
+
+        const json = await res.json();
+        const count = Array.isArray(json) ? json.length : 0;
+        console.log(`[get-kpis] ${label} items: ${count}`);
+        return Array.isArray(json) ? json : [];
+      } catch (e) {
+        console.error(`[get-kpis] Error fetching ${label}:`, e);
+        return [];
+      }
+    };
+
+    const [factures, interventions, projects, clients, creneaux, devis] = await Promise.all([
+      fetchJson(`${apiBaseUrl}apiGetFactures`, 'Factures'),
+      fetchJson(`${apiBaseUrl}apiGetInterventions`, 'Interventions'),
+      fetchJson(`${apiBaseUrl}apiGetProjects`, 'Projects'),
+      fetchJson(`${apiBaseUrl}apiGetClients`, 'Clients'),
+      fetchJson(`${apiBaseUrl}apiGetInterventionsCreneaux`, 'Creneaux'),
+      fetchJson(`${apiBaseUrl}apiGetDevis`, 'Devis'),
+    ]);
 
     console.log(`[get-kpis] Data received - Factures: ${factures?.length || 0}, Interventions: ${interventions?.length || 0}, Projects: ${projects?.length || 0}`);
 
