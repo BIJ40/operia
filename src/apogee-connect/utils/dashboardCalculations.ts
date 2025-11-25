@@ -460,6 +460,36 @@ export const calculateDashboardStats = (
   const { nbDevis: devisJour, caDevis } = calculateDevisJour(devis, dateRange, userAgency);
   const { caTotal: caJour, nbFactures: nbFacturesCA } = calculateCaJour(factures, clients, projects, dateRange, userAgency);
   
+  // KPI 6: Délai moyen dossier → facture
+  const { delaiMoyen: delaiMoyenDossier } = calculateDelaiMoyenDossierFacture(factures, projects, dateRange);
+  
+  // KPI 7: Taux dossiers complexes
+  const { tauxComplexite: tauxDossiersComplexes } = calculateTauxDossiersComplexes(interventions, dateRange);
+  
+  // KPI 8: Nb moyen interventions par dossier
+  const { nbMoyen: nbMoyenInterventionsParDossier } = calculateNbMoyenInterventionsParDossier(interventions, dateRange);
+  
+  // KPI 9: Taux transformation devis (envoyés → acceptés)
+  const { tauxTransformation: tauxTransformationDevis } = calculateTauxTransformationDevis(devis, dateRange);
+  
+  // KPI 10: Panier moyen
+  const { panierMoyen } = calculatePanierMoyen(factures, dateRange);
+  
+  // KPI 11: Nb moyen visites par intervention
+  const { nbMoyen: nbMoyenVisitesParIntervention } = calculateNbMoyenVisitesParIntervention(interventions, dateRange);
+  
+  // KPI 12: Taux dossiers multi-univers
+  const { tauxMultiUnivers: tauxDossiersMultiUnivers } = calculateTauxDossiersMultiUnivers(projects, dateRange);
+  
+  // KPI 13: Taux dossiers sans devis
+  const { tauxSansDevis: tauxDossiersSansDevis } = calculateTauxDossiersSansDevis(projects, factures, devis, dateRange);
+  
+  // KPI 14: Taux dossiers multi-techniciens
+  const { tauxMultiTech: tauxDossiersMultiTechniciens } = calculateTauxDossiersMultiTechniciens(interventions, dateRange);
+  
+  // KPI 15: Polyvalence techniciens
+  const { polyvalenceMoyenne: polyvalenceTechniciens } = calculatePolyvalenceTechniciens(interventions, projects, users);
+  
   return {
     dossiersJour,
     rtJour,
@@ -468,6 +498,16 @@ export const calculateDashboardStats = (
     caDevis,
     caJour,
     nbFacturesCA,
+    delaiMoyenDossier,
+    tauxDossiersComplexes,
+    nbMoyenInterventionsParDossier,
+    tauxTransformationDevis,
+    panierMoyen,
+    nbMoyenVisitesParIntervention,
+    tauxDossiersMultiUnivers,
+    tauxDossiersSansDevis,
+    tauxDossiersMultiTechniciens,
+    polyvalenceTechniciens,
     variations: {
       dossiers: calculateVariationDossiers(projects, dateRange, userAgency),
       rt: null, // Non implémenté - null indique l'absence de données
