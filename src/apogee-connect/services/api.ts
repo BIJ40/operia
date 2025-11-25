@@ -1,5 +1,7 @@
 const API_KEY = "HC-0fbff339d2a701e86d63f66c1a8c8bf54";
-let BASE_URL = "https://dax.hc-apogee.fr/api/";
+// BASE_URL sera définie dynamiquement par AgencyContext via setApiBaseUrl
+// IMPORTANT: Ne JAMAIS hardcoder d'URL d'agence ici pour des raisons de sécurité
+let BASE_URL = "";
 
 export function setApiBaseUrl(url: string) {
   BASE_URL = url;
@@ -44,9 +46,17 @@ export const api = {
   getFactures: (filters?: Record<string, any>) => apiCall("apiGetFactures", filters),
   getDevis: (filters?: Record<string, any>) => apiCall("apiGetDevis", filters),
   getInterventionsCreneaux: async (filters?: Record<string, any>) => {
-    // Endpoint spécial avec URL différente
+    // CRITIQUE: Utiliser BASE_URL (définie par AgencyContext) pour l'agence de l'utilisateur
+    // Ne JAMAIS hardcoder l'URL d'une agence spécifique
+    if (!BASE_URL) {
+      console.warn(`⚠️ BASE_URL non définie - impossible d'appeler getInterventionsCreneaux`);
+      return [];
+    }
+    
     try {
-      const response = await fetch("https://dax.hc-apogee.fr/getInterventionsCreneaux", {
+      // Construire l'URL depuis BASE_URL (qui contient déjà l'agence)
+      const baseUrlWithoutApi = BASE_URL.replace('/api/', '/');
+      const response = await fetch(`${baseUrlWithoutApi}getInterventionsCreneaux`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
