@@ -193,119 +193,160 @@ export default function IndicateursAccueil() {
           {/* 8 KPI Temporels */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* KPI 1: Dossiers reçus */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-blue-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
-                  <FolderOpen className="w-3.5 h-3.5 text-white" />
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-blue-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
+                    <FolderOpen className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Dossiers reçus</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Dossiers reçus</p>
+                <p className="text-xl font-bold">{data?.dossiersJour || 0}</p>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Nombre de dossiers créés sur la période sélectionnée.
               </div>
-              <p className="text-xl font-bold">{data?.dossiersJour || 0}</p>
-            </Card>
+            </div>
 
             {/* KPI 2: RT réalisés */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-green-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
-                  <ClipboardCheck className="w-3.5 h-3.5 text-white" />
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-green-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
+                    <ClipboardCheck className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">RT réalisés</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">RT réalisés</p>
+                <p className="text-xl font-bold">{data?.rtJour || 0}</p>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Nombre de relevés techniques réalisés sur la période.
               </div>
-              <p className="text-xl font-bold">{data?.rtJour || 0}</p>
-            </Card>
+            </div>
 
             {/* KPI 3: Devis émis */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-purple-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
-                  <FileText className="w-3.5 h-3.5 text-white" />
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-purple-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
+                    <FileText className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Devis émis</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Devis émis</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{data?.devisJour || 0}</p>
+                  {data?.caDevis !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">({formatEuros(data.caDevis)})</span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Devis envoyés (state ≠ draft) et montant HT cumulé sur la période.
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{data?.devisJour || 0}</p>
-                {data?.caDevis !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">({formatEuros(data.caDevis)})</span>
-                )}
-              </div>
-            </Card>
+            </div>
 
             {/* KPI 4: CA période */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-orange-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
-                  <Euro className="w-3.5 h-3.5 text-white" />
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-orange-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
+                    <Euro className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">CA période</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">CA période</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{formatEuros(data?.caJour || 0)}</p>
+                  {data?.nbFacturesCA !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">({data.nbFacturesCA})</span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Somme du montant HT des factures (type = facture) sur la période, avec le nombre de factures.
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{formatEuros(data?.caJour || 0)}</p>
-                {data?.nbFacturesCA !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">({data.nbFacturesCA})</span>
-                )}
-              </div>
-            </Card>
+            </div>
 
             {/* KPI 5: Taux de SAV */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-red-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-red-500 to-red-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">SAV</span>
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-red-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-red-500 to-red-600 p-1.5 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">SAV</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Taux de SAV</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Taux de SAV</p>
+                <p className="text-xl font-bold">{(data?.tauxSAVGlobal || 0).toFixed(1)}%</p>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Pourcentage d&apos;interventions de type SAV sur l&apos;ensemble des interventions.
               </div>
-              <p className="text-xl font-bold">{(data?.tauxSAVGlobal || 0).toFixed(1)}%</p>
-            </Card>
+            </div>
 
             {/* KPI 6: Dossiers complexes */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-indigo-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">📊</span>
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-indigo-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-1.5 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">📊</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Dossiers complexes</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Dossiers complexes</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{data?.dossiersComplexes?.tauxComplexite || 0}%</p>
+                  {data?.dossiersComplexes?.nbComplexes !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">({data.dossiersComplexes.nbComplexes}/{data.dossiersComplexes.nbTotal})</span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Pourcentage de dossiers avec &gt; 6 interventions ou au moins 2 interventions travaux.
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{data?.dossiersComplexes?.tauxComplexite || 0}%</p>
-                {data?.dossiersComplexes?.nbComplexes !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">({data.dossiersComplexes.nbComplexes}/{data.dossiersComplexes.nbTotal})</span>
-                )}
-              </div>
-            </Card>
+            </div>
 
             {/* KPI 7: Panier moyen */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-pink-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-pink-500 to-pink-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">🛒</span>
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-pink-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-pink-500 to-pink-600 p-1.5 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">🛒</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Panier moyen</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Panier moyen</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{formatEuros(data?.panierMoyen?.panierMoyen || 0)}</p>
+                  {data?.panierMoyen?.nbDossiers !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">({data.panierMoyen.nbDossiers})</span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Montant moyen HT facturé par dossier, sur l&apos;ensemble des dossiers facturés.
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{formatEuros(data?.panierMoyen?.panierMoyen || 0)}</p>
-                {data?.panierMoyen?.nbDossiers !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">({data.panierMoyen.nbDossiers})</span>
-                )}
-              </div>
-            </Card>
+            </div>
 
             {/* KPI 8: Taux de transformation */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-cyan-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">📈</span>
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-cyan-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 p-1.5 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">📈</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Taux transfo devis</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Taux transfo devis</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{data?.tauxTransformationDevis?.tauxTransformation || 0}%</p>
+                  {data?.tauxTransformationDevis?.nbAcceptes !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">({data.tauxTransformationDevis.nbAcceptes}/{data.tauxTransformationDevis.nbEnvoyes})</span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Pourcentage de devis envoyés qui passent au statut accepté / facturé.
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{data?.tauxTransformationDevis?.tauxTransformation || 0}%</p>
-                {data?.tauxTransformationDevis?.nbAcceptes !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">({data.tauxTransformationDevis.nbAcceptes}/{data.tauxTransformationDevis.nbEnvoyes})</span>
-                )}
-              </div>
-            </Card>
+            </div>
           </div>
         </div>
+
       </Card>
 
       {/* KPI Indépendants (non soumis au sélecteur de période) */}
@@ -314,142 +355,183 @@ export default function IndicateursAccueil() {
           <h2 className="text-lg font-semibold text-foreground">Indicateurs Globaux (historique complet)</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* KPI 9: Délai moyen (NON soumis au filtre période) */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-teal-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">⏱️</span>
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-teal-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-1.5 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">⏱️</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Délai moyen d'un dossier</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Délai moyen d'un dossier</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{data?.delaiDossierFacture?.delaiMoyen || 0}j</p>
+                  {data?.delaiDossierFacture?.nbFactures !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">({data.delaiDossierFacture.nbFactures})</span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Délai moyen en jours entre la création du dossier et sa facturation (tous dossiers).
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{data?.delaiDossierFacture?.delaiMoyen || 0}j</p>
-                {data?.delaiDossierFacture?.nbFactures !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">({data.delaiDossierFacture.nbFactures})</span>
-                )}
-              </div>
-            </Card>
+            </div>
 
             {/* KPI 10: Nb Moyen Interventions/Dossier */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-amber-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">📊</span>
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-amber-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-1.5 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">📊</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Nb moyen RDV/Dossier</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Nb moyen RDV/Dossier</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{data?.nbMoyenInterventionsParDossier?.nbMoyen || 0}</p>
+                  {data?.nbMoyenInterventionsParDossier?.nbProjets !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">({data.nbMoyenInterventionsParDossier.nbProjets})</span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Nombre moyen de rendez-vous (interventions) par dossier sur l&apos;ensemble du parc.
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{data?.nbMoyenInterventionsParDossier?.nbMoyen || 0}</p>
-                {data?.nbMoyenInterventionsParDossier?.nbProjets !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">({data.nbMoyenInterventionsParDossier.nbProjets})</span>
-                )}
-              </div>
-            </Card>
+            </div>
 
             {/* KPI 11: Nb Moyen Visites/Intervention */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-lime-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-lime-500 to-lime-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">📍</span>
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-lime-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-lime-500 to-lime-600 p-1.5 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">📍</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Nb moyen visites/RDV</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Nb moyen visites/RDV</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{data?.nbMoyenVisitesParIntervention?.nbMoyen || 0}</p>
+                  {data?.nbMoyenVisitesParIntervention?.nbInterventions !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">({data.nbMoyenVisitesParIntervention.nbInterventions})</span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Nombre moyen de visites réalisées au sein d&apos;un même rendez-vous.
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{data?.nbMoyenVisitesParIntervention?.nbMoyen || 0}</p>
-                {data?.nbMoyenVisitesParIntervention?.nbInterventions !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">({data.nbMoyenVisitesParIntervention.nbInterventions})</span>
-                )}
-              </div>
-            </Card>
+            </div>
 
             {/* KPI 12: Taux Multi-Univers */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-violet-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-violet-500 to-violet-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">🌐</span>
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-violet-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-violet-500 to-violet-600 p-1.5 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">🌐</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Multi-univers</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Multi-univers</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{data?.tauxDossiersMultiUnivers?.tauxMultiUnivers || 0}%</p>
+                  {data?.tauxDossiersMultiUnivers?.nbMultiUnivers !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">
+                      ({data.tauxDossiersMultiUnivers.nbMultiUnivers}/{data.tauxDossiersMultiUnivers.nbTotal})
+                    </span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Pourcentage de dossiers faisant intervenir au moins deux univers (plomberie, électricité, etc.).
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{data?.tauxDossiersMultiUnivers?.tauxMultiUnivers || 0}%</p>
-                {data?.tauxDossiersMultiUnivers?.nbMultiUnivers !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">
-                    ({data.tauxDossiersMultiUnivers.nbMultiUnivers}/{data.tauxDossiersMultiUnivers.nbTotal})
-                  </span>
-                )}
-              </div>
-            </Card>
+            </div>
 
             {/* KPI 13: Taux One Shot */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-rose-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-rose-500 to-rose-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">⚡</span>
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-rose-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-rose-500 to-rose-600 p-1.5 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">⚡</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Taux One Shot</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Taux One Shot</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{data?.tauxDossiersSansDevis?.tauxSansDevis || 0}%</p>
+                  {data?.tauxDossiersSansDevis?.nbSansDevis !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">
+                      ({data.tauxDossiersSansDevis.nbSansDevis}/{data.tauxDossiersSansDevis.nbFactures})
+                    </span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Pourcentage de factures émises sans devis associé (dossiers One Shot).
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{data?.tauxDossiersSansDevis?.tauxSansDevis || 0}%</p>
-                {data?.tauxDossiersSansDevis?.nbSansDevis !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">
-                    ({data.tauxDossiersSansDevis.nbSansDevis}/{data.tauxDossiersSansDevis.nbFactures})
-                  </span>
-                )}
-              </div>
-            </Card>
+            </div>
 
             {/* KPI 14: Taux Multi-Techniciens */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-sky-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-sky-500 to-sky-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">👥</span>
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-sky-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-sky-500 to-sky-600 p-1.5 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">👥</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Multi-techniciens</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Multi-techniciens</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{data?.tauxDossiersMultiTechniciens?.tauxMultiTech || 0}%</p>
+                  {data?.tauxDossiersMultiTechniciens?.nbMultiTech !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">
+                      ({data.tauxDossiersMultiTechniciens.nbMultiTech}/{data.tauxDossiersMultiTechniciens.nbTotal})
+                    </span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Pourcentage de dossiers sur lesquels au moins deux techniciens différents interviennent.
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{data?.tauxDossiersMultiTechniciens?.tauxMultiTech || 0}%</p>
-                {data?.tauxDossiersMultiTechniciens?.nbMultiTech !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">
-                    ({data.tauxDossiersMultiTechniciens.nbMultiTech}/{data.tauxDossiersMultiTechniciens.nbTotal})
-                  </span>
-                )}
-              </div>
-            </Card>
+            </div>
 
             {/* KPI 15: Polyvalence Techniciens (historique complet) */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-emerald-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">🎯</span>
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-emerald-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-1.5 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">🎯</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Polyvalence tech</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Polyvalence tech</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{data?.polyvalenceTechniciens?.polyvalenceMoyenne || 0}</p>
+                  {data?.polyvalenceTechniciens?.nbTechniciens !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">
+                      ({data.polyvalenceTechniciens.nbTechniciens} techs)
+                    </span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Nombre moyen d&apos;univers différents couverts par technicien (polyvalence).
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{data?.polyvalenceTechniciens?.polyvalenceMoyenne || 0}</p>
-                {data?.polyvalenceTechniciens?.nbTechniciens !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">
-                    ({data.polyvalenceTechniciens.nbTechniciens} techs)
-                  </span>
-                )}
-              </div>
-            </Card>
+            </div>
 
             {/* KPI 16: Délai Dossier → 1er Devis */}
-            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-sky-500/50 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="bg-gradient-to-br from-sky-500 to-sky-600 p-1.5 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">📝</span>
+            <div className="relative group">
+              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-sky-500/50 shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gradient-to-br from-sky-500 to-sky-600 p-1.5 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">📝</span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">Délai Dossier → 1er Devis</p>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">Délai Dossier → 1er Devis</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xl font-bold">{data?.delaiDossierPremierDevis?.delaiMoyen || 0}j</p>
+                  {data?.delaiDossierPremierDevis?.nbDossiers !== undefined && (
+                    <span className="text-[10px] text-muted-foreground">({data.delaiDossierPremierDevis.nbDossiers})</span>
+                  )}
+                </div>
+              </Card>
+              <div className="absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Délai moyen entre la création du dossier et l&apos;envoi du premier devis.
               </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-xl font-bold">{data?.delaiDossierPremierDevis?.delaiMoyen || 0}j</p>
-                {data?.delaiDossierPremierDevis?.nbDossiers !== undefined && (
-                  <span className="text-[10px] text-muted-foreground">({data.delaiDossierPremierDevis.nbDossiers})</span>
-                )}
-              </div>
-            </Card>
+            </div>
           </div>
         </div>
+
       </Card>
 
       {/* Graphique CA Mensuel */}
