@@ -43,10 +43,16 @@ export default function IndicateursAccueil() {
       }, filters.dateRange, userAgency);
       
       // Calculer le délai moyen Dossier → Facture
-      const { calculateDelaiMoyenDossierFacture } = await import("@/apogee-connect/utils/dashboardCalculations");
+      const { calculateDelaiMoyenDossierFacture, calculateTauxDossiersComplexes } = await import("@/apogee-connect/utils/dashboardCalculations");
       const delaiDossierFacture = calculateDelaiMoyenDossierFacture(
         apiData.factures || [],
         apiData.projects || [],
+        filters.dateRange
+      );
+      
+      // Calculer le taux de dossiers complexes
+      const dossiersComplexes = calculateTauxDossiersComplexes(
+        apiData.interventions || [],
         filters.dateRange
       );
       
@@ -67,7 +73,7 @@ export default function IndicateursAccueil() {
         filters.dateRange
       );
       
-      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture };
+      return { ...stats, monthlyCAData, tauxSAVGlobal, delaiDossierFacture, dossiersComplexes };
     },
   });
 
@@ -196,8 +202,24 @@ export default function IndicateursAccueil() {
           </div>
         </Card>
 
-        {/* KPI 7-12: Placeholders */}
-        {[7, 8, 9, 10, 11, 12].map((num) => (
+        {/* KPI 7: Dossiers complexes */}
+        <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-indigo-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-1.5 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xs">📊</span>
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">Dossiers complexes</p>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <p className="text-xl font-bold">{data?.dossiersComplexes?.tauxComplexite || 0}%</p>
+            {data?.dossiersComplexes?.nbComplexes !== undefined && (
+              <span className="text-[10px] text-muted-foreground">({data.dossiersComplexes.nbComplexes}/{data.dossiersComplexes.nbTotal})</span>
+            )}
+          </div>
+        </Card>
+
+        {/* KPI 8-12: Placeholders */}
+        {[8, 9, 10, 11, 12].map((num) => (
           <Card key={num} className="p-3 border-2 border-dashed border-muted">
             <p className="text-[10px] text-muted-foreground mb-0.5">KPI #{num}</p>
             <p className="text-xl font-bold text-muted-foreground">--</p>

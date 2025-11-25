@@ -471,3 +471,70 @@ export const calculateDashboardStats = (
     }
   };
 };
+
+// ====================================================================
+// KPI 7 - TAUX DE DOSSIERS COMPLEXES
+// ====================================================================
+
+export const calculateTauxDossiersComplexes = (
+  interventions: any[],
+  dateRange?: { start: Date; end: Date }
+): { tauxComplexite: number; nbComplexes: number; nbTotal: number } => {
+  // Filtrer les interventions techniques validées
+  const interventionsTechniques = interventions.filter(intervention => {
+    // Vérifier le type "technique"
+    const isTechnique = 
+      intervention.type?.toLowerCase().includes("technique") ||
+      intervention.type2?.toLowerCase().includes("technique");
+    
+    // Vérifier l'état completed/validated
+    const isCompleted = 
+      intervention.state?.toLowerCase() === "completed" ||
+      intervention.state?.toLowerCase() === "validated" ||
+      intervention.status?.toLowerCase() === "completed" ||
+      intervention.status?.toLowerCase() === "validated";
+    
+    // Filtrer par date si dateRange fourni
+    if (dateRange) {
+      const date = intervention.date || intervention.data?.date;
+      if (!date) return false;
+      
+      try {
+        const interventionDate = parseISO(date);
+        if (!isWithinInterval(interventionDate, dateRange)) {
+          return false;
+        }
+      } catch {
+        return false;
+      }
+    }
+    
+    return isTechnique && isCompleted;
+  });
+
+  // Compter les interventions par projectId
+  const interventionsParProjet: Record<string, number> = {};
+  interventionsTechniques.forEach(intervention => {
+    const projectId = intervention.projectId || intervention.data?.projectId;
+    if (projectId) {
+      interventionsParProjet[projectId] = (interventionsParProjet[projectId] || 0) + 1;
+    }
+  });
+
+  // Projets avec au moins 1 intervention
+  const projetsAvecIntervention = Object.keys(interventionsParProjet).length;
+  
+  // Projets avec au moins 2 interventions (complexes)
+  const projetsComplexes = Object.values(interventionsParProjet).filter(count => count >= 2).length;
+
+  // Calculer le taux
+  const tauxComplexite = projetsAvecIntervention > 0 
+    ? (projetsComplexes / projetsAvecIntervention) * 100 
+    : 0;
+
+  return {
+    tauxComplexite: Math.round(tauxComplexite * 10) / 10, // Arrondir à 1 décimale
+    nbComplexes: projetsComplexes,
+    nbTotal: projetsAvecIntervention
+  };
+};
