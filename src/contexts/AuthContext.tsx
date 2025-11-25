@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   mustChangePassword: boolean;
   roleAgence: string | null;
+  agence: string | null;
   userPermissions: string[];
   isLoggingOut: boolean;
   hasAccessToBlock: (blockId: string) => boolean;
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isSupport, setIsSupport] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
+  const [agence, setAgence] = useState<string | null>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -50,12 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Check if user must change password and get role_agence
             const { data: profile } = await supabase
               .from('profiles')
-              .select('must_change_password, role_agence')
+              .select('must_change_password, role_agence, agence')
               .eq('id', session.user.id)
               .single();
             
             setMustChangePassword(profile?.must_change_password || false);
             setRoleAgence(profile?.role_agence || null);
+            setAgence(profile?.agence || null);
 
             // Load permissions for this user's role
             if (profile?.role_agence) {
@@ -73,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsSupport(false);
           setMustChangePassword(false);
           setRoleAgence(null);
+          setAgence(null);
           setUserPermissions([]);
         }
         
@@ -98,12 +102,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Check if user must change password and get role_agence
         supabase
           .from('profiles')
-          .select('must_change_password, role_agence')
+          .select('must_change_password, role_agence, agence')
           .eq('id', session.user.id)
           .single()
           .then(async ({ data }) => {
             setMustChangePassword(data?.must_change_password || false);
             setRoleAgence(data?.role_agence || null);
+            setAgence(data?.agence || null);
 
             // Load permissions for this user's role
             if (data?.role_agence) {
@@ -234,6 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       mustChangePassword,
       roleAgence,
+      agence,
       userPermissions,
       isLoggingOut,
       hasAccessToBlock,
@@ -255,6 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       mustChangePassword,
       roleAgence,
+      agence,
       userPermissions,
       isLoggingOut,
       hasAccessToBlock,
