@@ -63,27 +63,25 @@ export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetPr
   const TypeCard = ({ stat, index, compact = false }: { stat: TypeApporteurStats; index: number; compact?: boolean }) => (
     <Card 
       key={stat.type}
-      className="hover:shadow-lg transition-shadow cursor-pointer"
+      className="hover:shadow-lg transition-shadow cursor-pointer h-full"
       style={{ borderLeft: `4px solid ${COLORS[index % COLORS.length]}` }}
       onClick={() => setSelectedType(stat)}
     >
       <CardContent className={compact ? "p-4" : "p-6"}>
         <div className="space-y-3">
           {/* En-tête avec nom du type */}
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <h4 className="text-base font-bold">{stat.type}</h4>
-                {compact && (
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); setSelectedType(stat); }}>
-                    <Maximize2 className="w-3 h-3" />
-                  </Button>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">Type d'apporteur</p>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold truncate flex-1" title={stat.type}>{stat.type}</h4>
+              {compact && (
+                <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={(e) => { e.stopPropagation(); setSelectedType(stat); }}>
+                  <Maximize2 className="w-3 h-3" />
+                </Button>
+              )}
             </div>
-            <div className="text-right ml-2">
-              <p className={compact ? "text-xl font-bold" : "text-2xl font-bold"} style={{ color: COLORS[index % COLORS.length] }}>
+            <p className="text-xs text-muted-foreground">Type d'apporteur</p>
+            <div className="text-left">
+              <p className={compact ? "text-lg font-bold" : "text-2xl font-bold"} style={{ color: COLORS[index % COLORS.length] }}>
                 {formatEuros(stat.caHT)}
               </p>
               <p className="text-xs text-muted-foreground">CA HT</p>
@@ -91,59 +89,59 @@ export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetPr
           </div>
 
           {/* Métriques détaillées */}
-          <div className={`grid grid-cols-2 ${compact ? 'gap-2' : 'md:grid-cols-4 gap-4 pt-4 border-t'}`}>
+          <div className={`grid grid-cols-2 ${compact ? 'gap-3 pt-3 border-t' : 'md:grid-cols-4 gap-4 pt-4 border-t'}`}>
             {/* Dossiers */}
-            <div className="flex items-start gap-2">
-              <div className="bg-blue-500/10 p-1.5 rounded-lg">
-                <Package className={compact ? "w-3 h-3" : "w-4 h-4 text-blue-500"} />
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1.5">
+                <div className="bg-blue-500/10 p-1 rounded">
+                  <Package className="w-3 h-3 text-blue-500" />
+                </div>
+                <p className={compact ? "text-sm font-semibold" : "text-lg font-semibold"}>{stat.nbDossiers}</p>
               </div>
-              <div>
-                <p className={compact ? "text-base font-semibold" : "text-lg font-semibold"}>{stat.nbDossiers}</p>
-                <p className="text-xs text-muted-foreground">Dossiers</p>
-              </div>
+              <p className="text-xs text-muted-foreground">Dossiers</p>
             </div>
 
             {/* Panier moyen */}
-            <div className="flex items-start gap-2">
-              <div className="bg-green-500/10 p-1.5 rounded-lg">
-                <Euro className={compact ? "w-3 h-3" : "w-4 h-4 text-green-500"} />
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1.5">
+                <div className="bg-green-500/10 p-1 rounded">
+                  <Euro className="w-3 h-3 text-green-500" />
+                </div>
+                <p className={compact ? "text-sm font-semibold" : "text-lg font-semibold"}>{formatEuros(stat.panierMoyen)}</p>
               </div>
-              <div>
-                <p className={compact ? "text-base font-semibold" : "text-lg font-semibold"}>{formatEuros(stat.panierMoyen)}</p>
-                <p className="text-xs text-muted-foreground">Panier</p>
-              </div>
+              <p className="text-xs text-muted-foreground">Panier</p>
             </div>
 
             {/* Taux de transformation */}
-            <div className="flex items-start gap-2">
-              <div className="bg-purple-500/10 p-1.5 rounded-lg">
-                <Percent className={compact ? "w-3 h-3" : "w-4 h-4 text-purple-500"} />
-              </div>
-              <div>
-                <p className={compact ? "text-base font-semibold" : "text-lg font-semibold"}>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1.5">
+                <div className="bg-purple-500/10 p-1 rounded">
+                  <Percent className="w-3 h-3 text-purple-500" />
+                </div>
+                <p className={compact ? "text-sm font-semibold" : "text-lg font-semibold"}>
                   {stat.tauxTransformation !== null 
                     ? formatPercent(stat.tauxTransformation)
                     : "--"
                   }
                 </p>
-                <p className="text-xs text-muted-foreground">Transfo</p>
               </div>
+              <p className="text-xs text-muted-foreground">Transfo</p>
             </div>
 
             {/* Taux de SAV */}
-            <div className="flex items-start gap-2">
-              <div className="bg-orange-500/10 p-1.5 rounded-lg">
-                <Wrench className={compact ? "w-3 h-3" : "w-4 h-4 text-orange-500"} />
-              </div>
-              <div>
-                <p className={compact ? "text-base font-semibold" : "text-lg font-semibold"}>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1.5">
+                <div className="bg-orange-500/10 p-1 rounded">
+                  <Wrench className="w-3 h-3 text-orange-500" />
+                </div>
+                <p className={compact ? "text-sm font-semibold" : "text-lg font-semibold"}>
                   {stat.tauxSAV !== null 
                     ? formatPercent(stat.tauxSAV)
                     : "--"
                   }
                 </p>
-                <p className="text-xs text-muted-foreground">SAV</p>
               </div>
+              <p className="text-xs text-muted-foreground">SAV</p>
             </div>
           </div>
         </div>
@@ -200,7 +198,7 @@ export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetPr
       </Card>
 
       {/* Grille compacte avec cartes cliquables */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {data.map((stat, index) => (
           <TypeCard key={stat.type} stat={stat} index={index} compact={true} />
         ))}
