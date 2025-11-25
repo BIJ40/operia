@@ -22,6 +22,23 @@ export class DataService {
 
   // Charger toutes les données
   static async loadAllData(isApiEnabled: boolean = true) {
+    // GUARD: Vérifier si BASE_URL est définie avant de faire des appels
+    const { getApiBaseUrl } = await import('./api');
+    const baseUrl = getApiBaseUrl();
+    
+    if (!baseUrl) {
+      console.warn('⚠️ BASE_URL non définie - Aucun appel API ne sera effectué');
+      return {
+        users: [],
+        clients: [],
+        projects: [],
+        interventions: [],
+        factures: [],
+        devis: [],
+        creneaux: []
+      };
+    }
+    
     // Si l'API est désactivée et qu'on a déjà des données en cache, on les retourne
     if (!isApiEnabled && Object.keys(this.cache).length > 0 && this.cache.users?.length) {
       console.log('🔇 API désactivée - Utilisation du cache existant');

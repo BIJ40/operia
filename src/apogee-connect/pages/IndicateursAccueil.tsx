@@ -20,7 +20,14 @@ export default function IndicateursAccueil() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["kpis-overview", filters, isApiEnabled, agencyChangeCounter],
+    enabled: !!currentAgency?.id, // Ne lancer la query que si l'agence est définie
     queryFn: async () => {
+      // GUARD: Ne pas charger si l'agence n'est pas définie
+      if (!currentAgency?.id) {
+        console.warn('⚠️ Agence non définie - Chargement des données annulé');
+        return null;
+      }
+      
       const apiData = await DataService.loadAllData(isApiEnabled);
       
       const stats = calculateDashboardStats({
@@ -59,6 +66,14 @@ export default function IndicateursAccueil() {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
         <p className="text-2xl text-muted-foreground animate-pulse">Chargement des indicateurs...</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <p className="text-2xl text-muted-foreground">Aucune agence définie - Veuillez vous reconnecter</p>
       </div>
     );
   }

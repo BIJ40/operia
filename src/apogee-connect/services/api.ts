@@ -10,6 +10,15 @@ let BASE_URL = "";
 
 export function setApiBaseUrl(url: string) {
   BASE_URL = url;
+  if (url) {
+    console.log('✅ BASE_URL configurée:', url);
+  } else {
+    console.log('⚠️ BASE_URL réinitialisée (vide)');
+  }
+}
+
+export function getApiBaseUrl(): string {
+  return BASE_URL;
 }
 
 interface ApiResponse<T> {
@@ -19,6 +28,12 @@ interface ApiResponse<T> {
 }
 
 async function apiCall<T>(endpoint: string, additionalData?: Record<string, any>): Promise<T> {
+  // GUARD: Ne jamais appeler l'API si BASE_URL n'est pas définie
+  if (!BASE_URL) {
+    console.warn(`⚠️ BASE_URL non définie - appel API annulé pour ${endpoint}`);
+    throw new Error("BASE_URL non définie - veuillez vous connecter avec une agence valide");
+  }
+
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",

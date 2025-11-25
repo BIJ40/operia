@@ -47,7 +47,14 @@ export default function Dashboard() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard-stats", filters, secondaryFilters, isApiEnabled, agencyChangeCounter],
+    enabled: !!currentAgency?.id, // Ne lancer la query que si l'agence est définie
     queryFn: async () => {
+      // GUARD: Ne pas charger si l'agence n'est pas définie
+      if (!currentAgency?.id) {
+        console.warn('⚠️ Agence non définie - Chargement des données annulé');
+        return null;
+      }
+      
       const apiData = await DataService.loadAllData(isApiEnabled);
       
       // Calculer les vrais KPIs avec les données de l'API et la période sélectionnée
@@ -218,6 +225,14 @@ export default function Dashboard() {
 
   const periodLabel = filters.periodLabel || "aujourd'hui";
   
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <p className="text-2xl text-muted-foreground">Aucune agence définie - Veuillez vous reconnecter</p>
+      </div>
+    );
+  }
+  
   const stats = [
     {
       title: "Dossiers reçus",
@@ -257,6 +272,14 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
         <p className="text-2xl text-muted-foreground animate-pulse">Chargement du dashboard...</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <p className="text-2xl text-muted-foreground">Aucune agence définie - Veuillez vous reconnecter</p>
       </div>
     );
   }
