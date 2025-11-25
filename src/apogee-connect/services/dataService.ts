@@ -71,12 +71,29 @@ export class DataService {
       return [];
     };
 
+    // Importer la fonction d'exclusion de la facture fictive
+    const { isFictitiousTransferInvoice } = await import('../config/manualOverrides');
+    
+    // Extraire et filtrer les factures (exclure la facture fictive de transfert)
+    const allFactures = extractData(facturesRes);
+    const facturesFiltered = allFactures.filter((facture: any) => {
+      const isFictitious = isFictitiousTransferInvoice(facture);
+      if (isFictitious) {
+        console.log('🚫 Exclusion de la facture fictive de transfert comptable:', {
+          id: facture.id,
+          reference: facture.reference,
+          montant: facture.totalHT || facture.data?.totalHT
+        });
+      }
+      return !isFictitious;
+    });
+
     this.cache = { 
       users: extractData(usersRes),
       clients: extractData(clientsRes),
       projects: extractData(projectsRes),
       interventions: extractData(interventionsRes),
-      factures: extractData(facturesRes),
+      factures: facturesFiltered,
       devis: extractData(devisRes),
       creneaux: extractData(creneauxRes),
     };

@@ -1,6 +1,7 @@
 import { parseISO, isWithinInterval, startOfMonth, endOfMonth, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { isInitInvoice } from "./dashboardCalculations";
+import { manualJanuaryData, isManualOverrideMonth } from "@/apogee-connect/config/manualOverrides";
 
 export interface MonthlyCA {
   month: string;
@@ -25,6 +26,21 @@ export const calculateMonthlyCA = (
     const monthStart = startOfMonth(date);
     const monthEnd = endOfMonth(date);
     const monthLabel = format(date, "MMM", { locale: fr });
+    
+    // Vérifier si c'est janvier 2025 avec override manuel
+    if (isManualOverrideMonth(year, month + 1)) {
+      if (import.meta.env.DEV) {
+        console.log(`📅 OVERRIDE MANUEL - Janvier ${year}: CA manuel = ${manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs}€`);
+      }
+      
+      // Utiliser les valeurs manuelles configurées
+      monthlyData.push({
+        month: monthLabel,
+        ca: manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs,
+        nbFactures: 0 // Pas de factures réelles pour janvier
+      });
+      continue; // Passer au mois suivant
+    }
     
     let caMonth = 0;
     let nbFacturesMonth = 0;
