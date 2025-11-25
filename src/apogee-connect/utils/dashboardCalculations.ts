@@ -538,3 +538,57 @@ export const calculateTauxDossiersComplexes = (
     nbTotal: projetsAvecIntervention
   };
 };
+
+// ====================================================================
+// KPI 8 - PANIER MOYEN PAR DOSSIER FACTURÉ
+// ====================================================================
+
+export const calculatePanierMoyen = (
+  factures: any[],
+  dateRange?: { start: Date; end: Date }
+): { panierMoyen: number; caTotal: number; nbDossiers: number } => {
+  const projectsFactures = new Set<string>();
+  let caTotal = 0;
+
+  factures.forEach(facture => {
+    // 1. Filtrer les factures définitives (exclure les avoirs)
+    const type = facture.type || facture.data?.type;
+    if (type?.toLowerCase() === "avoir") return;
+
+    // 2. Filtrer par date si dateRange fourni
+    if (dateRange) {
+      const dateEmission = facture.dateReelle || facture.dateEmission || facture.date || facture.data?.dateReelle || facture.data?.dateEmission;
+      if (!dateEmission) return;
+
+      try {
+        const factureDate = parseISO(dateEmission);
+        if (!isWithinInterval(factureDate, dateRange)) {
+          return;
+        }
+      } catch {
+        return;
+      }
+    }
+
+    // 3. Récupérer le projectId
+    const projectId = facture.projectId || facture.data?.projectId;
+    if (!projectId) return;
+
+    // 4. Ajouter au set des projets facturés
+    projectsFactures.add(projectId);
+
+    // 5. Cumuler le CA HT
+    const montantHT = facture.montantHT || facture.totalHT || facture.data?.montantHT || facture.data?.totalHT || 0;
+    caTotal += Number(montantHT);
+  });
+
+  // 6. Calculer le panier moyen
+  const nbDossiers = projectsFactures.size;
+  const panierMoyen = nbDossiers > 0 ? caTotal / nbDossiers : 0;
+
+  return {
+    panierMoyen: Math.round(panierMoyen * 100) / 100, // Arrondir à 2 décimales
+    caTotal: Math.round(caTotal * 100) / 100,
+    nbDossiers
+  };
+};
