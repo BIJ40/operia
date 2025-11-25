@@ -1,5 +1,6 @@
 import { parseISO, isWithinInterval } from "date-fns";
 import { isInitInvoice, isApporteur, getInitInvoiceApporteursAmount, INIT_INVOICE_PARTICULIERS } from "./dashboardCalculations";
+import { manualJanuaryData, isManualOverrideMonth } from '@/apogee-connect/config/manualOverrides';
 
 export interface ApporteurStats {
   apporteurId: number;
@@ -228,17 +229,17 @@ export const calculatePartApporteurs = (
   factures: any[],
   projects: any[],
   clients: any[],
-  dateRange: { start: Date; end: Date }
+  dateRange: { start: Date; end: Date },
+  userAgency: string
 ): number => {
   // Vérifier si on est sur janvier 2025 avec override manuel
-  const { manualJanuaryData, isManualOverrideMonth } = require('@/apogee-connect/config/manualOverrides');
   const startYear = dateRange.start.getFullYear();
   const startMonth = dateRange.start.getMonth() + 1;
   const endYear = dateRange.end.getFullYear();
   const endMonth = dateRange.end.getMonth() + 1;
   
   // Si la période couvre uniquement janvier 2025
-  if (isManualOverrideMonth(startYear, startMonth) && startYear === endYear && startMonth === endMonth) {
+  if (isManualOverrideMonth(startYear, startMonth, userAgency) && startYear === endYear && startMonth === endMonth) {
     const caTotal = manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs;
     const partApporteurs = caTotal > 0 ? (manualJanuaryData.ca_apporteurs / caTotal) * 100 : 0;
     if (import.meta.env.DEV) {

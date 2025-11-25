@@ -65,7 +65,7 @@ export default function Dashboard() {
         devis: apiData.devis || [],
         clients: apiData.clients || [],
         users: apiData.users || [],
-      }, filters.dateRange);
+      }, filters.dateRange, userAgency);
       
       // Calculer les données pour le graphique d'activité (7 derniers jours)
       const activityData = calculateLast7DaysActivity(apiData.projects || []);
@@ -111,7 +111,8 @@ export default function Dashboard() {
         apiData.factures || [],
         apiData.projects || [],
         apiData.clients || [],
-        secondaryFilters.dateRange
+        secondaryFilters.dateRange,
+        userAgency
       );
       
       // Calculer le taux de transformation moyen
@@ -182,7 +183,8 @@ export default function Dashboard() {
         apiData.devis || [],
         apiData.interventions || [],
         apiData.clients || [],
-        secondaryFilters.dateRange
+        secondaryFilters.dateRange,
+        userAgency
       );
       
       // Calculer l'évolution mensuelle Particuliers vs Apporteurs - année dynamique
