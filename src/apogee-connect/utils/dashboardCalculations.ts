@@ -549,6 +549,16 @@ export const calculatePanierMoyen = (
   const projectsFactures = new Set<string>();
   let caTotal = 0;
   let facturesDebug: any[] = [];
+  let facturesRejected = 0;
+  let facturesAccepted = 0;
+
+  console.log("🛒 Panier Moyen - START", {
+    totalFactures: factures.length,
+    dateRange: dateRange ? {
+      start: dateRange.start.toISOString(),
+      end: dateRange.end.toISOString()
+    } : "undefined"
+  });
 
   factures.forEach(facture => {
     // 1. Filtrer les factures définitives (exclure les avoirs)
@@ -558,14 +568,48 @@ export const calculatePanierMoyen = (
     // 2. Filtrer par date si dateRange fourni
     if (dateRange) {
       const dateEmission = facture.dateReelle || facture.dateEmission || facture.date || facture.data?.dateReelle || facture.data?.dateEmission;
-      if (!dateEmission) return;
+      if (!dateEmission) {
+        facturesRejected++;
+        return;
+      }
 
       try {
         const factureDate = parseISO(dateEmission);
-        if (!isWithinInterval(factureDate, dateRange)) {
+        if (isNaN(factureDate.getTime())) {
+          facturesRejected++;
+          if (facturesRejected <= 3) {
+            console.log("🛒 Facture REJETÉE (date parse failed):", { 
+              dateEmission, 
+              ref: facture.reference || facture.numeroFacture 
+            });
+          }
           return;
         }
-      } catch {
+        
+        if (!isWithinInterval(factureDate, dateRange)) {
+          facturesRejected++;
+          if (facturesRejected <= 3) {
+            console.log("🛒 Facture REJETÉE (hors période):", { 
+              dateEmission,
+              factureDate: factureDate.toISOString(),
+              dateRangeStart: dateRange.start.toISOString(),
+              dateRangeEnd: dateRange.end.toISOString(),
+              ref: facture.reference || facture.numeroFacture 
+            });
+          }
+          return;
+        }
+        
+        facturesAccepted++;
+      } catch (error) {
+        facturesRejected++;
+        if (facturesRejected <= 3) {
+          console.log("🛒 Facture REJETÉE (exception):", { 
+            dateEmission, 
+            error: String(error),
+            ref: facture.reference || facture.numeroFacture 
+          });
+        }
         return;
       }
     }
@@ -602,14 +646,14 @@ export const calculatePanierMoyen = (
   const nbDossiers = projectsFactures.size;
   const panierMoyen = nbDossiers > 0 ? caTotal / nbDossiers : 0;
 
-  if (import.meta.env.DEV) {
-    console.log("🛒 Panier Moyen - Debug:", {
-      panierMoyen: Math.round(panierMoyen * 100) / 100,
-      caTotal: Math.round(caTotal * 100) / 100,
-      nbDossiers,
-      exemplesFactures: facturesDebug
-    });
-  }
+  console.log("🛒 Panier Moyen - RESULT:", {
+    panierMoyen: Math.round(panierMoyen * 100) / 100,
+    caTotal: Math.round(caTotal * 100) / 100,
+    nbDossiers,
+    facturesAccepted,
+    facturesRejected,
+    exemplesFactures: facturesDebug.slice(0, 2)
+  });
 
   return {
     panierMoyen: Math.round(panierMoyen * 100) / 100, // Arrondir à 2 décimales
