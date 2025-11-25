@@ -359,24 +359,8 @@ export function Chatbot() {
           {/* Header */}
           <div className="flex items-center justify-between p-3 border-b">
             <div className="flex items-center gap-2">
-              {activeTicket ? (
-                <>
-                  <Headphones className="h-6 w-6 text-primary" />
-                  <div>
-                    <h3 className="font-semibold text-sm">Support Client</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {activeTicket.status === 'waiting'
-                        ? 'En attente...'
-                        : 'Conseiller connecté'}
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <img src={chatIcon} alt="Chat" className="h-6 w-6" />
-                  <h3 className="font-semibold text-sm">Mme MICHU</h3>
-                </>
-              )}
+              <MessageCircle className="h-6 w-6 text-primary" />
+              <h3 className="font-semibold text-sm">Helpbox!</h3>
             </div>
             <Button
               onClick={() => {
