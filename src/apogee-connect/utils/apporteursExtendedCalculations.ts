@@ -105,7 +105,7 @@ export const calculateCAMoyenParApporteur = (
 };
 
 /**
- * KPI 8: Délai moyen de paiement (jours entre dateEmission et datePaiement)
+ * KPI 8: Délai moyen de paiement (jours entre dateEmission et premier paiement)
  */
 export const calculateDelaiMoyenPaiement = (
   factures: any[],
@@ -133,15 +133,22 @@ export const calculateDelaiMoyenPaiement = (
     const commanditaireId = project.data?.commanditaireId || project.commanditaireId;
     if (!commanditaireId) return;
 
+    // Date d'émission de la facture
     const dateEmissionStr = facture.dateEmission || facture.dateReelle || facture.date;
-    const datePaiementStr = facture.datePaiement || facture.data?.datePaiement;
-
-    if (!dateEmissionStr || !datePaiementStr) return;
-
+    if (!dateEmissionStr) return;
+    
     const dateEmission = parseDate(dateEmissionStr);
-    const datePaiement = parseDate(datePaiementStr);
+    if (!dateEmission) return;
 
-    if (!dateEmission || !datePaiement || datePaiement < dateEmission) return;
+    // Récupérer le premier paiement depuis data.tmpSaveRegV0.payments[0].date
+    const payments = facture.data?.tmpSaveRegV0?.payments || [];
+    if (payments.length === 0) return;
+
+    const premierPaiement = payments[0];
+    if (!premierPaiement || !premierPaiement.date) return;
+
+    const datePaiement = parseDate(premierPaiement.date);
+    if (!datePaiement || datePaiement < dateEmission) return;
 
     const delaiJours = Math.round((datePaiement.getTime() - dateEmission.getTime()) / (1000 * 60 * 60 * 24));
     totalDelai += delaiJours;
