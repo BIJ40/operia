@@ -229,34 +229,49 @@ Deno.serve(async (req) => {
 
     // ===== Tuile 4: Taux Apporteurs =====
     // Règle: CA_apporteurs = Σ(montantHT) pour factures avec commanditaireId non null
+    
+    // Debug: Échantillon de projets
+    const projectsSample = (projects || []).slice(0, 3);
+    console.log('[get-kpis] Sample projects:', JSON.stringify(projectsSample.map((p: any) => ({
+      id: p.id,
+      commanditaireId: p.commanditaireId,
+      commanditaire_id: p.commanditaire_id,
+      clientId: p.clientId,
+      keys: Object.keys(p).filter(k => k.toLowerCase().includes('command'))
+    })), null, 2));
+    
+    const projectsWithCommanditaire = (projects || []).filter((p: any) => p.commanditaireId || p.commanditaire_id);
+    console.log(`[get-kpis] Projects with commanditaire: ${projectsWithCommanditaire.length} / ${projects.length}`);
+    
     let ca_apporteurs = 0;
     const apporteursCA: Record<string, { ca: number; projects: Set<string>; type: string; name: string }> = {};
 
     facturesValides.forEach((invoice: any) => {
       const project = projectMap.get(invoice.projectId);
-      if (project && project.commanditaireId) {
-        const client = clientMap.get(project.commanditaireId);
-        if (client?.data?.isCommanditaire === true) {
+      if (project && (project.commanditaireId || project.commanditaire_id)) {
+        const commanditaireId = project.commanditaireId || project.commanditaire_id;
+        const client = clientMap.get(commanditaireId);
+        if (client) {
           const invoiceCA = calculateInvoiceTotal(invoice);
           ca_apporteurs += invoiceCA;
 
           // Pour détails apporteurs
-          const apporteurId = project.commanditaireId;
-          if (!apporteursCA[apporteurId]) {
-            apporteursCA[apporteurId] = {
+          if (!apporteursCA[commanditaireId]) {
+            apporteursCA[commanditaireId] = {
               ca: 0,
               projects: new Set(),
               type: client.typeClient || client.type || 'Autre',
-              name: client.label || client.name || `Client ${apporteurId}`,
+              name: client.label || client.name || `Client ${commanditaireId}`,
             };
           }
-          apporteursCA[apporteurId].ca += invoiceCA;
-          apporteursCA[apporteurId].projects.add(invoice.projectId);
+          apporteursCA[commanditaireId].ca += invoiceCA;
+          apporteursCA[commanditaireId].projects.add(invoice.projectId);
         }
       }
     });
 
     const apporteurs_rate = ca_period > 0 ? (ca_apporteurs / ca_period) * 100 : 0;
+    console.log(`[get-kpis] CA apporteurs: ${ca_apporteurs}, CA total: ${ca_period}, Taux: ${apporteurs_rate.toFixed(2)}%`);
 
     // ===== Tuile 5: Projets en Cours (hors sélecteur) =====
     // Règle: Statuts considérés comme "clos" = Terminé, Facturé, Archivé, Annulé. En cours = tous les autres.
