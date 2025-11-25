@@ -116,26 +116,28 @@ export class EnrichmentService {
 
     // Palette de couleurs FIXE (couleurs de la capture d'écran user)
     const colorPalette: Record<string, string> = {
-      'renovation': '#EC4899',     // rose/pink
-      'electricite': '#F59E0B',    // amber/yellow
-      'serrurerie': '#EC4899',     // pink/magenta
-      'menuiserie': '#9CA3AF',     // gray
-      'vitrerie': '#10B981',       // green/teal
-      'plomberie': '#10B981',      // green
-      'chauffage': '#EF4444',      // red
-      'climatisation': '#06B6D4',  // cyan/blue
+      'pmr': '#A38D77',            // PMR (ex: amelioration_logement)
+      'volet_roulant': '#2B15E0',  // violet - Volet roulant
+      'electricite': '#FD9A2C',    // orange
+      'plomberie': '#3BA6FF',      // bleu clair
+      'serrurerie': '#FF12BD',     // rose
+      'vitrerie': '#7FFE2E',       // vert
+      'menuiserie': '#FF7018',     // rouge orangé
+      'chauffage': '#EF4444',      // rouge (à confirmer)
+      'climatisation': '#06B6D4',  // cyan/blue (à confirmer)
       'autre': '#6B7280',          // gris moyen
       'non_renseigne': '#9CA3AF',  // gris clair
     };
 
     // Mapping des icônes Lucide pour chaque univers
     const iconMapping: Record<string, string> = {
-      'renovation': 'PaintRoller',
+      'pmr': 'Accessibility',
+      'volet_roulant': 'Blinds',
       'electricite': 'Zap',
-      'serrurerie': 'Key',
-      'menuiserie': 'DoorOpen',
-      'vitrerie': 'Square',
       'plomberie': 'Wrench',
+      'serrurerie': 'Key',
+      'vitrerie': 'Square',
+      'menuiserie': 'DoorOpen',
       'chauffage': 'Thermometer',
       'climatisation': 'Wind',
       'autre': 'HelpCircle',
@@ -218,16 +220,15 @@ export class EnrichmentService {
 
   private static formatUniverseLabel(slug: string): string {
     const labels: Record<string, string> = {
-      'plomberie': 'Plomberie',
+      'pmr': 'PMR',
+      'volet_roulant': 'Volet Roulant',
       'electricite': 'Électricité',
-      'menuiserie': 'Menuiserie',
-      'renovation': 'Rénovation',
-      'chauffage': 'Chauffage',
-      'climatisation': 'Climatisation',
+      'plomberie': 'Plomberie',
       'serrurerie': 'Serrurerie',
       'vitrerie': 'Vitrerie',
-      'volets': 'Volets',
-      'peinture': 'Peinture',
+      'menuiserie': 'Menuiserie',
+      'chauffage': 'Chauffage',
+      'climatisation': 'Climatisation',
       'autre': 'Autre',
     };
 
