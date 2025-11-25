@@ -4,7 +4,7 @@ import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersC
 import { useApiToggle } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { Card } from "@/components/ui/card";
-import { FolderOpen, Euro, Percent, ShoppingCart, Clock } from "lucide-react";
+import { FolderOpen, Euro, Percent, ShoppingCart, Clock, Users, TrendingUp, Heart, ArrowUpRight } from "lucide-react";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
 import { 
@@ -253,6 +253,79 @@ export default function IndicateursApporteurs() {
           <div className="flex items-baseline gap-2">
             <p className="text-2xl font-bold text-indigo-500">{Math.round(data?.delaiMoyenFacturation || 0)} j</p>
             <p className="text-xs text-muted-foreground">Dossier → Facture</p>
+          </div>
+        </Card>
+      </div>
+
+      {/* 5 nouveaux KPI temporaires */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+        {/* KPI 6: Nombre d'apporteurs actifs */}
+        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-cyan-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 p-1.5 rounded-lg">
+              <Users className="w-4 h-4 text-white" />
+            </div>
+            <p className="text-sm font-bold text-muted-foreground">Apporteurs actifs</p>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-cyan-500">42</p>
+            <p className="text-xs text-muted-foreground">sur la période</p>
+          </div>
+        </Card>
+
+        {/* KPI 7: CA moyen par apporteur */}
+        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-pink-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-gradient-to-br from-pink-500 to-pink-600 p-1.5 rounded-lg">
+              <TrendingUp className="w-4 h-4 text-white" />
+            </div>
+            <p className="text-sm font-bold text-muted-foreground">CA moyen / Apporteur</p>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-pink-500">12 500 €</p>
+            <p className="text-xs text-muted-foreground">moyenne HT</p>
+          </div>
+        </Card>
+
+        {/* KPI 8: Délai moyen de paiement */}
+        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-amber-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-1.5 rounded-lg">
+              <Clock className="w-4 h-4 text-white" />
+            </div>
+            <p className="text-sm font-bold text-muted-foreground">Délai paiement</p>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-amber-500">45 j</p>
+            <p className="text-xs text-muted-foreground">moyen</p>
+          </div>
+        </Card>
+
+        {/* KPI 9: Taux de fidélité */}
+        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-emerald-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-1.5 rounded-lg">
+              <Heart className="w-4 h-4 text-white" />
+            </div>
+            <p className="text-sm font-bold text-muted-foreground">Taux de fidélité</p>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-emerald-500">78%</p>
+            <p className="text-xs text-muted-foreground">apporteurs récurrents</p>
+          </div>
+        </Card>
+
+        {/* KPI 10: Croissance CA */}
+        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-violet-500/50 shadow-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-gradient-to-br from-violet-500 to-violet-600 p-1.5 rounded-lg">
+              <ArrowUpRight className="w-4 h-4 text-white" />
+            </div>
+            <p className="text-sm font-bold text-muted-foreground">Croissance CA</p>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-violet-500">+15%</p>
+            <p className="text-xs text-muted-foreground">vs période N-1</p>
           </div>
         </Card>
       </div>
