@@ -1343,45 +1343,70 @@ function parseFrenchDate(dateStr: string): Date | null {
 
 /**
  * Calculer le délai moyen entre ouverture dossier et envoi du premier devis
- * BASÉ SUR L'HISTORIQUE DES INTERVENTIONS
+ * BASÉ SUR apiGetDevis.history (pas intervention.history)
  */
 export function calculateDelaiMoyenDossierPremierDevis(
   projects: any[],
-  interventions: any[]
+  devis: any[]
 ): { delaiMoyen: number; nbDossiers: number } {
+  console.log("📊 KPI 16 - Nb projets:", projects.length);
+  console.log("📊 KPI 16 - Nb devis:", devis.length);
+
   const delais: number[] = [];
 
-  for (const it of interventions) {
-    // Date de création de l'intervention
-    const dateCreation = new Date(it.created_at);
+  // Pour chaque projet, chercher son premier devis envoyé
+  for (const project of projects) {
+    const dateCreation = new Date(project.created_at || project.date);
     if (isNaN(dateCreation.getTime())) continue;
 
-    // Chercher la première date "Devis à faire => Devis envoyé" dans l'historique
+    // Trouver les devis de ce projet
+    const devisProjet = devis.filter(d => d.projectId === project.id);
+    if (devisProjet.length === 0) continue;
+
+    // Chercher la première date d'envoi dans l'historique des devis
     let firstSent: Date | null = null;
 
-    const history = it.data?.history ?? [];
-    for (const h of history) {
-      const label = h.labelKind || "";
+    for (const d of devisProjet) {
+      const history = d.history ?? d.data?.history ?? [];
       
-      // Recherche tolérante
-      if (label.includes("Devis à faire") && label.includes("Devis envoyé")) {
-        const d = parseFrenchDate(h.dateModif);
-        if (!d) continue;
+      for (const h of history) {
+        const labelKind = (h.labelKind || "").toLowerCase();
+        
+        // Chercher les événements d'envoi de devis
+        if (['devis envoyé', 'devis emis', 'envoyé', 'sent'].some(keyword => labelKind.includes(keyword))) {
+          // Essayer plusieurs champs de date
+          const rawDate = h.date || h.dateModif || h.created_at;
+          if (!rawDate) continue;
 
-        if (!firstSent || d < firstSent) {
-          firstSent = d;
+          let eventDate: Date | null = null;
+          
+          // Si c'est une date française, parser
+          if (typeof rawDate === 'string' && rawDate.includes('/')) {
+            eventDate = parseFrenchDate(rawDate);
+          } else {
+            eventDate = new Date(rawDate);
+          }
+          
+          if (!eventDate || isNaN(eventDate.getTime())) continue;
+
+          if (!firstSent || eventDate < firstSent) {
+            firstSent = eventDate;
+          }
         }
       }
     }
 
     // Si on a trouvé une date d'envoi et qu'elle est après la création
     if (firstSent && firstSent > dateCreation) {
-      const diff = (firstSent.getTime() - dateCreation.getTime()) / 86400000;
-      delais.push(diff);
+      const diff = (firstSent.getTime() - dateCreation.getTime()) / (1000 * 60 * 60 * 24);
+      if (diff >= 0 && diff < 10000) {
+        delais.push(diff);
+        console.log(`📊 KPI 16 - Projet ${project.id}: délai = ${diff.toFixed(1)} jours`);
+      }
     }
   }
 
-  console.log("📊 KPI 16 - Interventions avec délai calculé:", delais.length);
+  console.log("📊 KPI 16 - Projets avec délai calculé:", delais.length);
   if (delais.length > 0) {
     console.log("📊 KPI 16 - Exemples de délais:", delais.slice(0, 5).map(d => d.toFixed(1)));
   }
