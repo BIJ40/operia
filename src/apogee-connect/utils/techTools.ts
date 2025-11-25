@@ -36,7 +36,7 @@ export function buildTechMap(usersData: any[]): Record<number, TechnicienInfo> {
       prenom: (u.firstname || "").trim(),
       nom: (u.name || "").trim(),
       actif: isActive,
-      color: u.data?.color?.hex || u.color?.hex || "#808080",
+      color: u.data?.bgcolor?.hex || u.bgcolor?.hex || u.data?.color?.hex || u.color?.hex || "#808080",
     };
   }
 
