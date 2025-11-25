@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupportTicket } from '@/hooks/use-support-ticket';
 
+// Custom hook for chatbot functionality
+
 type Message = {
   role: 'user' | 'assistant' | 'support';
   content: string;
