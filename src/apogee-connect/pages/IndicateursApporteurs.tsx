@@ -269,7 +269,14 @@ export default function IndicateursApporteurs() {
         <div className="lg:col-span-1">
           <TypesApporteursWidget data={data?.typesApporteursStats || []} />
         </div>
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-6">
+          {/* Titre de la section pour alignement */}
+          <div>
+            <h3 className="text-xl font-bold">Évolution temporelle</h3>
+            <p className="text-sm text-muted-foreground">
+              Nombre de dossiers créés par type d'apporteur, mois par mois
+            </p>
+          </div>
           <ApporteurTypeTimeline 
             projects={data?.rawProjects || []} 
             clients={data?.rawClients || []} 
