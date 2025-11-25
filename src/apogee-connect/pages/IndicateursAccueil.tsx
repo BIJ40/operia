@@ -137,9 +137,6 @@ export default function IndicateursAccueil() {
           <p className="text-[10px] text-muted-foreground mb-0.5">RT réalisés</p>
           <div className="flex items-baseline gap-1">
             <p className="text-xl font-bold">{data?.rtJour || 0}</p>
-            {data?.heuresRT !== undefined && (
-              <span className="text-[10px] text-muted-foreground">({data.heuresRT.toFixed(1)}h)</span>
-            )}
           </div>
         </Card>
 
