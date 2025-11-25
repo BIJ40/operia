@@ -308,114 +308,133 @@ export default function IndicateursAccueil() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* KPI 9: Délai moyen (NON soumis au filtre période) */}
             <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-teal-500/50 shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-1.5 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xs">⏱️</span>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-1.5 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">⏱️</span>
+                </div>
+                <p className="text-xs font-medium text-muted-foreground">Délai moyen d'un dossier</p>
               </div>
-              <p className="text-xs font-medium text-muted-foreground">Délai moyen d'un dossier</p>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <p className="text-xl font-bold">{data?.delaiDossierFacture?.delaiMoyen || 0}j</p>
-              {data?.delaiDossierFacture?.nbFactures !== undefined && (
-                <span className="text-[10px] text-muted-foreground">({data.delaiDossierFacture.nbFactures})</span>
-              )}
-            </div>
-          </Card>
+              <div className="flex items-baseline gap-1">
+                <p className="text-xl font-bold">{data?.delaiDossierFacture?.delaiMoyen || 0}j</p>
+                {data?.delaiDossierFacture?.nbFactures !== undefined && (
+                  <span className="text-[10px] text-muted-foreground">({data.delaiDossierFacture.nbFactures})</span>
+                )}
+              </div>
+            </Card>
 
-          {/* KPI 10: Nb Moyen Interventions/Dossier */}
-          <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-amber-500/50 shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-1.5 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xs">📊</span>
+            {/* KPI 10: Nb Moyen Interventions/Dossier */}
+            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-amber-500/50 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-1.5 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">📊</span>
+                </div>
+                <p className="text-xs font-medium text-muted-foreground">Nb moyen RDV/Dossier</p>
               </div>
-              <p className="text-xs font-medium text-muted-foreground">Nb moyen RDV/Dossier</p>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <p className="text-xl font-bold">{data?.nbMoyenInterventionsParDossier?.nbMoyen || 0}</p>
-              {data?.nbMoyenInterventionsParDossier?.nbProjets !== undefined && (
-                <span className="text-[10px] text-muted-foreground">({data.nbMoyenInterventionsParDossier.nbProjets})</span>
-              )}
-            </div>
-          </Card>
+              <div className="flex items-baseline gap-1">
+                <p className="text-xl font-bold">{data?.nbMoyenInterventionsParDossier?.nbMoyen || 0}</p>
+                {data?.nbMoyenInterventionsParDossier?.nbProjets !== undefined && (
+                  <span className="text-[10px] text-muted-foreground">({data.nbMoyenInterventionsParDossier.nbProjets})</span>
+                )}
+              </div>
+            </Card>
 
-          {/* KPI 11: Nb Moyen Visites/Intervention */}
-          <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-lime-500/50 shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="bg-gradient-to-br from-lime-500 to-lime-600 p-1.5 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xs">📍</span>
+            {/* KPI 11: Nb Moyen Visites/Intervention */}
+            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-lime-500/50 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-lime-500 to-lime-600 p-1.5 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">📍</span>
+                </div>
+                <p className="text-xs font-medium text-muted-foreground">Nb moyen visites/RDV</p>
               </div>
-              <p className="text-xs font-medium text-muted-foreground">Nb moyen visites/RDV</p>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <p className="text-xl font-bold">{data?.nbMoyenVisitesParIntervention?.nbMoyen || 0}</p>
-              {data?.nbMoyenVisitesParIntervention?.nbInterventions !== undefined && (
-                <span className="text-[10px] text-muted-foreground">({data.nbMoyenVisitesParIntervention.nbInterventions})</span>
-              )}
-            </div>
-          </Card>
+              <div className="flex items-baseline gap-1">
+                <p className="text-xl font-bold">{data?.nbMoyenVisitesParIntervention?.nbMoyen || 0}</p>
+                {data?.nbMoyenVisitesParIntervention?.nbInterventions !== undefined && (
+                  <span className="text-[10px] text-muted-foreground">({data.nbMoyenVisitesParIntervention.nbInterventions})</span>
+                )}
+              </div>
+            </Card>
 
-          {/* KPI 12: Taux Multi-Univers */}
-          <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-violet-500/50 shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="bg-gradient-to-br from-violet-500 to-violet-600 p-1.5 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xs">🌐</span>
+            {/* KPI 12: Taux Multi-Univers */}
+            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-violet-500/50 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-violet-500 to-violet-600 p-1.5 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">🌐</span>
+                </div>
+                <p className="text-xs font-medium text-muted-foreground">Multi-univers</p>
               </div>
-              <p className="text-xs font-medium text-muted-foreground">Multi-univers</p>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <p className="text-xl font-bold">{data?.tauxDossiersMultiUnivers?.tauxMultiUnivers || 0}%</p>
-              {data?.tauxDossiersMultiUnivers?.nbMultiUnivers !== undefined && (
-                <span className="text-[10px] text-muted-foreground">({data.tauxDossiersMultiUnivers.nbMultiUnivers}/{data.tauxDossiersMultiUnivers.nbTotal})</span>
-              )}
-            </div>
-          </Card>
+              <div className="flex items-baseline gap-1">
+                <p className="text-xl font-bold">{data?.tauxDossiersMultiUnivers?.tauxMultiUnivers || 0}%</p>
+                {data?.tauxDossiersMultiUnivers?.nbMultiUnivers !== undefined && (
+                  <span className="text-[10px] text-muted-foreground">
+                    ({data.tauxDossiersMultiUnivers.nbMultiUnivers}/{data.tauxDossiersMultiUnivers.nbTotal})
+                  </span>
+                )}
+              </div>
+            </Card>
 
-          {/* KPI 13: Taux One Shot */}
-          <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-rose-500/50 shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="bg-gradient-to-br from-rose-500 to-rose-600 p-1.5 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xs">⚡</span>
+            {/* KPI 13: Taux One Shot */}
+            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-rose-500/50 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-rose-500 to-rose-600 p-1.5 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">⚡</span>
+                </div>
+                <p className="text-xs font-medium text-muted-foreground">Taux One Shot</p>
               </div>
-              <p className="text-xs font-medium text-muted-foreground">Taux One Shot</p>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <p className="text-xl font-bold">{data?.tauxDossiersSansDevis?.tauxSansDevis || 0}%</p>
-              {data?.tauxDossiersSansDevis?.nbSansDevis !== undefined && (
-                <span className="text-[10px] text-muted-foreground">({data.tauxDossiersSansDevis.nbSansDevis}/{data.tauxDossiersSansDevis.nbFactures})</span>
-              )}
-            </div>
-          </Card>
+              <div className="flex items-baseline gap-1">
+                <p className="text-xl font-bold">{data?.tauxDossiersSansDevis?.tauxSansDevis || 0}%</p>
+                {data?.tauxDossiersSansDevis?.nbSansDevis !== undefined && (
+                  <span className="text-[10px] text-muted-foreground">
+                    ({data.tauxDossiersSansDevis.nbSansDevis}/{data.tauxDossiersSansDevis.nbFactures})
+                  </span>
+                )}
+              </div>
+            </Card>
 
-          {/* KPI 14: Taux Multi-Techniciens */}
-          <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-sky-500/50 shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="bg-gradient-to-br from-sky-500 to-sky-600 p-1.5 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xs">👥</span>
+            {/* KPI 14: Taux Multi-Techniciens */}
+            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-sky-500/50 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-sky-500 to-sky-600 p-1.5 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">👥</span>
+                </div>
+                <p className="text-xs font-medium text-muted-foreground">Multi-techniciens</p>
               </div>
-              <p className="text-xs font-medium text-muted-foreground">Multi-techniciens</p>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <p className="text-xl font-bold">{data?.tauxDossiersMultiTechniciens?.tauxMultiTech || 0}%</p>
-              {data?.tauxDossiersMultiTechniciens?.nbMultiTech !== undefined && (
-                <span className="text-[10px] text-muted-foreground">({data.tauxDossiersMultiTechniciens.nbMultiTech}/{data.tauxDossiersMultiTechniciens.nbTotal})</span>
-              )}
-            </div>
-          </Card>
+              <div className="flex items-baseline gap-1">
+                <p className="text-xl font-bold">{data?.tauxDossiersMultiTechniciens?.tauxMultiTech || 0}%</p>
+                {data?.tauxDossiersMultiTechniciens?.nbMultiTech !== undefined && (
+                  <span className="text-[10px] text-muted-foreground">
+                    ({data.tauxDossiersMultiTechniciens.nbMultiTech}/{data.tauxDossiersMultiTechniciens.nbTotal})
+                  </span>
+                )}
+              </div>
+            </Card>
 
-          {/* KPI 15: Polyvalence Techniciens (historique complet) */}
-          <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-emerald-500/50 shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-1.5 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xs">🎯</span>
+            {/* KPI 15: Polyvalence Techniciens (historique complet) */}
+            <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-emerald-500/50 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-1.5 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">🎯</span>
+                </div>
+                <p className="text-xs font-medium text-muted-foreground">Polyvalence tech</p>
               </div>
-              <p className="text-xs font-medium text-muted-foreground">Polyvalence tech</p>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <p className="text-xl font-bold">{data?.polyvalenceTechniciens?.polyvalenceMoyenne || 0}</p>
-              {data?.polyvalenceTechniciens?.nbTechniciens !== undefined && (
-                <span className="text-[10px] text-muted-foreground">({data.polyvalenceTechniciens.nbTechniciens} techs)</span>
-              )}
-            </div>
+              <div className="flex items-baseline gap-1">
+                <p className="text-xl font-bold">{data?.polyvalenceTechniciens?.polyvalenceMoyenne || 0}</p>
+                {data?.polyvalenceTechniciens?.nbTechniciens !== undefined && (
+                  <span className="text-[10px] text-muted-foreground">
+                    ({data.polyvalenceTechniciens.nbTechniciens} techs)
+                  </span>
+                )}
+              </div>
+            </Card>
+
+            {/* KPI 16: Placeholder - à définir */}
+            <Card className="p-3 border-2 border-dashed border-muted-foreground/20 bg-muted/10 shadow-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-muted p-1.5 rounded-lg flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground">?</span>
+                </div>
+                <p className="text-xs font-medium text-muted-foreground">KPI à définir</p>
+              </div>
+              <p className="text-xl font-bold text-muted-foreground">-</p>
             </Card>
           </div>
         </div>
