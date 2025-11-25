@@ -225,15 +225,6 @@ export default function ApogeeGuide() {
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
-  // Filtrer uniquement les catégories Apogée (exclure FAQ et HelpConfort)
-  const apogeeCategories = blocks
-    .filter(b => b.type === 'category' && b.slug !== 'faq' && !b.title.toLowerCase().includes('faq') && !b.slug.startsWith('helpconfort-'))
-    .sort((a, b) => a.order - b.order);
-
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -244,6 +235,15 @@ export default function ApogeeGuide() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Filtrer uniquement les catégories Apogée (exclure FAQ et HelpConfort)
+  const apogeeCategories = blocks
+    .filter(b => b.type === 'category' && b.slug !== 'faq' && !b.title.toLowerCase().includes('faq') && !b.slug.startsWith('helpconfort-'))
+    .sort((a, b) => a.order - b.order);
 
   // Les dates de création/mise à jour ne sont plus nécessaires pour cette page
 
