@@ -5,9 +5,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
 import { calculateUniversStats, calculateMonthlyUniversCA } from "@/apogee-connect/utils/universCalculations";
+import {
+  calculateDossiersParUnivers,
+  calculateTransfoParUnivers,
+  calculateUniversApporteurMatrix,
+} from "@/apogee-connect/utils/universExtendedCalculations";
 import { EnrichmentService } from "@/apogee-connect/services/enrichmentService";
 import { UniversKpiCard } from "@/apogee-connect/components/widgets/UniversKpiCard";
 import { UniversStackedChart } from "@/apogee-connect/components/widgets/UniversStackedChart";
+import { UniversDossiersChart } from "@/apogee-connect/components/widgets/UniversDossiersChart";
+import { UniversTransfoChart } from "@/apogee-connect/components/widgets/UniversTransfoChart";
+import { UniversApporteurMatrix } from "@/apogee-connect/components/widgets/UniversApporteurMatrix";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function IndicateursUnivers() {
@@ -37,8 +45,35 @@ export default function IndicateursUnivers() {
         rawData.projects,
         filters.dateRange
       );
+
+      // Calculer les nouvelles métriques
+      const dossiersParUnivers = calculateDossiersParUnivers(
+        rawData.projects,
+        filters.dateRange
+      );
+
+      const transfoParUnivers = calculateTransfoParUnivers(
+        rawData.projects,
+        rawData.devis,
+        rawData.factures,
+        filters.dateRange
+      );
+
+      const matrixUniversApporteur = calculateUniversApporteurMatrix(
+        rawData.projects,
+        rawData.clients,
+        rawData.factures,
+        filters.dateRange
+      );
       
-      return { stats, monthlyCA, universes: EnrichmentService.getAllUniverses() };
+      return {
+        stats,
+        monthlyCA,
+        dossiersParUnivers,
+        transfoParUnivers,
+        matrixUniversApporteur,
+        universes: EnrichmentService.getAllUniverses(),
+      };
     },
     enabled: isAgencyReady && !isAuthLoading,
   });
@@ -58,8 +93,12 @@ export default function IndicateursUnivers() {
 
   const stats = data?.stats || [];
   const monthlyCA = data?.monthlyCA || [];
+  const dossiersParUnivers = data?.dossiersParUnivers || {};
+  const transfoParUnivers = data?.transfoParUnivers || {};
+  const matrixUniversApporteur = data?.matrixUniversApporteur || {};
+  const universes = data?.universes || [];
   const universesMap = new Map(
-    data?.universes.map(u => [u.slug, u]) || []
+    universes.map(u => [u.slug, u])
   );
 
   return (
@@ -120,12 +159,33 @@ export default function IndicateursUnivers() {
           <div className="lg:col-span-2 lg:row-span-2">
             <UniversStackedChart 
               data={monthlyCA}
-              universes={data?.universes || []}
+              universes={universes}
               loading={isLoading}
             />
           </div>
         </div>
       )}
+
+      {/* Graphiques et analyses supplémentaires */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        <UniversDossiersChart
+          data={dossiersParUnivers}
+          universes={universes}
+          loading={isLoading}
+        />
+        <UniversTransfoChart
+          data={transfoParUnivers}
+          universes={universes}
+          loading={isLoading}
+        />
+      </div>
+
+      {/* Tableau croisé univers × apporteur */}
+      <UniversApporteurMatrix
+        data={matrixUniversApporteur}
+        universes={universes}
+        loading={isLoading}
+      />
     </div>
   );
 }
