@@ -167,7 +167,7 @@ export const TypesApporteursWidget = ({ data, loading, mode = "full" }: TypesApp
             <CardTitle className="text-base">Répartition du CA par type</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
+            <ResponsiveContainer width="100%" height={340}>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis 
