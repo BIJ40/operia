@@ -14,11 +14,11 @@ interface TypesApporteursWidgetProps {
 }
 
 const COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
+  "hsl(var(--primary))",        // Bleu Help Confort
+  "hsl(var(--accent))",          // Orange Help Confort
+  "hsl(var(--blue-dark))",       // Bleu foncé
+  "hsl(var(--blue-light))",      // Bleu clair
+  "hsl(40 90% 60%)",             // Orange clair
 ];
 
 export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetProps) => {
@@ -165,7 +165,7 @@ export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetPr
           <CardTitle className="text-base">Répartition du CA par type</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={180}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis 
