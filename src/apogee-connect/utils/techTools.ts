@@ -25,14 +25,18 @@ export function buildTechMap(usersData: any[]): Record<number, TechnicienInfo> {
   if (!Array.isArray(usersData)) return TECHS;
 
   for (const u of usersData) {
-    if (u?.isTechnicien !== true) continue;
+    // Ne garder que les techniciens
+    const isTechnicien = u?.isTechnicien === true || u?.type === "technicien";
+    if (!isTechnicien) continue;
+
+    const isActive = u?.is_on === true || u?.isActive === true;
 
     TECHS[u.id] = {
       id: u.id,
       prenom: (u.firstname || "").trim(),
       nom: (u.name || "").trim(),
-      actif: u.isActive === true,
-      color: u.color?.hex || "#808080"
+      actif: isActive,
+      color: u.data?.color?.hex || u.color?.hex || "#808080",
     };
   }
 
