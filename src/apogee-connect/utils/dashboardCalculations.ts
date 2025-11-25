@@ -548,6 +548,7 @@ export const calculatePanierMoyen = (
 ): { panierMoyen: number; caTotal: number; nbDossiers: number } => {
   const projectsFactures = new Set<string>();
   let caTotal = 0;
+  let facturesDebug: any[] = [];
 
   factures.forEach(facture => {
     // 1. Filtrer les factures définitives (exclure les avoirs)
@@ -580,6 +581,18 @@ export const calculatePanierMoyen = (
     const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || "0";
     const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
     
+    // Debug: garder les 3 premières factures pour inspection
+    if (facturesDebug.length < 3) {
+      facturesDebug.push({
+        ref: facture.reference || facture.numeroFacture,
+        montantRaw,
+        montant,
+        dataTotalHT: facture.data?.totalHT,
+        totalHT: facture.totalHT,
+        montantHT: facture.montantHT
+      });
+    }
+    
     if (!isNaN(montant)) {
       caTotal += montant;
     }
@@ -588,6 +601,15 @@ export const calculatePanierMoyen = (
   // 6. Calculer le panier moyen
   const nbDossiers = projectsFactures.size;
   const panierMoyen = nbDossiers > 0 ? caTotal / nbDossiers : 0;
+
+  if (import.meta.env.DEV) {
+    console.log("🛒 Panier Moyen - Debug:", {
+      panierMoyen: Math.round(panierMoyen * 100) / 100,
+      caTotal: Math.round(caTotal * 100) / 100,
+      nbDossiers,
+      exemplesFactures: facturesDebug
+    });
+  }
 
   return {
     panierMoyen: Math.round(panierMoyen * 100) / 100, // Arrondir à 2 décimales
