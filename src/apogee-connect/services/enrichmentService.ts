@@ -27,6 +27,7 @@ export interface UniverseRef {
   slug: string;
   label: string;
   colorHex: string;
+  icon?: string;
 }
 
 export class EnrichmentService {
@@ -113,31 +114,45 @@ export class EnrichmentService {
       universes.forEach((u: string) => universeSlugs.add(u));
     });
 
-    // Palette de couleurs FIXE (ne pas modifier)
+    // Palette de couleurs FIXE (couleurs de la capture d'écran user)
     const colorPalette: Record<string, string> = {
-      'plomberie': '#2E7D32',      // vert foncé
-      'electricite': '#1E3A8A',    // bleu foncé
-      'menuiserie': '#9CA3AF',     // gris
-      'renovation': '#F59E0B',     // orange
-      'serrurerie': '#7C3AED',     // violet
-      'volets': '#0EA5E9',         // cyan
-      'peinture': '#EF4444',       // rouge
-      'chauffage': '#DC2626',      // rouge foncé
-      'climatisation': '#06B6D4',  // cyan clair
-      'vitrerie': '#14B8A6',       // teal
+      'renovation': '#EC4899',     // rose/pink
+      'electricite': '#F59E0B',    // amber/yellow
+      'serrurerie': '#EC4899',     // pink/magenta
+      'menuiserie': '#9CA3AF',     // gray
+      'vitrerie': '#10B981',       // green/teal
+      'plomberie': '#10B981',      // green
+      'chauffage': '#EF4444',      // red
+      'climatisation': '#06B6D4',  // cyan/blue
       'autre': '#6B7280',          // gris moyen
       'non_renseigne': '#9CA3AF',  // gris clair
+    };
+
+    // Mapping des icônes Lucide pour chaque univers
+    const iconMapping: Record<string, string> = {
+      'renovation': 'PaintRoller',
+      'electricite': 'Zap',
+      'serrurerie': 'Key',
+      'menuiserie': 'DoorOpen',
+      'vitrerie': 'Square',
+      'plomberie': 'Wrench',
+      'chauffage': 'Thermometer',
+      'climatisation': 'Wind',
+      'autre': 'HelpCircle',
+      'non_renseigne': 'HelpCircle',
     };
 
     universeSlugs.forEach(slug => {
       const label = this.formatUniverseLabel(slug);
       const colorHex = colorPalette[slug.toLowerCase()] || this.getDefaultUniverseColor(slug);
+      const icon = iconMapping[slug.toLowerCase()] || 'HelpCircle';
 
       this.mapUnivers[slug] = {
         slug,
         label,
         colorHex,
-      };
+        icon,
+      } as any;
     });
 
     if (import.meta.env.DEV) {
