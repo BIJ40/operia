@@ -19,13 +19,15 @@ export const calculatePipelineStats = (
   factures: any[],
   dateRange?: { start: Date; end: Date }
 ): PipelineData => {
-  console.log("🔍 calculatePipelineStats - Début", {
-    projects: projects?.length || 0,
-    interventions: interventions?.length || 0,
-    devis: devis?.length || 0,
-    factures: factures?.length || 0,
-    dateRange
-  });
+  if (import.meta.env.DEV) {
+    console.log("🔍 calculatePipelineStats - Début", {
+      projects: projects?.length || 0,
+      interventions: interventions?.length || 0,
+      devis: devis?.length || 0,
+      factures: factures?.length || 0,
+      dateRange
+    });
+  }
 
   // Fonction de filtrage par date
   const filterByDate = (items: any[], dateField: string = "created_at") => {
@@ -63,9 +65,11 @@ export const calculatePipelineStats = (
     }
   });
 
-  console.log("🔍 Factures filtrées (pipeline):", filteredFactures.length);
-  if (filteredFactures.length > 0) {
-    console.log("📄 Exemple de facture (pipeline):", filteredFactures[0]);
+  if (import.meta.env.DEV) {
+    console.log("🔍 Factures filtrées (pipeline):", filteredFactures.length);
+    if (filteredFactures.length > 0) {
+      console.log("📄 Exemple de facture (pipeline):", filteredFactures[0]);
+    }
   }
 
   // On considère qu'une facture = travaux réalisés (peu importe le statut),

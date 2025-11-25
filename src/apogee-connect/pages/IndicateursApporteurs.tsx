@@ -83,11 +83,14 @@ export default function IndicateursApporteurs() {
         secondaryFilters.dateRange
       );
       
+      // Calculer l'évolution mensuelle Particuliers vs Apporteurs - année dynamique
+      const start = secondaryFilters.dateRange?.start;
+      const year = start instanceof Date ? start.getFullYear() : new Date().getFullYear();
       const segmentationData = calculateMonthlySegmentation(
         apiData.factures || [],
         apiData.clients || [],
         apiData.projects || [],
-        2025
+        year
       );
       
       const tauxTransformationMoyen = calculateTauxTransformationMoyen(

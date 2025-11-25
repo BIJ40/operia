@@ -222,10 +222,12 @@ export const calculateDevisJour = (devis: any[], dateRange: { start: Date; end: 
 export const calculateCaJour = (factures: any[], clients: any[], projects: any[], dateRange: { start: Date; end: Date }): { caTotal: number; nbFactures: number } => {
   if (!factures || factures.length === 0) return { caTotal: 0, nbFactures: 0 };
   
-  console.log("💶 calculateCaJour - entrée", {
-    nbFactures: factures.length,
-    dateRange,
-  });
+  if (import.meta.env.DEV) {
+    console.log("💶 calculateCaJour - entrée", {
+      nbFactures: factures.length,
+      dateRange,
+    });
+  }
   
   // Créer un map des clients et projets pour recherche rapide
   const clientsMap = new Map(clients.map(c => [c.id, c]));
@@ -299,17 +301,19 @@ export const calculateCaJour = (factures: any[], clients: any[], projects: any[]
   
   const nbFacturesComptabilisees = facturesDansPeriode - facturesExclues - facturesAvecMontantInvalide;
   
-  console.log("💶 calculateCaJour - résultat", { 
-    caTotal, 
-    facturesDansPeriode,
-    facturesAvecMontantInvalide,
-    facturesExclues,
-    nbFacturesComptabilisees,
-    totalFacturesPositives: totalFactures,
-    totalAvoirs,
-    nbFacturesTotal: factures.length,
-    exemplesFactures
-  });
+  if (import.meta.env.DEV) {
+    console.log("💶 calculateCaJour - résultat", { 
+      caTotal, 
+      facturesDansPeriode,
+      facturesAvecMontantInvalide,
+      facturesExclues,
+      nbFacturesComptabilisees,
+      totalFacturesPositives: totalFactures,
+      totalAvoirs,
+      nbFacturesTotal: factures.length,
+      exemplesFactures
+    });
+  }
   
   return { caTotal, nbFactures: nbFacturesComptabilisees };
 };
@@ -384,8 +388,8 @@ export const calculateDashboardStats = (
     nbFacturesCA,
     variations: {
       dossiers: calculateVariationDossiers(projects, dateRange),
-      rt: 0, // TODO: implémenter si nécessaire
-      devis: 0, // TODO: implémenter si nécessaire
+      rt: null, // Non implémenté - null indique l'absence de données
+      devis: null, // Non implémenté - null indique l'absence de données
       ca: calculateVariationCa(factures, clients, projects, dateRange),
     }
   };

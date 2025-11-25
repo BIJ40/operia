@@ -9,8 +9,6 @@ interface PipelineChartProps {
 }
 
 export const PipelineChart = ({ stages, totalDossiers }: PipelineChartProps) => {
-  console.log("📊 PipelineChart - données:", stages);
-
   return (
     <Card className="p-8 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-2 border-green-200 dark:border-green-800 hover:scale-102 transition-all duration-300 cursor-pointer shadow-xl">
       <div className="flex items-start justify-between mb-6">

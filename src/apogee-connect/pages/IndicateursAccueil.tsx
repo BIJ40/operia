@@ -31,11 +31,14 @@ export default function IndicateursAccueil() {
         users: apiData.users || [],
       }, filters.dateRange);
       
+      // Calculer les données mensuelles CA - année dynamique basée sur les filtres
+      const start = filters.dateRange?.start;
+      const year = start instanceof Date ? start.getFullYear() : new Date().getFullYear();
       const monthlyCAData = calculateMonthlyCA(
         apiData.factures || [],
         apiData.clients || [],
         apiData.projects || [],
-        2025
+        year
       );
       
       const tauxSAVGlobal = calculateTauxSAVGlobal(

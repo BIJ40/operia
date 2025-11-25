@@ -92,7 +92,9 @@ export const calculateTop10Apporteurs = (
     if (isInitInvoice(facture, client, project)) {
       // Utiliser la part APPORTEURS de la facture d'init
       montant = getInitInvoiceApporteursAmount(facture);
-      console.log("💰 APPORTEURS - Facture INIT détectée, utilisation part apporteurs:", montant);
+      if (import.meta.env.DEV) {
+        console.log("💰 APPORTEURS - Facture INIT détectée, utilisation part apporteurs:", montant);
+      }
     } else {
       // Calculer le montant HT normal
       const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
