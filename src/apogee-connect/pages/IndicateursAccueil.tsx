@@ -171,9 +171,14 @@ export default function IndicateursAccueil() {
         {/* COLONNE GAUCHE - KPI Temporels */}
         <Card className="p-4 border-2 border-primary/20 bg-gradient-to-br from-background to-muted/20">
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-foreground">Indicateurs Temporels</h2>
-            
-            <PeriodSelector />
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-lg font-semibold text-foreground whitespace-nowrap">Indicateurs Temporels</h2>
+              <div className="flex-1 flex justify-end">
+                <div className="scale-90 origin-right">
+                  <PeriodSelector />
+                </div>
+              </div>
+            </div>
 
             <div className="grid grid-cols-2 gap-2">
               {/* KPI 1: Dossiers reçus */}
