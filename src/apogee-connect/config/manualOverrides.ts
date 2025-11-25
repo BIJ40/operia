@@ -21,14 +21,22 @@ export interface ManualJanuaryData {
   month: number; // 1 = janvier
   ca_particuliers: number;
   ca_apporteurs: number;
+  nb_factures_particuliers: number;
+  nb_factures_apporteurs: number;
+  nb_projets: number;
+  nb_devis: number;
 }
 
 export const manualJanuaryData: ManualJanuaryData = {
   enabled: true,
   year: 2025,
   month: 1, // janvier
-  ca_particuliers: 0, // À renseigner par l'utilisateur
-  ca_apporteurs: 0,   // À renseigner par l'utilisateur
+  ca_particuliers: 19419.94,
+  ca_apporteurs: 68460.47,
+  nb_factures_particuliers: 30,
+  nb_factures_apporteurs: 214,
+  nb_projets: 379,
+  nb_devis: 11,
 };
 
 /**
