@@ -12,7 +12,6 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ApporteursSection } from '@/components/sections/ApporteursSection';
 
 export default function MyIndicators() {
   const { isAuthenticated, hasAccessToScope } = useAuth();
@@ -334,10 +333,6 @@ export default function MyIndicators() {
           </Card>
         )}
 
-        {/* Section Apporteurs */}
-        {!isLoading && data && (
-          <ApporteursSection />
-        )}
 
         {/* État de chargement */}
         {isLoading && (
