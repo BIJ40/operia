@@ -13,7 +13,8 @@ export const calculateMonthlyCA = (
   factures: any[],
   clients: any[],
   projects: any[],
-  year: number
+  year: number,
+  userAgency: string
 ): MonthlyCA[] => {
   const clientsMap = new Map(clients.map(c => [c.id, c]));
   const projectsMap = new Map(projects.map(p => [p.id, p]));
@@ -27,17 +28,17 @@ export const calculateMonthlyCA = (
     const monthEnd = endOfMonth(date);
     const monthLabel = format(date, "MMM", { locale: fr });
     
-    // Vérifier si c'est janvier 2025 avec override manuel
-    if (isManualOverrideMonth(year, month + 1)) {
+    // Vérifier si c'est janvier 2025 avec override manuel pour cette agence
+    if (isManualOverrideMonth(year, month + 1, userAgency)) {
       if (import.meta.env.DEV) {
-        console.log(`📅 OVERRIDE MANUEL - Janvier ${year}: CA manuel = ${manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs}€`);
+        console.log(`📅 OVERRIDE MANUEL - Janvier ${year} (agence: ${userAgency}): CA manuel = ${manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs}€`);
       }
       
       // Utiliser les valeurs manuelles configurées
       monthlyData.push({
         month: monthLabel,
         ca: manualJanuaryData.ca_particuliers + manualJanuaryData.ca_apporteurs,
-        nbFactures: 0 // Pas de factures réelles pour janvier
+        nbFactures: manualJanuaryData.nb_factures_particuliers + manualJanuaryData.nb_factures_apporteurs
       });
       continue; // Passer au mois suivant
     }

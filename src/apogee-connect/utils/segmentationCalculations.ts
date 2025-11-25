@@ -19,7 +19,8 @@ export const calculateMonthlySegmentation = (
   factures: any[],
   clients: any[],
   projects: any[],
-  year: number
+  year: number,
+  userAgency: string
 ): MonthlySegmentData[] => {
   const clientsMap = new Map(clients.map(c => [c.id, c]));
   const projectsMap = new Map(projects.map(p => [p.id, p]));
@@ -33,10 +34,10 @@ export const calculateMonthlySegmentation = (
     const monthEnd = endOfMonth(date);
     const monthLabel = format(date, "MMM", { locale: fr });
     
-    // Vérifier si c'est janvier 2025 avec override manuel
-    if (isManualOverrideMonth(year, month + 1)) {
+    // Vérifier si c'est janvier 2025 avec override manuel pour cette agence
+    if (isManualOverrideMonth(year, month + 1, userAgency)) {
       if (import.meta.env.DEV) {
-        console.log(`📅 OVERRIDE MANUEL - Janvier ${year}: Particuliers = ${manualJanuaryData.ca_particuliers}€, Apporteurs = ${manualJanuaryData.ca_apporteurs}€`);
+        console.log(`📅 OVERRIDE MANUEL - Janvier ${year} (agence: ${userAgency}): Particuliers = ${manualJanuaryData.ca_particuliers}€, Apporteurs = ${manualJanuaryData.ca_apporteurs}€`);
       }
       
       // Utiliser les valeurs manuelles configurées

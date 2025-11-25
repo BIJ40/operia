@@ -17,6 +17,7 @@
 
 export interface ManualJanuaryData {
   enabled: boolean;
+  agency: string; // Slug de l'agence concernée (ex: "dax")
   year: number;
   month: number; // 1 = janvier
   ca_particuliers: number;
@@ -29,6 +30,7 @@ export interface ManualJanuaryData {
 
 export const manualJanuaryData: ManualJanuaryData = {
   enabled: true,
+  agency: "dax", // CRITIQUE: Ces données ne concernent QUE l'agence DAX
   year: 2025,
   month: 1, // janvier
   ca_particuliers: 19419.94,
@@ -41,9 +43,15 @@ export const manualJanuaryData: ManualJanuaryData = {
 
 /**
  * Vérifie si une date correspond au mois manuel (janvier 2025)
+ * ET si l'agence de l'utilisateur correspond
+ * 
+ * @param year Année à vérifier
+ * @param month Mois à vérifier (1-12)
+ * @param userAgency Slug de l'agence de l'utilisateur (ex: "dax")
  */
-export const isManualOverrideMonth = (year: number, month: number): boolean => {
+export const isManualOverrideMonth = (year: number, month: number, userAgency: string): boolean => {
   if (!manualJanuaryData.enabled) return false;
+  if (userAgency !== manualJanuaryData.agency) return false; // ISOLATION AGENCE
   return year === manualJanuaryData.year && month === manualJanuaryData.month;
 };
 
