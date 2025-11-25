@@ -108,10 +108,13 @@ export class EnrichmentService {
   private static buildUniversesMap(projects: any[]) {
     const universeSlugs = new Set<string>();
     
-    // Collecter tous les univers uniques
+    // Collecter tous les univers uniques ET LES NORMALISER immédiatement
     projects.forEach(project => {
       const universes = project.universes || project.data?.universes || [];
-      universes.forEach((u: string) => universeSlugs.add(u));
+      universes.forEach((u: string) => {
+        const normalized = this.normalizeUniverseSlug(u);
+        universeSlugs.add(normalized);
+      });
     });
 
     // Palette de couleurs FIXE (couleurs de la capture d'écran user)
@@ -144,8 +147,7 @@ export class EnrichmentService {
       'non_renseigne': 'HelpCircle',
     };
 
-    universeSlugs.forEach(slug => {
-      const normalizedSlug = this.normalizeUniverseSlug(slug);
+    universeSlugs.forEach(normalizedSlug => {
       const label = this.formatUniverseLabel(normalizedSlug);
       const colorHex = colorPalette[normalizedSlug] || this.getDefaultUniverseColor(normalizedSlug);
       const icon = iconMapping[normalizedSlug] || 'HelpCircle';
@@ -229,6 +231,7 @@ export class EnrichmentService {
       // Ancien slug → Nouveau slug
       'amelioration_logement': 'pmr',
       'amelioration-logement': 'pmr',
+      'ame_logement': 'pmr',
       'volets': 'volet_roulant',
       'volet': 'volet_roulant',
     };

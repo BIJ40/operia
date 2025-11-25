@@ -17,6 +17,7 @@ const normalizeUniverseSlug = (slug: string): string => {
   const normalizationMap: Record<string, string> = {
     'amelioration_logement': 'pmr',
     'amelioration-logement': 'pmr',
+    'ame_logement': 'pmr',
     'volets': 'volet_roulant',
     'volet': 'volet_roulant',
   };
