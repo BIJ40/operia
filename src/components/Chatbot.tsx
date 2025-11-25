@@ -9,6 +9,7 @@ import { ChatInput } from '@/components/chatbot/ChatInput';
 import { ChatModeSelector } from '@/components/chatbot/ChatModeSelector';
 import { SupportTicketDialog } from '@/components/chatbot/SupportTicketDialog';
 import chatIcon from '@/assets/logo_chat.png';
+import { MessageCircle } from 'lucide-react';
 
 export function Chatbot() {
   const { isAdmin, isSupport } = useAuth();
@@ -325,28 +326,19 @@ export function Chatbot() {
             right: `${buttonPosition.right}px`,
             zIndex: 9999,
           }}
-          className="relative h-20 w-20 rounded-full shadow-2xl hover:scale-110 transition-transform overflow-visible bg-gradient-to-br from-helpconfort-blue-light via-helpconfort-blue-dark to-primary animate-pulse group"
+          className="relative px-6 py-3 rounded-full shadow-2xl hover:scale-105 transition-all overflow-visible bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark group flex items-center gap-3"
         >
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1/4 h-full cursor-grab group-hover:opacity-100 opacity-0 transition-opacity pointer-events-none">
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-full cursor-grab group-hover:opacity-100 opacity-0 transition-opacity pointer-events-none">
             <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1 h-6 bg-white/50 rounded-full"></div>
           </div>
 
-          <div
-            className="absolute inset-0 rounded-full bg-gradient-to-r from-helpconfort-blue-light via-primary to-helpconfort-blue-dark animate-spin-slow opacity-75 blur-sm pointer-events-none"
-            style={{ padding: '3px' }}
-          ></div>
-
-          <div className="relative h-full w-full rounded-full bg-gradient-to-br from-helpconfort-blue-light to-helpconfort-blue-dark flex items-center justify-center shadow-inner pointer-events-none">
-            <img
-              src={chatIcon}
-              alt="Chat"
-              className="w-10 h-10 pointer-events-none select-none drop-shadow-lg"
-              draggable="false"
-            />
-          </div>
+          <MessageCircle className="h-6 w-6 text-white flex-shrink-0" />
+          <span className="text-white font-semibold text-sm whitespace-nowrap">
+            Demander de l'aide en direct
+          </span>
 
           {unreadCount > 0 && (
-            <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-7 w-7 flex items-center justify-center animate-pulse shadow-lg border-2 border-background pointer-events-none">
+            <div className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse shadow-lg border-2 border-background pointer-events-none">
               {unreadCount > 9 ? '9+' : unreadCount}
             </div>
           )}
