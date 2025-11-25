@@ -370,13 +370,13 @@ export default function IndicateursAccueil() {
             </div>
           </Card>
 
-          {/* KPI 13: Taux Sans Devis */}
+          {/* KPI 13: Taux One Shot */}
           <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-rose-500/50 shadow-lg">
             <div className="flex items-center gap-2 mb-2">
               <div className="bg-gradient-to-br from-rose-500 to-rose-600 p-1.5 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xs">⚡</span>
               </div>
-              <p className="text-xs font-medium text-muted-foreground">Sans devis</p>
+              <p className="text-xs font-medium text-muted-foreground">Taux One Shot</p>
             </div>
             <div className="flex items-baseline gap-1">
               <p className="text-xl font-bold">{data?.tauxDossiersSansDevis?.tauxSansDevis || 0}%</p>
