@@ -313,7 +313,7 @@ export default function Dashboard() {
           <PeriodSelector />
         </div>
 
-        {/* Section KPIs liés à la période - 15 tuiles compactes */}
+        {/* Section KPIs liés à la période - 16 tuiles compactes */}
         <div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <TooltipProvider>
