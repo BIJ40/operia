@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LucideIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface KpiTileProps {
   title: string;
@@ -12,16 +13,26 @@ interface KpiTileProps {
     value: number;
     isPositive: boolean;
   };
+  tooltip?: string;
 }
 
-export function KpiTile({ title, value, subtitle, icon: Icon, isLoading, trend }: KpiTileProps) {
+export function KpiTile({ title, value, subtitle, icon: Icon, isLoading, trend, tooltip }: KpiTileProps) {
   return (
     <Card className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
         <CardTitle className="text-sm font-semibold text-foreground">{title}</CardTitle>
-        <div className="p-2 rounded-full bg-accent/20">
-          <Icon className="h-5 w-5 text-accent" />
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="p-2 rounded-full bg-accent/20 cursor-help">
+              <Icon className="h-5 w-5 text-accent" />
+            </div>
+          </TooltipTrigger>
+          {tooltip && (
+            <TooltipContent>
+              <p className="max-w-xs text-xs">{tooltip}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
       </CardHeader>
       <CardContent>
         {isLoading ? (

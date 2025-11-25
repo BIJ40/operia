@@ -121,13 +121,14 @@ export default function MyIndicators() {
               isLoading={isLoading}
             />
 
-            {/* T6 - Interventions J (structurel) */}
+            {/* T6 - Interventions (temporel) - réalisées sur la période */}
             <KpiTile
-              title="Interventions J"
-              value={data ? data.kpis.interventions_today : '-'}
-              subtitle="⏱ Aujourd'hui"
-              icon={Calendar}
+              title="Interventions"
+              value={data ? data.kpis.interventions_count : '-'}
+              subtitle="Réalisées sur la période"
+              icon={Wrench}
               isLoading={isLoading}
+              tooltip="Nombre d'interventions terminées sur la période sélectionnée"
             />
 
             {/* T7 - Interventions (temporel) */}
