@@ -183,64 +183,64 @@ export default function IndicateursApporteurs() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {/* Carte 1: Dû global */}
         <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-orange-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-3">
             <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
               <Euro className="w-4 h-4 text-white" />
             </div>
+            <p className="text-xs font-medium text-muted-foreground">Dû global TTC</p>
           </div>
-          <p className="text-xs text-muted-foreground mb-1">Dû global TTC</p>
           <p className="text-2xl font-bold text-orange-500">{formatEuros(data?.duGlobal || 0)}</p>
-          <p className="text-xs text-muted-foreground mt-1">à encaisser</p>
+          <p className="text-xs text-muted-foreground">à encaisser</p>
         </Card>
 
         {/* Carte 2: Total dossiers confiés */}
         <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-blue-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-3">
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
               <FolderOpen className="w-4 h-4 text-white" />
             </div>
+            <p className="text-xs font-medium text-muted-foreground">Dossiers confiés</p>
           </div>
-          <p className="text-xs text-muted-foreground mb-1">Dossiers confiés</p>
           <p className="text-2xl font-bold text-blue-500">
             {data?.dossiersConfiesParApporteur?.reduce((sum, d) => sum + d.nbDossiers, 0) || 0}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">total période</p>
+          <p className="text-xs text-muted-foreground">total période</p>
         </Card>
 
         {/* Carte 3: Taux de transformation moyen */}
         <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-purple-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-3">
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
               <Percent className="w-4 h-4 text-white" />
             </div>
+            <p className="text-xs font-medium text-muted-foreground">Taux de transfo moyen</p>
           </div>
-          <p className="text-xs text-muted-foreground mb-1">Taux de transfo moyen</p>
           <p className="text-2xl font-bold text-purple-500">{(data?.tauxTransformationMoyen || 0).toFixed(0)}%</p>
-          <p className="text-xs text-muted-foreground mt-1">Devis → Factures</p>
+          <p className="text-xs text-muted-foreground">Devis → Factures</p>
         </Card>
 
         {/* Carte 4: Panier moyen HT */}
         <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-green-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-3">
             <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
               <ShoppingCart className="w-4 h-4 text-white" />
             </div>
+            <p className="text-xs font-medium text-muted-foreground">Panier moyen HT</p>
           </div>
-          <p className="text-xs text-muted-foreground mb-1">Panier moyen HT</p>
           <p className="text-2xl font-bold text-green-500">{formatEuros(data?.panierMoyenHT || 0)}</p>
-          <p className="text-xs text-muted-foreground mt-1">Dossier apporteur</p>
+          <p className="text-xs text-muted-foreground">Dossier apporteur</p>
         </Card>
 
         {/* Carte 5: Délai moyen */}
         <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-indigo-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-3">
             <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-1.5 rounded-lg">
               <Clock className="w-4 h-4 text-white" />
             </div>
+            <p className="text-xs font-medium text-muted-foreground">Délai moyen</p>
           </div>
-          <p className="text-xs text-muted-foreground mb-1">Délai moyen</p>
           <p className="text-2xl font-bold text-indigo-500">{Math.round(data?.delaiMoyenFacturation || 0)} j</p>
-          <p className="text-xs text-muted-foreground mt-1">Dossier → Facture</p>
+          <p className="text-xs text-muted-foreground">Dossier → Facture</p>
         </Card>
       </div>
 
