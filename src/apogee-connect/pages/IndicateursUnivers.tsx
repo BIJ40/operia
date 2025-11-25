@@ -77,15 +77,15 @@ export default function IndicateursUnivers() {
         <SecondaryPeriodSelector />
       </div>
 
-      {/* Layout avec 4 tuiles (2x2) à gauche et graphique à droite */}
+      {/* Layout avec 8 tuiles (4x2) à gauche et graphique à droite */}
       {isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-            {[...Array(4)].map((_, i) => (
+          <div className="lg:col-span-3 grid grid-cols-4 gap-4">
+            {[...Array(8)].map((_, i) => (
               <Skeleton key={i} className="h-48" />
             ))}
           </div>
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-2 lg:row-span-2">
             <Skeleton className="h-full min-h-[400px]" />
           </div>
         </div>
@@ -100,9 +100,9 @@ export default function IndicateursUnivers() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          {/* 4 tuiles en grille 2x2 */}
-          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-            {stats.slice(0, 4).map((stat) => {
+          {/* 8 tuiles en grille 4x2 */}
+          <div className="lg:col-span-3 grid grid-cols-4 gap-4">
+            {stats.map((stat) => {
               const universeRef = universesMap.get(stat.univers);
               return (
                 <UniversKpiCard
@@ -116,8 +116,8 @@ export default function IndicateursUnivers() {
             })}
           </div>
 
-          {/* Graphique empilé à droite */}
-          <div className="lg:col-span-3">
+          {/* Graphique empilé à droite sur toute la hauteur */}
+          <div className="lg:col-span-2 lg:row-span-2">
             <UniversStackedChart 
               data={monthlyCA}
               universes={data?.universes || []}
