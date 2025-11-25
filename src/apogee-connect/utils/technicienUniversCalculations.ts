@@ -1,6 +1,23 @@
 import { parseISO, isWithinInterval } from "date-fns";
 import { buildTechMap, resolveTech } from "./techTools";
 
+/**
+ * Normaliser les slugs d'univers de l'API vers nos labels
+ * Table de correspondance HARD-CODÉE (identique à enrichmentService)
+ */
+const normalizeUniverseSlug = (slug: string): string => {
+  const normalizationMap: Record<string, string> = {
+    'amelioration_logement': 'pmr',
+    'amelioration-logement': 'pmr',
+    'ame_logement': 'pmr',
+    'volets': 'volet_roulant',
+    'volet': 'volet_roulant',
+  };
+
+  const normalized = normalizationMap[slug.toLowerCase()];
+  return normalized || slug.toLowerCase();
+};
+
 export interface TechnicienUniversStats {
   technicienId: string;
   technicienNom: string;
@@ -151,10 +168,11 @@ export function calculateTechnicienUniversStats(
     const caFactureHT = Number(facture.data?.totalHT || facture.totalHT || 0);
     if (caFactureHT <= 0) return;
 
-    // Univers du projet
-    const universes = project.data?.universes || [];
-    if (universes.length === 0) return;
+    // Univers du projet - NORMALISER les slugs
+    const universesRaw = project.data?.universes || [];
+    if (universesRaw.length === 0) return;
 
+    const universes = universesRaw.map((u: string) => normalizeUniverseSlug(u));
     const nbUniverses = universes.length;
 
     // Durées par technicien sur ce projet
