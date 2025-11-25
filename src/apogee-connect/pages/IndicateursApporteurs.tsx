@@ -389,13 +389,9 @@ export default function IndicateursApporteurs() {
       </div>
 
       {/* Widget Types d'apporteurs + Graphique Segmentation (2 colonnes) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-        <div className="flex flex-col h-full">
-          <TypesApporteursWidget data={data?.typesApporteursStats || []} mode="chartOnly" />
-        </div>
-        <div className="flex flex-col h-full">
-          <SegmentationChart data={data?.segmentationData || []} />
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TypesApporteursWidget data={data?.typesApporteursStats || []} mode="chartOnly" />
+        <SegmentationChart data={data?.segmentationData || []} />
       </div>
 
       {/* Stats détaillées par type d'apporteur + Clients directs */}
