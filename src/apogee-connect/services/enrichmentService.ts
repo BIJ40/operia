@@ -121,6 +121,7 @@ export class EnrichmentService {
     const colorPalette: Record<string, string> = {
       'pmr': '#2B15E0',            // bleu violet (PMR)
       'volet_roulant': '#9817F0',  // violet/magenta - Volet roulant
+      'renovation': '#A38D77',     // beige/brun - Rénovation
       'electricite': '#FD9A2C',    // orange
       'plomberie': '#3BA6FF',      // bleu clair
       'serrurerie': '#FF12BD',     // rose
@@ -136,6 +137,7 @@ export class EnrichmentService {
     const iconMapping: Record<string, string> = {
       'pmr': 'Accessibility',
       'volet_roulant': 'Blinds',
+      'renovation': 'PaintRoller',
       'electricite': 'Zap',
       'plomberie': 'Droplets',
       'serrurerie': 'KeyRound',
@@ -244,6 +246,7 @@ export class EnrichmentService {
     const labels: Record<string, string> = {
       'pmr': 'PMR',
       'volet_roulant': 'Volets roulants',
+      'renovation': 'Rénovation',
       'electricite': 'Électricité',
       'plomberie': 'Plomberie',
       'serrurerie': 'Serrurerie',
