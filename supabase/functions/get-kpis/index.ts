@@ -210,6 +210,11 @@ Deno.serve(async (req) => {
 
     console.log(`[get-kpis] Data received - Factures: ${factures?.length || 0}, Interventions: ${interventions?.length || 0}, Projects: ${projects?.length || 0}`);
 
+    // Debug: check factures structure
+    if (factures && factures.length > 0) {
+      console.log(`[get-kpis] First facture sample:`, JSON.stringify(factures[0]).substring(0, 500));
+    }
+
     // Helper function to filter invoices by date range
     const filterInvoicesByPeriod = (invoices: any[], start: Date, end: Date) => {
       return invoices.filter((f: any) => {
@@ -225,9 +230,22 @@ Deno.serve(async (req) => {
       return isRealInvoice && isValidStatus;
     });
 
+    console.log(`[get-kpis] Valid invoices after filtering: ${validInvoices.length}`);
+
     // CA HT période (sélecteur)
     const periodInvoices = filterInvoicesByPeriod(validInvoices, dates.start, dates.end);
-    const ca_period = periodInvoices.reduce((sum: number, f: any) => sum + parseFloat(f.totalHT || f.totalTTC || 0), 0);
+    console.log(`[get-kpis] Period invoices count: ${periodInvoices.length}, Period: ${dates.start.toISOString()} to ${dates.end.toISOString()}`);
+    
+    if (periodInvoices.length > 0) {
+      console.log(`[get-kpis] First period invoice sample:`, JSON.stringify(periodInvoices[0]).substring(0, 500));
+    }
+    
+    const ca_period = periodInvoices.reduce((sum: number, f: any) => {
+      const amount = parseFloat(f.totalHT || f.totalTTC || 0);
+      return sum + amount;
+    }, 0);
+
+    console.log(`[get-kpis] CA period calculated: ${ca_period}`);
 
     // Nombre de factures (période active)
     const invoices_count = periodInvoices.length;
