@@ -24,6 +24,8 @@ import AdminIndex from "./pages/AdminIndex";
 import AdminRolePermissions from "./pages/AdminRolePermissions";
 import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
+import MyIndicators from "./pages/MyIndicators";
+import AdminAgencies from "./pages/AdminAgencies";
 import NotFound from "./pages/NotFound";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
@@ -62,6 +64,8 @@ function AppContent() {
         <Route path="/admin/users" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUsers /></Layout>} />
         <Route path="/admin/users-list" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUsersList /></Layout>} />
         <Route path="/admin/role-permissions" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminRolePermissions /></Layout>} />
+        <Route path="/admin/agencies" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminAgencies /></Layout>} />
+        <Route path="/mes-indicateurs" element={<Layout showHeader showSidebar={false}><MyIndicators /></Layout>} />
         <Route path="/profile" element={<Layout showHeader={false} showSidebar={false}><Profile /></Layout>} />
         <Route path="/favorites" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><Favorites /></Layout>} />
         <Route path="*" element={<NotFound />} />
