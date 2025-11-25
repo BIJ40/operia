@@ -182,10 +182,13 @@ export const TypesApporteursWidget = ({ data, loading }: TypesApporteursWidgetPr
               <Tooltip 
                 formatter={(value: number) => formatEuros(value)}
                 contentStyle={{ 
-                  backgroundColor: 'hsl(var(--popover))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
+                  backgroundColor: 'white',
+                  border: '2px solid hsl(var(--primary))',
+                  borderRadius: '8px',
+                  zIndex: 100
                 }}
+                wrapperStyle={{ zIndex: 100 }}
+                cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
               />
               <Bar dataKey="value" radius={[8, 8, 0, 0]}>
                 {chartData.map((entry, index) => (
