@@ -16,7 +16,7 @@ export const TopApporteursWidget = ({ data }: TopApporteursWidgetProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const ApporteursList = ({ items, showAll = false }: { items: ApporteurStats[], showAll?: boolean }) => {
-    const displayData = showAll ? items : items.slice(0, 10);
+    const displayData = showAll ? items : items.slice(0, 5);
     
     return (
       <TooltipProvider>
@@ -86,7 +86,7 @@ export const TopApporteursWidget = ({ data }: TopApporteursWidgetProps) => {
       <Card className="p-6">
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
           <Building2 className="w-5 h-5" />
-          Top 10 Apporteurs
+          Top 5 Apporteurs
         </h3>
         <p className="text-sm text-muted-foreground text-center py-8">
           Aucun apporteur pour cette période
@@ -101,7 +101,7 @@ export const TopApporteursWidget = ({ data }: TopApporteursWidgetProps) => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold flex items-center gap-2">
             <Building2 className="w-5 h-5" />
-            Top 10 Apporteurs
+            Top 5 Apporteurs
           </h3>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setIsDialogOpen(true); }}>
             <Maximize2 className="w-4 h-4" />
