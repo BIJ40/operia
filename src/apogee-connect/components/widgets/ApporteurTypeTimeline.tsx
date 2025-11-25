@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer } from "recharts";
 import { formatApporteurType } from "@/apogee-connect/utils/formatters";
@@ -105,6 +105,20 @@ export const ApporteurTypeTimeline = ({ projects, clients }: ApporteurTypeTimeli
     [projects, clients]
   );
 
+  const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set());
+
+  const handleLegendClick = (type: string) => {
+    setHiddenTypes(prev => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  };
+
   if (!chartData.length) {
     return (
       <Card>
@@ -151,7 +165,22 @@ export const ApporteurTypeTimeline = ({ projects, clients }: ApporteurTypeTimeli
               }}
               wrapperStyle={{ zIndex: 100 }}
             />
-            <Legend wrapperStyle={{ paddingTop: '20px' }} />
+            <Legend 
+              wrapperStyle={{ paddingTop: '20px', cursor: 'pointer' }} 
+              onClick={(e) => {
+                if (e.dataKey) {
+                  handleLegendClick(String(e.dataKey));
+                }
+              }}
+              formatter={(value) => (
+                <span style={{ 
+                  opacity: hiddenTypes.has(String(value)) ? 0.4 : 1,
+                  textDecoration: hiddenTypes.has(String(value)) ? 'line-through' : 'none'
+                }}>
+                  {value}
+                </span>
+              )}
+            />
             {allTypes.map((type, index) => (
               <Line
                 key={type}
@@ -161,6 +190,7 @@ export const ApporteurTypeTimeline = ({ projects, clients }: ApporteurTypeTimeli
                 strokeWidth={2}
                 dot={{ r: 3 }}
                 activeDot={{ r: 5 }}
+                hide={hiddenTypes.has(type)}
               />
             ))}
           </LineChart>
