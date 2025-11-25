@@ -4,7 +4,7 @@ import { useFilters } from "@/apogee-connect/contexts/FiltersContext";
 import { useApiToggle } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { Card } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, FolderOpen, ClipboardCheck, FileText, Euro } from "lucide-react";
+import { FolderOpen, ClipboardCheck, FileText, Euro } from "lucide-react";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { calculateDashboardStats } from "@/apogee-connect/utils/dashboardCalculations";
 import { calculateTauxSAVGlobal } from "@/apogee-connect/utils/apporteursCalculations";
@@ -108,46 +108,34 @@ export default function IndicateursAccueil() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {/* KPI 1: Dossiers reçus */}
         <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-blue-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-2">
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
               <FolderOpen className="w-3.5 h-3.5 text-white" />
             </div>
-            <div className="flex items-center gap-1">
-              {(data?.variations.dossiers || 0) > 0 ? (
-                <TrendingUp className="w-2.5 h-2.5 text-green-500" />
-              ) : (
-                <TrendingDown className="w-2.5 h-2.5 text-red-500" />
-              )}
-              <span className="text-[10px] font-semibold text-muted-foreground">
-                {Math.abs(data?.variations.dossiers || 0)}%
-              </span>
-            </div>
+            <p className="text-xs font-medium text-muted-foreground">Dossiers reçus</p>
           </div>
-          <p className="text-[10px] text-muted-foreground mb-0.5">Dossiers reçus</p>
           <p className="text-xl font-bold">{data?.dossiersJour || 0}</p>
         </Card>
 
         {/* KPI 2: RT réalisés */}
         <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-green-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-2">
             <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
               <ClipboardCheck className="w-3.5 h-3.5 text-white" />
             </div>
+            <p className="text-xs font-medium text-muted-foreground">RT réalisés</p>
           </div>
-          <p className="text-[10px] text-muted-foreground mb-0.5">RT réalisés</p>
-          <div className="flex items-baseline gap-1">
-            <p className="text-xl font-bold">{data?.rtJour || 0}</p>
-          </div>
+          <p className="text-xl font-bold">{data?.rtJour || 0}</p>
         </Card>
 
         {/* KPI 3: Devis émis */}
         <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-purple-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-2">
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
               <FileText className="w-3.5 h-3.5 text-white" />
             </div>
+            <p className="text-xs font-medium text-muted-foreground">Devis émis</p>
           </div>
-          <p className="text-[10px] text-muted-foreground mb-0.5">Devis émis</p>
           <div className="flex items-baseline gap-1">
             <p className="text-xl font-bold">{data?.devisJour || 0}</p>
             {data?.caDevis !== undefined && (
@@ -158,22 +146,12 @@ export default function IndicateursAccueil() {
 
         {/* KPI 4: CA période */}
         <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-orange-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-2">
             <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
               <Euro className="w-3.5 h-3.5 text-white" />
             </div>
-            <div className="flex items-center gap-1">
-              {(data?.variations.ca || 0) > 0 ? (
-                <TrendingUp className="w-2.5 h-2.5 text-green-500" />
-              ) : (
-                <TrendingDown className="w-2.5 h-2.5 text-red-500" />
-              )}
-              <span className="text-[10px] font-semibold text-muted-foreground">
-                {Math.abs(data?.variations.ca || 0)}%
-              </span>
-            </div>
+            <p className="text-xs font-medium text-muted-foreground">CA période</p>
           </div>
-          <p className="text-[10px] text-muted-foreground mb-0.5">CA période</p>
           <div className="flex items-baseline gap-1">
             <p className="text-xl font-bold">{formatEuros(data?.caJour || 0)}</p>
             {data?.nbFacturesCA !== undefined && (
@@ -184,15 +162,13 @@ export default function IndicateursAccueil() {
 
         {/* KPI 5: Taux de SAV */}
         <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-red-500/50 shadow-lg">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-2">
             <div className="bg-gradient-to-br from-red-500 to-red-600 p-1.5 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xs">SAV</span>
             </div>
+            <p className="text-xs font-medium text-muted-foreground">Taux de SAV</p>
           </div>
-          <p className="text-[10px] text-muted-foreground mb-0.5">Taux de SAV</p>
-          <div className="flex items-baseline gap-1">
-            <p className="text-xl font-bold">{(data?.tauxSAVGlobal || 0).toFixed(1)}%</p>
-          </div>
+          <p className="text-xl font-bold">{(data?.tauxSAVGlobal || 0).toFixed(1)}%</p>
         </Card>
 
         {/* KPI 6-12: Placeholders */}
