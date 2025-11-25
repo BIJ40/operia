@@ -200,6 +200,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Helper pour déterminer le scope d'un block à partir de son contexte
+  const getScopeFromPath = (): 'apogee' | 'apporteurs' | 'helpconfort' | null => {
+    const path = window.location.pathname;
+    if (path.includes('/apogee')) return 'apogee';
+    if (path.includes('/apporteurs')) return 'apporteurs';
+    if (path.includes('/helpconfort')) return 'helpconfort';
+    return null;
+  };
+
   const hasAccessToBlock = (blockId: string): boolean => {
     // Les admins ont accès à tout
     if (isAdmin) return true;
@@ -207,9 +216,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Si aucun rôle agence, accès à tout
     if (!roleAgence) return true;
     
-    // Sinon, vérifier si le block est dans la liste des permissions
-    // Par défaut, si aucune permission n'est définie, l'accès est accordé
-    return userPermissions.includes(blockId);
+    // Déterminer le scope en fonction du chemin actuel
+    const scope = getScopeFromPath();
+    if (!scope) return true; // Si pas de scope identifié, autoriser par défaut
+    
+    // Vérifier l'accès au scope parent
+    return hasAccessToScope(scope);
   };
 
   const hasAccessToScope = (scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs'): boolean => {

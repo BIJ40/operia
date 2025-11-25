@@ -1,5 +1,5 @@
 // Page Category pour Apporteurs (utilise apporteur_blocks)
-import { useParams, useLocation, Link } from 'react-router-dom';
+import { useParams, useLocation, Navigate, Link } from 'react-router-dom';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -58,7 +58,16 @@ export default function CategoryApporteur() {
   const { slug, subslug } = useParams<{ slug: string; subslug: string }>();
   const location = useLocation();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useApporteurEditor();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, hasAccessToScope } = useAuth();
+  
+  // Vérifier les permissions pour accéder à cette page
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  
+  if (!hasAccessToScope('apporteurs')) {
+    return <Navigate to="/" replace />;
+  }
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug);
   const subcategory = blocks.find(b => b.type === 'subcategory' && b.slug === subslug);

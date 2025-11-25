@@ -236,7 +236,7 @@ const SortableCategory = ({
 export default function HelpConfort() {
   const { blocks, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isEditMode } = useEditor();
-  const { isAdmin, isAuthenticated, roleAgence } = useAuth();
+  const { isAdmin, isAuthenticated, roleAgence, hasAccessToScope } = useAuth();
   const isBlockLocked = useIsBlockLocked();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -249,6 +249,11 @@ export default function HelpConfort() {
   const [searchTerm, setSearchTerm] = useState('');
 
   if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Vérifier les permissions pour accéder à cette page
+  if (!hasAccessToScope('helpconfort')) {
     return <Navigate to="/" replace />;
   }
 

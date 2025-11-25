@@ -301,7 +301,7 @@ const SortableCategory = ({
 
 export default function ApporteurGuide() {
   const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, reorderBlocks } = useApporteurEditor();
-  const { isAdmin, isAuthenticated } = useAuth();
+  const { isAdmin, isAuthenticated, hasAccessToScope } = useAuth();
   const isBlockLocked = useIsBlockLocked();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -315,6 +315,11 @@ export default function ApporteurGuide() {
   const [uploadingImage, setUploadingImage] = useState(false);
 
   if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Vérifier les permissions pour accéder à cette page
+  if (!hasAccessToScope('apporteurs')) {
     return <Navigate to="/" replace />;
   }
 
