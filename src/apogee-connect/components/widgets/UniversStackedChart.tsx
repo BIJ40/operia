@@ -76,7 +76,7 @@ export const UniversStackedChart = ({ data, universes, loading }: UniversStacked
   };
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="flex flex-col">
       <CardHeader>
         <CardTitle className="bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
           Évolution du CA par univers
@@ -85,8 +85,8 @@ export const UniversStackedChart = ({ data, universes, loading }: UniversStacked
           Répartition mensuelle du chiffre d'affaires • Total : {formatCurrency(totalCA)}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1">
-        <ResponsiveContainer width="100%" height="100%">
+      <CardContent>
+        <ResponsiveContainer width="100%" height={320}>
           <AreaChart data={data}>
             <defs>
               {sortedUniverses.map((universe) => (
