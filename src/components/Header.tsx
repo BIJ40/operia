@@ -60,36 +60,6 @@ export function Header() {
               <span className="font-semibold text-foreground">ACCUEIL</span>
             </Link>
 
-            <Link 
-              to="/apogee" 
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
-            >
-              <span className="font-semibold text-foreground">APOGEE</span>
-            </Link>
-
-            <Link 
-              to="/apporteurs" 
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
-            >
-              <span className="font-semibold text-foreground">APPORTEURS</span>
-            </Link>
-
-            {roleAgence !== 'assistant(e)' && (
-              <Link 
-                to="/helpconfort" 
-                className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
-              >
-                <span className="font-semibold text-foreground">HELPCONFORT</span>
-              </Link>
-            )}
-
-            <Link 
-              to="/mes-indicateurs" 
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
-            >
-              <BarChart3 className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-foreground">STATS</span>
-            </Link>
 
             <Button
               onClick={handleEditerClick}
@@ -165,16 +135,18 @@ export function Header() {
                 {isSupport && (
                   <Link
                     to="/support"
-                    className={`transition-all duration-300 p-2 rounded-md relative ${
-                      hasNewTickets
-                        ? 'text-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.5)] scale-110'
-                        : 'text-primary hover:text-primary hover:scale-110 shadow-[0_0_15px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_20px_hsl(var(--primary)/0.5)]'
+                    className={`flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-xl hover:bg-accent hover:scale-[1.02] transition-all duration-300 relative ${
+                      hasNewTickets 
+                        ? 'border-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.5)]' 
+                        : 'border-border hover:border-primary/50'
                     }`}
-                    title="Support client"
                   >
-                    <Headset className="w-5 h-5" />
+                    <Headset className={`w-5 h-5 ${hasNewTickets ? 'text-red-500' : 'text-primary'}`} />
+                    <span className={`font-semibold ${hasNewTickets ? 'text-red-500' : 'text-foreground'}`}>
+                      SUPPORT
+                    </span>
                     {hasNewTickets && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-bounce">
                         {newTicketsCount}
                       </span>
                     )}
