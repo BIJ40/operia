@@ -277,8 +277,6 @@ export default function IndicateursSAV() {
                     }))}
                   cx="50%"
                   cy="50%"
-                  labelLine={true}
-                  label={(entry) => `${entry.name}: ${entry.value}`}
                   outerRadius={120}
                   fill="#8884d8"
                   dataKey="value"
@@ -304,7 +302,11 @@ export default function IndicateursSAV() {
                     ];
                   }}
                 />
-                <Legend />
+                <Legend 
+                  formatter={(value: string, entry: any) => {
+                    return `${value} (${entry.payload.value})`;
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </Card>
