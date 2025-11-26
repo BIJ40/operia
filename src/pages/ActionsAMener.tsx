@@ -96,7 +96,7 @@ function ActionsAMenerContent() {
   };
 
   return (
-    <Layout showHeader showSidebar sidebarType="actions">
+    <Layout showSidebar sidebarType="actions">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="space-y-6">
           {/* En-tête */}
