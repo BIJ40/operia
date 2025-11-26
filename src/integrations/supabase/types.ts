@@ -14,6 +14,139 @@ export type Database = {
   }
   public: {
     Tables: {
+      agency_royalty_calculations: {
+        Row: {
+          agency_id: string
+          ca_cumul_annuel: number
+          calculated_at: string
+          calculated_by: string | null
+          config_id: string
+          detail_tranches: Json
+          id: string
+          month: number
+          redevance_calculee: number
+          year: number
+        }
+        Insert: {
+          agency_id: string
+          ca_cumul_annuel: number
+          calculated_at?: string
+          calculated_by?: string | null
+          config_id: string
+          detail_tranches?: Json
+          id?: string
+          month: number
+          redevance_calculee: number
+          year: number
+        }
+        Update: {
+          agency_id?: string
+          ca_cumul_annuel?: number
+          calculated_at?: string
+          calculated_by?: string | null
+          config_id?: string
+          detail_tranches?: Json
+          id?: string
+          month?: number
+          redevance_calculee?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_royalty_calculations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_royalty_calculations_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "agency_royalty_config"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_royalty_config: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          model_name: string
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_name?: string
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_name?: string
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_royalty_config_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_royalty_tiers: {
+        Row: {
+          config_id: string
+          created_at: string
+          from_amount: number
+          id: string
+          percentage: number
+          tier_order: number
+          to_amount: number | null
+        }
+        Insert: {
+          config_id: string
+          created_at?: string
+          from_amount: number
+          id?: string
+          percentage: number
+          tier_order: number
+          to_amount?: number | null
+        }
+        Update: {
+          config_id?: string
+          created_at?: string
+          from_amount?: number
+          id?: string
+          percentage?: number
+          tier_order?: number
+          to_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_royalty_tiers_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "agency_royalty_config"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apogee_agencies: {
         Row: {
           created_at: string
@@ -348,6 +481,62 @@ export type Database = {
           created_at?: string
           id?: string
           scope?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      franchiseur_agency_assignments: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "franchiseur_agency_assignments_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      franchiseur_roles: {
+        Row: {
+          created_at: string
+          franchiseur_role: Database["public"]["Enums"]["franchiseur_role"]
+          id: string
+          permissions: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          franchiseur_role: Database["public"]["Enums"]["franchiseur_role"]
+          id?: string
+          permissions?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          franchiseur_role?: Database["public"]["Enums"]["franchiseur_role"]
+          id?: string
+          permissions?: Json | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -951,6 +1140,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_franchiseur_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["franchiseur_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -961,6 +1157,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "support" | "franchiseur"
+      franchiseur_role: "animateur" | "directeur" | "dg"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1089,6 +1286,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "support", "franchiseur"],
+      franchiseur_role: ["animateur", "directeur", "dg"],
     },
   },
 } as const
