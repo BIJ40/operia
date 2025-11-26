@@ -4,6 +4,7 @@ import { DataService } from "@/apogee-connect/services/dataService";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
+import { buildTechMap } from "@/apogee-connect/utils/techTools";
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
 import {
   calculateSAVGlobalStats,
@@ -39,6 +40,9 @@ export default function IndicateursSAV() {
     queryFn: async () => {
       const rawData = await DataService.loadAllData();
 
+      // Construire le mapping des techniciens
+      const TECHS = buildTechMap(rawData.users || []);
+
       const globalStats = calculateSAVGlobalStats(
         rawData.projects,
         rawData.interventions,
@@ -58,7 +62,7 @@ export default function IndicateursSAV() {
         rawData.projects,
         rawData.interventions,
         rawData.factures,
-        rawData.users,
+        TECHS,
         filters.dateRange
       );
 
