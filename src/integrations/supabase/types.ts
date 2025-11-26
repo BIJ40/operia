@@ -612,7 +612,9 @@ export type Database = {
           display_order: number
           icon: string
           id: string
+          is_logo: boolean | null
           link: string
+          size: string | null
           title: string
           updated_at: string
         }
@@ -623,7 +625,9 @@ export type Database = {
           display_order?: number
           icon?: string
           id?: string
+          is_logo?: boolean | null
           link: string
+          size?: string | null
           title: string
           updated_at?: string
         }
@@ -634,7 +638,9 @@ export type Database = {
           display_order?: number
           icon?: string
           id?: string
+          is_logo?: boolean | null
           link?: string
+          size?: string | null
           title?: string
           updated_at?: string
         }

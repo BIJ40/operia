@@ -56,6 +56,8 @@ interface HomeCard {
   icon: string;
   color_preset: ColorPreset;
   display_order: number;
+  is_logo?: boolean;
+  size?: 'normal' | 'large';
 }
 
 interface SortableCardProps {
@@ -117,12 +119,46 @@ const SortableCard = ({
   };
 
   const Icon = IconComponent(card.icon || 'BookOpen');
+  const isLarge = card.size === 'large';
+  const isLogo = card.is_logo || false;
+
+  // Si c'est un logo, afficher l'image
+  if (isLogo) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="relative"
+      >
+        {isEditMode && (
+          <div
+            {...attributes}
+            {...listeners}
+            className="absolute top-2 left-2 cursor-grab active:cursor-grabbing z-10 bg-background/80 rounded p-1"
+          >
+            <GripVertical className="w-5 h-5 text-muted-foreground hover:text-primary" />
+          </div>
+        )}
+        <img 
+          src={helpConfortServicesImg} 
+          alt={card.title} 
+          className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
+          draggable="false"
+        />
+      </div>
+    );
+  }
+
+  // Style de base en fonction de la taille
+  const baseClassName = isLarge
+    ? "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-6 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 min-h-[240px] flex flex-col"
+    : "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2";
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
+      className={baseClassName}
     >
       {isEditMode && (
         <>
@@ -214,13 +250,23 @@ const SortableCard = ({
         </div>
       ) : (
         <>
-          <Link to={card.link} className="flex items-center gap-2">
-          <Icon className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
-            <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
-              <p className="text-xs text-muted-foreground truncate">{card.description}</p>
+          {card.link && card.link !== '#' ? (
+            <Link to={card.link} className={isLarge ? "flex-1" : "flex items-center gap-2 flex-1"}>
+              <Icon className={isLarge ? "w-12 h-12 text-primary mb-4" : "w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300"} />
+              <div className={isLarge ? "" : "flex-1 min-w-0"}>
+                <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{card.title}</h2>
+                <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{card.description}</p>
+              </div>
+            </Link>
+          ) : (
+            <div className={isLarge ? "flex-1" : "flex items-center gap-2 flex-1"}>
+              <Icon className={isLarge ? "w-12 h-12 text-primary mb-4" : "w-12 h-12 text-primary flex-shrink-0"} />
+              <div className={isLarge ? "" : "flex-1 min-w-0"}>
+                <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{card.title}</h2>
+                <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{card.description}</p>
+              </div>
             </div>
-          </Link>
+          )}
         </>
       )}
     </div>
@@ -551,45 +597,42 @@ export default function Landing() {
                     items={homeCards.map(c => c.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    {/* Première ligne - Cartes principales */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                      {homeCards.filter(card => !card.link.includes('/mes-indicateurs')).map(card => (
-                        <SortableCard
-                          key={card.id}
-                          card={card}
-                          editingId={editingId}
-                          editTitle={editTitle}
-                          editDescription={editDescription}
-                          editLink={editLink}
-                          editIcon={editIcon}
-                          editColor={editColor}
-                          isEditMode={isEditMode}
-                          onEditTitleChange={setEditTitle}
-                          onEditDescriptionChange={setEditDescription}
-                          onEditLinkChange={setEditLink}
-                          onEditIconChange={setEditIcon}
-                          onEditColorChange={setEditColor}
-                          onSave={handleSave}
-                          onCancel={handleCancel}
-                          onEdit={handleEdit}
-                          onDelete={handleDelete}
-                          getColorClass={getColorClass}
-                          IconComponent={IconComponent}
-                        />
-                      ))}
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                      {homeCards.map(card => {
+                        // Gérer spécialement "Mes indicateurs" avec son composant dédié
+                        if (card.link?.includes('/mes-indicateurs')) {
+                          return (
+                            <div key={card.id} className={card.size === 'large' ? "min-h-[240px]" : ""}>
+                              <SortableCard
+                                card={card}
+                                editingId={editingId}
+                                editTitle={editTitle}
+                                editDescription={editDescription}
+                                editLink={editLink}
+                                editIcon={editIcon}
+                                editColor={editColor}
+                                isEditMode={isEditMode}
+                                onEditTitleChange={setEditTitle}
+                                onEditDescriptionChange={setEditDescription}
+                                onEditLinkChange={setEditLink}
+                                onEditIconChange={setEditIcon}
+                                onEditColorChange={setEditColor}
+                                onSave={handleSave}
+                                onCancel={handleCancel}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                                getColorClass={getColorClass}
+                                IconComponent={IconComponent}
+                              />
+                            </div>
+                          );
+                        }
 
-                    {/* Deuxième ligne - Mes indicateurs / Support / Actions à mener */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start mb-4">
-                      {/* Mes indicateurs - Grande hauteur */}
-                      {(() => {
-                        const mesIndicateursCard = homeCards.find(card => card.link.includes('/mes-indicateurs'));
-                        if (!mesIndicateursCard) return null;
-                        
+                        // Toutes les autres cartes (Support, Actions, Logo compris)
                         return (
-                          <div key={mesIndicateursCard.id} className="min-h-[240px]">
+                          <div key={card.id} className={card.size === 'large' ? "min-h-[240px]" : ""}>
                             <SortableCard
-                              card={mesIndicateursCard}
+                              card={card}
                               editingId={editingId}
                               editTitle={editTitle}
                               editDescription={editDescription}
@@ -611,106 +654,39 @@ export default function Landing() {
                             />
                           </div>
                         );
-                      })()}
-
-                      {/* Support - Hauteur normale */}
-                      <div className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2">
-                        <Icons.Headphones className="w-12 h-12 text-primary flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <h2 className="text-lg font-bold text-foreground truncate">Support / Tickets</h2>
-                          <p className="text-xs text-muted-foreground truncate">Créer un ticket ou consulter vos demandes</p>
-                        </div>
-                      </div>
-
-                      {/* Actions à mener - Grande hauteur */}
-                      <div className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-6 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 min-h-[240px] flex flex-col">
-                        <Icons.CheckSquare className="w-12 h-12 text-primary mb-4" />
-                        <h2 className="text-xl font-bold text-foreground mb-2">Actions à mener</h2>
-                        <p className="text-sm text-muted-foreground">Suivez vos actions en cours et à venir</p>
-                      </div>
-                    </div>
-
-                    {/* Logo sous Actions à mener */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div className="lg:col-start-3">
-                        <img 
-                          src={helpConfortServicesImg} 
-                          alt="Help Confort Services" 
-                          className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
-                          draggable="false"
-                        />
-                      </div>
+                      })}
                     </div>
                   </SortableContext>
                 </DndContext>
               ) : (
-                <>
-                  {/* Première ligne - Cartes principales */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                    {homeCards.filter(card => !card.link.includes('/mes-indicateurs')).map(card => {
-                      const Icon = IconComponent(card.icon || 'BookOpen');
-                      
-                      let scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs' | null = null;
-                      if (card.link.includes('/apogee')) scope = 'apogee';
-                      else if (card.link.includes('/apporteur')) scope = 'apporteurs';
-                      else if (card.link.includes('/helpconfort')) scope = 'helpconfort';
-                      
-                      const isLocked = scope ? !hasAccessToScope(scope) : false;
-                      
-                      if (isLocked) {
-                        return (
-                          <div
-                            key={card.id}
-                            onClick={() => {
-                              toast({
-                                title: 'Accès restreint',
-                                description: 'Vous n\'avez pas les permissions pour accéder à cette section',
-                                variant: 'destructive',
-                              });
-                            }}
-                            className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 cursor-pointer opacity-60"
-                          >
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                              <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
-                            </div>
-                            <Icon className="w-12 h-12 text-primary flex-shrink-0 opacity-50" />
-                            <div className="flex-1 min-w-0">
-                              <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
-                              <p className="text-xs text-muted-foreground truncate">{card.description}</p>
-                            </div>
-                          </div>
-                        );
-                      }
-                      
-                      return (
-                        <Link
-                          key={card.id}
-                          to={card.link}
-                          className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
-                        >
-                          <Icon className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
-                          <div className="flex-1 min-w-0">
-                            <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
-                            <p className="text-xs text-muted-foreground truncate">{card.description}</p>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                  {homeCards.map(card => {
+                    const Icon = IconComponent(card.icon || 'BookOpen');
+                    const isLarge = card.size === 'large';
+                    const isLogo = card.is_logo || false;
 
-                  {/* Deuxième ligne - Mes indicateurs / Support / Actions à mener */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-                    {/* Mes indicateurs - Grande hauteur */}
-                    {(() => {
-                      const mesIndicateursCard = homeCards.find(card => card.link.includes('/mes-indicateurs'));
-                      if (!mesIndicateursCard) return null;
-                      
+                    // Gérer le logo
+                    if (isLogo) {
+                      return (
+                        <div key={card.id}>
+                          <img 
+                            src={helpConfortServicesImg} 
+                            alt={card.title} 
+                            className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
+                            draggable="false"
+                          />
+                        </div>
+                      );
+                    }
+
+                    // Gérer spécialement "Mes indicateurs"
+                    if (card.link?.includes('/mes-indicateurs')) {
                       const scope = 'mes_indicateurs';
                       const isLocked = !hasAccessToScope(scope) || !agence;
                       
                       if (!isLocked && agence) {
                         return (
-                          <div key={mesIndicateursCard.id} className="min-h-[240px]">
+                          <div key={card.id} className={isLarge ? "min-h-[240px]" : ""}>
                             <ApiToggleProvider>
                               <AgencyProvider>
                                 <MesIndicateursCard />
@@ -722,7 +698,7 @@ export default function Landing() {
                       
                       return (
                         <div
-                          key={mesIndicateursCard.id}
+                          key={card.id}
                           onClick={() => {
                             toast({
                               title: 'Accès restreint',
@@ -737,38 +713,72 @@ export default function Landing() {
                           </div>
                         </div>
                       );
-                    })()}
+                    }
 
-                    {/* Support - Hauteur normale */}
-                    <Link
-                      to="/support-tickets"
-                      className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
-                    >
-                      <Icons.Headphones className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
-                      <div className="flex-1 min-w-0">
-                        <h2 className="text-lg font-bold text-foreground truncate">Support / Tickets</h2>
-                        <p className="text-xs text-muted-foreground truncate">Créer un ticket ou consulter vos demandes</p>
-                      </div>
-                    </Link>
+                    // Vérifier les permissions pour les autres cartes
+                    let scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs' | null = null;
+                    if (card.link?.includes('/apogee')) scope = 'apogee';
+                    else if (card.link?.includes('/apporteur')) scope = 'apporteurs';
+                    else if (card.link?.includes('/helpconfort')) scope = 'helpconfort';
+                    
+                    const isLocked = scope ? !hasAccessToScope(scope) : false;
 
-                    {/* Actions à mener - Grande hauteur avec logo en dessous */}
-                    <div className="space-y-4">
-                      <div className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-6 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 min-h-[240px] flex flex-col">
-                        <Icons.CheckSquare className="w-12 h-12 text-primary mb-4" />
-                        <h2 className="text-xl font-bold text-foreground mb-2">Actions à mener</h2>
-                        <p className="text-sm text-muted-foreground">Suivez vos actions en cours et à venir</p>
+                    const baseClassName = isLarge
+                      ? "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-6 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 min-h-[240px] flex flex-col"
+                      : "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2";
+                    
+                    if (isLocked) {
+                      return (
+                        <div
+                          key={card.id}
+                          onClick={() => {
+                            toast({
+                              title: 'Accès restreint',
+                              description: 'Vous n\'avez pas les permissions pour accéder à cette section',
+                              variant: 'destructive',
+                            });
+                          }}
+                          className={`${baseClassName} cursor-pointer opacity-60`}
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
+                          </div>
+                          <Icon className={isLarge ? "w-12 h-12 text-primary mb-4 opacity-50" : "w-12 h-12 text-primary flex-shrink-0 opacity-50"} />
+                          <div className={isLarge ? "" : "flex-1 min-w-0"}>
+                            <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{card.title}</h2>
+                            <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{card.description}</p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    if (card.link && card.link !== '#') {
+                      return (
+                        <Link
+                          key={card.id}
+                          to={card.link}
+                          className={baseClassName}
+                        >
+                          <Icon className={isLarge ? "w-12 h-12 text-primary mb-4" : "w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300"} />
+                          <div className={isLarge ? "" : "flex-1 min-w-0"}>
+                            <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{card.title}</h2>
+                            <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{card.description}</p>
+                          </div>
+                        </Link>
+                      );
+                    }
+
+                    return (
+                      <div key={card.id} className={baseClassName}>
+                        <Icon className={isLarge ? "w-12 h-12 text-primary mb-4" : "w-12 h-12 text-primary flex-shrink-0"} />
+                        <div className={isLarge ? "" : "flex-1 min-w-0"}>
+                          <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{card.title}</h2>
+                          <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{card.description}</p>
+                        </div>
                       </div>
-                      
-                      {/* Logo sous Actions à mener */}
-                      <img 
-                        src={helpConfortServicesImg} 
-                        alt="Help Confort Services" 
-                        className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
-                        draggable="false"
-                      />
-                    </div>
-                  </div>
-                </>
+                    );
+                  })}
+                </div>
               )}
 
               {isEditMode && isAdmin && (
