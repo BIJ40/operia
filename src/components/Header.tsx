@@ -14,7 +14,7 @@ export function Header() {
   const editorContext = useEditor();
   const apporteurContext = useApporteurEditor();
   const { isAuthenticated, isAdmin, isSupport, roleAgence, isLoggingOut, logout } = useAuth();
-  const { hasNewTickets, newTicketsCount, assignedToMeCount } = useSupportNotifications();
+  const { hasNewTickets, newTicketsCount, assignedToMeCount, unreadMessagesCount } = useSupportNotifications();
   const [loginOpen, setLoginOpen] = useState(false);
   
   // Déterminer quel contexte utiliser selon la page
@@ -111,6 +111,11 @@ export function Header() {
                     {assignedToMeCount}
                   </span>
                 )}
+                {unreadMessagesCount > 0 && (
+                  <span className="absolute top-1/2 -translate-y-1/2 -left-2 bg-orange-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-pulse">
+                    {unreadMessagesCount}
+                  </span>
+                )}
               </Link>
               <Link
                 to="/profile"
@@ -166,6 +171,11 @@ export function Header() {
                       {assignedToMeCount > 0 && (
                         <span className="absolute -bottom-2 -right-2 bg-blue-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
                           {assignedToMeCount}
+                        </span>
+                      )}
+                      {unreadMessagesCount > 0 && (
+                        <span className="absolute top-1/2 -translate-y-1/2 -left-2 bg-orange-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-pulse">
+                          {unreadMessagesCount}
                         </span>
                       )}
                     </Link>
