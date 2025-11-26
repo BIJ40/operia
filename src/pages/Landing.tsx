@@ -13,6 +13,9 @@ import { Header } from '@/components/Header';
 import helpConfortServicesImg from '@/assets/help-confort-services.png';
 import { useEditor } from '@/contexts/EditorContext';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
+import { MesIndicateursCard } from '@/components/landing/MesIndicateursCard';
+import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
+import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 
 const supabaseAny = supabase as any;
 import {
@@ -613,6 +616,17 @@ export default function Landing() {
                   const isLocked = scope === 'mes_indicateurs' 
                     ? (!hasAccessToScope(scope) || !agence)
                     : (scope ? !hasAccessToScope(scope) : false);
+                  
+                  // Cas spécial: carte Mes indicateurs avec KPIs
+                  if (scope === 'mes_indicateurs' && !isLocked && agence) {
+                    return (
+                      <ApiToggleProvider key={card.id}>
+                        <AgencyProvider>
+                          <MesIndicateursCard />
+                        </AgencyProvider>
+                      </ApiToggleProvider>
+                    );
+                  }
                   
                   if (isLocked) {
                     return (
