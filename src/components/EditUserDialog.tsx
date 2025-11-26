@@ -159,6 +159,33 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
 
       if (error) throw error;
 
+      // Auto-créer l'agence si elle n'existe pas déjà
+      if (agence.trim() && agence.trim() !== user.agence) {
+        const agencySlug = agence.trim().toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const { data: existingAgency } = await supabase
+          .from('apogee_agencies')
+          .select('id')
+          .eq('slug', agencySlug)
+          .maybeSingle();
+
+        if (!existingAgency) {
+          const { error: agencyError } = await supabase
+            .from('apogee_agencies')
+            .insert({
+              slug: agencySlug,
+              label: agence.trim(),
+              is_active: true
+            });
+
+          if (agencyError) {
+            console.error('Erreur création agence:', agencyError);
+            // On continue même si la création d'agence échoue
+          } else {
+            console.log('Agence créée automatiquement:', agencySlug);
+          }
+        }
+      }
+
       // Règle automatique : si le poste devient "tete_de_reseau", attribuer le rôle système "franchiseur"
       if (roleAgence === 'tete_de_reseau' && roleAgence !== user.role_agence) {
         console.log('Changement vers tête de réseau détecté pour utilisateur:', user.id);
