@@ -139,6 +139,21 @@ export function AppSidebarHelpConfort() {
             </Link>
           )}
 
+          {/* Favoris comme catégorie spéciale */}
+          <Link
+            to="/favorites"
+            className={`mx-2 mb-4 px-4 py-3 rounded-lg flex items-center gap-3 transition-all duration-200 ${
+              location.pathname === '/favorites'
+                ? 'bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white shadow-md'
+                : 'bg-white border-2 border-transparent hover:border-helpconfort-orange hover:shadow-sm'
+            }`}
+          >
+            <Icons.Heart className={`w-5 h-5 ${location.pathname === '/favorites' ? 'fill-white' : 'text-red-500 fill-red-500'}`} />
+            <span className={`font-semibold ${location.pathname === '/favorites' ? 'text-white' : 'text-foreground'}`}>
+              Mes Favoris
+            </span>
+          </Link>
+
           <SidebarGroupContent>
             <SidebarMenu>
               {blockCategories.map((category) => {
