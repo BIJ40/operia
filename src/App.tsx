@@ -33,6 +33,8 @@ import IndicateursSAV from "./apogee-connect/pages/IndicateursSAV";
 import AdminAgencies from "./pages/AdminAgencies";
 import AdminStorageQuota from "./pages/AdminStorageQuota";
 import AdminUserActivity from "./pages/AdminUserActivity";
+import AdminTickets from "./pages/AdminTickets";
+import UserTickets from "./pages/UserTickets";
 import NotFound from "./pages/NotFound";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
@@ -66,6 +68,8 @@ function AppContent() {
         <Route path="/admin/documents" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminDocuments /></Layout>} />
         <Route path="/admin/support" element={<AdminSupport />} />
         <Route path="/support" element={<Support />} />
+        <Route path="/admin/tickets" element={<AdminTickets />} />
+        <Route path="/support-tickets" element={<Layout showHeader showSidebar={false}><UserTickets /></Layout>} />
         <Route path="/admin/backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminBackup /></Layout>} />
         <Route path="/admin/helpconfort-backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminHelpConfortBackup /></Layout>} />
         <Route path="/admin/users" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUsers /></Layout>} />

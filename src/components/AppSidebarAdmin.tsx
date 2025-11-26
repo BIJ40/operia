@@ -76,6 +76,11 @@ const adminMenuItems = [
     icon: MessageSquare,
   },
   {
+    title: 'Tickets',
+    url: '/admin/tickets',
+    icon: MessageSquare,
+  },
+  {
     title: 'Surveillance Quota',
     url: '/admin/storage-quota',
     icon: HardDrive,

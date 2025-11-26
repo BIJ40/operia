@@ -531,6 +531,20 @@ export default function Landing() {
               })}
             </div>
 
+            {/* Support / Tickets Tile - Always visible for authenticated users */}
+            <div className="mt-8">
+              <Link
+                to="/support-tickets"
+                className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 max-w-md mx-auto"
+              >
+                <Icons.Headphones className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-bold text-foreground truncate">Support / Tickets</h2>
+                  <p className="text-xs text-muted-foreground truncate">Créer un ticket ou consulter vos demandes</p>
+                </div>
+              </Link>
+            </div>
+
             {/* Help Confort Services Image */}
             <div className="mt-12 text-center">
               <img 
@@ -643,6 +657,20 @@ export default function Landing() {
                 })}
               </div>
             )}
+
+            {/* Support / Tickets Tile - Always visible for authenticated users */}
+            <div className="mt-8">
+              <Link
+                to="/support-tickets"
+                className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 max-w-md mx-auto"
+              >
+                <Icons.Headphones className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-bold text-foreground truncate">Support / Tickets</h2>
+                  <p className="text-xs text-muted-foreground truncate">Créer un ticket ou consulter vos demandes</p>
+                </div>
+              </Link>
+            </div>
 
             {/* Help Confort Services Image */}
             <div className="mt-12 text-center">
