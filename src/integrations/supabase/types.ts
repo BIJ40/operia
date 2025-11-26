@@ -991,45 +991,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_calendar_connections: {
-        Row: {
-          access_token: string | null
-          calendar_id: string | null
-          created_at: string
-          id: string
-          is_connected: boolean
-          provider: string
-          refresh_token: string | null
-          token_expiry: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          access_token?: string | null
-          calendar_id?: string | null
-          created_at?: string
-          id?: string
-          is_connected?: boolean
-          provider: string
-          refresh_token?: string | null
-          token_expiry?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          access_token?: string | null
-          calendar_id?: string | null
-          created_at?: string
-          id?: string
-          is_connected?: boolean
-          provider?: string
-          refresh_token?: string | null
-          token_expiry?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_connection_logs: {
         Row: {
           connected_at: string
@@ -1136,33 +1097,6 @@ export type Database = {
         Update: {
           last_seen?: string
           status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_quick_notes: {
-        Row: {
-          color: string
-          content: string
-          created_at: string
-          id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          color?: string
-          content: string
-          created_at?: string
-          id?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          color?: string
-          content?: string
-          created_at?: string
-          id?: string
           updated_at?: string
           user_id?: string
         }

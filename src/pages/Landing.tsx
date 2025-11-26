@@ -14,11 +14,8 @@ import helpConfortServicesImg from '@/assets/help-confort-services.png';
 import { useEditor } from '@/contexts/EditorContext';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { MesIndicateursCard } from '@/components/landing/MesIndicateursCard';
-import { WidgetGrid } from '@/components/landing/WidgetGrid';
-import { WidgetsPanelButton } from '@/components/landing/WidgetsPanelButton';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
-import { useWidgetPreferences } from '@/hooks/use-widget-preferences';
 
 const supabaseAny = supabase as any;
 import {
@@ -231,7 +228,7 @@ const SortableCard = ({
 };
 
 export default function Landing() {
-  const { isAdmin, isAuthenticated, roleAgence, hasAccessToScope, agence, isSupport, isFranchiseur } = useAuth();
+  const { isAdmin, isAuthenticated, roleAgence, hasAccessToScope, agence } = useAuth();
   const { toast } = useToast();
   const { blocks } = useEditor();
   const isBlockLocked = useIsBlockLocked();
@@ -246,10 +243,6 @@ export default function Landing() {
   const [cardToDelete, setCardToDelete] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
-  const { preferences, updatePreference } = useWidgetPreferences();
-
-  // Déterminer si on affiche le mode widget (non-admin, non-support, non-franchiseur)
-  const showWidgetMode = !isAdmin && !isSupport && !isFranchiseur;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -510,7 +503,7 @@ export default function Landing() {
 
           <div className="container max-w-6xl mx-auto px-4 py-8">
             {/* Cartes avec cadenas pour visiteurs */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {homeCards.map(card => {
                 const Icon = IconComponent(card.icon || 'BookOpen');
                 return (
@@ -567,7 +560,7 @@ export default function Landing() {
                   items={homeCards.map(c => c.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 items-start">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {homeCards.map(card => (
                       <SortableCard
                         key={card.id}
@@ -607,70 +600,8 @@ export default function Landing() {
                   </Link>
                 </SortableContext>
               </DndContext>
-            ) : showWidgetMode ? (
-              <>
-                {/* Logo centré en haut */}
-                <div className="flex justify-center mb-12">
-                  <img 
-                    src={helpConfortServicesImg} 
-                    alt="Help Confort Services" 
-                    className="max-w-xs pointer-events-none select-none"
-                    draggable="false"
-                  />
-                </div>
-
-                <WidgetGrid 
-                  homeCards={homeCards}
-                  isDashboardEditMode={false}
-                />
-                
-                <WidgetsPanelButton
-                  widgets={[
-                    ...homeCards.map(card => {
-                      const widgetKey = `nav-${card.id}`;
-                      const pref = preferences.find(p => p.widget_key === widgetKey);
-                      return {
-                        key: widgetKey,
-                        title: card.title,
-                        description: card.description,
-                        isEnabled: pref?.is_enabled ?? true,
-                        isPinned: true,
-                      };
-                    }),
-                    {
-                      key: 'support-tickets',
-                      title: 'Support / Tickets',
-                      description: 'Créer un ticket ou consulter vos demandes',
-                      isEnabled: preferences.find(p => p.widget_key === 'support-tickets')?.is_enabled ?? true,
-                      isPinned: true,
-                    },
-                    {
-                      key: 'weather',
-                      title: 'Météo',
-                      description: 'Afficher la météo en temps réel',
-                      isEnabled: preferences.find(p => p.widget_key === 'weather')?.is_enabled ?? false,
-                      isPinned: true,
-                    },
-                    {
-                      key: 'quick-notes',
-                      title: 'Notes rapides',
-                      description: 'Prendre des notes rapides sur votre dashboard',
-                      isEnabled: preferences.find(p => p.widget_key === 'quick-notes')?.is_enabled ?? false,
-                      isPinned: true,
-                    },
-                    {
-                      key: 'calendar',
-                      title: 'Calendrier',
-                      description: 'Voir votre calendrier et vos événements',
-                      isEnabled: preferences.find(p => p.widget_key === 'calendar')?.is_enabled ?? false,
-                      isPinned: true,
-                    },
-                  ]}
-                  onToggleWidget={(widgetKey, enabled) => updatePreference(widgetKey, { is_enabled: enabled })}
-                />
-              </>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {homeCards.map(card => {
                   const Icon = IconComponent(card.icon || 'BookOpen');
                   
@@ -750,6 +681,24 @@ export default function Landing() {
                     <p className="text-xs text-muted-foreground truncate">Créer un ticket ou consulter vos demandes</p>
                   </div>
                 </Link>
+              </div>
+            )}
+
+            {/* Help Confort Services Image */}
+            <div className="mt-12 text-center">
+              <img 
+                src={helpConfortServicesImg} 
+                alt="Help Confort Services" 
+                className="w-full max-w-md mx-auto pointer-events-none select-none"
+                draggable="false"
+              />
+            </div>
+
+            {isEditMode && isAdmin && (
+              <div className="flex justify-end mt-8">
+                <Button onClick={handleAddCard} size="sm" variant="ghost" className="gap-1 text-muted-foreground hover:text-foreground">
+                  <Plus className="w-4 h-4" />
+                </Button>
               </div>
             )}
           </div>

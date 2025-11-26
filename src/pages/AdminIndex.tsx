@@ -2,7 +2,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { AdminWidgetGrid } from '@/components/admin/overview/AdminWidgetGrid';
+import { StatsOverview } from '@/components/admin/overview/StatsOverview';
+import { QuickActions } from '@/components/admin/overview/QuickActions';
+import { NavigationCards } from '@/components/admin/overview/NavigationCards';
 
 export default function AdminIndex() {
   const { isAdmin } = useAuth();
@@ -28,7 +30,11 @@ export default function AdminIndex() {
         </Button>
       </div>
 
-      <AdminWidgetGrid />
+      <StatsOverview />
+
+      <QuickActions />
+
+      <NavigationCards />
     </div>
   );
 }
