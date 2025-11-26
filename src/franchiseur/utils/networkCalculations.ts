@@ -205,18 +205,32 @@ export function calculateTotalInterventions(agencyData: AgencyData[], dateRange?
 }
 
 /**
- * Calculate network-wide SAV rate as AVERAGE of individual agency rates
+ * Network SAV statistics interface
  */
-export function calculateSAVRate(agencyData: AgencyData[]): number {
+export interface NetworkSAVStats {
+  tauxMoyenAgences: number;     // Simple average of agency rates: (rate1+rate2+...+rateN)/N
+  tauxGlobalReseau: number;     // Global network rate: (total SAV / total projects) * 100
+  nbTotalProjects: number;
+  nbTotalSAVProjects: number;
+  nbAgences: number;
+}
+
+/**
+ * Calculate comprehensive network SAV statistics
+ * Returns both simple average of agency rates AND global weighted rate
+ */
+export function calculateNetworkSAVStats(agencyData: AgencyData[]): NetworkSAVStats {
+  let totalProjects = 0;
+  let totalSAVProjects = 0;
   const agencyRates: number[] = [];
 
   agencyData.forEach((agency) => {
     if (!agency.data?.projects || !agency.data?.interventions) return;
 
     const projectIds = new Set(agency.data.projects.map((p: any) => p.id));
-    const totalProjects = projectIds.size;
+    const agencyProjectCount = projectIds.size;
     
-    if (totalProjects === 0) return;
+    if (agencyProjectCount === 0) return;
 
     const savProjectIds = new Set();
     agency.data.interventions.forEach((intervention: any) => {
@@ -225,14 +239,37 @@ export function calculateSAVRate(agencyData: AgencyData[]): number {
       }
     });
 
-    const agencySAVRate = (savProjectIds.size / totalProjects) * 100;
-    agencyRates.push(agencySAVRate);
+    const agencySAVCount = savProjectIds.size;
+
+    // Accumulate for global calculation
+    totalProjects += agencyProjectCount;
+    totalSAVProjects += agencySAVCount;
+
+    // Store individual agency rate for average calculation
+    const agencyRate = (agencySAVCount / agencyProjectCount) * 100;
+    agencyRates.push(agencyRate);
   });
 
-  // Return average of all agency rates
-  return agencyRates.length > 0 
-    ? agencyRates.reduce((sum, rate) => sum + rate, 0) / agencyRates.length 
-    : 0;
+  return {
+    tauxMoyenAgences: agencyRates.length > 0 
+      ? Math.round((agencyRates.reduce((sum, rate) => sum + rate, 0) / agencyRates.length) * 10) / 10
+      : 0,
+    tauxGlobalReseau: totalProjects > 0 
+      ? Math.round((totalSAVProjects / totalProjects) * 1000) / 10
+      : 0,
+    nbTotalProjects: totalProjects,
+    nbTotalSAVProjects: totalSAVProjects,
+    nbAgences: agencyData.length,
+  };
+}
+
+/**
+ * @deprecated Use calculateNetworkSAVStats instead for comprehensive SAV statistics
+ * Calculate network-wide SAV rate as AVERAGE of individual agency rates
+ */
+export function calculateSAVRate(agencyData: AgencyData[]): number {
+  const stats = calculateNetworkSAVStats(agencyData);
+  return stats.tauxMoyenAgences;
 }
 
 /**
