@@ -196,36 +196,40 @@ export default function AdminUsersList() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {user.service_competencies?.apogee && (
-                        <Badge className="bg-blue-500 hover:bg-blue-600 text-white text-xs">
-                          Apogée
-                        </Badge>
-                      )}
-                      {user.service_competencies?.apporteurs && (
-                        <Badge className="bg-green-500 hover:bg-green-600 text-white text-xs">
-                          Apporteurs
-                        </Badge>
-                      )}
-                      {user.service_competencies?.conseil && (
-                        <Badge className="bg-purple-500 hover:bg-purple-600 text-white text-xs">
-                          Conseil
-                        </Badge>
-                      )}
-                      {user.service_competencies?.helpconfort && (
-                        <Badge className="bg-accent hover:bg-accent/90 text-white text-xs">
-                          {user.service_competencies.helpconfort === 'animateur_reseau' && 'HC - Animateur'}
-                          {user.service_competencies.helpconfort === 'directeur_reseau' && 'HC - Directeur'}
-                          {user.service_competencies.helpconfort === 'dg' && 'HC - DG'}
-                        </Badge>
-                      )}
-                      {!user.service_competencies?.apogee && 
-                       !user.service_competencies?.apporteurs && 
-                       !user.service_competencies?.conseil && 
-                       !user.service_competencies?.helpconfort && (
-                        <span className="text-xs text-muted-foreground">Aucune</span>
-                      )}
-                    </div>
+                    {user.system_role !== 'user' ? (
+                      <div className="flex flex-wrap gap-1">
+                        {user.service_competencies?.apogee && (
+                          <Badge className="bg-blue-500 hover:bg-blue-600 text-white text-xs">
+                            Apogée
+                          </Badge>
+                        )}
+                        {user.service_competencies?.apporteurs && (
+                          <Badge className="bg-green-500 hover:bg-green-600 text-white text-xs">
+                            Apporteurs
+                          </Badge>
+                        )}
+                        {user.service_competencies?.conseil && (
+                          <Badge className="bg-purple-500 hover:bg-purple-600 text-white text-xs">
+                            Conseil
+                          </Badge>
+                        )}
+                        {user.service_competencies?.helpconfort && (
+                          <Badge className="bg-accent hover:bg-accent/90 text-white text-xs">
+                            {user.service_competencies.helpconfort === 'animateur_reseau' && 'HC - Animateur'}
+                            {user.service_competencies.helpconfort === 'directeur_reseau' && 'HC - Directeur'}
+                            {user.service_competencies.helpconfort === 'dg' && 'HC - DG'}
+                          </Badge>
+                        )}
+                        {!user.service_competencies?.apogee && 
+                         !user.service_competencies?.apporteurs && 
+                         !user.service_competencies?.conseil && 
+                         !user.service_competencies?.helpconfort && (
+                          <span className="text-xs text-muted-foreground">Aucune</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString('fr-FR')}</TableCell>
                   <TableCell className="text-right">

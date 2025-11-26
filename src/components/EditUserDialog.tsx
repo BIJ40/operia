@@ -20,6 +20,7 @@ interface UserProfile {
   role_agence: string | null;
   service_competencies: any;
   created_at: string;
+  system_role?: string;
 }
 
 interface EditUserDialogProps {
@@ -49,6 +50,7 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [generatingPassword, setGeneratingPassword] = useState(false);
   const [sendPasswordEmail, setSendPasswordEmail] = useState(true);
+  const [systemRole, setSystemRole] = useState<string>('user');
 
   useEffect(() => {
     if (user) {
@@ -58,6 +60,7 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
       setAgence(user.agence || '');
       setRoleAgence(user.role_agence || '');
       setServiceCompetencies(user.service_competencies || {});
+      setSystemRole(user.system_role || 'user');
     }
   }, [user]);
 
@@ -265,97 +268,99 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
             </RadioGroup>
           </div>
 
-          <Card className="border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Compétences services</CardTitle>
-              <CardDescription className="text-xs">
-                Sélectionnez les services sur lesquels cet utilisateur peut intervenir
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Services généraux</Label>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={serviceCompetencies.apogee ? "default" : "outline"}
-                    onClick={() => {
-                      const newCompetencies = { ...serviceCompetencies };
-                      if (newCompetencies.apogee) {
-                        delete newCompetencies.apogee;
-                      } else {
-                        newCompetencies.apogee = true;
-                      }
-                      setServiceCompetencies(newCompetencies);
-                    }}
-                  >
-                    Apogée
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={serviceCompetencies.apporteurs ? "default" : "outline"}
-                    onClick={() => {
-                      const newCompetencies = { ...serviceCompetencies };
-                      if (newCompetencies.apporteurs) {
-                        delete newCompetencies.apporteurs;
-                      } else {
-                        newCompetencies.apporteurs = true;
-                      }
-                      setServiceCompetencies(newCompetencies);
-                    }}
-                  >
-                    Apporteurs
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={serviceCompetencies.conseil ? "default" : "outline"}
-                    onClick={() => {
-                      const newCompetencies = { ...serviceCompetencies };
-                      if (newCompetencies.conseil) {
-                        delete newCompetencies.conseil;
-                      } else {
-                        newCompetencies.conseil = true;
-                      }
-                      setServiceCompetencies(newCompetencies);
-                    }}
-                  >
-                    Conseil
-                  </Button>
+          {systemRole !== 'user' && (
+            <Card className="border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Compétences services</CardTitle>
+                <CardDescription className="text-xs">
+                  Sélectionnez les services sur lesquels cet utilisateur peut intervenir
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Services généraux</Label>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={serviceCompetencies.apogee ? "default" : "outline"}
+                      onClick={() => {
+                        const newCompetencies = { ...serviceCompetencies };
+                        if (newCompetencies.apogee) {
+                          delete newCompetencies.apogee;
+                        } else {
+                          newCompetencies.apogee = true;
+                        }
+                        setServiceCompetencies(newCompetencies);
+                      }}
+                    >
+                      Apogée
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={serviceCompetencies.apporteurs ? "default" : "outline"}
+                      onClick={() => {
+                        const newCompetencies = { ...serviceCompetencies };
+                        if (newCompetencies.apporteurs) {
+                          delete newCompetencies.apporteurs;
+                        } else {
+                          newCompetencies.apporteurs = true;
+                        }
+                        setServiceCompetencies(newCompetencies);
+                      }}
+                    >
+                      Apporteurs
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={serviceCompetencies.conseil ? "default" : "outline"}
+                      onClick={() => {
+                        const newCompetencies = { ...serviceCompetencies };
+                        if (newCompetencies.conseil) {
+                          delete newCompetencies.conseil;
+                        } else {
+                          newCompetencies.conseil = true;
+                        }
+                        setServiceCompetencies(newCompetencies);
+                      }}
+                    >
+                      Conseil
+                    </Button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground" htmlFor="helpconfort-role">
-                  HelpConfort
-                </Label>
-                <Select
-                  value={serviceCompetencies.helpconfort || 'none'}
-                  onValueChange={(value) => {
-                    const newCompetencies = { ...serviceCompetencies };
-                    if (value === 'none') {
-                      delete newCompetencies.helpconfort;
-                    } else {
-                      newCompetencies.helpconfort = value;
-                    }
-                    setServiceCompetencies(newCompetencies);
-                  }}
-                >
-                  <SelectTrigger id="helpconfort-role">
-                    <SelectValue placeholder="Sélectionner un rôle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Aucun</SelectItem>
-                    <SelectItem value="animateur_reseau">Animateur Réseau</SelectItem>
-                    <SelectItem value="directeur_reseau">Directeur Réseau</SelectItem>
-                    <SelectItem value="dg">Directeur Général</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground" htmlFor="helpconfort-role">
+                    HelpConfort
+                  </Label>
+                  <Select
+                    value={serviceCompetencies.helpconfort || 'none'}
+                    onValueChange={(value) => {
+                      const newCompetencies = { ...serviceCompetencies };
+                      if (value === 'none') {
+                        delete newCompetencies.helpconfort;
+                      } else {
+                        newCompetencies.helpconfort = value;
+                      }
+                      setServiceCompetencies(newCompetencies);
+                    }}
+                  >
+                    <SelectTrigger id="helpconfort-role">
+                      <SelectValue placeholder="Sélectionner un rôle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Aucun</SelectItem>
+                      <SelectItem value="animateur_reseau">Animateur Réseau</SelectItem>
+                      <SelectItem value="directeur_reseau">Directeur Réseau</SelectItem>
+                      <SelectItem value="dg">Directeur Général</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-destructive/50 bg-destructive/5">
             <CardHeader className="pb-3">
