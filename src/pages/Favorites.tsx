@@ -179,8 +179,16 @@ export default function Favorites() {
   };
 
   const handleNavigateToSection = (favorite: Favorite) => {
-    const basePath = favorite.scope === 'apporteurs-nationaux' ? '/apporteurs' : '/apogee';
+    let basePath = '/apogee';
+    if (favorite.scope === 'apporteurs-nationaux') basePath = '/apporteurs';
+    else if (favorite.scope === 'helpconfort') basePath = '/helpconfort';
     navigate(`${basePath}/category/${favorite.category_slug}#${favorite.block_id}`);
+  };
+
+  const getScopeLabel = (scope: string) => {
+    if (scope === 'apporteurs-nationaux') return 'Apporteurs';
+    if (scope === 'helpconfort') return 'HelpConfort';
+    return 'Apogée';
   };
 
   if (!isAuthenticated) {
@@ -258,7 +266,7 @@ export default function Favorites() {
                         const colorClasses = getColorClasses(favorite.color_preset);
                         const isTips = favorite.content_type === 'tips';
 
-                        return (
+                          return (
                           <AccordionItem 
                             key={favorite.id} 
                             value={favorite.id}
@@ -268,6 +276,9 @@ export default function Favorites() {
                               <AccordionTrigger className={`${colorClasses} px-6 hover:no-underline [&[data-state=open]>div>svg]:rotate-180`}>
                                 <div className="flex items-center justify-between w-full gap-4 pr-4">
                                   <div className="flex items-center gap-3 flex-1">
+                                    <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1 shrink-0">
+                                      {getScopeLabel(favorite.scope)}
+                                    </Badge>
                                     {isTips && (
                                       <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1">
                                         <Lightbulb className="w-3 h-3" />
