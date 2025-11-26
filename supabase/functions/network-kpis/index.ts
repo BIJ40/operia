@@ -53,14 +53,18 @@ async function loadAgencyData(agencySlug: string) {
       // Check if response is OK and is JSON
       const contentType = response.headers.get('content-type');
       if (!response.ok || !contentType?.includes('application/json')) {
-        console.warn(`❌ ${agencySlug}/${endpoint}: Invalid response (${response.status})`);
+        const preview = await response.text();
+        console.error(`❌ ${agencySlug}/${endpoint}: HTTP ${response.status}, Content-Type: ${contentType}`);
+        console.error(`Response preview: ${preview.substring(0, 200)}`);
         return [];
       }
 
       try {
         return await response.json();
       } catch (e) {
-        console.warn(`❌ ${agencySlug}/${endpoint}: JSON parse error`);
+        const preview = await response.text();
+        console.error(`❌ ${agencySlug}/${endpoint}: JSON parse error`);
+        console.error(`Response preview: ${preview.substring(0, 200)}`);
         return [];
       }
     });
