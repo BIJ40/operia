@@ -8,7 +8,7 @@ import { ChatHistory } from '@/components/chatbot/ChatHistory';
 import { ChatInput } from '@/components/chatbot/ChatInput';
 import { ChatModeSelector } from '@/components/chatbot/ChatModeSelector';
 import { SupportTicketDialog } from '@/components/chatbot/SupportTicketDialog';
-import { CreateTicketFromChat } from '@/components/chatbot/CreateTicketFromChat';
+import { TimeoutModal } from '@/components/chatbot/TimeoutModal';
 import chatIcon from '@/assets/logo_chat.png';
 import { MessageCircle } from 'lucide-react';
 
@@ -49,6 +49,7 @@ export function Chatbot() {
     setTicketRating,
     setTicketComment,
     setShowChoiceMode,
+    setShowTicketCreation,
     setButtonPosition,
     setIsDragging,
     setDragOffset,
@@ -391,13 +392,16 @@ export function Chatbot() {
               />
 
               {showTicketCreation && activeTicket && (
-                <div className="p-3">
-                  <CreateTicketFromChat
-                    messages={messages}
-                    onCreateTicket={createTicketFromChat}
-                    isCreating={isCreating}
-                  />
-                </div>
+                <TimeoutModal
+                  open={showTicketCreation}
+                  onWait={() => {
+                    // Reset timeout and continue waiting
+                    setShowTicketCreation(false);
+                  }}
+                  onCreateTicket={(category, subject, description) => {
+                    createTicketFromChat(category, subject, description);
+                  }}
+                />
               )}
 
               <ChatInput

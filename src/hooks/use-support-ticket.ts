@@ -24,7 +24,7 @@ export const useSupportTicket = () => {
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
 
-  const createSupportTicket = async (messages: Message[]) => {
+  const createSupportTicket = async (messages: Message[], isLiveChat: boolean = true) => {
     if (!user) {
       toast({
         title: 'Erreur',
@@ -39,7 +39,7 @@ export const useSupportTicket = () => {
       // Récupérer le nom de l'utilisateur
       const { data: profile } = await supabase
         .from('profiles')
-        .select('first_name, last_name')
+        .select('first_name, last_name, agence')
         .eq('id', user.id)
         .single();
 
@@ -51,14 +51,19 @@ export const useSupportTicket = () => {
       const userMessages = messages.filter(m => m.role === 'user');
       const lastQuestion = userMessages[userMessages.length - 1]?.content || 'Demande de support';
 
-      // Créer le ticket
+      // Créer la demande (support direct) ou le ticket
       const { data: ticket, error: ticketError } = await supabase
         .from('support_tickets')
         .insert({
           user_id: user.id,
           user_pseudo: userName,
+          subject: lastQuestion.substring(0, 100),
           status: 'waiting',
           priority: 'urgent',
+          source: 'chat',
+          is_live_chat: isLiveChat,
+          escalated_from_chat: false,
+          agency_slug: profile?.agence || null,
           chatbot_conversation: messages as any,
         } as any)
         .select()
