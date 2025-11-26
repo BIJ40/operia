@@ -228,17 +228,29 @@ export const useAdminTickets = () => {
     try {
       const { error } = await supabase
         .from('support_tickets')
-        .update({ assigned_to: userId } as any)
+        .update({ 
+          assigned_to: userId || null,
+          updated_at: new Date().toISOString()
+        } as any)
         .eq('id', ticketId);
 
       if (error) throw error;
 
       toast({
         title: 'Succès',
-        description: 'Ticket assigné',
+        description: userId ? 'Ticket assigné' : 'Ticket désassigné',
         duration: 3000,
       });
-      loadTickets();
+      
+      await loadTickets();
+      if (selectedTicket?.id === ticketId) {
+        const { data } = await supabase
+          .from('support_tickets')
+          .select('*')
+          .eq('id', ticketId)
+          .single();
+        if (data) setSelectedTicket(data as Ticket);
+      }
     } catch (error) {
       console.error('Error assigning ticket:', error);
       toast({

@@ -46,6 +46,7 @@ export default function AdminSupportTickets() {
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [darkMode, setDarkMode] = useState(false);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
+  const [supportUsers, setSupportUsers] = useState<Array<{ id: string; name: string }>>([]);
 
   const getCardClassName = (status: string) => {
     const isActive = filters.status === status;
@@ -439,6 +440,11 @@ export default function AdminSupportTickets() {
                                   <User className="w-3 h-3" />
                                   {ticket.user_pseudo}
                                 </p>
+                                {ticket.assigned_to && (
+                                  <p className="text-xs text-primary font-medium mt-1">
+                                    👤 {supportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Assigné'}
+                                  </p>
+                                )}
                               </div>
                               {getStatusBadge(ticket.status)}
                             </div>
@@ -498,6 +504,23 @@ export default function AdminSupportTickets() {
                             👋 Prendre en charge
                           </Button>
                         )}
+
+                        <Select
+                          value={selectedTicket.assigned_to || 'none'}
+                          onValueChange={(v) => assignTicket(selectedTicket.id, v === 'none' ? '' : v)}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Non assigné" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Non assigné</SelectItem>
+                            {supportUsers.map(u => (
+                              <SelectItem key={u.id} value={u.id}>
+                                👤 {u.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
 
                         <Select
                           value={selectedTicket.status}
@@ -609,6 +632,14 @@ export default function AdminSupportTickets() {
                         <div>
                           <label className="text-sm font-medium">Utilisateur</label>
                           <p className="text-sm text-muted-foreground">{selectedTicket.user_pseudo}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Assigné à</label>
+                          <p className="text-sm text-muted-foreground">
+                            {selectedTicket.assigned_to 
+                              ? `👤 ${supportUsers.find(u => u.id === selectedTicket.assigned_to)?.name || 'Utilisateur inconnu'}`
+                              : 'Non assigné'}
+                          </p>
                         </div>
                         <div>
                           <label className="text-sm font-medium">Agence</label>
