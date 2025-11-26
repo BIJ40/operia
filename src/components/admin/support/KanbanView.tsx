@@ -32,7 +32,7 @@ const columns: KanbanColumn[] = [
 ];
 
 function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
-  const { setNodeRef } = useDroppable({ id });
+  const { setNodeRef } = useDroppable({ id, data: { type: 'column', status: id } });
   return (
     <div ref={setNodeRef} className="h-full">
       {children}
@@ -43,7 +43,7 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
 function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSelect: (ticket: SupportTicket) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
     id: ticket.id,
-    data: { ticket }
+    data: { type: 'ticket', ticket, status: ticket.status }
   });
 
   const style = {
@@ -122,16 +122,17 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
 
     const ticketId = active.id as string;
     
-    // Déterminer le statut de la colonne de destination
-    let newStatus: string;
-    const isColumn = columns.some(col => col.status === over.id);
-    if (isColumn) {
-      newStatus = over.id as string;
-    } else {
-      const targetTicket = localTickets.find(t => t.id === over.id);
-      if (!targetTicket) return;
-      newStatus = targetTicket.status;
+    // Déterminer le statut de la colonne de destination à partir des données DnD
+    let newStatus: string | undefined;
+
+    const overType = over.data?.current?.type as string | undefined;
+    if (overType === 'column') {
+      newStatus = over.data?.current?.status as string;
+    } else if (overType === 'ticket') {
+      newStatus = over.data?.current?.status as string;
     }
+
+    if (!newStatus) return;
 
     const ticket = localTickets.find(t => t.id === ticketId);
     if (ticket && ticket.status !== newStatus) {
