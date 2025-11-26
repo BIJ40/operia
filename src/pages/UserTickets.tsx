@@ -88,6 +88,18 @@ export default function UserTickets() {
     return <Badge variant="outline" className={className}>{label}</Badge>;
   };
 
+  const getPriorityBadge = (priority: string) => {
+    const config: Record<string, { label: string; className: string }> = {
+      low: { label: '🟢 Faible', className: 'bg-blue-100 text-blue-800 border-blue-300' },
+      normal: { label: '⚪ Normal', className: 'bg-gray-100 text-gray-800 border-gray-300' },
+      high: { label: '🟠 Élevé', className: 'bg-orange-100 text-orange-800 border-orange-300' },
+      urgent: { label: '🔴 Urgent', className: 'bg-red-100 text-red-800 border-red-300' },
+    };
+
+    const { label, className } = config[priority] || config.normal;
+    return <Badge variant="outline" className={className}>{label}</Badge>;
+  };
+
   if (selectedTicket) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
@@ -259,17 +271,17 @@ export default function UserTickets() {
                     type="button"
                     variant={newTicket.priority === 'low' ? 'default' : 'outline'}
                     onClick={() => setNewTicket({ ...newTicket, priority: 'low' })}
-                    className={newTicket.priority === 'low' ? 'bg-green-600 hover:bg-green-700' : ''}
+                    className={newTicket.priority === 'low' ? 'bg-blue-600 hover:bg-blue-700' : ''}
                   >
-                    Faible
+                    🟢 Faible
                   </Button>
                   <Button
                     type="button"
                     variant={newTicket.priority === 'normal' ? 'default' : 'outline'}
                     onClick={() => setNewTicket({ ...newTicket, priority: 'normal' })}
-                    className={newTicket.priority === 'normal' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                    className={newTicket.priority === 'normal' ? 'bg-gray-600 hover:bg-gray-700' : ''}
                   >
-                    Normal
+                    ⚪ Normal
                   </Button>
                   <Button
                     type="button"
@@ -277,7 +289,7 @@ export default function UserTickets() {
                     onClick={() => setNewTicket({ ...newTicket, priority: 'high' })}
                     className={newTicket.priority === 'high' ? 'bg-orange-600 hover:bg-orange-700' : ''}
                   >
-                    Élevé
+                    🟠 Élevé
                   </Button>
                   <Button
                     type="button"
@@ -285,7 +297,7 @@ export default function UserTickets() {
                     onClick={() => setNewTicket({ ...newTicket, priority: 'urgent' })}
                     className={newTicket.priority === 'urgent' ? 'bg-red-600 hover:bg-red-700' : ''}
                   >
-                    Urgent
+                    🔴 Urgent
                   </Button>
                 </div>
               </div>
@@ -376,10 +388,11 @@ export default function UserTickets() {
                       <div className="text-sm text-muted-foreground mb-2">
                         Par <span className="font-semibold">{ticket.user_pseudo}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <TicketSourceBadge source={ticket.source} />
                         <TicketCategoryBadge category={ticket.category} />
                         {getStatusBadge(ticket.status)}
+                        {getPriorityBadge(ticket.priority)}
                       </div>
                     </div>
                     <div className="text-sm text-muted-foreground">
