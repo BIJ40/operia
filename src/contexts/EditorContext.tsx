@@ -434,6 +434,16 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             timestamp: Date.now()
           }));
         } catch (e) {
+          // Si quota dépassé, nettoyer le cache et continuer sans cache
+          if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+            try {
+              localStorage.removeItem(CACHE_KEY);
+              localStorage.removeItem('apogee_data_cache');
+              console.log('🧹 Cache localStorage nettoyé (quota dépassé)');
+            } catch (cleanError) {
+              console.warn('Impossible de nettoyer le cache:', cleanError);
+            }
+          }
           console.warn('Erreur sauvegarde cache:', e);
         }
         
