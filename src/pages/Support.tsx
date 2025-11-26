@@ -19,6 +19,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Header } from '@/components/Header';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { EscalateTicketDialog } from '@/components/admin/support/EscalateTicketDialog';
+import { SupportLevelBadge } from '@/components/SupportLevelBadge';
 
 export default function Support() {
   const { isSupport, isAdmin, user } = useAuth();
@@ -32,6 +34,7 @@ export default function Support() {
     isLoading,
     filters,
     setFilters,
+    supportUsers,
     updateTicketStatus,
     updateTicketPriority,
     assignTicket,
@@ -39,13 +42,22 @@ export default function Support() {
     addSupportMessage,
     downloadAttachment,
     reopenTicket,
+    escalateTicket,
     getStats,
   } = useAdminTickets();
 
   const [newMessage, setNewMessage] = useState('');
   const [darkMode, setDarkMode] = useState(false);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
-  const [supportUsers, setSupportUsers] = useState<Array<{ id: string; name: string }>>([]);
+
+  // Transformer supportUsers pour le format attendu
+  const formattedSupportUsers = supportUsers.map(u => ({
+    id: u.id,
+    name: `${u.first_name} ${u.last_name}`,
+    first_name: u.first_name,
+    last_name: u.last_name,
+    support_level: u.support_level,
+  }));
 
   const getCardClassName = (status: string) => {
     const isActive = filters.status === status;
@@ -79,35 +91,6 @@ export default function Support() {
       navigate('/');
     }
   }, [isSupport, isAdmin, navigate]);
-
-  // Charger la liste des users support et admin
-  useEffect(() => {
-    const loadSupportUsers = async () => {
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('user_id, role')
-        .in('role', ['support', 'admin']);
-
-      if (roles) {
-        const userIds = [...new Set(roles.map(r => r.user_id))];
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name')
-          .in('id', userIds);
-
-        if (profiles) {
-          setSupportUsers(
-            profiles.map(p => ({
-              id: p.id,
-              name: `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sans nom'
-            }))
-          );
-        }
-      }
-    };
-
-    loadSupportUsers();
-  }, []);
 
   // Charger les préférences email
   useEffect(() => {
@@ -366,7 +349,7 @@ export default function Support() {
                                 </p>
                                 {ticket.assigned_to && (
                                   <p className="text-xs text-primary font-medium mt-1">
-                                    👤 {supportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Assigné'}
+                                    👤 {formattedSupportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Assigné'}
                                   </p>
                                 )}
                               </div>
@@ -374,6 +357,7 @@ export default function Support() {
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                               {getDemandTypeBadge(ticket)}
+                              <SupportLevelBadge level={ticket.support_level || 1} />
                               <ServiceBadge service={ticket.service} />
                               {ticket.category && <TicketCategoryBadge category={ticket.category} />}
                               {getPriorityBadge(ticket.priority)}
@@ -429,6 +413,14 @@ export default function Support() {
                           </Button>
                         )}
 
+                        <EscalateTicketDialog
+                          currentLevel={selectedTicket.support_level || 1}
+                          supportUsers={formattedSupportUsers}
+                          onEscalate={(targetLevel, targetUserId, reason) => 
+                            escalateTicket(selectedTicket.id, targetLevel, targetUserId, reason)
+                          }
+                        />
+
                         <Select
                           value={selectedTicket.assigned_to || 'none'}
                           onValueChange={(v) => assignTicket(selectedTicket.id, v === 'none' ? '' : v)}
@@ -438,7 +430,7 @@ export default function Support() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">Non assigné</SelectItem>
-                            {supportUsers.map(u => (
+                            {formattedSupportUsers.map(u => (
                               <SelectItem key={u.id} value={u.id}>
                                 👤 {u.name}
                               </SelectItem>
@@ -551,7 +543,7 @@ export default function Support() {
                           <label className="text-sm font-medium">Assigné à</label>
                           <p className="text-sm text-muted-foreground">
                             {selectedTicket.assigned_to 
-                              ? `👤 ${supportUsers.find(u => u.id === selectedTicket.assigned_to)?.name || 'Utilisateur inconnu'}`
+                              ? `👤 ${formattedSupportUsers.find(u => u.id === selectedTicket.assigned_to)?.name || 'Utilisateur inconnu'}`
                               : 'Non assigné'}
                           </p>
                         </div>
@@ -579,6 +571,12 @@ export default function Support() {
                             </div>
                           </div>
                         )}
+                        <div>
+                          <label className="text-sm font-medium">Niveau de support</label>
+                          <div className="mt-1">
+                            <SupportLevelBadge level={selectedTicket.support_level || 1} showLabel />
+                          </div>
+                        </div>
                         <div>
                           <label className="text-sm font-medium">Créé le</label>
                           <p className="text-sm text-muted-foreground">

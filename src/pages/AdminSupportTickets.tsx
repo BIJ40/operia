@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
-import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, Moon, Sun, Bell, BellOff } from 'lucide-react';
+import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, Moon, Sun, Bell, BellOff, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 import { EscalateTicketDialog } from '@/components/admin/support/EscalateTicketDialog';
+import { SupportLevelBadge } from '@/components/SupportLevelBadge';
 
 export default function AdminSupportTickets() {
   const { canManageTickets, user } = useAuth();
@@ -219,6 +220,15 @@ export default function AdminSupportTickets() {
               <p className="text-muted-foreground">Console unifiée de gestion des demandes</p>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/admin/support-levels')}
+                className="gap-2 bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white"
+              >
+                <Shield className="w-4 h-4" />
+                Gérer les niveaux
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -446,6 +456,7 @@ export default function AdminSupportTickets() {
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                               {getDemandTypeBadge(ticket)}
+                              <SupportLevelBadge level={ticket.support_level || 1} />
                               <ServiceBadge service={ticket.service} />
                               {ticket.category && <TicketCategoryBadge category={ticket.category} />}
                               {getPriorityBadge(ticket.priority)}
@@ -669,6 +680,12 @@ export default function AdminSupportTickets() {
                             </div>
                           </div>
                         )}
+                        <div>
+                          <label className="text-sm font-medium">Niveau de support</label>
+                          <div className="mt-1">
+                            <SupportLevelBadge level={selectedTicket.support_level || 1} showLabel />
+                          </div>
+                        </div>
                         <div>
                           <label className="text-sm font-medium">Créé le</label>
                           <p className="text-sm text-muted-foreground">

@@ -15,6 +15,7 @@ import CategoryHelpConfort from "./pages/CategoryHelpConfort";
 import Documents from "./pages/Documents";
 import AdminDocuments from "./pages/AdminDocuments";
 import AdminSupportTickets from "./pages/AdminSupportTickets";
+import AdminSupportLevels from "./pages/AdminSupportLevels";
 import Support from "./pages/Support";
 import AdminBackup from "./pages/AdminBackup";
 import AdminHelpConfortBackup from "./pages/AdminHelpConfortBackup";
@@ -67,6 +68,7 @@ function AppContent() {
         <Route path="/admin" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminIndex /></Layout>} />
         <Route path="/admin/documents" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminDocuments /></Layout>} />
         <Route path="/admin/support" element={<AdminSupportTickets />} />
+        <Route path="/admin/support-levels" element={<AdminSupportLevels />} />
         <Route path="/admin/tickets" element={<AdminSupportTickets />} />
         <Route path="/support" element={<Support />} />
         <Route path="/support-tickets" element={<Layout showHeader showSidebar={false}><UserTickets /></Layout>} />
