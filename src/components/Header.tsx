@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ChatbotNotifications } from '@/components/ChatbotNotifications';
-import { SupportNotifications } from '@/components/SupportNotifications';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
 import { useState } from 'react';
 
@@ -50,7 +49,7 @@ export function Header() {
 
       {isAdmin ? (
         <header className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 transition-all duration-300 ${
-          isSupport && hasNewTickets ? 'animate-[pulse-red_2s_ease-in-out_infinite] shadow-[0_0_30px_rgba(239,68,68,0.5)]' : ''
+          hasNewTickets ? 'animate-[pulse-red_2s_ease-in-out_infinite] shadow-[0_0_30px_rgba(239,68,68,0.5)]' : ''
         }`}>
           <div className="container mx-auto px-4 py-4 flex items-center gap-4">
             <Link 
@@ -120,27 +119,24 @@ export function Header() {
 
             <div className="ml-auto flex items-center gap-2">
               <ChatbotNotifications />
-              <SupportNotifications />
-              {isSupport && (
-                <Link
-                  to="/support"
-                  className={`flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-xl hover:bg-accent hover:scale-[1.02] transition-all duration-300 relative ${
-                    hasNewTickets 
-                      ? 'border-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.5)]' 
-                      : 'border-primary/30 hover:border-primary'
-                  }`}
-                >
-                  <Headset className={`w-5 h-5 ${hasNewTickets ? 'text-red-500' : 'text-primary'}`} />
-                  <span className={`font-semibold ${hasNewTickets ? 'text-red-500' : 'text-foreground'}`}>
-                    SUPPORT
+              <Link
+                to="/admin/support"
+                className={`flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-xl hover:bg-accent hover:scale-[1.02] transition-all duration-300 relative ${
+                  hasNewTickets 
+                    ? 'border-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.5)]' 
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <Headset className={`w-5 h-5 ${hasNewTickets ? 'text-red-500' : 'text-primary'}`} />
+                <span className={`font-semibold ${hasNewTickets ? 'text-red-500' : 'text-foreground'}`}>
+                  SUPPORT
+                </span>
+                {hasNewTickets && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-bounce">
+                    {newTicketsCount}
                   </span>
-                  {hasNewTickets && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-bounce">
-                      {newTicketsCount}
-                    </span>
-                  )}
-                </Link>
-              )}
+                )}
+              </Link>
               <Link
                 to="/profile"
                 className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
