@@ -60,7 +60,7 @@ serve(async (req) => {
     console.log('Admin verified:', userId)
 
     // Récupérer les données de la requête
-    const { userId: targetUserId, newPassword } = await req.json()
+    const { userId: targetUserId, newPassword, sendEmail } = await req.json()
 
     if (!targetUserId || !newPassword) {
       throw new Error('userId et newPassword sont requis')
@@ -101,8 +101,8 @@ serve(async (req) => {
       .eq('id', targetUserId)
       .single()
 
-    // Envoyer l'email avec le mot de passe provisoire
-    if (profileData?.email) {
+    // Envoyer l'email avec le mot de passe provisoire seulement si demandé
+    if (sendEmail !== false && profileData?.email) {
       try {
         const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
         const userName = profileData.first_name 
@@ -221,6 +221,8 @@ serve(async (req) => {
         console.error('Error sending email:', emailError)
         // Ne pas bloquer la réponse si l'email échoue
       }
+    } else if (sendEmail === false) {
+      console.log('Envoi d\'email désactivé par l\'administrateur')
     }
 
     return new Response(

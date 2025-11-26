@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
 import { z } from 'zod';
 import { Navigate } from 'react-router-dom';
 
@@ -72,6 +73,7 @@ export default function AdminUsers() {
   const [agence, setAgence] = useState('');
   const [roleAgence, setRoleAgence] = useState('');
   const [tempPassword, setTempPassword] = useState('');
+  const [sendEmail, setSendEmail] = useState(true);
 
   const generatePassword = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
@@ -140,7 +142,8 @@ export default function AdminUsers() {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           agence: agence.trim() || null,
-          roleAgence: roleAgence.trim() || null
+          roleAgence: roleAgence.trim() || null,
+          sendEmail
         }
       });
 
@@ -148,7 +151,9 @@ export default function AdminUsers() {
 
       toast({
         title: 'Utilisateur créé !',
-        description: `L'utilisateur "${email}" a été créé avec succès. Un email contenant son mot de passe temporaire lui a été transmis.`,
+        description: sendEmail 
+          ? `L'utilisateur "${email}" a été créé avec succès. Un email contenant son mot de passe temporaire lui a été transmis.`
+          : `L'utilisateur "${email}" a été créé avec succès.`,
       });
 
       // Reset form
@@ -158,6 +163,7 @@ export default function AdminUsers() {
       setAgence('');
       setRoleAgence('');
       setTempPassword('');
+      setSendEmail(true);
       setErrors({});
     } catch (error: any) {
       console.error('Erreur création utilisateur:', error);
@@ -325,6 +331,20 @@ export default function AdminUsers() {
                   Communiquez ces identifiants à l'utilisateur. Il devra changer son mot de passe à la première connexion.
                 </AlertDescription>
               </Alert>
+            </div>
+
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox
+                id="sendEmail"
+                checked={sendEmail}
+                onCheckedChange={(checked) => setSendEmail(checked as boolean)}
+              />
+              <Label
+                htmlFor="sendEmail"
+                className="text-sm font-normal cursor-pointer"
+              >
+                Envoyer le mot de passe par email à l'utilisateur
+              </Label>
             </div>
 
             <Button type="submit" disabled={loading} className="w-full">
