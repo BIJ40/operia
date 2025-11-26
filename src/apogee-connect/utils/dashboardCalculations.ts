@@ -252,8 +252,15 @@ export const calculateDevisJour = (devis: any[], dateRange: { start: Date; end: 
   return { nbDevis, caDevis };
 };
 
-export const calculateCaJour = (factures: any[], clients: any[], projects: any[], dateRange: { start: Date; end: Date }, userAgency: string): { caTotal: number; nbFactures: number } => {
+export const calculateCaJour = (factures: any[], clients: any[], projects: any[], dateRange: { start: Date; end: Date } | undefined, userAgency: string): { caTotal: number; nbFactures: number } => {
   if (!factures || factures.length === 0) return { caTotal: 0, nbFactures: 0 };
+  
+  if (!dateRange) {
+    if (import.meta.env.DEV) {
+      console.warn("💶 calculateCaJour - dateRange undefined, retour 0 pour sécurité");
+    }
+    return { caTotal: 0, nbFactures: 0 };
+  }
   
   if (import.meta.env.DEV) {
     console.log("💶 calculateCaJour - entrée", {
