@@ -29,6 +29,7 @@ import IndicateursAccueil from "./apogee-connect/pages/IndicateursAccueil";
 import IndicateursApporteurs from "./apogee-connect/pages/IndicateursApporteurs";
 import IndicateursUnivers from "./apogee-connect/pages/IndicateursUnivers";
 import IndicateursTechniciens from "./apogee-connect/pages/IndicateursTechniciens";
+import IndicateursSAV from "./apogee-connect/pages/IndicateursSAV";
 import AdminAgencies from "./pages/AdminAgencies";
 import NotFound from "./pages/NotFound";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -74,6 +75,7 @@ function AppContent() {
           <Route path="apporteurs" element={<IndicateursApporteurs />} />
           <Route path="univers" element={<IndicateursUnivers />} />
           <Route path="techniciens" element={<IndicateursTechniciens />} />
+          <Route path="sav" element={<IndicateursSAV />} />
         </Route>
         <Route path="/profile" element={<Layout showHeader={false} showSidebar={false}><Profile /></Layout>} />
         <Route path="/favorites" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><Favorites /></Layout>} />
