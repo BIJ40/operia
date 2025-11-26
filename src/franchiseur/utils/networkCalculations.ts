@@ -1,9 +1,30 @@
-import { parseISO, isWithinInterval, startOfYear, endOfYear, startOfMonth, endOfMonth } from "date-fns";
+import { parseISO, isWithinInterval, startOfYear, endOfYear, startOfMonth, endOfMonth, parse } from "date-fns";
 
 interface AgencyData {
   agencyId: string;
   agencyLabel: string;
   data: any;
+}
+
+/**
+ * Parse date in both ISO and French DD/MM/YYYY formats
+ */
+function parseDate(dateString: string): Date | null {
+  if (!dateString) return null;
+  
+  try {
+    // Try ISO format first
+    const isoDate = parseISO(dateString);
+    if (!isNaN(isoDate.getTime())) return isoDate;
+  } catch {}
+  
+  try {
+    // Try French format DD/MM/YYYY
+    const frenchDate = parse(dateString, 'dd/MM/yyyy', new Date());
+    if (!isNaN(frenchDate.getTime())) return frenchDate;
+  } catch {}
+  
+  return null;
 }
 
 /**
@@ -27,12 +48,10 @@ export function calculateTop5Agencies(agencyData: AgencyData[]) {
           const dateReelle = f.dateReelle || f.dateEmission || f.created_at;
           if (!dateReelle) return false;
 
-          try {
-            const factureDate = parseISO(dateReelle);
-            return isWithinInterval(factureDate, { start: yearStart, end: yearEnd });
-          } catch {
-            return false;
-          }
+          const factureDate = parseDate(dateReelle);
+          if (!factureDate) return false;
+          
+          return isWithinInterval(factureDate, { start: yearStart, end: yearEnd });
         })
         .reduce((sum: number, f: any) => sum + (f.montantHT || 0), 0);
 
@@ -83,12 +102,10 @@ export function calculateBestApporteur(agencyData: AgencyData[]) {
       const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
       if (!dateReelle) return;
 
-      try {
-        const factureDate = parseISO(dateReelle);
-        if (!isWithinInterval(factureDate, { start: yearStart, end: yearEnd })) return;
-      } catch {
-        return;
-      }
+      const factureDate = parseDate(dateReelle);
+      if (!factureDate) return;
+      
+      if (!isWithinInterval(factureDate, { start: yearStart, end: yearEnd })) return;
 
       const project = projectsMap.get(facture.projectId);
       if (!project) return;
@@ -171,12 +188,10 @@ export function calculateTotalInterventions(agencyData: AgencyData[], dateRange?
       const date = intervention.date || intervention.created_at;
       if (!date) return false;
 
-      try {
-        const interventionDate = parseISO(date);
-        return isWithinInterval(interventionDate, { start, end });
-      } catch {
-        return false;
-      }
+      const interventionDate = parseDate(date);
+      if (!interventionDate) return false;
+      
+      return isWithinInterval(interventionDate, { start, end });
     }).length;
 
     return total + count;

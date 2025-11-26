@@ -12,53 +12,60 @@ const dataCache = new Map<string, CacheEntry>();
 
 export class NetworkDataService {
   /**
-   * Load data for multiple agencies in parallel
+   * Load data for multiple agencies SEQUENTIALLY to avoid BASE_URL race condition
    */
   static async loadMultiAgencyData(agencySlugs: string[], dateRange?: DateRange) {
-    const results = await Promise.allSettled(
-      agencySlugs.map(async (agencySlug) => {
-        const cacheKey = `${agencySlug}-${dateRange?.from.toISOString()}-${dateRange?.to.toISOString()}`;
+    const results = [];
+    
+    console.log(`🔄 Chargement de ${agencySlugs.length} agences...`);
+    
+    // Load agencies sequentially to avoid BASE_URL conflicts
+    for (const agencySlug of agencySlugs) {
+      const cacheKey = `${agencySlug}-${dateRange?.from.toISOString()}-${dateRange?.to.toISOString()}`;
+      
+      // Check cache
+      const cached = dataCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        console.log(`✅ ${agencySlug}: données en cache`);
+        results.push({ agencyId: agencySlug, data: cached.data });
+        continue;
+      }
+
+      // Load fresh data
+      try {
+        // Configure BASE_URL for this agency
+        const apiUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
+        console.log(`🔄 ${agencySlug}: configuration BASE_URL...`);
+        setApiBaseUrl(apiUrl);
         
-        // Check cache
-        const cached = dataCache.get(cacheKey);
-        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-          return { agencyId: agencySlug, data: cached.data };
-        }
+        // Clear DataService cache to force fresh load
+        DataService.clearCache();
+        
+        // Load data for this agency
+        const loadedData = await DataService.loadAllData(true);
+        const data = {
+          users: loadedData.users || [],
+          clients: loadedData.clients || [],
+          projects: loadedData.projects || [],
+          interventions: loadedData.interventions || [],
+          factures: loadedData.factures || [],
+          devis: loadedData.devis || [],
+        };
 
-        // Load fresh data
-        try {
-          // Configure BASE_URL for this agency
-          const apiUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
-          setApiBaseUrl(apiUrl);
-          
-          // Clear DataService cache to force fresh load
-          DataService.clearCache();
-          
-          // Load data for this agency
-          const loadedData = await DataService.loadAllData(true);
-          const data = {
-            users: loadedData.users || [],
-            clients: loadedData.clients || [],
-            projects: loadedData.projects || [],
-            interventions: loadedData.interventions || [],
-            factures: loadedData.factures || [],
-            devis: loadedData.devis || [],
-          };
+        console.log(`✅ ${agencySlug}: ${data.factures.length} factures, ${data.projects.length} projets, ${data.interventions.length} interventions`);
 
-          // Cache the data
-          dataCache.set(cacheKey, { data, timestamp: Date.now() });
-          
-          return { agencyId: agencySlug, data };
-        } catch (error) {
-          console.error(`Failed to load data for agency ${agencySlug}:`, error);
-          return { agencyId: agencySlug, data: null, error };
-        }
-      })
-    );
+        // Cache the data
+        dataCache.set(cacheKey, { data, timestamp: Date.now() });
+        
+        results.push({ agencyId: agencySlug, data });
+      } catch (error) {
+        console.error(`❌ ${agencySlug}: échec chargement`, error);
+        results.push({ agencyId: agencySlug, data: null, error });
+      }
+    }
 
-    return results
-      .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
-      .map(r => r.value);
+    console.log(`✅ Chargement terminé: ${results.filter(r => r.data).length}/${agencySlugs.length} agences OK`);
+    return results.filter(r => r.data);
   }
 
   /**
