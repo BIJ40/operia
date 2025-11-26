@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners } from '@dnd-kit/core';
@@ -87,15 +87,20 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
   const { toast } = useToast();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null);
+  const [localTickets, setLocalTickets] = useState<SupportTicket[]>(tickets);
+
+  useEffect(() => {
+    setLocalTickets(tickets);
+  }, [tickets]);
 
   const getTicketsByStatus = (status: string) => {
-    return tickets.filter(ticket => ticket.status === status);
+    return localTickets.filter(ticket => ticket.status === status);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     setActiveId(active.id as string);
-    const ticket = tickets.find(t => t.id === active.id);
+    const ticket = localTickets.find(t => t.id === active.id);
     setActiveTicket(ticket || null);
   };
 
@@ -109,23 +114,24 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
     const ticketId = active.id as string;
     
     // Déterminer le statut de la colonne de destination
-    // Si over.id est un ID de colonne, l'utiliser directement
-    // Sinon, trouver le ticket et utiliser son statut (car on drop sur un autre ticket)
     let newStatus: string;
-    
     const isColumn = columns.some(col => col.status === over.id);
     if (isColumn) {
       newStatus = over.id as string;
     } else {
-      // On a droppé sur un ticket, trouver sa colonne
-      const targetTicket = tickets.find(t => t.id === over.id);
+      const targetTicket = localTickets.find(t => t.id === over.id);
       if (!targetTicket) return;
       newStatus = targetTicket.status;
     }
 
-    // Si le ticket est déplacé vers une nouvelle colonne
-    const ticket = tickets.find(t => t.id === ticketId);
+    const ticket = localTickets.find(t => t.id === ticketId);
     if (ticket && ticket.status !== newStatus) {
+      // Mise à jour optimiste de l'UI
+      setLocalTickets(prev =>
+        prev.map(t =>
+          t.id === ticketId ? { ...t, status: newStatus } : t
+        )
+      );
       // Mettre à jour le statut dans la base de données
       const updateData: any = { status: newStatus };
       
