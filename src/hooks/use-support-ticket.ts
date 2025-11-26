@@ -36,14 +36,16 @@ export const useSupportTicket = () => {
 
     setIsCreating(true);
     try {
-      // Récupérer le pseudo de l'utilisateur
+      // Récupérer le nom de l'utilisateur
       const { data: profile } = await supabase
         .from('profiles')
-        .select('pseudo')
+        .select('first_name, last_name')
         .eq('id', user.id)
         .single();
 
-      const userPseudo = profile?.pseudo || 'Utilisateur';
+      const userName = profile?.first_name 
+        ? `${profile.first_name} ${profile.last_name || ''}`.trim()
+        : 'Utilisateur';
 
       // Extraire la dernière question de l'utilisateur
       const userMessages = messages.filter(m => m.role === 'user');
@@ -54,7 +56,7 @@ export const useSupportTicket = () => {
         .from('support_tickets')
         .insert({
           user_id: user.id,
-          user_pseudo: userPseudo,
+          user_pseudo: userName,
           status: 'waiting',
           priority: 'urgent',
           chatbot_conversation: messages as any,
@@ -70,7 +72,7 @@ export const useSupportTicket = () => {
       const { error: notifyError } = await supabase.functions.invoke('notify-support-ticket', {
         body: {
           ticketId: ticket.id,
-          userPseudo: userPseudo,
+          userName: userName,
           lastQuestion: lastQuestion,
           appUrl: appUrl,
         },

@@ -55,16 +55,16 @@ serve(async (req) => {
     }
 
     // Récupérer les données de la requête
-    const { pseudo, password, firstName, lastName, agence, roleAgence } = await req.json()
+    const { email, password, firstName, lastName, agence, roleAgence } = await req.json()
 
-    if (!pseudo || !password || !firstName || !lastName) {
-      throw new Error('Pseudo, mot de passe, prénom et nom sont requis')
+    if (!email || !password || !firstName || !lastName) {
+      throw new Error('Email, mot de passe, prénom et nom sont requis')
     }
 
-    // Validation du pseudo
-    const pseudoRegex = /^[a-zA-Z0-9_-]+$/
-    if (!pseudoRegex.test(pseudo) || pseudo.length < 3 || pseudo.length > 30) {
-      throw new Error('Le pseudo doit contenir 3-30 caractères (lettres, chiffres, - et _)')
+    // Validation de l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      throw new Error('L\'adresse email n\'est pas valide')
     }
 
     // Validation du mot de passe
@@ -72,29 +72,20 @@ serve(async (req) => {
       throw new Error('Le mot de passe doit contenir entre 8 et 100 caractères')
     }
 
-    // Vérifier si le pseudo existe déjà
-    const { data: existingProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('pseudo')
-      .eq('pseudo', pseudo)
-      .maybeSingle()
-
-    if (existingProfile) {
-      throw new Error('Ce pseudo est déjà utilisé')
+    // Vérifier si l'email existe déjà
+    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers()
+    if (existingUser?.users?.some(u => u.email === email)) {
+      throw new Error('Cet email est déjà utilisé')
     }
-
-    // Créer un email fictif interne basé sur le pseudo
-    const internalEmail = `${pseudo}@internal.helpogee.local`
 
     // Créer l'utilisateur avec le service role
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: internalEmail,
+      email: email,
       password,
       email_confirm: true,
       user_metadata: {
         first_name: firstName,
-        last_name: lastName,
-        pseudo: pseudo
+        last_name: lastName
       }
     })
 
@@ -107,11 +98,10 @@ serve(async (req) => {
       throw new Error('Utilisateur non créé')
     }
 
-    // Mettre à jour le profil avec le pseudo et le flag de changement de mot de passe
+    // Mettre à jour le profil avec le flag de changement de mot de passe
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
       .update({ 
-        pseudo: pseudo,
         agence: agence || null,
         role_agence: roleAgence || null,
         must_change_password: true 
@@ -123,14 +113,14 @@ serve(async (req) => {
       throw new Error('Erreur lors de la mise à jour du profil')
     }
 
-    console.log('Utilisateur créé avec succès:', pseudo)
+    console.log('Utilisateur créé avec succès:', email)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         user: { 
           id: newUser.user.id, 
-          pseudo: pseudo 
+          email: email 
         } 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

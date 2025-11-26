@@ -156,14 +156,17 @@ export const useChatbot = () => {
     try {
       const relevantContent = await searchRelevantContent(input);
 
-      let userPseudo = 'Utilisateur';
+      let userName = 'Utilisateur';
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('pseudo')
+          .select('first_name, last_name')
           .eq('id', user.id)
           .single();
-        userPseudo = profile?.pseudo || user.email?.split('@')[0] || 'Utilisateur';
+        
+        if (profile?.first_name) {
+          userName = profile.first_name;
+        }
       }
 
       const response = await fetch(
@@ -178,7 +181,7 @@ export const useChatbot = () => {
             messages: [...messages, userMessage],
             guideContent: relevantContent,
             userId: user?.id || null,
-            userPseudo: userPseudo,
+            userName: userName,
           }),
         }
       );

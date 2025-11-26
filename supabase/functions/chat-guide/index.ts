@@ -68,7 +68,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { messages, guideContent, userId, userPseudo, similarityScores } = body;
+    const { messages, guideContent, userId, userName, similarityScores } = body;
     
     const validation = validateInput(messages, guideContent);
     if (!validation.valid) {
@@ -112,7 +112,7 @@ ${guideContent}
    Si la question concerne une procédure/action NON décrite dans le contenu :
    
    Réponds EXACTEMENT :
-   "❌ Désolé ${userPseudo || ''}, le guide ne semble pas donner cette information. Je remonte immédiatement la demande afin qu'une clarification soit apportée sur le sujet. De plus, je fais en sorte que tu sois recontacté à ce sujet.
+   "❌ Désolé ${userName || ''}, le guide ne semble pas donner cette information. Je remonte immédiatement la demande afin qu'une clarification soit apportée sur le sujet. De plus, je fais en sorte que tu sois recontacté à ce sujet.
    
    Voici ce que j'ai trouvé de pertinent :
    - [Liste les sections les plus proches avec leurs liens]
@@ -220,7 +220,7 @@ Réponds maintenant.`;
           
           await supabase.from('chatbot_queries').insert({
             user_id: userId || null,
-            user_pseudo: userPseudo || 'Anonyme',
+            user_pseudo: userName || 'Anonyme',
             question: userQuestion,
             answer: fullAnswer,
             is_incomplete: isIncomplete,
