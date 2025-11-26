@@ -8,6 +8,7 @@ export const useAdminTickets = () => {
   const { canManageTickets } = useAuth();
   const { toast } = useToast();
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [allTickets, setAllTickets] = useState<Ticket[]>([]); // Liste complète pour les stats
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
@@ -24,6 +25,16 @@ export const useAdminTickets = () => {
 
     setIsLoading(true);
     try {
+      // Charger d'abord tous les tickets pour les stats
+      const { data: allData, error: allError } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (allError) throw allError;
+      setAllTickets((allData || []) as Ticket[]);
+
+      // Puis charger les tickets filtrés
       let query = supabase
         .from('support_tickets')
         .select('*')
@@ -314,11 +325,11 @@ export const useAdminTickets = () => {
   };
 
   const getStats = () => {
-    const total = tickets.length;
-    const waiting = tickets.filter((t) => t.status === 'waiting').length;
-    const inProgress = tickets.filter((t) => t.status === 'in_progress').length;
-    const resolved = tickets.filter((t) => t.status === 'resolved').length;
-    const unresolved = tickets.filter((t) => t.status === 'unresolved').length;
+    const total = allTickets.length;
+    const waiting = allTickets.filter((t) => t.status === 'waiting').length;
+    const inProgress = allTickets.filter((t) => t.status === 'in_progress').length;
+    const resolved = allTickets.filter((t) => t.status === 'resolved').length;
+    const unresolved = allTickets.filter((t) => t.status === 'unresolved').length;
 
     return { total, waiting, inProgress, resolved, unresolved };
   };
