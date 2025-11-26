@@ -148,7 +148,7 @@ export default function AdminUsers() {
 
       toast({
         title: 'Utilisateur créé !',
-        description: `L'utilisateur "${email}" a été créé avec succès. Communiquez-lui ses identifiants : Email = ${email}, Mot de passe = ${tempPassword}`,
+        description: `L'utilisateur "${email}" a été créé avec succès. Un email contenant son mot de passe temporaire lui a été transmis.`,
       });
 
       // Reset form
