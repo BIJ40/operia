@@ -1,10 +1,13 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Resend } from 'https://esm.sh/resend@4.0.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -111,6 +114,78 @@ serve(async (req) => {
     if (updateError) {
       console.error('Erreur mise à jour profil:', updateError)
       throw new Error('Erreur lors de la mise à jour du profil')
+    }
+
+    // Envoyer l'email avec le mot de passe temporaire
+    try {
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
+              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb; }
+              .credential-item { margin: 15px 0; }
+              .credential-label { font-weight: bold; color: #666; font-size: 14px; }
+              .credential-value { font-size: 18px; color: #2563eb; font-weight: bold; font-family: monospace; }
+              .button { display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; }
+              .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎉 Bienvenue sur Helpbox!</h1>
+              </div>
+              <div class="content">
+                <p>Bonjour <strong>${firstName} ${lastName}</strong>,</p>
+                
+                <p>Votre compte a été créé avec succès. Voici vos identifiants de connexion :</p>
+                
+                <div class="credentials">
+                  <div class="credential-item">
+                    <div class="credential-label">📧 Email de connexion :</div>
+                    <div class="credential-value">${email}</div>
+                  </div>
+                  
+                  <div class="credential-item">
+                    <div class="credential-label">🔑 Mot de passe temporaire :</div>
+                    <div class="credential-value">${password}</div>
+                  </div>
+                </div>
+                
+                <p><strong>⚠️ Important :</strong> Ce mot de passe est temporaire. Vous devrez le modifier lors de votre première connexion pour des raisons de sécurité.</p>
+                
+                <div style="text-align: center;">
+                  <a href="${Deno.env.get('SUPABASE_URL')?.replace('https://', 'https://').replace('.supabase.co', '.lovable.app')}" class="button">
+                    Se connecter à Helpbox!
+                  </a>
+                </div>
+                
+                <div class="footer">
+                  <p>Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet email.</p>
+                  <p>© ${new Date().getFullYear()} Helpbox! - Tous droits réservés</p>
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>
+      `
+
+      await resend.emails.send({
+        from: 'Helpbox! <support@helpconfort.services>',
+        to: [email],
+        subject: '🎉 Bienvenue sur Helpbox! - Vos identifiants de connexion',
+        html: emailHtml,
+      })
+
+      console.log('Email envoyé avec succès à:', email)
+    } catch (emailError) {
+      console.error('Erreur envoi email:', emailError)
+      // On continue même si l'email échoue
     }
 
     console.log('Utilisateur créé avec succès:', email)
