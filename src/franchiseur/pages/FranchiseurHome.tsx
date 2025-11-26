@@ -1,4 +1,4 @@
-import { TrendingUp, Building2, FileText, Wrench, AlertCircle, Euro } from "lucide-react";
+import { TrendingUp, FileText, Wrench, AlertCircle, Euro } from "lucide-react";
 import { NetworkPeriodSelector } from "../components/filters/NetworkPeriodSelector";
 import { AgencySelector } from "../components/filters/AgencySelector";
 import { NetworkKpiTile } from "../components/widgets/NetworkKpiTile";
@@ -37,7 +37,7 @@ export default function FranchiseurHome() {
         <NetworkPeriodSelector />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
         <NetworkKpiTile
           title="CA Année en cours"
           value={stats?.totalCAYear || 0}
@@ -55,12 +55,6 @@ export default function FranchiseurHome() {
               ? `Du ${dateRange.from.toLocaleDateString('fr-FR')} au ${dateRange.to.toLocaleDateString('fr-FR')}`
               : undefined
           }
-        />
-
-        <NetworkKpiTile
-          title="Agences Actives"
-          value={stats?.agencyCount || 0}
-          icon={Building2}
         />
 
         <NetworkKpiTile
