@@ -138,7 +138,7 @@ serve(async (req) => {
           <body>
             <div class="container">
               <div class="header">
-                <h1>🎉 Bienvenue sur Helpbox!</h1>
+                <h1>🎉 Bienvenue sur HelpConfort Services</h1>
               </div>
               <div class="content">
                 <p>Bonjour <strong>${firstName} ${lastName}</strong>,</p>
@@ -161,13 +161,13 @@ serve(async (req) => {
                 
                 <div style="text-align: center;">
                   <a href="${Deno.env.get('SUPABASE_URL')?.replace('https://', 'https://').replace('.supabase.co', '.lovable.app')}" class="button">
-                    Se connecter à Helpbox!
+                    Se connecter à HelpConfort Services
                   </a>
                 </div>
                 
                 <div class="footer">
                   <p>Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet email.</p>
-                  <p>© ${new Date().getFullYear()} Helpbox! - Tous droits réservés</p>
+                  <p>© ${new Date().getFullYear()} HelpConfort Services - Tous droits réservés</p>
                 </div>
               </div>
             </div>
@@ -176,9 +176,9 @@ serve(async (req) => {
       `
 
       await resend.emails.send({
-        from: 'Helpbox! <support@helpconfort.services>',
+        from: 'HelpConfort Services <support@helpconfort.services>',
         to: [email],
-        subject: '🎉 Bienvenue sur Helpbox! - Vos identifiants de connexion',
+        subject: '🎉 Bienvenue sur HelpConfort Services - Vos identifiants de connexion',
         html: emailHtml,
       })
 
