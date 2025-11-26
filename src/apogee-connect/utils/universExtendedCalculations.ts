@@ -147,6 +147,7 @@ export function calculateTransfoParUnivers(
   // ÉTAPE 3: Calculer CA factures par univers (UNIQUEMENT projets avec devis accepté)
   let facturesCountTotal = 0;
   let facturesCountIncluded = 0;
+  let facturesNaN = 0;
   
   factures.forEach((f) => {
     facturesCountTotal++;
@@ -171,7 +172,17 @@ export function calculateTransfoParUnivers(
     const project = projectsMap.get(f.projectId);
     if (!project) return;
 
-    const caFacture = Number(f.data?.totalHT || f.totalHT || 0);
+    // Extraire le montant avec tous les chemins possibles
+    const montantRaw = f.montantHT || f.data?.montantHT || f.data?.totalHT || f.totalHT || "0";
+    const montantStr = String(montantRaw).replace(/[^0-9.-]/g, '');
+    const caFacture = parseFloat(montantStr);
+    
+    if (isNaN(caFacture)) {
+      console.warn(`[TransfoParUnivers] Montant NaN pour facture ${f.id} projet ${f.projectId}:`, montantRaw);
+      facturesNaN++;
+      return;
+    }
+
     const universes = project.data?.universes || project.universes || [];
     if (universes.length === 0) return;
 
@@ -186,7 +197,7 @@ export function calculateTransfoParUnivers(
     });
   });
 
-  console.log(`[TransfoParUnivers] Factures: ${facturesCountIncluded} incluses / ${facturesCountTotal} totales`);
+  console.log(`[TransfoParUnivers] Factures: ${facturesCountIncluded} incluses / ${facturesCountTotal} totales, ${facturesNaN} avec montant NaN`);
 
   // ÉTAPE 4: Calculer taux de transformation (plafonné à 100%)
   const result: Record<string, { caDevis: number; caFactures: number; tauxTransfo: number }> = {};
