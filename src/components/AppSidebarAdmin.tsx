@@ -80,7 +80,11 @@ export function AppSidebarAdmin() {
   const { open } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
-  const [usersOpen, setUsersOpen] = useState(true);
+  
+  // Check if we're on a user-related page to keep the group open by default
+  const isUserPage = location.pathname.includes('/admin/users') || 
+                     location.pathname.includes('/admin/role-permissions');
+  const [usersOpen, setUsersOpen] = useState(isUserPage);
 
   const getParentPath = () => {
     const path = location.pathname;
@@ -100,10 +104,6 @@ export function AppSidebarAdmin() {
 
   const parentPath = getParentPath();
   const showReturnButton = parentPath !== null;
-
-  // Check if we're on a user-related page to keep the group open
-  const isUserPage = location.pathname.includes('/admin/users') || 
-                     location.pathname.includes('/admin/role-permissions');
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -134,7 +134,7 @@ export function AppSidebarAdmin() {
                   return (
                     <Collapsible 
                       key={item.title} 
-                      open={usersOpen || isUserPage} 
+                      open={usersOpen} 
                       onOpenChange={setUsersOpen}
                       className="group/collapsible"
                     >
