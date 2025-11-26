@@ -167,7 +167,14 @@ export default function AdminUsersList() {
             </TableHeader>
             <TableBody>
               {users.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow 
+                  key={user.id}
+                  onClick={() => {
+                    setEditingUser(user);
+                    setShowEditDialog(true);
+                  }}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                >
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div title={!user.must_change_password ? "Utilisateur actif" : "Première connexion non effectuée"}>
@@ -233,18 +240,7 @@ export default function AdminUsersList() {
                   </TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString('fr-FR')}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditingUser(user);
-                          setShowEditDialog(true);
-                        }}
-                        title="Modifier les informations"
-                      >
-                        <Edit className="w-4 h-4 text-primary" />
-                      </Button>
+                    <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="sm"
