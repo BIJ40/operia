@@ -997,6 +997,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_actions_config: {
+        Row: {
+          created_at: string
+          delai_a_commander: number
+          delai_a_facturer: number
+          delai_devis_a_faire: number
+          delai_devis_envoye: number
+          delai_facture_non_reglee: number
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delai_a_commander?: number
+          delai_a_facturer?: number
+          delai_devis_a_faire?: number
+          delai_devis_envoye?: number
+          delai_facture_non_reglee?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delai_a_commander?: number
+          delai_a_facturer?: number
+          delai_devis_a_faire?: number
+          delai_devis_envoye?: number
+          delai_facture_non_reglee?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_calendar_connections: {
         Row: {
           access_token: string | null
