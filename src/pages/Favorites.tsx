@@ -287,6 +287,9 @@ export default function Favorites() {
                                     <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1 shrink-0">
                                       {getScopeLabel(favorite.scope)}
                                     </Badge>
+                                    <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1 shrink-0">
+                                      {group.categoryTitle}
+                                    </Badge>
                                     {isTips && (
                                       <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1">
                                         <Lightbulb className="w-3 h-3" />
