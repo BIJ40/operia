@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useFranchiseur } from '../contexts/FranchiseurContext';
 import { useNetworkFilters } from '../contexts/NetworkFiltersContext';
 import { NetworkDataService } from '../services/networkDataService';
+import { startOfYear, endOfYear } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   calculateTop5Agencies, 
@@ -51,14 +52,20 @@ export function useNetworkStats() {
       });
 
       // Convert date range for calculations
-      const calculationDateRange = dateRange ? {
-        start: dateRange.from,
-        end: dateRange.to
-      } : undefined;
+      const now = new Date();
+      const yearRange = {
+        start: startOfYear(now),
+        end: endOfYear(now),
+      };
+
+      const calculationDateRange = dateRange
+        ? { start: dateRange.from, end: dateRange.to }
+        : yearRange;
 
       // Calculate aggregated statistics
       const stats = {
-        totalCA: NetworkDataService.aggregateCA(agencyData),
+        totalCAYear: NetworkDataService.aggregateCA(agencyData, yearRange),
+        totalCAPeriod: NetworkDataService.aggregateCA(agencyData, calculationDateRange),
         totalProjects: NetworkDataService.aggregateProjectCount(agencyData),
         agencyCount: agenciesToLoad.length,
         totalInterventions: calculateTotalInterventions(agencyData, calculationDateRange),

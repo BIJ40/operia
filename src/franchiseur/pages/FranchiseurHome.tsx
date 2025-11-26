@@ -40,17 +40,21 @@ export default function FranchiseurHome() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <NetworkKpiTile
           title="CA Année en cours"
-          value={stats?.totalCA || 0}
+          value={stats?.totalCAYear || 0}
           icon={TrendingUp}
           format="currency"
         />
 
         <NetworkKpiTile
           title="CA Période"
-          value={stats?.totalCA || 0}
+          value={stats?.totalCAPeriod || 0}
           icon={TrendingUp}
           format="currency"
-          subtitle={`Du ${dateRange.from.toLocaleDateString('fr-FR')} au ${dateRange.to.toLocaleDateString('fr-FR')}`}
+          subtitle={
+            dateRange
+              ? `Du ${dateRange.from.toLocaleDateString('fr-FR')} au ${dateRange.to.toLocaleDateString('fr-FR')}`
+              : undefined
+          }
         />
 
         <NetworkKpiTile
