@@ -696,7 +696,7 @@ export default function AdminDocuments() {
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <CardTitle className="text-sm">{query.user_pseudo}</CardTitle>
+                            <CardTitle className="text-sm">Question #{query.id.slice(0, 8)}</CardTitle>
                             {query.is_incomplete && (
                               <Badge variant="destructive" className="text-xs">Incomplète</Badge>
                             )}

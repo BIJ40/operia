@@ -375,7 +375,6 @@ export const useChatbot = () => {
         .from('support_tickets')
         .insert({
           user_id: user.id,
-          user_pseudo: userName,
           subject,
           category,
           status: 'waiting',
