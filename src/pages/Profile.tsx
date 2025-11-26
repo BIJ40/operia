@@ -12,6 +12,7 @@ import { z } from 'zod';
 
 interface Profile {
   id: string;
+  email: string | null;
   first_name: string | null;
   last_name: string | null;
   agence: string | null;
@@ -19,21 +20,15 @@ interface Profile {
   avatar_url: string | null;
 }
 
-const emailSchema = z.string().trim().email({ message: "Email invalide" }).max(255, { message: "L'email ne peut pas dépasser 255 caractères" });
-
 export default function Profile() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [pseudo, setPseudo] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [agence, setAgence] = useState('');
   const [roleAgence, setRoleAgence] = useState('');
-  const [email, setEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [updatingEmail, setUpdatingEmail] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -65,8 +60,6 @@ export default function Profile() {
         setAgence(data.agence || '');
         setRoleAgence(data.role_agence || '');
       }
-      
-      setEmail(user.email || '');
     } catch (error) {
       console.error('Error loading profile:', error);
       toast({
@@ -74,49 +67,6 @@ export default function Profile() {
         description: 'Impossible de charger le profil',
         variant: 'destructive',
       });
-    }
-  };
-
-  const handleEmailUpdate = async () => {
-    setEmailError('');
-    
-    // Validation de l'email
-    const validation = emailSchema.safeParse(email);
-    if (!validation.success) {
-      setEmailError(validation.error.issues[0].message);
-      return;
-    }
-
-    // Vérifier si l'email a changé
-    if (email === user?.email) {
-      toast({
-        title: 'Aucun changement',
-        description: 'L\'email n\'a pas été modifié',
-      });
-      return;
-    }
-
-    setUpdatingEmail(true);
-    try {
-      const { error } = await supabase.auth.updateUser({
-        email: email.trim(),
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Email mis à jour !',
-        description: 'Un email de confirmation a été envoyé à votre nouvelle adresse. Veuillez confirmer le changement.',
-      });
-    } catch (error: any) {
-      console.error('Error updating email:', error);
-      toast({
-        title: 'Erreur',
-        description: error.message || 'Impossible de mettre à jour l\'email',
-        variant: 'destructive',
-      });
-    } finally {
-      setUpdatingEmail(false);
     }
   };
 
@@ -145,32 +95,16 @@ export default function Profile() {
                     <Mail className="w-4 h-4 text-primary" />
                     Email
                   </Label>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value);
-                          setEmailError('');
-                        }}
-                        placeholder="votre.email@example.com"
-                        className={emailError ? 'border-destructive' : ''}
-                      />
-                      {emailError && <p className="text-sm text-destructive mt-1">{emailError}</p>}
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={handleEmailUpdate}
-                      disabled={updatingEmail || !email}
-                      size="sm"
-                    >
-                      {updatingEmail ? 'Envoi...' : 'Modifier'}
-                    </Button>
-                  </div>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={profile?.email || ''}
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                    placeholder="Non renseigné"
+                  />
                   <p className="text-xs text-muted-foreground">
-                    Un email de confirmation sera envoyé
+                    L'email ne peut pas être modifié
                   </p>
                 </div>
 
