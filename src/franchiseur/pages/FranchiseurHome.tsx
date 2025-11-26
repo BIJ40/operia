@@ -1,9 +1,12 @@
-import { TrendingUp, FileText, Wrench, AlertCircle, Euro } from "lucide-react";
+import { TrendingUp, FileText, Wrench, AlertCircle, Euro, Clock } from "lucide-react";
 import { NetworkPeriodSelector } from "../components/filters/NetworkPeriodSelector";
 import { AgencySelector } from "../components/filters/AgencySelector";
 import { NetworkKpiTile } from "../components/widgets/NetworkKpiTile";
 import { TopAgenciesWidget } from "../components/widgets/TopAgenciesWidget";
 import { TopApporteurWidget } from "../components/widgets/TopApporteurWidget";
+import { NetworkMonthlyCAChart } from "../components/widgets/NetworkMonthlyCAChart";
+import { NetworkCAPieChart } from "../components/widgets/NetworkCAPieChart";
+import { NetworkSAVChart } from "../components/widgets/NetworkSAVChart";
 import { useNetworkStats } from "../hooks/useNetworkStats";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
 import { useNetworkFilters } from "../contexts/NetworkFiltersContext";
@@ -76,6 +79,13 @@ export default function FranchiseurHome() {
           format="percentage"
         />
 
+        <NetworkKpiTile
+          title="Délai moyen traitement"
+          value={stats?.averageProcessingTime || 0}
+          icon={Clock}
+          subtitle="jours par dossier/intervention"
+        />
+
         {permissions.canViewRoyalties && (
           <NetworkKpiTile
             title="Redevances Mois"
@@ -87,8 +97,16 @@ export default function FranchiseurHome() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <TopAgenciesWidget agencies={stats?.top5Agencies || []} />
-        <TopApporteurWidget apporteur={stats?.bestApporteur || null} />
+        <NetworkMonthlyCAChart data={stats?.monthlyCAEvolution || []} />
+        <NetworkCAPieChart data={stats?.caByAgency || []} />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <NetworkSAVChart data={stats?.monthlySAVEvolution || []} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <TopAgenciesWidget agencies={stats?.top5Agencies || []} />
+          <TopApporteurWidget apporteur={stats?.bestApporteur || null} />
+        </div>
       </div>
     </div>
   );

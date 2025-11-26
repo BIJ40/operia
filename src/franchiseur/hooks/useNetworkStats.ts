@@ -9,7 +9,11 @@ import {
   calculateBestApporteur, 
   calculateMonthlyRoyalties,
   calculateTotalInterventions,
-  calculateSAVRate 
+  calculateSAVRate,
+  calculateAverageProcessingTime,
+  calculateMonthlyCAEvolution,
+  calculateCAByAgency,
+  calculateMonthlySAVEvolution
 } from '../utils/networkCalculations';
 
 export function useNetworkStats() {
@@ -71,8 +75,12 @@ export function useNetworkStats() {
         totalInterventions: calculateTotalInterventions(agencyData, calculationDateRange),
         savRate: calculateSAVRate(agencyData),
         monthlyRoyalties: calculateMonthlyRoyalties(agencyData),
+        averageProcessingTime: calculateAverageProcessingTime(agencyData),
         top5Agencies: calculateTop5Agencies(agencyData),
         bestApporteur: calculateBestApporteur(agencyData),
+        monthlyCAEvolution: calculateMonthlyCAEvolution(agencyData),
+        caByAgency: calculateCAByAgency(agencyData),
+        monthlySAVEvolution: calculateMonthlySAVEvolution(agencyData),
         agencyData,
       };
 

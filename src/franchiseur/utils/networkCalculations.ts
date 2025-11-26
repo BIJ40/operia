@@ -205,17 +205,18 @@ export function calculateTotalInterventions(agencyData: AgencyData[], dateRange?
 }
 
 /**
- * Calculate network-wide SAV rate
+ * Calculate network-wide SAV rate as AVERAGE of individual agency rates
  */
 export function calculateSAVRate(agencyData: AgencyData[]): number {
-  let totalProjects = 0;
-  let savProjects = 0;
+  const agencyRates: number[] = [];
 
   agencyData.forEach((agency) => {
     if (!agency.data?.projects || !agency.data?.interventions) return;
 
     const projectIds = new Set(agency.data.projects.map((p: any) => p.id));
-    totalProjects += projectIds.size;
+    const totalProjects = projectIds.size;
+    
+    if (totalProjects === 0) return;
 
     const savProjectIds = new Set();
     agency.data.interventions.forEach((intervention: any) => {
@@ -224,8 +225,157 @@ export function calculateSAVRate(agencyData: AgencyData[]): number {
       }
     });
 
-    savProjects += savProjectIds.size;
+    const agencySAVRate = (savProjectIds.size / totalProjects) * 100;
+    agencyRates.push(agencySAVRate);
   });
 
-  return totalProjects > 0 ? (savProjects / totalProjects) * 100 : 0;
+  // Return average of all agency rates
+  return agencyRates.length > 0 
+    ? agencyRates.reduce((sum, rate) => sum + rate, 0) / agencyRates.length 
+    : 0;
+}
+
+/**
+ * Calculate average processing time (days from project creation to last intervention)
+ */
+export function calculateAverageProcessingTime(agencyData: AgencyData[]): number {
+  let totalDays = 0;
+  let projectCount = 0;
+
+  agencyData.forEach((agency) => {
+    if (!agency.data?.projects || !agency.data?.interventions) return;
+
+    agency.data.projects.forEach((project: any) => {
+      const projectCreatedAt = parseDate(project.createdAt || project.created_at);
+      if (!projectCreatedAt) return;
+
+      // Find last intervention for this project
+      const projectInterventions = agency.data.interventions
+        .filter((i: any) => i.projectId === project.id)
+        .map((i: any) => parseDate(i.date || i.created_at))
+        .filter((d: Date | null) => d !== null) as Date[];
+
+      if (projectInterventions.length === 0) return;
+
+      const lastIntervention = new Date(Math.max(...projectInterventions.map(d => d.getTime())));
+      const daysDiff = Math.floor((lastIntervention.getTime() - projectCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+      
+      totalDays += daysDiff;
+      projectCount += 1;
+    });
+  });
+
+  return projectCount > 0 ? Math.round(totalDays / projectCount) : 0;
+}
+
+/**
+ * Calculate monthly CA evolution for the current year
+ */
+export function calculateMonthlyCAEvolution(agencyData: AgencyData[]) {
+  const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+  const monthlyData = months.map((month, index) => ({ month, ca: 0, nbFactures: 0 }));
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  agencyData.forEach((agency) => {
+    if (!agency.data?.factures) return;
+
+    agency.data.factures.forEach((facture: any) => {
+      if (facture.type === 'avoir') return;
+
+      const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
+      const factureDate = parseDate(dateReelle);
+      
+      if (!factureDate || factureDate.getFullYear() !== currentYear) return;
+
+      const monthIndex = factureDate.getMonth();
+      const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
+      const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+      
+      monthlyData[monthIndex].ca += montant;
+      monthlyData[monthIndex].nbFactures += 1;
+    });
+  });
+
+  return monthlyData;
+}
+
+/**
+ * Calculate CA distribution by agency (for pie chart)
+ */
+export function calculateCAByAgency(agencyData: AgencyData[]) {
+  const now = new Date();
+  const yearStart = startOfYear(now);
+  const yearEnd = endOfYear(now);
+
+  return agencyData
+    .map((agency) => {
+      if (!agency.data?.factures) {
+        return { agencyLabel: agency.agencyLabel, ca: 0 };
+      }
+
+      const ca = agency.data.factures
+        .filter((f: any) => {
+          if (f.type === 'avoir') return false;
+          const dateReelle = f.dateReelle || f.dateEmission || f.created_at;
+          const factureDate = parseDate(dateReelle);
+          return factureDate && isWithinInterval(factureDate, { start: yearStart, end: yearEnd });
+        })
+        .reduce((sum: number, f: any) => {
+          const montantRaw = f.data?.totalHT || f.totalHT || f.montantHT || 0;
+          const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+          return sum + montant;
+        }, 0);
+
+      return { agencyLabel: agency.agencyLabel, ca };
+    })
+    .filter(a => a.ca > 0)
+    .sort((a, b) => b.ca - a.ca);
+}
+
+/**
+ * Calculate monthly SAV evolution
+ */
+export function calculateMonthlySAVEvolution(agencyData: AgencyData[]) {
+  const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+  const monthlyData = months.map((month) => ({ month, tauxSAV: 0 }));
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  // For each month, calculate average SAV rate across agencies
+  months.forEach((_, monthIndex) => {
+    const agencyRates: number[] = [];
+
+    agencyData.forEach((agency) => {
+      if (!agency.data?.projects || !agency.data?.interventions) return;
+
+      // Projects created/active in this month
+      const monthProjects = agency.data.projects.filter((p: any) => {
+        const createdAt = parseDate(p.createdAt || p.created_at);
+        return createdAt && createdAt.getFullYear() === currentYear && createdAt.getMonth() === monthIndex;
+      });
+
+      if (monthProjects.length === 0) return;
+
+      const projectIds = new Set(monthProjects.map((p: any) => p.id));
+      const savProjectIds = new Set();
+
+      agency.data.interventions.forEach((intervention: any) => {
+        if (intervention.type === 'sav' && projectIds.has(intervention.projectId)) {
+          savProjectIds.add(intervention.projectId);
+        }
+      });
+
+      const agencyRate = (savProjectIds.size / projectIds.size) * 100;
+      agencyRates.push(agencyRate);
+    });
+
+    monthlyData[monthIndex].tauxSAV = agencyRates.length > 0
+      ? agencyRates.reduce((sum, rate) => sum + rate, 0) / agencyRates.length
+      : 0;
+  });
+
+  return monthlyData;
 }
