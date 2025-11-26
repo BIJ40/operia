@@ -372,6 +372,38 @@ export function calculateCAByAgency(agencyData: AgencyData[]) {
 }
 
 /**
+ * Calculate number of projects within a date range
+ */
+export function calculateProjectsOnPeriod(
+  agencyData: AgencyData[], 
+  dateRange?: { start: Date; end: Date }
+): number {
+  let totalProjects = 0;
+
+  agencyData.forEach((agency) => {
+    if (!agency.data?.projects) return;
+
+    agency.data.projects.forEach((project: any) => {
+      const projectCreatedAt = parseDate(project.createdAt || project.created_at);
+      if (!projectCreatedAt) return;
+
+      // Si pas de dateRange, on compte tous les projets
+      if (!dateRange) {
+        totalProjects++;
+        return;
+      }
+
+      // Sinon on filtre sur la période
+      if (isWithinInterval(projectCreatedAt, { start: dateRange.start, end: dateRange.end })) {
+        totalProjects++;
+      }
+    });
+  });
+
+  return totalProjects;
+}
+
+/**
  * Calculate taux one-shot: % of projects resolved in a single intervention
  */
 export function calculateOneShotRate(agencyData: AgencyData[]): number {
