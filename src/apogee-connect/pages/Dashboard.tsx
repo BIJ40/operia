@@ -202,7 +202,7 @@ export default function Dashboard() {
         console.log("📊 Stats calculées pour la période:", filters.dateRange, stats);
         console.log("📈 Activité 7 jours:", activityData);
         console.log("📈 Variation vs 30j:", activityVariation);
-        console.log("📦 Nombre de projets total:", apiData.projects?.length || 0);
+        console.log("📦 Nombre de dossiers total:", apiData.projects?.length || 0);
       }
       
       return {
