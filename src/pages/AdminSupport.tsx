@@ -7,6 +7,11 @@ import { MessageSquare, CheckCircle2, Clock, AlertCircle, LayoutGrid, List, Moon
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { AppSidebarAdmin } from '@/components/AppSidebarAdmin';
+import { Header } from '@/components/Header';
+import { ImageModal } from '@/components/ImageModal';
+import { Chatbot } from '@/components/Chatbot';
 import { useAdminSupport } from '@/hooks/use-admin-support';
 import { TicketList } from '@/components/admin/support/TicketList';
 import { TicketDetails } from '@/components/admin/support/TicketDetails';
@@ -119,7 +124,15 @@ export default function AdminSupport() {
 
   return (
     <div className={darkMode ? 'dark' : ''}>
-      <div className="container mx-auto p-6 space-y-6 bg-background text-foreground min-h-screen">
+      <SidebarProvider>
+        <div className="min-h-screen w-full flex bg-background text-foreground overflow-x-auto">
+          <AppSidebarAdmin />
+          
+          <div className="flex-1 flex flex-col min-h-screen min-w-0">
+            <Header />
+
+            <main className="flex-1">
+              <div className="container mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Support Tickets</h1>
           <div className="flex items-center gap-2">
@@ -342,7 +355,14 @@ export default function AdminSupport() {
           </div>
         </div>
         )}
-      </div>
+              </div>
+            </main>
+          </div>
+        </div>
+
+        <ImageModal />
+        <Chatbot />
+      </SidebarProvider>
     </div>
   );
 }

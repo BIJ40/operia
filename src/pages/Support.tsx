@@ -13,6 +13,10 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { MessageSquare, Clock, CheckCircle, Send, LayoutGrid, List, Bell, BellOff, Moon, Sun } from 'lucide-react';
 import { KanbanView } from '@/components/admin/support/KanbanView';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { Header } from '@/components/Header';
+import { ImageModal } from '@/components/ImageModal';
+import { Chatbot } from '@/components/Chatbot';
 
 interface SupportTicket {
   id: string;
@@ -369,8 +373,13 @@ export default function Support() {
 
   return (
     <div className={darkMode ? 'dark' : ''}>
-      <div className="min-h-screen bg-background text-foreground">
-        <div className="container mx-auto px-4 py-8">
+      <SidebarProvider>
+        <div className="min-h-screen w-full flex bg-background text-foreground overflow-x-auto">
+          <div className="flex-1 flex flex-col min-h-screen min-w-0">
+            <Header />
+
+            <main className="flex-1">
+              <div className="container mx-auto px-4 py-8">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">Support Client</h1>
@@ -641,8 +650,14 @@ export default function Support() {
             </Card>
           </div>
         )}
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
+
+        <ImageModal />
+        <Chatbot />
+      </SidebarProvider>
     </div>
   );
 }

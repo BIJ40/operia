@@ -62,8 +62,8 @@ function AppContent() {
         <Route path="/documents" element={<Layout showHeader showSidebar={false}><Documents /></Layout>} />
         <Route path="/admin" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminIndex /></Layout>} />
         <Route path="/admin/documents" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminDocuments /></Layout>} />
-        <Route path="/admin/support" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminSupport /></Layout>} />
-        <Route path="/support" element={<Layout showHeader showSidebar={false}><Support /></Layout>} />
+        <Route path="/admin/support" element={<AdminSupport />} />
+        <Route path="/support" element={<Support />} />
         <Route path="/admin/backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminBackup /></Layout>} />
         <Route path="/admin/helpconfort-backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminHelpConfortBackup /></Layout>} />
         <Route path="/admin/users" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUsers /></Layout>} />
