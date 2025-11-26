@@ -79,6 +79,22 @@ export const useAdminTickets = () => {
       if (msgsError) throw msgsError;
       setMessages(msgs || []);
 
+      // Mark unread user messages as read
+      const unreadUserMessages = (msgs || []).filter(
+        (msg: any) => !msg.is_from_support && !msg.read_at
+      );
+
+      if (unreadUserMessages.length > 0) {
+        const { error: updateError } = await supabase
+          .from('support_messages')
+          .update({ read_at: new Date().toISOString() })
+          .in('id', unreadUserMessages.map((msg: any) => msg.id));
+
+        if (updateError) {
+          console.error('Error marking messages as read:', updateError);
+        }
+      }
+
       // Load attachments
       const { data: atts, error: attsError } = await supabase
         .from('support_attachments')
