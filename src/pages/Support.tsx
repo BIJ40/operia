@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { MessageSquare, Clock, CheckCircle, Send, LayoutGrid, List, Bell, BellOff } from 'lucide-react';
+import { MessageSquare, Clock, CheckCircle, Send, LayoutGrid, List, Bell, BellOff, Moon, Sun } from 'lucide-react';
 import { KanbanView } from '@/components/admin/support/KanbanView';
 
 interface SupportTicket {
@@ -50,6 +50,7 @@ export default function Support() {
   const [activeTab, setActiveTab] = useState('waiting');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
   // Rediriger si pas support
   useEffect(() => {
@@ -367,50 +368,60 @@ export default function Support() {
   if (!isSupport) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Support Client</h1>
-            <p className="text-muted-foreground">Gérez les demandes d'assistance des utilisateurs</p>
+    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Support Client</h1>
+              <p className="text-muted-foreground">Gérez les demandes d'assistance des utilisateurs</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDarkMode(!darkMode)}
+                className="gap-2"
+              >
+                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {darkMode ? 'Clair' : 'Sombre'}
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="gap-2"
+              >
+                <List className="w-4 h-4" />
+                Liste
+              </Button>
+              <Button
+                variant={viewMode === 'kanban' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('kanban')}
+                className="gap-2"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Kanban
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="gap-2"
-            >
-              <List className="w-4 h-4" />
-              Liste
-            </Button>
-            <Button
-              variant={viewMode === 'kanban' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('kanban')}
-              className="gap-2"
-            >
-              <LayoutGrid className="w-4 h-4" />
-              Kanban
-            </Button>
-          </div>
-        </div>
 
         {/* Préférences de notifications */}
         <Card className="mb-6 border-l-4 border-l-primary">
-          <CardContent className="flex items-center justify-between p-4">
+          <CardContent className="flex items-center justify-between py-3 px-4">
             <div className="flex items-center gap-3">
               {emailNotificationsEnabled ? (
-                <Bell className="w-5 h-5 text-primary" />
+                <Bell className="w-4 h-4 text-primary flex-shrink-0" />
               ) : (
-                <BellOff className="w-5 h-5 text-muted-foreground" />
+                <BellOff className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               )}
               <div>
-                <Label htmlFor="email-notifications" className="text-base font-semibold cursor-pointer">
+                <Label htmlFor="email-notifications" className="text-sm font-semibold cursor-pointer">
                   Notifications par email
                 </Label>
-                <p className="text-sm text-muted-foreground">
-                  Recevez un email lors de l'ouverture d'un nouveau ticket
+                <p className="text-xs text-muted-foreground">
+                  Nouveaux tickets support
                 </p>
               </div>
             </div>
@@ -628,6 +639,7 @@ export default function Support() {
             </Card>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
