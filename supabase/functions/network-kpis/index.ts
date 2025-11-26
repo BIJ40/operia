@@ -43,23 +43,37 @@ async function loadAgencyData(agencySlug: string) {
 
   try {
     const endpoints = ['users', 'clients', 'projects', 'interventions', 'invoices', 'quotes'];
-    const promises = endpoints.map(endpoint =>
-      fetch(`${apiUrl}${endpoint}`, {
+    const promises = endpoints.map(async endpoint => {
+      const response = await fetch(`${apiUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ API_KEY: apiKey }),
-      }).then(r => r.json())
-    );
+      });
+
+      // Check if response is OK and is JSON
+      const contentType = response.headers.get('content-type');
+      if (!response.ok || !contentType?.includes('application/json')) {
+        console.warn(`❌ ${agencySlug}/${endpoint}: Invalid response (${response.status})`);
+        return [];
+      }
+
+      try {
+        return await response.json();
+      } catch (e) {
+        console.warn(`❌ ${agencySlug}/${endpoint}: JSON parse error`);
+        return [];
+      }
+    });
 
     const [users, clients, projects, interventions, invoices, quotes] = await Promise.all(promises);
 
     return {
-      users: users || [],
-      clients: clients || [],
-      projects: projects || [],
-      interventions: interventions || [],
-      factures: invoices || [],
-      devis: quotes || [],
+      users: Array.isArray(users) ? users : [],
+      clients: Array.isArray(clients) ? clients : [],
+      projects: Array.isArray(projects) ? projects : [],
+      interventions: Array.isArray(interventions) ? interventions : [],
+      factures: Array.isArray(invoices) ? invoices : [],
+      devis: Array.isArray(quotes) ? quotes : [],
     };
   } catch (error) {
     console.error(`❌ ${agencySlug}: load error`, error);
@@ -115,10 +129,12 @@ function calculateNetworkKPIs(agencyData: any[], dateRange?: { from: Date; to: D
     return total + count;
   }, 0);
 
-  // Calculate average SAV rate
+  // Calculate average SAV rate (weighted average)
   const agencySAVRates: number[] = [];
   agencyData.forEach((agency) => {
     if (!agency.data?.projects || !agency.data?.interventions) return;
+    if (!Array.isArray(agency.data.projects) || !Array.isArray(agency.data.interventions)) return;
+    
     const projectIds = new Set(agency.data.projects.map((p: any) => p.id));
     const totalProjects = projectIds.size;
     if (totalProjects === 0) return;
@@ -132,10 +148,12 @@ function calculateNetworkKPIs(agencyData: any[], dateRange?: { from: Date; to: D
 
     const agencySAVRate = (savProjectIds.size / totalProjects) * 100;
     agencySAVRates.push(agencySAVRate);
+    console.log(`📊 ${agency.agencyLabel}: ${agencySAVRate.toFixed(2)}% SAV (${savProjectIds.size}/${totalProjects})`);
   });
   const savRate = agencySAVRates.length > 0
     ? agencySAVRates.reduce((sum, rate) => sum + rate, 0) / agencySAVRates.length
     : 0;
+  console.log(`📊 SAV Rate Average: ${savRate.toFixed(2)}% across ${agencySAVRates.length} agencies`);
 
   // Calculate average processing time
   let totalDays = 0;
