@@ -33,7 +33,7 @@ const ROLE_OPTIONS = [
   { value: 'dirigeant', label: 'Dirigeant(e)' },
   { value: 'assistante', label: 'Assistante' },
   { value: 'commercial', label: 'Commercial' },
-  { value: 'franchiseur', label: 'Franchiseur' },
+  { value: 'tete_de_reseau', label: 'Tête de réseau' },
   { value: 'externe', label: 'Externe' },
 ];
 
@@ -155,6 +155,23 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
         .eq('id', user.id);
 
       if (error) throw error;
+
+      // Règle automatique : si le poste devient "tete_de_reseau", attribuer le rôle système "franchiseur"
+      if (roleAgence === 'tete_de_reseau' && roleAgence !== user.role_agence) {
+        const { data: existingRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        // Attribuer "franchiseur" si l'utilisateur n'a pas déjà un rôle ou si son rôle est "user"
+        if (!existingRole || existingRole.role === 'user') {
+          await supabase.from('user_roles').upsert({
+            user_id: user.id,
+            role: 'franchiseur'
+          });
+        }
+      }
 
       toast({
         title: 'Utilisateur modifié',

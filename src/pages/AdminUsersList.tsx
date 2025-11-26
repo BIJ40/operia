@@ -32,7 +32,7 @@ const getRoleLabel = (roleValue: string | null): string => {
     'dirigeant': 'Dirigeant(e)',
     'assistante': 'Assistante',
     'commercial': 'Commercial',
-    'franchiseur': 'Franchiseur',
+    'tete_de_reseau': 'Tête de réseau',
     'externe': 'Externe',
   };
   return roles[roleValue] || roleValue;

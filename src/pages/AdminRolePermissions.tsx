@@ -17,7 +17,7 @@ const AVAILABLE_ROLES = [
   { value: 'dirigeant', label: 'Dirigeant(e)' },
   { value: 'assistante', label: 'Assistante' },
   { value: 'commercial', label: 'Commercial' },
-  { value: 'franchiseur', label: 'Franchiseur' },
+  { value: 'tete_de_reseau', label: 'Tête de réseau' },
   { value: 'externe', label: 'Externe' },
 ];
 
