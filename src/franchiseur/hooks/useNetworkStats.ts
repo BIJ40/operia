@@ -1,91 +1,53 @@
 import { useQuery } from '@tanstack/react-query';
 import { useFranchiseur } from '../contexts/FranchiseurContext';
 import { useNetworkFilters } from '../contexts/NetworkFiltersContext';
-import { NetworkDataService } from '../services/networkDataService';
-import { startOfYear, endOfYear } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  calculateTop5Agencies, 
-  calculateBestApporteur, 
-  calculateMonthlyRoyalties,
-  calculateTotalInterventions,
-  calculateSAVRate,
-  calculateAverageProcessingTime,
-  calculateMonthlyCAEvolution,
-  calculateCAByAgency,
-  calculateMonthlySAVEvolution
-} from '../utils/networkCalculations';
+
+interface NetworkStats {
+  totalCAYear: number;
+  totalCAPeriod: number;
+  totalProjects: number;
+  agencyCount: number;
+  totalInterventions: number;
+  savRate: number;
+  monthlyRoyalties: number;
+  averageProcessingTime: number;
+  top5Agencies: Array<{ agencyId: string; agencyLabel: string; ca: number; rank: number }>;
+  bestApporteur: { name: string; ca: number; nbDossiers: number } | null;
+  monthlyCAEvolution: Array<{ month: string; ca: number; nbFactures: number }>;
+  caByAgency: Array<{ agencyLabel: string; ca: number }>;
+  monthlySAVEvolution: Array<{ month: string; tauxSAV: number }>;
+}
 
 export function useNetworkStats() {
-  const { selectedAgencies, assignedAgencies, franchiseurRole } = useFranchiseur();
+  const { franchiseurRole } = useFranchiseur();
   const { dateRange } = useNetworkFilters();
 
-  return useQuery({
-    queryKey: ['network-stats', selectedAgencies, dateRange],
+  return useQuery<NetworkStats>({
+    queryKey: ['network-stats', dateRange],
     queryFn: async () => {
-      // Get all active agencies
-      const { data: allAgencies } = await supabase
-        .from('apogee_agencies')
-        .select('id, slug, label')
-        .eq('is_active', true);
+      console.log('🔄 Calling network-kpis edge function...');
 
-      if (!allAgencies) return null;
-
-      // Filter agencies based on selection
-      let agenciesToLoad = allAgencies;
-      
-      if (selectedAgencies.length > 0) {
-        agenciesToLoad = allAgencies.filter(a => selectedAgencies.includes(a.id));
-      } else if (franchiseurRole === 'animateur' && assignedAgencies.length > 0) {
-        agenciesToLoad = allAgencies.filter(a => assignedAgencies.includes(a.id));
-      }
-
-      // Load data for all agencies
-      const rawAgencyData = await NetworkDataService.loadMultiAgencyData(
-        agenciesToLoad.map(a => a.slug),
-        dateRange
-      );
-
-      // Enrich agency data with labels
-      const agencyData = rawAgencyData.map(agency => {
-        const agencyInfo = agenciesToLoad.find(a => a.slug === agency.agencyId);
-        return {
-          ...agency,
-          agencyLabel: agencyInfo?.label || agency.agencyId,
-        };
+      // Call the edge function that handles all data loading and aggregation
+      const { data, error } = await supabase.functions.invoke('network-kpis', {
+        body: {
+          dateRange: dateRange ? {
+            from: dateRange.from.toISOString(),
+            to: dateRange.to.toISOString(),
+          } : null,
+        },
       });
 
-      // Convert date range for calculations
-      const now = new Date();
-      const yearRange = {
-        start: startOfYear(now),
-        end: endOfYear(now),
-      };
+      if (error) {
+        console.error('❌ Error calling network-kpis:', error);
+        throw error;
+      }
 
-      const calculationDateRange = dateRange
-        ? { start: dateRange.from, end: dateRange.to }
-        : yearRange;
-
-      // Calculate aggregated statistics
-      const stats = {
-        totalCAYear: NetworkDataService.aggregateCA(agencyData, yearRange),
-        totalCAPeriod: NetworkDataService.aggregateCA(agencyData, calculationDateRange),
-        totalProjects: NetworkDataService.aggregateProjectCount(agencyData),
-        agencyCount: agenciesToLoad.length,
-        totalInterventions: calculateTotalInterventions(agencyData, calculationDateRange),
-        savRate: calculateSAVRate(agencyData),
-        monthlyRoyalties: calculateMonthlyRoyalties(agencyData),
-        averageProcessingTime: calculateAverageProcessingTime(agencyData),
-        top5Agencies: calculateTop5Agencies(agencyData),
-        bestApporteur: calculateBestApporteur(agencyData),
-        monthlyCAEvolution: calculateMonthlyCAEvolution(agencyData),
-        caByAgency: calculateCAByAgency(agencyData),
-        monthlySAVEvolution: calculateMonthlySAVEvolution(agencyData),
-        agencyData,
-      };
-
-      return stats;
+      console.log('✅ Received KPIs from edge function');
+      return data as NetworkStats;
     },
     enabled: !!franchiseurRole,
+    staleTime: 5 * 60 * 1000, // 5 minutes - match edge function cache
+    gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime in v5)
   });
 }
