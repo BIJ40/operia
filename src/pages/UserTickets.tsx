@@ -12,11 +12,13 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketSourceBadge } from '@/components/tickets/TicketSourceBadge';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
-import { Plus, Send, Download, ArrowLeft } from 'lucide-react';
+import { Plus, Send, Download, ArrowLeft, Home } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 export default function UserTickets() {
+  const navigate = useNavigate();
   const { user, isAdmin, isSupport, canManageTickets } = useAuth();
   const {
     tickets,
@@ -192,6 +194,15 @@ export default function UserTickets() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container mx-auto px-4 py-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/')}
+          className="mb-4"
+        >
+          <Home className="w-4 h-4 mr-2" />
+          Retour à l'accueil
+        </Button>
+        
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Support / Tickets</h1>
           <Button onClick={() => setShowCreateForm(!showCreateForm)}>
