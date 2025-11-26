@@ -160,7 +160,7 @@ serve(async (req) => {
                 <p><strong>⚠️ Important :</strong> Ce mot de passe est temporaire. Vous devrez le modifier lors de votre première connexion pour des raisons de sécurité.</p>
                 
                 <div style="text-align: center;">
-                  <a href="${Deno.env.get('SUPABASE_URL')?.replace('https://', 'https://').replace('.supabase.co', '.lovable.app')}" class="button">
+                  <a href="${Deno.env.get('APP_URL') || 'https://www.helpconfort.services'}" class="button">
                     Se connecter à HelpConfort Services
                   </a>
                 </div>
