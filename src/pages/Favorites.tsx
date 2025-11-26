@@ -209,21 +209,19 @@ export default function Favorites() {
 
   return (
     <div className="container max-w-4xl mx-auto p-8">
-      <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Retour
-          </Button>
-        </div>
+      <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Heart className="w-8 h-8 text-red-500 fill-red-500" />
           Mes Favoris
         </h1>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Retour
+        </Button>
       </div>
 
       {loading ? (
