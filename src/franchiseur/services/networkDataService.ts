@@ -13,6 +13,35 @@ const dataCache = new Map<string, CacheEntry>();
 
 export class NetworkDataService {
   /**
+   * Load data for a single agency
+   * Must be called SEQUENTIALLY to avoid BASE_URL race condition
+   */
+  static async loadAgencyData(agencySlug: string) {
+    try {
+      // Configure BASE_URL for this agency
+      const apiUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
+      setApiBaseUrl(apiUrl);
+      
+      // Clear DataService cache to force fresh load
+      DataService.clearCache();
+      
+      // Load data for this agency
+      const loadedData: any = await DataService.loadAllData(true);
+      return {
+        users: loadedData.users || [],
+        clients: loadedData.clients || [],
+        projects: loadedData.projects || [],
+        interventions: loadedData.interventions || [],
+        factures: loadedData.invoices || loadedData.factures || [],
+        devis: loadedData.quotes || loadedData.devis || [],
+      };
+    } catch (error) {
+      console.error(`❌ Error loading ${agencySlug}:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Load data for multiple agencies SEQUENTIALLY to avoid BASE_URL race condition
    */
   static async loadMultiAgencyData(agencySlugs: string[], dateRange?: DateRange) {
