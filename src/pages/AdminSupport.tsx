@@ -118,28 +118,47 @@ export default function AdminSupport() {
   };
 
   return (
-    <div className={`container mx-auto p-6 space-y-6 ${darkMode ? 'dark' : ''}`}>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Support Tickets</h1>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setDarkMode(!darkMode)}
-            className="gap-2"
-          >
-            {darkMode ? (
-              <>
-                <Sun className="w-4 h-4" />
-                Clair
-              </>
-            ) : (
-              <>
-                <Moon className="w-4 h-4" />
-                Sombre
-              </>
-            )}
-          </Button>
+    <div className={darkMode ? 'dark' : ''}>
+      <div className="container mx-auto p-6 space-y-6 bg-background text-foreground min-h-screen">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Support Tickets</h1>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDarkMode(!darkMode)}
+              className="gap-2"
+            >
+              {darkMode ? (
+                <>
+                  <Sun className="w-4 h-4" />
+                  Clair
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4" />
+                  Sombre
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleEmailNotifications}
+              className="gap-2"
+            >
+              {emailNotificationsEnabled ? (
+                <>
+                  <Bell className="w-4 h-4" />
+                  Emails ON
+                </>
+              ) : (
+                <>
+                  <BellOff className="w-4 h-4" />
+                  Emails OFF
+                </>
+              )}
+            </Button>
           <Button
             variant={viewMode === 'list' ? 'default' : 'outline'}
             size="sm"
@@ -161,31 +180,8 @@ export default function AdminSupport() {
         </div>
       </div>
 
-      {/* Email Notifications Card */}
-      <Card className="bg-card/50 border-l-4 border-l-primary py-3 px-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {emailNotificationsEnabled ? (
-              <Bell className="w-4 h-4 text-primary" />
-            ) : (
-              <BellOff className="w-4 h-4 text-muted-foreground" />
-            )}
-            <div>
-              <p className="text-sm font-medium">Notifications par email</p>
-              <p className="text-xs text-muted-foreground">
-                Recevoir un email lors de l'ouverture d'un ticket
-              </p>
-            </div>
-          </div>
-          <Switch
-            checked={emailNotificationsEnabled}
-            onCheckedChange={toggleEmailNotifications}
-          />
-        </div>
-      </Card>
-
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-3">
           <div className="flex items-center gap-2 mb-1">
             <MessageSquare className="w-3.5 h-3.5" />
@@ -345,7 +341,8 @@ export default function AdminSupport() {
             )}
           </div>
         </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
