@@ -11,7 +11,6 @@ interface Message {
 interface TicketCreatedData {
   id: string;
   user_id: string;
-  user_pseudo: string;
   status: string;
   priority: string;
   chatbot_conversation: any;
@@ -56,7 +55,6 @@ export const useSupportTicket = () => {
         .from('support_tickets')
         .insert({
           user_id: user.id,
-          user_pseudo: userName,
           subject: lastQuestion.substring(0, 100),
           status: 'waiting',
           priority: 'urgent',
