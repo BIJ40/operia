@@ -439,12 +439,39 @@ export const useAdminTickets = () => {
       const currentTicket = tickets.find(t => t.id === ticketId) || selectedTicket;
       if (!currentTicket) throw new Error('Ticket not found');
 
+      // Get current user info
+      const { data: currentUser } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, service_competencies')
+        .eq('id', user?.id)
+        .single();
+
+      // Get target user info
+      const { data: targetUser } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, service_competencies')
+        .eq('id', targetUserId)
+        .single();
+
+      let fromRole = undefined;
+      let toRole = undefined;
+
+      // For HelpConfort, determine roles
+      if (currentTicket.service === 'HelpConfort') {
+        fromRole = (currentUser?.service_competencies as any)?.helpconfort || 'animateur_reseau';
+        toRole = (targetUser?.service_competencies as any)?.helpconfort || 'directeur_reseau';
+      }
+
       const escalationEntry = {
         timestamp: new Date().toISOString(),
         from_level: currentTicket.support_level || 1,
         to_level: targetLevel,
-        from_user: user?.id,
-        to_user: targetUserId,
+        from_role: fromRole,
+        to_role: toRole,
+        escalated_by: user?.id,
+        escalated_by_name: currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'Inconnu',
+        escalated_to: targetUserId,
+        escalated_to_name: targetUser ? `${targetUser.first_name} ${targetUser.last_name}` : 'Non assigné',
         reason,
       };
 
@@ -455,7 +482,7 @@ export const useAdminTickets = () => {
       const { error } = await supabase
         .from('support_tickets')
         .update({
-          support_level: targetLevel,
+          support_level: targetLevel || currentTicket.support_level,
           assigned_to: targetUserId,
           escalation_history: [...currentHistory, escalationEntry],
           updated_at: new Date().toISOString(),
@@ -464,9 +491,31 @@ export const useAdminTickets = () => {
 
       if (error) throw error;
 
+      // Send email notification
+      try {
+        await supabase.functions.invoke('notify-escalation', {
+          body: {
+            ticket_id: ticketId,
+            ticket_subject: currentTicket.subject,
+            ticket_service: currentTicket.service || 'Non défini',
+            from_level: currentTicket.support_level || 1,
+            to_level: targetLevel,
+            from_role: fromRole,
+            to_role: toRole,
+            escalated_by_name: escalationEntry.escalated_by_name,
+            escalated_to_id: targetUserId,
+            escalated_to_name: escalationEntry.escalated_to_name,
+            reason,
+          },
+        });
+      } catch (emailError) {
+        console.error('Error sending escalation email:', emailError);
+        // Don't fail the escalation if email fails
+      }
+
       toast({
         title: 'Succès',
-        description: `Ticket escaladé au niveau ${targetLevel}`,
+        description: `Ticket escaladé`,
         duration: 3000,
       });
 

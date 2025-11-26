@@ -233,6 +233,14 @@ export default function AdminSupportTickets() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => navigate('/admin/escalation-history')}
+                className="gap-2"
+              >
+                📊 Historique escalades
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setDarkMode(!darkMode)}
                 className="gap-2"
               >

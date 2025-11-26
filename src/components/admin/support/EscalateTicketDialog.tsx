@@ -72,13 +72,56 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
       if (userLevel === 1 && currentLevel === 1) return true; // N1 -> N2
       if (userLevel === 2 && currentLevel <= 2) return true; // N2 -> N3
       if (userLevel === 3 && currentLevel <= 3) return true; // N3 -> N3
+      return false;
     }
     
-    // Pour les autres services, pas encore implémenté
+    // Pour HelpConfort : système Animateur -> Directeur -> DG
+    if (ticket.service === 'HelpConfort') {
+      return true; // Tous peuvent escalader
+    }
+    
     return false;
   };
 
-  // Déterminer les niveaux d'escalade disponibles
+  // Get user's HelpConfort role from service_competencies
+  const [userHelpConfortRole, setUserHelpConfortRole] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const loadUserHelpConfortRole = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('service_competencies')
+        .eq('id', user.id)
+        .single();
+      if (data?.service_competencies) {
+        const competencies = data.service_competencies as any;
+        if (competencies?.helpconfort) {
+          setUserHelpConfortRole(competencies.helpconfort);
+        }
+      }
+    };
+    loadUserHelpConfortRole();
+  }, [user?.id]);
+
+  // Déterminer les rôles d'escalade disponibles (pour HelpConfort)
+  const getAvailableHelpConfortRoles = () => {
+    const currentRole = ticket.escalation_history?.[ticket.escalation_history.length - 1]?.to_role || 'animateur_reseau';
+    
+    if (userHelpConfortRole === 'animateur_reseau' && currentRole === 'animateur_reseau') {
+      return [{ value: 'directeur_reseau', label: 'Directeur Réseau' }];
+    }
+    if (userHelpConfortRole === 'directeur_reseau' && currentRole === 'directeur_reseau') {
+      return [{ value: 'dg', label: 'Directeur Général' }];
+    }
+    if (userHelpConfortRole === 'dg' && currentRole === 'dg') {
+      return [{ value: 'dg', label: 'Directeur Général (Réassignation)' }];
+    }
+    
+    return [];
+  };
+
+  // Déterminer les niveaux d'escalade disponibles (pour Apogée)
   const getAvailableLevels = () => {
     const currentLevel = ticket.support_level || 1;
     
@@ -92,18 +135,20 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
   };
 
   const availableLevels = getAvailableLevels();
+  const availableHelpConfortRoles = getAvailableHelpConfortRoles();
   const isEscalateAvailable = canEscalate();
+  
+  const [targetRole, setTargetRole] = useState<string>('');
 
-  // Filtrer les utilisateurs du niveau cible qui ont la compétence du service
+  // Filtrer les utilisateurs selon le service
   const availableUsers = supportUsers.filter(u => {
     const currentLevel = ticket.support_level || 1;
     
-    // Vérifier le niveau
-    const correctLevel = u.support_level === targetLevel;
-    if (!correctLevel) return false;
-    
-    // Pour Apogée, vérifier la compétence
     if (ticket.service === 'Apogée') {
+      // Vérifier le niveau
+      const correctLevel = u.support_level === targetLevel;
+      if (!correctLevel) return false;
+      
       const hasApogeeCompetency = u.service_competencies?.apogee !== false;
       
       // N3 -> N3 : exclure l'utilisateur actuel
@@ -114,16 +159,35 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
       return hasApogeeCompetency;
     }
     
-    // Pour les autres services, à implémenter
+    if (ticket.service === 'HelpConfort') {
+      const userRole = u.service_competencies?.helpconfort;
+      
+      // Filtrer par rôle cible
+      if (targetRole && userRole !== targetRole) return false;
+      
+      // DG -> DG : exclure l'utilisateur actuel
+      if (targetRole === 'dg' && userRole === 'dg' && u.id === user?.id) return false;
+      
+      return userRole === targetRole;
+    }
+    
     return false;
   });
 
   const handleEscalate = () => {
     if (!selectedUserId || !reason.trim()) return;
-    onEscalate(targetLevel, selectedUserId, reason);
+    
+    // Pour HelpConfort, on passe le rôle au lieu du niveau
+    if (ticket.service === 'HelpConfort') {
+      onEscalate(0, selectedUserId, reason); // Le niveau sera ignoré pour HelpConfort
+    } else {
+      onEscalate(targetLevel, selectedUserId, reason);
+    }
+    
     setOpen(false);
     setReason('');
     setSelectedUserId('');
+    setTargetRole('');
   };
 
   if (!isEscalateAvailable) {
@@ -151,7 +215,7 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {availableLevels.length > 1 && (
+          {ticket.service === 'Apogée' && availableLevels.length > 1 && (
             <div className="space-y-2">
               <Label>Niveau cible</Label>
               <RadioGroup value={targetLevel.toString()} onValueChange={(v) => setTargetLevel(parseInt(v))}>
@@ -166,13 +230,32 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
               </RadioGroup>
             </div>
           )}
+          
+          {ticket.service === 'HelpConfort' && availableHelpConfortRoles.length > 0 && (
+            <div className="space-y-2">
+              <Label>Rôle cible</Label>
+              <RadioGroup value={targetRole} onValueChange={setTargetRole}>
+                {availableHelpConfortRoles.map(role => (
+                  <div key={role.value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={role.value} id={`role-${role.value}`} />
+                    <Label htmlFor={`role-${role.value}`} className="cursor-pointer">
+                      {role.label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Support assigné</Label>
             <RadioGroup value={selectedUserId} onValueChange={setSelectedUserId}>
               {availableUsers.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Aucun support compétent disponible pour {ticket.service} - Niveau {targetLevel}
+                  {ticket.service === 'HelpConfort' && !targetRole
+                    ? 'Veuillez d\'abord sélectionner un rôle cible'
+                    : `Aucun support compétent disponible pour ${ticket.service}`
+                  }
                 </p>
               ) : (
                 availableUsers.map(u => (
@@ -208,7 +291,10 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
             disabled={!selectedUserId || !reason.trim()}
             className="bg-gradient-to-r from-primary to-helpconfort-blue-dark"
           >
-            Escalader au niveau {targetLevel}
+            {ticket.service === 'HelpConfort' 
+              ? `Escalader vers ${availableHelpConfortRoles.find(r => r.value === targetRole)?.label || 'le rôle sélectionné'}`
+              : `Escalader au niveau ${targetLevel}`
+            }
           </Button>
         </DialogFooter>
       </DialogContent>

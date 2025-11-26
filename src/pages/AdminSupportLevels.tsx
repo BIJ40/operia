@@ -130,6 +130,31 @@ export default function AdminSupportLevels() {
     }
   };
 
+  const updateHelpConfortRole = async (userId: string, role: string, currentCompetencies: any) => {
+    try {
+      const newCompetencies = { ...currentCompetencies };
+      
+      if (role === 'none') {
+        delete newCompetencies.helpconfort;
+      } else {
+        newCompetencies.helpconfort = role;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ service_competencies: newCompetencies })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast.success(`Rôle HelpConfort mis à jour`);
+      await loadSupportUsers();
+    } catch (error) {
+      console.error('Error updating HelpConfort role:', error);
+      toast.error('Impossible de mettre à jour le rôle');
+    }
+  };
+
   const getUsersByLevel = (level: number) => {
     return supportUsers.filter(u => u.support_level === level);
   };
@@ -269,36 +294,49 @@ export default function AdminSupportLevels() {
                                 </SelectContent>
                               </Select>
                             </div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm text-muted-foreground">Compétences services :</span>
-                              <Button
-                                size="sm"
-                                variant={user.service_competencies?.apogee ? "default" : "outline"}
-                                onClick={() => toggleServiceCompetency(user.id, 'apogee', user.service_competencies || {})}
-                              >
-                                Apogée
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant={user.service_competencies?.helpconfort ? "default" : "outline"}
-                                onClick={() => toggleServiceCompetency(user.id, 'helpconfort', user.service_competencies || {})}
-                              >
-                                HelpConfort
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant={user.service_competencies?.apporteurs ? "default" : "outline"}
-                                onClick={() => toggleServiceCompetency(user.id, 'apporteurs', user.service_competencies || {})}
-                              >
-                                Apporteurs
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant={user.service_competencies?.conseil ? "default" : "outline"}
-                                onClick={() => toggleServiceCompetency(user.id, 'conseil', user.service_competencies || {})}
-                              >
-                                Conseil
-                              </Button>
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm text-muted-foreground">Compétences services :</span>
+                                <Button
+                                  size="sm"
+                                  variant={user.service_competencies?.apogee ? "default" : "outline"}
+                                  onClick={() => toggleServiceCompetency(user.id, 'apogee', user.service_competencies || {})}
+                                >
+                                  Apogée
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={user.service_competencies?.apporteurs ? "default" : "outline"}
+                                  onClick={() => toggleServiceCompetency(user.id, 'apporteurs', user.service_competencies || {})}
+                                >
+                                  Apporteurs
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={user.service_competencies?.conseil ? "default" : "outline"}
+                                  onClick={() => toggleServiceCompetency(user.id, 'conseil', user.service_competencies || {})}
+                                >
+                                  Conseil
+                                </Button>
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground">Rôle HelpConfort :</span>
+                                <Select
+                                  value={user.service_competencies?.helpconfort || 'none'}
+                                  onValueChange={(value) => updateHelpConfortRole(user.id, value, user.service_competencies || {})}
+                                >
+                                  <SelectTrigger className="w-[220px]">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="none">Aucun</SelectItem>
+                                    <SelectItem value="animateur_reseau">Animateur Réseau</SelectItem>
+                                    <SelectItem value="directeur_reseau">Directeur Réseau</SelectItem>
+                                    <SelectItem value="dg">Directeur Général</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
                           </div>
                         </div>
