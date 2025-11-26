@@ -212,6 +212,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .filter((key) => key.startsWith('sb-'))
         .forEach((key) => localStorage.removeItem(key));
 
+      // Nettoyer les préférences UI
+      localStorage.removeItem('editMode');
+      
       // Nettoyer les états en mémoire
       setIsAdmin(false);
       setIsSupport(false);

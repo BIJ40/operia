@@ -8,6 +8,7 @@ import { Header } from '@/components/Header';
 import { Chatbot } from '@/components/Chatbot';
 import { ImageModal } from '@/components/ImageModal';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
+import { useUserPresence } from '@/hooks/use-user-presence';
 
 interface LayoutProps {
   children: ReactNode;
@@ -18,6 +19,7 @@ interface LayoutProps {
 
 export function Layout({ children, showHeader = true, showSidebar = true, sidebarType = 'apogee' }: LayoutProps) {
   useStorageQuota(); // Surveillance automatique du localStorage
+  useUserPresence(); // Tracking de la présence utilisateur
   
   const SidebarComponent = sidebarType === 'apporteur' 
     ? AppSidebarApporteur 

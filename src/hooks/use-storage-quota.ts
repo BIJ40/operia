@@ -35,7 +35,7 @@ export const useStorageQuota = () => {
 
         console.log(`📊 LocalStorage: ${(totalSize / 1024).toFixed(2)} KB utilisés (${percentageUsed.toFixed(1)}%)`);
 
-        // Si on dépasse le seuil, créer une alerte
+        // Si on dépasse le seuil, créer une alerte et nettoyer si nécessaire
         if (percentageUsed >= QUOTA_WARNING_THRESHOLD) {
           console.warn(`⚠️ Quota localStorage élevé: ${percentageUsed.toFixed(1)}%`);
           
@@ -48,6 +48,31 @@ export const useStorageQuota = () => {
             percentage_used: parseFloat(percentageUsed.toFixed(2)),
             cache_keys: cacheKeys
           });
+
+          // Si on dépasse 90%, nettoyer automatiquement les plus gros caches
+          if (percentageUsed >= 90) {
+            console.warn('🧹 Nettoyage automatique du localStorage (quota > 90%)');
+            
+            // Trier les clés par taille décroissante
+            const sortedKeys = Object.entries(cacheKeys)
+              .sort(([, a], [, b]) => (b as number) - (a as number));
+            
+            // Supprimer les plus gros caches jusqu'à descendre sous 70%
+            let currentSize = totalSize;
+            for (const [key, size] of sortedKeys) {
+              if ((currentSize / quotaLimit) * 100 < 70) break;
+              
+              try {
+                localStorage.removeItem(key);
+                currentSize -= size as number;
+                console.log(`🗑️ Cache supprimé: ${key} (${((size as number) / 1024).toFixed(2)} KB)`);
+              } catch (e) {
+                console.error(`Erreur suppression ${key}:`, e);
+              }
+            }
+            
+            console.log(`✅ Nettoyage terminé. Nouveau quota: ${((currentSize / quotaLimit) * 100).toFixed(1)}%`);
+          }
         }
       } catch (error) {
         console.error('Erreur lors de la vérification du quota:', error);
