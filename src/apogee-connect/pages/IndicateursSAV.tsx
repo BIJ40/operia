@@ -16,7 +16,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { AlertTriangle, TrendingUp, Users, Layers, CalendarDays } from "lucide-react";
-import { formatEuros } from "@/apogee-connect/utils/formatters";
+import { formatEuros, formatUniverseLabel, formatApporteurType } from "@/apogee-connect/utils/formatters";
 import {
   Table,
   TableBody,
@@ -265,7 +265,7 @@ export default function IndicateursSAV() {
               SAV par type d'apporteur
             </h2>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={byTypeApporteur}>
+              <BarChart data={byTypeApporteur.map(item => ({ ...item, type: formatApporteurType(item.type) }))}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="type" />
                 <YAxis />
@@ -295,7 +295,7 @@ export default function IndicateursSAV() {
                 <TableBody>
                   {byUnivers.map((item) => (
                     <TableRow key={item.univers}>
-                      <TableCell className="font-medium">{item.univers}</TableCell>
+                      <TableCell className="font-medium">{formatUniverseLabel(item.univers)}</TableCell>
                       <TableCell className="text-right">{item.nbProjectsSAV}</TableCell>
                       <TableCell className="text-right">
                         <Badge variant={item.tauxSAV > 15 ? "destructive" : "secondary"}>
@@ -362,7 +362,7 @@ export default function IndicateursSAV() {
                     <TableRow key={item.apporteurId}>
                       <TableCell className="font-medium">{item.apporteurNom}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{item.type}</Badge>
+                        <Badge variant="outline">{formatApporteurType(item.type)}</Badge>
                       </TableCell>
                       <TableCell className="text-right">{item.nbProjectsSAV}</TableCell>
                       <TableCell className="text-right">

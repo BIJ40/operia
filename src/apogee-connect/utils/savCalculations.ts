@@ -110,6 +110,7 @@ const getLastTechnicianForProject = (
 
 /**
  * Extrait le CA d'un projet via ses factures
+ * IMPORTANT: Applique un coefficient de 35% car un SAV coûte en moyenne 35% de la facture
  */
 const getProjectCA = (
   projectId: number,
@@ -143,7 +144,8 @@ const getProjectCA = (
     const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
 
     if (!isNaN(montant)) {
-      ca += montant;
+      // Appliquer le coefficient 35% pour le coût SAV
+      ca += montant * 0.35;
     }
   });
 
@@ -289,6 +291,10 @@ export const calculateSAVByTechnicien = (
   const usersMap = new Map(users.map(u => [u.id, u]));
   const statsParTech = new Map<string, { nbInterventions: number; projects: Set<number>; heures: number; ca: number }>();
 
+  console.log("[SAV Technicien] Nombre de users:", users.length);
+  console.log("[SAV Technicien] Nombre de projets:", projects.length);
+  console.log("[SAV Technicien] Nombre d'interventions:", interventions.length);
+
   // Identifier tous les projets SAV dans la période
   const savProjects = new Set<number>();
 
@@ -308,10 +314,16 @@ export const calculateSAVByTechnicien = (
     }
   });
 
+  console.log("[SAV Technicien] Projets SAV identifiés:", savProjects.size);
+
   // Pour chaque projet SAV, attribuer au dernier technicien
   savProjects.forEach(projectId => {
     const lastTechId = getLastTechnicianForProject(projectId, interventions);
-    if (!lastTechId) return;
+    
+    if (!lastTechId) {
+      console.warn(`[SAV Technicien] Aucun technicien trouvé pour projet ${projectId}`);
+      return;
+    }
 
     if (!statsParTech.has(lastTechId)) {
       statsParTech.set(lastTechId, { nbInterventions: 0, projects: new Set(), heures: 0, ca: 0 });
@@ -341,11 +353,15 @@ export const calculateSAVByTechnicien = (
     });
   });
 
+  console.log("[SAV Technicien] Nombre de techniciens avec SAV:", statsParTech.size);
+
   const result: SAVByTechnicien[] = [];
 
   statsParTech.forEach((stats, techId) => {
     const user = usersMap.get(techId);
     const nom = user ? `${user.firstname || ""} ${user.name || ""}`.trim() : "Technicien inconnu";
+
+    console.log(`[SAV Technicien] ${nom}: ${stats.projects.size} projets, ${stats.nbInterventions} interventions`);
 
     result.push({
       technicienId: techId,
