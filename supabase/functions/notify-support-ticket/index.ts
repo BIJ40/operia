@@ -21,6 +21,7 @@ interface NotificationRequest {
   category?: string;
   source?: string;
   agencySlug?: string;
+  service?: string;
 }
 
 serve(async (req) => {
@@ -66,13 +67,31 @@ serve(async (req) => {
 
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    const { ticketId, userName, lastQuestion, appUrl, category, source, agencySlug }: NotificationRequest = await req.json();
+    const { ticketId, userName, lastQuestion, appUrl, category, source, agencySlug, service }: NotificationRequest = await req.json();
 
-    // Récupérer tous les utilisateurs avec le rôle "support", "franchiseur" ou "admin"
+    // Déterminer les rôles cibles en fonction du service
+    let targetRoles = ['admin']; // Admin toujours notifié
+
+    switch (service) {
+      case 'apogee':
+        targetRoles.push('support');
+        break;
+      case 'helpconfort':
+      case 'apporteurs':
+      case 'conseil':
+        targetRoles.push('franchiseur');
+        break;
+      default: // 'autre' ou non défini
+        targetRoles.push('support', 'franchiseur');
+    }
+
+    console.log(`Routing ticket to roles: ${targetRoles.join(', ')} based on service: ${service || 'autre'}`);
+
+    // Récupérer les utilisateurs avec les rôles cibles
     const { data: supportUserRoles, error: usersError } = await supabase
       .from('user_roles')
       .select('user_id')
-      .in('role', ['admin', 'support', 'franchiseur']);
+      .in('role', targetRoles);
 
     if (usersError) throw usersError;
 

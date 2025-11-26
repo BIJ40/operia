@@ -718,6 +718,7 @@ export type Database = {
           rating: number | null
           rating_comment: string | null
           resolved_at: string | null
+          service: string | null
           source: string
           status: string
           subject: string
@@ -739,6 +740,7 @@ export type Database = {
           rating?: number | null
           rating_comment?: string | null
           resolved_at?: string | null
+          service?: string | null
           source?: string
           status?: string
           subject?: string
@@ -760,6 +762,7 @@ export type Database = {
           rating?: number | null
           rating_comment?: string | null
           resolved_at?: string | null
+          service?: string | null
           source?: string
           status?: string
           subject?: string

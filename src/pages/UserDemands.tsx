@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TicketSourceBadge } from '@/components/tickets/TicketSourceBadge';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
+import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { Plus, Send, Download, ArrowLeft, MessageSquare, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -35,6 +36,7 @@ export default function UserDemands() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTicket, setNewTicket] = useState({
     subject: '',
+    service: 'autre',
     category: 'question',
     description: '',
   });
@@ -55,13 +57,14 @@ export default function UserDemands() {
 
     const ticket = await createTicket(
       trimmedSubject,
+      newTicket.service,
       newTicket.category,
       trimmedDescription,
       files
     );
 
     if (ticket) {
-      setNewTicket({ subject: '', category: 'question', description: '' });
+      setNewTicket({ subject: '', service: 'autre', category: 'question', description: '' });
       setFiles([]);
       setShowCreateForm(false);
     }
@@ -134,6 +137,7 @@ export default function UserDemands() {
                   </div>
                   <div className="flex items-center gap-2">
                     {getDemandTypeBadge(selectedTicket)}
+                    <ServiceBadge service={selectedTicket.service} />
                     <TicketSourceBadge source={selectedTicket.source} />
                     {selectedTicket.category && <TicketCategoryBadge category={selectedTicket.category} />}
                     {getStatusBadge(selectedTicket.status)}
@@ -237,6 +241,52 @@ export default function UserDemands() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div>
+                <Label>Service concerné *</Label>
+                <div className="grid grid-cols-5 gap-2 mt-2">
+                  <Button
+                    type="button"
+                    variant={newTicket.service === 'apogee' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, service: 'apogee' })}
+                    className={newTicket.service === 'apogee' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                  >
+                    🖥️ Apogée
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newTicket.service === 'helpconfort' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, service: 'helpconfort' })}
+                    className={newTicket.service === 'helpconfort' ? 'bg-orange-600 hover:bg-orange-700' : ''}
+                  >
+                    🏠 HelpConfort
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newTicket.service === 'apporteurs' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, service: 'apporteurs' })}
+                    className={newTicket.service === 'apporteurs' ? 'bg-green-600 hover:bg-green-700' : ''}
+                  >
+                    🤝 Apporteurs
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newTicket.service === 'conseil' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, service: 'conseil' })}
+                    className={newTicket.service === 'conseil' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                  >
+                    💡 Conseil
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newTicket.service === 'autre' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, service: 'autre' })}
+                    className={newTicket.service === 'autre' ? 'bg-gray-600 hover:bg-gray-700' : ''}
+                  >
+                    ❓ Autre
+                  </Button>
+                </div>
+              </div>
+
               <div>
                 <Label htmlFor="category">Catégorie</Label>
                 <Select
@@ -354,6 +404,7 @@ export default function UserDemands() {
                           </div>
                           <div className="flex items-center gap-2">
                             {getDemandTypeBadge(ticket)}
+                            <ServiceBadge service={ticket.service} />
                             {getStatusBadge(ticket.status)}
                           </div>
                         </div>
@@ -398,6 +449,7 @@ export default function UserDemands() {
                           </div>
                           <div className="flex items-center gap-2">
                             {getDemandTypeBadge(ticket)}
+                            <ServiceBadge service={ticket.service} />
                             <TicketCategoryBadge category={ticket.category} />
                             {getStatusBadge(ticket.status)}
                           </div>

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
+import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, Moon, Sun, Bell, BellOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -59,7 +60,8 @@ export default function AdminSupportTickets() {
            filters.source !== 'all' || 
            filters.category !== 'all' || 
            filters.agency !== 'all' ||
-           filters.priority !== 'all';
+           filters.priority !== 'all' ||
+           filters.service !== 'all';
   };
 
   const resetFilters = () => {
@@ -69,6 +71,7 @@ export default function AdminSupportTickets() {
       category: 'all',
       agency: 'all',
       priority: 'all',
+      service: 'all',
     });
   };
 
@@ -393,6 +396,20 @@ export default function AdminSupportTickets() {
                       <SelectItem value="urgent">🔴 Urgent</SelectItem>
                     </SelectContent>
                   </Select>
+
+                  <Select value={filters.service} onValueChange={(v) => setFilters({ ...filters, service: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Service" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      <SelectItem value="all">Tous les services</SelectItem>
+                      <SelectItem value="apogee">🖥️ Apogée</SelectItem>
+                      <SelectItem value="helpconfort">🏠 HelpConfort</SelectItem>
+                      <SelectItem value="apporteurs">🤝 Apporteurs</SelectItem>
+                      <SelectItem value="conseil">💡 Conseil</SelectItem>
+                      <SelectItem value="autre">❓ Autre</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardHeader>
               <CardContent>
@@ -426,6 +443,7 @@ export default function AdminSupportTickets() {
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                               {getDemandTypeBadge(ticket)}
+                              <ServiceBadge service={ticket.service} />
                               {ticket.category && <TicketCategoryBadge category={ticket.category} />}
                               {getPriorityBadge(ticket.priority)}
                             </div>
@@ -590,6 +608,12 @@ export default function AdminSupportTickets() {
                           <label className="text-sm font-medium">Type de demande</label>
                           <div className="mt-1">
                             {getDemandTypeBadge(selectedTicket)}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Service</label>
+                          <div className="mt-1">
+                            <ServiceBadge service={selectedTicket.service} />
                           </div>
                         </div>
                         {selectedTicket.category && (

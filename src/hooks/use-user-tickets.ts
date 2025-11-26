@@ -8,6 +8,7 @@ export interface Ticket {
   user_id: string;
   user_pseudo: string;
   subject: string;
+  service: string | null;
   category: string | null;
   status: string;
   priority: string;
@@ -133,6 +134,7 @@ export const useUserTickets = () => {
 
   const createTicket = async (
     subject: string,
+    service: string,
     category: string,
     description: string,
     files: File[],
@@ -160,6 +162,7 @@ export const useUserTickets = () => {
           user_id: user.id,
           user_pseudo: userName,
           subject,
+          service,
           category,
           status: 'waiting',
           priority,
@@ -214,6 +217,7 @@ export const useUserTickets = () => {
             userName,
             lastQuestion: subject,
             appUrl: window.location.origin,
+            service,
           },
         });
       } catch (notifyError) {
