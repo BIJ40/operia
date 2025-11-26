@@ -43,7 +43,7 @@ export default function FranchiseurHome() {
       </div>
 
       {/* Ligne 1: KPIs temporels (liés au sélecteur de période) */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <NetworkKpiTile
           title="CA Année en cours"
           value={stats?.totalCAYear || 0}
@@ -61,6 +61,12 @@ export default function FranchiseurHome() {
               ? `Du ${dateRange.from.toLocaleDateString('fr-FR')} au ${dateRange.to.toLocaleDateString('fr-FR')}`
               : undefined
           }
+        />
+
+        <NetworkKpiTile
+          title="Dossiers Période"
+          value={stats?.totalProjectsPeriod || 0}
+          icon={FileText}
         />
 
         <NetworkKpiTile
@@ -119,14 +125,8 @@ export default function FranchiseurHome() {
         />
       </div>
 
-      {/* Ligne 3: Dossiers totaux et SAV (intemporels) */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <NetworkKpiTile
-          title="Dossiers Totaux"
-          value={stats?.totalProjects || 0}
-          icon={FileText}
-        />
-
+      {/* Ligne 3: SAV (intemporel) */}
+      <div className="grid gap-4 md:grid-cols-1">
         <Card className="rounded-2xl border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">

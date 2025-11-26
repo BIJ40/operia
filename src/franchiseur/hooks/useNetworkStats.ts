@@ -16,12 +16,14 @@ import {
   calculateProjectToQuoteDelay,
   calculateVisitsPerProject,
   calculateMultiUniversRate,
+  calculateProjectsOnPeriod,
 } from '../utils/networkCalculations';
 
 interface NetworkStats {
   totalCAYear: number;
   totalCAPeriod: number;
   totalProjects: number;
+  totalProjectsPeriod: number;   // Projects filtered by selected period
   agencyCount: number;
   totalInterventions: number;
   savRateMoyenne: number;        // Simple average of agency SAV rates
@@ -96,6 +98,7 @@ export function useNetworkStats() {
         totalCAYear,
         totalCAPeriod,
         totalProjects: agencyData.reduce((sum, a) => sum + (a.data?.projects?.length || 0), 0),
+        totalProjectsPeriod: calculateProjectsOnPeriod(agencyData, calcRange),
         agencyCount: agencyData.length,
         totalInterventions: calculateTotalInterventions(agencyData, calcRange),
         savRateMoyenne: savStats.tauxMoyenAgences,
