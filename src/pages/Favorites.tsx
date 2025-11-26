@@ -186,9 +186,9 @@ export default function Favorites() {
   };
 
   const getScopeLabel = (scope: string) => {
-    if (scope === 'apporteurs-nationaux') return 'Apporteurs';
-    if (scope === 'helpconfort') return 'HelpConfort';
-    return 'Apogée';
+    if (scope === 'apporteurs-nationaux') return 'Apporteurs Nationaux';
+    if (scope === 'helpconfort') return 'Base documentaire';
+    return 'Guide Apogée';
   };
 
   if (!isAuthenticated) {
