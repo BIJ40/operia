@@ -182,10 +182,26 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
 
     setLoading(true);
     try {
+      const newEmail = email.trim();
+      const emailChanged = newEmail !== user.email;
+
+      // Si l'email a changé, synchroniser avec Supabase Auth
+      if (emailChanged && newEmail) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('Non authentifié');
+
+        const response = await supabase.functions.invoke('update-user-email', {
+          body: { userId: user.id, newEmail }
+        });
+
+        if (response.error) throw response.error;
+      }
+
+      // Mettre à jour les autres informations du profil
       const { error } = await supabase
         .from('profiles')
         .update({
-          email: email.trim() || null,
+          email: newEmail || null,
           first_name: firstName.trim() || null,
           last_name: lastName.trim() || null,
           agence: agence.trim() || null,
@@ -198,7 +214,9 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
 
       toast({
         title: 'Utilisateur modifié',
-        description: 'Les informations ont été mises à jour avec succès',
+        description: emailChanged 
+          ? 'Les informations et l\'email d\'authentification ont été mis à jour avec succès'
+          : 'Les informations ont été mises à jour avec succès',
       });
 
       onSuccess();
