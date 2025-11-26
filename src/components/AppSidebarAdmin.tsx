@@ -9,7 +9,8 @@ import {
   Home,
   MessageSquare,
   ChevronRight,
-  HardDrive
+  HardDrive,
+  Activity
 } from 'lucide-react';
 import {
   Sidebar,
@@ -48,6 +49,10 @@ const adminMenuItems = [
       {
         title: 'Liste utilisateurs',
         url: '/admin/users-list',
+      },
+      {
+        title: 'Activité utilisateurs',
+        url: '/admin/user-activity',
       },
       {
         title: 'Permissions',
