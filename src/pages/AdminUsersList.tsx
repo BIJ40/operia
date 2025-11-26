@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Edit, Users, Shield, Key } from 'lucide-react';
+import { Trash2, Edit, Users, Shield, Key, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -119,10 +119,28 @@ export default function AdminUsersList() {
   return (
     <div className="min-h-screen w-full p-8 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Users className="w-8 h-8" />
-          Liste des utilisateurs
-        </h1>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/admin')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Retour
+          </Button>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Users className="w-8 h-8" />
+            Liste des utilisateurs
+          </h1>
+        </div>
+        <Button
+          onClick={() => navigate('/admin/users')}
+          className="flex items-center gap-2"
+        >
+          <Users className="w-4 h-4" />
+          Créer un utilisateur
+        </Button>
       </div>
 
       <Card>
