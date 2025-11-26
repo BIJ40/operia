@@ -182,7 +182,7 @@ serve(async (req) => {
 
                             <!-- Bouton CTA -->
                             <div style="text-align: center; margin: 35px 0;">
-                              <a href="https://${Deno.env.get('SUPABASE_URL')?.replace('https://', '').replace('.supabase.co', '')}.lovable.app/" 
+                              <a href="${Deno.env.get('APP_URL') || 'https://www.helpconfort.services'}" 
                                  style="display: inline-block; background: linear-gradient(135deg, #f97316 0%, #fb923c 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 6px rgba(249, 115, 22, 0.3); transition: all 0.3s ease;">
                                 🔐 Se connecter maintenant
                               </a>
