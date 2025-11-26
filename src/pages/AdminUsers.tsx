@@ -40,7 +40,7 @@ const createUserSchema = z.object({
     .optional(),
   roleAgence: z.string()
     .optional()
-    .refine((val) => !val || ['dirigeant', 'assistant(e)', 'commercial', 'franchiseur', 'externe'].includes(val), {
+    .refine((val) => !val || ['dirigeant', 'assistante', 'commercial', 'franchiseur', 'externe'].includes(val), {
       message: "Veuillez sélectionner un rôle valide"
     }),
   password: z.string()
@@ -52,7 +52,7 @@ const getRoleLabel = (roleValue: string | null): string => {
   if (!roleValue) return '-';
   const roles: Record<string, string> = {
     'dirigeant': 'Dirigeant(e)',
-    'assistant(e)': 'Assistant(e)',
+    'assistante': 'Assistante',
     'commercial': 'Commercial',
     'franchiseur': 'Franchiseur',
     'externe': 'Externe',
@@ -273,9 +273,9 @@ export default function AdminUsers() {
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="assistant(e)" id="role-assistant" />
+                    <RadioGroupItem value="assistante" id="role-assistant" />
                     <Label htmlFor="role-assistant" className="cursor-pointer font-normal text-sm">
-                      Assistant(e)
+                      Assistante
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">

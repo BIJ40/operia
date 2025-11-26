@@ -121,9 +121,6 @@ export default function UserTickets() {
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <CardTitle className="text-2xl">{selectedTicket.subject}</CardTitle>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    Ticket créé par <span className="font-semibold">{selectedTicket.user_pseudo}</span>
-                  </div>
                   <div className="flex items-center gap-2">
                     <ServiceBadge service={selectedTicket.service} />
                     <TicketSourceBadge source={selectedTicket.source} />
@@ -470,9 +467,6 @@ export default function UserTickets() {
                             {ticket.unreadCount} nouveau{ticket.unreadCount > 1 ? 'x' : ''}
                           </Badge>
                         )}
-                      </div>
-                      <div className="text-sm text-muted-foreground mb-2">
-                        Par <span className="font-semibold">{ticket.user_pseudo}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <ServiceBadge service={ticket.service} />

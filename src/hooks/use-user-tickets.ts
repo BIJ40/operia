@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 export interface Ticket {
   id: string;
   user_id: string;
-  user_pseudo: string;
   subject: string;
   service: string | null;
   category: string | null;
@@ -164,7 +163,6 @@ export const useUserTickets = () => {
         .from('support_tickets')
         .insert({
           user_id: user.id,
-          user_pseudo: userName,
           subject,
           service,
           category,

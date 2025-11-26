@@ -220,7 +220,6 @@ Réponds maintenant.`;
           
           await supabase.from('chatbot_queries').insert({
             user_id: userId || null,
-            user_pseudo: userName || 'Anonyme',
             question: userQuestion,
             answer: fullAnswer,
             is_incomplete: isIncomplete,

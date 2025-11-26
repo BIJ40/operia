@@ -132,9 +132,6 @@ export default function UserDemands() {
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <CardTitle className="text-2xl">{selectedTicket.subject}</CardTitle>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    Demande créée par <span className="font-semibold">{selectedTicket.user_pseudo}</span>
-                  </div>
                   <div className="flex items-center gap-2">
                     {getDemandTypeBadge(selectedTicket)}
                     <ServiceBadge service={selectedTicket.service} />

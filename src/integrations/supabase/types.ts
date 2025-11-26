@@ -231,7 +231,6 @@ export type Database = {
           similarity_scores: Json | null
           status: string | null
           user_id: string | null
-          user_pseudo: string | null
         }
         Insert: {
           admin_notes?: string | null
@@ -246,7 +245,6 @@ export type Database = {
           similarity_scores?: Json | null
           status?: string | null
           user_id?: string | null
-          user_pseudo?: string | null
         }
         Update: {
           admin_notes?: string | null
@@ -261,7 +259,6 @@ export type Database = {
           similarity_scores?: Json | null
           status?: string | null
           user_id?: string | null
-          user_pseudo?: string | null
         }
         Relationships: []
       }
@@ -732,7 +729,6 @@ export type Database = {
           support_level: number | null
           updated_at: string
           user_id: string
-          user_pseudo: string
           viewed_by_support_at: string | null
         }
         Insert: {
@@ -757,7 +753,6 @@ export type Database = {
           support_level?: number | null
           updated_at?: string
           user_id: string
-          user_pseudo: string
           viewed_by_support_at?: string | null
         }
         Update: {
@@ -782,7 +777,6 @@ export type Database = {
           support_level?: number | null
           updated_at?: string
           user_id?: string
-          user_pseudo?: string
           viewed_by_support_at?: string | null
         }
         Relationships: []

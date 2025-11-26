@@ -21,7 +21,7 @@ export function TicketDetails({ ticket, onResolve, onReopen }: TicketDetailsProp
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
-            {ticket.user_pseudo}
+            Ticket #{ticket.id.slice(0, 8)}
           </CardTitle>
           {ticket.status === 'resolved' ? (
             <Button onClick={onReopen} variant="outline" size="sm">

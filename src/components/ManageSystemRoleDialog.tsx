@@ -17,6 +17,7 @@ interface ManageSystemRoleDialogProps {
 const SYSTEM_ROLES = [
   { value: 'user', label: 'Utilisateur (accès standard)' },
   { value: 'support', label: 'Support (accès console support)' },
+  { value: 'admin', label: 'Administrateur (accès complet)' },
 ];
 
 export function ManageSystemRoleDialog({ 
@@ -74,7 +75,7 @@ export function ManageSystemRoleDialog({
         .from('user_roles')
         .insert([{
           user_id: userId,
-          role: selectedRole as 'admin' | 'support' | 'user'
+          role: selectedRole as 'admin' | 'support' | 'user' | 'franchiseur'
         }]);
 
       if (error) throw error;

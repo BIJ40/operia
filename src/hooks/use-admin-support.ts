@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 
 export interface SupportTicket {
   id: string;
-  user_pseudo: string;
   user_id: string;
   assigned_to: string | null;
   status: string;

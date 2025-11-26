@@ -30,7 +30,7 @@ const getRoleLabel = (roleValue: string | null): string => {
   if (!roleValue) return '-';
   const roles: Record<string, string> = {
     'dirigeant': 'Dirigeant(e)',
-    'assistant(e)': 'Assistant(e)',
+    'assistante': 'Assistante',
     'commercial': 'Commercial',
     'franchiseur': 'Franchiseur',
     'externe': 'Externe',

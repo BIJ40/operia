@@ -26,7 +26,7 @@ interface ChatbotQuery {
   id: string;
   question: string;
   answer: string | null;
-  user_pseudo: string | null;
+  user_id: string | null;
   status: string | null;
   created_at: string | null;
   admin_notes: string | null;

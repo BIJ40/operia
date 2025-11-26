@@ -73,7 +73,7 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
       className="bg-white border-2 border-border rounded-xl p-4 mb-3 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
     >
       <div className="flex items-start justify-between mb-2">
-        <span className="font-semibold text-foreground">{ticket.user_pseudo}</span>
+        <span className="font-semibold text-foreground">Ticket #{ticket.id.slice(0, 8)}</span>
         {getPriorityIcon(ticket.priority)}
       </div>
       <div className="text-sm text-muted-foreground mb-2">
@@ -244,7 +244,7 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
       <DragOverlay>
         {activeTicket && (
           <div className="bg-white border-2 border-primary rounded-xl p-4 shadow-2xl opacity-90">
-            <div className="font-semibold text-foreground">{activeTicket.user_pseudo}</div>
+            <div className="font-semibold text-foreground">Ticket #{activeTicket.id.slice(0, 8)}</div>
             <div className="text-sm text-muted-foreground">
               {format(new Date(activeTicket.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
             </div>

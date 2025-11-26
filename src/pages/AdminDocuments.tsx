@@ -39,7 +39,7 @@ interface Document {
 
 interface ChatbotQuery {
   id: string;
-  user_pseudo: string;
+  user_id: string | null;
   question: string;
   answer: string | null;
   is_incomplete: boolean;

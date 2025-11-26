@@ -133,13 +133,13 @@ export function useSupportNotifications() {
           // Récupérer les infos du ticket
           const { data: ticket } = await supabase
             .from('support_tickets')
-            .select('subject, user_pseudo')
+            .select('subject, user_id')
             .eq('id', (payload.new as any).ticket_id)
             .single();
 
           toast.info('Nouvelle réponse utilisateur', {
             description: ticket 
-              ? `${ticket.user_pseudo} a répondu sur: ${ticket.subject}`
+              ? `Nouvelle réponse sur: ${ticket.subject}`
               : 'Un utilisateur a répondu à un ticket',
             duration: 5000,
           });
@@ -163,13 +163,13 @@ export function useSupportNotifications() {
           // Récupérer les infos du ticket
           const { data: ticket } = await supabase
             .from('support_tickets')
-            .select('subject, user_pseudo')
+            .select('subject, user_id')
             .eq('id', (payload.new as any).ticket_id)
             .single();
 
           toast.info('Nouveau document ajouté', {
             description: ticket 
-              ? `${ticket.user_pseudo} a ajouté un document à: ${ticket.subject}`
+              ? `Document ajouté à: ${ticket.subject}`
               : 'Un document a été ajouté à un ticket',
             duration: 5000,
           });
