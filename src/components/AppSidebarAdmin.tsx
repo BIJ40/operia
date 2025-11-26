@@ -7,7 +7,8 @@ import {
   Shield,
   ArrowLeft,
   Home,
-  MessageSquare
+  MessageSquare,
+  ChevronRight
 } from 'lucide-react';
 import {
   Sidebar,
@@ -18,11 +19,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useState } from 'react';
 
 const adminMenuItems = [
   {
@@ -31,19 +37,22 @@ const adminMenuItems = [
     icon: Home,
   },
   {
-    title: 'Créer utilisateur',
-    url: '/admin/users',
+    title: 'Utilisateurs',
     icon: Users,
-  },
-  {
-    title: 'Liste utilisateurs',
-    url: '/admin/users-list',
-    icon: Users,
-  },
-  {
-    title: 'Permissions',
-    url: '/admin/role-permissions',
-    icon: Shield,
+    subItems: [
+      {
+        title: 'Créer utilisateur',
+        url: '/admin/users',
+      },
+      {
+        title: 'Liste utilisateurs',
+        url: '/admin/users-list',
+      },
+      {
+        title: 'Permissions',
+        url: '/admin/role-permissions',
+      },
+    ]
   },
   {
     title: 'Agences',
@@ -71,6 +80,7 @@ export function AppSidebarAdmin() {
   const { open } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
+  const [usersOpen, setUsersOpen] = useState(true);
 
   const getParentPath = () => {
     const path = location.pathname;
@@ -90,6 +100,10 @@ export function AppSidebarAdmin() {
 
   const parentPath = getParentPath();
   const showReturnButton = parentPath !== null;
+
+  // Check if we're on a user-related page to keep the group open
+  const isUserPage = location.pathname.includes('/admin/users') || 
+                     location.pathname.includes('/admin/role-permissions');
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -115,21 +129,63 @@ export function AppSidebarAdmin() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {adminMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      end={item.url === '/admin'}
-                      className="hover:bg-accent"
-                      activeClassName="bg-accent text-accent-foreground font-medium"
+              {adminMenuItems.map((item) => {
+                if (item.subItems) {
+                  return (
+                    <Collapsible 
+                      key={item.title} 
+                      open={usersOpen || isUserPage} 
+                      onOpenChange={setUsersOpen}
+                      className="group/collapsible"
                     >
-                      <item.icon className="h-4 w-4" />
-                      {open && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton className="hover:bg-accent">
+                            <item.icon className="h-4 w-4" />
+                            {open && <span>{item.title}</span>}
+                            {open && (
+                              <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                            )}
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            {item.subItems.map((subItem) => (
+                              <SidebarMenuSubItem key={subItem.title}>
+                                <SidebarMenuSubButton asChild>
+                                  <NavLink
+                                    to={subItem.url}
+                                    className="hover:bg-accent"
+                                    activeClassName="bg-accent text-accent-foreground font-medium"
+                                  >
+                                    <span>{subItem.title}</span>
+                                  </NavLink>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            ))}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  );
+                }
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink 
+                        to={item.url!} 
+                        end={item.url === '/admin'}
+                        className="hover:bg-accent"
+                        activeClassName="bg-accent text-accent-foreground font-medium"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {open && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
