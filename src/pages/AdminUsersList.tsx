@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface UserProfile {
   id: string;
+  email: string | null;
   first_name: string | null;
   last_name: string | null;
   agence: string | null;
@@ -128,6 +129,7 @@ export default function AdminUsersList() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Email</TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Prénom</TableHead>
                 <TableHead>Agence</TableHead>
@@ -140,6 +142,7 @@ export default function AdminUsersList() {
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
+                  <TableCell>{user.email || '-'}</TableCell>
                   <TableCell>{user.last_name || '-'}</TableCell>
                   <TableCell>{user.first_name || '-'}</TableCell>
                   <TableCell>{user.agence || '-'}</TableCell>
@@ -197,7 +200,7 @@ export default function AdminUsersList() {
               ))}
               {users.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     Aucun utilisateur enregistré
                   </TableCell>
                 </TableRow>

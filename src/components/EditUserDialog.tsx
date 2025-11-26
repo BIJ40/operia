@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 interface UserProfile {
   id: string;
+  email: string | null;
   first_name: string | null;
   last_name: string | null;
   agence: string | null;
@@ -35,6 +36,7 @@ const ROLE_OPTIONS = [
 export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUserDialogProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [agence, setAgence] = useState('');
@@ -46,6 +48,7 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
 
   useEffect(() => {
     if (user) {
+      setEmail(user.email || '');
       setFirstName(user.first_name || '');
       setLastName(user.last_name || '');
       setAgence(user.agence || '');
@@ -182,6 +185,7 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
       const { error } = await supabase
         .from('profiles')
         .update({
+          email: email.trim() || null,
           first_name: firstName.trim() || null,
           last_name: lastName.trim() || null,
           agence: agence.trim() || null,
@@ -221,6 +225,18 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="edit-email">Email</Label>
+            <Input
+              id="edit-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="utilisateur@exemple.com"
+              required
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="edit-firstName">Prénom</Label>
