@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { CacheBackupNotification } from "./components/CacheBackupNotification";
 import Landing from "./pages/Landing";
 import ApogeeGuide from "./pages/ApogeeGuide";
 import ApporteurGuide from "./pages/ApporteurGuide";
@@ -35,6 +36,7 @@ import IndicateursSAV from "./apogee-connect/pages/IndicateursSAV";
 import AdminAgencies from "./pages/AdminAgencies";
 import AdminFranchiseurRoles from "./pages/AdminFranchiseurRoles";
 import AdminStorageQuota from "./pages/AdminStorageQuota";
+import AdminCacheBackup from "./pages/AdminCacheBackup";
 import AdminUserActivity from "./pages/AdminUserActivity";
 import UserTickets from "./pages/UserTickets";
 import UserDemands from "./pages/UserDemands";
@@ -92,6 +94,7 @@ function AppContent() {
         <Route path="/admin/agencies" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminAgencies /></Layout>} />
         <Route path="/admin/franchiseur-roles" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminFranchiseurRoles /></Layout>} />
         <Route path="/admin/storage-quota" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminStorageQuota /></Layout>} />
+        <Route path="/admin/cache-backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminCacheBackup /></Layout>} />
         <Route path="/admin/user-activity" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUserActivity /></Layout>} />
         <Route path="/mes-indicateurs" element={<Layout showHeader showSidebar={false}><IndicateursLayout /></Layout>}>
           <Route index element={<IndicateursAccueil />} />
@@ -139,6 +142,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <CacheBackupNotification />
           <EditorProvider>
             <ApporteurEditorProvider>
               <AppContent />

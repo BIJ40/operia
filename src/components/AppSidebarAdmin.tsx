@@ -87,6 +87,11 @@ const adminMenuItems = [
     icon: HardDrive,
   },
   {
+    title: 'Backups Cache',
+    url: '/admin/cache-backup',
+    icon: Database,
+  },
+  {
     title: 'Sauvegardes',
     url: '/admin/backup',
     icon: Database,

@@ -1,7 +1,9 @@
 /**
  * Cache Manager - Gestionnaire intelligent de cache localStorage
- * Évite les erreurs QuotaExceededError avec nettoyage automatique et compression
+ * Évite les erreurs QuotaExceededError avec nettoyage automatique et backup automatique
  */
+
+import { CacheBackup } from './cache-backup';
 
 interface CacheEntry<T = any> {
   data: T;
@@ -195,6 +197,12 @@ export class CacheManager {
 
       // Tenter de sauvegarder
       localStorage.setItem(key, entryString);
+      
+      // Sauvegarder automatiquement dans IndexedDB pour backup
+      CacheBackup.backup(key, data).catch(err => {
+        console.warn(`⚠️ Backup automatique échoué pour ${key}:`, err);
+      });
+      
       console.log(`💾 Cache sauvegardé: ${key} (${(entrySize / 1024).toFixed(2)} KB, TTL: ${ttl / 1000}s)`);
       return true;
     } catch (e) {
@@ -219,12 +227,16 @@ export class CacheManager {
   }
 
   /**
-   * Récupère une entrée du cache
+   * Récupère une entrée du cache avec restauration automatique depuis backup en cas d'erreur
    */
   static getItem<T>(key: string): T | null {
     try {
       const value = localStorage.getItem(key);
-      if (!value) return null;
+      if (!value) {
+        // Tenter de restaurer depuis le backup
+        console.log(`⚠️ Cache absent: ${key}, tentative de restauration depuis backup...`);
+        return this.restoreFromBackup<T>(key);
+      }
 
       const entry: CacheEntry<T> & { ttl: number } = JSON.parse(value);
       const age = Date.now() - entry.timestamp;
@@ -233,19 +245,53 @@ export class CacheManager {
       if (entry.ttl && age > entry.ttl) {
         localStorage.removeItem(key);
         console.log(`⏰ Cache expiré: ${key} (${Math.round(age / 1000)}s)`);
-        return null;
+        
+        // Tenter de restaurer depuis le backup si disponible
+        return this.restoreFromBackup<T>(key);
       }
 
       console.log(`⚡ Cache hit: ${key} (${Math.round(age / 1000)}s)`);
       return entry.data;
     } catch (e) {
-      console.warn(`Erreur lecture cache ${key}:`, e);
-      // Supprimer l'entrée corrompue
+      console.warn(`❌ Erreur lecture cache ${key}:`, e);
+      
+      // Tenter de restaurer depuis le backup
+      console.log(`♻️ Tentative de restauration depuis backup pour ${key}...`);
+      const restored = this.restoreFromBackup<T>(key);
+      
+      if (restored) {
+        // Sauvegarder à nouveau dans localStorage
+        this.setItem(key, restored);
+        console.log(`✅ Cache restauré et resauvegardé: ${key}`);
+      }
+      
+      // Supprimer l'entrée corrompue de localStorage
       try {
         localStorage.removeItem(key);
       } catch {}
-      return null;
+      
+      return restored;
     }
+  }
+
+  /**
+   * Restaure une entrée depuis le système de backup IndexedDB (synchrone via cache local)
+   */
+  private static restoreFromBackup<T>(key: string): T | null {
+    // Tentative de restauration asynchrone, mais retourne null immédiatement
+    // pour ne pas bloquer l'exécution
+    CacheBackup.restore(key).then(value => {
+      if (value) {
+        console.log(`✅ Backup trouvé pour ${key}, resauvegarde dans localStorage...`);
+        this.setItem(key, value);
+      } else {
+        console.log(`⚠️ Aucun backup trouvé pour ${key}`);
+      }
+    }).catch(err => {
+      console.warn(`❌ Erreur restauration backup ${key}:`, err);
+    });
+    
+    return null;
   }
 
   /**
@@ -286,19 +332,22 @@ export class CacheManager {
   }
 
   /**
-   * Affiche un rapport sur l'état du cache
+   * Affiche un rapport sur l'état du cache et des backups
    */
-  static printReport(): void {
+  static async printReport(): Promise<void> {
     const metrics = this.getCacheMetrics();
     const usagePercent = (metrics.totalSize / this.MAX_CACHE_SIZE) * 100;
     
-    console.log('📊 Rapport Cache:');
+    console.log('📊 Rapport Cache localStorage:');
     console.log(`   Taille totale: ${(metrics.totalSize / 1024).toFixed(2)} KB / ${(this.MAX_CACHE_SIZE / 1024).toFixed(2)} KB (${usagePercent.toFixed(1)}%)`);
     console.log(`   Nombre d'entrées: ${metrics.entryCount}`);
     if (metrics.oldestEntry) {
       const age = Date.now() - metrics.oldestEntry;
       console.log(`   Entrée la plus ancienne: ${Math.round(age / 1000)}s`);
     }
+    
+    console.log('');
+    await CacheBackup.printReport();
   }
 }
 
