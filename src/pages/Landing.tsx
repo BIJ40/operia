@@ -225,7 +225,7 @@ const SortableCard = ({
 };
 
 export default function Landing() {
-  const { isAdmin, isAuthenticated, roleAgence } = useAuth();
+  const { isAdmin, isAuthenticated, roleAgence, hasAccessToScope, agence } = useAuth();
   const { toast } = useToast();
   const { blocks } = useEditor();
   const isBlockLocked = useIsBlockLocked();
@@ -603,14 +603,16 @@ export default function Landing() {
                   const Icon = IconComponent(card.icon || 'BookOpen');
                   
                   // Déterminer le scope basé sur le lien de la carte
-                  let scope: 'apogee' | 'apporteurs' | 'helpconfort' | null = null;
+                  let scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs' | null = null;
                   if (card.link.includes('/apogee')) scope = 'apogee';
                   else if (card.link.includes('/apporteur')) scope = 'apporteurs';
                   else if (card.link.includes('/helpconfort')) scope = 'helpconfort';
+                  else if (card.link.includes('/mes-indicateurs')) scope = 'mes_indicateurs';
                   
-                  // Vérifier l'accès basé sur le scope
-                  const { hasAccessToScope } = useAuth();
-                  const isLocked = scope ? !hasAccessToScope(scope) : false;
+                  // Pour "mes_indicateurs", vérifier aussi si l'utilisateur a une agence définie
+                  const isLocked = scope === 'mes_indicateurs' 
+                    ? (!hasAccessToScope(scope) || !agence)
+                    : (scope ? !hasAccessToScope(scope) : false);
                   
                   if (isLocked) {
                     return (
