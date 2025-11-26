@@ -57,7 +57,7 @@ export function AgencySelector() {
 
   const getDisplayText = () => {
     if (selectedAgencies.length === 0) {
-      return "Toutes les agences";
+      return `Toutes les agences (${availableAgencies.length})`;
     }
     if (selectedAgencies.length === 1) {
       const agency = allAgencies.find(a => a.id === selectedAgencies[0]);
@@ -92,7 +92,7 @@ export function AgencySelector() {
                     selectedAgencies.length === 0 ? "opacity-100" : "opacity-0"
                   )}
                 />
-                Toutes les agences
+                Toutes les agences ({availableAgencies.length})
               </CommandItem>
               {availableAgencies.map((agency) => (
                 <CommandItem
