@@ -20,6 +20,8 @@ export interface Ticket {
   rating: number | null;
   rating_comment: string | null;
   unreadCount?: number;
+  is_live_chat: boolean;
+  escalated_from_chat: boolean;
 }
 
 export interface Attachment {

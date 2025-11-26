@@ -710,8 +710,10 @@ export type Database = {
           category: string | null
           chatbot_conversation: Json | null
           created_at: string
+          escalated_from_chat: boolean | null
           has_attachments: boolean
           id: string
+          is_live_chat: boolean | null
           priority: string
           rating: number | null
           rating_comment: string | null
@@ -729,8 +731,10 @@ export type Database = {
           category?: string | null
           chatbot_conversation?: Json | null
           created_at?: string
+          escalated_from_chat?: boolean | null
           has_attachments?: boolean
           id?: string
+          is_live_chat?: boolean | null
           priority?: string
           rating?: number | null
           rating_comment?: string | null
@@ -748,8 +752,10 @@ export type Database = {
           category?: string | null
           chatbot_conversation?: Json | null
           created_at?: string
+          escalated_from_chat?: boolean | null
           has_attachments?: boolean
           id?: string
+          is_live_chat?: boolean | null
           priority?: string
           rating?: number | null
           rating_comment?: string | null

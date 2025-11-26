@@ -357,7 +357,7 @@ export const useChatbot = () => {
         ? `${profile.first_name} ${profile.last_name || ''}`.trim()
         : 'Utilisateur';
 
-      // Create ticket with source='chat'
+      // Create ticket with source='chat' and escalated_from_chat=true
       const { data: ticket, error: ticketError } = await supabase
         .from('support_tickets')
         .insert({
@@ -370,6 +370,8 @@ export const useChatbot = () => {
           source: 'chat',
           agency_slug: profile?.agence || null,
           has_attachments: false,
+          is_live_chat: false,
+          escalated_from_chat: true,
           chatbot_conversation: JSON.stringify(messages),
         } as any)
         .select()
@@ -453,6 +455,7 @@ export const useChatbot = () => {
     setTicketRating,
     setTicketComment,
     setShowChoiceMode,
+    setShowTicketCreation,
     setButtonPosition,
     setIsDragging,
     setDragOffset,
