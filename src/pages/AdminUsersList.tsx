@@ -20,6 +20,7 @@ interface UserProfile {
   last_name: string | null;
   agence: string | null;
   role_agence: string | null;
+  service_competencies: any;
   created_at: string;
   system_role?: string;
   must_change_password: boolean | null;
