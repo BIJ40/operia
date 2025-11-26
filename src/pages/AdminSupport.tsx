@@ -1,13 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MessageSquare, CheckCircle2, Clock, AlertCircle, LayoutGrid, List } from 'lucide-react';
 import { useAdminSupport } from '@/hooks/use-admin-support';
 import { TicketList } from '@/components/admin/support/TicketList';
 import { TicketDetails } from '@/components/admin/support/TicketDetails';
 import { SupportChat } from '@/components/admin/support/SupportChat';
 import { SatisfactionChart } from '@/components/SatisfactionChart';
+import { KanbanView } from '@/components/admin/support/KanbanView';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { TrendingUp } from 'lucide-react';
 
@@ -32,6 +34,7 @@ export default function AdminSupport() {
   } = useAdminSupport();
 
   const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
 
   useEffect(() => {
     if (!isAdmin && !user) {
@@ -69,7 +72,29 @@ export default function AdminSupport() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Support Tickets</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Support Tickets</h1>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+            className="gap-2"
+          >
+            <List className="w-4 h-4" />
+            Liste
+          </Button>
+          <Button
+            variant={viewMode === 'kanban' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('kanban')}
+            className="gap-2"
+          >
+            <LayoutGrid className="w-4 h-4" />
+            Kanban
+          </Button>
+        </div>
+      </div>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -132,54 +157,16 @@ export default function AdminSupport() {
         </AccordionItem>
       </Accordion>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Ticket List */}
-        <div className="lg:col-span-1">
-          <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
-            <TabsList className="grid w-full grid-cols-3 mb-4">
-              <TabsTrigger value="waiting" className="gap-1 text-xs">
-                <AlertCircle className="w-3.5 h-3.5" />
-                Attente ({waitingCount})
-              </TabsTrigger>
-              <TabsTrigger value="in_progress" className="gap-1 text-xs">
-                <Clock className="w-3.5 h-3.5" />
-                En cours ({inProgressCount})
-              </TabsTrigger>
-              <TabsTrigger value="resolved" className="gap-1 text-xs">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Résolus
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value={filter} className="space-y-2 mt-0">
-              {filteredTickets.length === 0 ? (
-                <Card>
-                  <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                    Aucun ticket
-                  </CardContent>
-                </Card>
-              ) : (
-                <TicketList
-                  tickets={filteredTickets}
-                  selectedTicket={selectedTicket}
-                  onSelectTicket={selectTicket}
-                />
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* Chat Interface */}
-        <div className="lg:col-span-2">
-          {!selectedTicket ? (
-            <Card className="h-[600px] flex items-center justify-center">
-              <CardContent className="text-center text-muted-foreground">
-                <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                <p>Sélectionnez un ticket pour voir les détails</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
+      {viewMode === 'kanban' ? (
+        <div className="space-y-4">
+          <KanbanView
+            tickets={tickets}
+            onSelectTicket={selectTicket}
+            onTicketsUpdate={loadTickets}
+          />
+          
+          {selectedTicket && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <TicketDetails
                 ticket={selectedTicket}
                 onResolve={resolveTicket}
@@ -200,7 +187,77 @@ export default function AdminSupport() {
             </div>
           )}
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Ticket List */}
+          <div className="lg:col-span-1">
+            <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
+              <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="waiting" className="gap-1 text-xs">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  Attente ({waitingCount})
+                </TabsTrigger>
+                <TabsTrigger value="in_progress" className="gap-1 text-xs">
+                  <Clock className="w-3.5 h-3.5" />
+                  En cours ({inProgressCount})
+                </TabsTrigger>
+                <TabsTrigger value="resolved" className="gap-1 text-xs">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Résolus
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value={filter} className="space-y-2 mt-0">
+                {filteredTickets.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                      Aucun ticket
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <TicketList
+                    tickets={filteredTickets}
+                    selectedTicket={selectedTicket}
+                    onSelectTicket={selectTicket}
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Chat Interface */}
+          <div className="lg:col-span-2">
+            {!selectedTicket ? (
+              <Card className="h-[600px] flex items-center justify-center">
+                <CardContent className="text-center text-muted-foreground">
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                  <p>Sélectionnez un ticket pour voir les détails</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                <TicketDetails
+                  ticket={selectedTicket}
+                  onResolve={resolveTicket}
+                  onReopen={reopenTicket}
+                />
+                {selectedTicket.status !== 'resolved' && (
+                  <Card>
+                    <SupportChat
+                      messages={messages}
+                      newMessage={newMessage}
+                      isUserTyping={isUserTyping}
+                      messagesEndRef={messagesEndRef}
+                      onMessageChange={setNewMessage}
+                      onSendMessage={sendMessage}
+                    />
+                  </Card>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

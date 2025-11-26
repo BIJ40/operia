@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Clock, CheckCircle, Send } from 'lucide-react';
+import { MessageSquare, Clock, CheckCircle, Send, LayoutGrid, List } from 'lucide-react';
+import { KanbanView } from '@/components/admin/support/KanbanView';
 
 interface SupportTicket {
   id: string;
@@ -42,6 +43,7 @@ export default function Support() {
   const [messageInput, setMessageInput] = useState('');
   const [isUserTyping, setIsUserTyping] = useState(false);
   const [activeTab, setActiveTab] = useState('waiting');
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
 
   // Rediriger si pas support
   useEffect(() => {
@@ -124,7 +126,6 @@ export default function Support() {
     typingChannel
       .on('presence', { event: 'sync' }, () => {
         const state = typingChannel.presenceState();
-        // Vérifier si l'utilisateur est en train de taper
         const userTyping = Object.values(state).some((presences: any) => 
           presences.some((p: any) => !p.is_support && p.typing)
         );
@@ -311,12 +312,41 @@ export default function Support() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-6">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
             <h1 className="text-3xl font-bold mb-2">Support Client</h1>
             <p className="text-muted-foreground">Gérez les demandes d'assistance des utilisateurs</p>
           </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="gap-2"
+            >
+              <List className="w-4 h-4" />
+              Liste
+            </Button>
+            <Button
+              variant={viewMode === 'kanban' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('kanban')}
+              className="gap-2"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Kanban
+            </Button>
+          </div>
+        </div>
 
+        {viewMode === 'kanban' ? (
+          <KanbanView
+            tickets={tickets}
+            onSelectTicket={selectTicket}
+            onTicketsUpdate={loadTickets}
+          />
+        ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Liste des tickets */}
             <Card className="lg:col-span-1">
@@ -351,7 +381,7 @@ export default function Support() {
                           </p>
                         ) : (
                           filteredTickets.map(ticket => (
-                            <Card
+                             <Card
                               key={ticket.id}
                               className={`cursor-pointer transition-colors hover:bg-accent ${
                                 selectedTicket?.id === ticket.id ? 'border-primary bg-accent' : ''
@@ -515,7 +545,8 @@ export default function Support() {
               </CardContent>
             </Card>
           </div>
-        </div>
+        )}
       </div>
+    </div>
   );
 }
