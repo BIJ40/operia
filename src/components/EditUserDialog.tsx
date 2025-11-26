@@ -31,6 +31,8 @@ const ROLE_OPTIONS = [
   { value: 'dirigeant', label: 'Dirigeant(e)' },
   { value: 'assistant(e)', label: 'Assistant(e)' },
   { value: 'commercial', label: 'Commercial' },
+  { value: 'franchiseur', label: 'Franchiseur' },
+  { value: 'externe', label: 'Externe' },
 ];
 
 export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUserDialogProps) {
