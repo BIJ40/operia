@@ -19,6 +19,7 @@ export interface Ticket {
   resolved_at: string | null;
   rating: number | null;
   rating_comment: string | null;
+  unreadCount?: number;
 }
 
 export interface Attachment {
@@ -53,7 +54,25 @@ export const useUserTickets = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTickets((data || []) as Ticket[]);
+
+      // Load unread counts for each ticket
+      const ticketsWithUnread = await Promise.all(
+        (data || []).map(async (ticket) => {
+          const { count } = await supabase
+            .from('support_messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('ticket_id', ticket.id)
+            .eq('is_from_support', true)
+            .is('read_at', null);
+
+          return {
+            ...ticket,
+            unreadCount: count || 0,
+          } as Ticket;
+        })
+      );
+
+      setTickets(ticketsWithUnread);
     } catch (error) {
       console.error('Error loading tickets:', error);
       toast({
@@ -79,6 +98,14 @@ export const useUserTickets = () => {
       if (msgsError) throw msgsError;
       setMessages(msgs || []);
 
+      // Mark support messages as read
+      await supabase
+        .from('support_messages')
+        .update({ read_at: new Date().toISOString() })
+        .eq('ticket_id', ticketId)
+        .eq('is_from_support', true)
+        .is('read_at', null);
+
       // Load attachments
       const { data: atts, error: attsError } = await supabase
         .from('support_attachments')
@@ -88,6 +115,9 @@ export const useUserTickets = () => {
 
       if (attsError) throw attsError;
       setAttachments(atts || []);
+
+      // Reload tickets to update unread count
+      loadTickets();
     } catch (error) {
       console.error('Error loading ticket details:', error);
       toast({
@@ -257,6 +287,27 @@ export const useUserTickets = () => {
 
   useEffect(() => {
     loadTickets();
+
+    // Subscribe to new messages to update unread count in real-time
+    const channel = supabase
+      .channel('user-ticket-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'support_messages',
+          filter: `is_from_support=eq.true`,
+        },
+        () => {
+          loadTickets(); // Reload tickets to update unread counts
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   useEffect(() => {
