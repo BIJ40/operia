@@ -3,12 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function useSupportNotifications() {
-  const { isSupport, user } = useAuth();
+  const { isSupport, isAdmin, user } = useAuth();
   const [hasNewTickets, setHasNewTickets] = useState(false);
   const [newTicketsCount, setNewTicketsCount] = useState(0);
 
   useEffect(() => {
-    if (!isSupport || !user) return;
+    // Le hook fonctionne pour les admins ET les support
+    if ((!isSupport && !isAdmin) || !user) return;
 
     // Charger le nombre de tickets en attente initial
     const loadWaitingTickets = async () => {
@@ -58,7 +59,7 @@ export function useSupportNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isSupport, user]);
+  }, [isSupport, isAdmin, user]);
 
   return { hasNewTickets, newTicketsCount };
 }
