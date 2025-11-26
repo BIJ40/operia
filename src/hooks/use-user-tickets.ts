@@ -205,15 +205,20 @@ export const useUserTickets = () => {
         }
       }
 
-      // Notify support
-      await supabase.functions.invoke('notify-support-ticket', {
-        body: {
-          ticketId: ticket.id,
-          userName,
-          lastQuestion: subject,
-          appUrl: window.location.origin,
-        },
-      });
+      // Notify support (non bloquant pour la création du ticket)
+      try {
+        await supabase.functions.invoke('notify-support-ticket', {
+          body: {
+            ticketId: ticket.id,
+            userName,
+            lastQuestion: subject,
+            appUrl: window.location.origin,
+          },
+        });
+      } catch (notifyError) {
+        console.error('Error notifying support about new ticket:', notifyError);
+        // On ne bloque pas l'utilisateur si la notif email échoue
+      }
 
       toast({
         title: 'Succès',
