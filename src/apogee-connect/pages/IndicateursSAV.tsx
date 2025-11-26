@@ -28,6 +28,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function IndicateursSAV() {
   const { isAgencyReady } = useAgency();
@@ -64,6 +70,7 @@ export default function IndicateursSAV() {
         rawData.interventions,
         rawData.factures,
         TECHS,
+        rawData.clients || [],
         filters.dateRange
       );
 
@@ -390,29 +397,59 @@ export default function IndicateursSAV() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {byTechnicien.map((item) => {
-                    const techIdNum = parseInt(item.technicienId, 10);
-                    const techInfo = TECHS[techIdNum];
-                    const color = techInfo?.color || "#808080";
-                    
-                    return (
-                      <TableRow key={item.technicienId}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-3 h-3 rounded-full" 
-                              style={{ backgroundColor: color }}
-                            />
-                            {item.technicienNom}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">{item.nbProjectsSAV}</TableCell>
-                        <TableCell className="text-right">{item.nbInterventionsSAV}</TableCell>
-                        <TableCell className="text-right">{item.heuresSAV}h</TableCell>
-                        <TableCell className="text-right">{formatEuros(item.caSAV)}</TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  <TooltipProvider>
+                    {byTechnicien.map((item) => {
+                      const techIdNum = parseInt(item.technicienId, 10);
+                      const techInfo = TECHS[techIdNum];
+                      const color = techInfo?.color || "#808080";
+                      
+                      return (
+                        <UITooltip key={item.technicienId}>
+                          <TooltipTrigger asChild>
+                            <TableRow className="cursor-help hover:bg-muted/50">
+                              <TableCell className="font-medium">
+                                <div className="flex items-center gap-2">
+                                  <div 
+                                    className="w-3 h-3 rounded-full" 
+                                    style={{ backgroundColor: color }}
+                                  />
+                                  {item.technicienNom}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">{item.nbProjectsSAV}</TableCell>
+                              <TableCell className="text-right">{item.nbInterventionsSAV}</TableCell>
+                              <TableCell className="text-right">{item.heuresSAV}h</TableCell>
+                              <TableCell className="text-right">{formatEuros(item.caSAV)}</TableCell>
+                            </TableRow>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-md p-4">
+                            <div className="space-y-3">
+                              <h4 className="font-semibold text-sm mb-2">Dossiers SAV de {item.technicienNom}</h4>
+                              {item.dossiers && item.dossiers.length > 0 ? (
+                                <div className="space-y-2 max-h-80 overflow-y-auto">
+                                  {item.dossiers.map((dossier, idx) => (
+                                    <div key={idx} className="text-xs border-l-2 border-primary pl-2 py-1">
+                                      <div className="font-medium">#{dossier.projectId} - {dossier.projectName}</div>
+                                      <div className="text-muted-foreground">Client: {dossier.clientName}</div>
+                                      <div className="text-muted-foreground">
+                                        Univers: {dossier.universes.map(u => formatUniverseLabel(u)).join(", ") || "Non défini"}
+                                      </div>
+                                      <div className="text-muted-foreground">
+                                        Type: {formatApporteurType(dossier.apporteurType)}
+                                      </div>
+                                      <div className="font-semibold text-primary">CA SAV: {formatEuros(dossier.caSAV)}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-xs text-muted-foreground">Aucun détail disponible</div>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </UITooltip>
+                      );
+                    })}
+                  </TooltipProvider>
                 </TableBody>
               </Table>
             </div>
