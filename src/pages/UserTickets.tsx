@@ -194,12 +194,10 @@ export default function UserTickets() {
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Support / Tickets</h1>
-          {!canManageTickets && (
-            <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nouveau ticket
-            </Button>
-          )}
+          <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouveau ticket
+          </Button>
         </div>
 
         {showCreateForm && (
