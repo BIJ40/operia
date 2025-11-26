@@ -540,7 +540,7 @@ export default function Landing() {
                 <img 
                   src={helpConfortServicesImg} 
                   alt="Help Confort Services" 
-                  className="w-full pointer-events-none select-none"
+                  className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
                   draggable="false"
                 />
               </div>
@@ -692,7 +692,7 @@ export default function Landing() {
                 <img 
                   src={helpConfortServicesImg} 
                   alt="Help Confort Services" 
-                  className="w-full pointer-events-none select-none"
+                  className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
                   draggable="false"
                 />
               </div>
