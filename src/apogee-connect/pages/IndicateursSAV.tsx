@@ -259,144 +259,109 @@ export default function IndicateursSAV() {
             </ResponsiveContainer>
           </Card>
 
-          {/* SAV par type apporteur - Camembert */}
-          <Card className="p-6 border-l-4 border-l-accent shadow-lg">
-            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-6">
-              SAV par type d'apporteur
-            </h2>
-            <ResponsiveContainer width="100%" height={400}>
-              <PieChart>
-                <Pie
-                  data={byTypeApporteur
-                    .filter(item => item.nbSAVProjects > 0)
-                    .map(item => ({
-                      name: formatApporteurType(item.type),
-                      value: item.nbSAVProjects,
-                      tauxSAV: item.tauxSAV,
-                      caSAV: item.caSAV,
-                    }))}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={120}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {byTypeApporteur.filter(item => item.nbSAVProjects > 0).map((entry, index) => {
-                    const colors = ["#ef4444", "#f97316", "#f59e0b", "#84cc16", "#06b6d4", "#8b5cf6", "#ec4899"];
-                    return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
-                  })}
-                </Pie>
-                <Tooltip 
-                  formatter={(value: number, name: string, entry: any) => {
-                    const total = byTypeApporteur
-                      .filter(item => item.nbSAVProjects > 0)
-                      .reduce((sum, item) => sum + item.nbSAVProjects, 0);
-                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
-                    return [
-                      <>
-                        <div>{value} dossiers ({percentage}%)</div>
-                        <div>Taux SAV: {entry.payload.tauxSAV.toFixed(1)}%</div>
-                        <div>CA: {formatEuros(entry.payload.caSAV)}</div>
-                      </>,
-                      name
-                    ];
-                  }}
-                />
-                <Legend 
-                  formatter={(value: string, entry: any) => {
-                    return `${value} (${entry.payload.value})`;
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </Card>
-
-          {/* SAV par univers - Tuiles */}
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-2">
-                SAV par univers
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Analyse du taux de SAV et du CA par univers métier
-              </p>
-            </div>
-
-            {/* Grille de tuiles par univers */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {byUnivers
-                .filter((item) => item.nbProjectsSAV > 0 && item.univers.toLowerCase() !== "non défini")
-                .map((item) => (
-                  <Card 
-                    key={item.univers} 
-                    className="p-5 bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border-l-4 border-l-red-500 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
-                  >
-                    <div className="space-y-3">
-                      {/* Titre univers */}
-                      <div className="flex items-center gap-2">
-                        <Layers className="w-5 h-5 text-red-600" />
-                        <h3 className="font-bold text-sm">{formatUniverseLabel(item.univers)}</h3>
-                      </div>
-
-                      {/* Taux SAV principal */}
-                      <div>
-                        <p className="text-xs text-muted-foreground">Taux SAV</p>
-                        <p className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">
-                          {item.tauxSAV.toFixed(1)}%
-                        </p>
-                      </div>
-
-                      {/* Indicateurs secondaires */}
-                      <div className="pt-2 border-t space-y-1">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-muted-foreground">Dossiers SAV</span>
-                          <Badge variant="destructive" className="font-mono">
-                            {item.nbProjectsSAV}
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-muted-foreground">CA SAV</span>
-                          <span className="text-sm font-semibold">{formatEuros(item.caSAV)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-            </div>
-
-            {/* Graphique comparatif */}
+          {/* SAV par type apporteur et par univers - Camemberts côte à côte */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* SAV par type apporteur */}
             <Card className="p-6 border-l-4 border-l-accent shadow-lg">
-              <h3 className="text-lg font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-4">
-                Comparaison taux SAV par univers
-              </h3>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={byUnivers
-                  .filter((item) => item.nbProjectsSAV > 0 && item.univers.toLowerCase() !== "non défini")
-                  .map(item => ({ 
-                    ...item, 
-                    univers: formatUniverseLabel(item.univers) 
-                  }))}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="univers" 
-                    angle={-45} 
-                    textAnchor="end" 
-                    height={100}
-                    interval={0}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis />
+              <h2 className="text-lg font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-4">
+                SAV par type d'apporteur
+              </h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={byTypeApporteur
+                      .filter(item => item.nbSAVProjects > 0)
+                      .map(item => ({
+                        name: formatApporteurType(item.type),
+                        value: item.nbSAVProjects,
+                        tauxSAV: item.tauxSAV,
+                        caSAV: item.caSAV,
+                      }))}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {byTypeApporteur.filter(item => item.nbSAVProjects > 0).map((entry, index) => {
+                      const colors = ["#ef4444", "#f97316", "#f59e0b", "#84cc16", "#06b6d4", "#8b5cf6", "#ec4899"];
+                      return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                    })}
+                  </Pie>
                   <Tooltip 
-                    formatter={(value: number, name: string) => {
-                      if (name === "CA SAV") return [formatEuros(value), name];
-                      if (name === "Taux SAV (%)") return [value.toFixed(1) + "%", name];
-                      return [value, name];
+                    formatter={(value: number, name: string, entry: any) => {
+                      const total = byTypeApporteur
+                        .filter(item => item.nbSAVProjects > 0)
+                        .reduce((sum, item) => sum + item.nbSAVProjects, 0);
+                      const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
+                      return [
+                        <>
+                          <div>{value} dossiers ({percentage}%)</div>
+                          <div>Taux SAV: {entry.payload.tauxSAV.toFixed(1)}%</div>
+                          <div>CA: {formatEuros(entry.payload.caSAV)}</div>
+                        </>,
+                        name
+                      ];
                     }}
                   />
-                  <Legend />
-                  <Bar dataKey="tauxSAV" fill="#ef4444" name="Taux SAV (%)" />
-                  <Bar dataKey="nbProjectsSAV" fill="#f97316" name="Dossiers SAV" />
-                </BarChart>
+                  <Legend 
+                    formatter={(value: string, entry: any) => {
+                      return `${value} (${entry.payload.value})`;
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
+
+            {/* SAV par univers */}
+            <Card className="p-6 border-l-4 border-l-accent shadow-lg">
+              <h2 className="text-lg font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-4">
+                SAV par univers
+              </h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={byUnivers
+                      .filter((item) => item.nbProjectsSAV > 0 && item.univers.toLowerCase() !== "non défini")
+                      .map(item => ({
+                        name: formatUniverseLabel(item.univers),
+                        value: item.nbProjectsSAV,
+                        tauxSAV: item.tauxSAV,
+                        caSAV: item.caSAV,
+                      }))}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {byUnivers.filter((item) => item.nbProjectsSAV > 0 && item.univers.toLowerCase() !== "non défini").map((entry, index) => {
+                      const colors = ["#ef4444", "#f97316", "#f59e0b", "#84cc16", "#06b6d4", "#8b5cf6", "#ec4899", "#f43f5e"];
+                      return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                    })}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number, name: string, entry: any) => {
+                      const total = byUnivers
+                        .filter((item) => item.nbProjectsSAV > 0 && item.univers.toLowerCase() !== "non défini")
+                        .reduce((sum, item) => sum + item.nbProjectsSAV, 0);
+                      const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
+                      return [
+                        <>
+                          <div>{value} dossiers ({percentage}%)</div>
+                          <div>Taux SAV: {entry.payload.tauxSAV.toFixed(1)}%</div>
+                          <div>CA: {formatEuros(entry.payload.caSAV)}</div>
+                        </>,
+                        name
+                      ];
+                    }}
+                  />
+                  <Legend 
+                    formatter={(value: string, entry: any) => {
+                      return `${value} (${entry.payload.value})`;
+                    }}
+                  />
+                </PieChart>
               </ResponsiveContainer>
             </Card>
           </div>
