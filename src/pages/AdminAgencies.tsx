@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
+import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -60,6 +60,7 @@ interface UserProfile {
 export default function AdminAgencies() {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -338,6 +339,14 @@ export default function AdminAgencies() {
                             <Users className="h-3 w-3 mr-1" />
                             {agencyUsers.length}
                           </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/admin/agences/${agency.id}`)}
+                            title="Voir le profil complet"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"

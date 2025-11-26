@@ -90,6 +90,7 @@ function AppContent() {
         <Route path="/admin/users-list" element={<Layout showHeader showSidebar={false}><AdminUsersList /></Layout>} />
         <Route path="/admin/role-permissions" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminRolePermissions /></Layout>} />
         <Route path="/admin/agencies" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminAgencies /></Layout>} />
+        <Route path="/admin/agences/:agencyId" element={<Layout showHeader showSidebar={false}><FranchiseurAgencyProfile /></Layout>} />
         <Route path="/admin/franchiseur-roles" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminFranchiseurRoles /></Layout>} />
         <Route path="/admin/storage-quota" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminStorageQuota /></Layout>} />
         <Route path="/admin/user-activity" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUserActivity /></Layout>} />

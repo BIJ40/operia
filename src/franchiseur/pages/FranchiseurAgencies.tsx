@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Building2, Plus, Search, Users, Calendar, Phone, Mail, MapPin } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,9 +10,9 @@ import { AgencyProfileDialog } from "../components/AgencyProfileDialog";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
 
 export default function FranchiseurAgencies() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [showInactive, setShowInactive] = useState(false);
-  const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   const { data: agencies, isLoading } = useAgencies();
@@ -93,7 +94,7 @@ export default function FranchiseurAgencies() {
               <Card
                 key={agency.id}
                 className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] rounded-2xl border-l-4 border-l-primary"
-                onClick={() => setSelectedAgencyId(agency.id)}
+                onClick={() => navigate(`/tete-de-reseau/agences/${agency.id}`)}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -160,15 +161,6 @@ export default function FranchiseurAgencies() {
           )}
         </CardContent>
       </Card>
-
-      {selectedAgencyId && (
-        <AgencyProfileDialog
-          agencyId={selectedAgencyId}
-          open={!!selectedAgencyId}
-          onOpenChange={(open) => !open && setSelectedAgencyId(null)}
-          canManage={canManageAgencies}
-        />
-      )}
 
       {isCreateDialogOpen && (
         <AgencyProfileDialog
