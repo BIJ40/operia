@@ -3,12 +3,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Edit, Users, Shield } from 'lucide-react';
+import { Trash2, Edit, Users, Shield, Key } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EditUserDialog } from '@/components/EditUserDialog';
 import { ManageSystemRoleDialog } from '@/components/ManageSystemRoleDialog';
+import { ManageUserPermissionsDialog } from '@/components/ManageUserPermissionsDialog';
 import { Badge } from '@/components/ui/badge';
 
 interface UserProfile {
@@ -43,6 +44,8 @@ export default function AdminUsersList() {
   const [managingRoleUserId, setManagingRoleUserId] = useState<string | null>(null);
   const [managingRoleUserName, setManagingRoleUserName] = useState<string | null>(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [managingPermissionsUser, setManagingPermissionsUser] = useState<UserProfile | null>(null);
+  const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -172,6 +175,17 @@ export default function AdminUsersList() {
                       >
                         <Edit className="w-4 h-4 text-primary" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setManagingPermissionsUser(user);
+                          setShowPermissionsDialog(true);
+                        }}
+                        title="Gérer les permissions individuelles"
+                      >
+                        <Key className="w-4 h-4 text-accent" />
+                      </Button>
                       {user.system_role !== 'admin' && (
                         <Button
                           variant="ghost"
@@ -223,6 +237,14 @@ export default function AdminUsersList() {
         userId={managingRoleUserId}
         userName={managingRoleUserName}
         onSuccess={loadUsers}
+      />
+
+      <ManageUserPermissionsDialog
+        open={showPermissionsDialog}
+        onOpenChange={setShowPermissionsDialog}
+        userId={managingPermissionsUser?.id || ''}
+        userName={`${managingPermissionsUser?.first_name || ''} ${managingPermissionsUser?.last_name || ''}`.trim() || 'Utilisateur'}
+        userRole={managingPermissionsUser?.role_agence || null}
       />
     </div>
   );
