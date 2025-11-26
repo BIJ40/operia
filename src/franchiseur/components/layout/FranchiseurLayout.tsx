@@ -9,20 +9,21 @@ import { useEffect } from "react";
 
 function FranchiseurLayoutContent() {
   const { franchiseurRole, isLoading } = useFranchiseur();
+  const { isAdmin } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isLoading && !franchiseurRole) {
+    if (!isLoading && !franchiseurRole && !isAdmin) {
       toast({
         title: "Accès refusé",
         description: "Vous devez avoir un rôle franchiseur pour accéder à cette section",
         variant: "destructive",
       });
     }
-  }, [franchiseurRole, isLoading, toast]);
+  }, [franchiseurRole, isLoading, isAdmin, toast]);
 
-  // Redirect if no franchiseur role
-  if (!isLoading && !franchiseurRole) {
+  // Redirect if no franchiseur role and not admin
+  if (!isLoading && !franchiseurRole && !isAdmin) {
     return <Navigate to="/" replace />;
   }
 
