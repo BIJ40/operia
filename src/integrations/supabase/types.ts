@@ -472,7 +472,6 @@ export type Database = {
           id: string
           last_name: string | null
           must_change_password: boolean | null
-          pseudo: string | null
           role_agence: string | null
           updated_at: string
         }
@@ -484,7 +483,6 @@ export type Database = {
           id: string
           last_name?: string | null
           must_change_password?: boolean | null
-          pseudo?: string | null
           role_agence?: string | null
           updated_at?: string
         }
@@ -496,7 +494,6 @@ export type Database = {
           id?: string
           last_name?: string | null
           must_change_password?: boolean | null
-          pseudo?: string | null
           role_agence?: string | null
           updated_at?: string
         }
@@ -763,7 +760,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_email_from_pseudo: { Args: { _pseudo: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

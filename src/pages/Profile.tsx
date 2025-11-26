@@ -12,7 +12,6 @@ import { z } from 'zod';
 
 interface Profile {
   id: string;
-  pseudo: string | null;
   first_name: string | null;
   last_name: string | null;
   agence: string | null;
@@ -61,7 +60,6 @@ export default function Profile() {
 
       if (data) {
         setProfile(data);
-        setPseudo(data.pseudo || '');
         setFirstName(data.first_name || '');
         setLastName(data.last_name || '');
         setAgence(data.agence || '');
@@ -142,20 +140,6 @@ export default function Profile() {
           <CardContent className="pt-6">
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="pseudo" className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-primary" />
-                    Pseudo
-                  </Label>
-                  <Input
-                    id="pseudo"
-                    value={pseudo}
-                    disabled
-                    className="bg-muted cursor-not-allowed"
-                    placeholder="Non renseigné"
-                  />
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="email" className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-primary" />

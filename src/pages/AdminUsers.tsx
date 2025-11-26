@@ -14,7 +14,6 @@ import { Navigate } from 'react-router-dom';
 
 interface UserProfile {
   id: string;
-  pseudo: string | null;
   first_name: string | null;
   last_name: string | null;
   agence: string | null;
@@ -23,11 +22,9 @@ interface UserProfile {
 }
 
 const createUserSchema = z.object({
-  pseudo: z.string()
+  email: z.string()
     .trim()
-    .min(3, { message: "Le pseudo doit contenir au moins 3 caractères" })
-    .max(30, { message: "Le pseudo ne peut pas dépasser 30 caractères" })
-    .regex(/^[a-zA-Z0-9_-]+$/, { message: "Le pseudo ne peut contenir que des lettres, chiffres, tirets et underscores" }),
+    .email({ message: "L'adresse email n'est pas valide" }),
   firstName: z.string()
     .trim()
     .min(1, { message: "Le prénom est requis" })
@@ -69,7 +66,7 @@ export default function AdminUsers() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   // Form fields
-  const [pseudo, setPseudo] = useState('');
+  const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [agence, setAgence] = useState('');
@@ -92,7 +89,7 @@ export default function AdminUsers() {
     
     // Validation avec Zod
     const validation = createUserSchema.safeParse({
-      pseudo: pseudo.trim(),
+      email: email.trim(),
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       agence: agence.trim() || undefined,
@@ -138,7 +135,7 @@ export default function AdminUsers() {
       // Appel de la fonction edge (le SDK Supabase envoie automatiquement le token)
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: { 
-          pseudo: pseudo.trim(),
+          email: email.trim(),
           password: tempPassword,
           firstName: firstName.trim(),
           lastName: lastName.trim(),
@@ -151,22 +148,17 @@ export default function AdminUsers() {
 
       toast({
         title: 'Utilisateur créé !',
-        description: `L'utilisateur "${pseudo}" a été créé avec succès. Communiquez-lui ses identifiants : Pseudo = ${pseudo}, Mot de passe = ${tempPassword}`,
+        description: `L'utilisateur "${email}" a été créé avec succès. Communiquez-lui ses identifiants : Email = ${email}, Mot de passe = ${tempPassword}`,
       });
 
       // Reset form
-      setPseudo('');
+      setEmail('');
       setFirstName('');
       setLastName('');
       setAgence('');
       setRoleAgence('');
       setTempPassword('');
       setErrors({});
-      
-      toast({
-        title: 'Utilisateur créé !',
-        description: `L'utilisateur "${pseudo}" a été créé avec succès. Communiquez-lui ses identifiants : Pseudo = ${pseudo}, Mot de passe = ${tempPassword}`,
-      });
     } catch (error: any) {
       console.error('Erreur création utilisateur:', error);
       toast({
@@ -201,19 +193,20 @@ export default function AdminUsers() {
           <form onSubmit={handleCreateUser} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="pseudo">Pseudo *</Label>
+                <Label htmlFor="email">Email *</Label>
                 <Input
-                  id="pseudo"
-                  value={pseudo}
+                  id="email"
+                  type="email"
+                  value={email}
                   onChange={(e) => {
-                    setPseudo(e.target.value);
-                    setErrors(prev => ({ ...prev, pseudo: '' }));
+                    setEmail(e.target.value);
+                    setErrors(prev => ({ ...prev, email: '' }));
                   }}
-                  placeholder="jean_dupont"
+                  placeholder="jean.dupont@exemple.com"
                   required
-                  className={errors.pseudo ? 'border-destructive' : ''}
+                  className={errors.email ? 'border-destructive' : ''}
                 />
-                {errors.pseudo && <p className="text-xs text-destructive">{errors.pseudo}</p>}
+                {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
               </div>
 
               <div className="space-y-2">

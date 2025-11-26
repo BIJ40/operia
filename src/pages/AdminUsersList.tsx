@@ -13,7 +13,6 @@ import { Badge } from '@/components/ui/badge';
 
 interface UserProfile {
   id: string;
-  pseudo: string | null;
   first_name: string | null;
   last_name: string | null;
   agence: string | null;
@@ -129,7 +128,6 @@ export default function AdminUsersList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Pseudo</TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Prénom</TableHead>
                 <TableHead>Agence</TableHead>
@@ -142,7 +140,6 @@ export default function AdminUsersList() {
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.pseudo || '-'}</TableCell>
                   <TableCell>{user.last_name || '-'}</TableCell>
                   <TableCell>{user.first_name || '-'}</TableCell>
                   <TableCell>{user.agence || '-'}</TableCell>
@@ -177,8 +174,8 @@ export default function AdminUsersList() {
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            setManagingRoleUserId(user.id);
-                            setManagingRoleUserName(user.pseudo || `${user.first_name} ${user.last_name}`);
+                          setManagingRoleUserId(user.id);
+                            setManagingRoleUserName(`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Utilisateur');
                             setShowRoleDialog(true);
                           }}
                           title="Gérer le rôle système"
@@ -200,7 +197,7 @@ export default function AdminUsersList() {
               ))}
               {users.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     Aucun utilisateur enregistré
                   </TableCell>
                 </TableRow>
