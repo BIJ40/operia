@@ -11,7 +11,8 @@ import {
   ChevronRight,
   HardDrive,
   Activity,
-  Building2
+  Building2,
+  Network
 } from 'lucide-react';
 import {
   Sidebar,
@@ -70,6 +71,11 @@ const adminMenuItems = [
     title: 'Tête de réseau',
     url: '/admin/franchiseur-roles',
     icon: Building2,
+  },
+  {
+    title: 'Interface Franchiseur',
+    url: '/tete-de-reseau',
+    icon: Network,
   },
   {
     title: 'Mme Michu',
