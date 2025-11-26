@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,12 +10,14 @@ import { buildActionsAMener } from '@/apogee-connect/utils/actionsAMenerCalculat
 import { ActionsAMenerTable } from '@/apogee-connect/components/ActionsAMenerTable';
 import { ActionsConfigDialog } from '@/apogee-connect/components/ActionsConfigDialog';
 import { useActionsConfig } from '@/apogee-connect/hooks/useActionsConfig';
+import { DossierDetailDialog } from '@/apogee-connect/components/DossierDetailDialog';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 
 function ActionsAMenerContent() {
   const { isAgencyReady, currentAgency } = useAgency();
   const { config, isLoading: isLoadingConfig } = useActionsConfig();
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
 
   const { data: actions, isLoading, error } = useQuery({
     queryKey: ['actions-a-mener', currentAgency?.id, config],
@@ -36,8 +39,7 @@ function ActionsAMenerContent() {
   });
 
   const handleOpenDossier = (projectId: number) => {
-    // TODO: Implémenter l'ouverture de la fiche dossier
-    console.log('Ouvrir dossier:', projectId);
+    setSelectedProjectId(projectId);
   };
 
   return (
@@ -131,6 +133,14 @@ function ActionsAMenerContent() {
           </Card>
         </div>
       </div>
+
+      {selectedProjectId && (
+        <DossierDetailDialog
+          open={!!selectedProjectId}
+          onOpenChange={(open) => !open && setSelectedProjectId(null)}
+          projectId={selectedProjectId}
+        />
+      )}
     </Layout>
   );
 }
