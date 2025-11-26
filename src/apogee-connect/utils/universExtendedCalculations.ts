@@ -50,6 +50,7 @@ export function calculateDossiersParUnivers(
 
 /**
  * Calcule le taux de transformation par univers
+ * IMPORTANT: Ne compare que les factures des dossiers ayant au moins un devis accepté
  */
 export function calculateTransfoParUnivers(
   projects: any[],
@@ -62,9 +63,15 @@ export function calculateTransfoParUnivers(
   // Map projets pour accès rapide
   const projectsMap = new Map(projects.map((p) => [p.id, p]));
 
-  // Calculer CA devis acceptés par univers
+  // États acceptés pour les devis (order = commandé, invoice = facturé)
+  const acceptedStates = ["order", "invoice"];
+
+  // ÉTAPE 1: Identifier les projets ayant au moins un devis accepté dans la période
+  const projectsWithAcceptedQuote = new Set<number>();
+  const acceptedQuotesByProject = new Map<number, any[]>();
+
   devis.forEach((d) => {
-    if (d.state !== "invoice") return;
+    if (!acceptedStates.includes(d.state)) return;
     
     const dateReelle = d.dateReelle || d.date;
     if (!dateReelle) return;
@@ -78,25 +85,50 @@ export function calculateTransfoParUnivers(
       return;
     }
 
-    const project = projectsMap.get(d.projectId);
+    // Projet a un devis accepté
+    projectsWithAcceptedQuote.add(d.projectId);
+    
+    // Stocker les devis par projet
+    const list = acceptedQuotesByProject.get(d.projectId) ?? [];
+    list.push(d);
+    acceptedQuotesByProject.set(d.projectId, list);
+  });
+
+  console.log(`[TransfoParUnivers] Projets avec devis accepté: ${projectsWithAcceptedQuote.size}`);
+
+  // ÉTAPE 2: Calculer CA devis par univers (uniquement projets avec devis accepté)
+  projectsWithAcceptedQuote.forEach((projectId) => {
+    const project = projectsMap.get(projectId);
     if (!project) return;
 
-    const caDevis = Number(d.data?.totalHT || d.totalHT || 0);
     const universes = project.data?.universes || project.universes || [];
-    const nbUniverses = universes.length || 1;
+    if (universes.length === 0) return;
 
+    const nbUniverses = universes.length;
+    const devisList = acceptedQuotesByProject.get(projectId) ?? [];
+
+    // Somme des devis acceptés du projet
+    let totalDevis = 0;
+    devisList.forEach((d) => {
+      totalDevis += Number(d.data?.totalHT || d.totalHT || 0);
+    });
+
+    // Répartir équitablement entre les univers
     universes.forEach((univers: string) => {
       const normalized = normalizeUniverseSlug(univers);
       if (!stats[normalized]) {
         stats[normalized] = { caDevis: 0, caFactures: 0 };
       }
-      stats[normalized].caDevis += caDevis / nbUniverses;
+      stats[normalized].caDevis += totalDevis / nbUniverses;
     });
   });
 
-  // Calculer CA factures par univers
+  // ÉTAPE 3: Calculer CA factures par univers (UNIQUEMENT projets avec devis accepté)
   factures.forEach((f) => {
     if (f.state === "canceled" || f.data?.type === "avoir") return;
+
+    // RESTRICTION: ne compter que les factures des projets avec devis accepté
+    if (!projectsWithAcceptedQuote.has(f.projectId)) return;
 
     const dateReelle = f.dateReelle || f.date;
     if (!dateReelle) return;
@@ -115,7 +147,9 @@ export function calculateTransfoParUnivers(
 
     const caFacture = Number(f.data?.totalHT || f.totalHT || 0);
     const universes = project.data?.universes || project.universes || [];
-    const nbUniverses = universes.length || 1;
+    if (universes.length === 0) return;
+
+    const nbUniverses = universes.length;
 
     universes.forEach((univers: string) => {
       const normalized = normalizeUniverseSlug(univers);
@@ -126,15 +160,19 @@ export function calculateTransfoParUnivers(
     });
   });
 
-  // Calculer taux de transformation
+  // ÉTAPE 4: Calculer taux de transformation (plafonné à 100%)
   const result: Record<string, { caDevis: number; caFactures: number; tauxTransfo: number }> = {};
   Object.keys(stats).forEach((univers) => {
     const data = stats[univers];
+    const taux = data.caDevis > 0 ? (data.caFactures / data.caDevis) * 100 : 0;
+    
     result[univers] = {
       caDevis: data.caDevis,
       caFactures: data.caFactures,
-      tauxTransfo: data.caDevis > 0 ? (data.caFactures / data.caDevis) * 100 : 0,
+      tauxTransfo: Math.min(taux, 100), // Plafonner à 100%
     };
+
+    console.log(`[TransfoParUnivers] ${univers}: CA devis=${data.caDevis.toFixed(2)}€, CA factures=${data.caFactures.toFixed(2)}€, taux=${taux.toFixed(1)}%`);
   });
 
   return result;
