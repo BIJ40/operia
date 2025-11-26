@@ -88,6 +88,17 @@ export const useAdminTickets = () => {
 
   const loadTicketDetails = async (ticketId: string) => {
     try {
+      // Marquer le ticket comme vu par le support (si pas déjà fait)
+      const { error: viewedError } = await supabase
+        .from('support_tickets')
+        .update({ viewed_by_support_at: new Date().toISOString() })
+        .eq('id', ticketId)
+        .is('viewed_by_support_at', null);
+
+      if (viewedError) {
+        console.error('Error marking ticket as viewed:', viewedError);
+      }
+
       // Load messages
       const { data: msgs, error: msgsError } = await supabase
         .from('support_messages')

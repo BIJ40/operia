@@ -725,6 +725,7 @@ export type Database = {
           updated_at: string
           user_id: string
           user_pseudo: string
+          viewed_by_support_at: string | null
         }
         Insert: {
           agency_slug?: string | null
@@ -747,6 +748,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           user_pseudo: string
+          viewed_by_support_at?: string | null
         }
         Update: {
           agency_slug?: string | null
@@ -769,6 +771,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           user_pseudo?: string
+          viewed_by_support_at?: string | null
         }
         Relationships: []
       }
