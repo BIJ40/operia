@@ -593,43 +593,63 @@ export default function Landing() {
                   collisionDetection={closestCenter}
                   onDragEnd={handleDragEnd}
                 >
-                  <SortableContext
-                    items={homeCards.map(c => c.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-                      {homeCards.map((card) => (
-                        <SortableCard
-                          key={card.id}
-                          card={card}
-                          editingId={editingId}
-                          editTitle={editTitle}
-                          editDescription={editDescription}
-                          editLink={editLink}
-                          editIcon={editIcon}
-                          editColor={editColor}
-                          isEditMode={isEditMode}
-                          onEditTitleChange={setEditTitle}
-                          onEditDescriptionChange={setEditDescription}
-                          onEditLinkChange={setEditLink}
-                          onEditIconChange={setEditIcon}
-                          onEditColorChange={setEditColor}
-                          onSave={handleSave}
-                          onCancel={handleCancel}
-                          onEdit={handleEdit}
-                          onDelete={handleDelete}
-                          getColorClass={getColorClass}
-                          IconComponent={IconComponent}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
+                  {(() => {
+                    const logoCard = homeCards.find(c => c.is_logo);
+                    const cardsWithoutLogo = homeCards.filter(c => !c.is_logo);
+
+                    return (
+                      <SortableContext
+                        items={cardsWithoutLogo.map(c => c.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                          {cardsWithoutLogo.map((card) => (
+                            <SortableCard
+                              key={card.id}
+                              card={card}
+                              editingId={editingId}
+                              editTitle={editTitle}
+                              editDescription={editDescription}
+                              editLink={editLink}
+                              editIcon={editIcon}
+                              editColor={editColor}
+                              isEditMode={isEditMode}
+                              onEditTitleChange={setEditTitle}
+                              onEditDescriptionChange={setEditDescription}
+                              onEditLinkChange={setEditLink}
+                              onEditIconChange={setEditIcon}
+                              onEditColorChange={setEditColor}
+                              onSave={handleSave}
+                              onCancel={handleCancel}
+                              onEdit={handleEdit}
+                              onDelete={handleDelete}
+                              getColorClass={getColorClass}
+                              IconComponent={IconComponent}
+                            />
+                          ))}
+                        </div>
+
+                        {logoCard && (
+                          <div className="mt-6 flex justify-center">
+                            <div className="w-full max-w-sm">
+                              <img
+                                src={helpConfortServicesImg}
+                                alt={logoCard.title}
+                                className="w-full h-auto pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
+                                draggable="false"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </SortableContext>
+                    );
+                  })()}
                 </DndContext>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
                   {homeCards.map(card => {
                     const Icon = IconComponent(card.icon || 'BookOpen');
-                    const isLarge = card.size === 'large';
+                    const isLarge = (card.size === 'large') || card.title === 'Actions à mener';
                     const isLogo = card.is_logo || false;
 
                     // Si c'est un logo, afficher l'image avec taille limitée
