@@ -16,7 +16,7 @@ import {
 } from "@/apogee-connect/utils/savCalculations";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { AlertTriangle, TrendingUp, Users, Layers, CalendarDays } from "lucide-react";
+import { AlertTriangle, TrendingUp, Users, Layers, CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
 import { formatEuros, formatUniverseLabel, formatApporteurType } from "@/apogee-connect/utils/formatters";
 import {
   Table,
@@ -34,6 +34,7 @@ export default function IndicateursSAV() {
   const { isAuthLoading } = useAuth();
   const { filters } = useSecondaryFilters();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [showAllApporteurs, setShowAllApporteurs] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["apogee-sav-stats", filters.dateRange, selectedYear],
@@ -417,11 +418,31 @@ export default function IndicateursSAV() {
             </div>
           </Card>
 
-          {/* SAV par apporteur (TOP 20) */}
+          {/* SAV par apporteur */}
           <Card className="p-6 border-l-4 border-l-accent shadow-lg">
-            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-6">
-              TOP 20 Apporteurs avec SAV
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+                SAV par apporteurs
+              </h2>
+              {byApporteur.length > 5 && (
+                <button
+                  onClick={() => setShowAllApporteurs(!showAllApporteurs)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                >
+                  {showAllApporteurs ? (
+                    <>
+                      Voir moins
+                      <ChevronUp size={16} />
+                    </>
+                  ) : (
+                    <>
+                      Voir plus ({byApporteur.length - 5} autres)
+                      <ChevronDown size={16} />
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -434,7 +455,7 @@ export default function IndicateursSAV() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {byApporteur.slice(0, 20).map((item) => (
+                  {(showAllApporteurs ? byApporteur : byApporteur.slice(0, 5)).map((item) => (
                     <TableRow key={item.apporteurId}>
                       <TableCell className="font-medium">{item.apporteurNom}</TableCell>
                       <TableCell>
