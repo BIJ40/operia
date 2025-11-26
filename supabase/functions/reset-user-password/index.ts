@@ -173,11 +173,19 @@ serve(async (req) => {
                                 📋 Instructions de connexion
                               </p>
                               <ol style="color: #0c4a6e; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8;">
-                                <li>Rendez-vous sur la page de connexion</li>
+                                <li>Cliquez sur le bouton ci-dessous pour accéder à la page de connexion</li>
                                 <li>Utilisez votre email : <strong>${profileData.email}</strong></li>
                                 <li>Entrez le mot de passe temporaire ci-dessus</li>
                                 <li>Suivez les instructions pour définir votre nouveau mot de passe</li>
                               </ol>
+                            </div>
+
+                            <!-- Bouton CTA -->
+                            <div style="text-align: center; margin: 35px 0;">
+                              <a href="https://${Deno.env.get('SUPABASE_URL')?.replace('https://', '').replace('.supabase.co', '')}.lovable.app/" 
+                                 style="display: inline-block; background: linear-gradient(135deg, #f97316 0%, #fb923c 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 6px rgba(249, 115, 22, 0.3); transition: all 0.3s ease;">
+                                🔐 Se connecter maintenant
+                              </a>
                             </div>
 
                             <p style="color: #666666; font-size: 14px; line-height: 1.6; margin: 30px 0 0 0;">
