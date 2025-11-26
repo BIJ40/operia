@@ -535,13 +535,15 @@ export default function Landing() {
             </div>
 
             {/* Help Confort Services Image */}
-            <div className="mt-12 text-center">
-              <img 
-                src={helpConfortServicesImg} 
-                alt="Help Confort Services" 
-                className="w-full max-w-md mx-auto pointer-events-none select-none"
-                draggable="false"
-              />
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="md:col-start-1 lg:col-start-2">
+                <img 
+                  src={helpConfortServicesImg} 
+                  alt="Help Confort Services" 
+                  className="w-full pointer-events-none select-none"
+                  draggable="false"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -685,13 +687,15 @@ export default function Landing() {
             )}
 
             {/* Help Confort Services Image */}
-            <div className="mt-12 text-center">
-              <img 
-                src={helpConfortServicesImg} 
-                alt="Help Confort Services" 
-                className="w-full max-w-md mx-auto pointer-events-none select-none"
-                draggable="false"
-              />
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="md:col-start-1 lg:col-start-2">
+                <img 
+                  src={helpConfortServicesImg} 
+                  alt="Help Confort Services" 
+                  className="w-full pointer-events-none select-none"
+                  draggable="false"
+                />
+              </div>
             </div>
 
             {isEditMode && isAdmin && (
