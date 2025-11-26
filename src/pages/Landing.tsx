@@ -609,6 +609,16 @@ export default function Landing() {
               </DndContext>
             ) : showWidgetMode ? (
               <>
+                {/* Logo centré en haut */}
+                <div className="flex justify-center mb-12">
+                  <img 
+                    src={helpConfortServicesImg} 
+                    alt="Help Confort Services" 
+                    className="max-w-xs pointer-events-none select-none"
+                    draggable="false"
+                  />
+                </div>
+
                 <WidgetGrid 
                   homeCards={homeCards}
                   isDashboardEditMode={false}
@@ -740,24 +750,6 @@ export default function Landing() {
                     <p className="text-xs text-muted-foreground truncate">Créer un ticket ou consulter vos demandes</p>
                   </div>
                 </Link>
-              </div>
-            )}
-
-            {/* Help Confort Services Image */}
-            <div className="mt-12 text-center">
-              <img 
-                src={helpConfortServicesImg} 
-                alt="Help Confort Services" 
-                className="w-full max-w-xs mx-auto pointer-events-none select-none"
-                draggable="false"
-              />
-            </div>
-
-            {isEditMode && isAdmin && (
-              <div className="flex justify-end mt-8">
-                <Button onClick={handleAddCard} size="sm" variant="ghost" className="gap-1 text-muted-foreground hover:text-foreground">
-                  <Plus className="w-4 h-4" />
-                </Button>
               </div>
             )}
           </div>

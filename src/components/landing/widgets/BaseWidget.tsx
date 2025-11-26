@@ -1,14 +1,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Settings, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { X } from 'lucide-react';
 
 interface BaseWidgetProps {
   id: string;
@@ -37,6 +30,8 @@ export function BaseWidget({
   onRemove,
   className = '',
 }: BaseWidgetProps) {
+  const [showControls, setShowControls] = React.useState(false);
+  
   const {
     attributes,
     listeners,
@@ -67,69 +62,28 @@ export function BaseWidget({
     <div
       ref={setNodeRef}
       style={style}
-      className={`${sizeClasses[size]} ${className} relative group transition-all duration-500 ease-out`}
+      className={`${sizeClasses[size]} ${className} relative group`}
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => setShowControls(false)}
     >
-      {isDashboardEditMode && (
-        <div className="absolute inset-x-0 top-0 z-50 flex items-center justify-end gap-1.5 px-2 pt-1.5 pointer-events-none">
-          <div className="flex items-center gap-1.5 rounded-full bg-background/95 backdrop-blur-sm shadow-md border border-border pointer-events-auto">
-            {onSizeChange && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="h-8 w-8"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-background z-[100]">
-                  <DropdownMenuItem onClick={() => onSizeChange('small')}>
-                    Petit (1 bloc)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onSizeChange('medium')}>
-                    Moyen (2 blocs)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onSizeChange('large')}>
-                    Large (4 blocs)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onSizeChange('xlarge')}>
-                    Pleine largeur (8 blocs)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
-            {isRemovable && onRemove && (
-              <Button
-                size="icon"
-                variant="destructive"
-                className="h-8 w-8"
-                onClick={onRemove}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            )}
-
-            <div
-              {...attributes}
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing"
+      {isDashboardEditMode && showControls && (
+        <div className="absolute -top-2 -right-2 z-50 flex items-center gap-1">
+          {isRemovable && onRemove && (
+            <button
+              onClick={onRemove}
+              className="w-6 h-6 rounded-full bg-destructive text-destructive-foreground shadow-lg hover:scale-110 transition-transform flex items-center justify-center"
             >
-              <Button
-                size="icon"
-                variant="outline"
-                className="h-8 w-8"
-                aria-label="Déplacer le widget"
-              >
-                <GripVertical className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       )}
       
-      <div className={isDashboardEditMode ? 'pt-6' : ''}>
+      <div 
+        {...attributes}
+        {...listeners}
+        className={`cursor-grab active:cursor-grabbing ${isDragging ? 'animate-pulse' : ''}`}
+      >
         {children}
       </div>
     </div>
