@@ -230,11 +230,12 @@ export const useUserTickets = () => {
       return ticket;
     } catch (error) {
       console.error('Error creating ticket:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       toast({
         title: 'Erreur',
-        description: 'Impossible de créer le ticket',
+        description: error instanceof Error ? error.message : 'Impossible de créer le ticket',
         variant: 'destructive',
-        duration: 3000,
+        duration: 5000,
       });
       return null;
     } finally {
