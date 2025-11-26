@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { RefreshCw, Copy } from 'lucide-react';
@@ -42,6 +43,7 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
   const [roleAgence, setRoleAgence] = useState('');
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [generatingPassword, setGeneratingPassword] = useState(false);
+  const [sendPasswordEmail, setSendPasswordEmail] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -74,7 +76,11 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
       if (!session) throw new Error('Non authentifié');
 
       const response = await supabase.functions.invoke('reset-user-password', {
-        body: { userId: user.id, newPassword }
+        body: { 
+          userId: user.id, 
+          newPassword,
+          sendEmail: sendPasswordEmail
+        }
       });
 
       if (response.error) throw response.error;
@@ -83,7 +89,9 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
       
       toast({
         title: 'Mot de passe généré',
-        description: 'Le mot de passe temporaire a été créé. L\'utilisateur devra le changer à la prochaine connexion.',
+        description: sendPasswordEmail
+          ? 'Le mot de passe temporaire a été créé et envoyé par email. L\'utilisateur devra le changer à la prochaine connexion.'
+          : 'Le mot de passe temporaire a été créé. L\'utilisateur devra le changer à la prochaine connexion.',
       });
     } catch (error: any) {
       console.error('Erreur génération mot de passe:', error);
@@ -237,6 +245,20 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
+              <div className="flex items-center space-x-2 pb-2">
+                <Checkbox
+                  id="sendPasswordEmail"
+                  checked={sendPasswordEmail}
+                  onCheckedChange={(checked) => setSendPasswordEmail(checked as boolean)}
+                />
+                <Label
+                  htmlFor="sendPasswordEmail"
+                  className="text-xs font-normal cursor-pointer"
+                >
+                  Envoyer le mot de passe par email
+                </Label>
+              </div>
+              
               <Button
                 type="button"
                 variant="destructive"

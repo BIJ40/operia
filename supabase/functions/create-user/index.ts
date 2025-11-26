@@ -58,7 +58,7 @@ serve(async (req) => {
     }
 
     // Récupérer les données de la requête
-    const { email, password, firstName, lastName, agence, roleAgence } = await req.json()
+    const { email, password, firstName, lastName, agence, roleAgence, sendEmail } = await req.json()
 
     if (!email || !password || !firstName || !lastName) {
       throw new Error('Email, mot de passe, prénom et nom sont requis')
@@ -116,76 +116,80 @@ serve(async (req) => {
       throw new Error('Erreur lors de la mise à jour du profil')
     }
 
-    // Envoyer l'email avec le mot de passe temporaire
-    try {
-      const emailHtml = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
-              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb; }
-              .credential-item { margin: 15px 0; }
-              .credential-label { font-weight: bold; color: #666; font-size: 14px; }
-              .credential-value { font-size: 18px; color: #2563eb; font-weight: bold; font-family: monospace; }
-              .button { display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; }
-              .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>🎉 Bienvenue sur HelpConfort Services</h1>
-              </div>
-              <div class="content">
-                <p>Bonjour <strong>${firstName} ${lastName}</strong>,</p>
-                
-                <p>Votre compte a été créé avec succès. Voici vos identifiants de connexion :</p>
-                
-                <div class="credentials">
-                  <div class="credential-item">
-                    <div class="credential-label">📧 Email de connexion :</div>
-                    <div class="credential-value">${email}</div>
+    // Envoyer l'email avec le mot de passe temporaire seulement si demandé
+    if (sendEmail !== false) {
+      try {
+        const emailHtml = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
+                .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb; }
+                .credential-item { margin: 15px 0; }
+                .credential-label { font-weight: bold; color: #666; font-size: 14px; }
+                .credential-value { font-size: 18px; color: #2563eb; font-weight: bold; font-family: monospace; }
+                .button { display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; }
+                .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>🎉 Bienvenue sur HelpConfort Services</h1>
+                </div>
+                <div class="content">
+                  <p>Bonjour <strong>${firstName} ${lastName}</strong>,</p>
+                  
+                  <p>Votre compte a été créé avec succès. Voici vos identifiants de connexion :</p>
+                  
+                  <div class="credentials">
+                    <div class="credential-item">
+                      <div class="credential-label">📧 Email de connexion :</div>
+                      <div class="credential-value">${email}</div>
+                    </div>
+                    
+                    <div class="credential-item">
+                      <div class="credential-label">🔑 Mot de passe temporaire :</div>
+                      <div class="credential-value">${password}</div>
+                    </div>
                   </div>
                   
-                  <div class="credential-item">
-                    <div class="credential-label">🔑 Mot de passe temporaire :</div>
-                    <div class="credential-value">${password}</div>
+                  <p><strong>⚠️ Important :</strong> Ce mot de passe est temporaire. Vous devrez le modifier lors de votre première connexion pour des raisons de sécurité.</p>
+                  
+                  <div style="text-align: center;">
+                    <a href="${Deno.env.get('APP_URL') || 'https://www.helpconfort.services'}" class="button">
+                      Se connecter à HelpConfort Services
+                    </a>
+                  </div>
+                  
+                  <div class="footer">
+                    <p>Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet email.</p>
+                    <p>© ${new Date().getFullYear()} HelpConfort Services - Tous droits réservés</p>
                   </div>
                 </div>
-                
-                <p><strong>⚠️ Important :</strong> Ce mot de passe est temporaire. Vous devrez le modifier lors de votre première connexion pour des raisons de sécurité.</p>
-                
-                <div style="text-align: center;">
-                  <a href="${Deno.env.get('APP_URL') || 'https://www.helpconfort.services'}" class="button">
-                    Se connecter à HelpConfort Services
-                  </a>
-                </div>
-                
-                <div class="footer">
-                  <p>Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet email.</p>
-                  <p>© ${new Date().getFullYear()} HelpConfort Services - Tous droits réservés</p>
-                </div>
               </div>
-            </div>
-          </body>
-        </html>
-      `
+            </body>
+          </html>
+        `
 
-      await resend.emails.send({
-        from: 'HelpConfort Services <support@helpconfort.services>',
-        to: [email],
-        subject: '🎉 Bienvenue sur HelpConfort Services - Vos identifiants de connexion',
-        html: emailHtml,
-      })
+        await resend.emails.send({
+          from: 'HelpConfort Services <support@helpconfort.services>',
+          to: [email],
+          subject: '🎉 Bienvenue sur HelpConfort Services - Vos identifiants de connexion',
+          html: emailHtml,
+        })
 
-      console.log('Email envoyé avec succès à:', email)
-    } catch (emailError) {
-      console.error('Erreur envoi email:', emailError)
-      // On continue même si l'email échoue
+        console.log('Email envoyé avec succès à:', email)
+      } catch (emailError) {
+        console.error('Erreur envoi email:', emailError)
+        // On continue même si l'email échoue
+      }
+    } else {
+      console.log('Envoi d\'email désactivé par l\'administrateur')
     }
 
     console.log('Utilisateur créé avec succès:', email)
