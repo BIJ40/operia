@@ -7,6 +7,7 @@ interface AuthContextType {
   isAuthLoading: boolean;
   isAdmin: boolean;
   isSupport: boolean;
+  isFranchiseur: boolean;
   user: User | null;
   mustChangePassword: boolean;
   roleAgence: string | null;
@@ -15,6 +16,7 @@ interface AuthContextType {
   isLoggingOut: boolean;
   hasAccessToBlock: (blockId: string) => boolean;
   hasAccessToScope: (scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs') => boolean;
+  canManageTickets: () => boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -26,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSupport, setIsSupport] = useState(false);
+  const [isFranchiseur, setIsFranchiseur] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [agence, setAgence] = useState<string | null>(null);
@@ -51,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             setIsAdmin(roles?.some(r => r.role === 'admin') || false);
             setIsSupport(roles?.some(r => r.role === 'support') || false);
+            setIsFranchiseur(roles?.some(r => r.role === 'franchiseur') || false);
 
             // Check if user must change password and get role_agence
             const { data: profile } = await supabase
@@ -91,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setIsAdmin(false);
           setIsSupport(false);
+          setIsFranchiseur(false);
           setMustChangePassword(false);
           setRoleAgence(null);
           setAgence(null);
@@ -114,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .then(({ data: roles }) => {
             setIsAdmin(roles?.some(r => r.role === 'admin') || false);
             setIsSupport(roles?.some(r => r.role === 'support') || false);
+            setIsFranchiseur(roles?.some(r => r.role === 'franchiseur') || false);
           });
 
         // Check if user must change password and get role_agence
@@ -218,6 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Nettoyer les états en mémoire
       setIsAdmin(false);
       setIsSupport(false);
+      setIsFranchiseur(false);
       setMustChangePassword(false);
       setRoleAgence(null);
       setUserPermissions([]);
@@ -285,12 +292,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return userPermissions.length === 0 || userPermissions.includes(scope);
   };
 
+  const canManageTickets = (): boolean => {
+    return isAdmin || isSupport || isFranchiseur;
+  };
+
   return (
     <AuthContext.Provider value={{ 
       isAuthenticated: !!user,
       isAuthLoading,
       isAdmin,
       isSupport,
+      isFranchiseur,
       user,
       mustChangePassword,
       roleAgence,
@@ -299,6 +311,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoggingOut,
       hasAccessToBlock,
       hasAccessToScope,
+      canManageTickets,
       login, 
       logout,
       signup 

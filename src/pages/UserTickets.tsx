@@ -1,0 +1,306 @@
+import { useState } from 'react';
+import { Header } from '@/components/Header';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserTickets } from '@/hooks/use-user-tickets';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { TicketSourceBadge } from '@/components/tickets/TicketSourceBadge';
+import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
+import { Plus, Send, Download, ArrowLeft } from 'lucide-react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+export default function UserTickets() {
+  const { user } = useAuth();
+  const {
+    tickets,
+    selectedTicket,
+    setSelectedTicket,
+    attachments,
+    messages,
+    isLoading,
+    isCreating,
+    createTicket,
+    addMessage,
+    downloadAttachment,
+  } = useUserTickets();
+
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newTicket, setNewTicket] = useState({
+    subject: '',
+    category: 'question',
+    description: '',
+  });
+  const [files, setFiles] = useState<File[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+
+  const handleCreateTicket = async () => {
+    if (!newTicket.subject || !newTicket.description) return;
+
+    const ticket = await createTicket(
+      newTicket.subject,
+      newTicket.category,
+      newTicket.description,
+      files
+    );
+
+    if (ticket) {
+      setNewTicket({ subject: '', category: 'question', description: '' });
+      setFiles([]);
+      setShowCreateForm(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!selectedTicket || !newMessage.trim()) return;
+
+    await addMessage(selectedTicket.id, newMessage);
+    setNewMessage('');
+  };
+
+  const getStatusBadge = (status: string) => {
+    const config: Record<string, { label: string; className: string }> = {
+      waiting: { label: 'En attente', className: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+      in_progress: { label: 'En cours', className: 'bg-blue-100 text-blue-800 border-blue-300' },
+      resolved: { label: 'Résolu', className: 'bg-green-100 text-green-800 border-green-300' },
+    };
+
+    const { label, className } = config[status] || config.waiting;
+    return <Badge variant="outline" className={className}>{label}</Badge>;
+  };
+
+  if (selectedTicket) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+        <Header />
+        <div className="container mx-auto px-4 py-6">
+          <Button
+            variant="ghost"
+            onClick={() => setSelectedTicket(null)}
+            className="mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour à la liste
+          </Button>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <CardTitle className="text-2xl">{selectedTicket.subject}</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <TicketSourceBadge source={selectedTicket.source} />
+                    <TicketCategoryBadge category={selectedTicket.category} />
+                    {getStatusBadge(selectedTicket.status)}
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Créé le {format(new Date(selectedTicket.created_at), 'PPp', { locale: fr })}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Attachments */}
+              {attachments.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-2">Pièces jointes</h3>
+                  <div className="space-y-2">
+                    {attachments.map((att) => (
+                      <div
+                        key={att.id}
+                        className="flex items-center justify-between p-2 border rounded"
+                      >
+                        <span className="text-sm">{att.file_name}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => downloadAttachment(att)}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Separator />
+
+              {/* Messages */}
+              <div>
+                <h3 className="font-semibold mb-2">Conversation</h3>
+                <ScrollArea className="h-96 border rounded p-4">
+                  <div className="space-y-4">
+                    {messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`p-3 rounded ${
+                          msg.is_from_support
+                            ? 'bg-blue-50 ml-8'
+                            : 'bg-muted mr-8'
+                        }`}
+                      >
+                        <div className="text-xs text-muted-foreground mb-1">
+                          {msg.is_from_support ? 'Support' : 'Vous'} •{' '}
+                          {format(new Date(msg.created_at), 'PPp', { locale: fr })}
+                        </div>
+                        <div className="text-sm whitespace-pre-wrap">{msg.message}</div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+
+              {/* New message input */}
+              {selectedTicket.status !== 'resolved' && (
+                <div className="flex gap-2">
+                  <Textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Votre message..."
+                    className="flex-1"
+                  />
+                  <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+      <Header />
+      <div className="container mx-auto px-4 py-6">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Support / Tickets</h1>
+          <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouveau ticket
+          </Button>
+        </div>
+
+        {showCreateForm && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Créer un nouveau ticket</CardTitle>
+              <CardDescription>
+                Décrivez votre problème ou votre question
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="category">Catégorie</Label>
+                <Select
+                  value={newTicket.category}
+                  onValueChange={(v) => setNewTicket({ ...newTicket, category: v })}
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bug">Bug</SelectItem>
+                    <SelectItem value="improvement">Amélioration</SelectItem>
+                    <SelectItem value="blocking">Blocage</SelectItem>
+                    <SelectItem value="question">Question</SelectItem>
+                    <SelectItem value="other">Autre</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="subject">Sujet</Label>
+                <Input
+                  id="subject"
+                  value={newTicket.subject}
+                  onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
+                  placeholder="Titre de votre demande"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={newTicket.description}
+                  onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+                  placeholder="Décrivez votre problème en détail"
+                  rows={5}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="files">Pièces jointes (optionnel)</Label>
+                <Input
+                  id="files"
+                  type="file"
+                  multiple
+                  onChange={(e) => setFiles(Array.from(e.target.files || []))}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleCreateTicket}
+                  disabled={isCreating || !newTicket.subject || !newTicket.description}
+                >
+                  {isCreating ? 'Création...' : 'Créer le ticket'}
+                </Button>
+                <Button variant="outline" onClick={() => setShowCreateForm(false)}>
+                  Annuler
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {isLoading ? (
+          <div className="text-center py-12">Chargement...</div>
+        ) : tickets.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              Aucun ticket. Créez-en un pour commencer.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4">
+            {tickets.map((ticket) => (
+              <Card
+                key={ticket.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => setSelectedTicket(ticket)}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2">
+                      <CardTitle>{ticket.subject}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <TicketSourceBadge source={ticket.source} />
+                        <TicketCategoryBadge category={ticket.category} />
+                        {getStatusBadge(ticket.status)}
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(ticket.created_at), 'PPp', { locale: fr })}
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
