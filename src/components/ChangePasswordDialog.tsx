@@ -31,12 +31,14 @@ export function ChangePasswordDialog({ open, onOpenChange, onSuccess }: ChangePa
       return;
     }
 
-    if (newPassword.length < 6) {
+    // Validation stricte du mot de passe
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/])[A-Za-z\d!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]{8,100}$/;
+    if (!passwordRegex.test(newPassword)) {
       toast({
-        title: 'Erreur',
-        description: 'Le mot de passe doit contenir au moins 6 caractères',
+        title: 'Mot de passe invalide',
+        description: 'Le mot de passe doit contenir au moins 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole (!@#$%^&*(),.?":{}|<>_-+=[]\\\/)',
         variant: 'destructive',
-        duration: 4000,
+        duration: 6000,
       });
       return;
     }
@@ -116,7 +118,7 @@ export function ChangePasswordDialog({ open, onOpenChange, onSuccess }: ChangePa
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Au moins 6 caractères"
+              placeholder="8+ caractères (MAJ, min, chiffre, symbole)"
               required
             />
           </div>

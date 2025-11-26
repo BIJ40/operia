@@ -71,9 +71,11 @@ serve(async (req) => {
     }
 
     // Validation du mot de passe
-    if (password.length < 8 || password.length > 100) {
-      throw new Error('Le mot de passe doit contenir entre 8 et 100 caractères')
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/])[A-Za-z\d!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]{8,100}$/;
+    if (!passwordRegex.test(password)) {
+      throw new Error('Le mot de passe doit contenir au moins 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole (!@#$%^&*(),.?":{}|<>_-+=[]\\\/)')
     }
+
 
     // Vérifier si l'email existe déjà
     const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers()
