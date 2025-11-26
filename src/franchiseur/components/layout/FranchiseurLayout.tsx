@@ -49,7 +49,15 @@ function FranchiseurLayoutContent() {
 }
 
 export default function FranchiseurLayout() {
-  const { user, isFranchiseur, isAdmin } = useAuth();
+  const { user, isFranchiseur, isAdmin, isAuthLoading } = useAuth();
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-muted-foreground">Chargement de votre session...</p>
+      </div>
+    );
+  }
 
   if (!user || (!isFranchiseur && !isAdmin)) {
     return <Navigate to="/" replace />;

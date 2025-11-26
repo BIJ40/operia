@@ -42,14 +42,15 @@ export class NetworkDataService {
         DataService.clearCache();
         
         // Load data for this agency
-        const loadedData = await DataService.loadAllData(true);
+        const loadedData: any = await DataService.loadAllData(true);
         const data = {
           users: loadedData.users || [],
           clients: loadedData.clients || [],
           projects: loadedData.projects || [],
           interventions: loadedData.interventions || [],
-          factures: loadedData.factures || [],
-          devis: loadedData.devis || [],
+          // Harmonisation des noms: les données API peuvent utiliser invoices/quotes
+          factures: loadedData.invoices || loadedData.factures || [],
+          devis: loadedData.quotes || loadedData.devis || [],
         };
 
         console.log(`✅ ${agencySlug}: ${data.factures.length} factures, ${data.projects.length} projets, ${data.interventions.length} interventions`);
