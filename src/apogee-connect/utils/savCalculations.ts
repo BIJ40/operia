@@ -29,6 +29,14 @@ export interface SAVByTechnicien {
   nbProjectsSAV: number;
   heuresSAV: number;
   caSAV: number;
+  dossiers?: Array<{
+    projectId: number;
+    projectName: string;
+    clientName: string;
+    universes: string[];
+    apporteurType: string;
+    caSAV: number;
+  }>;
 }
 
 export interface SAVByUnivers {
@@ -375,10 +383,18 @@ export const calculateSAVByTechnicien = (
   interventions: any[],
   factures: any[],
   TECHS: Record<number, TechnicienInfo>,
+  clients: any[],
   dateRange: { start: Date; end: Date }
 ): SAVByTechnicien[] => {
   const projectsMap = new Map(projects.map(p => [p.id, p]));
-  const statsParTech = new Map<string, { nbInterventions: number; projects: Set<number>; heures: number; ca: number }>();
+  const clientsMap = new Map(clients.map(c => [c.id, c]));
+  const statsParTech = new Map<string, { 
+    nbInterventions: number; 
+    projects: Set<number>; 
+    heures: number; 
+    ca: number;
+    projectDetails: Map<number, { ca: number }>;
+  }>();
 
   console.log("[SAV Technicien] Début calcul - TECHS:", Object.keys(TECHS).length, "projets:", projects.length, "interventions:", interventions.length);
 
@@ -411,7 +427,13 @@ export const calculateSAVByTechnicien = (
   console.log(`[SAV Technicien] ${savInterventions.length} interventions SAV trouvées dans la période`);
 
   // 3. Pour chaque intervention SAV, trouver le technicien responsable (dernier intervenu AVANT le SAV)
-  const savAttributions = new Map<string, { interventions: Set<any>; projects: Set<number>; ca: number; heures: number }>();
+  const savAttributions = new Map<string, { 
+    interventions: Set<any>; 
+    projects: Set<number>; 
+    ca: number; 
+    heures: number;
+    projectDetails: Map<number, { ca: number }>;
+  }>();
 
   savInterventions.forEach(savInterv => {
     const projectId = savInterv.projectId;
@@ -429,7 +451,13 @@ export const calculateSAVByTechnicien = (
 
     // Initialiser les stats si nécessaire
     if (!savAttributions.has(techId)) {
-      savAttributions.set(techId, { interventions: new Set(), projects: new Set(), ca: 0, heures: 0 });
+      savAttributions.set(techId, { 
+        interventions: new Set(), 
+        projects: new Set(), 
+        ca: 0, 
+        heures: 0,
+        projectDetails: new Map()
+      });
     }
 
     const stats = savAttributions.get(techId)!;
@@ -468,7 +496,15 @@ export const calculateSAVByTechnicien = (
         const stats = savAttributions.get(techId);
         if (stats) {
           // Répartir le CA équitablement entre tous les SAV du projet
-          stats.ca += caProject / savIntervsOfProject.length;
+          const caForThisSAV = caProject / savIntervsOfProject.length;
+          stats.ca += caForThisSAV;
+          
+          // Stocker les détails du projet pour ce technicien
+          if (!stats.projectDetails.has(projectId)) {
+            stats.projectDetails.set(projectId, { ca: 0 });
+          }
+          const projectDetail = stats.projectDetails.get(projectId)!;
+          projectDetail.ca += caForThisSAV;
         }
       }
     });
@@ -483,6 +519,37 @@ export const calculateSAVByTechnicien = (
 
     console.log(`[SAV Technicien] ${resolved.label}: ${stats.projects.size} projets, ${stats.interventions.size} interventions, ${stats.ca.toFixed(2)}€`);
 
+    // Construire les détails des dossiers
+    const dossiers: Array<{
+      projectId: number;
+      projectName: string;
+      clientName: string;
+      universes: string[];
+      apporteurType: string;
+      caSAV: number;
+    }> = [];
+
+    stats.projectDetails.forEach((detail, projectId) => {
+      const project = projectsMap.get(projectId);
+      if (!project) return;
+
+      const clientId = project.data?.commanditaireId || project.client_id || project.clientId;
+      const client = clientId ? clientsMap.get(clientId) : null;
+      const clientName = client ? (client.name || client.label || "Client inconnu") : "Particulier";
+
+      const universes = project.data?.universes || [];
+      const apporteurType = clientId ? (client?.data?.type || client?.type || "Non défini") : "particulier";
+
+      dossiers.push({
+        projectId,
+        projectName: project.name || project.label || `Dossier #${projectId}`,
+        clientName,
+        universes,
+        apporteurType,
+        caSAV: detail.ca,
+      });
+    });
+
     result.push({
       technicienId: String(techId),
       technicienNom: resolved.label,
@@ -490,6 +557,7 @@ export const calculateSAVByTechnicien = (
       nbProjectsSAV: stats.projects.size,
       heuresSAV: Math.round(stats.heures * 10) / 10,
       caSAV: stats.ca,
+      dossiers: dossiers.sort((a, b) => b.caSAV - a.caSAV),
     });
   });
 
