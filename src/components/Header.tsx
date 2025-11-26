@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Home, Edit3, Square, LogIn, Settings, User, Heart, Loader2, BarChart3, Headset } from 'lucide-react';
+import { LogOut, Home, Edit3, Square, LogIn, Settings, User, Heart, Loader2, BarChart3, Headset, Network } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +13,7 @@ export function Header() {
   const location = useLocation();
   const editorContext = useEditor();
   const apporteurContext = useApporteurEditor();
-  const { isAuthenticated, isAdmin, isSupport, roleAgence, isLoggingOut, logout } = useAuth();
+  const { isAuthenticated, isAdmin, isSupport, isFranchiseur, roleAgence, isLoggingOut, logout } = useAuth();
   const { hasNewTickets, newTicketsCount, assignedToMeCount, unreadMessagesCount } = useSupportNotifications();
   const [loginOpen, setLoginOpen] = useState(false);
   
@@ -86,6 +86,16 @@ export function Header() {
               <Settings className="w-5 h-5 text-primary" />
               <span className="font-semibold text-foreground">ADMIN</span>
             </Link>
+
+            {isFranchiseur && (
+              <Link
+                to="/tete-de-reseau"
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
+              >
+                <Network className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-foreground">RÉSEAU</span>
+              </Link>
+            )}
 
             <div className="ml-auto flex items-center gap-2">
               <ChatbotNotifications />
@@ -182,6 +192,15 @@ export function Header() {
                       )}
                     </Link>
                   </>
+                )}
+                {isFranchiseur && (
+                  <Link
+                    to="/tete-de-reseau"
+                    className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
+                  >
+                    <Network className="w-5 h-5 text-primary" />
+                    <span className="font-semibold text-foreground">RÉSEAU</span>
+                  </Link>
                 )}
                 <div className="ml-auto flex items-center gap-2">
                   <ChatbotNotifications />
