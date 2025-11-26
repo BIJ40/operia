@@ -1,17 +1,25 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Building2, TrendingUp, Euro, Calendar, Phone, Mail, MapPin, Users } from "lucide-react";
+import { Building2, TrendingUp, Euro, Calendar, Phone, Mail, MapPin, Users, Edit } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAgency } from "../hooks/useAgencies";
 import { useRoyaltyHistory } from "../hooks/useRoyaltyConfig";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { Separator } from "@/components/ui/separator";
+import { useFranchiseur } from "../contexts/FranchiseurContext";
+import { AgencyProfileDialog } from "../components/AgencyProfileDialog";
 
 export default function FranchiseurAgencyProfile() {
   const { agencyId } = useParams<{ agencyId: string }>();
   const { data: agency, isLoading: agencyLoading } = useAgency(agencyId || null);
   const { data: royaltyHistory } = useRoyaltyHistory(agencyId || null);
+  const { franchiseurRole } = useFranchiseur();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const canManage = franchiseurRole === "directeur" || franchiseurRole === "dg";
 
   if (agencyLoading) {
     return (
@@ -53,6 +61,16 @@ export default function FranchiseurAgencyProfile() {
             {agency.slug}
           </p>
         </div>
+        
+        {canManage && (
+          <Button 
+            onClick={() => setIsEditDialogOpen(true)}
+            className="rounded-2xl bg-gradient-to-r from-primary to-helpconfort-blue-dark border-l-4 border-l-accent shadow-lg hover:shadow-xl transition-all"
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Modifier
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="info" className="w-full">
@@ -216,6 +234,13 @@ export default function FranchiseurAgencyProfile() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AgencyProfileDialog
+        agencyId={agencyId || null}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        canManage={canManage}
+      />
     </div>
   );
 }
