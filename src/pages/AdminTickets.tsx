@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAdminTickets } from '@/hooks/use-admin-tickets';
+import { Ticket } from '@/hooks/use-user-tickets';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { TicketSourceBadge } from '@/components/tickets/TicketSourceBadge';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User } from 'lucide-react';
 import { format } from 'date-fns';
@@ -87,6 +87,28 @@ export default function AdminTickets() {
     return (
       <Badge variant="outline" className={colors[priority as keyof typeof colors]}>
         {labels[priority as keyof typeof labels] || priority}
+      </Badge>
+    );
+  };
+
+  const getDemandTypeBadge = (ticket: Ticket) => {
+    if (ticket.is_live_chat && ticket.status === 'waiting') {
+      return (
+        <Badge className="bg-green-500 text-white animate-pulse">
+          🟢 Chat en cours
+        </Badge>
+      );
+    }
+    if (ticket.escalated_from_chat) {
+      return (
+        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">
+          🔄 Ex-Demande
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+        🎫 Ticket
       </Badge>
     );
   };
@@ -180,13 +202,13 @@ export default function AdminTickets() {
 
                 <Select value={filters.source} onValueChange={(v) => setFilters({ ...filters, source: v })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Source" />
+                    <SelectValue placeholder="Type de demande" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Toutes les sources</SelectItem>
-                    <SelectItem value="chat">Chat</SelectItem>
-                    <SelectItem value="portal">Portail</SelectItem>
-                    <SelectItem value="system">Système</SelectItem>
+                    <SelectItem value="all">Tous les types</SelectItem>
+                    <SelectItem value="live_chat">🟢 Chats en cours</SelectItem>
+                    <SelectItem value="escalated">🔄 Ex-Demandes</SelectItem>
+                    <SelectItem value="portal">🎫 Tickets</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -221,7 +243,7 @@ export default function AdminTickets() {
                             {getStatusBadge(ticket.status)}
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <TicketSourceBadge source={ticket.source as any} />
+                            {getDemandTypeBadge(ticket)}
                             {ticket.category && <TicketCategoryBadge category={ticket.category} />}
                             {getPriorityBadge(ticket.priority)}
                           </div>
@@ -353,12 +375,12 @@ export default function AdminTickets() {
                         <label className="text-sm font-medium">Agence</label>
                         <p className="text-sm text-muted-foreground">{selectedTicket.agency_slug || 'N/A'}</p>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium">Source</label>
-                        <div className="mt-1">
-                          <TicketSourceBadge source={selectedTicket.source as any} />
+                       <div>
+                          <label className="text-sm font-medium">Type de demande</label>
+                          <div className="mt-1">
+                            {getDemandTypeBadge(selectedTicket)}
+                          </div>
                         </div>
-                      </div>
                       {selectedTicket.category && (
                         <div>
                           <label className="text-sm font-medium">Catégorie</label>
