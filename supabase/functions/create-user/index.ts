@@ -116,6 +116,33 @@ serve(async (req) => {
       throw new Error('Erreur lors de la mise à jour du profil')
     }
 
+    // Auto-créer l'agence si elle n'existe pas déjà
+    if (agence) {
+      const { data: existingAgency } = await supabaseAdmin
+        .from('apogee_agencies')
+        .select('id')
+        .eq('slug', agence.toLowerCase().replace(/[^a-z0-9]/g, '-'))
+        .maybeSingle()
+
+      if (!existingAgency) {
+        const agencySlug = agence.toLowerCase().replace(/[^a-z0-9]/g, '-')
+        const { error: agencyError } = await supabaseAdmin
+          .from('apogee_agencies')
+          .insert({
+            slug: agencySlug,
+            label: agence,
+            is_active: true
+          })
+
+        if (agencyError) {
+          console.error('Erreur création agence:', agencyError)
+          // On continue même si la création d'agence échoue
+        } else {
+          console.log('Agence créée automatiquement:', agencySlug)
+        }
+      }
+    }
+
     // Envoyer l'email avec le mot de passe temporaire seulement si demandé
     if (sendEmail !== false) {
       try {
