@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Header } from '@/components/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserTickets } from '@/hooks/use-user-tickets';
 import { Button } from '@/components/ui/button';
@@ -79,7 +78,6 @@ export default function UserTickets() {
   if (selectedTicket) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-        <Header />
         <div className="container mx-auto px-4 py-6">
           <Button
             variant="ghost"
@@ -181,7 +179,6 @@ export default function UserTickets() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <Header />
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Support / Tickets</h1>
