@@ -290,28 +290,24 @@ export default function IndicateursSAV() {
 
             {/* Grille de tuiles par univers */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {byUnivers.map((item) => {
-                const isHighRate = item.tauxSAV > 15;
-                const colorClass = isHighRate 
-                  ? "from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border-l-red-500"
-                  : "from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-l-green-500";
-                
-                return (
+              {byUnivers
+                .filter((item) => item.nbProjectsSAV > 0 && item.univers.toLowerCase() !== "non défini")
+                .map((item) => (
                   <Card 
                     key={item.univers} 
-                    className={`p-5 bg-gradient-to-br ${colorClass} border-l-4 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]`}
+                    className="p-5 bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border-l-4 border-l-red-500 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
                   >
                     <div className="space-y-3">
                       {/* Titre univers */}
                       <div className="flex items-center gap-2">
-                        <Layers className={`w-5 h-5 ${isHighRate ? 'text-red-600' : 'text-green-600'}`} />
+                        <Layers className="w-5 h-5 text-red-600" />
                         <h3 className="font-bold text-sm">{formatUniverseLabel(item.univers)}</h3>
                       </div>
 
                       {/* Taux SAV principal */}
                       <div>
                         <p className="text-xs text-muted-foreground">Taux SAV</p>
-                        <p className={`text-3xl font-bold bg-gradient-to-r ${isHighRate ? 'from-red-600 to-red-800' : 'from-green-600 to-green-800'} bg-clip-text text-transparent`}>
+                        <p className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">
                           {item.tauxSAV.toFixed(1)}%
                         </p>
                       </div>
@@ -320,7 +316,7 @@ export default function IndicateursSAV() {
                       <div className="pt-2 border-t space-y-1">
                         <div className="flex justify-between items-center">
                           <span className="text-xs text-muted-foreground">Dossiers SAV</span>
-                          <Badge variant={isHighRate ? "destructive" : "secondary"} className="font-mono">
+                          <Badge variant="destructive" className="font-mono">
                             {item.nbProjectsSAV}
                           </Badge>
                         </div>
@@ -331,8 +327,7 @@ export default function IndicateursSAV() {
                       </div>
                     </div>
                   </Card>
-                );
-              })}
+                ))}
             </div>
 
             {/* Graphique comparatif */}
@@ -341,10 +336,12 @@ export default function IndicateursSAV() {
                 Comparaison taux SAV par univers
               </h3>
               <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={byUnivers.map(item => ({ 
-                  ...item, 
-                  univers: formatUniverseLabel(item.univers) 
-                }))}>
+                <BarChart data={byUnivers
+                  .filter((item) => item.nbProjectsSAV > 0 && item.univers.toLowerCase() !== "non défini")
+                  .map(item => ({ 
+                    ...item, 
+                    univers: formatUniverseLabel(item.univers) 
+                  }))}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="univers" 
