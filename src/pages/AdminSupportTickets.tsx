@@ -36,6 +36,7 @@ export default function AdminSupportTickets() {
     assignTicket,
     addSupportMessage,
     downloadAttachment,
+    reopenTicket,
     getStats,
   } = useAdminTickets();
 
@@ -106,6 +107,7 @@ export default function AdminSupportTickets() {
       waiting: { label: 'En attente', variant: 'secondary', icon: Clock },
       in_progress: { label: 'En cours', variant: 'default', icon: AlertCircle },
       resolved: { label: 'Résolu', variant: 'outline', icon: CheckCircle2 },
+      unresolved: { label: 'Non résolu', variant: 'destructive', icon: AlertCircle },
     };
     const config = variants[status as keyof typeof variants] || variants.waiting;
     const Icon = config.icon;
@@ -233,7 +235,7 @@ export default function AdminSupportTickets() {
           </div>
 
           {/* Stats Dashboard */}
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-5">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
@@ -264,6 +266,14 @@ export default function AdminSupportTickets() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Non résolus</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{stats.unresolved}</div>
               </CardContent>
             </Card>
           </div>
@@ -392,7 +402,7 @@ export default function AdminSupportTickets() {
 
                     <TabsContent value="conversation" className="space-y-4">
                       {/* Controls */}
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="flex gap-2 flex-wrap items-center">
                         <Select
                           value={selectedTicket.status}
                           onValueChange={(v) => updateTicketStatus(selectedTicket.id, v)}
@@ -422,6 +432,17 @@ export default function AdminSupportTickets() {
                             <SelectItem value="urgent">Urgente</SelectItem>
                           </SelectContent>
                         </Select>
+
+                        {(selectedTicket.status === 'resolved' || selectedTicket.status === 'unresolved') && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => reopenTicket(selectedTicket.id)}
+                            className="ml-auto"
+                          >
+                            Réouvrir le ticket
+                          </Button>
+                        )}
                       </div>
 
                       <Separator />
@@ -452,7 +473,7 @@ export default function AdminSupportTickets() {
                       </ScrollArea>
 
                       {/* New Message Input */}
-                      {selectedTicket.status !== 'resolved' && (
+                      {selectedTicket.status !== 'resolved' && selectedTicket.status !== 'unresolved' && (
                         <div className="flex gap-2">
                           <Textarea
                             value={newMessage}
@@ -463,6 +484,21 @@ export default function AdminSupportTickets() {
                           />
                           <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
                             <Send className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+
+                      {(selectedTicket.status === 'resolved' || selectedTicket.status === 'unresolved') && (
+                        <div className="bg-muted p-4 rounded-lg text-center">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Ce ticket est {selectedTicket.status === 'resolved' ? 'résolu' : 'non résolu'}.
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => reopenTicket(selectedTicket.id)}
+                          >
+                            Réouvrir pour continuer la conversation
                           </Button>
                         </div>
                       )}

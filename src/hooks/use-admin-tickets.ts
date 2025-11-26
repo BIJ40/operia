@@ -233,13 +233,43 @@ export const useAdminTickets = () => {
     }
   };
 
+  const reopenTicket = async (ticketId: string) => {
+    try {
+      const { error } = await supabase
+        .from('support_tickets')
+        .update({ 
+          status: 'waiting',
+          resolved_at: null
+        } as any)
+        .eq('id', ticketId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: 'Ticket réouvert',
+        duration: 3000,
+      });
+      loadTickets();
+    } catch (error) {
+      console.error('Error reopening ticket:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de réouvrir le ticket',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    }
+  };
+
   const getStats = () => {
     const total = tickets.length;
     const waiting = tickets.filter((t) => t.status === 'waiting').length;
     const inProgress = tickets.filter((t) => t.status === 'in_progress').length;
     const resolved = tickets.filter((t) => t.status === 'resolved').length;
+    const unresolved = tickets.filter((t) => t.status === 'unresolved').length;
 
-    return { total, waiting, inProgress, resolved };
+    return { total, waiting, inProgress, resolved, unresolved };
   };
 
   useEffect(() => {
@@ -267,6 +297,7 @@ export const useAdminTickets = () => {
     assignTicket,
     addSupportMessage,
     downloadAttachment,
+    reopenTicket,
     getStats,
   };
 };
