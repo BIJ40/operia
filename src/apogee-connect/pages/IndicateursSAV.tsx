@@ -26,7 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 
 export default function IndicateursSAV() {
   const { isAgencyReady } = useAgency();
@@ -259,21 +259,49 @@ export default function IndicateursSAV() {
             </ResponsiveContainer>
           </Card>
 
-          {/* SAV par type apporteur */}
+          {/* SAV par type apporteur - Camembert */}
           <Card className="p-6 border-l-4 border-l-accent shadow-lg">
             <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-6">
               SAV par type d'apporteur
             </h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={byTypeApporteur.map(item => ({ ...item, type: formatApporteurType(item.type) }))}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="type" />
-                <YAxis />
-                <Tooltip />
+            <ResponsiveContainer width="100%" height={400}>
+              <PieChart>
+                <Pie
+                  data={byTypeApporteur.map(item => ({
+                    name: formatApporteurType(item.type),
+                    value: item.nbSAVProjects,
+                    tauxSAV: item.tauxSAV,
+                    caSAV: item.caSAV,
+                  }))}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={true}
+                  label={(entry) => `${entry.name}: ${entry.value}`}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {byTypeApporteur.map((entry, index) => {
+                    const colors = ["#ef4444", "#f97316", "#f59e0b", "#84cc16", "#06b6d4", "#8b5cf6", "#ec4899"];
+                    return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                  })}
+                </Pie>
+                <Tooltip 
+                  formatter={(value: number, name: string, entry: any) => {
+                    const total = byTypeApporteur.reduce((sum, item) => sum + item.nbSAVProjects, 0);
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
+                    return [
+                      <>
+                        <div>{value} dossiers ({percentage}%)</div>
+                        <div>Taux SAV: {entry.payload.tauxSAV.toFixed(1)}%</div>
+                        <div>CA: {formatEuros(entry.payload.caSAV)}</div>
+                      </>,
+                      name
+                    ];
+                  }}
+                />
                 <Legend />
-                <Bar dataKey="tauxSAV" fill="#ef4444" name="Taux SAV (%)" />
-                <Bar dataKey="nbSAVProjects" fill="#f97316" name="Nb dossiers SAV" />
-              </BarChart>
+              </PieChart>
             </ResponsiveContainer>
           </Card>
 
