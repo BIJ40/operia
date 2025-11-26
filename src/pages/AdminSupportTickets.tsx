@@ -45,6 +45,15 @@ export default function AdminSupportTickets() {
   const [darkMode, setDarkMode] = useState(false);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
 
+  const getCardClassName = (status: string) => {
+    const isActive = filters.status === status;
+    return `cursor-pointer transition-all ${
+      isActive 
+        ? 'shadow-xl ring-2 ring-primary scale-105' 
+        : 'hover:shadow-lg'
+    }`;
+  };
+
   useEffect(() => {
     const loadEmailPreference = async () => {
       if (!user?.id) return;
@@ -237,7 +246,7 @@ export default function AdminSupportTickets() {
           {/* Stats Dashboard */}
           <div className="grid gap-4 md:grid-cols-5">
             <Card 
-              className="cursor-pointer hover:shadow-lg transition-shadow"
+              className={getCardClassName('all')}
               onClick={() => setFilters({ ...filters, status: 'all' })}
             >
               <CardHeader className="pb-2">
@@ -248,7 +257,7 @@ export default function AdminSupportTickets() {
               </CardContent>
             </Card>
             <Card 
-              className="cursor-pointer hover:shadow-lg transition-shadow"
+              className={getCardClassName('waiting')}
               onClick={() => setFilters({ ...filters, status: 'waiting' })}
             >
               <CardHeader className="pb-2">
@@ -259,7 +268,7 @@ export default function AdminSupportTickets() {
               </CardContent>
             </Card>
             <Card 
-              className="cursor-pointer hover:shadow-lg transition-shadow"
+              className={getCardClassName('in_progress')}
               onClick={() => setFilters({ ...filters, status: 'in_progress' })}
             >
               <CardHeader className="pb-2">
@@ -270,7 +279,7 @@ export default function AdminSupportTickets() {
               </CardContent>
             </Card>
             <Card 
-              className="cursor-pointer hover:shadow-lg transition-shadow"
+              className={getCardClassName('resolved')}
               onClick={() => setFilters({ ...filters, status: 'resolved' })}
             >
               <CardHeader className="pb-2">
@@ -281,7 +290,7 @@ export default function AdminSupportTickets() {
               </CardContent>
             </Card>
             <Card 
-              className="cursor-pointer hover:shadow-lg transition-shadow"
+              className={getCardClassName('unresolved')}
               onClick={() => setFilters({ ...filters, status: 'unresolved' })}
             >
               <CardHeader className="pb-2">
