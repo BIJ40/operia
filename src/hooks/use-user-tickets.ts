@@ -135,7 +135,8 @@ export const useUserTickets = () => {
     subject: string,
     category: string,
     description: string,
-    files: File[]
+    files: File[],
+    priority: string = 'normal'
   ) => {
     if (!user) return null;
 
@@ -161,7 +162,7 @@ export const useUserTickets = () => {
           subject,
           category,
           status: 'waiting',
-          priority: 'normal',
+          priority,
           source: 'portal',
           agency_slug: profile?.agence || null,
           has_attachments: files.length > 0,
