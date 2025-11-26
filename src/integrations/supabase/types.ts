@@ -475,6 +475,7 @@ export type Database = {
           last_name: string | null
           must_change_password: boolean | null
           role_agence: string | null
+          support_level: number | null
           updated_at: string
         }
         Insert: {
@@ -488,6 +489,7 @@ export type Database = {
           last_name?: string | null
           must_change_password?: boolean | null
           role_agence?: string | null
+          support_level?: number | null
           updated_at?: string
         }
         Update: {
@@ -501,6 +503,7 @@ export type Database = {
           last_name?: string | null
           must_change_password?: boolean | null
           role_agence?: string | null
+          support_level?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -711,6 +714,7 @@ export type Database = {
           chatbot_conversation: Json | null
           created_at: string
           escalated_from_chat: boolean | null
+          escalation_history: Json | null
           has_attachments: boolean
           id: string
           is_live_chat: boolean | null
@@ -722,6 +726,7 @@ export type Database = {
           source: string
           status: string
           subject: string
+          support_level: number | null
           updated_at: string
           user_id: string
           user_pseudo: string
@@ -734,6 +739,7 @@ export type Database = {
           chatbot_conversation?: Json | null
           created_at?: string
           escalated_from_chat?: boolean | null
+          escalation_history?: Json | null
           has_attachments?: boolean
           id?: string
           is_live_chat?: boolean | null
@@ -745,6 +751,7 @@ export type Database = {
           source?: string
           status?: string
           subject?: string
+          support_level?: number | null
           updated_at?: string
           user_id: string
           user_pseudo: string
@@ -757,6 +764,7 @@ export type Database = {
           chatbot_conversation?: Json | null
           created_at?: string
           escalated_from_chat?: boolean | null
+          escalation_history?: Json | null
           has_attachments?: boolean
           id?: string
           is_live_chat?: boolean | null
@@ -768,6 +776,7 @@ export type Database = {
           source?: string
           status?: string
           subject?: string
+          support_level?: number | null
           updated_at?: string
           user_id?: string
           user_pseudo?: string

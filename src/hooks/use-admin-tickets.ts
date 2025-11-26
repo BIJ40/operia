@@ -4,8 +4,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Ticket, Attachment } from './use-user-tickets';
 
+interface SupportUser {
+  id: string;
+  first_name: string;
+  last_name: string;
+  support_level: number;
+}
+
 export const useAdminTickets = () => {
-  const { canManageTickets } = useAuth();
+  const { canManageTickets, user } = useAuth();
   const { toast } = useToast();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [allTickets, setAllTickets] = useState<Ticket[]>([]); // Liste complète pour les stats
@@ -13,6 +20,7 @@ export const useAdminTickets = () => {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [supportUsers, setSupportUsers] = useState<SupportUser[]>([]);
   const [filters, setFilters] = useState({
     status: 'all',
     category: 'all',
@@ -391,6 +399,96 @@ export const useAdminTickets = () => {
     }
   };
 
+  const loadSupportUsers = async () => {
+    try {
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'support');
+
+      if (rolesError) throw rolesError;
+
+      if (!userRoles || userRoles.length === 0) {
+        setSupportUsers([]);
+        return;
+      }
+
+      const userIds = userRoles.map(ur => ur.user_id);
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, support_level')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      setSupportUsers(profiles as SupportUser[]);
+    } catch (error) {
+      console.error('Error loading support users:', error);
+    }
+  };
+
+  const escalateTicket = async (
+    ticketId: string, 
+    targetLevel: number, 
+    targetUserId: string,
+    reason: string
+  ) => {
+    try {
+      const currentTicket = tickets.find(t => t.id === ticketId) || selectedTicket;
+      if (!currentTicket) throw new Error('Ticket not found');
+
+      const escalationEntry = {
+        timestamp: new Date().toISOString(),
+        from_level: currentTicket.support_level || 1,
+        to_level: targetLevel,
+        from_user: user?.id,
+        to_user: targetUserId,
+        reason,
+      };
+
+      const currentHistory = Array.isArray(currentTicket.escalation_history) 
+        ? currentTicket.escalation_history 
+        : [];
+
+      const { error } = await supabase
+        .from('support_tickets')
+        .update({
+          support_level: targetLevel,
+          assigned_to: targetUserId,
+          escalation_history: [...currentHistory, escalationEntry],
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', ticketId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: `Ticket escaladé au niveau ${targetLevel}`,
+        duration: 3000,
+      });
+
+      await loadTickets();
+      if (selectedTicket?.id === ticketId) {
+        const { data } = await supabase
+          .from('support_tickets')
+          .select('*')
+          .eq('id', ticketId)
+          .single();
+        if (data) setSelectedTicket(data as Ticket);
+      }
+    } catch (error) {
+      console.error('Error escalating ticket:', error);
+      toast({
+        title: 'Erreur',
+        description: "Impossible d'escalader le ticket",
+        variant: 'destructive',
+        duration: 3000,
+      });
+    }
+  };
+
   const getStats = () => {
     const total = allTickets.length;
     const waiting = allTickets.filter((t) => t.status === 'waiting').length;
@@ -403,6 +501,7 @@ export const useAdminTickets = () => {
 
   useEffect(() => {
     loadTickets();
+    loadSupportUsers();
   }, [filters]);
 
   useEffect(() => {
@@ -420,6 +519,7 @@ export const useAdminTickets = () => {
     isLoading,
     filters,
     setFilters,
+    supportUsers,
     loadTickets,
     updateTicketStatus,
     updateTicketPriority,
@@ -428,6 +528,7 @@ export const useAdminTickets = () => {
     addSupportMessage,
     downloadAttachment,
     reopenTicket,
+    escalateTicket,
     getStats,
   };
 };

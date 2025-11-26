@@ -20,6 +20,8 @@ import { Layout } from '@/components/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+import { EscalateTicketDialog } from '@/components/admin/support/EscalateTicketDialog';
+
 export default function AdminSupportTickets() {
   const { canManageTickets, user } = useAuth();
   const navigate = useNavigate();
@@ -32,6 +34,7 @@ export default function AdminSupportTickets() {
     isLoading,
     filters,
     setFilters,
+    supportUsers,
     updateTicketStatus,
     updateTicketPriority,
     assignTicket,
@@ -39,6 +42,7 @@ export default function AdminSupportTickets() {
     addSupportMessage,
     downloadAttachment,
     reopenTicket,
+    escalateTicket,
     getStats,
   } = useAdminTickets();
 
@@ -46,7 +50,15 @@ export default function AdminSupportTickets() {
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [darkMode, setDarkMode] = useState(false);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
-  const [supportUsers, setSupportUsers] = useState<Array<{ id: string; name: string }>>([]);
+
+  // Transformer supportUsers pour le format attendu par les composants
+  const formattedSupportUsers = supportUsers.map(u => ({
+    id: u.id,
+    name: `${u.first_name} ${u.last_name}`,
+    first_name: u.first_name,
+    last_name: u.last_name,
+    support_level: u.support_level,
+  }));
 
   const getCardClassName = (status: string) => {
     const isActive = filters.status === status;
@@ -426,7 +438,7 @@ export default function AdminSupportTickets() {
                                 </p>
                                 {ticket.assigned_to && (
                                   <p className="text-xs text-primary font-medium mt-1">
-                                    👤 {supportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Assigné'}
+                                    👤 {formattedSupportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Assigné'}
                                   </p>
                                 )}
                               </div>
@@ -489,6 +501,14 @@ export default function AdminSupportTickets() {
                           </Button>
                         )}
 
+                        <EscalateTicketDialog
+                          currentLevel={selectedTicket.support_level || 1}
+                          supportUsers={formattedSupportUsers}
+                          onEscalate={(targetLevel, targetUserId, reason) => 
+                            escalateTicket(selectedTicket.id, targetLevel, targetUserId, reason)
+                          }
+                        />
+
                         <Select
                           value={selectedTicket.assigned_to || 'none'}
                           onValueChange={(v) => assignTicket(selectedTicket.id, v === 'none' ? '' : v)}
@@ -498,7 +518,7 @@ export default function AdminSupportTickets() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">Non assigné</SelectItem>
-                            {supportUsers.map(u => (
+                            {formattedSupportUsers.map(u => (
                               <SelectItem key={u.id} value={u.id}>
                                 👤 {u.name}
                               </SelectItem>
@@ -621,7 +641,7 @@ export default function AdminSupportTickets() {
                           <label className="text-sm font-medium">Assigné à</label>
                           <p className="text-sm text-muted-foreground">
                             {selectedTicket.assigned_to 
-                              ? `👤 ${supportUsers.find(u => u.id === selectedTicket.assigned_to)?.name || 'Utilisateur inconnu'}`
+                              ? `👤 ${formattedSupportUsers.find(u => u.id === selectedTicket.assigned_to)?.name || 'Utilisateur inconnu'}`
                               : 'Non assigné'}
                           </p>
                         </div>

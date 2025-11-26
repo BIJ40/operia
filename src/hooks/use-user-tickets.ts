@@ -25,6 +25,8 @@ export interface Ticket {
   escalated_from_chat: boolean;
   assigned_to: string | null;
   viewed_by_support_at: string | null;
+  support_level: number;
+  escalation_history: any[];
 }
 
 export interface Attachment {
