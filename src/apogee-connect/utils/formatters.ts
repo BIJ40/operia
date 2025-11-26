@@ -109,3 +109,37 @@ export function formatApporteurType(type: string | undefined | null): string {
   // Retourner le libellé mappé ou le type original si pas de correspondance
   return typeMapping[typeLower] || type;
 }
+
+/**
+ * Formater le nom d'univers pour l'affichage
+ * Transforme les slugs d'univers en libellés lisibles
+ * 
+ * @param slug - Slug technique d'univers
+ * @returns Libellé formaté pour l'affichage
+ */
+export function formatUniverseLabel(slug: string | undefined | null): string {
+  if (!slug) return 'Non défini';
+  
+  const slugLower = slug.toLowerCase().trim();
+  
+  // Mapping des slugs d'univers vers les libellés d'affichage
+  const universeMapping: Record<string, string> = {
+    'volets': 'Volets roulants',
+    'volet_roulant': 'Volets roulants',
+    'ame_logement': 'PMR',
+    'pmr': 'PMR',
+    'renovation': 'Rénovation',
+    'electricite': 'Électricité',
+    'plomberie': 'Plomberie',
+    'serrurerie': 'Serrurerie',
+    'vitrerie': 'Vitrerie',
+    'menuiserie': 'Menuiserie',
+    'chauffage': 'Chauffage',
+    'climatisation': 'Climatisation',
+    'autre': 'Autre',
+  };
+  
+  // Retourner le libellé mappé ou capitaliser le slug si pas de correspondance
+  return universeMapping[slugLower] || 
+         slug.charAt(0).toUpperCase() + slug.slice(1).toLowerCase();
+}
