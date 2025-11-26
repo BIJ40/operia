@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, CheckCircle2, Clock, AlertCircle, LayoutGrid, List } from 'lucide-react';
+import { MessageSquare, CheckCircle2, Clock, AlertCircle, LayoutGrid, List, Moon, Sun, Bell, BellOff } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { useAdminSupport } from '@/hooks/use-admin-support';
 import { TicketList } from '@/components/admin/support/TicketList';
 import { TicketDetails } from '@/components/admin/support/TicketDetails';
@@ -35,6 +38,50 @@ export default function AdminSupport() {
 
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+  const [darkMode, setDarkMode] = useState(false);
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
+
+  useEffect(() => {
+    const loadEmailPreference = async () => {
+      if (!user?.id) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email_notifications_enabled')
+        .eq('id', user.id)
+        .single();
+
+      if (!error && data) {
+        setEmailNotificationsEnabled(data.email_notifications_enabled ?? true);
+      }
+    };
+
+    loadEmailPreference();
+  }, [user?.id]);
+
+  const toggleEmailNotifications = async () => {
+    if (!user?.id) return;
+
+    const newValue = !emailNotificationsEnabled;
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ email_notifications_enabled: newValue })
+      .eq('id', user.id);
+
+    if (error) {
+      toast.error("Erreur lors de la mise à jour des préférences");
+      return;
+    }
+
+    setEmailNotificationsEnabled(newValue);
+    toast.success(
+      newValue 
+        ? "Notifications email activées" 
+        : "Notifications email désactivées",
+      { duration: 4000 }
+    );
+  };
 
   useEffect(() => {
     if (!isAdmin && !user) {
@@ -71,10 +118,28 @@ export default function AdminSupport() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className={`container mx-auto p-6 space-y-6 ${darkMode ? 'dark' : ''}`}>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Support Tickets</h1>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setDarkMode(!darkMode)}
+            className="gap-2"
+          >
+            {darkMode ? (
+              <>
+                <Sun className="w-4 h-4" />
+                Clair
+              </>
+            ) : (
+              <>
+                <Moon className="w-4 h-4" />
+                Sombre
+              </>
+            )}
+          </Button>
           <Button
             variant={viewMode === 'list' ? 'default' : 'outline'}
             size="sm"
@@ -95,6 +160,29 @@ export default function AdminSupport() {
           </Button>
         </div>
       </div>
+
+      {/* Email Notifications Card */}
+      <Card className="bg-card/50 border-l-4 border-l-primary py-3 px-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {emailNotificationsEnabled ? (
+              <Bell className="w-4 h-4 text-primary" />
+            ) : (
+              <BellOff className="w-4 h-4 text-muted-foreground" />
+            )}
+            <div>
+              <p className="text-sm font-medium">Notifications par email</p>
+              <p className="text-xs text-muted-foreground">
+                Recevoir un email lors de l'ouverture d'un ticket
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={emailNotificationsEnabled}
+            onCheckedChange={toggleEmailNotifications}
+          />
+        </div>
+      </Card>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
