@@ -19,11 +19,13 @@ import {
 import { BaseWidget } from './widgets/BaseWidget';
 import { NavigationWidget } from './widgets/NavigationWidget';
 import { MesIndicateursCard } from './MesIndicateursCard';
+import { WeatherWidget } from './widgets/WeatherWidget';
+import { QuickNotesWidget } from './widgets/QuickNotesWidget';
+import { CalendarWidget } from './widgets/CalendarWidget';
 import { useWidgetPreferences, WidgetPreference } from '@/hooks/use-widget-preferences';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
-import * as Icons from 'lucide-react';
 
 interface HomeCard {
   id: string;
@@ -37,6 +39,14 @@ interface WidgetGridProps {
   homeCards: HomeCard[];
   isDashboardEditMode: boolean;
 }
+
+type Widget = {
+  id: string;
+  type: string;
+  card?: HomeCard;
+  isLocked?: boolean;
+  preference: WidgetPreference;
+};
 
 export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) {
   const { hasAccessToScope, agence } = useAuth();
@@ -59,8 +69,9 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
   };
 
   // Créer la liste des widgets avec leurs préférences
-  const widgets = homeCards
-    .map(card => {
+  const widgets: Widget[] = [
+    // Widgets de navigation depuis homeCards
+    ...homeCards.map(card => {
       const widgetKey = `nav-${card.id}`;
       const pref = preferences.find(p => p.widget_key === widgetKey);
       
@@ -87,34 +98,64 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
           display_order: homeCards.indexOf(card),
         },
       };
-    })
+    }),
+    // Widget Support
+    {
+      id: 'support-tickets',
+      type: 'navigation',
+      card: {
+        id: 'support',
+        title: 'Support / Tickets',
+        description: 'Créer un ticket ou consulter vos demandes',
+        link: '/support-tickets',
+        icon: 'Headphones',
+      },
+      isLocked: false,
+      preference: preferences.find(p => p.widget_key === 'support-tickets') || {
+        id: 'support-tickets',
+        widget_key: 'support-tickets',
+        is_enabled: true,
+        size: 'medium' as const,
+        display_order: homeCards.length,
+      },
+    },
+    // Nouveaux widgets
+    {
+      id: 'weather',
+      type: 'weather',
+      preference: preferences.find(p => p.widget_key === 'weather') || {
+        id: 'weather',
+        widget_key: 'weather',
+        is_enabled: false,
+        size: 'small' as const,
+        display_order: homeCards.length + 1,
+      },
+    },
+    {
+      id: 'quick-notes',
+      type: 'quick-notes',
+      preference: preferences.find(p => p.widget_key === 'quick-notes') || {
+        id: 'quick-notes',
+        widget_key: 'quick-notes',
+        is_enabled: false,
+        size: 'medium' as const,
+        display_order: homeCards.length + 2,
+      },
+    },
+    {
+      id: 'calendar',
+      type: 'calendar',
+      preference: preferences.find(p => p.widget_key === 'calendar') || {
+        id: 'calendar',
+        widget_key: 'calendar',
+        is_enabled: false,
+        size: 'medium' as const,
+        display_order: homeCards.length + 3,
+      },
+    },
+  ]
     .filter(w => w.preference.is_enabled)
     .sort((a, b) => a.preference.display_order - b.preference.display_order);
-
-  // Ajouter le widget Support
-  const supportWidget = {
-    id: 'support-tickets',
-    type: 'navigation',
-    card: {
-      id: 'support',
-      title: 'Support / Tickets',
-      description: 'Créer un ticket ou consulter vos demandes',
-      link: '/support-tickets',
-      icon: 'Headphones',
-    },
-    isLocked: false,
-    preference: preferences.find(p => p.widget_key === 'support-tickets') || {
-      id: 'support-tickets',
-      widget_key: 'support-tickets',
-      is_enabled: true,
-      size: 'medium' as const,
-      display_order: widgets.length,
-    },
-  };
-
-  if (supportWidget.preference.is_enabled) {
-    widgets.push(supportWidget);
-  }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -143,6 +184,45 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
     updatePreference(widgetKey, { is_enabled: false });
   };
 
+  const renderWidget = (widget: Widget) => {
+    if (widget.type === 'mes-indicateurs') {
+      return (
+        <ApiToggleProvider>
+          <AgencyProvider>
+            <MesIndicateursCard />
+          </AgencyProvider>
+        </ApiToggleProvider>
+      );
+    }
+    
+    if (widget.type === 'weather') {
+      return <WeatherWidget />;
+    }
+    
+    if (widget.type === 'quick-notes') {
+      return <QuickNotesWidget />;
+    }
+    
+    if (widget.type === 'calendar') {
+      return <CalendarWidget />;
+    }
+    
+    // Navigation widget
+    if (widget.card) {
+      return (
+        <NavigationWidget
+          title={widget.card.title}
+          description={widget.card.description}
+          link={widget.card.link}
+          icon={widget.card.icon}
+          isLocked={widget.isLocked || false}
+        />
+      );
+    }
+    
+    return null;
+  };
+
   const activeWidget = widgets.find(w => w.id === activeId);
 
   return (
@@ -166,21 +246,7 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
               onSizeChange={(size) => handleSizeChange(widget.id, size)}
               onRemove={() => handleRemove(widget.id)}
             >
-              {widget.type === 'mes-indicateurs' ? (
-                <ApiToggleProvider>
-                  <AgencyProvider>
-                    <MesIndicateursCard />
-                  </AgencyProvider>
-                </ApiToggleProvider>
-              ) : (
-                <NavigationWidget
-                  title={widget.card.title}
-                  description={widget.card.description}
-                  link={widget.card.link}
-                  icon={widget.card.icon}
-                  isLocked={widget.isLocked}
-                />
-              )}
+              {renderWidget(widget)}
             </BaseWidget>
           ))}
         </div>
@@ -194,17 +260,7 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
               size={activeWidget.preference.size}
               isDashboardEditMode={false}
             >
-              {activeWidget.type === 'mes-indicateurs' ? (
-                <div className="h-full bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-4" />
-              ) : (
-                <NavigationWidget
-                  title={activeWidget.card.title}
-                  description={activeWidget.card.description}
-                  link={activeWidget.card.link}
-                  icon={activeWidget.card.icon}
-                  isLocked={activeWidget.isLocked}
-                />
-              )}
+              {renderWidget(activeWidget)}
             </BaseWidget>
           </div>
         )}
