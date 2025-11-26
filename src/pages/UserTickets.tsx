@@ -37,6 +37,7 @@ export default function UserTickets() {
   const [newTicket, setNewTicket] = useState({
     subject: '',
     category: 'question',
+    priority: 'normal',
     description: '',
   });
   const [files, setFiles] = useState<File[]>([]);
@@ -58,11 +59,12 @@ export default function UserTickets() {
       trimmedSubject,
       newTicket.category,
       trimmedDescription,
-      files
+      files,
+      newTicket.priority
     );
 
     if (ticket) {
-      setNewTicket({ subject: '', category: 'question', description: '' });
+      setNewTicket({ subject: '', category: 'question', priority: 'normal', description: '' });
       setFiles([]);
       setShowCreateForm(false);
     }
@@ -194,14 +196,25 @@ export default function UserTickets() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container mx-auto px-4 py-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/')}
-          className="mb-4"
-        >
-          <Home className="w-4 h-4 mr-2" />
-          Retour à l'accueil
-        </Button>
+        {showCreateForm ? (
+          <Button
+            variant="ghost"
+            onClick={() => setShowCreateForm(false)}
+            className="mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour aux tickets
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+            className="mb-4"
+          >
+            <Home className="w-4 h-4 mr-2" />
+            Retour à l'accueil
+          </Button>
+        )}
         
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Support / Tickets</h1>
@@ -237,6 +250,44 @@ export default function UserTickets() {
                     <SelectItem value="other">Autre</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <Label>Niveau d'urgence *</Label>
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  <Button
+                    type="button"
+                    variant={newTicket.priority === 'low' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, priority: 'low' })}
+                    className={newTicket.priority === 'low' ? 'bg-green-600 hover:bg-green-700' : ''}
+                  >
+                    Faible
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newTicket.priority === 'normal' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, priority: 'normal' })}
+                    className={newTicket.priority === 'normal' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                  >
+                    Normal
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newTicket.priority === 'high' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, priority: 'high' })}
+                    className={newTicket.priority === 'high' ? 'bg-orange-600 hover:bg-orange-700' : ''}
+                  >
+                    Élevé
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newTicket.priority === 'urgent' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, priority: 'urgent' })}
+                    className={newTicket.priority === 'urgent' ? 'bg-red-600 hover:bg-red-700' : ''}
+                  >
+                    Urgent
+                  </Button>
+                </div>
               </div>
 
               <div>
