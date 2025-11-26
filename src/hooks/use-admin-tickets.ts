@@ -18,6 +18,7 @@ export const useAdminTickets = () => {
     category: 'all',
     source: 'all',
     agency: 'all',
+    priority: 'all',
   });
 
   const loadTickets = async () => {
@@ -59,6 +60,9 @@ export const useAdminTickets = () => {
       }
       if (filters.agency !== 'all') {
         query = query.eq('agency_slug', filters.agency);
+      }
+      if (filters.priority !== 'all') {
+        query = query.eq('priority', filters.priority);
       }
 
       const { data, error } = await query;

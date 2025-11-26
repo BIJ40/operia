@@ -58,7 +58,8 @@ export default function AdminSupportTickets() {
     return filters.status !== 'all' || 
            filters.source !== 'all' || 
            filters.category !== 'all' || 
-           filters.agency !== 'all';
+           filters.agency !== 'all' ||
+           filters.priority !== 'all';
   };
 
   const resetFilters = () => {
@@ -67,6 +68,7 @@ export default function AdminSupportTickets() {
       source: 'all',
       category: 'all',
       agency: 'all',
+      priority: 'all',
     });
   };
 
@@ -367,15 +369,28 @@ export default function AdminSupportTickets() {
                     </SelectContent>
                   </Select>
 
-                  <Select value={filters.source} onValueChange={(v) => setFilters({ ...filters, source: v })}>
+                   <Select value={filters.source} onValueChange={(v) => setFilters({ ...filters, source: v })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Type de demande" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-background z-50">
                       <SelectItem value="all">Tous les types</SelectItem>
                       <SelectItem value="live_chat">🟢 Chats en cours</SelectItem>
                       <SelectItem value="escalated">🔄 Ex-Demandes</SelectItem>
                       <SelectItem value="portal">🎫 Tickets</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={filters.priority} onValueChange={(v) => setFilters({ ...filters, priority: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Degré d'urgence" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      <SelectItem value="all">Tous les niveaux</SelectItem>
+                      <SelectItem value="low">🟢 Faible</SelectItem>
+                      <SelectItem value="normal">🔵 Normal</SelectItem>
+                      <SelectItem value="high">🟠 Élevé</SelectItem>
+                      <SelectItem value="urgent">🔴 Urgent</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
