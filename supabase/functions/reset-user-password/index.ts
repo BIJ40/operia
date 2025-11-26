@@ -110,7 +110,7 @@ serve(async (req) => {
           : profileData.email
 
         await resend.emails.send({
-          from: 'HelpConfort <support@helpconfort.services>',
+          from: 'HelpConfort Services <support@helpconfort.services>',
           to: [profileData.email],
           subject: 'Votre nouveau mot de passe temporaire',
           html: `
