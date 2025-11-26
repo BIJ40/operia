@@ -158,6 +158,7 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
 
       // Règle automatique : si le poste devient "tete_de_reseau", attribuer le rôle système "franchiseur"
       if (roleAgence === 'tete_de_reseau' && roleAgence !== user.role_agence) {
+        console.log('Changement vers tête de réseau détecté pour utilisateur:', user.id);
         const { data: existingRole } = await supabase
           .from('user_roles')
           .select('role')
@@ -166,10 +167,13 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
         
         // Attribuer "franchiseur" si l'utilisateur n'a pas déjà un rôle ou si son rôle est "user"
         if (!existingRole || existingRole.role === 'user') {
+          console.log('Attribution automatique du rôle franchiseur');
           await supabase.from('user_roles').upsert({
             user_id: user.id,
             role: 'franchiseur'
           });
+        } else {
+          console.log('Rôle existant conservé:', existingRole.role);
         }
       }
 
