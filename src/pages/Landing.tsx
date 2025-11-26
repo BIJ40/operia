@@ -589,6 +589,18 @@ export default function Landing() {
                     ))}
                   </div>
                   
+                  {/* Help Confort Services Image */}
+                  <div className="mt-8 mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="md:col-start-1 lg:col-start-2">
+                      <img 
+                        src={helpConfortServicesImg} 
+                        alt="Help Confort Services" 
+                        className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
+                        draggable="false"
+                      />
+                    </div>
+                  </div>
+
                   {/* Support / Tickets Tile - Always visible */}
                   <Link
                     to="/support-tickets"
@@ -672,7 +684,19 @@ export default function Landing() {
                   );
                 })}
 
-                {/* Support / Tickets Tile - Same size as other tiles */}
+                {/* Help Confort Services Image */}
+                <div className="mt-8 mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="md:col-start-1 lg:col-start-2">
+                    <img 
+                      src={helpConfortServicesImg} 
+                      alt="Help Confort Services" 
+                      className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
+                      draggable="false"
+                    />
+                  </div>
+                </div>
+
+                 {/* Support / Tickets Tile - Same size as other tiles */}
                 <Link
                   to="/support-tickets"
                   className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
@@ -685,18 +709,6 @@ export default function Landing() {
                 </Link>
               </div>
             )}
-
-            {/* Help Confort Services Image */}
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="md:col-start-1 lg:col-start-2">
-                <img 
-                  src={helpConfortServicesImg} 
-                  alt="Help Confort Services" 
-                  className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
-                  draggable="false"
-                />
-              </div>
-            </div>
 
             {isEditMode && isAdmin && (
               <div className="flex justify-end mt-8">
