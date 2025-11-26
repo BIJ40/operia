@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Resend } from 'https://esm.sh/resend@2.0.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -92,6 +93,66 @@ serve(async (req) => {
     }
 
     console.log('Profile updated - must_change_password set to true')
+
+    // Récupérer l'email de l'utilisateur
+    const { data: profileData } = await supabaseAdmin
+      .from('profiles')
+      .select('email, first_name, last_name')
+      .eq('id', targetUserId)
+      .single()
+
+    // Envoyer l'email avec le mot de passe provisoire
+    if (profileData?.email) {
+      try {
+        const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
+        const userName = profileData.first_name 
+          ? `${profileData.first_name} ${profileData.last_name || ''}`
+          : profileData.email
+
+        await resend.emails.send({
+          from: 'HelpConfort <support@helpconfort.services>',
+          to: [profileData.email],
+          subject: 'Votre nouveau mot de passe temporaire',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #333;">Réinitialisation de votre mot de passe</h2>
+              <p>Bonjour ${userName},</p>
+              <p>Un administrateur a généré un nouveau mot de passe temporaire pour votre compte.</p>
+              
+              <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 0; font-size: 14px; color: #666;">Votre mot de passe temporaire :</p>
+                <p style="font-size: 20px; font-weight: bold; color: #333; margin: 10px 0; font-family: monospace;">
+                  ${newPassword}
+                </p>
+              </div>
+
+              <p style="color: #d9534f; font-weight: bold;">
+                ⚠️ Important : Vous devrez changer ce mot de passe lors de votre prochaine connexion.
+              </p>
+
+              <p>Pour vous connecter :</p>
+              <ol>
+                <li>Rendez-vous sur la page de connexion</li>
+                <li>Utilisez votre email : <strong>${profileData.email}</strong></li>
+                <li>Entrez le mot de passe temporaire ci-dessus</li>
+                <li>Suivez les instructions pour définir votre nouveau mot de passe</li>
+              </ol>
+
+              <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+              
+              <p style="color: #999; font-size: 12px;">
+                Si vous n'avez pas demandé cette réinitialisation, contactez immédiatement votre administrateur.
+              </p>
+            </div>
+          `,
+        })
+
+        console.log('Password reset email sent successfully to:', profileData.email)
+      } catch (emailError) {
+        console.error('Error sending email:', emailError)
+        // Ne pas bloquer la réponse si l'email échoue
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: true }),
