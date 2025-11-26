@@ -54,6 +54,22 @@ export default function AdminSupportTickets() {
     }`;
   };
 
+  const hasActiveFilters = () => {
+    return filters.status !== 'all' || 
+           filters.source !== 'all' || 
+           filters.category !== 'all' || 
+           filters.agency !== 'all';
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      status: 'all',
+      source: 'all',
+      category: 'all',
+      agency: 'all',
+    });
+  };
+
   useEffect(() => {
     const loadEmailPreference = async () => {
       if (!user?.id) return;
@@ -244,6 +260,19 @@ export default function AdminSupportTickets() {
           </div>
 
           {/* Stats Dashboard */}
+          {hasActiveFilters() && (
+            <div className="flex justify-end mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={resetFilters}
+                className="gap-2"
+              >
+                <AlertCircle className="w-4 h-4" />
+                Réinitialiser les filtres
+              </Button>
+            </div>
+          )}
           <div className="grid gap-4 md:grid-cols-5">
             <Card 
               className={getCardClassName('all')}
