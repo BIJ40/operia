@@ -23,7 +23,7 @@ export function Layout({ children, showHeader = true, showSidebar = true, sideba
   useStorageQuota(); // Surveillance automatique du localStorage
   useUserPresence(); // Tracking de la présence utilisateur
   useConnectionLogger(); // Log des connexions/déconnexions
-  useAdminConnectionNotifications(); // Notifications temps réel pour les admins
+  // useAdminConnectionNotifications(); // Notifications temps réel pour les admins - DÉSACTIVÉ
   
   const SidebarComponent = sidebarType === 'apporteur' 
     ? AppSidebarApporteur 
