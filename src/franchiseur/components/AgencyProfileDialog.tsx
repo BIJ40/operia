@@ -14,9 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAgency } from "../hooks/useAgencies";
+import { useAnimators } from "../hooks/useAnimators";
 import { RoyaltyConfigSection } from "./RoyaltyConfigSection";
 
 interface AgencyProfileDialogProps {
@@ -33,6 +35,7 @@ export function AgencyProfileDialog({
   canManage,
 }: AgencyProfileDialogProps) {
   const { data: agency, isLoading } = useAgency(agencyId);
+  const { data: animators } = useAnimators();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
 
@@ -250,6 +253,36 @@ export function AgencyProfileDialog({
                     placeholder="75001"
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-semibold">Animateur réseau</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="animateur_id">Animateur rattaché</Label>
+                <Select
+                  value={formData.animateur_id}
+                  onValueChange={(value) => setFormData({ ...formData, animateur_id: value })}
+                  disabled={!canManage}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un animateur" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucun animateur</SelectItem>
+                    {animators?.map((animator) => (
+                      <SelectItem key={animator.id} value={animator.id}>
+                        {animator.first_name} {animator.last_name} ({animator.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {animators?.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Aucun animateur disponible. Créez d'abord des utilisateurs avec le rôle "Animateur".
+                  </p>
+                )}
               </div>
             </div>
           </TabsContent>
