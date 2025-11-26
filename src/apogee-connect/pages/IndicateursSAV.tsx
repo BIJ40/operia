@@ -376,7 +376,7 @@ export default function IndicateursSAV() {
           {/* SAV par technicien */}
           <Card className="p-6 border-l-4 border-l-accent shadow-lg">
             <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-6">
-              SAV par technicien (responsable = dernier intervenu)
+              Technicien impliqué
             </h2>
             <div className="overflow-x-auto">
               <Table>
