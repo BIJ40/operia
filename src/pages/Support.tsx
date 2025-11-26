@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Clock, CheckCircle, Send, LayoutGrid, List } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { MessageSquare, Clock, CheckCircle, Send, LayoutGrid, List, Bell, BellOff } from 'lucide-react';
 import { KanbanView } from '@/components/admin/support/KanbanView';
 
 interface SupportTicket {
@@ -47,6 +49,7 @@ export default function Support() {
   const [isUserTyping, setIsUserTyping] = useState(false);
   const [activeTab, setActiveTab] = useState('waiting');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
 
   // Rediriger si pas support
   useEffect(() => {
@@ -59,6 +62,7 @@ export default function Support() {
   useEffect(() => {
     if (!user) return;
     loadTickets();
+    loadEmailNotificationPreference();
 
     // Écouter les changements en temps réel
     const channel = supabase
@@ -182,6 +186,55 @@ export default function Support() {
       setMessages(data || []);
     } catch (error) {
       console.error('Error loading messages:', error);
+    }
+  };
+
+  const loadEmailNotificationPreference = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email_notifications_enabled')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setEmailNotificationsEnabled(data.email_notifications_enabled ?? true);
+      }
+    } catch (error) {
+      console.error('Error loading email notification preference:', error);
+    }
+  };
+
+  const toggleEmailNotifications = async (enabled: boolean) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ email_notifications_enabled: enabled })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setEmailNotificationsEnabled(enabled);
+      toast({
+        title: enabled ? 'Notifications activées' : 'Notifications désactivées',
+        description: enabled 
+          ? 'Vous recevrez des emails pour les nouveaux tickets'
+          : 'Vous ne recevrez plus d\'emails pour les nouveaux tickets',
+        duration: 4000,
+      });
+    } catch (error) {
+      console.error('Error updating email notification preference:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour les notifications',
+        variant: 'destructive',
+        duration: 4000,
+      });
     }
   };
 
@@ -342,6 +395,32 @@ export default function Support() {
             </Button>
           </div>
         </div>
+
+        {/* Préférences de notifications */}
+        <Card className="mb-6 border-l-4 border-l-primary">
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              {emailNotificationsEnabled ? (
+                <Bell className="w-5 h-5 text-primary" />
+              ) : (
+                <BellOff className="w-5 h-5 text-muted-foreground" />
+              )}
+              <div>
+                <Label htmlFor="email-notifications" className="text-base font-semibold cursor-pointer">
+                  Notifications par email
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Recevez un email lors de l'ouverture d'un nouveau ticket
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="email-notifications"
+              checked={emailNotificationsEnabled}
+              onCheckedChange={toggleEmailNotifications}
+            />
+          </CardContent>
+        </Card>
 
         {viewMode === 'kanban' ? (
           <KanbanView
