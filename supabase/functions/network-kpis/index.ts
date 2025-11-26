@@ -50,21 +50,19 @@ async function loadAgencyData(agencySlug: string) {
         body: JSON.stringify({ API_KEY: apiKey }),
       });
 
-      // Check if response is OK and is JSON
-      const contentType = response.headers.get('content-type');
-      if (!response.ok || !contentType?.includes('application/json')) {
-        const preview = await response.text();
-        console.error(`❌ ${agencySlug}/${endpoint}: HTTP ${response.status}, Content-Type: ${contentType}`);
-        console.error(`Response preview: ${preview.substring(0, 200)}`);
-        return [];
-      }
-
       try {
-        return await response.json();
+        const text = await response.text();
+        // Certains serveurs Apogée renvoient du JSON mais avec un mauvais Content-Type,
+        // donc on tente toujours un parse JSON, et on log seulement si ça échoue.
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          console.error(`❌ ${agencySlug}/${endpoint}: JSON parse error`);
+          console.error(`Response preview: ${text.substring(0, 200)}`);
+          return [];
+        }
       } catch (e) {
-        const preview = await response.text();
-        console.error(`❌ ${agencySlug}/${endpoint}: JSON parse error`);
-        console.error(`Response preview: ${preview.substring(0, 200)}`);
+        console.error(`❌ ${agencySlug}/${endpoint}: network error`, e);
         return [];
       }
     });
