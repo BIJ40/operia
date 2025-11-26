@@ -59,15 +59,15 @@ export function BaseWidget({
   const sizeClasses = {
     small: 'col-span-1',   // 1 bloc
     medium: 'col-span-2',  // 2 blocs
-    large: 'col-span-3',   // 3 blocs
-    xlarge: 'col-span-4',  // 4 blocs
+    large: 'col-span-4',   // 4 blocs
+    xlarge: 'col-span-8',  // 8 blocs (pleine largeur)
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`${sizeClasses[size]} ${className} relative group transition-all duration-200 ease-in-out`}
+      className={`${sizeClasses[size]} ${className} relative group transition-all duration-500 ease-out`}
     >
       {isDashboardEditMode && (
         <div className="absolute inset-x-0 top-0 z-50 flex items-center justify-end gap-1.5 px-2 pt-1.5 pointer-events-none">
@@ -91,10 +91,10 @@ export function BaseWidget({
                     Moyen (2 blocs)
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onSizeChange('large')}>
-                    Grand (3 blocs)
+                    Large (4 blocs)
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onSizeChange('xlarge')}>
-                    Très grand (4 blocs)
+                    Pleine largeur (8 blocs)
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
