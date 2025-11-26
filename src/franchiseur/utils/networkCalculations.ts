@@ -53,7 +53,11 @@ export function calculateTop5Agencies(agencyData: AgencyData[]) {
           
           return isWithinInterval(factureDate, { start: yearStart, end: yearEnd });
         })
-        .reduce((sum: number, f: any) => sum + (f.montantHT || 0), 0);
+        .reduce((sum: number, f: any) => {
+          const montantRaw = f.data?.totalHT || f.totalHT || f.montantHT || 0;
+          const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+          return sum + montant;
+        }, 0);
 
       return { agencyId: agency.agencyId, agencyLabel: agency.agencyLabel, ca };
     })
@@ -123,7 +127,9 @@ export function calculateBestApporteur(agencyData: AgencyData[]) {
         nbDossiers: 0 
       };
       
-      existing.ca += facture.montantHT || 0;
+      const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
+      const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+      existing.ca += montant;
       
       // Count unique projects per apporteur
       apporteurMap.set(commanditaireId, existing);

@@ -77,7 +77,11 @@ export class NetworkDataService {
       if (!agency.data?.factures) return sum;
       const agencyCA = agency.data.factures
         .filter((f: any) => f.type === 'facture')
-        .reduce((total: number, f: any) => total + (f.montantHT || 0), 0);
+        .reduce((total: number, f: any) => {
+          const montantRaw = f.data?.totalHT || f.totalHT || f.montantHT || 0;
+          const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+          return total + montant;
+        }, 0);
       return sum + agencyCA;
     }, 0);
   }
