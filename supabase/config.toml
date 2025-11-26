@@ -24,6 +24,9 @@ verify_jwt = true
 [functions.reset-user-password]
 verify_jwt = true
 
+[functions.update-user-email]
+verify_jwt = true
+
 [functions.notify-support-ticket]
 verify_jwt = true
 
