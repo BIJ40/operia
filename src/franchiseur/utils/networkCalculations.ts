@@ -235,19 +235,24 @@ export function calculateNetworkSAVStats(agencyData: AgencyData[]): NetworkSAVSt
   agencyData.forEach((agency) => {
     if (!agency.data?.projects || !agency.data?.interventions) return;
 
-    const projectIds = new Set(agency.data.projects.map((p: any) => p.id));
-    const agencyProjectCount = projectIds.size;
-    
+    const agencyProjectCount = agency.data.projects.length;
     if (agencyProjectCount === 0) return;
 
-    const savProjectIds = new Set();
+    // Count interventions per project
+    const interventionCountByProject = new Map<number, number>();
     agency.data.interventions.forEach((intervention: any) => {
-      if (intervention.type === 'sav' && projectIds.has(intervention.projectId)) {
-        savProjectIds.add(intervention.projectId);
-      }
+      const count = interventionCountByProject.get(intervention.projectId) || 0;
+      interventionCountByProject.set(intervention.projectId, count + 1);
     });
 
-    const agencySAVCount = savProjectIds.size;
+    // Count SAV projects (projects with more than 1 intervention)
+    let agencySAVCount = 0;
+    agency.data.projects.forEach((project: any) => {
+      const interventionCount = interventionCountByProject.get(project.id) || 0;
+      if (interventionCount > 1) {
+        agencySAVCount++;
+      }
+    });
 
     // Accumulate for global calculation
     totalProjects += agencyProjectCount;
