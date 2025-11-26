@@ -66,9 +66,19 @@ export function calculateTransfoParUnivers(
   // États acceptés pour les devis (order = commandé, invoice = facturé)
   const acceptedStates = ["order", "invoice"];
 
+  console.log(`[TransfoParUnivers] Début analyse - ${devis.length} devis, ${factures.length} factures`);
+
   // ÉTAPE 1: Identifier les projets ayant au moins un devis accepté dans la période
   const projectsWithAcceptedQuote = new Set<number>();
   const acceptedQuotesByProject = new Map<number, any[]>();
+
+  // Compter les états de devis pour debug
+  const devisStatesCounts = new Map<string, number>();
+  devis.forEach((d) => {
+    const state = d.state || "undefined";
+    devisStatesCounts.set(state, (devisStatesCounts.get(state) || 0) + 1);
+  });
+  console.log(`[TransfoParUnivers] États des devis:`, Object.fromEntries(devisStatesCounts));
 
   devis.forEach((d) => {
     if (!acceptedStates.includes(d.state)) return;
@@ -95,6 +105,17 @@ export function calculateTransfoParUnivers(
   });
 
   console.log(`[TransfoParUnivers] Projets avec devis accepté: ${projectsWithAcceptedQuote.size}`);
+  
+  // Log des univers trouvés dans les projets avec devis
+  const universesInProjects = new Set<string>();
+  projectsWithAcceptedQuote.forEach((projectId) => {
+    const project = projectsMap.get(projectId);
+    if (project) {
+      const universes = project.data?.universes || project.universes || [];
+      universes.forEach((u: string) => universesInProjects.add(u));
+    }
+  });
+  console.log(`[TransfoParUnivers] Univers trouvés dans projets avec devis:`, Array.from(universesInProjects));
 
   // ÉTAPE 2: Calculer CA devis par univers (uniquement projets avec devis accepté)
   projectsWithAcceptedQuote.forEach((projectId) => {
@@ -124,11 +145,16 @@ export function calculateTransfoParUnivers(
   });
 
   // ÉTAPE 3: Calculer CA factures par univers (UNIQUEMENT projets avec devis accepté)
+  let facturesCountTotal = 0;
+  let facturesCountIncluded = 0;
+  
   factures.forEach((f) => {
+    facturesCountTotal++;
     if (f.state === "canceled" || f.data?.type === "avoir") return;
 
     // RESTRICTION: ne compter que les factures des projets avec devis accepté
     if (!projectsWithAcceptedQuote.has(f.projectId)) return;
+    facturesCountIncluded++;
 
     const dateReelle = f.dateReelle || f.date;
     if (!dateReelle) return;
@@ -159,6 +185,8 @@ export function calculateTransfoParUnivers(
       stats[normalized].caFactures += caFacture / nbUniverses;
     });
   });
+
+  console.log(`[TransfoParUnivers] Factures: ${facturesCountIncluded} incluses / ${facturesCountTotal} totales`);
 
   // ÉTAPE 4: Calculer taux de transformation (plafonné à 100%)
   const result: Record<string, { caDevis: number; caFactures: number; tauxTransfo: number }> = {};
