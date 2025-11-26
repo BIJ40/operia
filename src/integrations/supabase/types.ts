@@ -606,6 +606,44 @@ export type Database = {
         }
         Relationships: []
       }
+      support_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_messages: {
         Row: {
           created_at: string
@@ -667,43 +705,58 @@ export type Database = {
       }
       support_tickets: {
         Row: {
+          agency_slug: string | null
           assigned_to: string | null
+          category: string | null
           chatbot_conversation: Json | null
           created_at: string
+          has_attachments: boolean
           id: string
           priority: string
           rating: number | null
           rating_comment: string | null
           resolved_at: string | null
+          source: string
           status: string
+          subject: string
           updated_at: string
           user_id: string
           user_pseudo: string
         }
         Insert: {
+          agency_slug?: string | null
           assigned_to?: string | null
+          category?: string | null
           chatbot_conversation?: Json | null
           created_at?: string
+          has_attachments?: boolean
           id?: string
           priority?: string
           rating?: number | null
           rating_comment?: string | null
           resolved_at?: string | null
+          source?: string
           status?: string
+          subject?: string
           updated_at?: string
           user_id: string
           user_pseudo: string
         }
         Update: {
+          agency_slug?: string | null
           assigned_to?: string | null
+          category?: string | null
           chatbot_conversation?: Json | null
           created_at?: string
+          has_attachments?: boolean
           id?: string
           priority?: string
           rating?: number | null
           rating_comment?: string | null
           resolved_at?: string | null
+          source?: string
           status?: string
+          subject?: string
           updated_at?: string
           user_id?: string
           user_pseudo?: string
@@ -889,7 +942,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "support"
+      app_role: "admin" | "user" | "support" | "franchiseur"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1017,7 +1070,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "support"],
+      app_role: ["admin", "user", "support", "franchiseur"],
     },
   },
 } as const
