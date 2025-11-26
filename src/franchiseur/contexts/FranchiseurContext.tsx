@@ -23,7 +23,7 @@ interface FranchiseurContextType {
 const FranchiseurContext = createContext<FranchiseurContextType | undefined>(undefined);
 
 export function FranchiseurProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, isFranchiseur } = useAuth();
   const [franchiseurRole, setFranchiseurRole] = useState<FranchiseurRole>(null);
   const [assignedAgencies, setAssignedAgencies] = useState<string[]>([]);
   const [selectedAgencies, setSelectedAgencies] = useState<string[]>([]);
@@ -37,6 +37,12 @@ export function FranchiseurProvider({ children }: { children: ReactNode }) {
 
     const loadFranchiseurData = async () => {
       setIsLoading(true);
+      
+      // First check if user has franchiseur app role
+      if (!isFranchiseur) {
+        setIsLoading(false);
+        return;
+      }
       
       // Load franchiseur role
       const { data: roleData } = await supabase
@@ -65,13 +71,18 @@ export function FranchiseurProvider({ children }: { children: ReactNode }) {
           setAssignedAgencies([]);
           setSelectedAgencies([]);
         }
+      } else {
+        // If user has franchiseur app role but no specific role, default to DG (full access)
+        setFranchiseurRole('dg');
+        setAssignedAgencies([]);
+        setSelectedAgencies([]);
       }
 
       setIsLoading(false);
     };
 
     loadFranchiseurData();
-  }, [user]);
+  }, [user, isFranchiseur]);
 
   const permissions: FranchiseurPermissions = {
     canViewRoyalties: franchiseurRole === 'directeur' || franchiseurRole === 'dg',
