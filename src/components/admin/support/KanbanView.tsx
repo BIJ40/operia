@@ -107,7 +107,21 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
     if (!over) return;
 
     const ticketId = active.id as string;
-    const newStatus = over.id as string;
+    
+    // Déterminer le statut de la colonne de destination
+    // Si over.id est un ID de colonne, l'utiliser directement
+    // Sinon, trouver le ticket et utiliser son statut (car on drop sur un autre ticket)
+    let newStatus: string;
+    
+    const isColumn = columns.some(col => col.status === over.id);
+    if (isColumn) {
+      newStatus = over.id as string;
+    } else {
+      // On a droppé sur un ticket, trouver sa colonne
+      const targetTicket = tickets.find(t => t.id === over.id);
+      if (!targetTicket) return;
+      newStatus = targetTicket.status;
+    }
 
     // Si le ticket est déplacé vers une nouvelle colonne
     const ticket = tickets.find(t => t.id === ticketId);
@@ -168,7 +182,10 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
                   items={columnTickets.map(t => t.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="space-y-3">
+                  <div 
+                    className="space-y-3 min-h-[100px]"
+                    data-column-status={column.status}
+                  >
                     {columnTickets.map((ticket) => (
                       <SortableTicketCard
                         key={ticket.id}
