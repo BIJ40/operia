@@ -49,9 +49,9 @@ function FranchiseurLayoutContent() {
 }
 
 export default function FranchiseurLayout() {
-  const { user } = useAuth();
+  const { user, isFranchiseur } = useAuth();
 
-  if (!user) {
+  if (!user || !isFranchiseur) {
     return <Navigate to="/" replace />;
   }
 
