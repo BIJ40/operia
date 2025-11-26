@@ -9,6 +9,8 @@ import { Chatbot } from '@/components/Chatbot';
 import { ImageModal } from '@/components/ImageModal';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
 import { useUserPresence } from '@/hooks/use-user-presence';
+import { useConnectionLogger } from '@/hooks/use-connection-logger';
+import { useAdminConnectionNotifications } from '@/hooks/use-admin-connection-notifications';
 
 interface LayoutProps {
   children: ReactNode;
@@ -20,6 +22,8 @@ interface LayoutProps {
 export function Layout({ children, showHeader = true, showSidebar = true, sidebarType = 'apogee' }: LayoutProps) {
   useStorageQuota(); // Surveillance automatique du localStorage
   useUserPresence(); // Tracking de la présence utilisateur
+  useConnectionLogger(); // Log des connexions/déconnexions
+  useAdminConnectionNotifications(); // Notifications temps réel pour les admins
   
   const SidebarComponent = sidebarType === 'apporteur' 
     ? AppSidebarApporteur 
