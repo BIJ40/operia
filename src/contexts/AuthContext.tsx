@@ -261,6 +261,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Si aucun rôle agence, accès à tout
     if (!roleAgence) return true;
     
+    // Les dirigeants ont automatiquement accès aux indicateurs
+    if (scope === 'mes_indicateurs' && roleAgence === 'dirigeant') {
+      return true;
+    }
+    
     // PRIORITÉ 1: Vérifier les permissions individuelles
     if (scope in individualPermissions) {
       return individualPermissions[scope];
