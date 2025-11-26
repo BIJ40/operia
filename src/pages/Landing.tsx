@@ -15,7 +15,7 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { MesIndicateursCard } from '@/components/landing/MesIndicateursCard';
 import { WidgetGrid } from '@/components/landing/WidgetGrid';
-import { WidgetMenu } from '@/components/landing/WidgetMenu';
+import { WidgetsPanelButton } from '@/components/landing/WidgetsPanelButton';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { useWidgetPreferences } from '@/hooks/use-widget-preferences';
@@ -614,7 +614,7 @@ export default function Landing() {
                   isDashboardEditMode={false}
                 />
                 
-                <WidgetMenu
+                <WidgetsPanelButton
                   widgets={homeCards.map(card => {
                     const widgetKey = `nav-${card.id}`;
                     const pref = preferences.find(p => p.widget_key === widgetKey);
@@ -623,12 +623,14 @@ export default function Landing() {
                       title: card.title,
                       description: card.description,
                       isEnabled: pref?.is_enabled ?? true,
+                      isPinned: true,
                     };
                   }).concat({
                     key: 'support-tickets',
                     title: 'Support / Tickets',
                     description: 'Créer un ticket ou consulter vos demandes',
                     isEnabled: preferences.find(p => p.widget_key === 'support-tickets')?.is_enabled ?? true,
+                    isPinned: true,
                   })}
                   onToggleWidget={(widgetKey, enabled) => updatePreference(widgetKey, { is_enabled: enabled })}
                 />

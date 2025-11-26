@@ -7,6 +7,8 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -39,6 +41,7 @@ interface WidgetGridProps {
 export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) {
   const { hasAccessToScope, agence } = useAuth();
   const { preferences, updatePreference, reorderPreferences } = useWidgetPreferences();
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -50,6 +53,10 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
 
   // Créer la liste des widgets avec leurs préférences
   const widgets = homeCards
@@ -112,6 +119,8 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
+    setActiveId(null);
+    
     if (over && active.id !== over.id) {
       const oldIndex = widgets.findIndex(w => w.id === active.id);
       const newIndex = widgets.findIndex(w => w.id === over.id);
@@ -134,10 +143,13 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
     updatePreference(widgetKey, { is_enabled: false });
   };
 
+  const activeWidget = widgets.find(w => w.id === activeId);
+
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <SortableContext
@@ -150,7 +162,7 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
               key={widget.id}
               id={widget.id}
               size={widget.preference.size}
-              isDashboardEditMode={isDashboardEditMode}
+              isDashboardEditMode={true}
               onSizeChange={(size) => handleSizeChange(widget.id, size)}
               onRemove={() => handleRemove(widget.id)}
             >
@@ -173,6 +185,30 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
           ))}
         </div>
       </SortableContext>
+      
+      <DragOverlay>
+        {activeWidget && (
+          <div className="opacity-50">
+            <BaseWidget
+              id={activeWidget.id}
+              size={activeWidget.preference.size}
+              isDashboardEditMode={false}
+            >
+              {activeWidget.type === 'mes-indicateurs' ? (
+                <div className="h-full bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-4" />
+              ) : (
+                <NavigationWidget
+                  title={activeWidget.card.title}
+                  description={activeWidget.card.description}
+                  link={activeWidget.card.link}
+                  icon={activeWidget.card.icon}
+                  isLocked={activeWidget.isLocked}
+                />
+              )}
+            </BaseWidget>
+          </div>
+        )}
+      </DragOverlay>
     </DndContext>
   );
 }
