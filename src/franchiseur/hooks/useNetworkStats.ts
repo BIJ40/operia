@@ -78,14 +78,17 @@ export function useNetworkStats() {
         ? { start: dateRange.from, end: dateRange.to }
         : { start: yearStart, end: yearEnd };
 
+      const totalCAYear = NetworkDataService.aggregateCA(agencyData, { start: yearStart, end: yearEnd });
+      const totalCAPeriod = NetworkDataService.aggregateCA(agencyData, calcRange);
+
       return {
-        totalCAYear: 0, // TODO: calculate from agencyData
-        totalCAPeriod: 0, // TODO: calculate from agencyData
+        totalCAYear,
+        totalCAPeriod,
         totalProjects: agencyData.reduce((sum, a) => sum + (a.data?.projects?.length || 0), 0),
         agencyCount: agencyData.length,
         totalInterventions: calculateTotalInterventions(agencyData, calcRange),
         savRate: calculateSAVRate(agencyData),
-        monthlyRoyalties: 0, // Placeholder
+        monthlyRoyalties: 0, // Placeholder (redevances calculées ailleurs)
         averageProcessingTime: calculateAverageProcessingTime(agencyData),
         top5Agencies: calculateTop5Agencies(agencyData),
         bestApporteur: calculateBestApporteur(agencyData),
