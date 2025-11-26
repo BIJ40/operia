@@ -422,11 +422,11 @@ export const calculateSAVByTechnicien = (
     stats.interventions.add(savInterv.id);
     stats.projects.add(projectId);
 
-    // Extraire les heures du SAV
-    const heures = savInterv.data?.heures || savInterv.duree || 0;
-    const heuresNum = parseFloat(String(heures).replace(/[^0-9.-]/g, ''));
-    if (!isNaN(heuresNum)) {
-      stats.heures += heuresNum;
+    // Extraire les durées du SAV (en minutes) et convertir en heures
+    const duree = savInterv.data?.heures || savInterv.duree || 0;
+    const dureeNum = parseFloat(String(duree).replace(/[^0-9.-]/g, ''));
+    if (!isNaN(dureeNum)) {
+      stats.heures += dureeNum / 60; // Conversion minutes -> heures
     }
   });
 
