@@ -102,9 +102,20 @@ export default function FranchiseurAgencies() {
                       <Building2 className="h-5 w-5 text-primary" />
                       <CardTitle className="text-lg">{agency.label}</CardTitle>
                     </div>
-                    {!agency.is_active && (
-                      <Badge variant="secondary">Inactive</Badge>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {!agency.is_active && (
+                        <Badge variant="secondary" className="text-xs">Inactive</Badge>
+                      )}
+                      {agency.animateur_profile ? (
+                        <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-xs">
+                          Animateur
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">
+                          Sans animateur
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <CardDescription className="font-mono text-xs">
                     {agency.slug}
