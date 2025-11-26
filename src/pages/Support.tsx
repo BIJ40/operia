@@ -21,6 +21,9 @@ interface SupportTicket {
   created_at: string;
   chatbot_conversation: any;
   assigned_to: string | null;
+  resolved_at: string | null;
+  rating: number | null;
+  rating_comment: string | null;
 }
 
 interface SupportMessage {
