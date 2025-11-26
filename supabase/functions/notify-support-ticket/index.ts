@@ -15,9 +15,12 @@ const corsHeaders = {
 
 interface NotificationRequest {
   ticketId: string;
-  userPseudo: string;
+  userName: string;
   lastQuestion: string;
   appUrl: string;
+  category?: string;
+  source?: string;
+  agencySlug?: string;
 }
 
 serve(async (req) => {
@@ -63,13 +66,13 @@ serve(async (req) => {
 
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    const { ticketId, userPseudo, lastQuestion, appUrl }: NotificationRequest = await req.json();
+    const { ticketId, userName, lastQuestion, appUrl, category, source, agencySlug }: NotificationRequest = await req.json();
 
-    // Récupérer tous les utilisateurs avec le rôle "support" ou "admin"
+    // Récupérer tous les utilisateurs avec le rôle "support", "franchiseur" ou "admin"
     const { data: supportUserRoles, error: usersError } = await supabase
       .from('user_roles')
       .select('user_id')
-      .in('role', ['admin', 'support']);
+      .in('role', ['admin', 'support', 'franchiseur']);
 
     if (usersError) throw usersError;
 
@@ -125,6 +128,24 @@ serve(async (req) => {
     }
 
     console.log(`Sending notification to ${supportEmails.length} support users (with notifications enabled)`);
+
+    // Déterminer le badge de source
+    const sourceBadges = {
+      chat: '💬 CHAT',
+      portal: '🎫 PORTAIL',
+      system: '🤖 SYSTÈME',
+    };
+    const sourceBadge = sourceBadges[source as keyof typeof sourceBadges] || '🎫 TICKET';
+
+    // Déterminer le badge de catégorie
+    const categoryLabels = {
+      bug: '🐛 Bug',
+      improvement: '💡 Amélioration',
+      blocking: '🚫 Blocage',
+      question: '❓ Question',
+      other: '📝 Autre',
+    };
+    const categoryLabel = category ? categoryLabels[category as keyof typeof categoryLabels] : '';
 
     // Envoyer l'email avec un template HTML personnalisé
     const emailHtml = `
@@ -219,27 +240,30 @@ serve(async (req) => {
           
           <div class="content">
             <p>Bonjour,</p>
-            <p>Un utilisateur a demandé à parler à un conseiller.</p>
+            <p>Un utilisateur a créé un nouveau ticket support.</p>
             
             <div class="ticket-info">
-              <p><strong>Utilisateur :</strong> ${userPseudo}</p>
+              <p><strong>Utilisateur :</strong> ${userName}</p>
               <p><strong>Ticket :</strong> #${ticketId.substring(0, 8)}</p>
+              <p><strong>Source :</strong> ${sourceBadge}</p>
+              ${categoryLabel ? `<p><strong>Catégorie :</strong> ${categoryLabel}</p>` : ''}
+              ${agencySlug ? `<p><strong>Agence :</strong> ${agencySlug}</p>` : ''}
               <p><strong>Date :</strong> ${new Date().toLocaleString('fr-FR')}</p>
             </div>
             
-            <p><strong>Dernière question :</strong></p>
+            <p><strong>Sujet / Dernière question :</strong></p>
             <div class="question-box">
               "${lastQuestion}"
             </div>
             
             <p style="text-align: center;">
-              <a href="${appUrl}/admin/support?ticket=${ticketId}" class="button">
-                👉 Répondre Maintenant
+              <a href="${appUrl}/admin/tickets" class="button">
+                👉 Gérer les Tickets
               </a>
             </p>
             
             <p style="color: #6b7280; font-size: 14px;">
-              <strong>Note :</strong> Le premier à prendre en charge ce ticket sera assigné automatiquement.
+              <strong>Note :</strong> Accédez à la console de gestion des tickets pour voir tous les détails et répondre.
             </p>
           </div>
           
@@ -252,9 +276,9 @@ serve(async (req) => {
     `;
 
     const { data, error } = await resend.emails.send({
-      from: 'Support Helpogée <support@helpconfort.services>',
+      from: 'HelpConfort Services <support@helpconfort.services>',
       to: supportEmails,
-      subject: `🚨 Nouveau ticket support #${ticketId.substring(0, 8)} - ${userPseudo}`,
+      subject: `🚨 Nouveau ticket ${sourceBadge} #${ticketId.substring(0, 8)} - ${userName}`,
       html: emailHtml,
     });
 
@@ -270,7 +294,7 @@ serve(async (req) => {
     if (ALLMYSMS_LOGIN && ALLMYSMS_API_KEY && ALLMYSMS_SUPPORT_PHONES) {
       try {
         const supportPhones = ALLMYSMS_SUPPORT_PHONES.split(',').map(p => p.trim());
-        const smsMessage = `🚨 Nouveau ticket support de ${userPseudo}: "${lastQuestion.substring(0, 100)}${lastQuestion.length > 100 ? '...' : ''}"\n\nRépondre: ${appUrl}/admin/support?ticket=${ticketId}`;
+        const smsMessage = `🚨 Nouveau ticket ${sourceBadge} de ${userName}${agencySlug ? ` (${agencySlug})` : ''}: "${lastQuestion.substring(0, 80)}${lastQuestion.length > 80 ? '...' : ''}"\n\nRépondre: ${appUrl}/admin/tickets`;
         
         console.log(`Sending SMS to ${supportPhones.length} support phone(s)`);
         

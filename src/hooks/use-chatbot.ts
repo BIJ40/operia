@@ -33,6 +33,8 @@ export const useChatbot = () => {
   const [ticketRating, setTicketRating] = useState(0);
   const [ticketComment, setTicketComment] = useState('');
   const [showChoiceMode, setShowChoiceMode] = useState(true);
+  const [showTicketCreation, setShowTicketCreation] = useState(false);
+  const [supportTimeout, setSupportTimeout] = useState<NodeJS.Timeout | null>(null);
   const [buttonPosition, setButtonPosition] = useState(() => {
     const saved = localStorage.getItem('chatbot-position');
     return saved ? JSON.parse(saved) : { bottom: 24, right: 24 };
@@ -43,15 +45,19 @@ export const useChatbot = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const lastSupportMessageTimeRef = useRef<Date | null>(null);
 
-  // Clean up typing timeout
+  // Clean up timeouts
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
+      if (supportTimeout) {
+        clearTimeout(supportTimeout);
+      }
     };
-  }, []);
+  }, [supportTimeout]);
 
   // Scroll to bottom
   const scrollToBottom = () => {
@@ -291,6 +297,131 @@ export const useChatbot = () => {
     setIsOpen(false);
   };
 
+  // Start support timeout when ticket is created
+  useEffect(() => {
+    if (activeTicket && !showTicketCreation) {
+      lastSupportMessageTimeRef.current = new Date();
+      
+      // Start 60 second timeout
+      const timeout = setTimeout(() => {
+        // Check if no support message received in last 60 seconds
+        const lastSupportMsg = supportMessages
+          .filter(m => m.is_from_support)
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+        
+        if (!lastSupportMsg || 
+            (new Date().getTime() - new Date(lastSupportMsg.created_at).getTime()) > 60000) {
+          setShowTicketCreation(true);
+        }
+      }, 60000); // 60 seconds
+      
+      setSupportTimeout(timeout);
+      
+      return () => {
+        if (timeout) clearTimeout(timeout);
+      };
+    }
+  }, [activeTicket, supportMessages, showTicketCreation]);
+
+  // Reset timeout when support responds
+  useEffect(() => {
+    if (activeTicket && supportMessages.length > 0) {
+      const lastSupportMsg = supportMessages
+        .filter(m => m.is_from_support)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+      
+      if (lastSupportMsg) {
+        lastSupportMessageTimeRef.current = new Date(lastSupportMsg.created_at);
+        setShowTicketCreation(false);
+        
+        if (supportTimeout) {
+          clearTimeout(supportTimeout);
+          setSupportTimeout(null);
+        }
+      }
+    }
+  }, [supportMessages, activeTicket, supportTimeout]);
+
+  // Create ticket from chat
+  const createTicketFromChat = async (category: string, subject: string, description: string) => {
+    if (!user) return;
+
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, agence')
+        .eq('id', user.id)
+        .single();
+
+      const userName = profile?.first_name
+        ? `${profile.first_name} ${profile.last_name || ''}`.trim()
+        : 'Utilisateur';
+
+      // Create ticket with source='chat'
+      const { data: ticket, error: ticketError } = await supabase
+        .from('support_tickets')
+        .insert({
+          user_id: user.id,
+          user_pseudo: userName,
+          subject,
+          category,
+          status: 'waiting',
+          priority: 'normal',
+          source: 'chat',
+          agency_slug: profile?.agence || null,
+          has_attachments: false,
+          chatbot_conversation: JSON.stringify(messages),
+        } as any)
+        .select()
+        .single();
+
+      if (ticketError) throw ticketError;
+
+      // Create initial message with description
+      const { error: msgError } = await supabase.from('support_messages').insert({
+        ticket_id: ticket.id,
+        sender_id: user.id,
+        message: description,
+        is_from_support: false,
+      } as any);
+
+      if (msgError) throw msgError;
+
+      // Notify support
+      await supabase.functions.invoke('notify-support-ticket', {
+        body: {
+          ticketId: ticket.id,
+          userName,
+          lastQuestion: subject,
+          appUrl: window.location.origin,
+          category,
+          source: 'chat',
+        },
+      });
+
+      toast({
+        title: 'Ticket créé',
+        description: 'Votre demande a été transmise au support. Vous serez recontacté.',
+        duration: 3000,
+      });
+
+      // Close chat and reset
+      setIsOpen(false);
+      setShowTicketCreation(false);
+      setShowChoiceMode(true);
+      setMessages([]);
+      setActiveTicket(null);
+    } catch (error) {
+      console.error('Error creating ticket from chat:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de créer le ticket',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    }
+  };
+
   return {
     user,
     isOpen,
@@ -305,11 +436,13 @@ export const useChatbot = () => {
     ticketRating,
     ticketComment,
     showChoiceMode,
+    showTicketCreation,
     buttonPosition,
     isDragging,
     messagesEndRef,
     buttonRef,
     createSupportTicket,
+    createTicketFromChat,
     isCreating,
     setIsOpen,
     setInput,
