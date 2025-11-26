@@ -503,7 +503,7 @@ export default function Landing() {
 
           <div className="container max-w-6xl mx-auto px-4 py-8">
             {/* Cartes avec cadenas pour visiteurs */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
               {homeCards.map(card => {
                 const Icon = IconComponent(card.icon || 'BookOpen');
                 return (
@@ -560,7 +560,7 @@ export default function Landing() {
                   items={homeCards.map(c => c.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 items-start">
                     {homeCards.map(card => (
                       <SortableCard
                         key={card.id}
@@ -601,7 +601,7 @@ export default function Landing() {
                 </SortableContext>
               </DndContext>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
                 {homeCards.map(card => {
                   const Icon = IconComponent(card.icon || 'BookOpen');
                   
