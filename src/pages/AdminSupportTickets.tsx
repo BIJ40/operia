@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminTickets } from '@/hooks/use-admin-tickets';
 import { Ticket } from '@/hooks/use-user-tickets';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +26,7 @@ import { SupportLevelBadge } from '@/components/SupportLevelBadge';
 export default function AdminSupportTickets() {
   const { canManageTickets, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     tickets,
     selectedTicket,
@@ -88,6 +89,16 @@ export default function AdminSupportTickets() {
       priority: 'all',
     });
   };
+
+  // Appliquer le filtre depuis la navigation header si présent
+  useEffect(() => {
+    const state = location.state as { filterStatus?: string } | null;
+    if (state?.filterStatus) {
+      setFilters(prev => ({ ...prev, status: state.filterStatus as any }));
+      // Nettoyer le state pour éviter de réappliquer le filtre
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const loadEmailPreference = async () => {
