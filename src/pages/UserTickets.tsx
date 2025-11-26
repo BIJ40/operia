@@ -41,12 +41,21 @@ export default function UserTickets() {
   const [newMessage, setNewMessage] = useState('');
 
   const handleCreateTicket = async () => {
-    if (!newTicket.subject || !newTicket.description) return;
+    const trimmedSubject = newTicket.subject.trim();
+    const trimmedDescription = newTicket.description.trim();
+    
+    if (!trimmedSubject || trimmedSubject.length < 3) {
+      return;
+    }
+    
+    if (!trimmedDescription) {
+      return;
+    }
 
     const ticket = await createTicket(
-      newTicket.subject,
+      trimmedSubject,
       newTicket.category,
-      newTicket.description,
+      trimmedDescription,
       files
     );
 
@@ -222,23 +231,29 @@ export default function UserTickets() {
               </div>
 
               <div>
-                <Label htmlFor="subject">Sujet</Label>
+                <Label htmlFor="subject">Sujet *</Label>
                 <Input
                   id="subject"
                   value={newTicket.subject}
                   onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
-                  placeholder="Titre de votre demande"
+                  placeholder="Titre de votre demande (minimum 3 caractères)"
+                  required
+                  minLength={3}
                 />
+                {newTicket.subject.trim().length > 0 && newTicket.subject.trim().length < 3 && (
+                  <p className="text-sm text-destructive mt-1">Le sujet doit contenir au moins 3 caractères</p>
+                )}
               </div>
 
               <div>
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Description *</Label>
                 <Textarea
                   id="description"
                   value={newTicket.description}
                   onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
                   placeholder="Décrivez votre problème en détail"
                   rows={5}
+                  required
                 />
               </div>
 
@@ -255,7 +270,11 @@ export default function UserTickets() {
               <div className="flex gap-2">
                 <Button
                   onClick={handleCreateTicket}
-                  disabled={isCreating || !newTicket.subject || !newTicket.description}
+                  disabled={
+                    isCreating || 
+                    newTicket.subject.trim().length < 3 || 
+                    !newTicket.description.trim()
+                  }
                 >
                   {isCreating ? 'Création...' : 'Créer le ticket'}
                 </Button>
