@@ -13,15 +13,15 @@ interface LoginDialogProps {
 }
 
 const loginSchema = z.object({
-  pseudo: z.string()
+  email: z.string()
     .trim()
-    .min(3, { message: "Le pseudo doit contenir au moins 3 caractères" }),
+    .email({ message: "L'adresse email n'est pas valide" }),
   password: z.string()
     .min(1, { message: "Le mot de passe est requis" })
 });
 
 export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
-  const [pseudo, setPseudo] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -33,7 +33,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
 
     // Validation
     const validation = loginSchema.safeParse({
-      pseudo: pseudo.trim(),
+      email: email.trim(),
       password
     });
 
@@ -50,28 +50,13 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
 
     setLoading(true);
     try {
-      const trimmedPseudo = pseudo.trim();
-      let email = trimmedPseudo;
-      
-      // Si ce n'est pas un email, chercher dans la base de données
-      if (!trimmedPseudo.includes('@')) {
-        const { data: emailFromPseudo, error: rpcError } = await supabase
-          .rpc('get_email_from_pseudo', { _pseudo: trimmedPseudo });
-        
-        if (!rpcError && emailFromPseudo) {
-          email = emailFromPseudo;
-        } else {
-          email = `${trimmedPseudo}@internal.helpogee.local`;
-        }
-      }
-      
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
       if (signInError) {
-        throw new Error('Pseudo ou mot de passe incorrect');
+        throw new Error('Email ou mot de passe incorrect');
       }
 
       toast({
@@ -80,7 +65,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       });
 
       onOpenChange(false);
-      setPseudo('');
+      setEmail('');
       setPassword('');
     } catch (error: any) {
       toast({
@@ -99,7 +84,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
         <DialogHeader>
           <DialogTitle>Connexion</DialogTitle>
           <DialogDescription>
-            Connectez-vous avec votre pseudo et votre mot de passe.
+            Connectez-vous avec votre email et votre mot de passe.
             <br />
             <span className="text-xs text-muted-foreground">
               Si vous avez perdu votre mot de passe, contactez votre administrateur.
@@ -108,19 +93,20 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="pseudo">Pseudo</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
-              id="pseudo"
-              value={pseudo}
+              id="email"
+              type="email"
+              value={email}
               onChange={(e) => {
-                setPseudo(e.target.value);
-                setErrors(prev => ({ ...prev, pseudo: '' }));
+                setEmail(e.target.value);
+                setErrors(prev => ({ ...prev, email: '' }));
               }}
-              placeholder="votre_pseudo"
+              placeholder="votre.email@exemple.com"
               required
-              className={errors.pseudo ? 'border-destructive' : ''}
+              className={errors.email ? 'border-destructive' : ''}
             />
-            {errors.pseudo && <p className="text-sm text-destructive">{errors.pseudo}</p>}
+            {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Mot de passe</Label>
