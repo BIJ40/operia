@@ -11,6 +11,7 @@ import { EditUserDialog } from '@/components/EditUserDialog';
 import { ManageSystemRoleDialog } from '@/components/ManageSystemRoleDialog';
 import { ManageUserPermissionsDialog } from '@/components/ManageUserPermissionsDialog';
 import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, UserX } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -21,6 +22,7 @@ interface UserProfile {
   role_agence: string | null;
   created_at: string;
   system_role?: string;
+  must_change_password: boolean | null;
 }
 
 const getRoleLabel = (roleValue: string | null): string => {
@@ -145,7 +147,18 @@ export default function AdminUsersList() {
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.email || '-'}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div title={!user.must_change_password ? "Utilisateur actif" : "Première connexion non effectuée"}>
+                        {!user.must_change_password ? (
+                          <CheckCircle2 className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <UserX className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      {user.email || '-'}
+                    </div>
+                  </TableCell>
                   <TableCell>{user.last_name || '-'}</TableCell>
                   <TableCell>{user.first_name || '-'}</TableCell>
                   <TableCell>{user.agence || '-'}</TableCell>
