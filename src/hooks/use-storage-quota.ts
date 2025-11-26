@@ -60,7 +60,7 @@ export const useStorageQuota = () => {
           // Si on dépasse 90%, utiliser CacheManager pour nettoyer intelligemment
           if (percentageUsed >= 90) {
             console.warn('🧹 Nettoyage automatique du localStorage (quota > 90%)');
-            CacheManager.printReport();
+            await CacheManager.printReport();
             
             // CacheManager gère automatiquement le nettoyage intelligent
             // Forcer un nettoyage supplémentaire si nécessaire
