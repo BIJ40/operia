@@ -17,6 +17,7 @@ interface SupportUser {
   email: string;
   support_level: number;
   agence: string | null;
+  service_competencies: any;
 }
 
 const getSupportLevelLabel = (level: number) => {
@@ -71,7 +72,7 @@ export default function AdminSupportLevels() {
 
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, email, support_level, agence')
+        .select('id, first_name, last_name, email, support_level, agence, service_competencies')
         .in('id', userIds)
         .order('support_level', { ascending: true })
         .order('last_name', { ascending: true });
@@ -96,11 +97,36 @@ export default function AdminSupportLevels() {
 
       if (error) throw error;
 
-      toast.success(`Niveau de support mis à jour vers ${getSupportLevelLabel(newLevel)}`);
+      toast.success(`Niveau Apogée mis à jour vers ${getSupportLevelLabel(newLevel)}`);
       await loadSupportUsers();
     } catch (error) {
       console.error('Error updating support level:', error);
       toast.error('Impossible de mettre à jour le niveau');
+    }
+  };
+
+  const toggleServiceCompetency = async (userId: string, service: string, currentCompetencies: any) => {
+    try {
+      const newCompetencies = { ...currentCompetencies };
+      
+      if (newCompetencies[service]) {
+        delete newCompetencies[service];
+      } else {
+        newCompetencies[service] = true;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ service_competencies: newCompetencies })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast.success(`Compétence ${service} ${newCompetencies[service] ? 'activée' : 'désactivée'}`);
+      await loadSupportUsers();
+    } catch (error) {
+      console.error('Error updating service competency:', error);
+      toast.error('Impossible de mettre à jour les compétences');
     }
   };
 
@@ -124,10 +150,10 @@ export default function AdminSupportLevels() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-              Gestion des Niveaux de Support
+              Gestion des Compétences Support
             </h1>
             <p className="text-muted-foreground">
-              Gérer les niveaux d'expertise des membres du support
+              Gérer les niveaux Apogée (N1/N2/N3) et les compétences par service
             </p>
           </div>
           <Button
@@ -211,36 +237,69 @@ export default function AdminSupportLevels() {
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">Modifier :</span>
-                            <Select
-                              value={user.support_level.toString()}
-                              onValueChange={(value) => updateSupportLevel(user.id, parseInt(value))}
-                            >
-                              <SelectTrigger className="w-[200px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="1">
-                                  <span className="flex items-center gap-2">
-                                    <Shield className="w-4 h-4 bg-blue-500 text-white rounded-full p-0.5" />
-                                    N1 - Aide de base
-                                  </span>
-                                </SelectItem>
-                                <SelectItem value="2">
-                                  <span className="flex items-center gap-2">
-                                    <Shield className="w-4 h-4 bg-orange-500 text-white rounded-full p-0.5" />
-                                    N2 - Technique
-                                  </span>
-                                </SelectItem>
-                                <SelectItem value="3">
-                                  <span className="flex items-center gap-2">
-                                    <Shield className="w-4 h-4 bg-red-500 text-white rounded-full p-0.5" />
-                                    N3 - Développeur
-                                  </span>
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
+                          <div className="flex flex-col gap-4 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">Niveau Apogée :</span>
+                              <Select
+                                value={user.support_level.toString()}
+                                onValueChange={(value) => updateSupportLevel(user.id, parseInt(value))}
+                              >
+                                <SelectTrigger className="w-[200px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="1">
+                                    <span className="flex items-center gap-2">
+                                      <Shield className="w-4 h-4 bg-blue-500 text-white rounded-full p-0.5" />
+                                      N1 - Aide de base
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="2">
+                                    <span className="flex items-center gap-2">
+                                      <Shield className="w-4 h-4 bg-orange-500 text-white rounded-full p-0.5" />
+                                      N2 - Technique
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="3">
+                                    <span className="flex items-center gap-2">
+                                      <Shield className="w-4 h-4 bg-red-500 text-white rounded-full p-0.5" />
+                                      N3 - Développeur
+                                    </span>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm text-muted-foreground">Compétences services :</span>
+                              <Button
+                                size="sm"
+                                variant={user.service_competencies?.apogee ? "default" : "outline"}
+                                onClick={() => toggleServiceCompetency(user.id, 'apogee', user.service_competencies || {})}
+                              >
+                                Apogée
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={user.service_competencies?.helpconfort ? "default" : "outline"}
+                                onClick={() => toggleServiceCompetency(user.id, 'helpconfort', user.service_competencies || {})}
+                              >
+                                HelpConfort
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={user.service_competencies?.apporteurs ? "default" : "outline"}
+                                onClick={() => toggleServiceCompetency(user.id, 'apporteurs', user.service_competencies || {})}
+                              >
+                                Apporteurs
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={user.service_competencies?.conseil ? "default" : "outline"}
+                                onClick={() => toggleServiceCompetency(user.id, 'conseil', user.service_competencies || {})}
+                              >
+                                Conseil
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       ))}
