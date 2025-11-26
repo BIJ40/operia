@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import apogeeData from '@/data/apogee-data.json';
+import { CacheManager } from '@/lib/cache-manager';
 
 interface EditorContextType {
   blocks: Block[];
@@ -47,22 +48,12 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
       console.log('🔄 Chargement depuis Supabase pour l\'utilisateur', user.id);
 
-      // Vérifier le cache d'abord
-      try {
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (cached) {
-          const { data, timestamp } = JSON.parse(cached);
-          const age = Date.now() - timestamp;
-          
-          if (age < CACHE_TTL) {
-            console.log(`⚡ Chargement depuis cache (${Math.round(age / 1000)}s)`);
-            setBlocks(data);
-            setLoading(false);
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn('Erreur lecture cache:', e);
+      // Vérifier le cache d'abord avec CacheManager
+      const cached = CacheManager.getItem<Block[]>(CACHE_KEY);
+      if (cached) {
+        setBlocks(cached);
+        setLoading(false);
+        return;
       }
 
       try {
@@ -116,27 +107,10 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
           setBlocks(transformedBlocks);
           
-          // Sauvegarder dans le cache
-          try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify({
-              data: transformedBlocks,
-              timestamp: Date.now()
-            }));
-          } catch (e) {
-            // Si quota dépassé, nettoyer le cache et réessayer
-            if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-              try {
-                localStorage.removeItem(CACHE_KEY);
-                localStorage.removeItem('apogee_data_cache');
-                console.log('🧹 Cache localStorage nettoyé');
-              } catch (cleanError) {
-                console.warn('Impossible de nettoyer le cache:', cleanError);
-              }
-            }
-            console.warn('Erreur sauvegarde cache:', e);
-          }
+          // Sauvegarder dans le cache avec CacheManager
+          CacheManager.setItem(CACHE_KEY, transformedBlocks, CACHE_TTL);
           
-          console.log(`⚡ ${transformedBlocks.length} blocks chargés depuis Supabase`);
+          console.log(`✅ ${transformedBlocks.length} blocks chargés depuis Supabase`);
         } else {
           setBlocks([]);
           console.log('⚠️ Aucun block retourné par Supabase');
@@ -390,12 +364,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const reloadBlocks = useCallback(async () => {
     setLoading(true);
     
-    // Invalider le cache
-    try {
-      localStorage.removeItem(CACHE_KEY);
-    } catch (e) {
-      console.warn('Erreur suppression cache:', e);
-    }
+    // Invalider le cache avec CacheManager
+    CacheManager.removeItem(CACHE_KEY);
 
     try {
       const { data, error } = await supabase
@@ -427,25 +397,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
         setBlocks(transformedBlocks);
         
-        // Mettre à jour le cache
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({
-            data: transformedBlocks,
-            timestamp: Date.now()
-          }));
-        } catch (e) {
-          // Si quota dépassé, nettoyer le cache et continuer sans cache
-          if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-            try {
-              localStorage.removeItem(CACHE_KEY);
-              localStorage.removeItem('apogee_data_cache');
-              console.log('🧹 Cache localStorage nettoyé (quota dépassé)');
-            } catch (cleanError) {
-              console.warn('Impossible de nettoyer le cache:', cleanError);
-            }
-          }
-          console.warn('Erreur sauvegarde cache:', e);
-        }
+        // Mettre à jour le cache avec CacheManager
+        CacheManager.setItem(CACHE_KEY, transformedBlocks, CACHE_TTL);
         
         console.log(`🔄 ${transformedBlocks.length} blocks rechargés`);
       }

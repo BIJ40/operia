@@ -1,0 +1,289 @@
+/**
+ * Cache Manager - Gestionnaire intelligent de cache localStorage
+ * Évite les erreurs QuotaExceededError avec nettoyage automatique et compression
+ */
+
+interface CacheEntry<T = any> {
+  data: T;
+  timestamp: number;
+  size: number; // Taille en bytes
+}
+
+interface CacheMetrics {
+  totalSize: number;
+  entryCount: number;
+  oldestEntry: number | null;
+}
+
+export class CacheManager {
+  private static readonly MAX_CACHE_SIZE = 4 * 1024 * 1024; // 4MB max (sur ~5MB total)
+  private static readonly MAX_ENTRY_SIZE = 1 * 1024 * 1024; // 1MB max par entrée
+  private static readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes par défaut
+
+  /**
+   * Calcule la taille d'une entrée en bytes
+   */
+  private static calculateSize(data: any): number {
+    try {
+      return new Blob([JSON.stringify(data)]).size;
+    } catch {
+      return 0;
+    }
+  }
+
+  /**
+   * Obtient les métriques du cache
+   */
+  static getCacheMetrics(): CacheMetrics {
+    let totalSize = 0;
+    let entryCount = 0;
+    let oldestEntry: number | null = null;
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('_cache') || key.includes('Cache'))) {
+        try {
+          const value = localStorage.getItem(key);
+          if (value) {
+            const size = new Blob([value]).size;
+            totalSize += size;
+            entryCount++;
+
+            const parsed = JSON.parse(value);
+            if (parsed.timestamp) {
+              if (!oldestEntry || parsed.timestamp < oldestEntry) {
+                oldestEntry = parsed.timestamp;
+              }
+            }
+          }
+        } catch {}
+      }
+    }
+
+    return { totalSize, entryCount, oldestEntry };
+  }
+
+  /**
+   * Nettoie les entrées les plus anciennes jusqu'à libérer l'espace nécessaire
+   */
+  private static cleanOldestEntries(neededSpace: number): boolean {
+    const cacheEntries: Array<{ key: string; timestamp: number; size: number }> = [];
+
+    // Collecter toutes les entrées de cache
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('_cache') || key.includes('Cache'))) {
+        try {
+          const value = localStorage.getItem(key);
+          if (value) {
+            const size = new Blob([value]).size;
+            const parsed = JSON.parse(value);
+            if (parsed.timestamp) {
+              cacheEntries.push({ key, timestamp: parsed.timestamp, size });
+            }
+          }
+        } catch {}
+      }
+    }
+
+    // Trier par timestamp (les plus anciens en premier)
+    cacheEntries.sort((a, b) => a.timestamp - b.timestamp);
+
+    let freedSpace = 0;
+    let removedCount = 0;
+
+    // Supprimer les plus anciens jusqu'à avoir assez d'espace
+    for (const entry of cacheEntries) {
+      if (freedSpace >= neededSpace) break;
+
+      try {
+        localStorage.removeItem(entry.key);
+        freedSpace += entry.size;
+        removedCount++;
+        console.log(`🗑️ Cache supprimé: ${entry.key} (${(entry.size / 1024).toFixed(2)} KB)`);
+      } catch (e) {
+        console.error(`Erreur suppression ${entry.key}:`, e);
+      }
+    }
+
+    console.log(`✅ Nettoyage: ${removedCount} entrées supprimées, ${(freedSpace / 1024).toFixed(2)} KB libérés`);
+    return freedSpace >= neededSpace;
+  }
+
+  /**
+   * Nettoie les entrées expirées
+   */
+  static cleanExpiredEntries(): number {
+    const now = Date.now();
+    let cleanedCount = 0;
+
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('_cache') || key.includes('Cache'))) {
+        try {
+          const value = localStorage.getItem(key);
+          if (value) {
+            const parsed = JSON.parse(value);
+            if (parsed.timestamp && parsed.ttl) {
+              const age = now - parsed.timestamp;
+              if (age > parsed.ttl) {
+                localStorage.removeItem(key);
+                cleanedCount++;
+              }
+            }
+          }
+        } catch {}
+      }
+    }
+
+    if (cleanedCount > 0) {
+      console.log(`🧹 ${cleanedCount} entrées expirées nettoyées`);
+    }
+    return cleanedCount;
+  }
+
+  /**
+   * Sauvegarde une entrée dans le cache avec gestion intelligente de l'espace
+   */
+  static setItem<T>(key: string, data: T, ttl: number = this.DEFAULT_TTL): boolean {
+    try {
+      // Nettoyer les entrées expirées d'abord
+      this.cleanExpiredEntries();
+
+      const size = this.calculateSize(data);
+
+      // Vérifier si l'entrée est trop volumineuse
+      if (size > this.MAX_ENTRY_SIZE) {
+        console.warn(`⚠️ Entrée trop volumineuse pour le cache: ${key} (${(size / 1024).toFixed(2)} KB)`);
+        return false;
+      }
+
+      const entry: CacheEntry<T> & { ttl: number } = {
+        data,
+        timestamp: Date.now(),
+        size,
+        ttl,
+      };
+
+      const entryString = JSON.stringify(entry);
+      const entrySize = new Blob([entryString]).size;
+
+      // Obtenir les métriques actuelles
+      const metrics = this.getCacheMetrics();
+      const projectedSize = metrics.totalSize + entrySize;
+
+      // Si on dépasse la limite, nettoyer les anciennes entrées
+      if (projectedSize > this.MAX_CACHE_SIZE) {
+        const neededSpace = projectedSize - this.MAX_CACHE_SIZE + (this.MAX_CACHE_SIZE * 0.2); // Libérer 20% supplémentaire
+        console.log(`⚠️ Cache plein (${(metrics.totalSize / 1024).toFixed(2)} KB), nettoyage de ${(neededSpace / 1024).toFixed(2)} KB...`);
+        
+        const cleaned = this.cleanOldestEntries(neededSpace);
+        if (!cleaned) {
+          console.warn('❌ Impossible de libérer assez d\'espace dans le cache');
+          return false;
+        }
+      }
+
+      // Tenter de sauvegarder
+      localStorage.setItem(key, entryString);
+      console.log(`💾 Cache sauvegardé: ${key} (${(entrySize / 1024).toFixed(2)} KB, TTL: ${ttl / 1000}s)`);
+      return true;
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+        console.error('❌ QuotaExceededError malgré le nettoyage:', e);
+        
+        // Dernier recours: nettoyer TOUS les caches
+        try {
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && (key.includes('_cache') || key.includes('Cache'))) {
+              localStorage.removeItem(key);
+            }
+          }
+          console.log('🧹 Tous les caches ont été nettoyés');
+        } catch {}
+      } else {
+        console.error('Erreur sauvegarde cache:', e);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Récupère une entrée du cache
+   */
+  static getItem<T>(key: string): T | null {
+    try {
+      const value = localStorage.getItem(key);
+      if (!value) return null;
+
+      const entry: CacheEntry<T> & { ttl: number } = JSON.parse(value);
+      const age = Date.now() - entry.timestamp;
+
+      // Vérifier si l'entrée est expirée
+      if (entry.ttl && age > entry.ttl) {
+        localStorage.removeItem(key);
+        console.log(`⏰ Cache expiré: ${key} (${Math.round(age / 1000)}s)`);
+        return null;
+      }
+
+      console.log(`⚡ Cache hit: ${key} (${Math.round(age / 1000)}s)`);
+      return entry.data;
+    } catch (e) {
+      console.warn(`Erreur lecture cache ${key}:`, e);
+      // Supprimer l'entrée corrompue
+      try {
+        localStorage.removeItem(key);
+      } catch {}
+      return null;
+    }
+  }
+
+  /**
+   * Supprime une entrée du cache
+   */
+  static removeItem(key: string): void {
+    try {
+      localStorage.removeItem(key);
+      console.log(`🗑️ Cache supprimé: ${key}`);
+    } catch (e) {
+      console.warn(`Erreur suppression cache ${key}:`, e);
+    }
+  }
+
+  /**
+   * Nettoie tous les caches
+   */
+  static clearAll(): void {
+    let count = 0;
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('_cache') || key.includes('Cache'))) {
+        try {
+          localStorage.removeItem(key);
+          count++;
+        } catch {}
+      }
+    }
+    console.log(`🧹 ${count} entrées de cache supprimées`);
+  }
+
+  /**
+   * Affiche un rapport sur l'état du cache
+   */
+  static printReport(): void {
+    const metrics = this.getCacheMetrics();
+    const usagePercent = (metrics.totalSize / this.MAX_CACHE_SIZE) * 100;
+    
+    console.log('📊 Rapport Cache:');
+    console.log(`   Taille totale: ${(metrics.totalSize / 1024).toFixed(2)} KB / ${(this.MAX_CACHE_SIZE / 1024).toFixed(2)} KB (${usagePercent.toFixed(1)}%)`);
+    console.log(`   Nombre d'entrées: ${metrics.entryCount}`);
+    if (metrics.oldestEntry) {
+      const age = Date.now() - metrics.oldestEntry;
+      console.log(`   Entrée la plus ancienne: ${Math.round(age / 1000)}s`);
+    }
+  }
+}
+
+// Nettoyer les caches expirés au chargement
+CacheManager.cleanExpiredEntries();

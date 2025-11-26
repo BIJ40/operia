@@ -3,6 +3,7 @@ import { Block } from '@/types/block';
 import { loadApporteurData, saveApporteurData, exportApporteurData, importApporteurData } from '@/lib/db-apporteurs';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { CacheManager } from '@/lib/cache-manager';
 
 interface ApporteurEditorContextType {
   blocks: Block[];
@@ -26,13 +27,27 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { isAdmin } = useAuth();
 
-  // Chargement initial
+  const CACHE_KEY = 'apporteur_blocks_cache';
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  // Chargement initial avec cache
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Vérifier le cache d'abord
+        const cached = CacheManager.getItem<Block[]>(CACHE_KEY);
+        if (cached) {
+          setBlocks(cached);
+          setLoading(false);
+          return;
+        }
+
+        // Charger depuis Supabase si pas en cache
         const data = await loadApporteurData();
         if (data) {
           setBlocks(data.blocks);
+          // Sauvegarder dans le cache
+          CacheManager.setItem(CACHE_KEY, data.blocks, CACHE_TTL);
         }
       } catch (error) {
         console.error('Erreur chargement données apporteurs:', error);

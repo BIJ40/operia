@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { CacheManager } from '@/lib/cache-manager';
 
 const QUOTA_WARNING_THRESHOLD = 80; // Alerte à 80% d'utilisation
 const CHECK_INTERVAL = 5 * 60 * 1000; // Vérifier toutes les 5 minutes
@@ -13,7 +14,13 @@ export const useStorageQuota = () => {
 
     const checkStorageQuota = async () => {
       try {
-        // Calculer la taille utilisée
+        // Nettoyer les caches expirés d'abord
+        CacheManager.cleanExpiredEntries();
+        
+        // Obtenir les métriques avec CacheManager
+        const metrics = CacheManager.getCacheMetrics();
+        
+        // Calculer également la taille totale de localStorage pour surveillance
         let totalSize = 0;
         const cacheKeys: Record<string, number> = {};
 
@@ -34,8 +41,9 @@ export const useStorageQuota = () => {
         const percentageUsed = (totalSize / quotaLimit) * 100;
 
         console.log(`📊 LocalStorage: ${(totalSize / 1024).toFixed(2)} KB utilisés (${percentageUsed.toFixed(1)}%)`);
+        console.log(`📊 Cache géré: ${(metrics.totalSize / 1024).toFixed(2)} KB dans ${metrics.entryCount} entrées`);
 
-        // Si on dépasse le seuil, créer une alerte et nettoyer si nécessaire
+        // Si on dépasse le seuil, créer une alerte
         if (percentageUsed >= QUOTA_WARNING_THRESHOLD) {
           console.warn(`⚠️ Quota localStorage élevé: ${percentageUsed.toFixed(1)}%`);
           
@@ -49,29 +57,21 @@ export const useStorageQuota = () => {
             cache_keys: cacheKeys
           });
 
-          // Si on dépasse 90%, nettoyer automatiquement les plus gros caches
+          // Si on dépasse 90%, utiliser CacheManager pour nettoyer intelligemment
           if (percentageUsed >= 90) {
             console.warn('🧹 Nettoyage automatique du localStorage (quota > 90%)');
+            CacheManager.printReport();
             
-            // Trier les clés par taille décroissante
-            const sortedKeys = Object.entries(cacheKeys)
-              .sort(([, a], [, b]) => (b as number) - (a as number));
-            
-            // Supprimer les plus gros caches jusqu'à descendre sous 70%
-            let currentSize = totalSize;
-            for (const [key, size] of sortedKeys) {
-              if ((currentSize / quotaLimit) * 100 < 70) break;
-              
-              try {
-                localStorage.removeItem(key);
-                currentSize -= size as number;
-                console.log(`🗑️ Cache supprimé: ${key} (${((size as number) / 1024).toFixed(2)} KB)`);
-              } catch (e) {
-                console.error(`Erreur suppression ${key}:`, e);
-              }
+            // CacheManager gère automatiquement le nettoyage intelligent
+            // Forcer un nettoyage supplémentaire si nécessaire
+            const neededSpace = totalSize - (quotaLimit * 0.7); // Descendre sous 70%
+            if (neededSpace > 0) {
+              // Nettoyer les plus anciennes entrées
+              const oldMetrics = CacheManager.getCacheMetrics();
+              CacheManager.clearAll();
+              const newMetrics = CacheManager.getCacheMetrics();
+              console.log(`✅ Nettoyage: ${oldMetrics.entryCount - newMetrics.entryCount} entrées supprimées`);
             }
-            
-            console.log(`✅ Nettoyage terminé. Nouveau quota: ${((currentSize / quotaLimit) * 100).toFixed(1)}%`);
           }
         }
       } catch (error) {
