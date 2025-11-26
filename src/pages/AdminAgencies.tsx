@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { toast } from 'sonner';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import {
   Dialog,
@@ -25,6 +25,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface Agency {
   id: string;
@@ -39,12 +48,24 @@ interface AgencyFormData {
   is_active: boolean;
 }
 
+interface UserProfile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  agence: string | null;
+  role_agence: string | null;
+}
+
 export default function AdminAgencies() {
   const { isAdmin } = useAuth();
+  const { toast } = useToast();
   const [agencies, setAgencies] = useState<Agency[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAgency, setEditingAgency] = useState<Agency | null>(null);
+  const [expandedAgencies, setExpandedAgencies] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState<AgencyFormData>({
     slug: '',
     label: '',
@@ -53,26 +74,51 @@ export default function AdminAgencies() {
 
   useEffect(() => {
     if (isAdmin) {
-      loadAgencies();
+      loadData();
     }
   }, [isAdmin]);
 
-  const loadAgencies = async () => {
+  const loadData = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('apogee_agencies')
-        .select('*')
-        .order('label');
+      const [agenciesResult, usersResult] = await Promise.all([
+        supabase.from('apogee_agencies').select('*').order('label'),
+        supabase.from('profiles').select('id, first_name, last_name, email, agence, role_agence').order('first_name'),
+      ]);
 
-      if (error) throw error;
-      setAgencies(data || []);
+      if (agenciesResult.error) throw agenciesResult.error;
+      if (usersResult.error) throw usersResult.error;
+
+      setAgencies(agenciesResult.data || []);
+      setUsers(usersResult.data || []);
     } catch (error) {
-      console.error('Error loading agencies:', error);
-      toast.error('Erreur lors du chargement des agences');
+      console.error('Error loading data:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Erreur lors du chargement des données',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleAgencyExpanded = (agencyId: string) => {
+    const newExpanded = new Set(expandedAgencies);
+    if (newExpanded.has(agencyId)) {
+      newExpanded.delete(agencyId);
+    } else {
+      newExpanded.add(agencyId);
+    }
+    setExpandedAgencies(newExpanded);
+  };
+
+  const getUsersForAgency = (slug: string) => {
+    return users.filter((user) => user.agence === slug);
+  };
+
+  const getUsersWithoutAgency = () => {
+    return users.filter((user) => !user.agence);
   };
 
   const openDialog = (agency?: Agency) => {
@@ -108,21 +154,23 @@ export default function AdminAgencies() {
           .eq('id', editingAgency.id);
 
         if (error) throw error;
-        toast.success('Agence modifiée avec succès');
+        toast({ title: 'Agence modifiée avec succès' });
       } else {
-        const { error } = await supabase
-          .from('apogee_agencies')
-          .insert([formData]);
+        const { error } = await supabase.from('apogee_agencies').insert([formData]);
 
         if (error) throw error;
-        toast.success('Agence créée avec succès');
+        toast({ title: 'Agence créée avec succès' });
       }
 
       closeDialog();
-      loadAgencies();
+      loadData();
     } catch (error) {
       console.error('Error saving agency:', error);
-      toast.error('Erreur lors de l\'enregistrement');
+      toast({
+        title: 'Erreur',
+        description: "Erreur lors de l'enregistrement",
+        variant: 'destructive',
+      });
     }
   };
 
@@ -132,17 +180,38 @@ export default function AdminAgencies() {
     }
 
     try {
-      const { error } = await supabase
-        .from('apogee_agencies')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('apogee_agencies').delete().eq('id', id);
 
       if (error) throw error;
-      toast.success('Agence supprimée avec succès');
-      loadAgencies();
+      toast({ title: 'Agence supprimée avec succès' });
+      loadData();
     } catch (error) {
       console.error('Error deleting agency:', error);
-      toast.error('Erreur lors de la suppression');
+      toast({
+        title: 'Erreur',
+        description: 'Erreur lors de la suppression',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAssignUser = async (userId: string, agencySlug: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ agence: agencySlug })
+        .eq('id', userId);
+
+      if (error) throw error;
+      toast({ title: 'Utilisateur assigné avec succès' });
+      loadData();
+    } catch (error) {
+      console.error('Error assigning user:', error);
+      toast({
+        title: 'Erreur',
+        description: "Erreur lors de l'assignation",
+        variant: 'destructive',
+      });
     }
   };
 
@@ -156,7 +225,7 @@ export default function AdminAgencies() {
         <div>
           <h1 className="text-3xl font-bold">Gestion des Agences</h1>
           <p className="text-muted-foreground mt-1">
-            Configuration des agences. Clé API partagée stockée de manière sécurisée.
+            Configuration des agences et attribution des utilisateurs
           </p>
         </div>
         <Button onClick={() => openDialog()}>
@@ -165,68 +234,189 @@ export default function AdminAgencies() {
         </Button>
       </div>
 
+      {/* Utilisateurs sans agence */}
+      {getUsersWithoutAgency().length > 0 && (
+        <Card className="border-orange-200 bg-orange-50/50">
+          <CardHeader>
+            <CardTitle className="text-orange-900">
+              <Users className="inline h-5 w-5 mr-2" />
+              Utilisateurs sans agence ({getUsersWithoutAgency().length})
+            </CardTitle>
+            <CardDescription className="text-orange-700">
+              Ces utilisateurs n'ont pas encore d'agence assignée
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {getUsersWithoutAgency().map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between p-3 bg-white rounded-lg border"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {user.first_name} {user.last_name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    {user.role_agence && (
+                      <Badge variant="outline" className="mt-1">
+                        {user.role_agence}
+                      </Badge>
+                    )}
+                  </div>
+                  <Select
+                    onValueChange={(value) => handleAssignUser(user.id, value)}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Assigner à une agence" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {agencies
+                        .filter((a) => a.is_active)
+                        .map((agency) => (
+                          <SelectItem key={agency.id} value={agency.slug}>
+                            {agency.label}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Liste des agences */}
       <Card>
         <CardHeader>
           <CardTitle>Agences configurées</CardTitle>
           <CardDescription>
-            Liste des agences. L'URL de l'API est construite automatiquement : https://&#123;slug&#125;.hc-apogee.fr/api
+            Liste des agences avec leurs utilisateurs. L'URL de l'API est construite automatiquement
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <p className="text-center text-muted-foreground py-4">Chargement...</p>
           ) : agencies.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">
-              Aucune agence configurée
-            </p>
+            <p className="text-center text-muted-foreground py-4">Aucune agence configurée</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Slug</TableHead>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {agencies.map((agency) => (
-                  <TableRow key={agency.id}>
-                    <TableCell className="font-mono text-sm">{agency.slug}</TableCell>
-                    <TableCell className="font-medium">{agency.label}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          agency.is_active
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {agency.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openDialog(agency)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(agency.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+            <div className="space-y-4">
+              {agencies.map((agency) => {
+                const agencyUsers = getUsersForAgency(agency.slug);
+                const isExpanded = expandedAgencies.has(agency.id);
+
+                return (
+                  <Card key={agency.id} className="overflow-hidden">
+                    <div className="p-4 bg-gradient-to-r from-primary/5 to-primary/10">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-lg font-semibold">{agency.label}</h3>
+                              <Badge
+                                variant={agency.is_active ? 'default' : 'secondary'}
+                                className={
+                                  agency.is_active
+                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                    : ''
+                                }
+                              >
+                                {agency.is_active ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Slug: <span className="font-mono">{agency.slug}</span> • URL:{' '}
+                              <span className="font-mono text-xs">
+                                https://{agency.slug}.hc-apogee.fr/api
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">
+                            <Users className="h-3 w-3 mr-1" />
+                            {agencyUsers.length}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleAgencyExpanded(agency.id)}
+                          >
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openDialog(agency)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(agency.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+
+                    <Collapsible open={isExpanded}>
+                      <CollapsibleContent>
+                        {agencyUsers.length === 0 ? (
+                          <div className="p-4 text-center text-muted-foreground">
+                            Aucun utilisateur assigné à cette agence
+                          </div>
+                        ) : (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Nom</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Rôle</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {agencyUsers.map((user) => (
+                                <TableRow key={user.id}>
+                                  <TableCell className="font-medium">
+                                    {user.first_name} {user.last_name}
+                                  </TableCell>
+                                  <TableCell className="text-sm text-muted-foreground">
+                                    {user.email}
+                                  </TableCell>
+                                  <TableCell>
+                                    {user.role_agence && (
+                                      <Badge variant="outline">{user.role_agence}</Badge>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleAssignUser(user.id, null)}
+                                    >
+                                      Retirer
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        )}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </Card>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -235,7 +425,7 @@ export default function AdminAgencies() {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
-              {editingAgency ? 'Modifier l\'agence' : 'Nouvelle agence'}
+              {editingAgency ? "Modifier l'agence" : 'Nouvelle agence'}
             </DialogTitle>
             <DialogDescription>
               L'URL de l'API sera automatiquement construite comme https://&#123;slug&#125;.hc-apogee.fr/api
@@ -281,9 +471,7 @@ export default function AdminAgencies() {
             <Button variant="outline" onClick={closeDialog}>
               Annuler
             </Button>
-            <Button onClick={handleSave}>
-              {editingAgency ? 'Modifier' : 'Créer'}
-            </Button>
+            <Button onClick={handleSave}>{editingAgency ? 'Modifier' : 'Créer'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

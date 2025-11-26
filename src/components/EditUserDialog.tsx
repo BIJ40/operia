@@ -60,6 +60,13 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
   const loadUserPermissions = async (userId: string) => {
     setLoadingPermissions(true);
     try {
+      // Les dirigeants ont automatiquement accès aux indicateurs
+      if (user?.role_agence === 'dirigeant') {
+        setHasIndicateursAccess(true);
+        setLoadingPermissions(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('role_permissions')
         .select('block_id, can_access')
@@ -307,24 +314,31 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
                 Accès aux indicateurs
               </CardTitle>
               <CardDescription className="text-xs">
-                Autoriser l'utilisateur à consulter les KPIs de son agence
+                {roleAgence === 'dirigeant' 
+                  ? 'Les dirigeants ont automatiquement accès aux indicateurs'
+                  : 'Autoriser l\'utilisateur à consulter les KPIs de son agence'}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <Label htmlFor="indicateurs-toggle" className="text-sm font-normal">
-                  Activer "Mes indicateurs"
+                  {roleAgence === 'dirigeant' ? 'Accès automatique' : 'Activer "Mes indicateurs"'}
                 </Label>
                 <Switch
                   id="indicateurs-toggle"
                   checked={hasIndicateursAccess}
                   onCheckedChange={handleToggleIndicateurs}
-                  disabled={loadingPermissions || !user?.role_agence}
+                  disabled={loadingPermissions || !user?.role_agence || roleAgence === 'dirigeant'}
                 />
               </div>
               {!user?.role_agence && (
                 <p className="text-xs text-muted-foreground mt-2">
                   L'utilisateur doit avoir un rôle pour gérer les permissions
+                </p>
+              )}
+              {roleAgence === 'dirigeant' && (
+                <p className="text-xs text-green-600 mt-2">
+                  ✓ Accès automatique aux indicateurs pour les dirigeants
                 </p>
               )}
             </CardContent>
