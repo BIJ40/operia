@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Home, Edit3, Square, LogIn, Settings, User, Heart, Loader2, BarChart3, Headset } from 'lucide-react';
+import { LogOut, Home, Edit3, Square, LogIn, Settings, User, Heart, Loader2, BarChart3, Headset, Sun, Moon } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,15 +7,32 @@ import { Button } from '@/components/ui/button';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ChatbotNotifications } from '@/components/ChatbotNotifications';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function Header() {
   const location = useLocation();
   const editorContext = useEditor();
   const apporteurContext = useApporteurEditor();
   const { isAuthenticated, isAdmin, isSupport, roleAgence, isLoggingOut, logout } = useAuth();
-  const { hasNewTickets, newTicketsCount } = useSupportNotifications();
+  const { hasNewTickets, newTicketsCount, assignedToMeCount } = useSupportNotifications();
   const [loginOpen, setLoginOpen] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  // Charger le thème au démarrage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('support-theme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('support-theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
   
   // Déterminer quel contexte utiliser selon la page
   const isApporteurPage = location.pathname.startsWith('/apporteurs');
@@ -106,6 +123,11 @@ export function Header() {
                     {newTicketsCount}
                   </span>
                 )}
+                {assignedToMeCount > 0 && (
+                  <span className="absolute -bottom-2 -right-2 bg-blue-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                    {assignedToMeCount}
+                  </span>
+                )}
               </Link>
               <Link
                 to="/profile"
@@ -158,7 +180,29 @@ export function Header() {
                           {newTicketsCount}
                         </span>
                       )}
+                      {assignedToMeCount > 0 && (
+                        <span className="absolute -bottom-2 -right-2 bg-blue-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                          {assignedToMeCount}
+                        </span>
+                      )}
                     </Link>
+                    <Button
+                      onClick={toggleTheme}
+                      variant="ghost"
+                      className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
+                    >
+                      {theme === 'light' ? (
+                        <>
+                          <Moon className="w-5 h-5 text-primary" />
+                          <span className="font-semibold text-foreground">SOMBRE</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sun className="w-5 h-5 text-primary" />
+                          <span className="font-semibold text-foreground">CLAIR</span>
+                        </>
+                      )}
+                    </Button>
                   </>
                 )}
                 <div className="ml-auto flex items-center gap-2">

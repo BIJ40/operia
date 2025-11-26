@@ -6,30 +6,43 @@ export function useSupportNotifications() {
   const { isSupport, isAdmin, user } = useAuth();
   const [hasNewTickets, setHasNewTickets] = useState(false);
   const [newTicketsCount, setNewTicketsCount] = useState(0);
+  const [assignedToMeCount, setAssignedToMeCount] = useState(0);
 
   useEffect(() => {
     // Le hook fonctionne pour les admins ET les support
     if ((!isSupport && !isAdmin) || !user) return;
 
-    // Charger le nombre de tickets en attente initial
-    const loadWaitingTickets = async () => {
-      const { count, error } = await supabase
+    // Charger le nombre de tickets en attente et assignés
+    const loadTickets = async () => {
+      // Tickets en attente
+      const { count: waitingCount, error: waitingError } = await supabase
         .from('support_tickets')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'waiting');
 
-      if (!error) {
-        const safeCount = count ?? 0;
+      // Tickets assignés à moi (en cours)
+      const { count: assignedCount, error: assignedError } = await supabase
+        .from('support_tickets')
+        .select('*', { count: 'exact', head: true })
+        .eq('assigned_to', user.id)
+        .eq('status', 'in_progress');
+
+      if (!waitingError) {
+        const safeCount = waitingCount ?? 0;
         setNewTicketsCount(safeCount);
         setHasNewTickets(safeCount > 0);
       }
+
+      if (!assignedError) {
+        setAssignedToMeCount(assignedCount ?? 0);
+      }
     };
 
-    loadWaitingTickets();
+    loadTickets();
 
-    // Écouter les nouveaux tickets en temps réel
+    // Écouter les changements de tickets en temps réel
     const channel = supabase
-      .channel('support-new-tickets')
+      .channel('support-tickets-notifications')
       .on(
         'postgres_changes',
         {
@@ -38,8 +51,7 @@ export function useSupportNotifications() {
           table: 'support_tickets',
         },
         () => {
-          // Recharger le compte
-          loadWaitingTickets();
+          loadTickets();
         }
       )
       .on(
@@ -50,8 +62,7 @@ export function useSupportNotifications() {
           table: 'support_tickets',
         },
         () => {
-          // Recharger le compte si le statut change
-          loadWaitingTickets();
+          loadTickets();
         }
       )
       .subscribe();
@@ -61,5 +72,5 @@ export function useSupportNotifications() {
     };
   }, [isSupport, isAdmin, user]);
 
-  return { hasNewTickets, newTicketsCount };
+  return { hasNewTickets, newTicketsCount, assignedToMeCount };
 }
