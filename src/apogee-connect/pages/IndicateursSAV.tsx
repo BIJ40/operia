@@ -277,38 +277,98 @@ export default function IndicateursSAV() {
             </ResponsiveContainer>
           </Card>
 
-          {/* SAV par univers */}
-          <Card className="p-6 border-l-4 border-l-accent shadow-lg">
-            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-6">
-              SAV par univers
-            </h2>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Univers</TableHead>
-                    <TableHead className="text-right">Dossiers SAV</TableHead>
-                    <TableHead className="text-right">Taux SAV</TableHead>
-                    <TableHead className="text-right">CA SAV</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {byUnivers.map((item) => (
-                    <TableRow key={item.univers}>
-                      <TableCell className="font-medium">{formatUniverseLabel(item.univers)}</TableCell>
-                      <TableCell className="text-right">{item.nbProjectsSAV}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant={item.tauxSAV > 15 ? "destructive" : "secondary"}>
-                          {item.tauxSAV.toFixed(1)}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{formatEuros(item.caSAV)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          {/* SAV par univers - Tuiles */}
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-2">
+                SAV par univers
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Analyse du taux de SAV et du CA par univers métier
+              </p>
             </div>
-          </Card>
+
+            {/* Grille de tuiles par univers */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {byUnivers.map((item) => {
+                const isHighRate = item.tauxSAV > 15;
+                const colorClass = isHighRate 
+                  ? "from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border-l-red-500"
+                  : "from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-l-green-500";
+                
+                return (
+                  <Card 
+                    key={item.univers} 
+                    className={`p-5 bg-gradient-to-br ${colorClass} border-l-4 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]`}
+                  >
+                    <div className="space-y-3">
+                      {/* Titre univers */}
+                      <div className="flex items-center gap-2">
+                        <Layers className={`w-5 h-5 ${isHighRate ? 'text-red-600' : 'text-green-600'}`} />
+                        <h3 className="font-bold text-sm">{formatUniverseLabel(item.univers)}</h3>
+                      </div>
+
+                      {/* Taux SAV principal */}
+                      <div>
+                        <p className="text-xs text-muted-foreground">Taux SAV</p>
+                        <p className={`text-3xl font-bold bg-gradient-to-r ${isHighRate ? 'from-red-600 to-red-800' : 'from-green-600 to-green-800'} bg-clip-text text-transparent`}>
+                          {item.tauxSAV.toFixed(1)}%
+                        </p>
+                      </div>
+
+                      {/* Indicateurs secondaires */}
+                      <div className="pt-2 border-t space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-muted-foreground">Dossiers SAV</span>
+                          <Badge variant={isHighRate ? "destructive" : "secondary"} className="font-mono">
+                            {item.nbProjectsSAV}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-muted-foreground">CA SAV</span>
+                          <span className="text-sm font-semibold">{formatEuros(item.caSAV)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Graphique comparatif */}
+            <Card className="p-6 border-l-4 border-l-accent shadow-lg">
+              <h3 className="text-lg font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent mb-4">
+                Comparaison taux SAV par univers
+              </h3>
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart data={byUnivers.map(item => ({ 
+                  ...item, 
+                  univers: formatUniverseLabel(item.univers) 
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="univers" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={100}
+                    interval={0}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value: number, name: string) => {
+                      if (name === "CA SAV") return [formatEuros(value), name];
+                      if (name === "Taux SAV (%)") return [value.toFixed(1) + "%", name];
+                      return [value, name];
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="tauxSAV" fill="#ef4444" name="Taux SAV (%)" />
+                  <Bar dataKey="nbProjectsSAV" fill="#f97316" name="Dossiers SAV" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
 
           {/* SAV par technicien */}
           <Card className="p-6 border-l-4 border-l-accent shadow-lg">
