@@ -161,8 +161,10 @@ export const calculateSAVGlobalStats = (
   factures: any[],
   dateRange: { start: Date; end: Date }
 ): SAVGlobalStats => {
-  // IMPORTANT: Utiliser la même logique que calculateTauxSAVGlobal
-  // 1. Filtrer les interventions sur la période (pas les projets)
+  console.log("[SAV Global] === Début du calcul ===");
+  
+  // NOUVELLE LOGIQUE: Base sur les INTERVENTIONS, pas sur les FACTURES
+  // 1. Filtrer les interventions sur la période
   const interventionsPeriode = interventions.filter(interv => {
     const date = interv.date || interv.dateIntervention || interv.created_at;
     if (!date) return false;
@@ -175,7 +177,19 @@ export const calculateSAVGlobalStats = (
     }
   });
 
-  // 2. Identifier les dossiers avec SAV
+  console.log(`[SAV Global] Interventions dans la période: ${interventionsPeriode.length}`);
+
+  // 2. Identifier TOUS les dossiers actifs (avec au moins 1 intervention)
+  const dossiersActifs = new Set<number>();
+  interventionsPeriode.forEach(interv => {
+    if (interv.projectId) {
+      dossiersActifs.add(interv.projectId);
+    }
+  });
+
+  console.log(`[SAV Global] Dossiers actifs (avec interventions): ${dossiersActifs.size}`);
+
+  // 3. Identifier les dossiers avec SAV et compter les interventions SAV
   const dossiersSAV = new Set<number>();
   let nbInterventionsSAV = 0;
   
@@ -191,36 +205,21 @@ export const calculateSAVGlobalStats = (
     }
   });
 
-  // 3. Compter les dossiers facturés sur la période (même logique que page Accueil)
-  const facturesPeriode = factures.filter(facture => {
-    const dateFacture = facture.dateEmission || facture.dateReelle || facture.created_at;
-    if (!dateFacture) return false;
-    
-    try {
-      const factureDate = parseISO(dateFacture);
-      if (!isWithinInterval(factureDate, dateRange)) return false;
-    } catch {
-      return false;
-    }
-    
-    // Exclure les avoirs
-    const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-    return typeFacture !== "avoir";
-  });
-  
-  const dossiersFactures = new Set<number>();
-  facturesPeriode.forEach(facture => {
-    dossiersFactures.add(facture.projectId);
-  });
+  console.log(`[SAV Global] Dossiers avec SAV: ${dossiersSAV.size}`);
+  console.log(`[SAV Global] Interventions SAV: ${nbInterventionsSAV}`);
 
-  // 4. Calculer le CA SAV
+  // 4. Calculer le CA SAV (en utilisant les factures disponibles)
   let caSAV = 0;
   dossiersSAV.forEach(projectId => {
     caSAV += getProjectCA(projectId, factures, dateRange);
   });
 
-  const nbTotalProjects = dossiersFactures.size;
+  console.log(`[SAV Global] CA SAV: ${caSAV.toFixed(2)} €`);
+
+  const nbTotalProjects = dossiersActifs.size;
   const tauxSAV = nbTotalProjects > 0 ? (dossiersSAV.size / nbTotalProjects) * 100 : 0;
+
+  console.log(`[SAV Global] Taux SAV: ${tauxSAV.toFixed(1)}% (${dossiersSAV.size} / ${nbTotalProjects})`);
 
   return {
     nbTotalProjects,
@@ -243,30 +242,30 @@ export const calculateSAVByTypeApporteur = (
   dateRange: { start: Date; end: Date }
 ): SAVByTypeApporteur[] => {
   const clientsMap = new Map(clients.map(c => [c.id, c]));
+  const projectsMap = new Map(projects.map(p => [p.id, p]));
   const statsParType = new Map<string, { total: number; sav: number; ca: number }>();
 
-  // 1. Filtrer les factures sur la période pour identifier les dossiers actifs
-  const facturesPeriode = factures.filter(facture => {
-    const dateFacture = facture.dateEmission || facture.dateReelle || facture.created_at;
-    if (!dateFacture) return false;
+  // 1. Filtrer les interventions sur la période pour identifier les dossiers actifs
+  const interventionsPeriode = interventions.filter(interv => {
+    const date = interv.date || interv.dateIntervention || interv.created_at;
+    if (!date) return false;
     
     try {
-      const factureDate = parseISO(dateFacture);
-      if (!isWithinInterval(factureDate, dateRange)) return false;
+      const intervDate = parseISO(date);
+      return isWithinInterval(intervDate, dateRange);
     } catch {
       return false;
     }
-    
-    const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-    return typeFacture !== "avoir";
   });
-  
-  const dossiersFactures = new Set<number>();
-  facturesPeriode.forEach(f => dossiersFactures.add(f.projectId));
 
-  // 2. Pour chaque dossier facturé, identifier le type d'apporteur
-  dossiersFactures.forEach(projectId => {
-    const project = projects.find(p => p.id === projectId);
+  const dossiersActifs = new Set<number>();
+  interventionsPeriode.forEach(interv => {
+    if (interv.projectId) dossiersActifs.add(interv.projectId);
+  });
+
+  // 2. Pour chaque dossier actif, identifier le type d'apporteur
+  dossiersActifs.forEach(projectId => {
+    const project = projectsMap.get(projectId);
     if (!project) return;
 
     const commanditaireId = project.data?.commanditaireId || project.commanditaireId;
@@ -320,35 +319,35 @@ export const calculateSAVByTechnicien = (
   dateRange: { start: Date; end: Date }
 ): SAVByTechnicien[] => {
   const usersMap = new Map(users.map(u => [u.id, u]));
+  const projectsMap = new Map(projects.map(p => [p.id, p]));
   const statsParTech = new Map<string, { nbInterventions: number; projects: Set<number>; heures: number; ca: number }>();
 
   console.log("[SAV Technicien] Nombre de users:", users.length);
   console.log("[SAV Technicien] Nombre de projets:", projects.length);
   console.log("[SAV Technicien] Nombre d'interventions:", interventions.length);
 
-  // 1. Filtrer les factures sur la période pour identifier les dossiers actifs
-  const facturesPeriode = factures.filter(facture => {
-    const dateFacture = facture.dateEmission || facture.dateReelle || facture.created_at;
-    if (!dateFacture) return false;
+  // 1. Filtrer les interventions sur la période pour identifier les dossiers actifs
+  const interventionsPeriode = interventions.filter(interv => {
+    const date = interv.date || interv.dateIntervention || interv.created_at;
+    if (!date) return false;
     
     try {
-      const factureDate = parseISO(dateFacture);
-      if (!isWithinInterval(factureDate, dateRange)) return false;
+      const intervDate = parseISO(date);
+      return isWithinInterval(intervDate, dateRange);
     } catch {
       return false;
     }
-    
-    const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-    return typeFacture !== "avoir";
   });
-  
-  const dossiersFactures = new Set<number>();
-  facturesPeriode.forEach(f => dossiersFactures.add(f.projectId));
 
-  // 2. Identifier les projets SAV parmi les dossiers facturés
+  const dossiersActifs = new Set<number>();
+  interventionsPeriode.forEach(interv => {
+    if (interv.projectId) dossiersActifs.add(interv.projectId);
+  });
+
+  // 2. Identifier les projets SAV parmi les dossiers actifs
   const savProjects = new Set<number>();
-  dossiersFactures.forEach(projectId => {
-    const project = projects.find(p => p.id === projectId);
+  dossiersActifs.forEach(projectId => {
+    const project = projectsMap.get(projectId);
     if (!project) return;
     
     if (isProjectSAV(projectId, interventions, project)) {
@@ -429,30 +428,30 @@ export const calculateSAVByUnivers = (
   factures: any[],
   dateRange: { start: Date; end: Date }
 ): SAVByUnivers[] => {
+  const projectsMap = new Map(projects.map(p => [p.id, p]));
   const statsParUnivers = new Map<string, { total: number; sav: number; ca: number }>();
 
-  // 1. Filtrer les factures sur la période pour identifier les dossiers actifs
-  const facturesPeriode = factures.filter(facture => {
-    const dateFacture = facture.dateEmission || facture.dateReelle || facture.created_at;
-    if (!dateFacture) return false;
+  // 1. Filtrer les interventions sur la période pour identifier les dossiers actifs
+  const interventionsPeriode = interventions.filter(interv => {
+    const date = interv.date || interv.dateIntervention || interv.created_at;
+    if (!date) return false;
     
     try {
-      const factureDate = parseISO(dateFacture);
-      if (!isWithinInterval(factureDate, dateRange)) return false;
+      const intervDate = parseISO(date);
+      return isWithinInterval(intervDate, dateRange);
     } catch {
       return false;
     }
-    
-    const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-    return typeFacture !== "avoir";
   });
-  
-  const dossiersFactures = new Set<number>();
-  facturesPeriode.forEach(f => dossiersFactures.add(f.projectId));
 
-  // 2. Pour chaque dossier facturé, analyser les univers
-  dossiersFactures.forEach(projectId => {
-    const project = projects.find(p => p.id === projectId);
+  const dossiersActifs = new Set<number>();
+  interventionsPeriode.forEach(interv => {
+    if (interv.projectId) dossiersActifs.add(interv.projectId);
+  });
+
+  // 2. Pour chaque dossier actif, analyser les univers
+  dossiersActifs.forEach(projectId => {
+    const project = projectsMap.get(projectId);
     if (!project) return;
 
     const universes = project.data?.universes || [];
@@ -505,30 +504,30 @@ export const calculateSAVByApporteur = (
   dateRange: { start: Date; end: Date }
 ): SAVByApporteur[] => {
   const clientsMap = new Map(clients.map(c => [c.id, c]));
+  const projectsMap = new Map(projects.map(p => [p.id, p]));
   const statsParApporteur = new Map<number, { nom: string; type: string; total: number; sav: number; ca: number }>();
 
-  // 1. Filtrer les factures sur la période pour identifier les dossiers actifs
-  const facturesPeriode = factures.filter(facture => {
-    const dateFacture = facture.dateEmission || facture.dateReelle || facture.created_at;
-    if (!dateFacture) return false;
+  // 1. Filtrer les interventions sur la période pour identifier les dossiers actifs
+  const interventionsPeriode = interventions.filter(interv => {
+    const date = interv.date || interv.dateIntervention || interv.created_at;
+    if (!date) return false;
     
     try {
-      const factureDate = parseISO(dateFacture);
-      if (!isWithinInterval(factureDate, dateRange)) return false;
+      const intervDate = parseISO(date);
+      return isWithinInterval(intervDate, dateRange);
     } catch {
       return false;
     }
-    
-    const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-    return typeFacture !== "avoir";
   });
-  
-  const dossiersFactures = new Set<number>();
-  facturesPeriode.forEach(f => dossiersFactures.add(f.projectId));
 
-  // 2. Pour chaque dossier facturé avec apporteur
-  dossiersFactures.forEach(projectId => {
-    const project = projects.find(p => p.id === projectId);
+  const dossiersActifs = new Set<number>();
+  interventionsPeriode.forEach(interv => {
+    if (interv.projectId) dossiersActifs.add(interv.projectId);
+  });
+
+  // 2. Pour chaque dossier actif avec apporteur
+  dossiersActifs.forEach(projectId => {
+    const project = projectsMap.get(projectId);
     if (!project) return;
 
     const commanditaireId = project.data?.commanditaireId || project.commanditaireId;
@@ -594,25 +593,32 @@ export const calculateSAVMonthlyEvolution = (
 
   const monthlyTotal = Array(12).fill(0);
   const projectsMap = new Map(projects.map(p => [p.id, p]));
+  const dossiersActifsParMois: Set<number>[] = Array.from({ length: 12 }, () => new Set());
 
-  // Filtrer les factures de l'année pour identifier les dossiers actifs par mois
-  factures.forEach(facture => {
-    const dateFacture = facture.dateEmission || facture.dateReelle || facture.created_at;
-    if (!dateFacture) return;
+  // Filtrer les interventions de l'année pour identifier les dossiers actifs par mois
+  interventions.forEach(interv => {
+    const date = interv.date || interv.dateIntervention || interv.created_at;
+    if (!date) return;
 
     try {
-      const factureDate = parseISO(dateFacture);
-      if (factureDate.getFullYear() !== year) return;
+      const intervDate = parseISO(date);
+      if (intervDate.getFullYear() !== year) return;
 
-      const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-      if (typeFacture === "avoir") return;
-
-      const monthIndex = factureDate.getMonth();
-      const projectId = facture.projectId;
+      const monthIndex = intervDate.getMonth();
+      const projectId = interv.projectId;
       
-      // Compter le dossier dans le mois (peut être compté plusieurs fois si plusieurs factures)
-      monthlyTotal[monthIndex]++;
+      // Ajouter le dossier aux dossiers actifs du mois
+      dossiersActifsParMois[monthIndex].add(projectId);
+    } catch {
+      return;
+    }
+  });
 
+  // Pour chaque mois, calculer le nombre de dossiers actifs et de dossiers SAV
+  dossiersActifsParMois.forEach((dossiersActifs, monthIndex) => {
+    monthlyTotal[monthIndex] = dossiersActifs.size;
+
+    dossiersActifs.forEach(projectId => {
       const project = projectsMap.get(projectId);
       if (!project) return;
 
@@ -620,16 +626,14 @@ export const calculateSAVMonthlyEvolution = (
       if (isSAV) {
         monthlyData[monthIndex].nbSAV++;
         
-        // Ajouter le CA de cette facture
-        const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
-        const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-        if (!isNaN(montant)) {
-          monthlyData[monthIndex].caSAV += montant * 0.35; // Appliquer le coefficient 35%
-        }
+        // Calculer le CA SAV pour ce dossier dans ce mois
+        const dateRange = {
+          start: new Date(year, monthIndex, 1),
+          end: new Date(year, monthIndex + 1, 0, 23, 59, 59)
+        };
+        monthlyData[monthIndex].caSAV += getProjectCA(projectId, factures, dateRange);
       }
-    } catch {
-      return;
-    }
+    });
   });
 
   // Calculer les taux
