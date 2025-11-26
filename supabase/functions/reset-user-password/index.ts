@@ -66,6 +66,12 @@ serve(async (req) => {
       throw new Error('userId et newPassword sont requis')
     }
 
+    // Validation du mot de passe
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/])[A-Za-z\d!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]{8,100}$/;
+    if (!passwordRegex.test(newPassword)) {
+      throw new Error('Le mot de passe doit contenir au moins 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole')
+    }
+
     console.log('Resetting password for user:', targetUserId)
 
     // Réinitialiser le mot de passe

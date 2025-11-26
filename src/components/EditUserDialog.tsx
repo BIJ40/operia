@@ -65,13 +65,27 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
   }, [user]);
 
   const generateRandomPassword = () => {
-    const length = 12;
-    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+    // Garantir au moins un caractère de chaque catégorie
+    const lowercase = "abcdefghijklmnopqrstuvwxyz";
+    const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const numbers = "0123456789";
+    const symbols = "!@#$%&*";
+    
+    // Commencer avec un caractère obligatoire de chaque type
     let password = "";
-    for (let i = 0; i < length; i++) {
-      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    password += lowercase.charAt(Math.floor(Math.random() * lowercase.length));
+    password += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
+    password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    password += symbols.charAt(Math.floor(Math.random() * symbols.length));
+    
+    // Compléter jusqu'à 12 caractères avec tous les caractères possibles
+    const allChars = lowercase + uppercase + numbers + symbols;
+    for (let i = password.length; i < 12; i++) {
+      password += allChars.charAt(Math.floor(Math.random() * allChars.length));
     }
-    return password;
+    
+    // Mélanger le mot de passe pour ne pas avoir un pattern prévisible
+    return password.split('').sort(() => Math.random() - 0.5).join('');
   };
 
   const handleGeneratePassword = async () => {
