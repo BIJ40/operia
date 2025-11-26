@@ -200,7 +200,7 @@ export default function IndicateursSAV() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Projets avec intervention SAV
+                Dossiers avec intervention SAV
               </p>
             </Card>
 

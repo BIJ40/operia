@@ -21,6 +21,11 @@ export function MesIndicateursCard() {
       try {
         const apiData = await DataService.loadAllData(true);
         
+        // Utiliser l'année en cours comme période par défaut pour les KPIs
+        const now = new Date();
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        const yearEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+        
         const stats = calculateDashboardStats({
           projects: apiData.projects || [],
           interventions: apiData.interventions || [],
@@ -28,7 +33,7 @@ export function MesIndicateursCard() {
           devis: apiData.devis || [],
           clients: apiData.clients || [],
           users: apiData.users || [],
-        }, undefined, currentAgency?.id);
+        }, { start: yearStart, end: yearEnd }, currentAgency?.id || '');
 
         // Calculer le taux SAV global
         let tauxSAV = 0;
@@ -53,7 +58,7 @@ export function MesIndicateursCard() {
         const delaiDossierFacture = calculateDelaiMoyenDossierFacture(
           apiData.factures || [],
           apiData.projects || [],
-          undefined
+          { start: yearStart, end: yearEnd }
         );
 
         return {
@@ -127,11 +132,11 @@ export function MesIndicateursCard() {
               </div>
             </div>
 
-            {/* Nb Projets */}
+            {/* Nb Dossiers */}
             <div className="bg-background/60 backdrop-blur-sm rounded-lg p-2 border border-border/50">
               <div className="flex items-center gap-1 mb-0.5">
                 <TrendingUp className="w-3 h-3 text-primary" />
-                <span className="text-[10px] text-muted-foreground font-medium">Projets</span>
+                <span className="text-[10px] text-muted-foreground font-medium">Dossiers</span>
               </div>
               <div className="text-sm font-bold text-foreground">
                 {kpis.nbProjets}
