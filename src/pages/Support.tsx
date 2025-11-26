@@ -368,8 +368,8 @@ export default function Support() {
   if (!isSupport) return null;
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+    <div className={darkMode ? 'dark' : ''}>
+      <div className="min-h-screen bg-background text-foreground">
         <div className="container mx-auto px-4 py-8">
           <div className="mb-6 flex items-center justify-between">
             <div>
@@ -383,8 +383,35 @@ export default function Support() {
                 onClick={() => setDarkMode(!darkMode)}
                 className="gap-2"
               >
-                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                {darkMode ? 'Clair' : 'Sombre'}
+                {darkMode ? (
+                  <>
+                    <Sun className="w-4 h-4" />
+                    Clair
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-4 h-4" />
+                    Sombre
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toggleEmailNotifications(!emailNotificationsEnabled)}
+                className="gap-2"
+              >
+                {emailNotificationsEnabled ? (
+                  <>
+                    <Bell className="w-4 h-4" />
+                    Emails ON
+                  </>
+                ) : (
+                  <>
+                    <BellOff className="w-4 h-4" />
+                    Emails OFF
+                  </>
+                )}
               </Button>
               <Button
                 variant={viewMode === 'list' ? 'default' : 'outline'}
@@ -408,31 +435,6 @@ export default function Support() {
           </div>
 
         {/* Préférences de notifications */}
-        <Card className="mb-6 border-l-4 border-l-primary">
-          <CardContent className="flex items-center justify-between py-3 px-4">
-            <div className="flex items-center gap-3">
-              {emailNotificationsEnabled ? (
-                <Bell className="w-4 h-4 text-primary flex-shrink-0" />
-              ) : (
-                <BellOff className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              )}
-              <div>
-                <Label htmlFor="email-notifications" className="text-sm font-semibold cursor-pointer">
-                  Notifications par email
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Nouveaux tickets support
-                </p>
-              </div>
-            </div>
-            <Switch
-              id="email-notifications"
-              checked={emailNotificationsEnabled}
-              onCheckedChange={toggleEmailNotifications}
-            />
-          </CardContent>
-        </Card>
-
         {viewMode === 'kanban' ? (
           <KanbanView
             tickets={tickets}
