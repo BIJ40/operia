@@ -86,7 +86,7 @@ export function AgencyProfileDialog({
         adresse: formData.adresse || null,
         ville: formData.ville || null,
         code_postal: formData.code_postal || null,
-        animateur_id: formData.animateur_id || null,
+        animateur_id: formData.animateur_id === "none" ? null : (formData.animateur_id || null),
       };
 
       if (agencyId) {
@@ -262,7 +262,7 @@ export function AgencyProfileDialog({
               <div className="space-y-2">
                 <Label htmlFor="animateur_id">Animateur rattaché</Label>
                 <Select
-                  value={formData.animateur_id}
+                  value={formData.animateur_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, animateur_id: value })}
                   disabled={!canManage}
                 >
@@ -270,7 +270,7 @@ export function AgencyProfileDialog({
                     <SelectValue placeholder="Sélectionner un animateur" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucun animateur</SelectItem>
+                    <SelectItem value="none">Aucun animateur</SelectItem>
                     {animators?.map((animator) => (
                       <SelectItem key={animator.id} value={animator.id}>
                         {animator.first_name} {animator.last_name} ({animator.email})
