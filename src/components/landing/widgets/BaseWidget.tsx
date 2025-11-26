@@ -60,7 +60,7 @@ export function BaseWidget({
     <div
       ref={setNodeRef}
       style={style}
-      className={`${sizeClasses[size]} ${className} relative`}
+      className={`${sizeClasses[size]} ${className} relative transition-all duration-200 ease-in-out`}
     >
       {isDashboardEditMode && (
         <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -74,7 +74,7 @@ export function BaseWidget({
                 <Settings className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent align="end" className="bg-background z-50">
               <DropdownMenuItem onClick={() => onSizeChange?.('small')}>
                 Petit (1 bloc)
               </DropdownMenuItem>
