@@ -280,8 +280,15 @@ export default function UserTickets() {
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <CardTitle>{ticket.subject}</CardTitle>
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-2">
+                        <CardTitle>{ticket.subject}</CardTitle>
+                        {ticket.unreadCount && ticket.unreadCount > 0 && (
+                          <Badge className="bg-red-500 text-white hover:bg-red-600">
+                            {ticket.unreadCount} nouveau{ticket.unreadCount > 1 ? 'x' : ''}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2">
                         <TicketSourceBadge source={ticket.source} />
                         <TicketCategoryBadge category={ticket.category} />
