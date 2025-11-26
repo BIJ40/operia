@@ -12,6 +12,10 @@ import {
   calculateMonthlyCAEvolution,
   calculateCAByAgency,
   calculateMonthlySAVEvolution,
+  calculateOneShotRate,
+  calculateProjectToQuoteDelay,
+  calculateVisitsPerProject,
+  calculateMultiUniversRate,
 } from '../utils/networkCalculations';
 
 interface NetworkStats {
@@ -25,6 +29,10 @@ interface NetworkStats {
   nbTotalSAVProjects: number;    // Total SAV projects across network
   monthlyRoyalties: number;
   averageProcessingTime: number;
+  oneShotRate: number;           // % projects resolved in single intervention
+  projectToQuoteDelay: number;   // Average days from project to first quote
+  visitsPerProject: number;      // Average visits/appointments per project
+  multiUniversRate: number;      // % projects with multiple universes
   top5Agencies: Array<{ agencyId: string; agencyLabel: string; ca: number; rank: number }>;
   bestApporteur: { name: string; ca: number; nbDossiers: number } | null;
   monthlyCAEvolution: Array<{ month: string; ca: number; nbFactures: number }>;
@@ -95,6 +103,10 @@ export function useNetworkStats() {
         nbTotalSAVProjects: savStats.nbTotalSAVProjects,
         monthlyRoyalties: 0, // Placeholder (redevances calculées ailleurs)
         averageProcessingTime: calculateAverageProcessingTime(agencyData),
+        oneShotRate: calculateOneShotRate(agencyData),
+        projectToQuoteDelay: calculateProjectToQuoteDelay(agencyData),
+        visitsPerProject: calculateVisitsPerProject(agencyData),
+        multiUniversRate: calculateMultiUniversRate(agencyData),
         top5Agencies: calculateTop5Agencies(agencyData),
         bestApporteur: calculateBestApporteur(agencyData),
         monthlyCAEvolution: calculateMonthlyCAEvolution(agencyData),
