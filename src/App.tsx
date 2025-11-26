@@ -31,6 +31,7 @@ import IndicateursUnivers from "./apogee-connect/pages/IndicateursUnivers";
 import IndicateursTechniciens from "./apogee-connect/pages/IndicateursTechniciens";
 import IndicateursSAV from "./apogee-connect/pages/IndicateursSAV";
 import AdminAgencies from "./pages/AdminAgencies";
+import AdminStorageQuota from "./pages/AdminStorageQuota";
 import NotFound from "./pages/NotFound";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
@@ -70,6 +71,7 @@ function AppContent() {
         <Route path="/admin/users-list" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUsersList /></Layout>} />
         <Route path="/admin/role-permissions" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminRolePermissions /></Layout>} />
         <Route path="/admin/agencies" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminAgencies /></Layout>} />
+        <Route path="/admin/storage-quota" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminStorageQuota /></Layout>} />
         <Route path="/mes-indicateurs" element={<Layout showHeader showSidebar={false}><IndicateursLayout /></Layout>}>
           <Route index element={<IndicateursAccueil />} />
           <Route path="apporteurs" element={<IndicateursApporteurs />} />

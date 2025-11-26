@@ -8,7 +8,8 @@ import {
   ArrowLeft,
   Home,
   MessageSquare,
-  ChevronRight
+  ChevronRight,
+  HardDrive
 } from 'lucide-react';
 import {
   Sidebar,
@@ -68,6 +69,11 @@ const adminMenuItems = [
     title: 'Support',
     url: '/admin/support',
     icon: MessageSquare,
+  },
+  {
+    title: 'Surveillance Quota',
+    url: '/admin/storage-quota',
+    icon: HardDrive,
   },
   {
     title: 'Sauvegardes',

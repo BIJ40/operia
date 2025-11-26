@@ -570,6 +570,42 @@ export type Database = {
           },
         ]
       }
+      storage_quota_alerts: {
+        Row: {
+          cache_keys: Json | null
+          created_at: string
+          id: string
+          percentage_used: number
+          quota_total_bytes: number
+          quota_used_bytes: number
+          user_agence: string | null
+          user_email: string
+          user_id: string
+        }
+        Insert: {
+          cache_keys?: Json | null
+          created_at?: string
+          id?: string
+          percentage_used: number
+          quota_total_bytes: number
+          quota_used_bytes: number
+          user_agence?: string | null
+          user_email: string
+          user_id: string
+        }
+        Update: {
+          cache_keys?: Json | null
+          created_at?: string
+          id?: string
+          percentage_used?: number
+          quota_total_bytes?: number
+          quota_used_bytes?: number
+          user_agence?: string | null
+          user_email?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       support_messages: {
         Row: {
           created_at: string

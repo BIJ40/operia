@@ -7,6 +7,7 @@ import { AppSidebarAdmin } from '@/components/AppSidebarAdmin';
 import { Header } from '@/components/Header';
 import { Chatbot } from '@/components/Chatbot';
 import { ImageModal } from '@/components/ImageModal';
+import { useStorageQuota } from '@/hooks/use-storage-quota';
 
 interface LayoutProps {
   children: ReactNode;
@@ -16,6 +17,8 @@ interface LayoutProps {
 }
 
 export function Layout({ children, showHeader = true, showSidebar = true, sidebarType = 'apogee' }: LayoutProps) {
+  useStorageQuota(); // Surveillance automatique du localStorage
+  
   const SidebarComponent = sidebarType === 'apporteur' 
     ? AppSidebarApporteur 
     : sidebarType === 'helpconfort'
