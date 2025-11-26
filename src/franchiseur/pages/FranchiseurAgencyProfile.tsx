@@ -56,6 +56,15 @@ export default function FranchiseurAgencyProfile() {
             {!agency.is_active && (
               <Badge variant="secondary">Inactive</Badge>
             )}
+            {agency.animateur_profile ? (
+              <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                Animateur assigné
+              </Badge>
+            ) : (
+              <Badge variant="secondary">
+                Sans animateur
+              </Badge>
+            )}
           </div>
           <p className="text-muted-foreground mt-1 font-mono text-sm">
             {agency.slug}
