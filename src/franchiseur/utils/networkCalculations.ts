@@ -372,6 +372,120 @@ export function calculateCAByAgency(agencyData: AgencyData[]) {
 }
 
 /**
+ * Calculate taux one-shot: % of projects resolved in a single intervention
+ */
+export function calculateOneShotRate(agencyData: AgencyData[]): number {
+  let totalProjects = 0;
+  let oneShotProjects = 0;
+
+  agencyData.forEach((agency) => {
+    if (!agency.data?.projects || !agency.data?.interventions) return;
+
+    const interventionsByProject = new Map<number, number>();
+    
+    agency.data.interventions.forEach((intervention: any) => {
+      const count = interventionsByProject.get(intervention.projectId) || 0;
+      interventionsByProject.set(intervention.projectId, count + 1);
+    });
+
+    agency.data.projects.forEach((project: any) => {
+      const interventionCount = interventionsByProject.get(project.id) || 0;
+      if (interventionCount > 0) {
+        totalProjects++;
+        if (interventionCount === 1) {
+          oneShotProjects++;
+        }
+      }
+    });
+  });
+
+  return totalProjects > 0 ? Math.round((oneShotProjects / totalProjects) * 1000) / 10 : 0;
+}
+
+/**
+ * Calculate average delay from project creation to first quote (in days)
+ */
+export function calculateProjectToQuoteDelay(agencyData: AgencyData[]): number {
+  let totalDays = 0;
+  let projectCount = 0;
+
+  agencyData.forEach((agency) => {
+    if (!agency.data?.projects || !agency.data?.devis) return;
+
+    agency.data.projects.forEach((project: any) => {
+      const projectCreatedAt = parseDate(project.createdAt || project.created_at);
+      if (!projectCreatedAt) return;
+
+      // Find first quote for this project
+      const projectQuotes = agency.data.devis
+        .filter((d: any) => d.projectId === project.id)
+        .map((d: any) => parseDate(d.dateReelle || d.dateCreation || d.created_at))
+        .filter((d: Date | null) => d !== null) as Date[];
+
+      if (projectQuotes.length === 0) return;
+
+      const firstQuote = new Date(Math.min(...projectQuotes.map(d => d.getTime())));
+      const daysDiff = Math.floor((firstQuote.getTime() - projectCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff >= 0) {
+        totalDays += daysDiff;
+        projectCount += 1;
+      }
+    });
+  });
+
+  return projectCount > 0 ? Math.round(totalDays / projectCount) : 0;
+}
+
+/**
+ * Calculate average number of visits/appointments per project
+ */
+export function calculateVisitsPerProject(agencyData: AgencyData[]): number {
+  let totalVisits = 0;
+  let projectCount = 0;
+
+  agencyData.forEach((agency) => {
+    if (!agency.data?.projects || !agency.data?.interventions) return;
+
+    const projectIds = new Set(agency.data.projects.map((p: any) => p.id));
+    projectCount += projectIds.size;
+
+    // Count visits (interventions of type 'visite' or similar)
+    agency.data.interventions.forEach((intervention: any) => {
+      if (projectIds.has(intervention.projectId)) {
+        // Count all interventions as potential visits/appointments
+        totalVisits++;
+      }
+    });
+  });
+
+  return projectCount > 0 ? Math.round((totalVisits / projectCount) * 10) / 10 : 0;
+}
+
+/**
+ * Calculate percentage of projects involving multiple universes
+ */
+export function calculateMultiUniversRate(agencyData: AgencyData[]): number {
+  let totalProjects = 0;
+  let multiUniversProjects = 0;
+
+  agencyData.forEach((agency) => {
+    if (!agency.data?.projects) return;
+
+    agency.data.projects.forEach((project: any) => {
+      totalProjects++;
+      
+      const universes = project.data?.universes || project.universes || [];
+      if (Array.isArray(universes) && universes.length > 1) {
+        multiUniversProjects++;
+      }
+    });
+  });
+
+  return totalProjects > 0 ? Math.round((multiUniversProjects / totalProjects) * 1000) / 10 : 0;
+}
+
+/**
  * Calculate monthly SAV evolution
  */
 export function calculateMonthlySAVEvolution(agencyData: AgencyData[]) {
