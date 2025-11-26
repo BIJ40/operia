@@ -40,6 +40,7 @@ export function Chatbot() {
     createSupportTicket,
     createTicketFromChat,
     isCreating,
+    handleWaitTimeout,
     setIsOpen,
     setInput,
     setShowCloseConfirm,
@@ -394,10 +395,7 @@ export function Chatbot() {
               {showTicketCreation && activeTicket && (
                 <TimeoutModal
                   open={showTicketCreation}
-                  onWait={() => {
-                    // Reset timeout and continue waiting
-                    setShowTicketCreation(false);
-                  }}
+                  onWait={handleWaitTimeout}
                   onCreateTicket={(category, subject, description) => {
                     createTicketFromChat(category, subject, description);
                   }}
