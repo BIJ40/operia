@@ -1,5 +1,7 @@
-import { Building2, BarChart3, TrendingUp, Euro, Settings, Home } from "lucide-react";
+import { Building2, BarChart3, TrendingUp, Euro, Settings, Home, ArrowLeft } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { useFranchiseur } from "@/franchiseur/contexts/FranchiseurContext";
 import {
   Sidebar,
@@ -18,6 +20,7 @@ export function FranchiseurSidebar() {
   const { state } = useSidebar();
   const { permissions } = useFranchiseur();
   const collapsed = state === "collapsed";
+  const navigate = useNavigate();
 
   const mainItems = [
     { title: "Accueil", url: "/tete-de-reseau", icon: Home },
@@ -43,6 +46,16 @@ export function FranchiseurSidebar() {
       <SidebarTrigger className="m-2 self-end" />
 
       <SidebarContent>
+        <div className="p-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/')}
+            className="w-full rounded-2xl border-2 hover:bg-accent"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {!collapsed && <span className="ml-2">Retour accueil</span>}
+          </Button>
+        </div>
         <SidebarGroup>
           <SidebarGroupLabel>Tête de Réseau</SidebarGroupLabel>
           <SidebarGroupContent>
