@@ -71,13 +71,8 @@ const adminMenuItems = [
     icon: MessageSquare,
   },
   {
-    title: 'Support',
+    title: 'Support & Tickets',
     url: '/admin/support',
-    icon: MessageSquare,
-  },
-  {
-    title: 'Tickets',
-    url: '/admin/tickets',
     icon: MessageSquare,
   },
   {

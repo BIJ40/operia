@@ -14,7 +14,7 @@ import HelpConfort from "./pages/HelpConfort";
 import CategoryHelpConfort from "./pages/CategoryHelpConfort";
 import Documents from "./pages/Documents";
 import AdminDocuments from "./pages/AdminDocuments";
-import AdminSupport from "./pages/AdminSupport";
+import AdminSupportTickets from "./pages/AdminSupportTickets";
 import Support from "./pages/Support";
 import AdminBackup from "./pages/AdminBackup";
 import AdminHelpConfortBackup from "./pages/AdminHelpConfortBackup";
@@ -33,7 +33,6 @@ import IndicateursSAV from "./apogee-connect/pages/IndicateursSAV";
 import AdminAgencies from "./pages/AdminAgencies";
 import AdminStorageQuota from "./pages/AdminStorageQuota";
 import AdminUserActivity from "./pages/AdminUserActivity";
-import AdminTickets from "./pages/AdminTickets";
 import UserTickets from "./pages/UserTickets";
 import UserDemands from "./pages/UserDemands";
 import NotFound from "./pages/NotFound";
@@ -67,9 +66,9 @@ function AppContent() {
         <Route path="/documents" element={<Layout showHeader showSidebar={false}><Documents /></Layout>} />
         <Route path="/admin" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminIndex /></Layout>} />
         <Route path="/admin/documents" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminDocuments /></Layout>} />
-        <Route path="/admin/support" element={<AdminSupport />} />
+        <Route path="/admin/support" element={<AdminSupportTickets />} />
+        <Route path="/admin/tickets" element={<AdminSupportTickets />} />
         <Route path="/support" element={<Support />} />
-        <Route path="/admin/tickets" element={<AdminTickets />} />
         <Route path="/support-tickets" element={<Layout showHeader showSidebar={false}><UserTickets /></Layout>} />
         <Route path="/mes-demandes" element={<Layout showHeader showSidebar={false}><UserDemands /></Layout>} />
         <Route path="/admin/backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminBackup /></Layout>} />
