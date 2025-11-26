@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [agence, setAgence] = useState<string | null>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const [individualPermissions, setIndividualPermissions] = useState<Record<string, boolean>>({});
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -61,6 +62,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setMustChangePassword(profile?.must_change_password || false);
             setRoleAgence(profile?.role_agence || null);
             setAgence(profile?.agence || null);
+
+            // Load individual user permissions (priority)
+            const { data: userPerms } = await supabase
+              .from('user_permissions')
+              .select('block_id, can_access')
+              .eq('user_id', session.user.id);
+
+            const individualPermsMap: Record<string, boolean> = {};
+            userPerms?.forEach(p => {
+              individualPermsMap[p.block_id] = p.can_access;
+            });
+            setIndividualPermissions(individualPermsMap);
 
             // Load permissions for this user's role
             if (profile?.role_agence) {
@@ -113,6 +126,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setMustChangePassword(data?.must_change_password || false);
             setRoleAgence(data?.role_agence || null);
             setAgence(data?.agence || null);
+
+            // Load individual user permissions (priority)
+            const { data: userPerms } = await supabase
+              .from('user_permissions')
+              .select('block_id, can_access')
+              .eq('user_id', session.user.id);
+
+            const individualPermsMap: Record<string, boolean> = {};
+            userPerms?.forEach(p => {
+              individualPermsMap[p.block_id] = p.can_access;
+            });
+            setIndividualPermissions(individualPermsMap);
 
             // Load permissions for this user's role
             if (data?.role_agence) {
@@ -193,6 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setMustChangePassword(false);
       setRoleAgence(null);
       setUserPermissions([]);
+      setIndividualPermissions({});
       setUser(null);
 
       // Redirection immédiate vers la page d'accueil
@@ -235,6 +261,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Si aucun rôle agence, accès à tout
     if (!roleAgence) return true;
     
+    // PRIORITÉ 1: Vérifier les permissions individuelles
+    if (scope in individualPermissions) {
+      return individualPermissions[scope];
+    }
+    
+    // PRIORITÉ 2: Fallback sur permissions de rôle
     // Nouveaux scopes (mes_indicateurs) : bloqués par défaut
     const newScopes = ['mes_indicateurs'];
     if (newScopes.includes(scope)) {
