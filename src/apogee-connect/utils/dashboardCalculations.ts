@@ -100,42 +100,6 @@ export const isApporteur = (project: any): boolean => {
   return !!commanditaireId;
 };
 
-/**
- * Identifie les factures d'initialisation à traiter spécialement.
- * Facture JANVIER 2025 : répartition entre particuliers et apporteurs
- */
-export const isInitInvoice = (facture: any, client?: any, project?: any): boolean => {
-  if (!facture) return false;
-  
-  // Identifier la facture de régularisation JANVIER 2025
-  if ((client?.displayName?.includes("z_fake") || client?.nom?.includes("z_fake")) &&
-      (facture.reference === "MNFA250100001" || facture.numeroFacture === "MNFA250100001")) {
-    return true;
-  }
-  
-  return false;
-};
-
-/**
- * Valeurs de répartition pour la facture JANVIER 2025
- * - Part PARTICULIERS : 19 419,94 €
- * - Part APPORTEURS : le reste du montant total
- */
-export const INIT_INVOICE_PARTICULIERS = 19419.94;
-
-/**
- * Calcule la part APPORTEURS de la facture d'init JANVIER 2025
- */
-export const getInitInvoiceApporteursAmount = (facture: any): number => {
-  const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
-  const montantTotal = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-  
-  if (isNaN(montantTotal)) return 0;
-  
-  // Part apporteurs = montant total - part particuliers
-  const partApporteurs = montantTotal - INIT_INVOICE_PARTICULIERS;
-  return Math.max(0, partApporteurs); // Éviter les valeurs négatives
-};
 
 // ====================================================================
 // CALCULS KPI HEADER
@@ -260,12 +224,6 @@ export const calculateRtJour = (interventions: any[], dateRange: { start: Date; 
 export const calculateDevisJour = (devis: any[], dateRange: { start: Date; end: Date }, userAgency: string): { nbDevis: number; caDevis: number } => {
   if (!devis || devis.length === 0) return { nbDevis: 0, caDevis: 0 };
   
-  // Vérifier si on est sur janvier 2025 avec override manuel
-  const startYear = dateRange.start.getFullYear();
-  const startMonth = dateRange.start.getMonth() + 1;
-  const endYear = dateRange.end.getFullYear();
-  const endMonth = dateRange.end.getMonth() + 1;
-  
   let nbDevis = 0;
   let caDevis = 0;
   
@@ -297,12 +255,6 @@ export const calculateDevisJour = (devis: any[], dateRange: { start: Date; end: 
 export const calculateCaJour = (factures: any[], clients: any[], projects: any[], dateRange: { start: Date; end: Date }, userAgency: string): { caTotal: number; nbFactures: number } => {
   if (!factures || factures.length === 0) return { caTotal: 0, nbFactures: 0 };
   
-  // Vérifier si on est sur janvier 2025 avec override manuel
-  const startYear = dateRange.start.getFullYear();
-  const startMonth = dateRange.start.getMonth() + 1;
-  const endYear = dateRange.end.getFullYear();
-  const endMonth = dateRange.end.getMonth() + 1;
-  
   if (import.meta.env.DEV) {
     console.log("💶 calculateCaJour - entrée", {
       nbFactures: factures.length,
@@ -317,7 +269,6 @@ export const calculateCaJour = (factures: any[], clients: any[], projects: any[]
   let caTotal = 0;
   let facturesDansPeriode = 0;
   let facturesAvecMontantInvalide = 0;
-  let facturesExclues = 0;
   let totalAvoirs = 0;
   let totalFactures = 0;
   const exemplesFactures: any[] = [];
@@ -331,14 +282,6 @@ export const calculateCaJour = (factures: any[], clients: any[], projects: any[]
       const inRange = isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end });
       if (!inRange) return;
       facturesDansPeriode++;
-      
-      // Exclure les factures d'initialisation
-      const client = clientsMap.get(facture.clientId);
-      const project = projectsMap.get(facture.projectId);
-      if (isInitInvoice(facture, client, project)) {
-        facturesExclues++;
-        return;
-      }
       
       // Extraire et valider le montant
       const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
@@ -380,14 +323,13 @@ export const calculateCaJour = (factures: any[], clients: any[], projects: any[]
     }
   });
   
-  const nbFacturesComptabilisees = facturesDansPeriode - facturesExclues - facturesAvecMontantInvalide;
+  const nbFacturesComptabilisees = facturesDansPeriode - facturesAvecMontantInvalide;
   
   if (import.meta.env.DEV) {
     console.log("💶 calculateCaJour - résultat", { 
       caTotal, 
       facturesDansPeriode,
       facturesAvecMontantInvalide,
-      facturesExclues,
       nbFacturesComptabilisees,
       totalFacturesPositives: totalFactures,
       totalAvoirs,

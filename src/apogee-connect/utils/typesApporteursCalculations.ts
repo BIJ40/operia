@@ -1,5 +1,5 @@
 import { parseISO, isWithinInterval } from "date-fns";
-import { isInitInvoice, isApporteur, getInitInvoiceApporteursAmount } from "./dashboardCalculations";
+import { isApporteur } from "./dashboardCalculations";
 
 export interface TypeApporteurStats {
   type: string;
@@ -130,18 +130,9 @@ export const calculateTypesApporteursStats = (
     const stats = statsParType.get(type);
     if (!stats) return;
     
-    // Vérifier si c'est la facture d'init JANVIER 2025
-    const client = clientsMap.get(facture.clientId);
-    let montant = 0;
-    
-    if (isInitInvoice(facture, client, project)) {
-      // Utiliser la part APPORTEURS de la facture d'init
-      montant = getInitInvoiceApporteursAmount(facture);
-    } else {
-      // Calculer le montant HT normal
-      const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
-      montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-    }
+    // Calculer le montant HT
+    const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
+    const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
     
     if (!isNaN(montant)) {
       stats.caHT += montant;
@@ -197,11 +188,6 @@ const calculateTauxTransformationParType = (
       .filter(f => {
         const typeFacture = f.typeFacture || f.data?.type || f.state;
         return typeFacture !== "avoir";
-      })
-      .filter(f => {
-        const client = clients.find(c => c.id === f.clientId);
-        const project = projectsMap.get(f.projectId);
-        return !isInitInvoice(f, client, project);
       })
       .map(f => f.projectId)
   );

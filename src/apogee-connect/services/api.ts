@@ -66,17 +66,13 @@ export const api = {
   getFactures: (filters?: Record<string, any>) => apiCall("apiGetFactures", filters),
   getDevis: (filters?: Record<string, any>) => apiCall("apiGetDevis", filters),
   getInterventionsCreneaux: async (filters?: Record<string, any>) => {
-    // CRITIQUE: Utiliser BASE_URL (définie par AgencyContext) pour l'agence de l'utilisateur
-    // Ne JAMAIS hardcoder l'URL d'une agence spécifique
     if (!BASE_URL) {
       console.warn(`⚠️ BASE_URL non définie - impossible d'appeler getInterventionsCreneaux`);
       return [];
     }
     
     try {
-      // Construire l'URL depuis BASE_URL (qui contient déjà l'agence)
-      const baseUrlWithoutApi = BASE_URL.replace('/api/', '/');
-      const response = await fetch(`${baseUrlWithoutApi}getInterventionsCreneaux`, {
+      const response = await fetch(`${BASE_URL}getInterventionsCreneaux`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -93,7 +89,6 @@ export const api = {
 
       return await response.json();
     } catch (error) {
-      // Erreur CORS côté serveur - on retourne un tableau vide
       console.warn(`⚠️ getInterventionsCreneaux non disponible (CORS):`, error);
       return [];
     }
