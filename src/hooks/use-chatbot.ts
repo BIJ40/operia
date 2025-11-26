@@ -297,31 +297,44 @@ export const useChatbot = () => {
     setIsOpen(false);
   };
 
-  // Start support timeout when ticket is created
+  // Start support timeout - recurring every minute
+  const startSupportTimeout = () => {
+    if (supportTimeout) {
+      clearTimeout(supportTimeout);
+    }
+
+    const timeout = setTimeout(() => {
+      // Check if no support message received in last 60 seconds
+      const lastSupportMsg = supportMessages
+        .filter(m => m.is_from_support)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+      
+      if (!lastSupportMsg || 
+          (new Date().getTime() - new Date(lastSupportMsg.created_at).getTime()) > 60000) {
+        setShowTicketCreation(true);
+      }
+    }, 60000); // 60 seconds
+    
+    setSupportTimeout(timeout);
+  };
+
+  // Handle user choosing to wait
+  const handleWaitTimeout = () => {
+    setShowTicketCreation(false);
+    startSupportTimeout(); // Restart the timeout cycle
+  };
+
+  // Start timeout when ticket is created
   useEffect(() => {
     if (activeTicket && !showTicketCreation) {
       lastSupportMessageTimeRef.current = new Date();
-      
-      // Start 60 second timeout
-      const timeout = setTimeout(() => {
-        // Check if no support message received in last 60 seconds
-        const lastSupportMsg = supportMessages
-          .filter(m => m.is_from_support)
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-        
-        if (!lastSupportMsg || 
-            (new Date().getTime() - new Date(lastSupportMsg.created_at).getTime()) > 60000) {
-          setShowTicketCreation(true);
-        }
-      }, 60000); // 60 seconds
-      
-      setSupportTimeout(timeout);
+      startSupportTimeout();
       
       return () => {
-        if (timeout) clearTimeout(timeout);
+        if (supportTimeout) clearTimeout(supportTimeout);
       };
     }
-  }, [activeTicket, supportMessages, showTicketCreation]);
+  }, [activeTicket]);
 
   // Reset timeout when support responds
   useEffect(() => {
@@ -340,7 +353,7 @@ export const useChatbot = () => {
         }
       }
     }
-  }, [supportMessages, activeTicket, supportTimeout]);
+  }, [supportMessages]);
 
   // Create ticket from chat
   const createTicketFromChat = async (category: string, subject: string, description: string) => {
@@ -446,6 +459,7 @@ export const useChatbot = () => {
     createSupportTicket,
     createTicketFromChat,
     isCreating,
+    handleWaitTimeout,
     setIsOpen,
     setInput,
     setShowCloseConfirm,
