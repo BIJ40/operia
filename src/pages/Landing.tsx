@@ -256,24 +256,21 @@ export default function Landing() {
   );
 
   useEffect(() => {
-    loadCards(); // Toujours charger les cartes, même pour les visiteurs
+    loadCards();
     
     if (isAuthenticated) {
       setLoginOpen(false);
     }
     
-    // Synchroniser isEditMode avec localStorage
     const storedEditMode = localStorage.getItem('editMode') === 'true';
     setIsEditMode(storedEditMode);
     
-    // Écouter les changements de localStorage
     const handleStorageChange = () => {
       const newEditMode = localStorage.getItem('editMode') === 'true';
       setIsEditMode(newEditMode);
     };
     
     window.addEventListener('storage', handleStorageChange);
-    // Custom event pour les changements dans le même onglet
     window.addEventListener('editModeChange', handleStorageChange);
     
     return () => {
@@ -403,13 +400,11 @@ export default function Landing() {
       ? Math.max(...homeCards.map(c => c.display_order))
       : -1;
 
-    // Générer un slug unique pour la nouvelle catégorie
     const timestamp = Date.now();
     const slug = `categorie-${timestamp}`;
     const categoryId = `block-${timestamp}-${Math.random().toString(36).substr(2, 9)}`;
 
     try {
-      // 1. Créer la catégorie dans blocks
       const { error: blockError } = await supabaseAny
         .from('blocks')
         .insert({
@@ -430,7 +425,6 @@ export default function Landing() {
         throw blockError;
       }
 
-      // 2. Créer la carte d'accueil avec le lien vers la catégorie
       const { error: cardError } = await supabaseAny
         .from('home_cards')
         .insert({
@@ -452,7 +446,6 @@ export default function Landing() {
       });
       loadCards();
       
-      // Recharger les blocks dans le contexte pour mettre à jour la sidebar
       window.location.reload();
     } catch (error) {
       console.error('Error adding card:', error);
@@ -489,7 +482,6 @@ export default function Landing() {
       
       {!isAuthenticated ? (
         <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-          {/* Header visiteur - uniquement bouton de connexion */}
           <div className="container mx-auto px-4 py-4 flex justify-end">
             <Button
               onClick={() => setLoginOpen(true)}
@@ -502,7 +494,6 @@ export default function Landing() {
           </div>
 
           <div className="container max-w-6xl mx-auto px-4 py-8">
-            {/* Cartes avec cadenas pour visiteurs */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {homeCards.map(card => {
                 const Icon = IconComponent(card.icon || 'BookOpen');
@@ -519,7 +510,6 @@ export default function Landing() {
                     }}
                     className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 cursor-pointer opacity-60"
                   >
-                    {/* Cadenas en overlay */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
                     </div>
@@ -534,7 +524,6 @@ export default function Landing() {
               })}
             </div>
 
-            {/* Help Confort Services Image */}
             <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="md:col-start-1 lg:col-start-2">
                 <img 
@@ -551,47 +540,226 @@ export default function Landing() {
         <>
           <Header />
           <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-          <div className="container max-w-6xl mx-auto px-4 py-12">
-            {isEditMode && isAdmin ? (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={homeCards.map(c => c.id)}
-                  strategy={verticalListSortingStrategy}
+            <div className="container max-w-6xl mx-auto px-4 py-12">
+              {isEditMode && isAdmin ? (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {homeCards.map(card => (
-                      <SortableCard
-                        key={card.id}
-                        card={card}
-                        editingId={editingId}
-                        editTitle={editTitle}
-                        editDescription={editDescription}
-                        editLink={editLink}
-                        editIcon={editIcon}
-                        editColor={editColor}
-                        isEditMode={isEditMode}
-                        onEditTitleChange={setEditTitle}
-                        onEditDescriptionChange={setEditDescription}
-                        onEditLinkChange={setEditLink}
-                        onEditIconChange={setEditIcon}
-                        onEditColorChange={setEditColor}
-                        onSave={handleSave}
-                        onCancel={handleCancel}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        getColorClass={getColorClass}
-                        IconComponent={IconComponent}
-                      />
-                    ))}
+                  <SortableContext
+                    items={homeCards.map(c => c.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {/* Première ligne - Cartes principales */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                      {homeCards.filter(card => !card.link.includes('/mes-indicateurs')).map(card => (
+                        <SortableCard
+                          key={card.id}
+                          card={card}
+                          editingId={editingId}
+                          editTitle={editTitle}
+                          editDescription={editDescription}
+                          editLink={editLink}
+                          editIcon={editIcon}
+                          editColor={editColor}
+                          isEditMode={isEditMode}
+                          onEditTitleChange={setEditTitle}
+                          onEditDescriptionChange={setEditDescription}
+                          onEditLinkChange={setEditLink}
+                          onEditIconChange={setEditIcon}
+                          onEditColorChange={setEditColor}
+                          onSave={handleSave}
+                          onCancel={handleCancel}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          getColorClass={getColorClass}
+                          IconComponent={IconComponent}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Deuxième ligne - Mes indicateurs / Support / Actions à mener */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start mb-4">
+                      {/* Mes indicateurs - Grande hauteur */}
+                      {(() => {
+                        const mesIndicateursCard = homeCards.find(card => card.link.includes('/mes-indicateurs'));
+                        if (!mesIndicateursCard) return null;
+                        
+                        return (
+                          <div key={mesIndicateursCard.id} className="min-h-[240px]">
+                            <SortableCard
+                              card={mesIndicateursCard}
+                              editingId={editingId}
+                              editTitle={editTitle}
+                              editDescription={editDescription}
+                              editLink={editLink}
+                              editIcon={editIcon}
+                              editColor={editColor}
+                              isEditMode={isEditMode}
+                              onEditTitleChange={setEditTitle}
+                              onEditDescriptionChange={setEditDescription}
+                              onEditLinkChange={setEditLink}
+                              onEditIconChange={setEditIcon}
+                              onEditColorChange={setEditColor}
+                              onSave={handleSave}
+                              onCancel={handleCancel}
+                              onEdit={handleEdit}
+                              onDelete={handleDelete}
+                              getColorClass={getColorClass}
+                              IconComponent={IconComponent}
+                            />
+                          </div>
+                        );
+                      })()}
+
+                      {/* Support - Hauteur normale */}
+                      <div className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2">
+                        <Icons.Headphones className="w-12 h-12 text-primary flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <h2 className="text-lg font-bold text-foreground truncate">Support / Tickets</h2>
+                          <p className="text-xs text-muted-foreground truncate">Créer un ticket ou consulter vos demandes</p>
+                        </div>
+                      </div>
+
+                      {/* Actions à mener - Grande hauteur */}
+                      <div className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-6 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 min-h-[240px] flex flex-col">
+                        <Icons.CheckSquare className="w-12 h-12 text-primary mb-4" />
+                        <h2 className="text-xl font-bold text-foreground mb-2">Actions à mener</h2>
+                        <p className="text-sm text-muted-foreground">Suivez vos actions en cours et à venir</p>
+                      </div>
+                    </div>
+
+                    {/* Logo sous Actions à mener */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="lg:col-start-3">
+                        <img 
+                          src={helpConfortServicesImg} 
+                          alt="Help Confort Services" 
+                          className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
+                          draggable="false"
+                        />
+                      </div>
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                <>
+                  {/* Première ligne - Cartes principales */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    {homeCards.filter(card => !card.link.includes('/mes-indicateurs')).map(card => {
+                      const Icon = IconComponent(card.icon || 'BookOpen');
+                      
+                      let scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs' | null = null;
+                      if (card.link.includes('/apogee')) scope = 'apogee';
+                      else if (card.link.includes('/apporteur')) scope = 'apporteurs';
+                      else if (card.link.includes('/helpconfort')) scope = 'helpconfort';
+                      
+                      const isLocked = scope ? !hasAccessToScope(scope) : false;
+                      
+                      if (isLocked) {
+                        return (
+                          <div
+                            key={card.id}
+                            onClick={() => {
+                              toast({
+                                title: 'Accès restreint',
+                                description: 'Vous n\'avez pas les permissions pour accéder à cette section',
+                                variant: 'destructive',
+                              });
+                            }}
+                            className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 cursor-pointer opacity-60"
+                          >
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
+                            </div>
+                            <Icon className="w-12 h-12 text-primary flex-shrink-0 opacity-50" />
+                            <div className="flex-1 min-w-0">
+                              <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
+                              <p className="text-xs text-muted-foreground truncate">{card.description}</p>
+                            </div>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <Link
+                          key={card.id}
+                          to={card.link}
+                          className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
+                        >
+                          <Icon className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
+                          <div className="flex-1 min-w-0">
+                            <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
+                            <p className="text-xs text-muted-foreground truncate">{card.description}</p>
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
-                  
-                  {/* Help Confort Services Image */}
-                  <div className="mt-8 mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="md:col-start-1 lg:col-start-2">
+
+                  {/* Deuxième ligne - Mes indicateurs / Support / Actions à mener */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                    {/* Mes indicateurs - Grande hauteur */}
+                    {(() => {
+                      const mesIndicateursCard = homeCards.find(card => card.link.includes('/mes-indicateurs'));
+                      if (!mesIndicateursCard) return null;
+                      
+                      const scope = 'mes_indicateurs';
+                      const isLocked = !hasAccessToScope(scope) || !agence;
+                      
+                      if (!isLocked && agence) {
+                        return (
+                          <div key={mesIndicateursCard.id} className="min-h-[240px]">
+                            <ApiToggleProvider>
+                              <AgencyProvider>
+                                <MesIndicateursCard />
+                              </AgencyProvider>
+                            </ApiToggleProvider>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <div
+                          key={mesIndicateursCard.id}
+                          onClick={() => {
+                            toast({
+                              title: 'Accès restreint',
+                              description: 'Vous n\'avez pas les permissions pour accéder à cette section',
+                              variant: 'destructive',
+                            });
+                          }}
+                          className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-4 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer opacity-60 min-h-[240px] flex items-center justify-center"
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Support - Hauteur normale */}
+                    <Link
+                      to="/support-tickets"
+                      className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
+                    >
+                      <Icons.Headphones className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-lg font-bold text-foreground truncate">Support / Tickets</h2>
+                        <p className="text-xs text-muted-foreground truncate">Créer un ticket ou consulter vos demandes</p>
+                      </div>
+                    </Link>
+
+                    {/* Actions à mener - Grande hauteur avec logo en dessous */}
+                    <div className="space-y-4">
+                      <div className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-6 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 min-h-[240px] flex flex-col">
+                        <Icons.CheckSquare className="w-12 h-12 text-primary mb-4" />
+                        <h2 className="text-xl font-bold text-foreground mb-2">Actions à mener</h2>
+                        <p className="text-sm text-muted-foreground">Suivez vos actions en cours et à venir</p>
+                      </div>
+                      
+                      {/* Logo sous Actions à mener */}
                       <img 
                         src={helpConfortServicesImg} 
                         alt="Help Confort Services" 
@@ -600,174 +768,35 @@ export default function Landing() {
                       />
                     </div>
                   </div>
+                </>
+              )}
 
-                  {/* Support / Tickets Tile - Always visible */}
-                  <Link
-                    to="/support-tickets"
-                    className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
-                  >
-                    <Icons.Headphones className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
-                    <div className="flex-1 min-w-0">
-                      <h2 className="text-lg font-bold text-foreground truncate">Support / Tickets</h2>
-                      <p className="text-xs text-muted-foreground truncate">Créer un ticket ou consulter vos demandes</p>
-                    </div>
-                  </Link>
-                </SortableContext>
-              </DndContext>
-            ) : (
-              <>
-                {/* Première ligne - Cartes principales */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {homeCards.filter(card => !card.link.includes('/mes-indicateurs')).map(card => {
-                  const Icon = IconComponent(card.icon || 'BookOpen');
-                  
-                  // Déterminer le scope basé sur le lien de la carte
-                  let scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs' | null = null;
-                  if (card.link.includes('/apogee')) scope = 'apogee';
-                  else if (card.link.includes('/apporteur')) scope = 'apporteurs';
-                  else if (card.link.includes('/helpconfort')) scope = 'helpconfort';
-                  
-                  const isLocked = scope ? !hasAccessToScope(scope) : false;
-                  
-                  if (isLocked) {
-                    return (
-                      <div
-                        key={card.id}
-                        onClick={() => {
-                          toast({
-                            title: 'Accès restreint',
-                            description: 'Vous n\'avez pas les permissions pour accéder à cette section',
-                            variant: 'destructive',
-                          });
-                        }}
-                        className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 cursor-pointer opacity-60"
-                      >
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
-                        </div>
-                        <Icon className="w-12 h-12 text-primary flex-shrink-0 opacity-50" />
-                        <div className="flex-1 min-w-0">
-                          <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
-                          <p className="text-xs text-muted-foreground truncate">{card.description}</p>
-                        </div>
-                      </div>
-                    );
-                  }
-                  
-                  return (
-                    <Link
-                      key={card.id}
-                      to={card.link}
-                      className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
-                    >
-                      <Icon className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
-                      <div className="flex-1 min-w-0">
-                        <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
-                        <p className="text-xs text-muted-foreground truncate">{card.description}</p>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              {/* Deuxième ligne - Mes indicateurs / Support / Actions à mener */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-                {/* Mes indicateurs - Grande hauteur */}
-                {(() => {
-                  const mesIndicateursCard = homeCards.find(card => card.link.includes('/mes-indicateurs'));
-                  if (!mesIndicateursCard) return null;
-                  
-                  const scope = 'mes_indicateurs';
-                  const isLocked = !hasAccessToScope(scope) || !agence;
-                  
-                  if (!isLocked && agence) {
-                    return (
-                      <div key={mesIndicateursCard.id} className="min-h-[240px]">
-                        <ApiToggleProvider>
-                          <AgencyProvider>
-                            <MesIndicateursCard />
-                          </AgencyProvider>
-                        </ApiToggleProvider>
-                      </div>
-                    );
-                  }
-                  
-                  return (
-                    <div
-                      key={mesIndicateursCard.id}
-                      onClick={() => {
-                        toast({
-                          title: 'Accès restreint',
-                          description: 'Vous n\'avez pas les permissions pour accéder à cette section',
-                          variant: 'destructive',
-                        });
-                      }}
-                      className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-4 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer opacity-60 min-h-[240px] flex items-center justify-center"
-                    >
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Support - Hauteur normale */}
-                <Link
-                  to="/support-tickets"
-                  className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
-                >
-                  <Icons.Headphones className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-bold text-foreground truncate">Support / Tickets</h2>
-                    <p className="text-xs text-muted-foreground truncate">Créer un ticket ou consulter vos demandes</p>
-                  </div>
-                </Link>
-
-                {/* Actions à mener - Grande hauteur avec logo en dessous */}
-                <div className="space-y-4">
-                  <div className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-6 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 min-h-[240px] flex flex-col">
-                    <Icons.CheckSquare className="w-12 h-12 text-primary mb-4" />
-                    <h2 className="text-xl font-bold text-foreground mb-2">Actions à mener</h2>
-                    <p className="text-sm text-muted-foreground">Suivez vos actions en cours et à venir</p>
-                  </div>
-                  
-                  {/* Logo sous Actions à mener */}
-                  <img 
-                    src={helpConfortServicesImg} 
-                    alt="Help Confort Services" 
-                    className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
-                    draggable="false"
-                  />
+              {isEditMode && isAdmin && (
+                <div className="flex justify-end mt-8">
+                  <Button onClick={handleAddCard} size="sm" variant="ghost" className="gap-1 text-muted-foreground hover:text-foreground">
+                    <Plus className="w-4 h-4" />
+                  </Button>
                 </div>
-              </div>
-            )}
-
-            {isEditMode && isAdmin && (
-              <div className="flex justify-end mt-8">
-                <Button onClick={handleAddCard} size="sm" variant="ghost" className="gap-1 text-muted-foreground hover:text-foreground">
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
 
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-              <AlertDialogDescription>
-                Êtes-vous sûr de vouloir supprimer cette carte ?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Supprimer
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Êtes-vous sûr de vouloir supprimer cette carte ?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Supprimer
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </>
       )}
     </>
