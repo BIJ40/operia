@@ -12,6 +12,7 @@ import { ManageSystemRoleDialog } from '@/components/ManageSystemRoleDialog';
 import { ManageUserPermissionsDialog } from '@/components/ManageUserPermissionsDialog';
 import { Badge } from '@/components/ui/badge';
 import { OnlineUsers } from '@/components/admin/OnlineUsers';
+import { ConnectionStats } from '@/components/admin/ConnectionStats';
 
 interface UserProfile {
   id: string;
@@ -124,6 +125,9 @@ export default function AdminUsersList() {
 
       {/* Section utilisateurs en ligne */}
       <OnlineUsers />
+
+      {/* Section statistiques de connexion */}
+      <ConnectionStats />
 
       <Card>
         <CardHeader>

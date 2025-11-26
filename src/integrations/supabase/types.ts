@@ -710,6 +710,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_connection_logs: {
+        Row: {
+          connected_at: string
+          created_at: string
+          disconnected_at: string | null
+          duration_seconds: number | null
+          id: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          connected_at?: string
+          created_at?: string
+          disconnected_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          connected_at?: string
+          created_at?: string
+          disconnected_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_history: {
         Row: {
           block_id: string
