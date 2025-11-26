@@ -103,11 +103,22 @@ export default {
             transform: "rotate(360deg)",
           },
         },
+        "pulse-red": {
+          "0%, 100%": {
+            backgroundColor: "hsl(var(--background))",
+            borderColor: "hsl(var(--border))",
+          },
+          "50%": {
+            backgroundColor: "rgba(239, 68, 68, 0.1)",
+            borderColor: "rgba(239, 68, 68, 0.5)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "spin-slow": "spin-slow 3s linear infinite",
+        "pulse-red": "pulse-red 2s ease-in-out infinite",
       },
     },
   },

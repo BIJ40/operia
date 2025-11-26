@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Home, Edit3, Square, LogIn, Settings, User, Heart, Loader2, BarChart3 } from 'lucide-react';
+import { LogOut, Home, Edit3, Square, LogIn, Settings, User, Heart, Loader2, BarChart3, Headset } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ChatbotNotifications } from '@/components/ChatbotNotifications';
 import { SupportNotifications } from '@/components/SupportNotifications';
+import { useSupportNotifications } from '@/hooks/use-support-notifications';
 import { useState } from 'react';
 
 export function Header() {
@@ -14,6 +15,7 @@ export function Header() {
   const editorContext = useEditor();
   const apporteurContext = useApporteurEditor();
   const { isAuthenticated, isAdmin, isSupport, roleAgence, isLoggingOut, logout } = useAuth();
+  const { hasNewTickets, newTicketsCount } = useSupportNotifications();
   const [loginOpen, setLoginOpen] = useState(false);
   
   // Déterminer quel contexte utiliser selon la page
@@ -47,7 +49,9 @@ export function Header() {
       )}
 
       {isAdmin ? (
-        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <header className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 transition-all duration-300 ${
+          isSupport && hasNewTickets ? 'animate-[pulse-red_2s_ease-in-out_infinite] shadow-[0_0_30px_rgba(239,68,68,0.5)]' : ''
+        }`}>
           <div className="container mx-auto px-4 py-4 flex items-center gap-4">
             <Link 
               to="/" 
@@ -120,10 +124,21 @@ export function Header() {
               {isSupport && (
                 <Link
                   to="/support"
-                  className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-primary/30 rounded-xl hover:bg-accent hover:border-primary hover:scale-[1.02] transition-all duration-300"
+                  className={`flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-xl hover:bg-accent hover:scale-[1.02] transition-all duration-300 relative ${
+                    hasNewTickets 
+                      ? 'border-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.5)]' 
+                      : 'border-primary/30 hover:border-primary'
+                  }`}
                 >
-                  <Settings className="w-5 h-5 text-primary" />
-                  <span className="font-semibold text-foreground">SUPPORT</span>
+                  <Headset className={`w-5 h-5 ${hasNewTickets ? 'text-red-500' : 'text-primary'}`} />
+                  <span className={`font-semibold ${hasNewTickets ? 'text-red-500' : 'text-foreground'}`}>
+                    SUPPORT
+                  </span>
+                  {hasNewTickets && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-bounce">
+                      {newTicketsCount}
+                    </span>
+                  )}
                 </Link>
               )}
               <Link
@@ -145,17 +160,28 @@ export function Header() {
           </div>
         </header>
       ) : (
-        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <header className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 transition-all duration-300 ${
+          isSupport && hasNewTickets ? 'animate-[pulse-red_2s_ease-in-out_infinite] shadow-[0_0_30px_rgba(239,68,68,0.5)]' : ''
+        }`}>
           <div className="container mx-auto px-4 py-2 flex items-center justify-end gap-2">
             {isAuthenticated ? (
               <>
                 {isSupport && (
                   <Link
                     to="/support"
-                    className="text-primary hover:text-primary hover:scale-110 transition-all duration-300 shadow-[0_0_15px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_20px_hsl(var(--primary)/0.5)] p-2 rounded-md"
+                    className={`transition-all duration-300 p-2 rounded-md relative ${
+                      hasNewTickets
+                        ? 'text-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.5)] scale-110'
+                        : 'text-primary hover:text-primary hover:scale-110 shadow-[0_0_15px_hsl(var(--primary)/0.3)] hover:shadow-[0_0_20px_hsl(var(--primary)/0.5)]'
+                    }`}
                     title="Support client"
                   >
-                    <Settings className="w-5 h-5" />
+                    <Headset className="w-5 h-5" />
+                    {hasNewTickets && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
+                        {newTicketsCount}
+                      </span>
+                    )}
                   </Link>
                 )}
                 <Link
