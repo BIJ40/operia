@@ -220,9 +220,17 @@ export interface NetworkSAVStats {
  * Returns both simple average of agency rates AND global weighted rate
  */
 export function calculateNetworkSAVStats(agencyData: AgencyData[]): NetworkSAVStats {
+  console.log("[FRANCHISEUR SAV] agences brutes =", agencyData.map(a => ({
+    id: a.agencyId,
+    name: a.agencyLabel,
+    projects: a.data?.projects?.length || 0,
+    interventions: a.data?.interventions?.length || 0
+  })));
+
   let totalProjects = 0;
   let totalSAVProjects = 0;
   const agencyRates: number[] = [];
+  const agencySAVDetails: any[] = [];
 
   agencyData.forEach((agency) => {
     if (!agency.data?.projects || !agency.data?.interventions) return;
@@ -248,9 +256,19 @@ export function calculateNetworkSAVStats(agencyData: AgencyData[]): NetworkSAVSt
     // Store individual agency rate for average calculation
     const agencyRate = (agencySAVCount / agencyProjectCount) * 100;
     agencyRates.push(agencyRate);
+
+    agencySAVDetails.push({
+      id: agency.agencyId,
+      name: agency.agencyLabel,
+      nbTotalProjects: agencyProjectCount,
+      nbSAVProjects: agencySAVCount,
+      tauxSAV: Math.round(agencyRate * 10) / 10
+    });
   });
 
-  return {
+  console.log("[FRANCHISEUR SAV] savGlobal par agence =", agencySAVDetails);
+
+  const result = {
     tauxMoyenAgences: agencyRates.length > 0 
       ? Math.round((agencyRates.reduce((sum, rate) => sum + rate, 0) / agencyRates.length) * 10) / 10
       : 0,
@@ -261,6 +279,16 @@ export function calculateNetworkSAVStats(agencyData: AgencyData[]): NetworkSAVSt
     nbTotalSAVProjects: totalSAVProjects,
     nbAgences: agencyData.length,
   };
+
+  console.log("[FRANCHISEUR SAV] RÉSULTAT FINAL =", {
+    nbAgences: result.nbAgences,
+    tauxGlobalReseau: `${result.tauxGlobalReseau}%`,
+    tauxMoyenAgences: `${result.tauxMoyenAgences}%`,
+    nbTotalDossiers: result.nbTotalProjects,
+    nbTotalDossiersSAV: result.nbTotalSAVProjects
+  });
+
+  return result;
 }
 
 /**
