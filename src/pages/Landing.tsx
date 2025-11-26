@@ -722,7 +722,7 @@ export default function Landing() {
               <img 
                 src={helpConfortServicesImg} 
                 alt="Help Confort Services" 
-                className="w-full max-w-6xl mx-auto pointer-events-none select-none"
+                className="w-full max-w-md mx-auto pointer-events-none select-none"
                 draggable="false"
               />
             </div>
