@@ -121,9 +121,23 @@ const getResponsibleTechBeforeSAV = (
       // C'est une intervention productive, extraire les durées par technicien
       const durationsByTech: Record<string, number> = {};
       
-      // Extraire les techniciens de toutes les visites
-      const visites = prevInterv.visites || prevInterv.data?.visites || [];
-      visites.forEach((visite: any) => {
+      // Extraire les techniciens de toutes les visites (plusieurs structures possibles)
+      const allVisites: any[] = [];
+      if (Array.isArray(prevInterv.visites)) allVisites.push(...prevInterv.visites);
+      if (Array.isArray(prevInterv.data?.visites)) allVisites.push(...prevInterv.data.visites);
+      const nestedKeys = ["biDepan", "biTvx", "biRt"] as const;
+      nestedKeys.forEach((key) => {
+        const items = prevInterv.data?.[key]?.items;
+        if (Array.isArray(items)) {
+          items.forEach((item: any) => {
+            if (Array.isArray(item.visites)) {
+              allVisites.push(...item.visites);
+            }
+          });
+        }
+      });
+
+      allVisites.forEach((visite: any) => {
         const duree = visite.duree || 0;
         const usersIds = visite.usersIds || [];
         
