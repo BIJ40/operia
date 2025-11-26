@@ -236,7 +236,10 @@ export default function AdminSupportTickets() {
 
           {/* Stats Dashboard */}
           <div className="grid gap-4 md:grid-cols-5">
-            <Card>
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => setFilters({ ...filters, status: 'all' })}
+            >
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
               </CardHeader>
@@ -244,7 +247,10 @@ export default function AdminSupportTickets() {
                 <div className="text-2xl font-bold">{stats.total}</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => setFilters({ ...filters, status: 'waiting' })}
+            >
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">En attente</CardTitle>
               </CardHeader>
@@ -252,7 +258,10 @@ export default function AdminSupportTickets() {
                 <div className="text-2xl font-bold text-orange-600">{stats.waiting}</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => setFilters({ ...filters, status: 'in_progress' })}
+            >
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">En cours</CardTitle>
               </CardHeader>
@@ -260,7 +269,10 @@ export default function AdminSupportTickets() {
                 <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => setFilters({ ...filters, status: 'resolved' })}
+            >
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Résolus</CardTitle>
               </CardHeader>
@@ -268,7 +280,10 @@ export default function AdminSupportTickets() {
                 <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => setFilters({ ...filters, status: 'unresolved' })}
+            >
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Non résolus</CardTitle>
               </CardHeader>
