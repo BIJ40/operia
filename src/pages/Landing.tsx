@@ -14,8 +14,11 @@ import helpConfortServicesImg from '@/assets/help-confort-services.png';
 import { useEditor } from '@/contexts/EditorContext';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { MesIndicateursCard } from '@/components/landing/MesIndicateursCard';
+import { WidgetGrid } from '@/components/landing/WidgetGrid';
+import { WidgetMenu } from '@/components/landing/WidgetMenu';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
+import { useWidgetPreferences } from '@/hooks/use-widget-preferences';
 
 const supabaseAny = supabase as any;
 import {
@@ -228,7 +231,7 @@ const SortableCard = ({
 };
 
 export default function Landing() {
-  const { isAdmin, isAuthenticated, roleAgence, hasAccessToScope, agence } = useAuth();
+  const { isAdmin, isAuthenticated, roleAgence, hasAccessToScope, agence, isSupport, isFranchiseur } = useAuth();
   const { toast } = useToast();
   const { blocks } = useEditor();
   const isBlockLocked = useIsBlockLocked();
@@ -243,6 +246,10 @@ export default function Landing() {
   const [cardToDelete, setCardToDelete] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const { preferences, updatePreference } = useWidgetPreferences();
+
+  // Déterminer si on affiche le mode widget (non-admin, non-support, non-franchiseur)
+  const showWidgetMode = !isAdmin && !isSupport && !isFranchiseur;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -600,6 +607,32 @@ export default function Landing() {
                   </Link>
                 </SortableContext>
               </DndContext>
+            ) : showWidgetMode ? (
+              <>
+                <WidgetGrid 
+                  homeCards={homeCards}
+                  isDashboardEditMode={false}
+                />
+                
+                <WidgetMenu
+                  widgets={homeCards.map(card => {
+                    const widgetKey = `nav-${card.id}`;
+                    const pref = preferences.find(p => p.widget_key === widgetKey);
+                    return {
+                      key: widgetKey,
+                      title: card.title,
+                      description: card.description,
+                      isEnabled: pref?.is_enabled ?? true,
+                    };
+                  }).concat({
+                    key: 'support-tickets',
+                    title: 'Support / Tickets',
+                    description: 'Créer un ticket ou consulter vos demandes',
+                    isEnabled: preferences.find(p => p.widget_key === 'support-tickets')?.is_enabled ?? true,
+                  })}
+                  onToggleWidget={(widgetKey, enabled) => updatePreference(widgetKey, { is_enabled: enabled })}
+                />
+              </>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
                 {homeCards.map(card => {
@@ -689,7 +722,7 @@ export default function Landing() {
               <img 
                 src={helpConfortServicesImg} 
                 alt="Help Confort Services" 
-                className="w-full max-w-md mx-auto pointer-events-none select-none"
+                className="w-full max-w-6xl mx-auto pointer-events-none select-none"
                 draggable="false"
               />
             </div>
