@@ -101,6 +101,7 @@ export function formatApporteurType(type: string | undefined | null): string {
     'agence_immo': 'Gestion locative',
     'facility_services': 'Maintenanceur',
     'gestion_syndic': 'Syndic',
+    'bailleur_social': 'Bailleur social',
     'assurance': 'Assurance',
     'professionnel': 'Professionnel',
     'association': 'Association',
