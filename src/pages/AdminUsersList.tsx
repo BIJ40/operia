@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Edit, Users, Shield, Key, ArrowLeft } from 'lucide-react';
+import { Trash2, Edit, Users, Shield, Key, ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -25,6 +25,9 @@ interface UserProfile {
   system_role?: string;
   must_change_password: boolean | null;
 }
+
+type SortColumn = 'email' | 'first_name' | 'last_name' | 'agence' | 'created_at';
+type SortDirection = 'asc' | 'desc' | null;
 
 const getRoleLabel = (roleValue: string | null): string => {
   if (!roleValue) return '-';
@@ -50,6 +53,8 @@ export default function AdminUsersList() {
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [managingPermissionsUser, setManagingPermissionsUser] = useState<UserProfile | null>(null);
   const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -116,6 +121,65 @@ export default function AdminUsersList() {
     }
   };
 
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      // Cycle: asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortColumn(null);
+        setSortDirection(null);
+      }
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortedUsers = () => {
+    if (!sortColumn || !sortDirection) return users;
+
+    return [...users].sort((a, b) => {
+      let aValue: any = a[sortColumn];
+      let bValue: any = b[sortColumn];
+
+      // Traiter les valeurs nulles
+      if (aValue === null) return sortDirection === 'asc' ? 1 : -1;
+      if (bValue === null) return sortDirection === 'asc' ? -1 : 1;
+
+      // Comparaison pour les dates
+      if (sortColumn === 'created_at') {
+        const aTime = new Date(aValue as string).getTime();
+        const bTime = new Date(bValue as string).getTime();
+        if (aTime < bTime) return sortDirection === 'asc' ? -1 : 1;
+        if (aTime > bTime) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      }
+
+      // Comparaison pour les chaînes (case-insensitive)
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        const aLower = aValue.toLowerCase();
+        const bLower = bValue.toLowerCase();
+        if (aLower < bLower) return sortDirection === 'asc' ? -1 : 1;
+        if (aLower > bLower) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      }
+
+      return 0;
+    });
+  };
+
+  const SortIcon = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="w-4 h-4 ml-1 text-muted-foreground" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="w-4 h-4 ml-1 text-primary" />
+      : <ArrowDown className="w-4 h-4 ml-1 text-primary" />;
+  };
+
+  const sortedUsers = getSortedUsers();
+
   return (
     <div className="min-h-screen w-full p-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -154,19 +218,59 @@ export default function AdminUsersList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Nom</TableHead>
-                <TableHead>Prénom</TableHead>
-                <TableHead>Agence</TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('email')}
+                >
+                  <div className="flex items-center">
+                    Email
+                    <SortIcon column="email" />
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('last_name')}
+                >
+                  <div className="flex items-center">
+                    Nom
+                    <SortIcon column="last_name" />
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('first_name')}
+                >
+                  <div className="flex items-center">
+                    Prénom
+                    <SortIcon column="first_name" />
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('agence')}
+                >
+                  <div className="flex items-center">
+                    Agence
+                    <SortIcon column="agence" />
+                  </div>
+                </TableHead>
                 <TableHead>Poste occupé</TableHead>
                 <TableHead>Rôle système</TableHead>
                 <TableHead>Compétences</TableHead>
-                <TableHead>Créé le</TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50 select-none"
+                  onClick={() => handleSort('created_at')}
+                >
+                  <div className="flex items-center">
+                    Créé le
+                    <SortIcon column="created_at" />
+                  </div>
+                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {sortedUsers.map((user) => (
                 <TableRow 
                   key={user.id}
                   onClick={() => {
@@ -278,7 +382,7 @@ export default function AdminUsersList() {
                   </TableCell>
                 </TableRow>
               ))}
-              {users.length === 0 && (
+              {sortedUsers.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     Aucun utilisateur enregistré
