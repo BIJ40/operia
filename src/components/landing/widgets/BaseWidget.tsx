@@ -16,6 +16,11 @@ interface BaseWidgetProps {
   size: 'small' | 'medium' | 'large' | 'xlarge';
   children: React.ReactNode;
   isDashboardEditMode?: boolean;
+  /**
+   * When false, the widget cannot be removed from the dashboard
+   * (used for mandatory widgets defined by admin).
+   */
+  isRemovable?: boolean;
   onSizeChange?: (size: 'small' | 'medium' | 'large' | 'xlarge') => void;
   onRemove?: () => void;
   className?: string;
@@ -27,6 +32,7 @@ export function BaseWidget({
   size,
   children,
   isDashboardEditMode = false,
+  isRemovable = true,
   onSizeChange,
   onRemove,
   className = '',
@@ -40,7 +46,8 @@ export function BaseWidget({
     isDragging,
   } = useSortable({ 
     id,
-    disabled: !isDashboardEditMode,
+    // Drag & drop always enabled so users can reorganize their dashboard
+    disabled: false,
   });
 
   const style = {
@@ -60,62 +67,69 @@ export function BaseWidget({
     <div
       ref={setNodeRef}
       style={style}
-      className={`${sizeClasses[size]} ${className} relative transition-all duration-200 ease-in-out`}
+      className={`${sizeClasses[size]} ${className} relative group transition-all duration-200 ease-in-out`}
     >
       {isDashboardEditMode && (
-        <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+        <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-end gap-1 px-2 pt-1 pointer-events-none">
+          <div className="flex items-center gap-1 rounded-full bg-background/80 backdrop-blur-sm shadow-sm pointer-events-auto">
+            {onSizeChange && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-7 w-7"
+                  >
+                    <Settings className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-background z-50">
+                  <DropdownMenuItem onClick={() => onSizeChange('small')}>
+                    Petit (1 bloc)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onSizeChange('medium')}>
+                    Moyen (2 blocs)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onSizeChange('large')}>
+                    Grand (3 blocs)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onSizeChange('xlarge')}>
+                    Très grand (4 blocs)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {isRemovable && onRemove && (
+              <Button
+                size="icon"
+                variant="destructive"
+                className="h-7 w-7"
+                onClick={onRemove}
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            )}
+
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing"
+            >
               <Button
                 size="icon"
                 variant="outline"
-                className="h-7 w-7 bg-background/80 backdrop-blur-sm"
+                className="h-7 w-7"
+                aria-label="Déplacer le widget"
               >
-                <Settings className="w-3 h-3" />
+                <GripVertical className="w-3 h-3" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-background z-50">
-              <DropdownMenuItem onClick={() => onSizeChange?.('small')}>
-                Petit (1 bloc)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSizeChange?.('medium')}>
-                Moyen (2 blocs)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSizeChange?.('large')}>
-                Grand (3 blocs)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSizeChange?.('xlarge')}>
-                Très grand (4 blocs)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <Button
-            size="icon"
-            variant="destructive"
-            className="h-7 w-7"
-            onClick={onRemove}
-          >
-            <X className="w-3 h-3" />
-          </Button>
-          
-          <div
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing"
-          >
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-7 w-7 bg-background/80 backdrop-blur-sm"
-            >
-              <GripVertical className="w-3 h-3" />
-            </Button>
+            </div>
           </div>
         </div>
       )}
       
-      <div className={isDashboardEditMode ? 'group' : ''}>
+      <div className={isDashboardEditMode ? 'pt-6' : ''}>
         {children}
       </div>
     </div>

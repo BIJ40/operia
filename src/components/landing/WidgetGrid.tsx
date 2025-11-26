@@ -45,6 +45,7 @@ type Widget = {
   type: string;
   card?: HomeCard;
   isLocked?: boolean;
+  isMandatory?: boolean;
   preference: WidgetPreference;
 };
 
@@ -85,11 +86,14 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
         ? (!hasAccessToScope(scope) || !agence)
         : (scope ? !hasAccessToScope(scope) : false);
 
+      const isMandatory = scope === 'mes_indicateurs';
+
       return {
         id: widgetKey,
         type: scope === 'mes_indicateurs' && !isLocked && agence ? 'mes-indicateurs' : 'navigation',
         card,
         isLocked,
+        isMandatory,
         preference: pref || {
           id: widgetKey,
           widget_key: widgetKey,
@@ -111,6 +115,7 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
         icon: 'Headphones',
       },
       isLocked: false,
+      isMandatory: true,
       preference: preferences.find(p => p.widget_key === 'support-tickets') || {
         id: 'support-tickets',
         widget_key: 'support-tickets',
@@ -243,6 +248,7 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
               id={widget.id}
               size={widget.preference.size}
               isDashboardEditMode={true}
+              isRemovable={!widget.isMandatory}
               onSizeChange={(size) => handleSizeChange(widget.id, size)}
               onRemove={() => handleRemove(widget.id)}
             >
