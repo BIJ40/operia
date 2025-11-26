@@ -32,7 +32,7 @@ export class CacheManager {
   }
 
   /**
-   * Obtient les métriques du cache
+   * Obtient les métriques du cache GÉRÉS PAR CACHEMANAGER UNIQUEMENT
    */
   static getCacheMetrics(): CacheMetrics {
     let totalSize = 0;
@@ -45,12 +45,13 @@ export class CacheManager {
         try {
           const value = localStorage.getItem(key);
           if (value) {
-            const size = new Blob([value]).size;
-            totalSize += size;
-            entryCount++;
-
             const parsed = JSON.parse(value);
-            if (parsed.timestamp) {
+            // Compter UNIQUEMENT les caches CacheManager (avec timestamp + ttl + size)
+            if (parsed.timestamp && parsed.ttl && parsed.size !== undefined) {
+              const size = new Blob([value]).size;
+              totalSize += size;
+              entryCount++;
+
               if (!oldestEntry || parsed.timestamp < oldestEntry) {
                 oldestEntry = parsed.timestamp;
               }
@@ -64,21 +65,22 @@ export class CacheManager {
   }
 
   /**
-   * Nettoie les entrées les plus anciennes jusqu'à libérer l'espace nécessaire
+   * Nettoie les entrées les plus anciennes GÉRÉES PAR CACHEMANAGER jusqu'à libérer l'espace nécessaire
    */
   private static cleanOldestEntries(neededSpace: number): boolean {
     const cacheEntries: Array<{ key: string; timestamp: number; size: number }> = [];
 
-    // Collecter toutes les entrées de cache
+    // Collecter UNIQUEMENT les entrées de cache CacheManager
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && (key.includes('_cache') || key.includes('Cache'))) {
         try {
           const value = localStorage.getItem(key);
           if (value) {
-            const size = new Blob([value]).size;
             const parsed = JSON.parse(value);
-            if (parsed.timestamp) {
+            // Ne nettoyer QUE les caches CacheManager (avec timestamp + ttl + size)
+            if (parsed.timestamp && parsed.ttl && parsed.size !== undefined) {
+              const size = new Blob([value]).size;
               cacheEntries.push({ key, timestamp: parsed.timestamp, size });
             }
           }
@@ -112,6 +114,7 @@ export class CacheManager {
 
   /**
    * Nettoie les entrées expirées
+   * IMPORTANT: Ne nettoie QUE les entrées gérées par CacheManager (avec timestamp + ttl + size)
    */
   static cleanExpiredEntries(): number {
     const now = Date.now();
@@ -119,20 +122,26 @@ export class CacheManager {
 
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i);
+      // Ne nettoyer QUE les caches gérés par CacheManager
       if (key && (key.includes('_cache') || key.includes('Cache'))) {
         try {
           const value = localStorage.getItem(key);
           if (value) {
             const parsed = JSON.parse(value);
-            if (parsed.timestamp && parsed.ttl) {
+            // IMPORTANT: Vérifier que c'est bien un cache CacheManager (a les 3 champs)
+            if (parsed.timestamp && parsed.ttl && parsed.size !== undefined) {
               const age = now - parsed.timestamp;
               if (age > parsed.ttl) {
                 localStorage.removeItem(key);
                 cleanedCount++;
+                console.log(`🗑️ Cache expiré supprimé: ${key}`);
               }
             }
           }
-        } catch {}
+        } catch (e) {
+          // Ignorer les erreurs de parsing sans supprimer
+          console.warn(`⚠️ Erreur parsing cache ${key}:`, e);
+        }
       }
     }
 
@@ -252,7 +261,8 @@ export class CacheManager {
   }
 
   /**
-   * Nettoie tous les caches
+   * Nettoie tous les caches GÉRÉS PAR CACHEMANAGER UNIQUEMENT
+   * IMPORTANT: Ne touche pas aux caches d'autres systèmes
    */
   static clearAll(): void {
     let count = 0;
@@ -260,12 +270,19 @@ export class CacheManager {
       const key = localStorage.key(i);
       if (key && (key.includes('_cache') || key.includes('Cache'))) {
         try {
-          localStorage.removeItem(key);
-          count++;
+          const value = localStorage.getItem(key);
+          if (value) {
+            const parsed = JSON.parse(value);
+            // Ne supprimer QUE les caches CacheManager (avec timestamp + ttl + size)
+            if (parsed.timestamp && parsed.ttl && parsed.size !== undefined) {
+              localStorage.removeItem(key);
+              count++;
+            }
+          }
         } catch {}
       }
     }
-    console.log(`🧹 ${count} entrées de cache supprimées`);
+    console.log(`🧹 ${count} entrées de cache CacheManager supprimées`);
   }
 
   /**
@@ -285,5 +302,5 @@ export class CacheManager {
   }
 }
 
-// Nettoyer les caches expirés au chargement
-CacheManager.cleanExpiredEntries();
+// Ne PAS nettoyer automatiquement au chargement pour éviter de supprimer des caches non-CacheManager
+// Le nettoyage se fera lors du premier appel à setItem() ou via cleanExpiredEntries() explicite
