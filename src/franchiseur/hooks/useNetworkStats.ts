@@ -7,7 +7,7 @@ import {
   calculateTop5Agencies,
   calculateBestApporteur,
   calculateTotalInterventions,
-  calculateSAVRate,
+  calculateNetworkSAVStats,
   calculateAverageProcessingTime,
   calculateMonthlyCAEvolution,
   calculateCAByAgency,
@@ -20,7 +20,9 @@ interface NetworkStats {
   totalProjects: number;
   agencyCount: number;
   totalInterventions: number;
-  savRate: number;
+  savRateMoyenne: number;        // Simple average of agency SAV rates
+  savRateGlobal: number;         // Global network SAV rate (weighted by projects)
+  nbTotalSAVProjects: number;    // Total SAV projects across network
   monthlyRoyalties: number;
   averageProcessingTime: number;
   top5Agencies: Array<{ agencyId: string; agencyLabel: string; ca: number; rank: number }>;
@@ -80,6 +82,7 @@ export function useNetworkStats() {
 
       const totalCAYear = NetworkDataService.aggregateCA(agencyData, { start: yearStart, end: yearEnd });
       const totalCAPeriod = NetworkDataService.aggregateCA(agencyData, calcRange);
+      const savStats = calculateNetworkSAVStats(agencyData);
 
       return {
         totalCAYear,
@@ -87,7 +90,9 @@ export function useNetworkStats() {
         totalProjects: agencyData.reduce((sum, a) => sum + (a.data?.projects?.length || 0), 0),
         agencyCount: agencyData.length,
         totalInterventions: calculateTotalInterventions(agencyData, calcRange),
-        savRate: calculateSAVRate(agencyData),
+        savRateMoyenne: savStats.tauxMoyenAgences,
+        savRateGlobal: savStats.tauxGlobalReseau,
+        nbTotalSAVProjects: savStats.nbTotalSAVProjects,
         monthlyRoyalties: 0, // Placeholder (redevances calculées ailleurs)
         averageProcessingTime: calculateAverageProcessingTime(agencyData),
         top5Agencies: calculateTop5Agencies(agencyData),
