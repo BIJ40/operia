@@ -93,6 +93,9 @@ export default function UserTickets() {
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <CardTitle className="text-2xl">{selectedTicket.subject}</CardTitle>
+                  <div className="text-sm text-muted-foreground mb-2">
+                    Ticket créé par <span className="font-semibold">{selectedTicket.user_pseudo}</span>
+                  </div>
                   <div className="flex items-center gap-2">
                     <TicketSourceBadge source={selectedTicket.source} />
                     <TicketCategoryBadge category={selectedTicket.category} />
