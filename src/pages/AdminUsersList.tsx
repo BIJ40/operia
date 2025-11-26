@@ -117,7 +117,7 @@ export default function AdminUsersList() {
   };
 
   return (
-    <div className="container max-w-6xl mx-auto p-8 space-y-6">
+    <div className="min-h-screen w-full p-8 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Users className="w-8 h-8" />
