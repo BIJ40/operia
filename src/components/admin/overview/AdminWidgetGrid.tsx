@@ -124,7 +124,7 @@ export function AdminWidgetGrid() {
         items={widgets.map(w => w.id)}
         strategy={rectSortingStrategy}
       >
-        <div className="grid grid-cols-4 gap-4 auto-rows-min items-start mt-6">
+        <div className="grid grid-cols-8 gap-4 auto-rows-min items-start mt-6">
           {widgets.map((widget) => (
             <BaseWidget
               key={widget.id}
