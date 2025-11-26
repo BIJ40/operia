@@ -139,7 +139,7 @@ export const TechnicienUniversHeatmap = ({
                   className="hover:bg-muted/50"
                   style={{ opacity: tech.technicienActif ? 1 : 0.6 }}
                 >
-                  <td className="border border-border p-2 font-medium sticky left-0 bg-background">
+                  <td className="border border-border p-2 font-medium sticky left-0 bg-muted/10">
                     <div className="flex items-center gap-2">
                       <div
                         className="w-3 h-3 rounded-full flex-shrink-0"
