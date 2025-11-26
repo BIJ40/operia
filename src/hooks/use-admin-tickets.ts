@@ -105,8 +105,9 @@ export const useAdminTickets = () => {
         .from('support_tickets')
         .update({ 
           status,
+          updated_at: new Date().toISOString(),
           resolved_at: status === 'resolved' ? new Date().toISOString() : null 
-        } as any)
+        })
         .eq('id', ticketId);
 
       if (error) throw error;
@@ -116,7 +117,17 @@ export const useAdminTickets = () => {
         description: 'Statut mis à jour',
         duration: 3000,
       });
-      loadTickets();
+      
+      // Reload tickets and refresh selected ticket if it matches
+      await loadTickets();
+      if (selectedTicket?.id === ticketId) {
+        const { data } = await supabase
+          .from('support_tickets')
+          .select('*')
+          .eq('id', ticketId)
+          .single();
+        if (data) setSelectedTicket(data as Ticket);
+      }
     } catch (error) {
       console.error('Error updating status:', error);
       toast({
@@ -132,7 +143,10 @@ export const useAdminTickets = () => {
     try {
       const { error } = await supabase
         .from('support_tickets')
-        .update({ priority } as any)
+        .update({ 
+          priority,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', ticketId);
 
       if (error) throw error;
@@ -142,7 +156,17 @@ export const useAdminTickets = () => {
         description: 'Priorité mise à jour',
         duration: 3000,
       });
-      loadTickets();
+      
+      // Reload tickets and refresh selected ticket if it matches
+      await loadTickets();
+      if (selectedTicket?.id === ticketId) {
+        const { data } = await supabase
+          .from('support_tickets')
+          .select('*')
+          .eq('id', ticketId)
+          .single();
+        if (data) setSelectedTicket(data as Ticket);
+      }
     } catch (error) {
       console.error('Error updating priority:', error);
       toast({
@@ -239,8 +263,9 @@ export const useAdminTickets = () => {
         .from('support_tickets')
         .update({ 
           status: 'waiting',
-          resolved_at: null
-        } as any)
+          resolved_at: null,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', ticketId);
 
       if (error) throw error;
@@ -250,7 +275,17 @@ export const useAdminTickets = () => {
         description: 'Ticket réouvert',
         duration: 3000,
       });
-      loadTickets();
+      
+      // Reload tickets and refresh selected ticket if it matches
+      await loadTickets();
+      if (selectedTicket?.id === ticketId) {
+        const { data } = await supabase
+          .from('support_tickets')
+          .select('*')
+          .eq('id', ticketId)
+          .single();
+        if (data) setSelectedTicket(data as Ticket);
+      }
     } catch (error) {
       console.error('Error reopening ticket:', error);
       toast({
