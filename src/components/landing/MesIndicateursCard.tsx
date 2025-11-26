@@ -12,11 +12,12 @@ export function MesIndicateursCard() {
   const { agence } = useAuth();
   const { isAgencyReady, currentAgency } = useAgency();
 
-  const { data: kpis, isLoading } = useQuery({
+  const { data: kpis, isLoading, error } = useQuery({
     queryKey: ["landing-kpis-preview", agence],
     enabled: !!agence && isAgencyReady,
     staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
+      console.log('🎯 MesIndicateursCard - Chargement KPIs pour agence:', agence, 'isAgencyReady:', isAgencyReady);
       try {
         const apiData = await DataService.loadAllData(true);
         
