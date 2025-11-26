@@ -1,5 +1,5 @@
 import { parseISO, isWithinInterval } from "date-fns";
-import { isInitInvoice, isApporteur, getInitInvoiceApporteursAmount, INIT_INVOICE_PARTICULIERS } from "./dashboardCalculations";
+import { isApporteur } from "./dashboardCalculations";
 
 export interface ApporteurStats {
   apporteurId: number;
@@ -85,21 +85,9 @@ export const calculateTop10Apporteurs = (
     
     const apporteurId = project.data?.commanditaireId || project.commanditaireId;
     
-    // Vérifier si c'est la facture d'init JANVIER 2025
-    const client = clientsMap.get(facture.clientId);
-    let montant = 0;
-    
-    if (isInitInvoice(facture, client, project)) {
-      // Utiliser la part APPORTEURS de la facture d'init
-      montant = getInitInvoiceApporteursAmount(facture);
-      if (import.meta.env.DEV) {
-        console.log("💰 APPORTEURS - Facture INIT détectée, utilisation part apporteurs:", montant);
-      }
-    } else {
-      // Calculer le montant HT normal
-      const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
-      montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-    }
+    // Calculer le montant HT
+    const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
+    const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
     
     if (isNaN(montant) || montant === 0) return;
     
@@ -231,16 +219,10 @@ export const calculatePartApporteurs = (
   dateRange: { start: Date; end: Date },
   userAgency: string
 ): number => {
-  // Vérifier si on est sur janvier 2025 avec override manuel
-  const startYear = dateRange.start.getFullYear();
-  const startMonth = dateRange.start.getMonth() + 1;
-  const endYear = dateRange.end.getFullYear();
-  const endMonth = dateRange.end.getMonth() + 1;
-  
   const clientsMap = createClientsMap(clients);
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
-  // Filtrer les factures de la période (incluant la facture d'init)
+  // Filtrer les factures de la période
   const facturesPeriode = filterFacturesPeriode(factures, clients, projects, dateRange);
   
   let caTotal = 0;
@@ -253,33 +235,18 @@ export const calculatePartApporteurs = (
     const project = projectsMap.get(projectId);
     if (!project) return;
     
-    // Vérifier si c'est la facture d'init JANVIER 2025
-    const client = clientsMap.get(facture.clientId);
-    let montant = 0;
+    // Montant normal
+    const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
+    const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
     
-    if (isInitInvoice(facture, client, project)) {
-      // Répartir la facture d'init
-      const partApporteurs = getInitInvoiceApporteursAmount(facture);
-      const partParticuliers = INIT_INVOICE_PARTICULIERS;
-      
-      caTotal += (partApporteurs + partParticuliers);
-      
-      // Seule la part apporteurs compte pour le CA avec apporteur
-      caAvecApporteur += partApporteurs;
-    } else {
-      // Montant normal
-      const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
-      montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-      
-      if (isNaN(montant)) return;
-      
-      caTotal += montant;
-      
-      // Vérifier si la facture a un apporteur
-      const apporteurId = project.data?.commanditaireId;
-      if (apporteurId) {
-        caAvecApporteur += montant;
-      }
+    if (isNaN(montant)) return;
+    
+    caTotal += montant;
+    
+    // Vérifier si la facture a un apporteur
+    const apporteurId = project.data?.commanditaireId;
+    if (apporteurId) {
+      caAvecApporteur += montant;
     }
   });
   

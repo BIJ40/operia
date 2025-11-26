@@ -1,6 +1,5 @@
 import { parseISO, isWithinInterval, startOfMonth, endOfMonth, format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { isInitInvoice, INIT_INVOICE_PARTICULIERS, getInitInvoiceApporteursAmount } from "./dashboardCalculations";
 
 export interface MonthlySegmentData {
   month: string;

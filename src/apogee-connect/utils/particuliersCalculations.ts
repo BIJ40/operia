@@ -1,5 +1,4 @@
 import { parseISO, isWithinInterval } from "date-fns";
-import { isInitInvoice, INIT_INVOICE_PARTICULIERS } from "./dashboardCalculations";
 
 export interface ParticuliersStats {
   caHT: number;
@@ -52,20 +51,14 @@ const filterFacturesPeriodeParticuliers = (
       const factureDate = parseISO(dateReelle);
       const dansLaPeriode = isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end });
       
-      if (dansLaPeriode) {
-        const client = clients.find(c => c.id === facture.clientId);
-        const isInit = isInitInvoice(facture, client, project);
-        
-        if (import.meta.env.DEV) {
-          console.log("✅ Facture particulier trouvée:", {
-            id: facture.id,
-            ref: facture.reference,
-            projectId: facture.projectId,
-            commanditaireId,
-            montant: facture.totalHT || facture.data?.totalHT,
-            isInit
-          });
-        }
+      if (dansLaPeriode && import.meta.env.DEV) {
+        console.log("✅ Facture particulier trouvée:", {
+          id: facture.id,
+          ref: facture.reference,
+          projectId: facture.projectId,
+          commanditaireId,
+          montant: facture.totalHT || facture.data?.totalHT
+        });
       }
       
       return dansLaPeriode;
@@ -126,35 +119,21 @@ export const calculateParticuliersStats = (
   let nbFactures = 0;
   
   facturesPeriode.forEach(facture => {
-    const client = clients.find(c => c.id === facture.clientId);
-    const project = projectsMap.get(facture.projectId);
+    // Calculer le montant HT
+    const montantRaw = facture.data?.totalHT || facture.totalHT || "0";
+    const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
     
-    // Vérifier si c'est la facture d'init JANVIER 2025
-    if (isInitInvoice(facture, client, project)) {
-      if (import.meta.env.DEV) {
-        console.log("💰 PARTICULIERS - Facture INIT détectée, utilisation part particuliers:", INIT_INVOICE_PARTICULIERS);
-      }
-      // Utiliser la part particuliers fixe
-      caHT += INIT_INVOICE_PARTICULIERS;
+    if (!isNaN(montant) && montant !== 0) {
+      caHT += montant;
       nbFactures += 1;
       dossiers.add(facture.projectId);
     } else {
-      // Calculer le montant HT normal
-      const montantRaw = facture.data?.totalHT || facture.totalHT || "0";
-      const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-      
-      if (!isNaN(montant) && montant !== 0) {
-        caHT += montant;
-        nbFactures += 1;
-        dossiers.add(facture.projectId);
-      } else {
-        console.warn("⚠️ PARTICULIERS - Montant invalide pour facture:", {
-          id: facture.id,
-          ref: facture.reference,
-          montantRaw,
-          montant
-        });
-      }
+      console.warn("⚠️ PARTICULIERS - Montant invalide pour facture:", {
+        id: facture.id,
+        ref: facture.reference,
+        montantRaw,
+        montant
+      });
     }
   });
   
@@ -200,11 +179,6 @@ const calculateTauxTransformationParticuliers = (
       .filter(f => {
         const typeFacture = f.typeFacture || f.data?.type || f.state;
         return typeFacture !== "avoir";
-      })
-      .filter(f => {
-        const client = clients.find(c => c.id === f.clientId);
-        const project = projectsMap.get(f.projectId);
-        return !isInitInvoice(f, client, project);
       })
       .map(f => f.projectId)
   );
