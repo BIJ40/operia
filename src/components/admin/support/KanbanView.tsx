@@ -127,17 +127,25 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
     const ticket = localTickets.find(t => t.id === ticketId);
     if (ticket && ticket.status !== newStatus) {
       // Mise à jour optimiste de l'UI
+      const updatedTicket = {
+        ...ticket,
+        status: newStatus,
+        resolved_at: newStatus === 'resolved' ? new Date().toISOString() : null
+      };
+      
       setLocalTickets(prev =>
-        prev.map(t =>
-          t.id === ticketId ? { ...t, status: newStatus } : t
-        )
+        prev.map(t => t.id === ticketId ? updatedTicket : t)
       );
+
       // Mettre à jour le statut dans la base de données
       const updateData: any = { status: newStatus };
       
-      // Si on déplace vers "resolved", ajouter resolved_at
+      // Gérer le champ resolved_at selon le nouveau statut
       if (newStatus === 'resolved') {
         updateData.resolved_at = new Date().toISOString();
+      } else {
+        // Si on sort de "resolved" (réouverture), on reset resolved_at
+        updateData.resolved_at = null;
       }
 
       const { error } = await supabase
@@ -147,15 +155,25 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
 
       if (error) {
         console.error('Erreur mise à jour statut:', error);
+        // Rollback optimiste en cas d'erreur
+        setLocalTickets(prev =>
+          prev.map(t => t.id === ticketId ? ticket : t)
+        );
         toast({
           title: 'Erreur',
           description: 'Impossible de mettre à jour le statut du ticket',
           variant: 'destructive',
         });
       } else {
+        const statusLabels: Record<string, string> = {
+          waiting: 'En attente',
+          in_progress: 'En cours',
+          resolved: 'Résolu'
+        };
+        
         toast({
-          title: 'Statut mis à jour',
-          description: `Ticket déplacé vers "${columns.find(c => c.status === newStatus)?.title}"`,
+          title: newStatus === 'resolved' ? 'Ticket résolu' : 'Ticket réouvert',
+          description: `Statut : ${statusLabels[newStatus] || newStatus}`,
         });
         onTicketsUpdate();
       }
