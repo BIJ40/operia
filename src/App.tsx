@@ -13,6 +13,8 @@ import Category from "./pages/Category";
 import CategoryApporteur from "./pages/CategoryApporteur";
 import HelpConfort from "./pages/HelpConfort";
 import CategoryHelpConfort from "./pages/CategoryHelpConfort";
+import ActionsAMener from "./pages/ActionsAMener";
+import CategoryActionsAMener from "./pages/CategoryActionsAMener";
 import Documents from "./pages/Documents";
 import AdminDocuments from "./pages/AdminDocuments";
 import AdminSupportTickets from "./pages/AdminSupportTickets";
@@ -71,6 +73,8 @@ function AppContent() {
         <Route path="/" element={<Layout showHeader={false} showSidebar={false}><Landing /></Layout>} />
         <Route path="/apogee" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><ApogeeGuide /></Layout>} />
         <Route path="/apogee/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><Category /></Layout>} />
+        <Route path="/actions-a-mener" element={<Layout showHeader showSidebar={true} sidebarType="actions"><ActionsAMener /></Layout>} />
+        <Route path="/actions-a-mener/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="actions"><CategoryActionsAMener /></Layout>} />
         <Route path="/apporteurs" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><ApporteurGuide /></Layout>} />
         <Route path="/apporteurs/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><ApporteurSubcategories /></Layout>} />
         <Route path="/apporteurs/category/:slug/sub/:subslug" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><CategoryApporteur /></Layout>} />

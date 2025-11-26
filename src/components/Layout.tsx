@@ -4,6 +4,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { AppSidebarApporteur } from '@/components/AppSidebarApporteur';
 import { AppSidebarHelpConfort } from '@/components/AppSidebarHelpConfort';
 import { AppSidebarAdmin } from '@/components/AppSidebarAdmin';
+import { AppSidebarActionsAMener } from '@/components/AppSidebarActionsAMener';
 import { Header } from '@/components/Header';
 import { Chatbot } from '@/components/Chatbot';
 import { ImageModal } from '@/components/ImageModal';
@@ -16,7 +17,7 @@ interface LayoutProps {
   children: ReactNode;
   showHeader?: boolean;
   showSidebar?: boolean;
-  sidebarType?: 'apogee' | 'apporteur' | 'helpconfort' | 'admin';
+  sidebarType?: 'apogee' | 'apporteur' | 'helpconfort' | 'admin' | 'actions';
 }
 
 export function Layout({ children, showHeader = true, showSidebar = true, sidebarType = 'apogee' }: LayoutProps) {
@@ -31,6 +32,8 @@ export function Layout({ children, showHeader = true, showSidebar = true, sideba
     ? AppSidebarHelpConfort
     : sidebarType === 'admin'
     ? AppSidebarAdmin
+    : sidebarType === 'actions'
+    ? AppSidebarActionsAMener
     : AppSidebar;
   
   return (
