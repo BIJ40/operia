@@ -149,28 +149,49 @@ export type Database = {
       }
       apogee_agencies: {
         Row: {
+          adresse: string | null
+          animateur_id: string | null
+          code_postal: string | null
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string
+          date_ouverture: string | null
           id: string
           is_active: boolean
           label: string
           slug: string
           updated_at: string
+          ville: string | null
         }
         Insert: {
+          adresse?: string | null
+          animateur_id?: string | null
+          code_postal?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
+          date_ouverture?: string | null
           id?: string
           is_active?: boolean
           label: string
           slug: string
           updated_at?: string
+          ville?: string | null
         }
         Update: {
+          adresse?: string | null
+          animateur_id?: string | null
+          code_postal?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
+          date_ouverture?: string | null
           id?: string
           is_active?: boolean
           label?: string
           slug?: string
           updated_at?: string
+          ville?: string | null
         }
         Relationships: []
       }
