@@ -87,19 +87,21 @@ serve(async (req) => {
     // Récupérer les user IDs
     const userIds = supportUserRoles.map(ur => ur.user_id);
 
-    // Récupérer les emails des utilisateurs support depuis auth.users
-    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-    if (authError) throw authError;
+    // Récupérer les préférences de notifications des utilisateurs support
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, email, email_notifications_enabled')
+      .in('id', userIds);
 
-    const supportEmails = authUsers.users
-      .filter(user => userIds.includes(user.id))
-      .map(user => user.email)
-      .filter(email => email) as string[];
+    if (profilesError) throw profilesError;
 
-    if (supportEmails.length === 0) {
-      console.log('No support emails found');
+    // Filtrer uniquement les utilisateurs qui ont activé les notifications email
+    const usersWithNotificationsEnabled = profiles?.filter(p => p.email_notifications_enabled !== false) || [];
+    
+    if (usersWithNotificationsEnabled.length === 0) {
+      console.log('No support users with email notifications enabled');
       return new Response(
-        JSON.stringify({ message: 'No support emails to notify' }),
+        JSON.stringify({ message: 'No support users with notifications enabled to notify' }),
         {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -107,7 +109,22 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Sending notification to ${supportEmails.length} support users`);
+    const supportEmails = usersWithNotificationsEnabled
+      .map(p => p.email)
+      .filter(email => email) as string[];
+
+    if (supportEmails.length === 0) {
+      console.log('No support emails found with notifications enabled');
+      return new Response(
+        JSON.stringify({ message: 'No support emails with notifications enabled' }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log(`Sending notification to ${supportEmails.length} support users (with notifications enabled)`);
 
     // Envoyer l'email avec un template HTML personnalisé
     const emailHtml = `
