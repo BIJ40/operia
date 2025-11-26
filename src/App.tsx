@@ -98,6 +98,15 @@ function AppContent() {
           <Route path="techniciens" element={<IndicateursTechniciens />} />
           <Route path="sav" element={<IndicateursSAV />} />
         </Route>
+        <Route path="/tete-de-reseau" element={<FranchiseurLayout />}>
+          <Route index element={<FranchiseurHome />} />
+          <Route path="agences" element={<FranchiseurAgencies />} />
+          <Route path="agences/:agencyId" element={<FranchiseurAgencyProfile />} />
+          <Route path="stats" element={<FranchiseurStats />} />
+          <Route path="comparatifs" element={<FranchiseurComparison />} />
+          <Route path="redevances" element={<FranchiseurRoyalties />} />
+          <Route path="parametres" element={<FranchiseurSettings />} />
+        </Route>
         <Route path="/profile" element={<Layout showHeader={false} showSidebar={false}><Profile /></Layout>} />
         <Route path="/favorites" element={<Layout showHeader showSidebar={false}><Favorites /></Layout>} />
         <Route path="*" element={<NotFound />} />
