@@ -1,5 +1,6 @@
 import { parseISO, isWithinInterval, format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { resolveTech, TechnicienInfo } from "./techTools";
 
 // ====================================================================
 // INTERFACES
@@ -359,14 +360,13 @@ export const calculateSAVByTechnicien = (
   projects: any[],
   interventions: any[],
   factures: any[],
-  users: any[],
+  TECHS: Record<number, TechnicienInfo>,
   dateRange: { start: Date; end: Date }
 ): SAVByTechnicien[] => {
-  const usersMap = new Map(users.map(u => [u.id, u]));
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   const statsParTech = new Map<string, { nbInterventions: number; projects: Set<number>; heures: number; ca: number }>();
 
-  console.log("[SAV Technicien] Début calcul - users:", users.length, "projets:", projects.length, "interventions:", interventions.length);
+  console.log("[SAV Technicien] Début calcul - TECHS:", Object.keys(TECHS).length, "projets:", projects.length, "interventions:", interventions.length);
 
   // 1. Grouper les interventions par projectId pour un accès rapide
   const interventionsByProject = new Map<number, any[]>();
@@ -464,14 +464,14 @@ export const calculateSAVByTechnicien = (
   const result: SAVByTechnicien[] = [];
 
   savAttributions.forEach((stats, techId) => {
-    const user = usersMap.get(techId);
-    const nom = user ? `${user.firstname || ""} ${user.name || ""}`.trim() : "Technicien inconnu";
+    const techIdNum = typeof techId === 'string' ? parseInt(techId, 10) : techId;
+    const resolved = resolveTech(techIdNum, TECHS);
 
-    console.log(`[SAV Technicien] ${nom}: ${stats.projects.size} projets, ${stats.interventions.size} interventions, ${stats.ca.toFixed(2)}€`);
+    console.log(`[SAV Technicien] ${resolved.label}: ${stats.projects.size} projets, ${stats.interventions.size} interventions, ${stats.ca.toFixed(2)}€`);
 
     result.push({
-      technicienId: techId,
-      technicienNom: nom,
+      technicienId: String(techId),
+      technicienNom: resolved.label,
       nbInterventionsSAV: stats.interventions.size,
       nbProjectsSAV: stats.projects.size,
       heuresSAV: Math.round(stats.heures * 10) / 10,
