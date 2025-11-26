@@ -26,7 +26,12 @@ export function buildTechMap(usersData: any[]): Record<number, TechnicienInfo> {
 
   for (const u of usersData) {
     // Ne garder que les techniciens
-    const isTechnicien = u?.isTechnicien === true || u?.type === "technicien";
+    // Règle: isTechnicien=true OU type="technicien" OU (type="utilisateur" ET universes non vide)
+    const hasUniverses = Array.isArray(u?.data?.universes) && u.data.universes.length > 0;
+    const isTechnicien = 
+      u?.isTechnicien === true || 
+      u?.type === "technicien" ||
+      (u?.type === "utilisateur" && hasUniverses);
     if (!isTechnicien) continue;
 
     const isActive = u?.is_on === true || u?.isActive === true;
