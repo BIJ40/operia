@@ -254,41 +254,61 @@ export default function UserTickets() {
                 <div className="grid grid-cols-5 gap-2 mt-2">
                   <Button
                     type="button"
-                    variant={newTicket.service === 'apogee' ? 'default' : 'outline'}
+                    variant="outline"
                     onClick={() => setNewTicket({ ...newTicket, service: 'apogee' })}
-                    className={newTicket.service === 'apogee' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                    className={`rounded-2xl border-l-4 transition-all ${
+                      newTicket.service === 'apogee'
+                        ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
+                        : 'border-l-border hover:border-l-accent hover:shadow-md'
+                    }`}
                   >
                     🖥️ Apogée
                   </Button>
                   <Button
                     type="button"
-                    variant={newTicket.service === 'helpconfort' ? 'default' : 'outline'}
+                    variant="outline"
                     onClick={() => setNewTicket({ ...newTicket, service: 'helpconfort' })}
-                    className={newTicket.service === 'helpconfort' ? 'bg-orange-600 hover:bg-orange-700' : ''}
+                    className={`rounded-2xl border-l-4 transition-all ${
+                      newTicket.service === 'helpconfort'
+                        ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
+                        : 'border-l-border hover:border-l-accent hover:shadow-md'
+                    }`}
                   >
                     🏠 HelpConfort
                   </Button>
                   <Button
                     type="button"
-                    variant={newTicket.service === 'apporteurs' ? 'default' : 'outline'}
+                    variant="outline"
                     onClick={() => setNewTicket({ ...newTicket, service: 'apporteurs' })}
-                    className={newTicket.service === 'apporteurs' ? 'bg-green-600 hover:bg-green-700' : ''}
+                    className={`rounded-2xl border-l-4 transition-all ${
+                      newTicket.service === 'apporteurs'
+                        ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
+                        : 'border-l-border hover:border-l-accent hover:shadow-md'
+                    }`}
                   >
                     🤝 Apporteurs
                   </Button>
                   <Button
                     type="button"
-                    variant={newTicket.service === 'conseil' ? 'default' : 'outline'}
+                    variant="outline"
                     onClick={() => setNewTicket({ ...newTicket, service: 'conseil' })}
-                    className={newTicket.service === 'conseil' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                    className={`rounded-2xl border-l-4 transition-all ${
+                      newTicket.service === 'conseil'
+                        ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
+                        : 'border-l-border hover:border-l-accent hover:shadow-md'
+                    }`}
                   >
                     💡 Conseil
                   </Button>
                   <Button
                     type="button"
-                    variant={newTicket.service === 'autre' ? 'default' : 'outline'}
+                    variant="outline"
                     onClick={() => setNewTicket({ ...newTicket, service: 'autre' })}
-                    className={newTicket.service === 'autre' ? 'bg-gray-600 hover:bg-gray-700' : ''}
+                    className={`rounded-2xl border-l-4 transition-all ${
+                      newTicket.service === 'autre'
+                        ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
+                        : 'border-l-border hover:border-l-accent hover:shadow-md'
+                    }`}
                   >
                     ❓ Autre
                   </Button>
@@ -319,33 +339,49 @@ export default function UserTickets() {
                 <div className="grid grid-cols-4 gap-2 mt-2">
                   <Button
                     type="button"
-                    variant={newTicket.priority === 'low' ? 'default' : 'outline'}
+                    variant="outline"
                     onClick={() => setNewTicket({ ...newTicket, priority: 'low' })}
-                    className={newTicket.priority === 'low' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                    className={`rounded-2xl border-l-4 transition-all ${
+                      newTicket.priority === 'low'
+                        ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
+                        : 'border-l-border hover:border-l-accent hover:shadow-md'
+                    }`}
                   >
                     🟢 Faible
                   </Button>
                   <Button
                     type="button"
-                    variant={newTicket.priority === 'normal' ? 'default' : 'outline'}
+                    variant="outline"
                     onClick={() => setNewTicket({ ...newTicket, priority: 'normal' })}
-                    className={newTicket.priority === 'normal' ? 'bg-gray-600 hover:bg-gray-700' : ''}
+                    className={`rounded-2xl border-l-4 transition-all ${
+                      newTicket.priority === 'normal'
+                        ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
+                        : 'border-l-border hover:border-l-accent hover:shadow-md'
+                    }`}
                   >
                     ⚪ Normal
                   </Button>
                   <Button
                     type="button"
-                    variant={newTicket.priority === 'high' ? 'default' : 'outline'}
+                    variant="outline"
                     onClick={() => setNewTicket({ ...newTicket, priority: 'high' })}
-                    className={newTicket.priority === 'high' ? 'bg-orange-600 hover:bg-orange-700' : ''}
+                    className={`rounded-2xl border-l-4 transition-all ${
+                      newTicket.priority === 'high'
+                        ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
+                        : 'border-l-border hover:border-l-accent hover:shadow-md'
+                    }`}
                   >
                     🟠 Élevé
                   </Button>
                   <Button
                     type="button"
-                    variant={newTicket.priority === 'urgent' ? 'default' : 'outline'}
+                    variant="outline"
                     onClick={() => setNewTicket({ ...newTicket, priority: 'urgent' })}
-                    className={newTicket.priority === 'urgent' ? 'bg-red-600 hover:bg-red-700' : ''}
+                    className={`rounded-2xl border-l-4 transition-all ${
+                      newTicket.priority === 'urgent'
+                        ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
+                        : 'border-l-border hover:border-l-accent hover:shadow-md'
+                    }`}
                   >
                     🔴 Urgent
                   </Button>
