@@ -37,7 +37,14 @@ export const useAdminTickets = () => {
         query = query.eq('category', filters.category);
       }
       if (filters.source !== 'all') {
-        query = query.eq('source', filters.source);
+        // Filter by demand type
+        if (filters.source === 'live_chat') {
+          query = query.eq('is_live_chat', true);
+        } else if (filters.source === 'escalated') {
+          query = query.eq('escalated_from_chat', true);
+        } else if (filters.source === 'portal') {
+          query = query.eq('is_live_chat', false).eq('escalated_from_chat', false);
+        }
       }
       if (filters.agency !== 'all') {
         query = query.eq('agency_slug', filters.agency);
