@@ -8,6 +8,7 @@ import { ChatHistory } from '@/components/chatbot/ChatHistory';
 import { ChatInput } from '@/components/chatbot/ChatInput';
 import { ChatModeSelector } from '@/components/chatbot/ChatModeSelector';
 import { SupportTicketDialog } from '@/components/chatbot/SupportTicketDialog';
+import { CreateTicketFromChat } from '@/components/chatbot/CreateTicketFromChat';
 import chatIcon from '@/assets/logo_chat.png';
 import { MessageCircle } from 'lucide-react';
 
@@ -31,11 +32,13 @@ export function Chatbot() {
     ticketRating,
     ticketComment,
     showChoiceMode,
+    showTicketCreation,
     buttonPosition,
     isDragging,
     messagesEndRef,
     buttonRef,
     createSupportTicket,
+    createTicketFromChat,
     isCreating,
     setIsOpen,
     setInput,
@@ -386,6 +389,16 @@ export function Chatbot() {
                 isUserTyping={isUserTyping}
                 onRenderMessageWithLinks={renderMessageWithLinks}
               />
+
+              {showTicketCreation && activeTicket && (
+                <div className="p-3">
+                  <CreateTicketFromChat
+                    messages={messages}
+                    onCreateTicket={createTicketFromChat}
+                    isCreating={isCreating}
+                  />
+                </div>
+              )}
 
               <ChatInput
                 input={input}
