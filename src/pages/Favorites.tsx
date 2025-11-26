@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, Trash2, ExternalLink, Lightbulb, ChevronDown } from 'lucide-react';
+import { Heart, Trash2, ExternalLink, Lightbulb, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -209,7 +209,17 @@ export default function Favorites() {
 
   return (
     <div className="container max-w-4xl mx-auto p-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-8">
+        <div className="flex items-center gap-4 mb-4">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Retour
+          </Button>
+        </div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Heart className="w-8 h-8 text-red-500 fill-red-500" />
           Mes Favoris
