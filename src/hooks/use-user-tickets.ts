@@ -23,6 +23,8 @@ export interface Ticket {
   unreadCount?: number;
   is_live_chat: boolean;
   escalated_from_chat: boolean;
+  assigned_to: string | null;
+  viewed_by_support_at: string | null;
 }
 
 export interface Attachment {

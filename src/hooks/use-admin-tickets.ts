@@ -250,6 +250,46 @@ export const useAdminTickets = () => {
     }
   };
 
+  const takeTicket = async (ticketId: string, userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('support_tickets')
+        .update({ 
+          assigned_to: userId,
+          status: 'in_progress',
+          viewed_by_support_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as any)
+        .eq('id', ticketId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: 'Vous avez pris en charge ce ticket',
+        duration: 3000,
+      });
+      
+      await loadTickets();
+      if (selectedTicket?.id === ticketId) {
+        const { data } = await supabase
+          .from('support_tickets')
+          .select('*')
+          .eq('id', ticketId)
+          .single();
+        if (data) setSelectedTicket(data as Ticket);
+      }
+    } catch (error) {
+      console.error('Error taking ticket:', error);
+      toast({
+        title: 'Erreur',
+        description: "Impossible de prendre en charge le ticket",
+        variant: 'destructive',
+        duration: 3000,
+      });
+    }
+  };
+
   const addSupportMessage = async (ticketId: string, message: string, userId: string) => {
     try {
       const { error } = await supabase.from('support_messages').insert({
@@ -376,6 +416,7 @@ export const useAdminTickets = () => {
     updateTicketStatus,
     updateTicketPriority,
     assignTicket,
+    takeTicket,
     addSupportMessage,
     downloadAttachment,
     reopenTicket,
