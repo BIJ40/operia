@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Home, Edit3, Square, LogIn, Settings, User, Heart, Loader2, BarChart3, Headset } from 'lucide-react';
+import { LogOut, Home, Edit3, Square, LogIn, Settings, User, Heart, Loader2, BarChart3, Headset, Ticket } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -173,6 +173,13 @@ export function Header() {
                 )}
                 <div className="ml-auto flex items-center gap-2">
                   <ChatbotNotifications />
+                  <Link
+                    to="/support-tickets"
+                    className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
+                  >
+                    <Ticket className="w-5 h-5 text-primary" />
+                    <span className="font-semibold text-foreground">TICKETS</span>
+                  </Link>
                   <Link
                     to="/favorites"
                     className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
