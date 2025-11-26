@@ -267,12 +267,14 @@ export default function IndicateursSAV() {
             <ResponsiveContainer width="100%" height={400}>
               <PieChart>
                 <Pie
-                  data={byTypeApporteur.map(item => ({
-                    name: formatApporteurType(item.type),
-                    value: item.nbSAVProjects,
-                    tauxSAV: item.tauxSAV,
-                    caSAV: item.caSAV,
-                  }))}
+                  data={byTypeApporteur
+                    .filter(item => item.nbSAVProjects > 0)
+                    .map(item => ({
+                      name: formatApporteurType(item.type),
+                      value: item.nbSAVProjects,
+                      tauxSAV: item.tauxSAV,
+                      caSAV: item.caSAV,
+                    }))}
                   cx="50%"
                   cy="50%"
                   labelLine={true}
@@ -281,14 +283,16 @@ export default function IndicateursSAV() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {byTypeApporteur.map((entry, index) => {
+                  {byTypeApporteur.filter(item => item.nbSAVProjects > 0).map((entry, index) => {
                     const colors = ["#ef4444", "#f97316", "#f59e0b", "#84cc16", "#06b6d4", "#8b5cf6", "#ec4899"];
                     return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
                   })}
                 </Pie>
                 <Tooltip 
                   formatter={(value: number, name: string, entry: any) => {
-                    const total = byTypeApporteur.reduce((sum, item) => sum + item.nbSAVProjects, 0);
+                    const total = byTypeApporteur
+                      .filter(item => item.nbSAVProjects > 0)
+                      .reduce((sum, item) => sum + item.nbSAVProjects, 0);
                     const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
                     return [
                       <>
