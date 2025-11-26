@@ -95,6 +95,7 @@ export default function IndicateursSAV() {
         byUnivers,
         byApporteur,
         monthlyEvolution,
+        TECHS,
       };
     },
     enabled: isAgencyReady && !isAuthLoading,
@@ -116,6 +117,7 @@ export default function IndicateursSAV() {
     byUnivers = [],
     byApporteur = [],
     monthlyEvolution = [],
+    TECHS = {},
   } = data || {};
 
   return (
@@ -387,15 +389,29 @@ export default function IndicateursSAV() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {byTechnicien.map((item) => (
-                    <TableRow key={item.technicienId}>
-                      <TableCell className="font-medium">{item.technicienNom}</TableCell>
-                      <TableCell className="text-right">{item.nbProjectsSAV}</TableCell>
-                      <TableCell className="text-right">{item.nbInterventionsSAV}</TableCell>
-                      <TableCell className="text-right">{item.heuresSAV}h</TableCell>
-                      <TableCell className="text-right">{formatEuros(item.caSAV)}</TableCell>
-                    </TableRow>
-                  ))}
+                  {byTechnicien.map((item) => {
+                    const techIdNum = parseInt(item.technicienId, 10);
+                    const techInfo = TECHS[techIdNum];
+                    const color = techInfo?.color || "#808080";
+                    
+                    return (
+                      <TableRow key={item.technicienId}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: color }}
+                            />
+                            {item.technicienNom}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">{item.nbProjectsSAV}</TableCell>
+                        <TableCell className="text-right">{item.nbInterventionsSAV}</TableCell>
+                        <TableCell className="text-right">{item.heuresSAV}h</TableCell>
+                        <TableCell className="text-right">{formatEuros(item.caSAV)}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
