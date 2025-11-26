@@ -87,7 +87,7 @@ function AppContent() {
           <Route path="sav" element={<IndicateursSAV />} />
         </Route>
         <Route path="/profile" element={<Layout showHeader={false} showSidebar={false}><Profile /></Layout>} />
-        <Route path="/favorites" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><Favorites /></Layout>} />
+        <Route path="/favorites" element={<Layout showHeader showSidebar={false}><Favorites /></Layout>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       
