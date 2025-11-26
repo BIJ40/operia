@@ -59,6 +59,7 @@ export default function AdminSupportTickets() {
     first_name: u.first_name,
     last_name: u.last_name,
     support_level: u.support_level,
+    service_competencies: u.service_competencies,
   }));
 
   const getCardClassName = (status: string) => {
@@ -513,7 +514,7 @@ export default function AdminSupportTickets() {
                         )}
 
                         <EscalateTicketDialog
-                          currentLevel={selectedTicket.support_level || 1}
+                          ticket={selectedTicket}
                           supportUsers={formattedSupportUsers}
                           onEscalate={(targetLevel, targetUserId, reason) => 
                             escalateTicket(selectedTicket.id, targetLevel, targetUserId, reason)

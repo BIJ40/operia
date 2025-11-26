@@ -9,6 +9,7 @@ interface SupportUser {
   first_name: string;
   last_name: string;
   support_level: number;
+  service_competencies: any;
 }
 
 export const useAdminTickets = () => {
@@ -417,7 +418,7 @@ export const useAdminTickets = () => {
 
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, support_level')
+        .select('id, first_name, last_name, support_level, service_competencies')
         .in('id', userIds);
 
       if (profilesError) throw profilesError;

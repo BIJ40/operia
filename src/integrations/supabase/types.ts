@@ -475,6 +475,7 @@ export type Database = {
           last_name: string | null
           must_change_password: boolean | null
           role_agence: string | null
+          service_competencies: Json | null
           support_level: number | null
           updated_at: string
         }
@@ -489,6 +490,7 @@ export type Database = {
           last_name?: string | null
           must_change_password?: boolean | null
           role_agence?: string | null
+          service_competencies?: Json | null
           support_level?: number | null
           updated_at?: string
         }
@@ -503,6 +505,7 @@ export type Database = {
           last_name?: string | null
           must_change_password?: boolean | null
           role_agence?: string | null
+          service_competencies?: Json | null
           support_level?: number | null
           updated_at?: string
         }

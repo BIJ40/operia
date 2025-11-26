@@ -15,16 +15,18 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ArrowUpCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { Ticket } from '@/hooks/use-user-tickets';
 
 interface SupportUser {
   id: string;
   first_name: string;
   last_name: string;
   support_level: number;
+  service_competencies: any;
 }
 
 interface EscalateTicketDialogProps {
-  currentLevel: number;
+  ticket: Ticket;
   supportUsers: SupportUser[];
   onEscalate: (targetLevel: number, targetUserId: string, reason: string) => void;
 }
@@ -38,10 +40,10 @@ const getSupportLevelLabel = (level: number) => {
   }
 };
 
-export function EscalateTicketDialog({ currentLevel, supportUsers, onEscalate }: EscalateTicketDialogProps) {
+export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: EscalateTicketDialogProps) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [targetLevel, setTargetLevel] = useState<number>(currentLevel + 1);
+  const [targetLevel, setTargetLevel] = useState<number>((ticket.support_level || 1) + 1);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [reason, setReason] = useState('');
   const [userLevel, setUserLevel] = useState<number>(1);
@@ -61,24 +63,59 @@ export function EscalateTicketDialog({ currentLevel, supportUsers, onEscalate }:
     loadUserLevel();
   }, [user?.id]);
 
+  // Déterminer si l'escalade est possible selon le service
+  const canEscalate = () => {
+    const currentLevel = ticket.support_level || 1;
+    
+    // Pour Apogée : système N1/N2/N3
+    if (ticket.service === 'Apogée') {
+      if (userLevel === 1 && currentLevel === 1) return true; // N1 -> N2
+      if (userLevel === 2 && currentLevel <= 2) return true; // N2 -> N3
+      if (userLevel === 3 && currentLevel <= 3) return true; // N3 -> N3
+    }
+    
+    // Pour les autres services, pas encore implémenté
+    return false;
+  };
+
   // Déterminer les niveaux d'escalade disponibles
   const getAvailableLevels = () => {
-    if (userLevel === 1 && currentLevel === 1) return [2]; // N1 -> N2
-    if (userLevel === 2 && currentLevel === 2) return [3]; // N2 -> N3
-    if (userLevel === 3 && currentLevel === 3) return [3]; // N3 -> N3 (autre collègue)
+    const currentLevel = ticket.support_level || 1;
+    
+    if (ticket.service === 'Apogée') {
+      if (userLevel === 1 && currentLevel === 1) return [2]; // N1 -> N2
+      if (userLevel === 2 && currentLevel === 2) return [3]; // N2 -> N3
+      if (userLevel === 3 && currentLevel === 3) return [3]; // N3 -> N3 (autre collègue)
+    }
+    
     return [];
   };
 
   const availableLevels = getAvailableLevels();
-  const canEscalate = availableLevels.length > 0;
+  const isEscalateAvailable = canEscalate();
 
-  // Filtrer les utilisateurs du niveau cible (et exclure l'utilisateur actuel pour N3->N3)
+  // Filtrer les utilisateurs du niveau cible qui ont la compétence du service
   const availableUsers = supportUsers.filter(u => {
-    if (targetLevel === currentLevel && targetLevel === 3) {
+    const currentLevel = ticket.support_level || 1;
+    
+    // Vérifier le niveau
+    const correctLevel = u.support_level === targetLevel;
+    if (!correctLevel) return false;
+    
+    // Pour Apogée, vérifier la compétence
+    if (ticket.service === 'Apogée') {
+      const hasApogeeCompetency = u.service_competencies?.apogee !== false;
+      
       // N3 -> N3 : exclure l'utilisateur actuel
-      return u.support_level === targetLevel && u.id !== user?.id;
+      if (targetLevel === currentLevel && targetLevel === 3) {
+        return hasApogeeCompetency && u.id !== user?.id;
+      }
+      
+      return hasApogeeCompetency;
     }
-    return u.support_level === targetLevel;
+    
+    // Pour les autres services, à implémenter
+    return false;
   });
 
   const handleEscalate = () => {
@@ -89,7 +126,7 @@ export function EscalateTicketDialog({ currentLevel, supportUsers, onEscalate }:
     setSelectedUserId('');
   };
 
-  if (!canEscalate) {
+  if (!isEscalateAvailable) {
     return null;
   }
 
@@ -109,7 +146,7 @@ export function EscalateTicketDialog({ currentLevel, supportUsers, onEscalate }:
         <DialogHeader>
           <DialogTitle>Escalader le ticket</DialogTitle>
           <DialogDescription>
-            Niveau actuel : <strong>{getSupportLevelLabel(currentLevel)}</strong>
+            Service: <strong>{ticket.service || 'Non défini'}</strong> • Niveau actuel : <strong>{getSupportLevelLabel(ticket.support_level || 1)}</strong>
           </DialogDescription>
         </DialogHeader>
 
@@ -134,13 +171,15 @@ export function EscalateTicketDialog({ currentLevel, supportUsers, onEscalate }:
             <Label>Support assigné</Label>
             <RadioGroup value={selectedUserId} onValueChange={setSelectedUserId}>
               {availableUsers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun support disponible pour ce niveau</p>
+                <p className="text-sm text-muted-foreground">
+                  Aucun support compétent disponible pour {ticket.service} - Niveau {targetLevel}
+                </p>
               ) : (
-                availableUsers.map(user => (
-                  <div key={user.id} className="flex items-center space-x-2">
-                    <RadioGroupItem value={user.id} id={`user-${user.id}`} />
-                    <Label htmlFor={`user-${user.id}`} className="cursor-pointer">
-                      {user.first_name} {user.last_name}
+                availableUsers.map(u => (
+                  <div key={u.id} className="flex items-center space-x-2">
+                    <RadioGroupItem value={u.id} id={`user-${u.id}`} />
+                    <Label htmlFor={`user-${u.id}`} className="cursor-pointer">
+                      {u.first_name} {u.last_name}
                     </Label>
                   </div>
                 ))
