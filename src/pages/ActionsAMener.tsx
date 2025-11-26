@@ -1,555 +1,146 @@
-import { useEditor } from '@/contexts/EditorContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
-import * as Icons from 'lucide-react';
-import { Lock } from 'lucide-react';
-import { useIsBlockLocked } from '@/hooks/use-permissions';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
-import { IconPicker } from '@/components/IconPicker';
-import { ColorPicker } from '@/components/ColorPicker';
-import { ImageUploader } from '@/components/ImageUploader';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { useQuery } from '@tanstack/react-query';
+import { Layout } from '@/components/Layout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle } from 'lucide-react';
+import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
+import { DataService } from '@/apogee-connect/services/dataService';
+import { buildActionsAMener } from '@/apogee-connect/utils/actionsAMenerCalculations';
+import { ActionsAMenerTable } from '@/apogee-connect/components/ActionsAMenerTable';
+import { ActionsConfigDialog } from '@/apogee-connect/components/ActionsConfigDialog';
+import { useActionsConfig } from '@/apogee-connect/hooks/useActionsConfig';
+import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
+import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 
-interface SortableCategoryProps {
-  category: any;
-  editingId: string | null;
-  editTitle: string;
-  editIcon: string;
-  editColor: ColorPreset;
-  editImageUrl: string | null;
-  editShowTitleOnCard: boolean;
-  isEditMode: boolean;
-  onEditTitleChange: (value: string) => void;
-  onEditIconChange: (value: string) => void;
-  onEditColorChange: (value: ColorPreset) => void;
-  onEditImageUrlChange: (value: string | null) => void;
-  onEditShowTitleOnCardChange: (value: boolean) => void;
-  onSave: () => void;
-  onCancel: () => void;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-  getColorClass: (color?: ColorPreset) => string;
-  IconComponent: (iconName: string) => any;
+function ActionsAMenerContent() {
+  const { isAgencyReady, currentAgency } = useAgency();
+  const { config, isLoading: isLoadingConfig } = useActionsConfig();
+
+  const { data: actions, isLoading, error } = useQuery({
+    queryKey: ['actions-a-mener', currentAgency?.id, config],
+    enabled: isAgencyReady && !isLoadingConfig,
+    staleTime: 2 * 60 * 1000,
+    queryFn: async () => {
+      const apiData = await DataService.loadAllData(true);
+      
+      const actionsList = buildActionsAMener(
+        apiData.projects || [],
+        apiData.devis || [],
+        apiData.factures || [],
+        apiData.clients || [],
+        config
+      );
+      
+      return actionsList;
+    },
+  });
+
+  const handleOpenDossier = (projectId: number) => {
+    // TODO: Implémenter l'ouverture de la fiche dossier
+    console.log('Ouvrir dossier:', projectId);
+  };
+
+  return (
+    <Layout showHeader showSidebar sidebarType="actions">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="space-y-6">
+          {/* En-tête */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+                Actions à mener
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Dossiers nécessitant une action de votre part
+              </p>
+            </div>
+            <ActionsConfigDialog />
+          </div>
+
+          {/* Statistiques rapides */}
+          {!isLoading && actions && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">Total actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{actions.length}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">En retard</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-destructive">
+                    {actions.filter(a => a.isLate).length}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">Devis à relancer</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {actions.filter(a => a.actionType === 'devis_envoye' && a.isLate).length}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">Factures à faire</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {actions.filter(a => a.actionType === 'a_facturer' && a.isLate).length}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Tableau des actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Liste des actions</CardTitle>
+              <CardDescription>
+                Actions triées par urgence (les plus anciennes en premier)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading || isLoadingConfig ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : error ? (
+                <div className="text-center py-8 text-destructive">
+                  <AlertCircle className="w-12 h-12 mx-auto mb-4" />
+                  <p>Erreur lors du chargement des actions</p>
+                </div>
+              ) : (
+                <ActionsAMenerTable
+                  actions={actions || []}
+                  onOpenDossier={handleOpenDossier}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </Layout>
+  );
 }
 
-const SortableCategory = ({
-  category,
-  editingId,
-  editTitle,
-  editIcon,
-  editColor,
-  editImageUrl,
-  editShowTitleOnCard,
-  isEditMode,
-  onEditTitleChange,
-  onEditIconChange,
-  onEditColorChange,
-  onEditImageUrlChange,
-  onEditShowTitleOnCardChange,
-  onSave,
-  onCancel,
-  onEdit,
-  onDelete,
-  getColorClass,
-  IconComponent,
-}: SortableCategoryProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: category.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const Icon = IconComponent(category.icon || 'ListTodo');
-  const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 ${getColorClass(category.colorPreset)}`}
-    >
-      {isEditMode && (
-        <>
-          <div
-            {...attributes}
-            {...listeners}
-            className="absolute -top-2 -left-2 cursor-grab active:cursor-grabbing z-10 bg-background rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <GripVertical className="w-4 h-4 text-muted-foreground hover:text-primary" />
-          </div>
-          {editingId !== category.id && (
-            <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-              <Button
-                onClick={() => onEdit(category.id)}
-                size="icon"
-                variant="outline"
-                className="h-7 w-7 bg-background shadow-md"
-              >
-                <Icons.Edit className="w-3 h-3" />
-              </Button>
-              <Button
-                onClick={() => onDelete(category.id)}
-                size="icon"
-                variant="destructive"
-                className="h-7 w-7 shadow-md"
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
-            </div>
-          )}
-        </>
-      )}
-      
-      {editingId === category.id ? (
-        <div className="space-y-3 w-full">
-          <Input
-            value={editTitle}
-            onChange={(e) => onEditTitleChange(e.target.value)}
-            placeholder="Titre de la catégorie"
-            autoFocus
-          />
-          
-          <ImageUploader
-            currentImage={editImageUrl || undefined}
-            onImageChange={onEditImageUrlChange}
-            bucketName="category-images"
-          />
-          
-          <IconPicker
-            value={editIcon}
-            onChange={onEditIconChange}
-          />
-          
-          <ColorPicker
-            value={editColor}
-            onChange={onEditColorChange}
-          />
-          
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="show-title-on-card"
-              checked={editShowTitleOnCard}
-              onCheckedChange={onEditShowTitleOnCardChange}
-            />
-            <label htmlFor="show-title-on-card" className="text-sm font-medium cursor-pointer">
-              Afficher le titre sur la carte
-            </label>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={onSave} size="sm">
-              Enregistrer
-            </Button>
-            <Button onClick={onCancel} size="sm" variant="outline">
-              Annuler
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Link to={`/actions-a-mener/category/${category.slug}`} className="flex items-center gap-3 flex-1 min-w-0">
-          {(isCustomImage && category.icon) || editImageUrl ? (
-            <img 
-              src={editImageUrl || category.icon} 
-              alt={category.title} 
-              className="w-6 h-6 object-contain flex-shrink-0" 
-            />
-          ) : (
-            <Icon className="w-6 h-6 text-primary flex-shrink-0" />
-          )}
-          {(category.showTitleOnCard !== false) && (
-            <span className="text-base font-medium text-foreground truncate">
-              {category.title}
-            </span>
-          )}
-        </Link>
-      )}
-    </div>
-  );
-};
-
 export default function ActionsAMener() {
-  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useEditor();
-  const { isAdmin, isAuthenticated } = useAuth();
-  const isBlockLocked = useIsBlockLocked();
-  const { toast } = useToast();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editIcon, setEditIcon] = useState('ListTodo');
-  const [editColor, setEditColor] = useState<ColorPreset>('blue');
-  const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
-  const [editShowTitleOnCard, setEditShowTitleOnCard] = useState(true);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
-  // Filtrer uniquement les catégories Actions à mener
-  const actionsCategories = blocks
-    .filter(b => b.type === 'category' && b.slug.startsWith('actions-a-mener-'))
-    .sort((a, b) => a.order - b.order);
-
-  const getColorClass = (color?: ColorPreset) => {
-    const colors = {
-      red: 'bg-red-50 border-l-red-500 hover:border-l-red-600',
-      blanc: 'bg-white border-l-gray-400 hover:border-l-gray-500',
-      white: 'bg-white border-l-gray-400 hover:border-l-gray-500',
-      blue: 'bg-blue-50 border-l-blue-500 hover:border-l-blue-600',
-      green: 'border-l-accent bg-gradient-to-r from-helpconfort-blue-light/20 to-helpconfort-blue-dark/20 hover:shadow-xl hover:border-l-accent/80',
-      yellow: 'bg-yellow-50 border-l-yellow-500 hover:border-l-yellow-600',
-      purple: 'bg-purple-50 border-l-purple-500 hover:border-l-purple-600',
-      orange: 'bg-orange-50 border-l-orange-500 hover:border-l-orange-600',
-      pink: 'bg-pink-50 border-l-pink-500 hover:border-l-pink-600',
-      cyan: 'bg-cyan-50 border-l-cyan-500 hover:border-l-cyan-600',
-      indigo: 'bg-indigo-50 border-l-indigo-500 hover:border-l-indigo-600',
-      teal: 'bg-teal-50 border-l-teal-500 hover:border-l-teal-600',
-      rose: 'bg-rose-50 border-l-rose-500 hover:border-l-rose-600',
-      gray: 'bg-gray-50 border-l-gray-400 hover:border-l-gray-500',
-    };
-    return colors[color || 'blue'] || colors.blue;
-  };
-
-  const IconComponent = (iconName: string) => {
-    const Icon = (Icons as any)[iconName] || Icons.ListTodo;
-    return Icon;
-  };
-
-  const handleEdit = (id: string) => {
-    const category = actionsCategories.find(c => c.id === id);
-    if (category) {
-      setEditingId(id);
-      setEditTitle(category.title);
-      setEditIcon(category.icon || 'ListTodo');
-      setEditColor(category.colorPreset || 'blue');
-      
-      const isImageUrl = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
-      setEditImageUrl(isImageUrl ? category.icon : null);
-      
-      setEditShowTitleOnCard(category.showTitleOnCard !== false);
-    }
-  };
-
-  const handleSave = () => {
-    if (editingId) {
-      updateBlock(editingId, {
-        title: editTitle,
-        icon: editImageUrl || editIcon,
-        colorPreset: editColor,
-        slug: `actions-a-mener-${editTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-        showTitleOnCard: editShowTitleOnCard,
-      });
-      setEditingId(null);
-      setEditImageUrl(null);
-    }
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-  };
-
-  const handleDelete = (id: string) => {
-    setCategoryToDelete(id);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (categoryToDelete) {
-      deleteBlock(categoryToDelete);
-      setCategoryToDelete(null);
-    }
-    setDeleteDialogOpen(false);
-  };
-
-  const handleAddCategory = () => {
-    addBlock({
-      type: 'category',
-      title: 'Nouvelle catégorie',
-      content: '',
-      icon: 'ListTodo',
-      colorPreset: 'blue',
-      slug: `actions-a-mener-${Date.now()}`,
-      parentId: null,
-      attachments: [],
-      order: actionsCategories.length,
-    });
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      const oldIndex = actionsCategories.findIndex(c => c.id === active.id);
-      const newIndex = actionsCategories.findIndex(c => c.id === over.id);
-      
-      const reorderedCategories = arrayMove(actionsCategories, oldIndex, newIndex);
-      
-      reorderedCategories.forEach((category, index) => {
-        updateBlock(category.id, { order: index });
-      });
-    }
-  };
-
-  const filteredCategories = searchTerm 
-    ? actionsCategories.filter(cat => {
-        const matchesTitle = cat.title.toLowerCase().includes(searchTerm.toLowerCase());
-        const sections = blocks.filter(b => b.type === 'section' && b.parentId === cat.id);
-        const matchesSection = sections.some(s => s.title.toLowerCase().includes(searchTerm.toLowerCase()));
-        return matchesTitle || matchesSection;
-      })
-    : actionsCategories;
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-        <div className="container max-w-6xl mx-auto px-4 py-8">
-          <div className="h-6 w-32 bg-muted animate-pulse rounded mb-6" />
-          
-          <div className="text-center mb-8">
-            <div className="h-10 w-96 bg-muted animate-pulse rounded mx-auto mb-3" />
-            <div className="h-6 w-64 bg-muted animate-pulse rounded mx-auto" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-12 bg-muted animate-pulse rounded-full" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <div className="container max-w-6xl mx-auto px-4 py-8">
-        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
-          <Icons.ArrowLeft className="w-4 h-4" />
-          <span>Retour accueil</span>
-        </Link>
-        
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Actions à mener
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Gérez vos actions et tâches importantes
-          </p>
-        </div>
-
-        {!isEditMode && (
-          <div className="mb-6 max-w-md mx-auto">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="Rechercher..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-        )}
-
-        {actionsCategories.length === 0 && !isEditMode && (
-          <div className="text-center py-16">
-            <Icons.ListTodo className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <p className="text-lg text-muted-foreground mb-2">
-              Aucune catégorie d'actions pour le moment
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Les sections seront créées par un administrateur
-            </p>
-          </div>
-        )}
-
-        {isEditMode && isAdmin ? (
-          <>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={filteredCategories.map(c => c.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  {filteredCategories.map(category => (
-                    <SortableCategory
-                      key={category.id}
-                      category={category}
-                      editingId={editingId}
-                      editTitle={editTitle}
-                      editIcon={editIcon}
-                      editColor={editColor}
-                      editImageUrl={editImageUrl}
-                      editShowTitleOnCard={editShowTitleOnCard}
-                      isEditMode={isEditMode}
-                      onEditTitleChange={setEditTitle}
-                      onEditIconChange={setEditIcon}
-                      onEditColorChange={setEditColor}
-                      onEditImageUrlChange={setEditImageUrl}
-                      onEditShowTitleOnCardChange={setEditShowTitleOnCard}
-                      onSave={handleSave}
-                      onCancel={handleCancel}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      getColorClass={getColorClass}
-                      IconComponent={IconComponent}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-            
-            <div className="flex justify-center mt-6">
-              <Button onClick={handleAddCategory} className="gap-2">
-                <Plus className="w-4 h-4" />
-                Ajouter une catégorie
-              </Button>
-            </div>
-          </>
-        ) : (
-          actionsCategories.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredCategories.map(category => {
-                const Icon = IconComponent(category.icon || 'ListTodo');
-                const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
-                const isLocked = isBlockLocked(category.id, blocks);
-                
-                if (isLocked) {
-                  return (
-                    <div
-                      key={category.id}
-                      onClick={() => {
-                        toast({
-                          title: 'Accès restreint',
-                          description: 'Vous n\'avez pas les permissions pour accéder à cette section',
-                          variant: 'destructive',
-                        });
-                      }}
-                      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 cursor-pointer opacity-60 ${getColorClass(category.colorPreset)}`}
-                    >
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <Lock className="w-8 h-8 text-destructive drop-shadow-lg" />
-                      </div>
-                      
-                      {isCustomImage ? (
-                        <img 
-                          src={category.icon} 
-                          alt={category.title} 
-                          className="w-6 h-6 object-contain flex-shrink-0 opacity-50" 
-                        />
-                      ) : (
-                        <Icon className="w-6 h-6 text-primary flex-shrink-0 opacity-50" />
-                      )}
-                      {(category.showTitleOnCard !== false) && (
-                        <span className="text-base font-medium text-foreground truncate opacity-50">
-                          {category.title}
-                        </span>
-                      )}
-                    </div>
-                  );
-                }
-                
-                return (
-                  <Link
-                    key={category.id}
-                    to={`/actions-a-mener/category/${category.slug}`}
-                    className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 ${getColorClass(category.colorPreset)}`}
-                  >
-                    {isCustomImage ? (
-                      <img 
-                        src={category.icon} 
-                        alt={category.title} 
-                        className="w-6 h-6 object-contain flex-shrink-0" 
-                      />
-                    ) : (
-                      <Icon className="w-6 h-6 text-primary flex-shrink-0" />
-                    )}
-                    {(category.showTitleOnCard !== false) && (
-                      <span className="text-base font-medium text-foreground truncate">
-                        {category.title}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          )
-        )}
-
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Cette action supprimera définitivement cette catégorie et toutes ses sections.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmDelete}>
-                Supprimer
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-    </div>
+    <ApiToggleProvider>
+      <AgencyProvider>
+        <ActionsAMenerContent />
+      </AgencyProvider>
+    </ApiToggleProvider>
   );
 }

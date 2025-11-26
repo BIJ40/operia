@@ -14,6 +14,7 @@ import helpConfortServicesImg from '@/assets/help-confort-services.png';
 import { useEditor } from '@/contexts/EditorContext';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { MesIndicateursCard } from '@/components/landing/MesIndicateursCard';
+import { ActionsAMenerCard } from '@/components/landing/ActionsAMenerCard';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 
@@ -694,6 +695,41 @@ export default function Landing() {
                             });
                           }}
                           className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-4 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer opacity-60 min-h-[240px] flex items-center justify-center"
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Gérer spécialement "Actions à mener"
+                    if (card.link?.includes('/actions-a-mener')) {
+                      const isLocked = !agence;
+                      
+                      if (!isLocked && agence) {
+                        return (
+                          <div key={card.id} className={isLarge ? "min-h-[240px]" : ""}>
+                            <ApiToggleProvider>
+                              <AgencyProvider>
+                                <ActionsAMenerCard />
+                              </AgencyProvider>
+                            </ApiToggleProvider>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <div
+                          key={card.id}
+                          onClick={() => {
+                            toast({
+                              title: 'Accès restreint',
+                              description: 'Vous devez être rattaché à une agence',
+                              variant: 'destructive',
+                            });
+                          }}
+                          className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-orange-50/50 to-red-50/50 dark:from-orange-950/20 dark:to-red-950/20 rounded-2xl p-4 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer opacity-60 min-h-[240px] flex items-center justify-center"
                         >
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
