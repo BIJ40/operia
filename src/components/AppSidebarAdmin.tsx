@@ -10,7 +10,8 @@ import {
   MessageSquare,
   ChevronRight,
   HardDrive,
-  Activity
+  Activity,
+  Building2
 } from 'lucide-react';
 import {
   Sidebar,
@@ -64,6 +65,11 @@ const adminMenuItems = [
     title: 'Agences',
     url: '/admin/agencies',
     icon: Settings,
+  },
+  {
+    title: 'Tête de réseau',
+    url: '/admin/franchiseur-roles',
+    icon: Building2,
   },
   {
     title: 'Mme Michu',
