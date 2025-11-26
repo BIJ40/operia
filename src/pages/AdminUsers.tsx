@@ -40,7 +40,7 @@ const createUserSchema = z.object({
     .optional(),
   roleAgence: z.string()
     .optional()
-    .refine((val) => !val || ['dirigeant', 'assistante', 'commercial', 'franchiseur', 'externe'].includes(val), {
+    .refine((val) => !val || ['dirigeant', 'assistante', 'commercial', 'tete_de_reseau', 'externe'].includes(val), {
       message: "Veuillez sélectionner un rôle valide"
     }),
   password: z.string()
@@ -54,7 +54,7 @@ const getRoleLabel = (roleValue: string | null): string => {
     'dirigeant': 'Dirigeant(e)',
     'assistante': 'Assistante',
     'commercial': 'Commercial',
-    'franchiseur': 'Franchiseur',
+    'tete_de_reseau': 'Tête de réseau',
     'externe': 'Externe',
   };
   return roles[roleValue] || roleValue;
@@ -149,6 +149,14 @@ export default function AdminUsers() {
       });
 
       if (error) throw error;
+
+      // Règle automatique : si le poste est "tete_de_reseau", attribuer le rôle système "franchiseur"
+      if (roleAgence.trim() === 'tete_de_reseau' && data?.userId) {
+        await supabase.from('user_roles').upsert({
+          user_id: data.userId,
+          role: 'franchiseur'
+        });
+      }
 
       toast({
         title: 'Utilisateur créé !',
@@ -285,9 +293,9 @@ export default function AdminUsers() {
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="franchiseur" id="role-franchiseur" />
-                    <Label htmlFor="role-franchiseur" className="cursor-pointer font-normal text-sm">
-                      Franchiseur
+                    <RadioGroupItem value="tete_de_reseau" id="role-tete-reseau" />
+                    <Label htmlFor="role-tete-reseau" className="cursor-pointer font-normal text-sm">
+                      Tête de réseau
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">

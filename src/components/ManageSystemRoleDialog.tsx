@@ -17,6 +17,7 @@ interface ManageSystemRoleDialogProps {
 const SYSTEM_ROLES = [
   { value: 'user', label: 'Utilisateur (accès standard)' },
   { value: 'support', label: 'Support (accès console support)' },
+  { value: 'franchiseur', label: 'Franchiseur (accès réseau)' },
   { value: 'admin', label: 'Administrateur (accès complet)' },
 ];
 
