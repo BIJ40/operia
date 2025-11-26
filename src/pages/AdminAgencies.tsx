@@ -118,7 +118,7 @@ export default function AdminAgencies() {
   };
 
   const getUsersWithoutAgency = () => {
-    return users.filter((user) => !user.agence);
+    return users.filter((user) => !user.agence && user.role_agence === 'dirigeant');
   };
 
   const openDialog = (agency?: Agency) => {
