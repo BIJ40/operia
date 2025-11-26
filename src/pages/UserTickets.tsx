@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketSourceBadge } from '@/components/tickets/TicketSourceBadge';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
+import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { Plus, Send, Download, ArrowLeft, Home } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -36,6 +37,7 @@ export default function UserTickets() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTicket, setNewTicket] = useState({
     subject: '',
+    service: 'autre',
     category: 'question',
     priority: 'normal',
     description: '',
@@ -57,6 +59,7 @@ export default function UserTickets() {
 
     const ticket = await createTicket(
       trimmedSubject,
+      newTicket.service,
       newTicket.category,
       trimmedDescription,
       files,
@@ -64,7 +67,7 @@ export default function UserTickets() {
     );
 
     if (ticket) {
-      setNewTicket({ subject: '', category: 'question', priority: 'normal', description: '' });
+      setNewTicket({ subject: '', service: 'autre', category: 'question', priority: 'normal', description: '' });
       setFiles([]);
       setShowCreateForm(false);
     }
@@ -122,6 +125,7 @@ export default function UserTickets() {
                     Ticket créé par <span className="font-semibold">{selectedTicket.user_pseudo}</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <ServiceBadge service={selectedTicket.service} />
                     <TicketSourceBadge source={selectedTicket.source} />
                     <TicketCategoryBadge category={selectedTicket.category} />
                     {getStatusBadge(selectedTicket.status)}
@@ -245,6 +249,52 @@ export default function UserTickets() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div>
+                <Label>Service concerné *</Label>
+                <div className="grid grid-cols-5 gap-2 mt-2">
+                  <Button
+                    type="button"
+                    variant={newTicket.service === 'apogee' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, service: 'apogee' })}
+                    className={newTicket.service === 'apogee' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                  >
+                    🖥️ Apogée
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newTicket.service === 'helpconfort' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, service: 'helpconfort' })}
+                    className={newTicket.service === 'helpconfort' ? 'bg-orange-600 hover:bg-orange-700' : ''}
+                  >
+                    🏠 HelpConfort
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newTicket.service === 'apporteurs' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, service: 'apporteurs' })}
+                    className={newTicket.service === 'apporteurs' ? 'bg-green-600 hover:bg-green-700' : ''}
+                  >
+                    🤝 Apporteurs
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newTicket.service === 'conseil' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, service: 'conseil' })}
+                    className={newTicket.service === 'conseil' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                  >
+                    💡 Conseil
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newTicket.service === 'autre' ? 'default' : 'outline'}
+                    onClick={() => setNewTicket({ ...newTicket, service: 'autre' })}
+                    className={newTicket.service === 'autre' ? 'bg-gray-600 hover:bg-gray-700' : ''}
+                  >
+                    ❓ Autre
+                  </Button>
+                </div>
+              </div>
+
               <div>
                 <Label htmlFor="category">Catégorie</Label>
                 <Select
@@ -389,6 +439,7 @@ export default function UserTickets() {
                         Par <span className="font-semibold">{ticket.user_pseudo}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
+                        <ServiceBadge service={ticket.service} />
                         <TicketSourceBadge source={ticket.source} />
                         <TicketCategoryBadge category={ticket.category} />
                         {getStatusBadge(ticket.status)}
