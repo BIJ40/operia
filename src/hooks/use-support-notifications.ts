@@ -13,15 +13,15 @@ export function useSupportNotifications() {
 
     // Charger le nombre de tickets en attente initial
     const loadWaitingTickets = async () => {
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from('support_tickets')
-        .select('id', { count: 'exact', head: true })
+        .select('*', { count: 'exact', head: true })
         .eq('status', 'waiting');
 
-      if (!error && data) {
-        const count = (data as any).count || 0;
-        setNewTicketsCount(count);
-        setHasNewTickets(count > 0);
+      if (!error) {
+        const safeCount = count ?? 0;
+        setNewTicketsCount(safeCount);
+        setHasNewTickets(safeCount > 0);
       }
     };
 
