@@ -37,7 +37,7 @@ export default function FranchiseurHome() {
         <NetworkPeriodSelector />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
         <NetworkKpiTile
           title="CA Année en cours"
           value={stats?.totalCAYear || 0}
