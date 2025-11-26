@@ -122,13 +122,13 @@ const SortableCard = ({
   const isLarge = card.size === 'large';
   const isLogo = card.is_logo || false;
 
-  // Si c'est un logo, afficher l'image
+  // Si c'est un logo, afficher l'image avec taille fixe
   if (isLogo) {
     return (
       <div
         ref={setNodeRef}
         style={style}
-        className="relative"
+        className="relative w-full max-w-sm mx-auto"
       >
         {isEditMode && (
           <div
@@ -142,17 +142,17 @@ const SortableCard = ({
         <img 
           src={helpConfortServicesImg} 
           alt={card.title} 
-          className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
+          className="w-full h-auto pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
           draggable="false"
         />
       </div>
     );
   }
 
-  // Style de base en fonction de la taille
+  // Style de base en fonction de la taille avec dimensions fixes pour éviter les changements pendant le drag
   const baseClassName = isLarge
-    ? "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-6 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 min-h-[240px] flex flex-col"
-    : "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2";
+    ? "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-6 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 min-h-[240px] h-[240px] flex flex-col"
+    : "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 h-[72px] flex items-center gap-2";
 
   return (
     <div
@@ -598,122 +598,30 @@ export default function Landing() {
                     strategy={verticalListSortingStrategy}
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-                      {homeCards.map((card, index) => {
-                        // Détecter Support pour le regrouper avec le logo
-                        const isSupportCard = card.link?.includes('/support-tickets');
-                        const logoCard = homeCards.find(c => c.is_logo);
-                        
-                        // Si c'est le logo, on le saute car il sera rendu avec Support
-                        if (card.is_logo) {
-                          return null;
-                        }
-
-                        // Si c'est Support, on rend Support + Logo ensemble
-                        if (isSupportCard && logoCard) {
-                          return (
-                            <div key={card.id} className="space-y-4">
-                              <SortableCard
-                                card={card}
-                                editingId={editingId}
-                                editTitle={editTitle}
-                                editDescription={editDescription}
-                                editLink={editLink}
-                                editIcon={editIcon}
-                                editColor={editColor}
-                                isEditMode={isEditMode}
-                                onEditTitleChange={setEditTitle}
-                                onEditDescriptionChange={setEditDescription}
-                                onEditLinkChange={setEditLink}
-                                onEditIconChange={setEditIcon}
-                                onEditColorChange={setEditColor}
-                                onSave={handleSave}
-                                onCancel={handleCancel}
-                                onEdit={handleEdit}
-                                onDelete={handleDelete}
-                                getColorClass={getColorClass}
-                                IconComponent={IconComponent}
-                              />
-                              <SortableCard
-                                card={logoCard}
-                                editingId={editingId}
-                                editTitle={editTitle}
-                                editDescription={editDescription}
-                                editLink={editLink}
-                                editIcon={editIcon}
-                                editColor={editColor}
-                                isEditMode={isEditMode}
-                                onEditTitleChange={setEditTitle}
-                                onEditDescriptionChange={setEditDescription}
-                                onEditLinkChange={setEditLink}
-                                onEditIconChange={setEditIcon}
-                                onEditColorChange={setEditColor}
-                                onSave={handleSave}
-                                onCancel={handleCancel}
-                                onEdit={handleEdit}
-                                onDelete={handleDelete}
-                                getColorClass={getColorClass}
-                                IconComponent={IconComponent}
-                              />
-                            </div>
-                          );
-                        }
-
-                        // Gérer spécialement "Mes indicateurs" avec son composant dédié
-                        if (card.link?.includes('/mes-indicateurs')) {
-                          return (
-                            <div key={card.id} className={card.size === 'large' ? "min-h-[240px]" : ""}>
-                              <SortableCard
-                                card={card}
-                                editingId={editingId}
-                                editTitle={editTitle}
-                                editDescription={editDescription}
-                                editLink={editLink}
-                                editIcon={editIcon}
-                                editColor={editColor}
-                                isEditMode={isEditMode}
-                                onEditTitleChange={setEditTitle}
-                                onEditDescriptionChange={setEditDescription}
-                                onEditLinkChange={setEditLink}
-                                onEditIconChange={setEditIcon}
-                                onEditColorChange={setEditColor}
-                                onSave={handleSave}
-                                onCancel={handleCancel}
-                                onEdit={handleEdit}
-                                onDelete={handleDelete}
-                                getColorClass={getColorClass}
-                                IconComponent={IconComponent}
-                              />
-                            </div>
-                          );
-                        }
-
-                        // Toutes les autres cartes
-                        return (
-                          <div key={card.id} className={card.size === 'large' ? "min-h-[240px]" : ""}>
-                            <SortableCard
-                              card={card}
-                              editingId={editingId}
-                              editTitle={editTitle}
-                              editDescription={editDescription}
-                              editLink={editLink}
-                              editIcon={editIcon}
-                              editColor={editColor}
-                              isEditMode={isEditMode}
-                              onEditTitleChange={setEditTitle}
-                              onEditDescriptionChange={setEditDescription}
-                              onEditLinkChange={setEditLink}
-                              onEditIconChange={setEditIcon}
-                              onEditColorChange={setEditColor}
-                              onSave={handleSave}
-                              onCancel={handleCancel}
-                              onEdit={handleEdit}
-                              onDelete={handleDelete}
-                              getColorClass={getColorClass}
-                              IconComponent={IconComponent}
-                            />
-                          </div>
-                        );
-                      })}
+                      {homeCards.map((card) => (
+                        <SortableCard
+                          key={card.id}
+                          card={card}
+                          editingId={editingId}
+                          editTitle={editTitle}
+                          editDescription={editDescription}
+                          editLink={editLink}
+                          editIcon={editIcon}
+                          editColor={editColor}
+                          isEditMode={isEditMode}
+                          onEditTitleChange={setEditTitle}
+                          onEditDescriptionChange={setEditDescription}
+                          onEditLinkChange={setEditLink}
+                          onEditIconChange={setEditIcon}
+                          onEditColorChange={setEditColor}
+                          onSave={handleSave}
+                          onCancel={handleCancel}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          getColorClass={getColorClass}
+                          IconComponent={IconComponent}
+                        />
+                      ))}
                     </div>
                   </SortableContext>
                 </DndContext>
@@ -724,32 +632,14 @@ export default function Landing() {
                     const isLarge = card.size === 'large';
                     const isLogo = card.is_logo || false;
 
-                    // Détecter Support pour le regrouper avec le logo
-                    const isSupportCard = card.link?.includes('/support-tickets');
-                    const logoCard = homeCards.find(c => c.is_logo);
-
-                    // Si c'est le logo seul, on le saute car il sera rendu avec Support
+                    // Si c'est un logo, afficher l'image avec taille limitée
                     if (isLogo) {
-                      return null;
-                    }
-
-                    // Si c'est Support, on rend Support + Logo ensemble
-                    if (isSupportCard && logoCard) {
-                      const baseClassName = "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2";
-                      
                       return (
-                        <div key={card.id} className="space-y-4">
-                          <Link to={card.link} className={baseClassName}>
-                            <Icon className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
-                            <div className="flex-1 min-w-0">
-                              <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
-                              <p className="text-xs text-muted-foreground truncate">{card.description}</p>
-                            </div>
-                          </Link>
+                        <div key={card.id} className="w-full max-w-sm mx-auto">
                           <img 
                             src={helpConfortServicesImg} 
-                            alt={logoCard.title} 
-                            className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
+                            alt={card.title} 
+                            className="w-full h-auto pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
                             draggable="false"
                           />
                         </div>
