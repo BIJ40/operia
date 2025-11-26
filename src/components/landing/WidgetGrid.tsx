@@ -241,7 +241,7 @@ export function WidgetGrid({ homeCards, isDashboardEditMode }: WidgetGridProps) 
         items={widgets.map(w => w.id)}
         strategy={rectSortingStrategy}
       >
-        <div className="grid grid-cols-4 gap-4 auto-rows-fr">
+        <div className="grid grid-cols-4 gap-4 auto-rows-min items-start">
           {widgets.map((widget) => (
             <BaseWidget
               key={widget.id}

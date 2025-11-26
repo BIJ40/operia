@@ -70,20 +70,20 @@ export function BaseWidget({
       className={`${sizeClasses[size]} ${className} relative group transition-all duration-200 ease-in-out`}
     >
       {isDashboardEditMode && (
-        <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-end gap-1 px-2 pt-1 pointer-events-none">
-          <div className="flex items-center gap-1 rounded-full bg-background/80 backdrop-blur-sm shadow-sm pointer-events-auto">
+        <div className="absolute inset-x-0 top-0 z-50 flex items-center justify-end gap-1.5 px-2 pt-1.5 pointer-events-none">
+          <div className="flex items-center gap-1.5 rounded-full bg-background/95 backdrop-blur-sm shadow-md border border-border pointer-events-auto">
             {onSizeChange && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     size="icon"
                     variant="outline"
-                    className="h-7 w-7"
+                    className="h-8 w-8"
                   >
-                    <Settings className="w-3 h-3" />
+                    <Settings className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-background z-50">
+                <DropdownMenuContent align="end" className="bg-background z-[100]">
                   <DropdownMenuItem onClick={() => onSizeChange('small')}>
                     Petit (1 bloc)
                   </DropdownMenuItem>
@@ -104,10 +104,10 @@ export function BaseWidget({
               <Button
                 size="icon"
                 variant="destructive"
-                className="h-7 w-7"
+                className="h-8 w-8"
                 onClick={onRemove}
               >
-                <X className="w-3 h-3" />
+                <X className="w-4 h-4" />
               </Button>
             )}
 
@@ -119,10 +119,10 @@ export function BaseWidget({
               <Button
                 size="icon"
                 variant="outline"
-                className="h-7 w-7"
+                className="h-8 w-8"
                 aria-label="Déplacer le widget"
               >
-                <GripVertical className="w-3 h-3" />
+                <GripVertical className="w-4 h-4" />
               </Button>
             </div>
           </div>
