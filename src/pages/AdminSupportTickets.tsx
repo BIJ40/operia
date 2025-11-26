@@ -62,8 +62,7 @@ export default function AdminSupportTickets() {
            filters.source !== 'all' || 
            filters.category !== 'all' || 
            filters.agency !== 'all' ||
-           filters.priority !== 'all' ||
-           filters.service !== 'all';
+           filters.priority !== 'all';
   };
 
   const resetFilters = () => {
@@ -73,7 +72,6 @@ export default function AdminSupportTickets() {
       category: 'all',
       agency: 'all',
       priority: 'all',
-      service: 'all',
     });
   };
 
@@ -338,15 +336,15 @@ export default function AdminSupportTickets() {
             </Card>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-5">
             {/* Tickets List */}
-            <Card className="md:col-span-1">
+            <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle>Demandes</CardTitle>
                 <CardDescription>Chats en cours et tickets</CardDescription>
                 
-                {/* Filters */}
-                <div className="space-y-2 pt-4">
+                {/* Filters - 2 lignes */}
+                <div className="grid grid-cols-2 gap-2 pt-4">
                   <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Statut" />
@@ -396,20 +394,6 @@ export default function AdminSupportTickets() {
                       <SelectItem value="normal">🔵 Normal</SelectItem>
                       <SelectItem value="high">🟠 Élevé</SelectItem>
                       <SelectItem value="urgent">🔴 Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={filters.service} onValueChange={(v) => setFilters({ ...filters, service: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Service" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      <SelectItem value="all">Tous les services</SelectItem>
-                      <SelectItem value="apogee">🖥️ Apogée</SelectItem>
-                      <SelectItem value="helpconfort">🏠 HelpConfort</SelectItem>
-                      <SelectItem value="apporteurs">🤝 Apporteurs</SelectItem>
-                      <SelectItem value="conseil">💡 Conseil</SelectItem>
-                      <SelectItem value="autre">❓ Autre</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -472,7 +456,7 @@ export default function AdminSupportTickets() {
             </Card>
 
             {/* Ticket Detail */}
-            <Card className="md:col-span-2">
+            <Card className="md:col-span-3">
               <CardHeader>
                 <CardTitle>
                   {selectedTicket ? 'Détail de la demande' : 'Sélectionnez une demande'}
