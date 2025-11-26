@@ -345,8 +345,9 @@ export const calculateCaJour = (factures: any[], clients: any[], projects: any[]
 // CALCULS VARIATIONS
 // ====================================================================
 
-export const calculateVariationDossiers = (projects: any[], dateRange: { start: Date; end: Date }, userAgency: string): number => {
+export const calculateVariationDossiers = (projects: any[], dateRange: { start: Date; end: Date } | undefined, userAgency: string): number => {
   if (!projects || projects.length === 0) return 0;
+  if (!dateRange) return 0;
   
   const dossiersActuel = calculateDossiersJour(projects, dateRange, userAgency);
   
@@ -362,7 +363,8 @@ export const calculateVariationDossiers = (projects: any[], dateRange: { start: 
   return Math.round(((dossiersActuel - dossiersPrecedent) / dossiersPrecedent) * 100);
 };
 
-export const calculateVariationCa = (factures: any[], clients: any[], projects: any[], dateRange: { start: Date; end: Date }, userAgency: string): number => {
+export const calculateVariationCa = (factures: any[], clients: any[], projects: any[], dateRange: { start: Date; end: Date } | undefined, userAgency: string): number => {
+  if (!dateRange) return 0;
   if (!factures || factures.length === 0) return 0;
   
   const { caTotal: caActuel } = calculateCaJour(factures, clients, projects, dateRange, userAgency);
