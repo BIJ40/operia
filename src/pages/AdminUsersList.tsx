@@ -30,8 +30,9 @@ const getRoleLabel = (roleValue: string | null): string => {
   const roles: Record<string, string> = {
     'dirigeant': 'Dirigeant(e)',
     'assistant(e)': 'Assistant(e)',
-    'technicien': 'Technicien',
     'commercial': 'Commercial',
+    'franchiseur': 'Franchiseur',
+    'externe': 'Externe',
   };
   return roles[roleValue] || roleValue;
 };

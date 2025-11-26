@@ -40,7 +40,7 @@ const createUserSchema = z.object({
     .optional(),
   roleAgence: z.string()
     .optional()
-    .refine((val) => !val || ['dirigeant', 'assistant(e)', 'technicien', 'commercial'].includes(val), {
+    .refine((val) => !val || ['dirigeant', 'assistant(e)', 'commercial', 'franchiseur', 'externe'].includes(val), {
       message: "Veuillez sélectionner un rôle valide"
     }),
   password: z.string()
@@ -53,8 +53,9 @@ const getRoleLabel = (roleValue: string | null): string => {
   const roles: Record<string, string> = {
     'dirigeant': 'Dirigeant(e)',
     'assistant(e)': 'Assistant(e)',
-    'technicien': 'Technicien',
     'commercial': 'Commercial',
+    'franchiseur': 'Franchiseur',
+    'externe': 'Externe',
   };
   return roles[roleValue] || roleValue;
 };
@@ -263,7 +264,7 @@ export default function AdminUsers() {
               </div>
 
               <div className="space-y-2">
-                <Label>Rôle</Label>
+                <Label>Poste occupé</Label>
                 <RadioGroup value={roleAgence} onValueChange={setRoleAgence} className="grid grid-cols-2 gap-2">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="dirigeant" id="role-dirigeant" />
@@ -278,15 +279,21 @@ export default function AdminUsers() {
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="technicien" id="role-technicien" />
-                    <Label htmlFor="role-technicien" className="cursor-pointer font-normal text-sm">
-                      Technicien
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
                     <RadioGroupItem value="commercial" id="role-commercial" />
                     <Label htmlFor="role-commercial" className="cursor-pointer font-normal text-sm">
                       Commercial
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="franchiseur" id="role-franchiseur" />
+                    <Label htmlFor="role-franchiseur" className="cursor-pointer font-normal text-sm">
+                      Franchiseur
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="externe" id="role-externe" />
+                    <Label htmlFor="role-externe" className="cursor-pointer font-normal text-sm">
+                      Externe
                     </Label>
                   </div>
                 </RadioGroup>
