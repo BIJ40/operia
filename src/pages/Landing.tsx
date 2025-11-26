@@ -615,23 +615,47 @@ export default function Landing() {
                 />
                 
                 <WidgetsPanelButton
-                  widgets={homeCards.map(card => {
-                    const widgetKey = `nav-${card.id}`;
-                    const pref = preferences.find(p => p.widget_key === widgetKey);
-                    return {
-                      key: widgetKey,
-                      title: card.title,
-                      description: card.description,
-                      isEnabled: pref?.is_enabled ?? true,
+                  widgets={[
+                    ...homeCards.map(card => {
+                      const widgetKey = `nav-${card.id}`;
+                      const pref = preferences.find(p => p.widget_key === widgetKey);
+                      return {
+                        key: widgetKey,
+                        title: card.title,
+                        description: card.description,
+                        isEnabled: pref?.is_enabled ?? true,
+                        isPinned: true,
+                      };
+                    }),
+                    {
+                      key: 'support-tickets',
+                      title: 'Support / Tickets',
+                      description: 'Créer un ticket ou consulter vos demandes',
+                      isEnabled: preferences.find(p => p.widget_key === 'support-tickets')?.is_enabled ?? true,
                       isPinned: true,
-                    };
-                  }).concat({
-                    key: 'support-tickets',
-                    title: 'Support / Tickets',
-                    description: 'Créer un ticket ou consulter vos demandes',
-                    isEnabled: preferences.find(p => p.widget_key === 'support-tickets')?.is_enabled ?? true,
-                    isPinned: true,
-                  })}
+                    },
+                    {
+                      key: 'weather',
+                      title: 'Météo',
+                      description: 'Afficher la météo en temps réel',
+                      isEnabled: preferences.find(p => p.widget_key === 'weather')?.is_enabled ?? false,
+                      isPinned: true,
+                    },
+                    {
+                      key: 'quick-notes',
+                      title: 'Notes rapides',
+                      description: 'Prendre des notes rapides sur votre dashboard',
+                      isEnabled: preferences.find(p => p.widget_key === 'quick-notes')?.is_enabled ?? false,
+                      isPinned: true,
+                    },
+                    {
+                      key: 'calendar',
+                      title: 'Calendrier',
+                      description: 'Voir votre calendrier et vos événements',
+                      isEnabled: preferences.find(p => p.widget_key === 'calendar')?.is_enabled ?? false,
+                      isPinned: true,
+                    },
+                  ]}
                   onToggleWidget={(widgetKey, enabled) => updatePreference(widgetKey, { is_enabled: enabled })}
                 />
               </>
