@@ -17,7 +17,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export default function UserTickets() {
-  const { user } = useAuth();
+  const { user, isAdmin, isSupport, canManageTickets } = useAuth();
   const {
     tickets,
     selectedTicket,
@@ -185,10 +185,12 @@ export default function UserTickets() {
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Support / Tickets</h1>
-          <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau ticket
-          </Button>
+          {!canManageTickets && (
+            <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Nouveau ticket
+            </Button>
+          )}
         </div>
 
         {showCreateForm && (
@@ -291,6 +293,9 @@ export default function UserTickets() {
                             {ticket.unreadCount} nouveau{ticket.unreadCount > 1 ? 'x' : ''}
                           </Badge>
                         )}
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-2">
+                        Par <span className="font-semibold">{ticket.user_pseudo}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <TicketSourceBadge source={ticket.source} />
