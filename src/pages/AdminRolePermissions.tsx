@@ -15,7 +15,7 @@ interface Permission {
 
 const AVAILABLE_ROLES = [
   { value: 'dirigeant', label: 'Dirigeant(e)' },
-  { value: 'assistant(e)', label: 'Assistant(e)' },
+  { value: 'assistante', label: 'Assistante' },
   { value: 'commercial', label: 'Commercial' },
   { value: 'franchiseur', label: 'Franchiseur' },
   { value: 'externe', label: 'Externe' },

@@ -67,7 +67,7 @@ export function TicketList({ tickets, selectedTicket, onSelectTicket }: TicketLi
               <div className="flex-1 space-y-1">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
-                  {ticket.user_pseudo}
+                  Ticket #{ticket.id.slice(0, 8)}
                   {getPriorityIcon(ticket.priority)}
                 </CardTitle>
                 <CardDescription className="text-xs">

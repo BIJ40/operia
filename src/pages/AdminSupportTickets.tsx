@@ -462,10 +462,6 @@ export default function AdminSupportTickets() {
                             <div className="flex items-start justify-between gap-2 mb-2">
                               <div className="flex-1 min-w-0">
                                 <p className="font-semibold truncate">{ticket.subject || 'Sans sujet'}</p>
-                                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                  <User className="w-3 h-3" />
-                                  {ticket.user_pseudo}
-                                </p>
                                 {ticket.assigned_to && (
                                   <p className="text-xs text-primary font-medium mt-1">
                                     👤 {formattedSupportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Assigné'}
@@ -665,8 +661,8 @@ export default function AdminSupportTickets() {
                           <p className="text-sm text-muted-foreground">{selectedTicket.subject || 'N/A'}</p>
                         </div>
                         <div>
-                          <label className="text-sm font-medium">Utilisateur</label>
-                          <p className="text-sm text-muted-foreground">{selectedTicket.user_pseudo}</p>
+                          <label className="text-sm font-medium">ID Utilisateur</label>
+                          <p className="text-sm text-muted-foreground">{selectedTicket.user_id}</p>
                         </div>
                         <div>
                           <label className="text-sm font-medium">Assigné à</label>
