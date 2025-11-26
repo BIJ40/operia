@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -30,6 +30,15 @@ const columns: KanbanColumn[] = [
   { id: 'in_progress', title: 'En cours', status: 'in_progress', color: 'bg-blue-100 border-blue-300' },
   { id: 'resolved', title: 'Résolus', status: 'resolved', color: 'bg-green-100 border-green-300' },
 ];
+
+function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
+  const { setNodeRef } = useDroppable({ id });
+  return (
+    <div ref={setNodeRef} className="h-full">
+      {children}
+    </div>
+  );
+}
 
 function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSelect: (ticket: SupportTicket) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
@@ -191,41 +200,42 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
           const columnTickets = getTicketsByStatus(column.status);
           
           return (
-            <Card key={column.id} className={`flex flex-col ${column.color} border-2`}>
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center justify-between">
-                  <span>{column.title}</span>
-                  <Badge variant="secondary" className="ml-2">
-                    {columnTickets.length}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-auto">
-                <SortableContext
-                  id={column.status}
-                  items={columnTickets.map(t => t.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div 
-                    className="space-y-3 min-h-[100px]"
-                    data-column-status={column.status}
+            <DroppableColumn key={column.id} id={column.status}>
+              <Card className={`flex flex-col ${column.color} border-2 h-full`}>
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{column.title}</span>
+                    <Badge variant="secondary" className="ml-2">
+                      {columnTickets.length}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1 overflow-auto">
+                  <SortableContext
+                    id={column.status}
+                    items={columnTickets.map(t => t.id)}
+                    strategy={verticalListSortingStrategy}
                   >
-                    {columnTickets.map((ticket) => (
-                      <SortableTicketCard
-                        key={ticket.id}
-                        ticket={ticket}
-                        onSelect={onSelectTicket}
-                      />
-                    ))}
-                    {columnTickets.length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground text-sm">
-                        Aucun ticket
-                      </div>
-                    )}
-                  </div>
-                </SortableContext>
-              </CardContent>
-            </Card>
+                    <div 
+                      className="space-y-3 min-h-[100px]"
+                    >
+                      {columnTickets.map((ticket) => (
+                        <SortableTicketCard
+                          key={ticket.id}
+                          ticket={ticket}
+                          onSelect={onSelectTicket}
+                        />
+                      ))}
+                      {columnTickets.length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground text-sm">
+                          Aucun ticket
+                        </div>
+                      )}
+                    </div>
+                  </SortableContext>
+                </CardContent>
+              </Card>
+            </DroppableColumn>
           );
         })}
       </div>
