@@ -81,30 +81,74 @@ const isProjectSAV = (
 };
 
 /**
- * Trouve le dernier technicien intervenu sur un projet SAV
+ * Trouve le dernier technicien intervenu AVANT une intervention SAV
+ * Exclut les RT et autres SAV pour ne garder que les interventions productives
  */
-const getLastTechnicianForProject = (
-  projectId: number,
-  interventions: any[]
-): string | null => {
-  // Filtrer et trier les interventions du projet par date décroissante
-  const projectInterventions = interventions
-    .filter(i => i.projectId === projectId && i.date)
+const getResponsibleTechBeforeSAV = (
+  savIntervention: any,
+  allInterventionsOfProject: any[]
+): { techId: string; durationsByTech: Record<string, number> } | null => {
+  // Trier les interventions par date croissante
+  const sortedIntervs = allInterventionsOfProject
+    .filter(i => i.date)
     .sort((a, b) => {
       try {
         const dateA = parseISO(a.date);
         const dateB = parseISO(b.date);
-        return dateB.getTime() - dateA.getTime(); // Plus récent d'abord
+        return dateA.getTime() - dateB.getTime();
       } catch {
         return 0;
       }
     });
 
-  if (projectInterventions.length === 0) return null;
+  // Trouver l'index de l'intervention SAV
+  const savIndex = sortedIntervs.findIndex(i => i.id === savIntervention.id);
+  if (savIndex === -1) return null;
 
-  // Récupérer le userId de la dernière intervention
-  const lastIntervention = projectInterventions[0];
-  return lastIntervention.userId || null;
+  // Chercher en arrière la dernière intervention productive (ni RT ni SAV)
+  for (let k = savIndex - 1; k >= 0; k--) {
+    const prevInterv = sortedIntervs[k];
+    
+    const type2 = prevInterv.type2 || prevInterv.data?.type2 || "";
+    const type = prevInterv.type || prevInterv.data?.type || "";
+    
+    // Exclure RT et SAV
+    const isRT = type2 === "RT" || type === "RT" || prevInterv.data?.birt === true;
+    const isSAV = type2.toLowerCase().includes("sav") || type.toLowerCase().includes("sav");
+    
+    if (!isRT && !isSAV) {
+      // C'est une intervention productive, extraire les durées par technicien
+      const durationsByTech: Record<string, number> = {};
+      
+      // Extraire les techniciens de toutes les visites
+      const visites = prevInterv.visites || prevInterv.data?.visites || [];
+      visites.forEach((visite: any) => {
+        const duree = visite.duree || 0;
+        const usersIds = visite.usersIds || [];
+        
+        usersIds.forEach((techId: string) => {
+          durationsByTech[techId] = (durationsByTech[techId] || 0) + duree;
+        });
+      });
+      
+      // Si pas de technicien dans visites, essayer userId direct
+      if (Object.keys(durationsByTech).length === 0 && prevInterv.userId) {
+        durationsByTech[prevInterv.userId] = prevInterv.duree || 0;
+      }
+      
+      if (Object.keys(durationsByTech).length === 0) {
+        continue; // Pas de tech trouvé, continuer à chercher
+      }
+      
+      // Identifier le technicien principal (plus grande durée)
+      const techEntries = Object.entries(durationsByTech);
+      const [respTechId] = techEntries.sort((a, b) => b[1] - a[1])[0];
+      
+      return { techId: respTechId, durationsByTech };
+    }
+  }
+  
+  return null; // Aucune intervention productive trouvée avant le SAV
 };
 
 /**
@@ -322,100 +366,120 @@ export const calculateSAVByTechnicien = (
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   const statsParTech = new Map<string, { nbInterventions: number; projects: Set<number>; heures: number; ca: number }>();
 
-  console.log("[SAV Technicien] Nombre de users:", users.length);
-  console.log("[SAV Technicien] Nombre de projets:", projects.length);
-  console.log("[SAV Technicien] Nombre d'interventions:", interventions.length);
+  console.log("[SAV Technicien] Début calcul - users:", users.length, "projets:", projects.length, "interventions:", interventions.length);
 
-  // 1. Filtrer les interventions sur la période pour identifier les dossiers actifs
-  const interventionsPeriode = interventions.filter(interv => {
+  // 1. Grouper les interventions par projectId pour un accès rapide
+  const interventionsByProject = new Map<number, any[]>();
+  interventions.forEach(interv => {
+    if (!interv.projectId) return;
+    const list = interventionsByProject.get(interv.projectId) ?? [];
+    list.push(interv);
+    interventionsByProject.set(interv.projectId, list);
+  });
+
+  // 2. Identifier toutes les interventions SAV dans la période
+  const savInterventions = interventions.filter(interv => {
     const date = interv.date || interv.dateIntervention || interv.created_at;
     if (!date) return false;
     
     try {
       const intervDate = parseISO(date);
-      return isWithinInterval(intervDate, dateRange);
+      if (!isWithinInterval(intervDate, dateRange)) return false;
     } catch {
       return false;
     }
+
+    const type2 = interv.type2 || interv.data?.type2 || "";
+    const type = interv.type || interv.data?.type || "";
+    return type2.toLowerCase().includes("sav") || type.toLowerCase().includes("sav");
   });
 
-  const dossiersActifs = new Set<number>();
-  interventionsPeriode.forEach(interv => {
-    if (interv.projectId) dossiersActifs.add(interv.projectId);
-  });
+  console.log(`[SAV Technicien] ${savInterventions.length} interventions SAV trouvées dans la période`);
 
-  // 2. Identifier les projets SAV parmi les dossiers actifs
-  const savProjects = new Set<number>();
-  dossiersActifs.forEach(projectId => {
-    const project = projectsMap.get(projectId);
-    if (!project) return;
-    
-    if (isProjectSAV(projectId, interventions, project)) {
-      savProjects.add(projectId);
-    }
-  });
+  // 3. Pour chaque intervention SAV, trouver le technicien responsable (dernier intervenu AVANT le SAV)
+  const savAttributions = new Map<string, { interventions: Set<any>; projects: Set<number>; ca: number; heures: number }>();
 
-  console.log("[SAV Technicien] Projets SAV identifiés:", savProjects.size);
+  savInterventions.forEach(savInterv => {
+    const projectId = savInterv.projectId;
+    if (!projectId) return;
 
-  // 3. Pour chaque projet SAV, attribuer au dernier technicien
-  savProjects.forEach(projectId => {
-    const lastTechId = getLastTechnicianForProject(projectId, interventions);
-    
-    if (!lastTechId) {
-      console.warn(`[SAV Technicien] Aucun technicien trouvé pour projet ${projectId}`);
+    const projectInterventions = interventionsByProject.get(projectId) ?? [];
+    const responsible = getResponsibleTechBeforeSAV(savInterv, projectInterventions);
+
+    if (!responsible) {
+      console.warn(`[SAV Technicien] Aucun technicien responsable trouvé pour SAV projet ${projectId} (intervention ${savInterv.id})`);
       return;
     }
 
-    if (!statsParTech.has(lastTechId)) {
-      statsParTech.set(lastTechId, { nbInterventions: 0, projects: new Set(), heures: 0, ca: 0 });
+    const { techId, durationsByTech } = responsible;
+
+    // Initialiser les stats si nécessaire
+    if (!savAttributions.has(techId)) {
+      savAttributions.set(techId, { interventions: new Set(), projects: new Set(), ca: 0, heures: 0 });
     }
 
-    const stats = statsParTech.get(lastTechId)!;
+    const stats = savAttributions.get(techId)!;
+    stats.interventions.add(savInterv.id);
     stats.projects.add(projectId);
-    stats.ca += getProjectCA(projectId, factures, dateRange);
 
-    // Compter les interventions SAV et heures (utiliser la même détection)
-    interventions.forEach(interv => {
-      if (interv.projectId !== projectId) return;
+    // Extraire les heures du SAV
+    const heures = savInterv.data?.heures || savInterv.duree || 0;
+    const heuresNum = parseFloat(String(heures).replace(/[^0-9.-]/g, ''));
+    if (!isNaN(heuresNum)) {
+      stats.heures += heuresNum;
+    }
+  });
 
-      const type2 = interv.type2 || interv.data?.type2 || "";
-      const type = interv.type || interv.data?.type || "";
-      const isSav = type2.toLowerCase().includes("sav") || type.toLowerCase().includes("sav");
+  console.log(`[SAV Technicien] SAV attribués à ${savAttributions.size} techniciens`);
 
-      if (isSav) {
-        stats.nbInterventions++;
+  // 4. Calculer le CA SAV pour chaque projet et l'attribuer
+  const projectsWithSAV = new Set<number>();
+  savInterventions.forEach(interv => {
+    if (interv.projectId) projectsWithSAV.add(interv.projectId);
+  });
 
-        // Extraire les heures
-        const heures = interv.data?.heures || interv.duree || 0;
-        const heuresNum = parseFloat(String(heures).replace(/[^0-9.-]/g, ''));
-        if (!isNaN(heuresNum)) {
-          stats.heures += heuresNum;
+  projectsWithSAV.forEach(projectId => {
+    const caProject = getProjectCA(projectId, factures, dateRange);
+    if (caProject === 0) return;
+
+    // Trouver tous les SAV de ce projet et leurs techniciens responsables
+    const savIntervsOfProject = savInterventions.filter(i => i.projectId === projectId);
+    
+    savIntervsOfProject.forEach(savInterv => {
+      const projectInterventions = interventionsByProject.get(projectId) ?? [];
+      const responsible = getResponsibleTechBeforeSAV(savInterv, projectInterventions);
+      
+      if (responsible) {
+        const { techId } = responsible;
+        const stats = savAttributions.get(techId);
+        if (stats) {
+          // Répartir le CA équitablement entre tous les SAV du projet
+          stats.ca += caProject / savIntervsOfProject.length;
         }
       }
     });
   });
 
-  console.log("[SAV Technicien] Nombre de techniciens avec SAV:", statsParTech.size);
-
+  // 5. Construire le résultat final
   const result: SAVByTechnicien[] = [];
 
-  statsParTech.forEach((stats, techId) => {
+  savAttributions.forEach((stats, techId) => {
     const user = usersMap.get(techId);
     const nom = user ? `${user.firstname || ""} ${user.name || ""}`.trim() : "Technicien inconnu";
 
-    console.log(`[SAV Technicien] ${nom}: ${stats.projects.size} projets, ${stats.nbInterventions} interventions`);
+    console.log(`[SAV Technicien] ${nom}: ${stats.projects.size} projets, ${stats.interventions.size} interventions, ${stats.ca.toFixed(2)}€`);
 
     result.push({
       technicienId: techId,
       technicienNom: nom,
-      nbInterventionsSAV: stats.nbInterventions,
+      nbInterventionsSAV: stats.interventions.size,
       nbProjectsSAV: stats.projects.size,
       heuresSAV: Math.round(stats.heures * 10) / 10,
       caSAV: stats.ca,
     });
   });
 
-  return result.sort((a, b) => b.nbProjectsSAV - a.nbProjectsSAV);
+  return result.sort((a, b) => b.caSAV - a.caSAV);
 };
 
 // ====================================================================
