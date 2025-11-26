@@ -1,6 +1,7 @@
 import { DataService } from '@/apogee-connect/services/dataService';
 import { setApiBaseUrl } from '@/apogee-connect/services/api';
 import { DateRange } from '../contexts/NetworkFiltersContext';
+import { parseISO, parse, isWithinInterval } from 'date-fns';
 
 interface CacheEntry {
   data: any;
@@ -70,14 +71,31 @@ export class NetworkDataService {
   }
 
   /**
-   * Aggregate CA across multiple agencies
+   * Aggregate CA across multiple agencies for a given date range
    */
-  static aggregateCA(agencyData: any[]): number {
+  static aggregateCA(agencyData: any[], range: { start: Date; end: Date }): number {
+    const parseDate = (value: string): Date | null => {
+      if (!value) return null;
+      try {
+        const d = parseISO(value);
+        if (!isNaN(d.getTime())) return d;
+      } catch {}
+      try {
+        const d = parse(value, 'dd/MM/yyyy', new Date());
+        if (!isNaN(d.getTime())) return d;
+      } catch {}
+      return null;
+    };
+
     return agencyData.reduce((sum, agency) => {
       if (!agency.data?.factures) return sum;
       const agencyCA = agency.data.factures
-        .filter((f: any) => f.type === 'facture')
+        .filter((f: any) => f.type !== 'avoir')
         .reduce((total: number, f: any) => {
+          const dateStr = f.dateReelle || f.dateEmission || f.created_at;
+          const d = dateStr ? parseDate(dateStr) : null;
+          if (!d || !isWithinInterval(d, range)) return total;
+
           const montantRaw = f.data?.totalHT || f.totalHT || f.montantHT || 0;
           const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
           return total + montant;
