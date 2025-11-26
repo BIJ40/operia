@@ -1,4 +1,5 @@
 import { DataService } from '@/apogee-connect/services/dataService';
+import { setApiBaseUrl } from '@/apogee-connect/services/api';
 import { DateRange } from '../contexts/NetworkFiltersContext';
 
 interface CacheEntry {
@@ -13,19 +14,27 @@ export class NetworkDataService {
   /**
    * Load data for multiple agencies in parallel
    */
-  static async loadMultiAgencyData(agencyIds: string[], dateRange?: DateRange) {
+  static async loadMultiAgencyData(agencySlugs: string[], dateRange?: DateRange) {
     const results = await Promise.allSettled(
-      agencyIds.map(async (agencyId) => {
-        const cacheKey = `${agencyId}-${dateRange?.from.toISOString()}-${dateRange?.to.toISOString()}`;
+      agencySlugs.map(async (agencySlug) => {
+        const cacheKey = `${agencySlug}-${dateRange?.from.toISOString()}-${dateRange?.to.toISOString()}`;
         
         // Check cache
         const cached = dataCache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-          return { agencyId, data: cached.data };
+          return { agencyId: agencySlug, data: cached.data };
         }
 
         // Load fresh data
         try {
+          // Configure BASE_URL for this agency
+          const apiUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
+          setApiBaseUrl(apiUrl);
+          
+          // Clear DataService cache to force fresh load
+          DataService.clearCache();
+          
+          // Load data for this agency
           const loadedData = await DataService.loadAllData(true);
           const data = {
             users: loadedData.users || [],
@@ -39,10 +48,10 @@ export class NetworkDataService {
           // Cache the data
           dataCache.set(cacheKey, { data, timestamp: Date.now() });
           
-          return { agencyId, data };
+          return { agencyId: agencySlug, data };
         } catch (error) {
-          console.error(`Failed to load data for agency ${agencyId}:`, error);
-          return { agencyId, data: null, error };
+          console.error(`Failed to load data for agency ${agencySlug}:`, error);
+          return { agencyId: agencySlug, data: null, error };
         }
       })
     );
