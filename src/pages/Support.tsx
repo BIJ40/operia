@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Header } from '@/components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -311,9 +310,7 @@ export default function Support() {
   if (!isSupport) return null;
 
   return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
         <div className="container mx-auto px-4 py-8">
           <div className="mb-6">
             <h1 className="text-3xl font-bold mb-2">Support Client</h1>
@@ -520,6 +517,5 @@ export default function Support() {
           </div>
         </div>
       </div>
-    </>
   );
 }
