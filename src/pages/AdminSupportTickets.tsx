@@ -35,6 +35,7 @@ export default function AdminSupportTickets() {
     updateTicketStatus,
     updateTicketPriority,
     assignTicket,
+    takeTicket,
     addSupportMessage,
     downloadAttachment,
     reopenTicket,
@@ -489,6 +490,15 @@ export default function AdminSupportTickets() {
                     <TabsContent value="conversation" className="space-y-4">
                       {/* Controls */}
                       <div className="flex gap-2 flex-wrap items-center">
+                        {selectedTicket.status === 'waiting' && selectedTicket.assigned_to !== user?.id && (
+                          <Button
+                            onClick={() => user && takeTicket(selectedTicket.id, user.id)}
+                            className="bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white hover:opacity-90 rounded-2xl shadow-lg border-l-4 border-l-accent"
+                          >
+                            👋 Prendre en charge
+                          </Button>
+                        )}
+
                         <Select
                           value={selectedTicket.status}
                           onValueChange={(v) => updateTicketStatus(selectedTicket.id, v)}
