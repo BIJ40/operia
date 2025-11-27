@@ -68,7 +68,7 @@ export function AccordionSection({
   return (
     <AccordionItem value={section.id} id={section.id}>
       <AccordionTrigger>
-        <div className="flex items-center justify-between w-full text-white">
+        <div className="flex items-center justify-between w-full text-foreground">
           <div className="flex items-center gap-3 flex-1">
             {section.showSummary && section.summary ? (
               <TooltipProvider delayDuration={100}>
@@ -76,7 +76,7 @@ export function AccordionSection({
                   <TooltipTrigger asChild>
                     <button 
                       type="button"
-                      className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-white shrink-0 cursor-pointer hover:bg-white/30 transition-colors"
+                      className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary shrink-0 cursor-pointer hover:bg-primary/30 transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -94,9 +94,9 @@ export function AccordionSection({
                 </Tooltip>
               </TooltipProvider>
             ) : (
-              <ChevronDown className="h-4 w-4 shrink-0 text-white transition-transform duration-200" />
+              <ChevronDown className="h-4 w-4 shrink-0 text-primary transition-transform duration-200" />
             )}
-            <h2 className="text-xl font-semibold text-left text-white">
+            <h2 className="text-xl font-semibold text-left text-foreground">
               {section.title}
             </h2>
             {/* Section badges */}
@@ -124,7 +124,7 @@ export function AccordionSection({
               </div>
             )}
           </div>
-          {isEditMode && isAdmin && (
+            {isEditMode && isAdmin && (
             <div 
               className="flex gap-2"
               onMouseDown={(e) => {
@@ -140,7 +140,7 @@ export function AccordionSection({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="cursor-move text-white hover:bg-white/20 h-8 w-8 p-0"
+                className="cursor-move text-primary hover:bg-primary/20 h-8 w-8 p-0"
                 {...dragAttributes}
                 {...dragListeners}
               >
@@ -151,7 +151,7 @@ export function AccordionSection({
                 size="sm"
                 variant="ghost"
                 title="Insérer une section après"
-                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                className="text-primary hover:bg-primary/20 h-8 w-8 p-0"
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -166,7 +166,7 @@ export function AccordionSection({
                 size="sm"
                 variant="ghost"
                 title="Insérer un TIPS après"
-                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                className="text-primary hover:bg-primary/20 h-8 w-8 p-0"
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -180,7 +180,7 @@ export function AccordionSection({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                className="text-primary hover:bg-primary/20 h-8 w-8 p-0"
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -195,7 +195,7 @@ export function AccordionSection({
                 size="sm"
                 variant="ghost"
                 title="Dupliquer la section"
-                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                className="text-primary hover:bg-primary/20 h-8 w-8 p-0"
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -212,7 +212,7 @@ export function AccordionSection({
                     size="sm"
                     variant="ghost"
                     title="Changer de catégorie"
-                    className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                    className="text-primary hover:bg-primary/20 h-8 w-8 p-0"
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -239,7 +239,7 @@ export function AccordionSection({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="text-white hover:bg-red-500/80 h-8 w-8 p-0"
+                className="text-destructive hover:bg-destructive/20 h-8 w-8 p-0"
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
