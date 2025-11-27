@@ -46,6 +46,10 @@ const createUserSchema = z.object({
   password: z.string()
     .min(8, { message: "Le mot de passe doit contenir au moins 8 caractères" })
     .max(100, { message: "Le mot de passe ne peut pas dépasser 100 caractères" })
+    .refine((val) => /[A-Z]/.test(val), { message: "Le mot de passe doit contenir au moins une majuscule" })
+    .refine((val) => /[a-z]/.test(val), { message: "Le mot de passe doit contenir au moins une minuscule" })
+    .refine((val) => /[0-9]/.test(val), { message: "Le mot de passe doit contenir au moins un chiffre" })
+    .refine((val) => /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]/.test(val), { message: "Le mot de passe doit contenir au moins un symbole" })
 });
 
 const getRoleLabel = (roleValue: string | null): string => {
