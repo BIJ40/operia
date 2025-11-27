@@ -11,7 +11,8 @@ interface TechnicienUniversHeatmapProps {
   loading?: boolean;
   mode: "ca" | "heures" | "caParHeure";
   showInactive: boolean;
-  onToggleInactive: (show: boolean) => void;
+  onToggleInactive?: (show: boolean) => void;
+  hideInactiveToggle?: boolean;
 }
 
 export const TechnicienUniversHeatmap = ({
@@ -21,6 +22,7 @@ export const TechnicienUniversHeatmap = ({
   mode,
   showInactive,
   onToggleInactive,
+  hideInactiveToggle = false,
 }: TechnicienUniversHeatmapProps) => {
   if (loading) {
     return (
@@ -98,16 +100,18 @@ export const TechnicienUniversHeatmap = ({
               Analyse croisée de la performance par technicien et domaine d'intervention
             </CardDescription>
           </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="show-inactive"
-              checked={showInactive}
-              onCheckedChange={onToggleInactive}
-            />
-            <Label htmlFor="show-inactive" className="text-sm text-muted-foreground cursor-pointer">
-              Afficher inactifs
-            </Label>
-          </div>
+          {!hideInactiveToggle && onToggleInactive && (
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="show-inactive"
+                checked={showInactive}
+                onCheckedChange={onToggleInactive}
+              />
+              <Label htmlFor="show-inactive" className="text-sm text-muted-foreground cursor-pointer">
+                Afficher inactifs
+              </Label>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
