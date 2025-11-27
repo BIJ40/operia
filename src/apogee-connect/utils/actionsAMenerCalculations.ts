@@ -266,15 +266,20 @@ export function buildActionsAMener(
     }
   });
   
-  // Filtrer les actions "à venir" : ne garder que celles qui seront en retard dans J+1
+  // Marquer les actions qui vont passer en retard dans J+1 et filtrer
   const tomorrow = addDays(today, 1);
-  const filteredActions = actions.filter(action => {
-    // Garder toutes les actions déjà en retard
-    if (action.isLate) return true;
-    
-    // Pour les actions "à venir", ne garder que celles dont la deadline est demain ou avant
-    return action.deadline <= tomorrow;
-  });
+  const filteredActions = actions
+    .map(action => ({
+      ...action,
+      isDueSoon: !action.isLate && action.deadline <= tomorrow,
+    }))
+    .filter(action => {
+      // Garder toutes les actions déjà en retard
+      if (action.isLate) return true;
+      
+      // Pour les actions "à venir", ne garder que celles dont la deadline est demain ou avant
+      return action.deadline <= tomorrow;
+    });
   
   // Trier par deadline croissante (plus urgentes en premier)
   filteredActions.sort((a, b) => a.deadline.getTime() - b.deadline.getTime());

@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, BellRing } from 'lucide-react';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { buildActionsAMener } from '@/apogee-connect/utils/actionsAMenerCalculations';
@@ -15,6 +15,7 @@ import { DossierDetailDialog } from '@/apogee-connect/components/DossierDetailDi
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { ActionType } from '@/apogee-connect/types/actions';
+import { toast } from '@/hooks/use-toast';
 
 function ActionsAMenerContent() {
   const { isAgencyReady, currentAgency } = useAgency();
@@ -44,6 +45,20 @@ function ActionsAMenerContent() {
       return actionsList;
     },
   });
+
+  // Notification automatique pour les actions qui vont passer en retard dans J+1
+  useEffect(() => {
+    if (!actions) return;
+    
+    const actionsDueSoon = actions.filter(action => action.isDueSoon);
+    
+    if (actionsDueSoon.length > 0) {
+      toast({
+        title: "⚠️ Actions urgentes à venir",
+        description: `${actionsDueSoon.length} action${actionsDueSoon.length > 1 ? 's' : ''} ${actionsDueSoon.length > 1 ? 'vont' : 'va'} passer en retard dans les 24h`,
+      });
+    }
+  }, [actions]);
 
   // Filtrage des actions
   const filteredActions = useMemo(() => {
