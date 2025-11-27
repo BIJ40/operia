@@ -56,15 +56,15 @@ export function TipsSection({
   const isNew = isSectionNew(section.completedAt);
 
   return (
-    <div className="rounded-2xl overflow-hidden border-2 border-l-4 border-helpconfort-orange/40 border-l-primary bg-card shadow-sm hover:border-helpconfort-orange/60 hover:shadow-md transition-all">
-      <div className="p-6 bg-gradient-to-r from-helpconfort-orange to-helpconfort-orange/80 text-white relative">
+    <div className="rounded-2xl overflow-hidden border-2 border-l-4 border-primary/40 border-l-helpconfort-orange bg-card shadow-sm hover:border-primary/60 hover:shadow-md transition-all">
+      <div className="p-6 bg-gradient-to-r from-helpconfort-orange/20 to-helpconfort-orange/10 text-foreground relative">
         {isEditMode && isAdmin && (
           <div className="absolute top-2 right-2 flex gap-2 z-10">
             <Button
               type="button"
               size="sm"
               variant="ghost"
-              className="cursor-move text-white hover:bg-white/20 h-8 w-8 p-0"
+              className="cursor-move text-foreground hover:bg-helpconfort-orange/20 h-8 w-8 p-0"
               {...dragAttributes}
               {...dragListeners}
             >
@@ -75,7 +75,7 @@ export function TipsSection({
               size="sm"
               variant="ghost"
               title="Insérer une section après"
-              className="text-white hover:bg-white/20 h-8 w-8 p-0"
+              className="text-foreground hover:bg-helpconfort-orange/20 h-8 w-8 p-0"
               onClick={() => onAddSection(section.id)}
             >
               <Plus className="w-4 h-4" />
@@ -85,7 +85,7 @@ export function TipsSection({
               size="sm"
               variant="ghost"
               title="Insérer un TIPS après"
-              className="text-white hover:bg-white/20 h-8 w-8 p-0"
+              className="text-foreground hover:bg-helpconfort-orange/20 h-8 w-8 p-0"
               onClick={() => onAddTips(section.id)}
             >
               <Lightbulb className="w-4 h-4" />
@@ -94,7 +94,7 @@ export function TipsSection({
               type="button"
               size="sm"
               variant="ghost"
-              className="text-white hover:bg-white/20 h-8 w-8 p-0"
+              className="text-foreground hover:bg-helpconfort-orange/20 h-8 w-8 p-0"
               onClick={() => onEdit(section.id)}
             >
               <Edit2 className="w-4 h-4" />
@@ -104,7 +104,7 @@ export function TipsSection({
               size="sm"
               variant="ghost"
               title="Dupliquer la section"
-              className="text-white hover:bg-white/20 h-8 w-8 p-0"
+              className="text-foreground hover:bg-helpconfort-orange/20 h-8 w-8 p-0"
               onClick={() => onDuplicate(section.id)}
             >
               <Copy className="w-4 h-4" />
@@ -116,7 +116,7 @@ export function TipsSection({
                   size="sm"
                   variant="ghost"
                   title="Changer de catégorie"
-                  className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                  className="text-foreground hover:bg-helpconfort-orange/20 h-8 w-8 p-0"
                 >
                   <FolderInput className="w-4 h-4" />
                 </Button>
@@ -138,7 +138,7 @@ export function TipsSection({
               type="button"
               size="sm"
               variant="ghost"
-              className="text-white hover:bg-red-500/80 h-8 w-8 p-0"
+              className="text-foreground hover:bg-red-500/20 hover:text-red-600 h-8 w-8 p-0"
               onClick={() => onDelete(section.id)}
             >
               <Trash2 className="w-4 h-4" />
@@ -159,7 +159,7 @@ export function TipsSection({
         <div className="flex items-center gap-2 flex-wrap">
           {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
             <>
-              <h3 className="text-lg font-semibold text-white">{section.title}</h3>
+              <h3 className="text-lg font-semibold text-foreground">{section.title}</h3>
               {!isEditMode && !isAdmin && (
                 <FavoriteButton
                   blockId={section.id}
