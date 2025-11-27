@@ -1,4 +1,14 @@
+import { motion, Variants } from "framer-motion";
 import { ReactNode } from "react";
+
+export const baseTileVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 140, damping: 18 },
+  },
+};
 
 interface ServiceTileProps {
   title: string;
@@ -6,6 +16,7 @@ interface ServiceTileProps {
   icon?: ReactNode;
   children?: ReactNode;
   className?: string;
+  variants?: Variants;
 }
 
 export const ServiceTile = ({
@@ -14,9 +25,11 @@ export const ServiceTile = ({
   icon,
   children,
   className = "",
+  variants = baseTileVariants,
 }: ServiceTileProps) => {
   return (
-    <div
+    <motion.div
+      variants={variants}
       className={`relative overflow-hidden rounded-2xl border border-accent/60 bg-card/90 shadow-lg p-4 md:p-5 ${className}`}
     >
       <div className="flex items-center gap-3">
@@ -34,6 +47,6 @@ export const ServiceTile = ({
       <div className="mt-3 md:mt-4 text-xs md:text-sm text-muted-foreground">
         {children}
       </div>
-    </div>
+    </motion.div>
   );
 };
