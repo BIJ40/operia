@@ -90,21 +90,23 @@ export function buildActionsAMener(
     const label = project.name || project.label || 'Sans libellé';
     
     // === RÈGLE 1: Dossiers en "devis à faire" ===
-    // Vérifier data.history pour trouver le dernier état " => Devis à faire"
+    // Filtrer uniquement les changements de statut (kind === 2) et prendre le dernier
     if (project.data?.history && Array.isArray(project.data.history)) {
-      // Trier l'historique par dateModif pour avoir le plus récent en premier
-      const sortedHistory = [...project.data.history].sort((a, b) => {
-        const dateA = parseDate(a.dateModif);
-        const dateB = parseDate(b.dateModif);
-        if (!dateA || !dateB) return 0;
-        return dateB.getTime() - dateA.getTime();
-      });
+      // Filtrer uniquement les changements de statut
+      const statusChanges = project.data.history
+        .filter((h: any) => h.kind === 2 && typeof h.labelKind === 'string')
+        .sort((a: any, b: any) => {
+          const dateA = parseDate(a.dateModif);
+          const dateB = parseDate(b.dateModif);
+          if (!dateA || !dateB) return 0;
+          return dateA.getTime() - dateB.getTime(); // Tri croissant
+        });
       
-      // Vérifier si le dernier état contient exactement " => Devis à faire"
-      if (sortedHistory.length > 0 && sortedHistory[0].labelKind) {
-        const lastState = sortedHistory[0].labelKind;
-        if (lastState.includes(' => Devis à faire')) {
-          const dateDepart = parseDate(sortedHistory[0].dateModif) || parseDate(project.updated_at) || parseDate(project.created_at);
+      // Vérifier si le dernier changement de statut se termine par " => Devis à faire"
+      if (statusChanges.length > 0) {
+        const lastStatus = statusChanges[statusChanges.length - 1];
+        if (lastStatus.labelKind && lastStatus.labelKind.includes(' => Devis à faire')) {
+          const dateDepart = parseDate(lastStatus.dateModif) || parseDate(project.updated_at) || parseDate(project.created_at);
           if (dateDepart) {
             const deadline = addDays(dateDepart, config.delai_devis_a_faire);
             const isLate = deadline < today;
