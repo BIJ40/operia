@@ -1,22 +1,54 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
+import { 
+  Role, 
+  Scope, 
+  RolePermission, 
+  UserPermission,
+  UserCapability,
+  EffectivePermission,
+  PERMISSION_LEVELS,
+  ScopeSlug
+} from '@/types/permissions';
 
 interface AuthContextType {
+  // État utilisateur
   isAuthenticated: boolean;
   isAuthLoading: boolean;
+  user: User | null;
+  
+  // Rôles système (anciens - pour compatibilité)
   isAdmin: boolean;
   isSupport: boolean;
   isFranchiseur: boolean;
-  user: User | null;
+  
+  // Nouveau système
+  role: Role | null;
+  capabilities: UserCapability[];
+  scopes: Scope[];
+  
+  // Anciennes propriétés (compatibilité)
   mustChangePassword: boolean;
   roleAgence: string | null;
   agence: string | null;
   userPermissions: string[];
   isLoggingOut: boolean;
+  
+  // Helpers de permissions - NOUVEAU SYSTÈME
+  canViewScope: (scopeSlug: ScopeSlug | string) => boolean;
+  canEditScope: (scopeSlug: ScopeSlug | string) => boolean;
+  canCreateScope: (scopeSlug: ScopeSlug | string) => boolean;
+  canDeleteScope: (scopeSlug: ScopeSlug | string) => boolean;
+  getEffectivePermission: (scopeSlug: ScopeSlug | string) => EffectivePermission;
+  hasCapability: (capability: string) => boolean;
+  
+  // Anciennes méthodes (compatibilité)
   hasAccessToBlock: (blockId: string) => boolean;
-  hasAccessToScope: (scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs' | 'actions_a_mener' | 'mes_demandes') => boolean;
+  hasAccessToScope: (scope: string) => boolean;
   canManageTickets: () => boolean;
+  
+  // Auth
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -26,73 +58,276 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  // Rôles système (anciens)
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSupport, setIsSupport] = useState(false);
   const [isFranchiseur, setIsFranchiseur] = useState(false);
+  
+  // Nouveau système
+  const [role, setRole] = useState<Role | null>(null);
+  const [capabilities, setCapabilities] = useState<UserCapability[]>([]);
+  const [scopes, setScopes] = useState<Scope[]>([]);
+  const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
+  const [userOverrides, setUserOverrides] = useState<UserPermission[]>([]);
+  
+  // Anciennes propriétés (compatibilité)
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [agence, setAgence] = useState<string | null>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
-  const [individualPermissions, setIndividualPermissions] = useState<Record<string, boolean>>({});
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Charger les données de permissions
+  const loadPermissionsData = useCallback(async (userId: string, profileRoleAgence: string | null, profileRoleId: string | null) => {
+    try {
+      // Charger tous les scopes (table nouvellement créée)
+      const { data: scopesData, error: scopesError } = await (supabase as any)
+        .from('scopes')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+      
+      if (!scopesError && scopesData) {
+        setScopes(scopesData as Scope[]);
+      }
+
+      // Charger les capabilities de l'utilisateur
+      const { data: capabilitiesData, error: capError } = await (supabase as any)
+        .from('user_capabilities')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true);
+      
+      if (!capError && capabilitiesData) {
+        setCapabilities(capabilitiesData as UserCapability[]);
+      }
+
+      // Charger le rôle métier si role_id existe
+      if (profileRoleId) {
+        const { data: roleData, error: roleError } = await (supabase as any)
+          .from('roles')
+          .select('*')
+          .eq('id', profileRoleId)
+          .single();
+        
+        if (!roleError && roleData) {
+          setRole(roleData as Role);
+        }
+      }
+
+      // Charger les permissions du rôle (ancien système + nouveau)
+      if (profileRoleAgence) {
+        const { data: rolePermsData } = await supabase
+          .from('role_permissions')
+          .select('*')
+          .eq('role_agence', profileRoleAgence);
+        
+        setRolePermissions((rolePermsData as unknown as RolePermission[]) || []);
+        
+        // Pour compatibilité, construire la liste des permissions
+        const permsList = rolePermsData
+          ?.filter((p: any) => p.can_access || p.can_view)
+          .map((p: any) => p.block_id)
+          .filter(Boolean) as string[] || [];
+        setUserPermissions(permsList);
+      }
+
+      // Charger les overrides utilisateur
+      const { data: userPermsData } = await supabase
+        .from('user_permissions')
+        .select('*')
+        .eq('user_id', userId);
+      
+      setUserOverrides((userPermsData as unknown as UserPermission[]) || []);
+
+    } catch (error) {
+      console.error('Erreur chargement permissions:', error);
+    }
+  }, []);
+
+  // Calculer la permission effective pour un scope
+  const getEffectivePermission = useCallback((scopeSlug: string): EffectivePermission => {
+    const scope = scopes.find(s => s.slug === scopeSlug);
+    
+    // Permission par défaut
+    const defaultPerm: EffectivePermission = {
+      level: scope?.default_level || PERMISSION_LEVELS.NONE,
+      canView: (scope?.default_level || 0) >= PERMISSION_LEVELS.VIEW,
+      canEdit: (scope?.default_level || 0) >= PERMISSION_LEVELS.EDIT,
+      canCreate: (scope?.default_level || 0) >= PERMISSION_LEVELS.EDIT,
+      canDelete: (scope?.default_level || 0) >= PERMISSION_LEVELS.ADMIN,
+      source: 'default'
+    };
+
+    // Admin a tous les droits
+    if (isAdmin) {
+      return {
+        level: PERMISSION_LEVELS.ADMIN,
+        canView: true,
+        canEdit: true,
+        canCreate: true,
+        canDelete: true,
+        source: 'default'
+      };
+    }
+
+    // Chercher l'override utilisateur (priorité 1)
+    const userOverride = userOverrides.find(p => {
+      if (p.scope_id && scope) {
+        return p.scope_id === scope.id;
+      }
+      return p.block_id === scopeSlug;
+    });
+
+    if (userOverride) {
+      // Si deny = true, bloquer totalement
+      if (userOverride.deny) {
+        return {
+          level: PERMISSION_LEVELS.NONE,
+          canView: false,
+          canEdit: false,
+          canCreate: false,
+          canDelete: false,
+          source: 'denied'
+        };
+      }
+
+      // Appliquer l'override (les champs définis écrasent)
+      return {
+        level: userOverride.level ?? defaultPerm.level,
+        canView: userOverride.can_view ?? defaultPerm.canView,
+        canEdit: userOverride.can_edit ?? defaultPerm.canEdit,
+        canCreate: userOverride.can_create ?? defaultPerm.canCreate,
+        canDelete: userOverride.can_delete ?? defaultPerm.canDelete,
+        source: 'user_override'
+      };
+    }
+
+    // Chercher la permission du rôle (priorité 2)
+    const rolePerm = rolePermissions.find(p => {
+      if (p.scope_id && scope) {
+        return p.scope_id === scope.id;
+      }
+      return p.block_id === scopeSlug;
+    });
+
+    if (rolePerm) {
+      return {
+        level: rolePerm.level ?? PERMISSION_LEVELS.NONE,
+        canView: rolePerm.can_view ?? false,
+        canEdit: rolePerm.can_edit ?? false,
+        canCreate: rolePerm.can_create ?? false,
+        canDelete: rolePerm.can_delete ?? false,
+        source: 'role'
+      };
+    }
+
+    // Retourner la permission par défaut du scope
+    return defaultPerm;
+  }, [scopes, userOverrides, rolePermissions, isAdmin]);
+
+  // Helpers de permissions
+  const canViewScope = useCallback((scopeSlug: string): boolean => {
+    if (isAdmin) return true;
+    return getEffectivePermission(scopeSlug).canView;
+  }, [getEffectivePermission, isAdmin]);
+
+  const canEditScope = useCallback((scopeSlug: string): boolean => {
+    if (isAdmin) return true;
+    return getEffectivePermission(scopeSlug).canEdit;
+  }, [getEffectivePermission, isAdmin]);
+
+  const canCreateScope = useCallback((scopeSlug: string): boolean => {
+    if (isAdmin) return true;
+    return getEffectivePermission(scopeSlug).canCreate;
+  }, [getEffectivePermission, isAdmin]);
+
+  const canDeleteScope = useCallback((scopeSlug: string): boolean => {
+    if (isAdmin) return true;
+    return getEffectivePermission(scopeSlug).canDelete;
+  }, [getEffectivePermission, isAdmin]);
+
+  const hasCapability = useCallback((capability: string): boolean => {
+    if (isAdmin) return true;
+    return capabilities.some(c => c.capability === capability && c.is_active);
+  }, [capabilities, isAdmin]);
+
+  // Compatibilité avec l'ancien système
+  const hasAccessToScope = useCallback((scope: string): boolean => {
+    return canViewScope(scope);
+  }, [canViewScope]);
+
+  const hasAccessToBlock = useCallback((blockId: string): boolean => {
+    if (isAdmin) return true;
+    if (!roleAgence) return true;
+    
+    // Utiliser le nouveau système si possible
+    const perm = getEffectivePermission(blockId);
+    return perm.canView;
+  }, [isAdmin, roleAgence, getEffectivePermission]);
+
+  const canManageTickets = useCallback((): boolean => {
+    return isAdmin || isSupport || isFranchiseur || hasCapability('support');
+  }, [isAdmin, isSupport, isFranchiseur, hasCapability]);
+
+  // Charger les données utilisateur
+  const loadUserData = useCallback(async (userId: string) => {
+    try {
+      // Charger les rôles système
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      const hasAdmin = roles?.some(r => r.role === 'admin') || false;
+      const hasSupportRole = roles?.some(r => r.role === 'support') || false;
+      const hasFranchiseur = roles?.some(r => r.role === 'franchiseur') || false;
+      
+      setIsAdmin(hasAdmin);
+      setIsSupport(hasSupportRole);
+      setIsFranchiseur(hasFranchiseur);
+
+      // Charger le profil (avec role_id nouvellement ajouté)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('must_change_password, role_agence, agence')
+        .eq('id', userId)
+        .single();
+      
+      // Charger role_id séparément car le type n'est pas encore mis à jour
+      const { data: profileWithRoleId } = await (supabase as any)
+        .from('profiles')
+        .select('role_id')
+        .eq('id', userId)
+        .single();
+      
+      setMustChangePassword(profile?.must_change_password || false);
+      setRoleAgence(profile?.role_agence || null);
+      setAgence(profile?.agence || null);
+
+      // Charger les données de permissions
+      await loadPermissionsData(userId, profile?.role_agence || null, profileWithRoleId?.role_id || null);
+
+    } catch (error) {
+      console.error('Erreur chargement données utilisateur:', error);
+    }
+  }, [loadPermissionsData]);
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
           setIsAuthLoading(true);
-          // Check if user is admin or support
           setTimeout(async () => {
-            const { data: roles } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', session.user.id);
-            
-            setIsAdmin(roles?.some(r => r.role === 'admin') || false);
-            setIsSupport(roles?.some(r => r.role === 'support') || false);
-            setIsFranchiseur(roles?.some(r => r.role === 'franchiseur') || false);
-
-            // Check if user must change password and get role_agence
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('must_change_password, role_agence, agence')
-              .eq('id', session.user.id)
-              .single();
-            
-            setMustChangePassword(profile?.must_change_password || false);
-            setRoleAgence(profile?.role_agence || null);
-            setAgence(profile?.agence || null);
-
-            // Load individual user permissions (priority)
-            const { data: userPerms } = await supabase
-              .from('user_permissions')
-              .select('block_id, can_access')
-              .eq('user_id', session.user.id);
-
-            const individualPermsMap: Record<string, boolean> = {};
-            userPerms?.forEach(p => {
-              individualPermsMap[p.block_id] = p.can_access;
-            });
-            setIndividualPermissions(individualPermsMap);
-
-            // Load permissions for this user's role
-            if (profile?.role_agence) {
-              const { data: permissions } = await supabase
-                .from('role_permissions')
-                .select('block_id, can_access')
-                .eq('role_agence', profile.role_agence)
-                .eq('can_access', true);
-
-              setUserPermissions(permissions?.map(p => p.block_id) || []);
-            }
-            
+            await loadUserData(session.user.id);
             setIsAuthLoading(false);
           }, 0);
         } else {
+          // Reset tous les états
           setIsAdmin(false);
           setIsSupport(false);
           setIsFranchiseur(false);
@@ -100,85 +335,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRoleAgence(null);
           setAgence(null);
           setUserPermissions([]);
+          setRole(null);
+          setCapabilities([]);
+          setScopes([]);
+          setRolePermissions([]);
+          setUserOverrides([]);
           setIsAuthLoading(false);
         }
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Vérifier la session existante
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
         setIsAuthLoading(true);
-        // Check if user is admin or support
-        supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .then(({ data: roles }) => {
-            setIsAdmin(roles?.some(r => r.role === 'admin') || false);
-            setIsSupport(roles?.some(r => r.role === 'support') || false);
-            setIsFranchiseur(roles?.some(r => r.role === 'franchiseur') || false);
-          });
-
-        // Check if user must change password and get role_agence
-        supabase
-          .from('profiles')
-          .select('must_change_password, role_agence, agence')
-          .eq('id', session.user.id)
-          .single()
-          .then(async ({ data }) => {
-            setMustChangePassword(data?.must_change_password || false);
-            setRoleAgence(data?.role_agence || null);
-            setAgence(data?.agence || null);
-
-            // Load individual user permissions (priority)
-            const { data: userPerms } = await supabase
-              .from('user_permissions')
-              .select('block_id, can_access')
-              .eq('user_id', session.user.id);
-
-            const individualPermsMap: Record<string, boolean> = {};
-            userPerms?.forEach(p => {
-              individualPermsMap[p.block_id] = p.can_access;
-            });
-            setIndividualPermissions(individualPermsMap);
-
-            // Load permissions for this user's role
-            if (data?.role_agence) {
-              const { data: permissions } = await supabase
-                .from('role_permissions')
-                .select('block_id, can_access')
-                .eq('role_agence', data.role_agence)
-                .eq('can_access', true);
-
-              setUserPermissions(permissions?.map(p => p.block_id) || []);
-            }
-
-            setIsAuthLoading(false);
-          });
+        await loadUserData(session.user.id);
+        setIsAuthLoading(false);
       } else {
         setIsAuthLoading(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [loadUserData]);
 
   const login = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return { success: false, error: error.message };
       return { success: true };
-    } catch (error) {
+    } catch {
       return { success: false, error: 'Une erreur est survenue' };
     }
   };
@@ -188,17 +376,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
+        options: { emailRedirectTo: `${window.location.origin}/` },
       });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
+      if (error) return { success: false, error: error.message };
       return { success: true };
-    } catch (error) {
+    } catch {
       return { success: false, error: 'Une erreur est survenue' };
     }
   };
@@ -206,109 +388,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       setIsLoggingOut(true);
-
-      // Petite pause pour laisser l'animation se voir
       await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Déconnexion complète de Supabase
       await supabase.auth.signOut();
 
-      // Fallback de sécurité : supprimer manuellement les sessions locales Supabase
       Object.keys(localStorage)
         .filter((key) => key.startsWith('sb-'))
         .forEach((key) => localStorage.removeItem(key));
 
-      // Nettoyer les préférences UI
       localStorage.removeItem('editMode');
       
-      // Nettoyer les états en mémoire
+      // Reset tous les états
       setIsAdmin(false);
       setIsSupport(false);
       setIsFranchiseur(false);
       setMustChangePassword(false);
       setRoleAgence(null);
+      setAgence(null);
       setUserPermissions([]);
-      setIndividualPermissions({});
+      setRole(null);
+      setCapabilities([]);
+      setScopes([]);
+      setRolePermissions([]);
+      setUserOverrides([]);
       setUser(null);
 
-      // Redirection immédiate vers la page d'accueil
       window.location.href = '/';
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
-      // En cas d'erreur, on redirige quand même
       window.location.href = '/';
     }
-  };
-
-  // Helper pour déterminer le scope d'un block à partir de son contexte
-  const getScopeFromPath = (): 'apogee' | 'apporteurs' | 'helpconfort' | null => {
-    const path = window.location.pathname;
-    if (path.includes('/apogee')) return 'apogee';
-    if (path.includes('/apporteurs')) return 'apporteurs';
-    if (path.includes('/helpconfort')) return 'helpconfort';
-    return null;
-  };
-
-  const hasAccessToBlock = (blockId: string): boolean => {
-    // Les admins ont accès à tout
-    if (isAdmin) return true;
-    
-    // Si aucun rôle agence, accès à tout
-    if (!roleAgence) return true;
-    
-    // Déterminer le scope en fonction du chemin actuel
-    const scope = getScopeFromPath();
-    if (!scope) return true; // Si pas de scope identifié, autoriser par défaut
-    
-    // Vérifier l'accès au scope parent
-    return hasAccessToScope(scope);
-  };
-
-  const hasAccessToScope = (scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs' | 'actions_a_mener' | 'mes_demandes'): boolean => {
-    // Les admins ont accès à tout
-    if (isAdmin) return true;
-    
-    // Si aucun rôle agence, accès à tout
-    if (!roleAgence) return true;
-    
-    // Les dirigeants ont automatiquement accès aux indicateurs
-    if (scope === 'mes_indicateurs' && roleAgence === 'dirigeant') {
-      return true;
-    }
-    
-    // PRIORITÉ 1: Vérifier les permissions individuelles
-    if (scope in individualPermissions) {
-      return individualPermissions[scope];
-    }
-    
-    // PRIORITÉ 2: Fallback sur permissions de rôle
-    // Nouveaux scopes : bloqués par défaut (sauf si permission explicite)
-    const newScopes = ['mes_indicateurs', 'actions_a_mener', 'mes_demandes'];
-    if (newScopes.includes(scope)) {
-      return userPermissions.includes(scope);
-    }
-    
-    // Anciens scopes (apogee, apporteurs, helpconfort) : permissifs par défaut
-    return userPermissions.length === 0 || userPermissions.includes(scope);
-  };
-
-  const canManageTickets = (): boolean => {
-    return isAdmin || isSupport || isFranchiseur;
   };
 
   return (
     <AuthContext.Provider value={{ 
       isAuthenticated: !!user,
       isAuthLoading,
+      user,
       isAdmin,
       isSupport,
       isFranchiseur,
-      user,
+      role,
+      capabilities,
+      scopes,
       mustChangePassword,
       roleAgence,
       agence,
       userPermissions,
       isLoggingOut,
+      // Nouveaux helpers
+      canViewScope,
+      canEditScope,
+      canCreateScope,
+      canDeleteScope,
+      getEffectivePermission,
+      hasCapability,
+      // Compatibilité
       hasAccessToBlock,
       hasAccessToScope,
       canManageTickets,
