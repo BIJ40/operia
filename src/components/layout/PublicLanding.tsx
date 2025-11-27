@@ -35,7 +35,8 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
             <span className="text-primary">Pilotez</span> votre agence.
             <br />
             <span className="text-primary">Maîtrisez</span> le logiciel Apogée.
-            <br />
+          </h1>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
             <span className="text-accent">Accédez</span> à toutes les ressources.
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
@@ -74,7 +75,7 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
           <FeatureCard
             icon={Network}
             title="Réseau"
-            description="Pilotage franchiseur, statistiques réseau, comparatifs inter-agences."
+            description="Pilotage franchiseur, statistiques réseau, gestion globale."
             color="accent"
           />
         </div>
