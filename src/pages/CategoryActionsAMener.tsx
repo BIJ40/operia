@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown } from 'lucide-react';
+import { createSanitizedHtml } from '@/lib/sanitize';
 import * as Icons from 'lucide-react';
 import {
   Accordion,
@@ -122,7 +123,7 @@ const SortableSection = ({ section, category, isEditMode, onEdit, onDelete, onCo
           ) : (
             <div 
               className="prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: section.content || '' }}
+              dangerouslySetInnerHTML={createSanitizedHtml(section.content || '')}
             />
           )}
         </AccordionContent>
@@ -335,7 +336,7 @@ export default function CategoryActionsAMener() {
                     <AccordionContent className="px-6 pt-2 pb-4">
                       <div 
                         className="prose prose-sm max-w-none"
-                        dangerouslySetInnerHTML={{ __html: section.content || '' }}
+                        dangerouslySetInnerHTML={createSanitizedHtml(section.content || '')}
                       />
                     </AccordionContent>
                   </AccordionItem>

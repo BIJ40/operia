@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Edit, Trash2, Copy, GripVertical, MoreVertical, MoveRight, Lightbulb, Info, AlertTriangle } from 'lucide-react';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { Block } from '@/types/block';
+import { createSanitizedHtml } from '@/lib/sanitize';
 
 interface SortableAccordionItemProps {
   section: Block;
@@ -74,7 +75,7 @@ export function SortableAccordionItem({
               {!section.hideTitle && <h3 className="font-semibold text-lg mb-2">{section.title}</h3>}
               <div
                 className="prose prose-sm max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: section.content }}
+                dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
               />
             </div>
             <div className="flex items-center gap-2">
@@ -184,7 +185,7 @@ export function SortableAccordionItem({
           )}
           <div
             className="prose prose-sm max-w-none dark:prose-invert"
-            dangerouslySetInnerHTML={{ __html: section.content }}
+            dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
           />
         </AccordionContent>
       </AccordionItem>

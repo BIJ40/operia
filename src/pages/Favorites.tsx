@@ -6,6 +6,7 @@ import { Heart, Trash2, ExternalLink, Lightbulb, ChevronDown, ArrowLeft } from '
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { createSanitizedHtml } from '@/lib/sanitize';
 import {
   Accordion,
   AccordionContent,
@@ -332,7 +333,7 @@ export default function Favorites() {
                                 <div className="p-6">
                                   <div
                                     className="prose prose-sm max-w-none break-words overflow-visible"
-                                    dangerouslySetInnerHTML={{ __html: favorite.content }}
+                                    dangerouslySetInnerHTML={createSanitizedHtml(favorite.content)}
                                   />
                                 </div>
                               </AccordionContent>
