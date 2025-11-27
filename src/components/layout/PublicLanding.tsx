@@ -9,6 +9,14 @@ interface PublicLandingProps {
 export function PublicLanding({ onLoginClick }: PublicLandingProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
+      {/* Header bandeau */}
+      <header className="w-full bg-gradient-to-r from-primary to-primary-dark">
+        <div className="container mx-auto px-6 py-3">
+          <p className="text-center text-primary-foreground text-lg md:text-xl font-medium tracking-wide">
+            urgence <span className="mx-2 opacity-60">|</span> dépannage <span className="mx-2 opacity-60">|</span> amélioration de l'habitat
+          </p>
+        </div>
+      </header>
 
       {/* Hero Section */}
       <section className="container mx-auto px-6 py-16 md:py-24">
