@@ -1,4 +1,4 @@
-import { Home, Users, Layers, Wrench, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Home, Users, Layers, Wrench, AlertTriangle, ArrowLeft, Monitor } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Link } from "react-router-dom";
 import {
@@ -17,6 +17,7 @@ const menuItems = [
   { title: "Les univers", url: "/mes-indicateurs/univers", icon: Layers },
   { title: "Les techniciens", url: "/mes-indicateurs/techniciens", icon: Wrench },
   { title: "Les SAV", url: "/mes-indicateurs/sav", icon: AlertTriangle },
+  { title: "Diffusion écran", url: "/diffusion", icon: Monitor },
 ];
 
 export function IndicateursSidebar() {
