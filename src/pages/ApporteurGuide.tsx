@@ -1,13 +1,13 @@
 // Page Guide Apporteurs (clone d'ApogeeGuide avec données séparées)
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical, Upload, X, Edit2, Lock } from 'lucide-react';
+import { Plus, Trash2, Search, GripVertical, Upload, X, Edit2, Lock, Ban, Clock } from 'lucide-react';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { toast } from 'sonner';
 import { IconPicker } from '@/components/IconPicker';
@@ -49,6 +49,7 @@ interface SortableCategoryProps {
   editShowTitleOnCard: boolean;
   editShowTitleInMenu: boolean;
   isEditMode: boolean;
+  isEmpty: boolean;
   isBlockLocked: (blockId: string, blocks: any[]) => boolean;
   onEditTitleChange: (value: string) => void;
   onEditIconChange: (value: string) => void;
@@ -62,7 +63,7 @@ interface SortableCategoryProps {
   onCancel: () => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  getColorClass: (color?: ColorPreset) => string;
+  getColorClass: (color?: ColorPreset, isEmpty?: boolean) => string;
   IconComponent: (iconName: string) => any;
 }
 
@@ -75,6 +76,7 @@ const SortableCategory = ({
   editShowTitleOnCard,
   editShowTitleInMenu,
   isEditMode,
+  isEmpty,
   isBlockLocked,
   onEditTitleChange,
   onEditIconChange,
@@ -113,8 +115,17 @@ const SortableCategory = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 overflow-visible ${getColorClass(category.colorPreset)}`}
+      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 overflow-visible ${getColorClass(category.colorPreset, isEmpty)}`}
     >
+      {/* Badge Vide */}
+      {isEmpty && !isEditMode && (
+        <div className="absolute -top-2 -right-2 z-20">
+          <div className="bg-muted text-muted-foreground text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1 border border-muted-foreground/30">
+            <Ban className="w-3 h-3" />
+            Vide
+          </div>
+        </div>
+      )}
       {isEditMode && !editingId && (
         <>
           <div
@@ -332,8 +343,11 @@ export default function ApporteurGuide() {
     })
   );
 
-  const getColorClass = (color?: ColorPreset) => {
-    // Style unifié aux couleurs du site - même que ApogeeGuide
+  const getColorClass = (color?: ColorPreset, isEmpty?: boolean) => {
+    // Style unifié aux couleurs du site - grisé si vide
+    if (isEmpty) {
+      return "bg-muted/50 border-muted-foreground/30 border-l-muted-foreground/50 opacity-60";
+    }
     return "bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 border-helpconfort-orange/40 border-l-primary hover:border-helpconfort-orange/60 hover:border-l-accent hover:shadow-xl";
   };
 
@@ -341,6 +355,16 @@ export default function ApporteurGuide() {
     const Icon = (Icons as any)[iconName] || Icons.BookOpen;
     return Icon;
   };
+
+  // Calculate category isEmpty status
+  const getCategoryStatus = useMemo(() => {
+    return (categoryId: string, category: any) => {
+      const sections = blocks.filter(b => b.parentId === categoryId && b.type === 'section');
+      // isEmpty: si la catégorie est marquée vide OU si toutes ses sections sont vides
+      const isEmpty = category.isEmpty || (sections.length > 0 && sections.every(s => s.isEmpty));
+      return { isEmpty };
+    };
+  }, [blocks]);
 
   const handleEdit = (id: string) => {
     const category = apporteurCategories.find(c => c.id === id);
@@ -516,34 +540,38 @@ export default function ApporteurGuide() {
             strategy={verticalListSortingStrategy}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredCategories.map(category => (
-                <SortableCategory
-                  key={category.id}
-                  category={category}
-                  editingId={editingId}
-                  editTitle={editTitle}
-                  editIcon={editIcon}
-                  editColor={editColor}
-                  editShowTitleOnCard={editShowTitleOnCard}
-                  editShowTitleInMenu={editShowTitleInMenu}
-                  isEditMode={isEditMode}
-                  isBlockLocked={isBlockLocked}
-                  onEditTitleChange={setEditTitle}
-                  onEditIconChange={setEditIcon}
-                  onEditColorChange={setEditColor}
-                  onShowTitleOnCardChange={setEditShowTitleOnCard}
-                  onShowTitleInMenuChange={setEditShowTitleInMenu}
-                  onImageUpload={handleImageUpload}
-                  onImageRemove={handleImageRemove}
-                  uploadingImage={uploadingImage}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  getColorClass={getColorClass}
-                  IconComponent={IconComponent}
-                />
-              ))}
+              {filteredCategories.map(category => {
+                const { isEmpty } = getCategoryStatus(category.id, category);
+                return (
+                  <SortableCategory
+                    key={category.id}
+                    category={category}
+                    editingId={editingId}
+                    editTitle={editTitle}
+                    editIcon={editIcon}
+                    editColor={editColor}
+                    editShowTitleOnCard={editShowTitleOnCard}
+                    editShowTitleInMenu={editShowTitleInMenu}
+                    isEditMode={isEditMode}
+                    isEmpty={isEmpty}
+                    isBlockLocked={isBlockLocked}
+                    onEditTitleChange={setEditTitle}
+                    onEditIconChange={setEditIcon}
+                    onEditColorChange={setEditColor}
+                    onShowTitleOnCardChange={setEditShowTitleOnCard}
+                    onShowTitleInMenuChange={setEditShowTitleInMenu}
+                    onImageUpload={handleImageUpload}
+                    onImageRemove={handleImageRemove}
+                    uploadingImage={uploadingImage}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    getColorClass={getColorClass}
+                    IconComponent={IconComponent}
+                  />
+                );
+              })}
             </div>
           </SortableContext>
         </DndContext>
