@@ -68,42 +68,34 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
           </motion.div>
         </div>
 
-        {/* Features Grid with elaborate animations */}
+        {/* Features Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-          {/* Card 1: Spin from top */}
-          <SpinFromTopCard
+          <FeatureCard
             icon={BarChart3}
             title="Pilotage d'agence"
             description="KPI, CA, actions à mener. Visualisez les performances de votre agence en temps réel."
             color="primary"
-            delay={9}
           />
           
-          {/* Card 2: Scale/Shrink into place */}
-          <ScaleInCard
+          <FeatureCard
             icon={BookOpen}
             title="Documentation"
             description="Guides complets, FAQ, ressources. Tout pour maîtriser Apogée et vos process."
             color="accent"
-            delay={10.5}
           />
           
-          {/* Card 3: Puzzle pieces assembly */}
-          <PuzzleCard
+          <FeatureCard
             icon={Headset}
             title="Support"
             description="Tickets, demandes, assistance. Une équipe dédiée pour vous accompagner."
             color="primary"
-            delay={12}
           />
           
-          {/* Card 4: Fireworks/Burst effect */}
-          <FireworksCard
+          <FeatureCard
             icon={Network}
             title="Réseau"
             description="Pilotage franchiseur, statistiques réseau, gestion globale."
             color="accent"
-            delay={13.5}
           />
         </div>
       </section>
@@ -331,14 +323,13 @@ function ReplacementTitle({ prefix, words, delay }: {
   );
 }
 
-// ========== CARD ANIMATIONS ==========
+// ========== FEATURE CARD ==========
 
-interface CardProps {
+interface FeatureCardProps {
   icon: React.ElementType;
   title: string;
   description: string;
   color: 'primary' | 'accent';
-  delay?: number;
 }
 
 const colorClasses = {
@@ -346,128 +337,14 @@ const colorClasses = {
   accent: 'bg-accent/10 text-accent border-accent/20',
 };
 
-function SpinFromTopCard({ icon: Icon, title, description, color, delay = 0 }: CardProps) {
+function FeatureCard({ icon: Icon, title, description, color }: FeatureCardProps) {
   return (
-    <motion.div
-      className="group bg-card border rounded-2xl p-6 hover:shadow-lg hover:border-primary/30 transition-all duration-300"
-      initial={{ opacity: 0, y: -300, rotate: -1080 }}
-      animate={{ opacity: 1, y: 0, rotate: 0 }}
-      transition={{ duration: 1.8, delay, type: "spring", stiffness: 40, damping: 10 }}
-      whileHover={{ scale: 1.02, y: -4 }}
-    >
+    <div className="group bg-card border rounded-2xl p-6 hover:shadow-lg hover:border-primary/30 transition-all duration-300">
       <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${colorClasses[color]}`}>
         <Icon className="w-7 h-7" />
       </div>
       <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
       <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
-    </motion.div>
-  );
-}
-
-function ScaleInCard({ icon: Icon, title, description, color, delay = 0 }: CardProps) {
-  return (
-    <motion.div
-      className="group bg-card border rounded-2xl p-6 hover:shadow-lg hover:border-primary/30 transition-all duration-300 origin-center"
-      initial={{ opacity: 0, scale: 0 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.8, delay, type: "spring", stiffness: 100, damping: 12 }}
-      whileHover={{ scale: 1.02, y: -4 }}
-    >
-      <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${colorClasses[color]}`}>
-        <Icon className="w-7 h-7" />
-      </div>
-      <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
-      <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
-    </motion.div>
-  );
-}
-
-function PuzzleCard({ icon: Icon, title, description, color, delay = 0 }: CardProps) {
-  const pieces = [
-    { x: -200, y: -200, rotate: -90 },
-    { x: 200, y: -200, rotate: 90 },
-    { x: -200, y: 200, rotate: 90 },
-    { x: 200, y: 200, rotate: -90 },
-  ];
-
-  return (
-    <motion.div
-      className="group bg-card border rounded-2xl p-6 hover:shadow-lg hover:border-primary/30 transition-all duration-300 relative overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay, duration: 0.3 }}
-      whileHover={{ scale: 1.02, y: -4 }}
-    >
-      {pieces.map((piece, index) => (
-        <motion.div
-          key={index}
-          className="absolute inset-0 bg-card rounded-2xl"
-          style={{ 
-            clipPath: index === 0 ? 'polygon(0 0, 50% 0, 50% 50%, 0 50%)' :
-                      index === 1 ? 'polygon(50% 0, 100% 0, 100% 50%, 50% 50%)' :
-                      index === 2 ? 'polygon(0 50%, 50% 50%, 50% 100%, 0 100%)' :
-                                    'polygon(50% 50%, 100% 50%, 100% 100%, 50% 100%)'
-          }}
-          initial={{ x: piece.x, y: piece.y, rotate: piece.rotate, opacity: 1 }}
-          animate={{ x: 0, y: 0, rotate: 0, opacity: 0 }}
-          transition={{ duration: 1.2, delay: delay + (index * 0.2), type: "spring", stiffness: 50, damping: 10 }}
-        />
-      ))}
-      
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: delay + 1.0, duration: 0.5 }}
-      >
-        <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${colorClasses[color]}`}>
-          <Icon className="w-7 h-7" />
-        </div>
-        <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
-        <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-function FireworksCard({ icon: Icon, title, description, color, delay = 0 }: CardProps) {
-  const particles = Array.from({ length: 20 }, (_, i) => ({
-    angle: (i * 18) * (Math.PI / 180),
-    distance: 120 + Math.random() * 60,
-  }));
-
-  return (
-    <motion.div
-      className="group bg-card border rounded-2xl p-6 hover:shadow-lg hover:border-primary/30 transition-all duration-300 relative overflow-hidden"
-      initial={{ opacity: 0, scale: 0 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay, duration: 0.8, type: "spring", stiffness: 100, damping: 15 }}
-      whileHover={{ scale: 1.02, y: -4 }}
-    >
-      {particles.map((particle, index) => (
-        <motion.div
-          key={index}
-          className="absolute w-3 h-3 rounded-full"
-          style={{
-            left: '50%',
-            top: '50%',
-            backgroundColor: index % 2 === 0 ? 'hsl(var(--primary))' : 'hsl(var(--accent))',
-          }}
-          initial={{ x: 0, y: 0, scale: 0, opacity: 1 }}
-          animate={{ 
-            x: Math.cos(particle.angle) * particle.distance,
-            y: Math.sin(particle.angle) * particle.distance,
-            scale: [0, 2, 0],
-            opacity: [1, 1, 0]
-          }}
-          transition={{ duration: 1.2, delay: delay + 0.2, ease: "easeOut" }}
-        />
-      ))}
-      
-      <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${colorClasses[color]}`}>
-        <Icon className="w-7 h-7" />
-      </div>
-      <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
-      <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
-    </motion.div>
+    </div>
   );
 }
