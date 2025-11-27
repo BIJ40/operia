@@ -69,7 +69,7 @@ export default function Landing() {
         <section>
           <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-primary" />
-            Help<span className="text-helpconfort-orange animate-pulse inline-block -ml-[1px]">!</span> Academy
+            <span>Help</span><span className="text-helpconfort-orange animate-pulse">!</span><span> Academy</span>
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
             {filteredHelpCards.map((card) => (
