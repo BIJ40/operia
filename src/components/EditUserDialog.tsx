@@ -139,8 +139,8 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
   }, [roleAgence]);
 
   const isTeteDeReseau = roleAgence === 'tete_de_reseau';
-  const hasSupport = systemRoles.includes('support');
-  const hasFranchiseur = systemRoles.includes('franchiseur');
+  const hasSupport = systemRoles.includes('support') || isTeteDeReseau;
+  const hasFranchiseur = systemRoles.includes('franchiseur') || isTeteDeReseau;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
