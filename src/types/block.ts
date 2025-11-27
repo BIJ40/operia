@@ -32,6 +32,7 @@ export interface Block {
   showSummary?: boolean;
   hideTitle?: boolean;
   isInProgress?: boolean;
+  completedAt?: string; // ISO date when section was marked as completed
 }
 
 export interface AppData {
