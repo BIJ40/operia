@@ -15,21 +15,43 @@ import logoHelpconfort from '@/assets/logo_helpogee.png';
 
 const pageTitles: Record<string, string> = {
   '/': 'Tableau de bord',
+  // HELP Academy
   '/apogee': 'Guide Apogée',
   '/apporteurs': 'Guide Apporteurs',
   '/helpconfort': 'Base Documentaire',
+  '/documents': 'Documents',
+  // Pilotage
   '/mes-indicateurs': 'Mes Indicateurs',
+  '/mes-indicateurs/apporteurs': 'Indicateurs Apporteurs',
+  '/mes-indicateurs/univers': 'Indicateurs Univers',
+  '/mes-indicateurs/techniciens': 'Indicateurs Techniciens',
+  '/mes-indicateurs/sav': 'Indicateurs SAV',
   '/actions-a-mener': 'Actions à Mener',
   '/diffusion': 'Mode Diffusion',
+  // Support
   '/mes-demandes': 'Mes Demandes',
   '/support': 'Support',
-  '/admin/support': 'Gestion Tickets',
-  '/tete-de-reseau': 'Réseau Franchiseur',
+  '/support-tickets': 'Mes Tickets',
+  // Franchiseur
+  '/tete-de-reseau': 'Dashboard Réseau',
+  '/tete-de-reseau/agences': 'Agences du Réseau',
+  '/tete-de-reseau/stats': 'Statistiques Réseau',
+  '/tete-de-reseau/comparatifs': 'Comparatifs',
+  '/tete-de-reseau/redevances': 'Redevances',
+  '/tete-de-reseau/parametres': 'Paramètres Réseau',
+  // Admin
   '/admin': 'Administration',
+  '/admin/support': 'Gestion Tickets',
   '/admin/users': 'Gestion Utilisateurs',
+  '/admin/users-list': 'Liste Utilisateurs',
   '/admin/role-permissions': 'Rôles & Permissions',
   '/admin/agencies': 'Gestion Agences',
   '/admin/backup': 'Sauvegardes',
+  '/admin/documents': 'Documents Admin',
+  '/admin/user-activity': 'Activité Utilisateurs',
+  '/admin/storage-quota': 'Quota Stockage',
+  '/admin/cache-backup': 'Cache & Backup',
+  // User
   '/profile': 'Mon Profil',
   '/favorites': 'Mes Favoris',
 };

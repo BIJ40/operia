@@ -69,6 +69,10 @@ export function UnifiedSidebar() {
       label: 'Pilotage Agence',
       items: [
         { title: 'Mes Indicateurs', url: '/mes-indicateurs', icon: BarChart3, scope: 'mes_indicateurs', description: 'Tableau de bord et KPI de votre agence' },
+        { title: 'Indicateurs Apporteurs', url: '/mes-indicateurs/apporteurs', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques apporteurs' },
+        { title: 'Indicateurs Univers', url: '/mes-indicateurs/univers', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques par univers' },
+        { title: 'Indicateurs Techniciens', url: '/mes-indicateurs/techniciens', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques techniciens' },
+        { title: 'Indicateurs SAV', url: '/mes-indicateurs/sav', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques SAV' },
         { title: 'Actions à Mener', url: '/actions-a-mener', icon: ListTodo, scope: 'actions_a_mener', description: 'Suivi des actions et tâches en cours' },
         { title: 'Diffusion', url: '/diffusion', icon: Tv, scope: 'diffusion', description: 'Mode affichage TV agence' },
       ],
