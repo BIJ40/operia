@@ -22,9 +22,12 @@ const AVAILABLE_ROLES = [
 ];
 
 const MAIN_CATEGORIES = [
-  { id: 'apogee', name: 'Guide Apogée' },
-  { id: 'apporteurs', name: 'Guide Apporteurs' },
-  { id: 'helpconfort', name: 'Base HelpConfort' },
+  { id: 'apogee', name: 'Guide Apogée', description: 'Documentation Apogée' },
+  { id: 'apporteurs', name: 'Guide Apporteurs', description: 'Documentation Apporteurs' },
+  { id: 'helpconfort', name: 'Base HelpConfort', description: 'Documentation HelpConfort' },
+  { id: 'mes_indicateurs', name: 'Mes indicateurs', description: 'KPIs et statistiques agence' },
+  { id: 'actions_a_mener', name: 'Actions à mener', description: 'Suivi des dossiers à traiter' },
+  { id: 'mes_demandes', name: 'Mes demandes de support', description: 'Tickets et historique support' },
 ];
 
 export default function AdminRolePermissions() {
@@ -172,7 +175,7 @@ export default function AdminRolePermissions() {
           Cliquez sur une catégorie pour autoriser ou refuser l'accès
         </p>
         
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {MAIN_CATEGORIES.map(category => {
             const isAllowed = hasPermission(category.id);
             
@@ -182,10 +185,13 @@ export default function AdminRolePermissions() {
                 className="cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => togglePermission(category.id, !isAllowed)}
               >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{category.name}</CardTitle>
-                    <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-base">{category.name}</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">{category.description}</p>
+                    </div>
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full shrink-0 ${
                       isAllowed 
                         ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' 
                         : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
@@ -193,12 +199,12 @@ export default function AdminRolePermissions() {
                       {isAllowed ? (
                         <>
                           <Check className="w-4 h-4" />
-                          <span className="font-medium text-sm">Autorisé</span>
+                          <span className="font-medium text-xs">Autorisé</span>
                         </>
                       ) : (
                         <>
                           <X className="w-4 h-4" />
-                          <span className="font-medium text-sm">Interdit</span>
+                          <span className="font-medium text-xs">Interdit</span>
                         </>
                       )}
                     </div>
