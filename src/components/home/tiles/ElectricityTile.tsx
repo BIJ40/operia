@@ -1,16 +1,14 @@
 import { motion } from "framer-motion";
 
 const electricTileVariants = {
-  hidden: { opacity: 0, y: 20, rotate: 0 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    rotate: [0, -1.2, 1.2, -0.8, 0.8, 0],
     transition: {
       type: "spring" as const,
       stiffness: 140,
       damping: 18,
-      delay: 0.4,
     },
   },
 };
@@ -20,6 +18,8 @@ export const ElectricityTile = () => {
     <motion.div
       variants={electricTileVariants}
       className="relative overflow-hidden rounded-2xl border border-accent/60 bg-card/90 shadow-lg p-4 md:p-5 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/30 dark:to-slate-800/20"
+      animate={{ rotate: [0, -1.2, 1.2, -0.8, 0.8, 0] }}
+      transition={{ delay: 0.5, duration: 0.35 }}
     >
       <div className="flex items-center gap-3">
         <div>
