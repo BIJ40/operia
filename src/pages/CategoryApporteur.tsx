@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Lightbulb, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 import * as Icons from 'lucide-react';
+import { createSanitizedHtml } from '@/lib/sanitize';
 import { DocumentsList } from '@/components/DocumentsList';
 import {
   Accordion,
@@ -302,7 +303,7 @@ export default function CategoryApporteur() {
             )}
             <div
               className="prose prose-sm max-w-none break-words overflow-visible dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: section.content }}
+              dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
             />
           </div>
         </div>
@@ -376,7 +377,7 @@ export default function CategoryApporteur() {
             ) : null}
             <div 
               className="prose prose-sm max-w-none dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: section.content }}
+              dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
             />
           </div>
         </div>
@@ -492,7 +493,7 @@ export default function CategoryApporteur() {
             <AccordionContent>
               <div
                 className="prose prose-sm max-w-none break-words overflow-visible"
-                dangerouslySetInnerHTML={{ __html: section.content }}
+                dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
               />
             </AccordionContent>
         </AccordionItem>

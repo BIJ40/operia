@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown, FolderInput, Copy, Info, ChevronsDownUp, ChevronsUpDown, Lightbulb, ArrowLeft } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
+import { createSanitizedHtml } from '@/lib/sanitize';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import {
   Accordion,
@@ -622,7 +623,7 @@ export default function Category() {
             )}
             <div
               className="prose prose-sm max-w-none break-words overflow-visible dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: section.content }}
+              dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
             />
           </div>
         </div>
@@ -755,7 +756,7 @@ export default function Category() {
             <div className="p-6 bg-card">
               <div
                 className="prose prose-sm max-w-none break-words overflow-visible"
-                dangerouslySetInnerHTML={{ __html: section.content }}
+                dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
               />
             </div>
           </div>
@@ -953,7 +954,7 @@ export default function Category() {
             <AccordionContent>
               <div
                 className="prose prose-sm max-w-none break-words overflow-visible"
-                dangerouslySetInnerHTML={{ __html: section.content }}
+                dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
               />
             </AccordionContent>
         </AccordionItem>
@@ -1138,7 +1139,7 @@ export default function Category() {
                       <AccordionContent>
                         <div
                           className="prose prose-sm max-w-none break-words overflow-visible"
-                          dangerouslySetInnerHTML={{ __html: section.content }}
+                          dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
                         />
                       </AccordionContent>
                     </AccordionItem>

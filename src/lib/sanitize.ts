@@ -1,0 +1,40 @@
+import DOMPurify from 'dompurify';
+
+/**
+ * Sanitize HTML content to prevent XSS attacks
+ * Allows safe HTML elements and attributes for rich text content
+ */
+export function sanitizeHtml(html: string): string {
+  if (!html) return '';
+  
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'ul', 'ol', 'li',
+      'a', 'img',
+      'blockquote', 'pre', 'code',
+      'table', 'thead', 'tbody', 'tr', 'th', 'td',
+      'div', 'span',
+      'hr',
+      'sub', 'sup',
+      // Callout support
+      'section',
+    ],
+    ALLOWED_ATTR: [
+      'href', 'target', 'rel',
+      'src', 'alt', 'title', 'width', 'height',
+      'class', 'style',
+      'data-callout', 'data-callout-type',
+      'colspan', 'rowspan',
+    ],
+    ALLOW_DATA_ATTR: true,
+  });
+}
+
+/**
+ * Create sanitized HTML props for dangerouslySetInnerHTML
+ */
+export function createSanitizedHtml(html: string): { __html: string } {
+  return { __html: sanitizeHtml(html) };
+}
