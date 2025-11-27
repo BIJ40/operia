@@ -72,12 +72,15 @@ export const calculateUniversStats = (
     if (universes.length === 0) return;
 
     // Déterminer le type de facture et le montant net (aligné sur calculateCaJour)
-    const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-    const montantRaw = facture.totalHT || facture.data?.totalHT || facture.montantHT || facture.data?.montantHT || "0";
-    const montantParsed = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-    if (isNaN(montantParsed)) return;
+    const rawType = facture.typeFacture || facture.data?.type || facture.state || "";
+    const typeFacture = String(rawType).toLowerCase();
 
-    const montantNet = typeFacture === "avoir" || typeFacture === "Avoir"
+    const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
+    const montantParsed = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+    if (isNaN(montantParsed) || montantParsed === 0) return;
+
+    // Montant net : factures en positif, avoirs en négatif
+    const montantNet = typeFacture === "avoir"
       ? -Math.abs(montantParsed)
       : montantParsed;
 
@@ -275,12 +278,15 @@ export const calculateMonthlyUniversCA = (
       if (!isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end })) return;
       
       // Déterminer le type de facture et le montant net (aligné sur calculateCaJour)
-      const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-      const montantRaw = facture.totalHT || facture.data?.totalHT || facture.montantHT || facture.data?.montantHT || "0";
+      const rawType = facture.typeFacture || facture.data?.type || facture.state || "";
+      const typeFacture = String(rawType).toLowerCase();
+
+      const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
       const montantParsed = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-      if (isNaN(montantParsed)) return;
-      
-      const montantNet = typeFacture === "avoir" || typeFacture === "Avoir"
+      if (isNaN(montantParsed) || montantParsed === 0) return;
+
+      // Montant net : factures en positif, avoirs en négatif
+      const montantNet = typeFacture === "avoir"
         ? -Math.abs(montantParsed)
         : montantParsed;
       
