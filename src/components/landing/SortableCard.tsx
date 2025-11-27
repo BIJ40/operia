@@ -8,6 +8,12 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import helpConfortServicesImg from '@/assets/help-confort-services.png';
 import { SortableCardProps, ColorPreset } from './types';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export function SortableCard({
   card,
@@ -118,31 +124,43 @@ export function SortableCard({
         </>
       )}
       
-      {editingId === card.id ? (
-        <div className="absolute inset-0 z-20 bg-card border-2 border-primary rounded-2xl p-4 shadow-xl overflow-y-auto max-h-[400px]">
-          <div className="space-y-3">
-            <Input
-              value={editTitle}
-              onChange={(e) => onEditTitleChange(e.target.value)}
-              placeholder="Titre de la carte"
-              autoFocus
-            />
-            <Input
-              value={editDescription}
-              onChange={(e) => onEditDescriptionChange(e.target.value)}
-              placeholder="Description"
-            />
-            <Input
-              value={editLink}
-              onChange={(e) => onEditLinkChange(e.target.value)}
-              placeholder="Lien (ex: /apogee)"
-            />
+      <Dialog open={editingId === card.id} onOpenChange={(open) => !open && onCancel()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier la carte</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Titre</label>
+              <Input
+                value={editTitle}
+                onChange={(e) => onEditTitleChange(e.target.value)}
+                placeholder="Titre de la carte"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Input
+                value={editDescription}
+                onChange={(e) => onEditDescriptionChange(e.target.value)}
+                placeholder="Description"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Lien</label>
+              <Input
+                value={editLink}
+                onChange={(e) => onEditLinkChange(e.target.value)}
+                placeholder="Lien (ex: /apogee)"
+              />
+            </div>
             <IconPicker
               value={editIcon}
               onChange={onEditIconChange}
             />
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Couleur</label>
+              <label className="text-sm font-medium">Couleur</label>
               <div className="flex flex-wrap gap-2">
                 {[
                   { value: 'red', color: 'bg-red-100 border-2 border-red-300 text-red-800', label: 'Rouge' },
@@ -166,17 +184,18 @@ export function SortableCard({
                 ))}
               </div>
             </div>
-            <div className="flex gap-2 pt-2">
-              <Button onClick={onSave} size="sm">
-                Enregistrer
-              </Button>
-              <Button onClick={onCancel} size="sm" variant="outline">
+            <div className="flex gap-2 pt-4 justify-end">
+              <Button onClick={onCancel} variant="outline">
                 Annuler
+              </Button>
+              <Button onClick={onSave}>
+                Enregistrer
               </Button>
             </div>
           </div>
-        </div>
-      ) : (
+        </DialogContent>
+      </Dialog>
+      {editingId !== card.id && (
         <>
           {card.link && card.link !== '#' ? (
             <Link to={card.link} className={isLarge ? "flex-1" : "flex items-center gap-2 flex-1"}>
