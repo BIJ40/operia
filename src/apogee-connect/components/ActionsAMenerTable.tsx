@@ -40,6 +40,7 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
             <TableHead>Action à mener</TableHead>
             <TableHead className="w-[140px]">Date limite</TableHead>
             <TableHead>Client</TableHead>
+            <TableHead>Technicien</TableHead>
             <TableHead className="w-[100px] text-center">État</TableHead>
             <TableHead className="w-[80px]"></TableHead>
           </TableRow>
@@ -73,6 +74,9 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
               </TableCell>
               <TableCell className="text-sm">
                 {action.clientName}
+              </TableCell>
+              <TableCell className="text-sm">
+                {action.technicienName || '-'}
               </TableCell>
               <TableCell className="text-center">
                 {action.isLate ? (

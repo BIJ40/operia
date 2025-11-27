@@ -266,6 +266,96 @@ export function buildActionsAMener(
     }
   });
   
+  // === RÈGLE 6: Dossiers en attente technicien "ATT TECH (manuel)" ===
+  projects.forEach(project => {
+    if (!project.data?.history || !Array.isArray(project.data.history)) return;
+    
+    const history = project.data.history;
+    
+    // Fonction pour parser les dates au format "DD/MM/YYYY HH:mm:ss"
+    const parseDateModif = (dateStr: string): number => {
+      const [d, t] = dateStr.split(" ");
+      const [j, m, a] = d.split("/").map(Number);
+      const [h, mi, s] = t.split(":").map(Number);
+      return new Date(a, m - 1, j, h, mi, s).getTime();
+    };
+    
+    // 1) Filtrer les changements de statut (kind === 2)
+    const statusChanges = history
+      .filter((h: any) => h.kind === 2 && typeof h.labelKind === 'string')
+      .sort((a: any, b: any) => {
+        const dateA = a.dateModif ? parseDateModif(a.dateModif) : 0;
+        const dateB = b.dateModif ? parseDateModif(b.dateModif) : 0;
+        return dateA - dateB;
+      });
+    
+    if (statusChanges.length === 0) return;
+    
+    const lastStatusChange = statusChanges[statusChanges.length - 1];
+    
+    // 2) Vérifier que le dernier statut est bien "=> ATT TECH (manuel)"
+    if (!lastStatusChange.labelKind || !lastStatusChange.labelKind.includes('=> ATT TECH (manuel)')) {
+      return;
+    }
+    
+    const attTechTime = lastStatusChange.dateModif ? parseDateModif(lastStatusChange.dateModif) : 0;
+    
+    // 3) Chercher le dernier RDV réalisé (kind === 14) avant ATT TECH
+    const rdvEntries = history
+      .filter((h: any) => 
+        h.kind === 14 &&
+        h.data &&
+        typeof h.data.content === 'string' &&
+        h.data.content.includes('R.D.V. : Planifié => Réalisé')
+      )
+      .sort((a: any, b: any) => {
+        const dateA = a.dateModif ? parseDateModif(a.dateModif) : 0;
+        const dateB = b.dateModif ? parseDateModif(b.dateModif) : 0;
+        return dateA - dateB;
+      });
+    
+    let technicienName = 'Technicien inconnu';
+    
+    if (rdvEntries.length > 0) {
+      // Ne garder que les RDV avant ou à la même date que ATT TECH
+      const rdvAvantAttTech = rdvEntries.filter((h: any) => {
+        const rdvTime = h.dateModif ? parseDateModif(h.dateModif) : 0;
+        return rdvTime <= attTechTime;
+      });
+      
+      if (rdvAvantAttTech.length > 0) {
+        const lastRdv = rdvAvantAttTech[rdvAvantAttTech.length - 1];
+        technicienName = lastRdv.userStr || lastRdv.data?.userName || 'Technicien inconnu';
+      }
+    }
+    
+    // Créer l'action de relance technicien
+    const clientId = project.clientId || project.client_id || project.data?.commanditaireId;
+    const client = clientId ? clientsMap.get(clientId) : null;
+    const clientName = client?.nom || client?.name || client?.raisonSociale || 'Client inconnu';
+    const ref = project.ref || `#${project.id}`;
+    const label = project.name || project.label || 'Sans libellé';
+    
+    const dateDepart = parseDate(lastStatusChange.dateModif) || today;
+    const deadline = addDays(dateDepart, config.delai_relance_technicien);
+    const isLate = deadline < today;
+    
+    actions.push({
+      projectId: project.id,
+      ref,
+      label,
+      statut: 'ATT TECH (manuel)',
+      actionLabel: ACTION_LABELS.relance_technicien,
+      actionType: 'relance_technicien',
+      deadline,
+      dateDepart,
+      isLate,
+      clientName,
+      technicienName,
+      daysLate: isLate ? differenceInDays(today, deadline) : 0,
+    });
+  });
+  
   // Marquer les actions qui vont passer en retard dans J+1 et filtrer
   const tomorrow = addDays(today, 1);
   const filteredActions = actions

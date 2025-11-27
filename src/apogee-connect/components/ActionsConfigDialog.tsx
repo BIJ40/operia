@@ -153,6 +153,26 @@ export function ActionsConfigDialog() {
               <span className="text-sm text-muted-foreground">jours</span>
             </div>
           </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="relance-technicien" className="text-right text-sm">
+              Relance technicien
+            </Label>
+            <div className="col-span-3 flex items-center gap-2">
+              <Input
+                id="relance-technicien"
+                type="number"
+                min="1"
+                value={localConfig.delai_relance_technicien}
+                onChange={(e) => setLocalConfig({
+                  ...localConfig,
+                  delai_relance_technicien: parseInt(e.target.value) || 1
+                })}
+                className="w-24"
+              />
+              <span className="text-sm text-muted-foreground">jours</span>
+            </div>
+          </div>
         </div>
 
         <DialogFooter className="gap-2">
