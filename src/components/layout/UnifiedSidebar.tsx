@@ -135,12 +135,12 @@ export function UnifiedSidebar() {
 
   return (
     <Sidebar className="border-r bg-sidebar" collapsible="icon">
-      <SidebarHeader className="border-b p-2">
-        <Link to="/" className="flex items-center justify-center">
+      <SidebarHeader className="border-b p-0">
+        <Link to="/" className="block w-full">
           <img 
             src={logoHelpconfortServices} 
             alt="HelpConfort Services" 
-            className={`object-contain transition-all ${collapsed ? 'h-8 w-8' : 'w-full max-h-24'}`}
+            className={`object-contain transition-all ${collapsed ? 'h-10 w-10 mx-auto my-1' : 'w-full'}`}
           />
         </Link>
       </SidebarHeader>
