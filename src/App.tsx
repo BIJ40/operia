@@ -5,6 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { CacheBackupNotification } from "./components/CacheBackupNotification";
+import { MainLayout } from "./components/layout";
+
+// Pages
 import Landing from "./pages/Landing";
 import ApogeeGuide from "./pages/ApogeeGuide";
 import ApporteurGuide from "./pages/ApporteurGuide";
@@ -36,7 +39,6 @@ import IndicateursUnivers from "./apogee-connect/pages/IndicateursUnivers";
 import IndicateursTechniciens from "./apogee-connect/pages/IndicateursTechniciens";
 import IndicateursSAV from "./apogee-connect/pages/IndicateursSAV";
 import AdminAgencies from "./pages/AdminAgencies";
-
 import AdminStorageQuota from "./pages/AdminStorageQuota";
 import AdminCacheBackup from "./pages/AdminCacheBackup";
 import AdminUserActivity from "./pages/AdminUserActivity";
@@ -52,11 +54,12 @@ import FranchiseurRoyalties from "./franchiseur/pages/FranchiseurRoyalties";
 import FranchiseurSettings from "./franchiseur/pages/FranchiseurSettings";
 import DiffusionDashboard from "./pages/DiffusionDashboard";
 import NotFound from "./pages/NotFound";
+
+// Providers
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
 import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
-import { Layout } from "./components/Layout";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 
@@ -73,42 +76,37 @@ function AppContent() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Layout showHeader={false} showSidebar={false}><Landing /></Layout>} />
-        <Route path="/apogee" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><ApogeeGuide /></Layout>} />
-        <Route path="/apogee/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="apogee"><Category /></Layout>} />
-        <Route path="/actions-a-mener" element={<Layout showHeader showSidebar={true} sidebarType="actions"><ActionsAMener /></Layout>} />
-        <Route path="/actions-a-mener/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="actions"><CategoryActionsAMener /></Layout>} />
-        <Route path="/apporteurs" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><ApporteurGuide /></Layout>} />
-        <Route path="/apporteurs/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><ApporteurSubcategories /></Layout>} />
-        <Route path="/apporteurs/category/:slug/sub/:subslug" element={<Layout showHeader showSidebar={true} sidebarType="apporteur"><CategoryApporteur /></Layout>} />
-        <Route path="/helpconfort" element={<Layout showHeader showSidebar={true} sidebarType="helpconfort"><HelpConfort /></Layout>} />
-        <Route path="/helpconfort/category/:slug" element={<Layout showHeader showSidebar={true} sidebarType="helpconfort"><CategoryHelpConfort /></Layout>} />
-        <Route path="/documents" element={<Layout showHeader showSidebar={false}><Documents /></Layout>} />
-        <Route path="/admin" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminIndex /></Layout>} />
-        <Route path="/admin/documents" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminDocuments /></Layout>} />
-        <Route path="/admin/support" element={<AdminSupportTickets />} />
-          <Route path="/admin/support-levels" element={<AdminSupportLevels />} />
-          <Route path="/admin/escalation-history" element={<AdminEscalationHistory />} />
-        <Route path="/admin/tickets" element={<AdminSupportTickets />} />
-        <Route path="/support" element={<Support />} />
-        <Route path="/support-tickets" element={<Layout showHeader showSidebar={false}><UserTickets /></Layout>} />
-        <Route path="/mes-demandes" element={<Layout showHeader showSidebar={false}><UserDemands /></Layout>} />
-        <Route path="/admin/backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminBackup /></Layout>} />
-        <Route path="/admin/helpconfort-backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminHelpConfortBackup /></Layout>} />
-        <Route path="/admin/users" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUsers /></Layout>} />
-        <Route path="/admin/users-list" element={<Layout showHeader showSidebar={false}><AdminUsersList /></Layout>} />
-        <Route path="/admin/role-permissions" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminRolePermissions /></Layout>} />
-        <Route path="/admin/agencies" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminAgencies /></Layout>} />
-        <Route path="/admin/storage-quota" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminStorageQuota /></Layout>} />
-        <Route path="/admin/cache-backup" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminCacheBackup /></Layout>} />
-        <Route path="/admin/user-activity" element={<Layout showHeader showSidebar={true} sidebarType="admin"><AdminUserActivity /></Layout>} />
-        <Route path="/mes-indicateurs" element={<Layout showHeader showSidebar={false}><IndicateursLayout /></Layout>}>
+        {/* Dashboard / Home */}
+        <Route path="/" element={<MainLayout><Landing /></MainLayout>} />
+        
+        {/* HELP Academy */}
+        <Route path="/apogee" element={<MainLayout><ApogeeGuide /></MainLayout>} />
+        <Route path="/apogee/category/:slug" element={<MainLayout><Category /></MainLayout>} />
+        <Route path="/apporteurs" element={<MainLayout><ApporteurGuide /></MainLayout>} />
+        <Route path="/apporteurs/category/:slug" element={<MainLayout><ApporteurSubcategories /></MainLayout>} />
+        <Route path="/apporteurs/category/:slug/sub/:subslug" element={<MainLayout><CategoryApporteur /></MainLayout>} />
+        <Route path="/helpconfort" element={<MainLayout><HelpConfort /></MainLayout>} />
+        <Route path="/helpconfort/category/:slug" element={<MainLayout><CategoryHelpConfort /></MainLayout>} />
+        <Route path="/documents" element={<MainLayout><Documents /></MainLayout>} />
+        
+        {/* Pilotage Agence */}
+        <Route path="/mes-indicateurs" element={<MainLayout showSidebar={false}><IndicateursLayout /></MainLayout>}>
           <Route index element={<IndicateursAccueil />} />
           <Route path="apporteurs" element={<IndicateursApporteurs />} />
           <Route path="univers" element={<IndicateursUnivers />} />
           <Route path="techniciens" element={<IndicateursTechniciens />} />
           <Route path="sav" element={<IndicateursSAV />} />
         </Route>
+        <Route path="/actions-a-mener" element={<MainLayout><ActionsAMener /></MainLayout>} />
+        <Route path="/actions-a-mener/category/:slug" element={<MainLayout><CategoryActionsAMener /></MainLayout>} />
+        <Route path="/diffusion" element={<DiffusionDashboard />} />
+        
+        {/* Support */}
+        <Route path="/support" element={<MainLayout><Support /></MainLayout>} />
+        <Route path="/support-tickets" element={<MainLayout><UserTickets /></MainLayout>} />
+        <Route path="/mes-demandes" element={<MainLayout><UserDemands /></MainLayout>} />
+        
+        {/* Franchiseur */}
         <Route path="/tete-de-reseau" element={<FranchiseurLayout />}>
           <Route index element={<FranchiseurHome />} />
           <Route path="agences" element={<FranchiseurAgencies />} />
@@ -118,19 +116,36 @@ function AppContent() {
           <Route path="redevances" element={<FranchiseurRoyalties />} />
           <Route path="parametres" element={<FranchiseurSettings />} />
         </Route>
-        <Route path="/diffusion" element={<DiffusionDashboard />} />
-        <Route path="/profile" element={<Layout showHeader={false} showSidebar={false}><Profile /></Layout>} />
-        <Route path="/favorites" element={<Layout showHeader showSidebar={false}><Favorites /></Layout>} />
+        
+        {/* Administration */}
+        <Route path="/admin" element={<MainLayout><AdminIndex /></MainLayout>} />
+        <Route path="/admin/documents" element={<MainLayout><AdminDocuments /></MainLayout>} />
+        <Route path="/admin/support" element={<MainLayout><AdminSupportTickets /></MainLayout>} />
+        <Route path="/admin/support-levels" element={<MainLayout><AdminSupportLevels /></MainLayout>} />
+        <Route path="/admin/escalation-history" element={<MainLayout><AdminEscalationHistory /></MainLayout>} />
+        <Route path="/admin/tickets" element={<MainLayout><AdminSupportTickets /></MainLayout>} />
+        <Route path="/admin/backup" element={<MainLayout><AdminBackup /></MainLayout>} />
+        <Route path="/admin/helpconfort-backup" element={<MainLayout><AdminHelpConfortBackup /></MainLayout>} />
+        <Route path="/admin/users" element={<MainLayout><AdminUsers /></MainLayout>} />
+        <Route path="/admin/users-list" element={<MainLayout><AdminUsersList /></MainLayout>} />
+        <Route path="/admin/role-permissions" element={<MainLayout><AdminRolePermissions /></MainLayout>} />
+        <Route path="/admin/agencies" element={<MainLayout><AdminAgencies /></MainLayout>} />
+        <Route path="/admin/storage-quota" element={<MainLayout><AdminStorageQuota /></MainLayout>} />
+        <Route path="/admin/cache-backup" element={<MainLayout><AdminCacheBackup /></MainLayout>} />
+        <Route path="/admin/user-activity" element={<MainLayout><AdminUserActivity /></MainLayout>} />
+        
+        {/* User pages */}
+        <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
+        <Route path="/favorites" element={<MainLayout><Favorites /></MainLayout>} />
+        
+        {/* 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
       
       <ChangePasswordDialog 
         open={showPasswordDialog} 
         onOpenChange={(open) => {
-          if (!open && mustChangePassword) {
-            // Ne pas permettre de fermer le dialog si le changement est obligatoire
-            return;
-          }
+          if (!open && mustChangePassword) return;
           setShowPasswordDialog(open);
         }}
         onSuccess={() => {
