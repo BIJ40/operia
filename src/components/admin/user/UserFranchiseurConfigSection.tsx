@@ -89,11 +89,13 @@ export function UserFranchiseurConfigSection({
           </RadioGroup>
         </div>
 
-        {franchiseurRole === 'animateur' && (
+        {(franchiseurRole === 'animateur' || franchiseurRole === 'directeur') && (
           <div className="space-y-2">
             <Label className="text-sm font-medium">Agences assignées</Label>
             <p className="text-xs text-muted-foreground mb-2">
-              Par défaut, les animateurs voient toutes les agences. Sélectionnez pour restreindre.
+              {franchiseurRole === 'animateur' 
+                ? 'Par défaut, les animateurs voient toutes les agences. Sélectionnez pour restreindre.'
+                : 'Agences sous la responsabilité de ce directeur.'}
             </p>
             <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded p-2">
               {agencies.map((agency) => (
