@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical, Lock, Clock, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Search, GripVertical, Lock, Clock, Sparkles, RefreshCw } from 'lucide-react';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { toast } from 'sonner';
 import { IconPicker } from '@/components/IconPicker';
@@ -303,7 +303,7 @@ export default function HelpConfort() {
     return Icon;
   };
 
-  // Calculate category status (hasInProgress, hasNew)
+  // Calculate category status (hasInProgress, hasNew, hasUpdate)
   const getCategoryStatus = useMemo(() => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -315,7 +315,11 @@ export default function HelpConfort() {
         if (!s.completedAt) return false;
         return new Date(s.completedAt) > sevenDaysAgo;
       });
-      return { hasInProgress, hasNew };
+      const hasUpdate = sections.some(s => {
+        if (!s.contentUpdatedAt) return false;
+        return new Date(s.contentUpdatedAt) > sevenDaysAgo;
+      });
+      return { hasInProgress, hasNew, hasUpdate };
     };
   }, [blocks]);
 
@@ -508,7 +512,7 @@ export default function HelpConfort() {
               const Icon = IconComponent(category.icon || 'BookOpen');
               const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
               const locked = isBlockLocked(category.id, [category]);
-              const { hasInProgress, hasNew } = getCategoryStatus(category.id);
+              const { hasInProgress, hasNew, hasUpdate } = getCategoryStatus(category.id);
               
               if (locked) {
                 return (
@@ -559,6 +563,16 @@ export default function HelpConfort() {
                         <Clock className="w-3 h-3" />
                         En cours
                       </div>
+                    </div>
+                  )}
+                  {/* Badge M.A.J - panneau avec pied */}
+                  {hasUpdate && !hasInProgress && (
+                    <div className="absolute -top-3 -right-1 z-20 flex flex-col items-center">
+                      <div className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 shadow-md border border-primary-foreground/20">
+                        <RefreshCw className="w-2.5 h-2.5" />
+                        M.A.J
+                      </div>
+                      <div className="w-0.5 h-2 bg-primary/80 rounded-b" />
                     </div>
                   )}
                   {isCustomImage ? (

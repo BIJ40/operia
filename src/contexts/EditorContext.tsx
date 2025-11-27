@@ -64,7 +64,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         // First load metadata without content to avoid timeout
         const { data, error } = await supabase
           .from('blocks')
-          .select('id,type,title,slug,parent_id,order,icon,color_preset,hide_from_sidebar,hide_title,attachments,content_type,tips_type,summary,show_summary,is_in_progress,completed_at')
+          .select('id,type,title,slug,parent_id,order,icon,color_preset,hide_from_sidebar,hide_title,attachments,content_type,tips_type,summary,show_summary,is_in_progress,completed_at,content_updated_at')
           .order('order');
 
         if (error) throw error;
@@ -109,6 +109,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             showSummary: block.show_summary !== false,
             isInProgress: block.is_in_progress || false,
             completedAt: block.completed_at || null,
+            contentUpdatedAt: block.content_updated_at || null,
           }));
 
           setBlocks(transformedBlocks);
@@ -235,6 +236,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       if (updates.showSummary !== undefined) updateData.show_summary = updates.showSummary;
       if (updates.isInProgress !== undefined) updateData.is_in_progress = updates.isInProgress;
       if (updates.completedAt !== undefined) updateData.completed_at = updates.completedAt;
+      if (updates.contentUpdatedAt !== undefined) updateData.content_updated_at = updates.contentUpdatedAt;
       
       const { error } = await supabase
         .from('blocks')

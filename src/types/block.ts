@@ -33,6 +33,7 @@ export interface Block {
   hideTitle?: boolean;
   isInProgress?: boolean;
   completedAt?: string; // ISO date when section was marked as completed
+  contentUpdatedAt?: string; // ISO date when content was updated (for M.A.J badge)
 }
 
 export interface AppData {
