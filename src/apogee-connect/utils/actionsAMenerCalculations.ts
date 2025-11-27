@@ -221,6 +221,7 @@ export function buildActionsAMener(
       });
     
     let technicienName = 'Technicien inconnu';
+    let technicienId: number | undefined = undefined;
     
     if (rdvEntries.length > 0) {
       // Ne garder que les RDV avant ou à la même date que le statut
@@ -232,6 +233,7 @@ export function buildActionsAMener(
       if (rdvAvant.length > 0) {
         const lastRdv = rdvAvant[rdvAvant.length - 1];
         technicienName = lastRdv.userStr || lastRdv.data?.userName || 'Technicien inconnu';
+        technicienId = lastRdv.userId; // Toujours récupérer l'ID pour lookup ultérieur
       }
     }
     
@@ -258,6 +260,7 @@ export function buildActionsAMener(
       isLate,
       clientName,
       technicienName,
+      technicienId,
       daysLate: isLate ? differenceInDays(today, deadline) : 0,
     });
   });
