@@ -4,7 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { ColorPreset } from '@/types/block';
 import { useState, useEffect } from 'react';
-import { Save, X, Clock, Sparkles, Check, RefreshCw } from 'lucide-react';
+import { Save, X, Clock, Sparkles, Check, RefreshCw, Ban } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +49,7 @@ interface SectionEditFormProps {
   initialIsInProgress?: boolean;
   initialCompletedAt?: string;
   initialContentUpdatedAt?: string;
+  initialIsEmpty?: boolean;
   onSave: (data: {
     title: string;
     content: string;
@@ -60,6 +61,7 @@ interface SectionEditFormProps {
     isInProgress?: boolean;
     completedAt?: string;
     contentUpdatedAt?: string;
+    isEmpty?: boolean;
   }) => void;
   onCancel: () => void;
 }
@@ -76,6 +78,7 @@ export function SectionEditForm({
   initialIsInProgress = false,
   initialCompletedAt,
   initialContentUpdatedAt,
+  initialIsEmpty = false,
   onSave,
   onCancel,
 }: SectionEditFormProps) {
@@ -114,6 +117,7 @@ export function SectionEditForm({
   const [isInProgress, setIsInProgress] = useState(initialIsInProgress);
   const [completedAt, setCompletedAt] = useState(initialCompletedAt);
   const [contentUpdatedAt, setContentUpdatedAt] = useState(initialContentUpdatedAt);
+  const [isEmpty, setIsEmpty] = useState(initialIsEmpty);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Helper to check if section is new (completed within 7 days)
@@ -234,6 +238,7 @@ export function SectionEditForm({
       isInProgress,
       completedAt,
       contentUpdatedAt,
+      isEmpty,
     });
     clearStorage();
   };
@@ -241,11 +246,13 @@ export function SectionEditForm({
   const handleMarkComplete = () => {
     setIsInProgress(false);
     setCompletedAt(new Date().toISOString());
+    setIsEmpty(false);
   };
 
   const handleMarkInProgress = () => {
     setIsInProgress(true);
     setCompletedAt(undefined);
+    setIsEmpty(false);
   };
 
   const handleMarkUpdated = () => {
@@ -254,6 +261,17 @@ export function SectionEditForm({
 
   const handleClearUpdated = () => {
     setContentUpdatedAt(undefined);
+  };
+
+  const handleMarkEmpty = () => {
+    setIsEmpty(true);
+    setIsInProgress(false);
+    setCompletedAt(undefined);
+    setContentUpdatedAt(undefined);
+  };
+
+  const handleClearEmpty = () => {
+    setIsEmpty(false);
   };
 
   const handleCancel = () => {
@@ -375,9 +393,20 @@ export function SectionEditForm({
           <Button 
             type="button"
             size="sm"
-            variant={isInProgress ? "default" : "outline"}
+            variant={isEmpty ? "default" : "outline"}
+            onClick={isEmpty ? handleClearEmpty : handleMarkEmpty}
+            className="gap-1 bg-muted/50 border-muted-foreground/40 hover:bg-muted text-muted-foreground"
+          >
+            <Ban className="w-3 h-3" />
+            {isEmpty ? "Retirer Vide" : "Vide"}
+          </Button>
+          <Button 
+            type="button"
+            size="sm"
+            variant={isInProgress && !isEmpty ? "default" : "outline"}
             onClick={handleMarkInProgress}
             className="gap-1"
+            disabled={isEmpty}
           >
             <Clock className="w-3 h-3" />
             En cours
@@ -385,9 +414,10 @@ export function SectionEditForm({
           <Button 
             type="button"
             size="sm"
-            variant={!isInProgress && completedAt ? "default" : "outline"}
+            variant={!isInProgress && completedAt && !isEmpty ? "default" : "outline"}
             onClick={handleMarkComplete}
             className="gap-1"
+            disabled={isEmpty}
           >
             <Check className="w-3 h-3" />
             Terminé
@@ -395,21 +425,28 @@ export function SectionEditForm({
           <Button 
             type="button"
             size="sm"
-            variant={isUpdated ? "default" : "outline"}
+            variant={isUpdated && !isEmpty ? "default" : "outline"}
             onClick={isUpdated ? handleClearUpdated : handleMarkUpdated}
             className="gap-1 bg-primary/10 border-primary/40 hover:bg-primary/20 text-primary"
+            disabled={isEmpty}
           >
             <RefreshCw className="w-3 h-3" />
             {isUpdated ? "Retirer M.A.J" : "Marquer M.A.J"}
           </Button>
         </div>
-        {isNew && (
+        {isEmpty && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Ban className="w-3 h-3" />
+            Section grisée - indique qu'elle n'est pas encore rédigée
+          </div>
+        )}
+        {isNew && !isEmpty && (
           <div className="flex items-center gap-1 text-xs text-accent">
             <Sparkles className="w-3 h-3" />
             Badge "New" affiché pendant 7 jours
           </div>
         )}
-        {isUpdated && (
+        {isUpdated && !isEmpty && (
           <div className="flex items-center gap-1 text-xs text-primary">
             <RefreshCw className="w-3 h-3" />
             Badge "M.A.J" affiché pendant 7 jours

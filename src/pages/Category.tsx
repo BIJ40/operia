@@ -386,6 +386,7 @@ export default function Category() {
                 initialIsInProgress={editingSection.isInProgress || false}
                 initialCompletedAt={editingSection.completedAt}
                 initialContentUpdatedAt={editingSection.contentUpdatedAt}
+                initialIsEmpty={editingSection.isEmpty || false}
                 onSave={handleSave}
                 onCancel={closeEditDialog}
               />

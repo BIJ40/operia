@@ -204,6 +204,7 @@ export type Database = {
           hide_title: boolean | null
           icon: string | null
           id: string
+          is_empty: boolean | null
           is_single_section: boolean | null
           order: number
           parent_id: string | null
@@ -228,6 +229,7 @@ export type Database = {
           hide_title?: boolean | null
           icon?: string | null
           id?: string
+          is_empty?: boolean | null
           is_single_section?: boolean | null
           order?: number
           parent_id?: string | null
@@ -252,6 +254,7 @@ export type Database = {
           hide_title?: boolean | null
           icon?: string | null
           id?: string
+          is_empty?: boolean | null
           is_single_section?: boolean | null
           order?: number
           parent_id?: string | null
@@ -280,6 +283,7 @@ export type Database = {
           hide_title: boolean | null
           icon: string | null
           id: string
+          is_empty: boolean | null
           is_in_progress: boolean | null
           order: number
           parent_id: string | null
@@ -303,6 +307,7 @@ export type Database = {
           hide_title?: boolean | null
           icon?: string | null
           id?: string
+          is_empty?: boolean | null
           is_in_progress?: boolean | null
           order?: number
           parent_id?: string | null
@@ -326,6 +331,7 @@ export type Database = {
           hide_title?: boolean | null
           icon?: string | null
           id?: string
+          is_empty?: boolean | null
           is_in_progress?: boolean | null
           order?: number
           parent_id?: string | null

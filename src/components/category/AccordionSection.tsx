@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { GripVertical, Plus, Lightbulb, Edit2, Copy, FolderInput, Trash2, ChevronDown, Info, Clock, Sparkles } from 'lucide-react';
+import { GripVertical, Plus, Lightbulb, Edit2, Copy, FolderInput, Trash2, ChevronDown, Info, Clock, Sparkles, Ban } from 'lucide-react';
 import { createSanitizedHtml } from '@/lib/sanitize';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import {
@@ -64,13 +64,18 @@ export function AccordionSection({
   onAddTips,
 }: AccordionSectionProps) {
   const isNew = isSectionNew(section.completedAt);
+  const isEmptySection = section.isEmpty === true;
   
   return (
-    <AccordionItem value={section.id} id={section.id}>
-      <AccordionTrigger>
+    <AccordionItem 
+      value={section.id} 
+      id={section.id}
+      className={isEmptySection ? 'opacity-50' : ''}
+    >
+      <AccordionTrigger className={isEmptySection ? 'cursor-default' : ''} disabled={isEmptySection}>
         <div className="flex items-center justify-between w-full text-foreground">
           <div className="flex items-center gap-3 flex-1">
-            {section.showSummary && section.summary ? (
+            {section.showSummary && section.summary && !isEmptySection ? (
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -94,25 +99,31 @@ export function AccordionSection({
                 </Tooltip>
               </TooltipProvider>
             ) : (
-              <ChevronDown className="h-4 w-4 shrink-0 text-primary transition-transform duration-200" />
+              <ChevronDown className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isEmptySection ? 'text-muted-foreground' : 'text-primary'}`} />
             )}
-            <h2 className="text-xl font-semibold text-left text-foreground">
+            <h2 className={`text-xl font-semibold text-left ${isEmptySection ? 'text-muted-foreground' : 'text-foreground'}`}>
               {section.title}
             </h2>
             {/* Section badges */}
-            {section.isInProgress && (
+            {isEmptySection && (
+              <span className="bg-muted text-muted-foreground text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
+                <Ban className="w-3 h-3" />
+                Vide
+              </span>
+            )}
+            {!isEmptySection && section.isInProgress && (
               <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 En cours
               </span>
             )}
-            {isNew && !section.isInProgress && (
+            {!isEmptySection && isNew && !section.isInProgress && (
               <span className="bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 New
               </span>
             )}
-            {!isEditMode && !isAdmin && (
+            {!isEditMode && !isAdmin && !isEmptySection && (
               <div onClick={(e) => e.stopPropagation()}>
                 <FavoriteButton
                   blockId={section.id}
@@ -253,12 +264,14 @@ export function AccordionSection({
           )}
         </div>
       </AccordionTrigger>
-      <AccordionContent>
-        <div
-          className="prose prose-sm max-w-none text-foreground px-1 py-2 break-words overflow-visible"
-          dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
-        />
-      </AccordionContent>
+      {!isEmptySection && (
+        <AccordionContent>
+          <div
+            className="prose prose-sm max-w-none text-foreground px-1 py-2 break-words overflow-visible"
+            dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
+          />
+        </AccordionContent>
+      )}
     </AccordionItem>
   );
 }

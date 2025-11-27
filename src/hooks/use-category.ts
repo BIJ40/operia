@@ -100,6 +100,7 @@ export const useCategory = () => {
           is_in_progress: updatedSection.isInProgress || false,
           completed_at: updatedSection.completedAt || null,
           content_updated_at: updatedSection.contentUpdatedAt || null,
+          is_empty: updatedSection.isEmpty || false,
         })
         .eq('id', updatedSection.id);
 
@@ -133,6 +134,7 @@ export const useCategory = () => {
           is_in_progress: updatedSection.isInProgress || false,
           completed_at: updatedSection.completedAt || null,
           content_updated_at: updatedSection.contentUpdatedAt || null,
+          is_empty: updatedSection.isEmpty || false,
         })
         .eq('id', updatedSection.id);
 
