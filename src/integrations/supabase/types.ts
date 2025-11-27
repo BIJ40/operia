@@ -150,7 +150,6 @@ export type Database = {
       apogee_agencies: {
         Row: {
           adresse: string | null
-          animateur_id: string | null
           code_postal: string | null
           contact_email: string | null
           contact_phone: string | null
@@ -165,7 +164,6 @@ export type Database = {
         }
         Insert: {
           adresse?: string | null
-          animateur_id?: string | null
           code_postal?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -180,7 +178,6 @@ export type Database = {
         }
         Update: {
           adresse?: string | null
-          animateur_id?: string | null
           code_postal?: string | null
           contact_email?: string | null
           contact_phone?: string | null
