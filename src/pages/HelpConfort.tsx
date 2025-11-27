@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical, Lock, Clock, Sparkles, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Search, GripVertical, Lock, Clock, Sparkles, RefreshCw, Ban } from 'lucide-react';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { toast } from 'sonner';
 import { IconPicker } from '@/components/IconPicker';
@@ -54,6 +54,7 @@ interface SortableCategoryProps {
   isEditMode: boolean;
   hasInProgress: boolean;
   hasNew: boolean;
+  isEmpty: boolean;
   isBlockLocked: (blockId: string, blocks: any[]) => boolean;
   onEditTitleChange: (value: string) => void;
   onEditIconChange: (value: string) => void;
@@ -64,7 +65,7 @@ interface SortableCategoryProps {
   onCancel: () => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  getColorClass: (color?: ColorPreset) => string;
+  getColorClass: (color?: ColorPreset, isEmpty?: boolean) => string;
   IconComponent: (iconName: string) => any;
 }
 
@@ -79,6 +80,7 @@ const SortableCategory = ({
   isEditMode,
   hasInProgress,
   hasNew,
+  isEmpty,
   isBlockLocked,
   onEditTitleChange,
   onEditIconChange,
@@ -114,10 +116,19 @@ const SortableCategory = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 overflow-visible ${getColorClass(category.colorPreset)}`}
+      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 overflow-visible ${getColorClass(category.colorPreset, isEmpty)}`}
     >
+      {/* Badge Vide */}
+      {isEmpty && !isEditMode && (
+        <div className="absolute -top-2 -right-2 z-20">
+          <div className="bg-muted text-muted-foreground text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1 border border-muted-foreground/30">
+            <Ban className="w-3 h-3" />
+            Vide
+          </div>
+        </div>
+      )}
       {/* Badge New en écharpe diagonale verte - décalé aux 3/4 */}
-      {hasNew && !isEditMode && (
+      {hasNew && !isEmpty && !isEditMode && (
         <div className="absolute -top-2 left-3/4 -translate-x-1/2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
           <div className="absolute top-3 -left-5 w-20 bg-green-500 text-white text-[10px] font-bold py-0.5 text-center transform -rotate-45 shadow-md">
             NEW
@@ -125,7 +136,7 @@ const SortableCategory = ({
         </div>
       )}
       {/* Badge En cours - arrondi accentué orange */}
-      {hasInProgress && !isEditMode && (
+      {hasInProgress && !isEmpty && !isEditMode && (
         <div className="absolute -top-2 -right-2 z-20">
           <div className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
             <Clock className="w-3 h-3" />
@@ -293,8 +304,11 @@ export default function HelpConfort() {
     })
   );
 
-  const getColorClass = (color?: ColorPreset) => {
-    // Style unifié aux couleurs du site - même que ApogeeGuide
+  const getColorClass = (color?: ColorPreset, isEmpty?: boolean) => {
+    // Style unifié aux couleurs du site - grisé si vide
+    if (isEmpty) {
+      return "bg-muted/50 border-muted-foreground/30 border-l-muted-foreground/50 opacity-60";
+    }
     return "bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 border-helpconfort-orange/40 border-l-primary hover:border-helpconfort-orange/60 hover:border-l-accent hover:shadow-xl";
   };
 
@@ -303,12 +317,12 @@ export default function HelpConfort() {
     return Icon;
   };
 
-  // Calculate category status (hasInProgress, hasNew, hasUpdate)
+  // Calculate category status (hasInProgress, hasNew, hasUpdate, isEmpty)
   const getCategoryStatus = useMemo(() => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    return (categoryId: string) => {
+    return (categoryId: string, category: any) => {
       const sections = blocks.filter(b => b.parentId === categoryId && b.type === 'section');
       const hasInProgress = sections.some(s => s.isInProgress);
       const hasNew = sections.some(s => {
@@ -319,7 +333,9 @@ export default function HelpConfort() {
         if (!s.contentUpdatedAt) return false;
         return new Date(s.contentUpdatedAt) > sevenDaysAgo;
       });
-      return { hasInProgress, hasNew, hasUpdate };
+      // isEmpty: si la catégorie est marquée vide OU si toutes ses sections sont vides
+      const isEmpty = category.isEmpty || (sections.length > 0 && sections.every(s => s.isEmpty));
+      return { hasInProgress, hasNew, hasUpdate, isEmpty };
     };
   }, [blocks]);
 
@@ -473,7 +489,7 @@ export default function HelpConfort() {
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   {filteredCategories.map(category => {
-                    const { hasInProgress, hasNew } = getCategoryStatus(category.id);
+                    const { hasInProgress, hasNew, isEmpty } = getCategoryStatus(category.id, category);
                     return (
                       <SortableCategory
                         key={category.id}
@@ -487,6 +503,7 @@ export default function HelpConfort() {
                         isEditMode={isEditMode}
                         hasInProgress={hasInProgress}
                         hasNew={hasNew}
+                        isEmpty={isEmpty}
                         isBlockLocked={isBlockLocked}
                         onEditTitleChange={setEditTitle}
                         onEditIconChange={setEditIcon}
@@ -512,7 +529,39 @@ export default function HelpConfort() {
               const Icon = IconComponent(category.icon || 'BookOpen');
               const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
               const locked = isBlockLocked(category.id, [category]);
-              const { hasInProgress, hasNew, hasUpdate } = getCategoryStatus(category.id);
+              const { hasInProgress, hasNew, hasUpdate, isEmpty } = getCategoryStatus(category.id, category);
+              
+              // Catégorie vide - non cliquable, grisée
+              if (isEmpty) {
+                return (
+                  <div
+                    key={category.id}
+                    className="group relative border-2 border-l-4 rounded-full px-4 py-2 transition-all duration-300 flex items-center gap-3 overflow-visible bg-muted/50 border-muted-foreground/30 border-l-muted-foreground/50 opacity-60 cursor-default"
+                  >
+                    {/* Badge Vide */}
+                    <div className="absolute -top-2 -right-2 z-20">
+                      <div className="bg-muted text-muted-foreground text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1 border border-muted-foreground/30">
+                        <Ban className="w-3 h-3" />
+                        Vide
+                      </div>
+                    </div>
+                    {isCustomImage ? (
+                      <img 
+                        src={category.icon} 
+                        alt={category.title} 
+                        className="w-6 h-6 object-contain flex-shrink-0 opacity-50" 
+                      />
+                    ) : (
+                      <Icon className="w-6 h-6 text-muted-foreground flex-shrink-0" />
+                    )}
+                    {(category.showTitleOnCard !== false) && (
+                      <span className="text-base font-medium text-muted-foreground truncate">
+                        {category.title}
+                      </span>
+                    )}
+                  </div>
+                );
+              }
               
               if (locked) {
                 return (
