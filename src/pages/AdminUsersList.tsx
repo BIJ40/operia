@@ -22,7 +22,7 @@ interface UserProfile {
   role_agence: string | null;
   service_competencies: any;
   created_at: string;
-  system_role?: string;
+  system_roles?: string[];
   must_change_password: boolean | null;
 }
 
@@ -73,18 +73,19 @@ export default function AdminUsersList() {
 
       if (profilesError) throw profilesError;
 
-      // Récupérer les rôles système pour chaque utilisateur
+      // Récupérer TOUS les rôles système pour chaque utilisateur
       const usersWithRoles = await Promise.all(
         (profilesData || []).map(async (profile) => {
-          const { data: roleData } = await supabase
+          const { data: rolesData } = await supabase
             .from('user_roles')
             .select('role')
-            .eq('user_id', profile.id)
-            .maybeSingle();
+            .eq('user_id', profile.id);
 
+          const roles = rolesData?.map(r => r.role) || [];
+          
           return {
             ...profile,
-            system_role: roleData?.role || 'user'
+            system_roles: roles.length > 0 ? roles : ['user']
           };
         })
       );
@@ -296,18 +297,23 @@ export default function AdminUsersList() {
                   <TableCell>{user.agence || '-'}</TableCell>
                   <TableCell>{getRoleLabel(user.role_agence)}</TableCell>
                   <TableCell>
-                    <Badge variant={
-                      user.system_role === 'admin' ? 'destructive' : 
-                      user.system_role === 'support' ? 'default' : 
-                      'secondary'
-                    }>
-                      {user.system_role === 'admin' ? 'Administrateur' : 
-                       user.system_role === 'support' ? 'Support' : 
-                       'Utilisateur'}
-                    </Badge>
+                    <div className="flex flex-wrap gap-1">
+                      {user.system_roles?.includes('admin') && (
+                        <Badge variant="destructive">Admin</Badge>
+                      )}
+                      {user.system_roles?.includes('franchiseur') && (
+                        <Badge className="bg-purple-500 hover:bg-purple-600 text-white">Franchiseur</Badge>
+                      )}
+                      {user.system_roles?.includes('support') && (
+                        <Badge variant="default">Support</Badge>
+                      )}
+                      {user.system_roles?.length === 1 && user.system_roles[0] === 'user' && (
+                        <Badge variant="secondary">Utilisateur</Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    {user.system_role !== 'user' ? (
+                    {user.system_roles && !user.system_roles.every(r => r === 'user') ? (
                       <div className="flex flex-wrap gap-1">
                         {user.service_competencies?.apogee && (
                           <Badge className="bg-blue-500 hover:bg-blue-600 text-white text-xs">
@@ -356,7 +362,7 @@ export default function AdminUsersList() {
                       >
                         <Key className="w-4 h-4 text-accent" />
                       </Button>
-                      {user.system_role !== 'admin' && (
+                      {!user.system_roles?.includes('admin') && (
                         <Button
                           variant="ghost"
                           size="sm"
