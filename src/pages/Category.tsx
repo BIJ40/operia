@@ -1,4 +1,4 @@
-import { useParams, Navigate, Link } from 'react-router-dom';
+import { useParams, Navigate, Link, useSearchParams } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,7 @@ import { useCategoryLogic } from '@/hooks/use-category-logic';
 
 export default function Category() {
   const { slug } = useParams();
+  const [searchParams] = useSearchParams();
 
   if (slug === 'faq-globale') {
     return <Navigate to="/apogee" replace />;
@@ -50,6 +51,9 @@ export default function Category() {
 
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
   const { isAuthenticated, isAdmin, hasAccessToScope } = useAuth();
+  
+  // Helper to preserve edit mode in navigation
+  const getEditUrl = (url: string) => isEditMode ? `${url}?edit=true` : url;
   
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -177,7 +181,7 @@ export default function Category() {
         <div className="flex items-center justify-between gap-2">
           {/* Left zone: Retour + left arrow */}
           <div className="flex items-center gap-2 shrink-0">
-            <Link to="/apogee">
+            <Link to={getEditUrl("/apogee")}>
               <Button variant="ghost" size="sm" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Retour
@@ -188,7 +192,7 @@ export default function Category() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>
-                    <Link to={prevCategory ? `/apogee/category/${prevCategory.slug}` : '#'}>
+                    <Link to={prevCategory ? getEditUrl(`/apogee/category/${prevCategory.slug}`) : '#'}>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -229,7 +233,7 @@ export default function Category() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>
-                    <Link to={nextCategory ? `/apogee/category/${nextCategory.slug}` : '#'}>
+                    <Link to={nextCategory ? getEditUrl(`/apogee/category/${nextCategory.slug}`) : '#'}>
                       <Button 
                         variant="ghost" 
                         size="icon" 

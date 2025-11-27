@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   Headset, MessageSquare, Network, Building2, PieChart, GitCompare,
@@ -20,7 +20,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/use-permissions';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 interface NavItem {
   title: string;
@@ -38,10 +38,24 @@ interface NavGroup {
 
 export function UnifiedSidebar() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { isAdmin, isSupport, isFranchiseur, canViewScope } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['help-academy', 'pilotage']));
+
+  // Check if currently in edit mode
+  const isInEditMode = searchParams.get('edit') === 'true' && isAdmin;
+
+  // Helper to preserve edit mode for guide URLs
+  const getUrlWithEditMode = (url: string) => {
+    const editablePrefix = ['/apogee', '/apporteurs', '/helpconfort'];
+    const isEditableUrl = editablePrefix.some(prefix => url.startsWith(prefix));
+    if (isInEditMode && isEditableUrl) {
+      return `${url}?edit=true`;
+    }
+    return url;
+  };
 
   const toggleGroup = (label: string) => {
     setOpenGroups(prev => {
@@ -209,7 +223,7 @@ export function UnifiedSidebar() {
                               `}
                               title={item.description}
                             >
-                              <Link to={item.url} className="flex items-center gap-3">
+                              <Link to={getUrlWithEditMode(item.url)} className="flex items-center gap-3">
                                 <Icon className="w-5 h-5 shrink-0" />
                                 {!collapsed && <span className="truncate">{item.title}</span>}
                               </Link>
