@@ -134,85 +134,84 @@ export default function CategoryApporteur() {
     <div className="space-y-6 pb-8">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm pb-4 pt-2 -mx-4 px-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4">
-            {/* Left zone: Retour + left arrow */}
-            <div className="flex items-center gap-2 shrink-0">
-              <Link to={`/apporteurs/${slug}`}>
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <ArrowLeft className="h-4 w-4" />
-                  Retour
-                </Button>
-              </Link>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Link to={prevSubcategory ? `/apporteurs/${slug}/${prevSubcategory.slug}` : '#'}>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8"
-                          disabled={!prevSubcategory}
-                        >
-                          <ChevronLeft className="h-5 w-5" />
-                        </Button>
-                      </Link>
-                    </span>
-                  </TooltipTrigger>
-                  {prevSubcategory && (
-                    <TooltipContent side="bottom">
-                      {prevSubcategory.title}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+        <div className="flex items-center justify-between gap-2">
+          {/* Left zone: Retour + left arrow */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Link to={`/apporteurs/${slug}`}>
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Retour
+              </Button>
+            </Link>
             
-            {/* Center zone: Title (truncates if too long) */}
-            <h1 className="text-2xl font-bold text-foreground truncate flex-1 min-w-0 text-center">{subcategory.title}</h1>
-            
-            {/* Right zone: Progress bar + indicator + right arrow (FIXED position) */}
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  key={currentSubcategoryIndex}
-                  className="h-full bg-primary transition-all duration-300 origin-left animate-pulse-progress"
-                  style={{ width: `${((currentSubcategoryIndex + 1) / availableSubcategories.length) * 100}%` }}
-                />
-              </div>
-              <span className="text-sm text-muted-foreground font-medium whitespace-nowrap">
-                {currentSubcategoryIndex + 1}/{availableSubcategories.length}
-              </span>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Link to={nextSubcategory ? `/apporteurs/${slug}/${nextSubcategory.slug}` : '#'}>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8"
-                          disabled={!nextSubcategory}
-                        >
-                          <ChevronRight className="h-5 w-5" />
-                        </Button>
-                      </Link>
-                    </span>
-                  </TooltipTrigger>
-                  {nextSubcategory && (
-                    <TooltipContent side="bottom">
-                      {nextSubcategory.title}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Link to={prevSubcategory ? `/apporteurs/${slug}/${prevSubcategory.slug}` : '#'}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        disabled={!prevSubcategory}
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  </span>
+                </TooltipTrigger>
+                {prevSubcategory && (
+                  <TooltipContent side="bottom">
+                    {prevSubcategory.title}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </div>
           
-          <div className="flex items-center gap-2">
+          {/* Center zone: Title (truncates if too long) */}
+          <h1 className="text-2xl font-bold text-foreground truncate flex-1 min-w-0">{subcategory.title}</h1>
+          
+          {/* Right zone: Progress bar + indicator + right arrow (FIXED to right) */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+              <div 
+                key={currentSubcategoryIndex}
+                className="h-full bg-primary transition-all duration-300 origin-left animate-pulse-progress"
+                style={{ width: `${((currentSubcategoryIndex + 1) / availableSubcategories.length) * 100}%` }}
+              />
+            </div>
+            <span className="text-sm text-muted-foreground font-medium whitespace-nowrap">
+              {currentSubcategoryIndex + 1}/{availableSubcategories.length}
+            </span>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Link to={nextSubcategory ? `/apporteurs/${slug}/${nextSubcategory.slug}` : '#'}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        disabled={!nextSubcategory}
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  </span>
+                </TooltipTrigger>
+                {nextSubcategory && (
+                  <TooltipContent side="bottom">
+                    {nextSubcategory.title}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-end gap-2 mt-2">
             {hasTips && (
               <Button
                 variant={showTips ? "default" : "outline"}
@@ -253,7 +252,6 @@ export default function CategoryApporteur() {
             )}
           </div>
         </div>
-      </div>
 
       {/* Sections */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
