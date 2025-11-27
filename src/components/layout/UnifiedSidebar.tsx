@@ -124,7 +124,9 @@ export function UnifiedSidebar() {
 
   const isActive = (url: string) => {
     if (url === '/') return location.pathname === '/';
-    return location.pathname.startsWith(url);
+    // For /admin, only match exact path to avoid highlighting when on /admin/users etc.
+    if (url === '/admin') return location.pathname === '/admin';
+    return location.pathname === url || location.pathname.startsWith(url + '/');
   };
 
   return (
