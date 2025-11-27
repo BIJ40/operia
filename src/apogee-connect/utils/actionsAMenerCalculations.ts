@@ -168,7 +168,7 @@ export function buildActionsAMener(
     }
   });
   
-  // === RÈGLE 3: Dossiers en attente technicien "ATT TECH (manuel)" ===
+  // === RÈGLE 3: Dossiers en attente technicien "ATT TECH (manuel)" ou "RT en cours" ===
   projects.forEach(project => {
     if (!project.data?.history || !Array.isArray(project.data.history)) return;
     
@@ -195,14 +195,18 @@ export function buildActionsAMener(
     
     const lastStatusChange = statusChanges[statusChanges.length - 1];
     
-    // 2) Vérifier que le dernier statut est bien "=> ATT TECH (manuel)"
-    if (!lastStatusChange.labelKind || !lastStatusChange.labelKind.includes('=> ATT TECH (manuel)')) {
+    // 2) Vérifier que le dernier statut est "=> ATT TECH (manuel)" ou "=> RT en cours"
+    const isAttTech = lastStatusChange.labelKind && lastStatusChange.labelKind.includes('=> ATT TECH (manuel)');
+    const isRtEnCours = lastStatusChange.labelKind && lastStatusChange.labelKind.includes('=> RT en cours');
+    
+    if (!isAttTech && !isRtEnCours) {
       return;
     }
     
-    const attTechTime = lastStatusChange.dateModif ? parseDateModif(lastStatusChange.dateModif) : 0;
+    const statusTime = lastStatusChange.dateModif ? parseDateModif(lastStatusChange.dateModif) : 0;
+    const statutLabel = isAttTech ? 'ATT TECH (manuel)' : 'RT en cours';
     
-    // 3) Chercher le dernier RDV réalisé (kind === 14) avant ATT TECH
+    // 3) Chercher le dernier RDV réalisé (kind === 14) avant le passage à ce statut
     const rdvEntries = history
       .filter((h: any) => 
         h.kind === 14 &&
@@ -219,14 +223,14 @@ export function buildActionsAMener(
     let technicienName = 'Technicien inconnu';
     
     if (rdvEntries.length > 0) {
-      // Ne garder que les RDV avant ou à la même date que ATT TECH
-      const rdvAvantAttTech = rdvEntries.filter((h: any) => {
+      // Ne garder que les RDV avant ou à la même date que le statut
+      const rdvAvant = rdvEntries.filter((h: any) => {
         const rdvTime = h.dateModif ? parseDateModif(h.dateModif) : 0;
-        return rdvTime <= attTechTime;
+        return rdvTime <= statusTime;
       });
       
-      if (rdvAvantAttTech.length > 0) {
-        const lastRdv = rdvAvantAttTech[rdvAvantAttTech.length - 1];
+      if (rdvAvant.length > 0) {
+        const lastRdv = rdvAvant[rdvAvant.length - 1];
         technicienName = lastRdv.userStr || lastRdv.data?.userName || 'Technicien inconnu';
       }
     }
@@ -246,7 +250,7 @@ export function buildActionsAMener(
       projectId: project.id,
       ref,
       label,
-      statut: 'ATT TECH (manuel)',
+      statut: statutLabel,
       actionLabel: ACTION_LABELS.relance_technicien,
       actionType: 'relance_technicien',
       deadline,
