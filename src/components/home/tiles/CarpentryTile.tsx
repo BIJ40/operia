@@ -1,13 +1,11 @@
 import { motion } from "framer-motion";
-import { baseTileVariants } from "./ServiceTile";
+import { baseTileVariants } from "./PlumbingTile";
 
 export const CarpentryTile = () => {
   return (
     <motion.div
       variants={baseTileVariants}
       className="relative overflow-hidden rounded-2xl border border-accent/60 bg-card/90 shadow-lg p-4 md:p-5 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20"
-      animate={{ rotate: [0, -1.2, 1.2, -0.8, 0.8, 0] }}
-      transition={{ delay: 0.5, duration: 0.35 }}
     >
       <div className="flex items-center gap-3">
         <div>
@@ -27,31 +25,18 @@ export const CarpentryTile = () => {
         </p>
       </div>
 
-      {/* Bordure électrique lumineuse */}
-      <motion.div
-        className="pointer-events-none absolute inset-0 rounded-2xl border border-yellow-400/70 dark:border-yellow-500/50"
-        initial={{ opacity: 0, boxShadow: "0 0 0px rgba(250,204,21,0)" }}
-        animate={{ opacity: 1, boxShadow: "0 0 22px rgba(250,204,21,0.5)" }}
-        transition={{ delay: 0.6, duration: 0.3 }}
-      />
+      {/* Planche en bas */}
+      <div className="pointer-events-none absolute left-6 right-6 bottom-4 h-2 rounded-full bg-amber-300/70" />
 
-      {/* Icône éclair */}
+      {/* Scie qui passe */}
       <motion.div
-        className="pointer-events-none absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 dark:bg-slate-800 text-yellow-300 text-lg shadow"
-        initial={{ scale: 0, rotate: -20, opacity: 0 }}
-        animate={{ scale: 1, rotate: 0, opacity: 1 }}
-        transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
+        className="pointer-events-none absolute bottom-3 left-6 flex h-6 px-3 items-center justify-center rounded-full bg-orange-400/90 text-xs text-white shadow"
+        initial={{ x: -40, y: 4, rotate: -10, opacity: 0 }}
+        animate={{ x: 80, y: 4, rotate: 8, opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.7, ease: "easeInOut" as const }}
       >
-        ⚡
+        🪚
       </motion.div>
-
-      {/* Arc électrique */}
-      <motion.div
-        className="pointer-events-none absolute bottom-4 right-4 h-6 w-1 bg-yellow-400/80 rounded-full"
-        initial={{ scaleY: 0, opacity: 0 }}
-        animate={{ scaleY: [0, 1, 0.5, 1, 0], opacity: [0, 1, 1, 1, 0] }}
-        transition={{ delay: 0.7, duration: 0.4, repeat: 1 }}
-      />
     </motion.div>
   );
 };
