@@ -84,7 +84,7 @@ export function MesIndicateursCard() {
         <TrendingUp className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-bold text-foreground">Mes indicateurs</h2>
-          <p className="text-xs text-muted-foreground">Tableau de bord KPIs</p>
+          <p className="text-xs text-muted-foreground">Pilotez votre agence</p>
         </div>
       </div>
 
