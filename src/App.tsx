@@ -50,6 +50,7 @@ import FranchiseurStats from "./franchiseur/pages/FranchiseurStats";
 import FranchiseurComparison from "./franchiseur/pages/FranchiseurComparison";
 import FranchiseurRoyalties from "./franchiseur/pages/FranchiseurRoyalties";
 import FranchiseurSettings from "./franchiseur/pages/FranchiseurSettings";
+import DiffusionDashboard from "./pages/DiffusionDashboard";
 import NotFound from "./pages/NotFound";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
@@ -116,6 +117,7 @@ function AppContent() {
           <Route path="redevances" element={<FranchiseurRoyalties />} />
           <Route path="parametres" element={<FranchiseurSettings />} />
         </Route>
+        <Route path="/diffusion" element={<DiffusionDashboard />} />
         <Route path="/profile" element={<Layout showHeader={false} showSidebar={false}><Profile /></Layout>} />
         <Route path="/favorites" element={<Layout showHeader showSidebar={false}><Favorites /></Layout>} />
         <Route path="*" element={<NotFound />} />
