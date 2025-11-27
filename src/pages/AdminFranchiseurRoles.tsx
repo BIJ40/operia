@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,100 +78,98 @@ export default function AdminFranchiseurRoles() {
   };
 
   return (
-    <Layout showHeader showSidebar={false}>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-              Gestion des Rôles Franchiseur
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Gérer les rôles franchiseur et les assignations d'agences
-            </p>
-          </div>
+    <div className="container mx-auto px-4 py-8 max-w-6xl space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+            Gestion des Rôles Franchiseur
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Gérer les rôles franchiseur et les assignations d'agences
+          </p>
         </div>
+      </div>
 
-        <Card className="rounded-2xl border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Utilisateurs Franchiseur
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <p className="text-muted-foreground">Chargement...</p>
-            ) : franchiseurUsers?.length === 0 ? (
-              <p className="text-muted-foreground">
-                Aucun utilisateur avec le rôle franchiseur
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {franchiseurUsers?.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <p className="font-medium">
-                          {user.first_name} {user.last_name}
-                        </p>
-                        <Badge className={getRoleBadgeColor(user.franchiseur_role)}>
-                          {getRoleLabel(user.franchiseur_role)}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
-                      
-                      {user.franchiseur_role === 'animateur' && user.agency_assignments.length > 0 && (
-                        <div className="mt-2 flex items-center gap-2 flex-wrap">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          <div className="flex gap-1 flex-wrap">
-                            {user.agency_assignments.map((assignment: any) => (
-                              <Badge key={assignment.id} variant="outline" className="text-xs">
-                                {assignment.apogee_agencies?.label || 'Agence'}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+      <Card className="rounded-2xl border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Utilisateurs Franchiseur
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <p className="text-muted-foreground">Chargement...</p>
+          ) : franchiseurUsers?.length === 0 ? (
+            <p className="text-muted-foreground">
+              Aucun utilisateur avec le rôle franchiseur
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {franchiseurUsers?.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <p className="font-medium">
+                        {user.first_name} {user.last_name}
+                      </p>
+                      <Badge className={getRoleBadgeColor(user.franchiseur_role)}>
+                        {getRoleLabel(user.franchiseur_role)}
+                      </Badge>
                     </div>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    
+                    {user.franchiseur_role === 'animateur' && user.agency_assignments.length > 0 && (
+                      <div className="mt-2 flex items-center gap-2 flex-wrap">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex gap-1 flex-wrap">
+                          {user.agency_assignments.map((assignment: any) => (
+                            <Badge key={assignment.id} variant="outline" className="text-xs">
+                              {assignment.apogee_agencies?.label || 'Agence'}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-                    <div className="flex gap-2">
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedUserId(user.id);
+                        setShowRoleDialog(true);
+                      }}
+                      className="rounded-xl"
+                    >
+                      Rôle
+                    </Button>
+
+                    {user.franchiseur_role === 'animateur' && (
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => {
                           setSelectedUserId(user.id);
-                          setShowRoleDialog(true);
+                          setShowAgenciesDialog(true);
                         }}
                         className="rounded-xl"
                       >
-                        Rôle
+                        <Building2 className="h-4 w-4 mr-1" />
+                        Agences
                       </Button>
-
-                      {user.franchiseur_role === 'animateur' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedUserId(user.id);
-                            setShowAgenciesDialog(true);
-                          }}
-                          className="rounded-xl"
-                        >
-                          <Building2 className="h-4 w-4 mr-1" />
-                          Agences
-                        </Button>
-                      )}
-                    </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {selectedUserId && (
         <>
@@ -197,6 +194,6 @@ export default function AdminFranchiseurRoles() {
           />
         </>
       )}
-    </Layout>
+    </div>
   );
 }
