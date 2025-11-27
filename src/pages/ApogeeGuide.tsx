@@ -50,6 +50,7 @@ interface SortableCategoryProps {
   editIcon: string;
   editImageUrl: string | null;
   editShowTitleOnCard: boolean;
+  editIsEmpty: boolean;
   isEditMode: boolean;
   hasInProgress: boolean;
   hasNew: boolean;
@@ -58,6 +59,7 @@ interface SortableCategoryProps {
   onEditIconChange: (value: string) => void;
   onEditImageUrlChange: (value: string | null) => void;
   onEditShowTitleOnCardChange: (value: boolean) => void;
+  onEditIsEmptyChange: (value: boolean) => void;
   onSave: () => void;
   onCancel: () => void;
   onEdit: (id: string) => void;
@@ -72,6 +74,7 @@ const SortableCategory = ({
   editIcon,
   editImageUrl,
   editShowTitleOnCard,
+  editIsEmpty,
   isEditMode,
   hasInProgress,
   hasNew,
@@ -80,6 +83,7 @@ const SortableCategory = ({
   onEditIconChange,
   onEditImageUrlChange,
   onEditShowTitleOnCardChange,
+  onEditIsEmptyChange,
   onSave,
   onCancel,
   onEdit,
@@ -204,6 +208,17 @@ const SortableCategory = ({
             </label>
           </div>
           
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="mark-empty"
+              checked={editIsEmpty}
+              onCheckedChange={onEditIsEmptyChange}
+            />
+            <label htmlFor="mark-empty" className="text-sm font-medium cursor-pointer text-muted-foreground">
+              Marquer comme vide (grise la catégorie)
+            </label>
+          </div>
+          
           <div className="flex gap-2">
             <Button onClick={onSave} size="sm">
               Enregistrer
@@ -245,6 +260,7 @@ export default function ApogeeGuide() {
   const [editIcon, setEditIcon] = useState('BookOpen');
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const [editShowTitleOnCard, setEditShowTitleOnCard] = useState(true);
+  const [editIsEmpty, setEditIsEmpty] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -318,6 +334,7 @@ export default function ApogeeGuide() {
       setEditImageUrl(isImageUrl ? category.icon : null);
       
       setEditShowTitleOnCard(category.showTitleOnCard !== false);
+      setEditIsEmpty(category.isEmpty || false);
     }
   };
 
@@ -328,6 +345,7 @@ export default function ApogeeGuide() {
         icon: editImageUrl || editIcon,
         slug: editTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         showTitleOnCard: editShowTitleOnCard,
+        isEmpty: editIsEmpty,
       });
       setEditingId(null);
       setEditImageUrl(null);
@@ -465,6 +483,7 @@ export default function ApogeeGuide() {
                       editIcon={editIcon}
                       editImageUrl={editImageUrl}
                       editShowTitleOnCard={editShowTitleOnCard}
+                      editIsEmpty={editIsEmpty}
                       isEditMode={isEditMode}
                       hasInProgress={badges.hasInProgress}
                       hasNew={badges.hasNew}
@@ -473,6 +492,7 @@ export default function ApogeeGuide() {
                       onEditIconChange={setEditIcon}
                       onEditImageUrlChange={setEditImageUrl}
                       onEditShowTitleOnCardChange={setEditShowTitleOnCard}
+                      onEditIsEmptyChange={setEditIsEmpty}
                       onSave={handleSave}
                       onCancel={handleCancel}
                       onEdit={handleEdit}

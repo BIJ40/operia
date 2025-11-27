@@ -186,6 +186,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
       if (updates.tipsType !== undefined) updateData.tips_type = updates.tipsType;
       if (updates.summary !== undefined) updateData.summary = updates.summary;
       if (updates.showSummary !== undefined) updateData.show_summary = updates.showSummary;
+      if (updates.isEmpty !== undefined) updateData.is_empty = updates.isEmpty;
       
       // Sauvegarder dans Supabase
       const { error } = await supabase

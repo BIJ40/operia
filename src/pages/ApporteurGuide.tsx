@@ -48,6 +48,7 @@ interface SortableCategoryProps {
   editColor: ColorPreset;
   editShowTitleOnCard: boolean;
   editShowTitleInMenu: boolean;
+  editIsEmpty: boolean;
   isEditMode: boolean;
   isEmpty: boolean;
   isBlockLocked: (blockId: string, blocks: any[]) => boolean;
@@ -56,6 +57,7 @@ interface SortableCategoryProps {
   onEditColorChange: (value: ColorPreset) => void;
   onShowTitleOnCardChange: (value: boolean) => void;
   onShowTitleInMenuChange: (value: boolean) => void;
+  onEditIsEmptyChange: (value: boolean) => void;
   onImageUpload: (file: File) => Promise<void>;
   onImageRemove: () => void;
   uploadingImage: boolean;
@@ -75,6 +77,7 @@ const SortableCategory = ({
   editColor,
   editShowTitleOnCard,
   editShowTitleInMenu,
+  editIsEmpty,
   isEditMode,
   isEmpty,
   isBlockLocked,
@@ -83,6 +86,7 @@ const SortableCategory = ({
   onEditColorChange,
   onShowTitleOnCardChange,
   onShowTitleInMenuChange,
+  onEditIsEmptyChange,
   onImageUpload,
   onImageRemove,
   uploadingImage,
@@ -261,6 +265,19 @@ const SortableCategory = ({
                 ))}
               </div>
             </div>
+            
+            <div className="flex items-center gap-2 mt-3">
+              <input
+                type="checkbox"
+                id="mark-empty-ap"
+                checked={editIsEmpty}
+                onChange={(e) => onEditIsEmptyChange(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <label htmlFor="mark-empty-ap" className="text-sm text-muted-foreground cursor-pointer">
+                Marquer comme vide (grise la catégorie)
+              </label>
+            </div>
           </div>
           <div className="flex gap-2 justify-end">
             <Button onClick={onCancel} variant="outline" size="sm">
@@ -314,6 +331,7 @@ export default function ApporteurGuide() {
   const [editColor, setEditColor] = useState<ColorPreset>('blue');
   const [editShowTitleOnCard, setEditShowTitleOnCard] = useState(true);
   const [editShowTitleInMenu, setEditShowTitleInMenu] = useState(true);
+  const [editIsEmpty, setEditIsEmpty] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
@@ -375,6 +393,7 @@ export default function ApporteurGuide() {
       setEditColor(category.colorPreset || 'blue');
       setEditShowTitleOnCard(category.showTitleOnCard !== false);
       setEditShowTitleInMenu(category.showTitleInMenu !== false);
+      setEditIsEmpty(category.isEmpty || false);
     }
   };
 
@@ -423,6 +442,7 @@ export default function ApporteurGuide() {
         colorPreset: editColor,
         showTitleOnCard: editShowTitleOnCard,
         showTitleInMenu: editShowTitleInMenu,
+        isEmpty: editIsEmpty,
         slug: editTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       });
       setEditingId(null);
@@ -552,6 +572,7 @@ export default function ApporteurGuide() {
                     editColor={editColor}
                     editShowTitleOnCard={editShowTitleOnCard}
                     editShowTitleInMenu={editShowTitleInMenu}
+                    editIsEmpty={editIsEmpty}
                     isEditMode={isEditMode}
                     isEmpty={isEmpty}
                     isBlockLocked={isBlockLocked}
@@ -560,6 +581,7 @@ export default function ApporteurGuide() {
                     onEditColorChange={setEditColor}
                     onShowTitleOnCardChange={setEditShowTitleOnCard}
                     onShowTitleInMenuChange={setEditShowTitleInMenu}
+                    onEditIsEmptyChange={setEditIsEmpty}
                     onImageUpload={handleImageUpload}
                     onImageRemove={handleImageRemove}
                     uploadingImage={uploadingImage}
