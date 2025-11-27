@@ -1,19 +1,39 @@
 import { motion } from "framer-motion";
-import { ServiceTile } from "./ServiceTile";
+
+export const baseTileVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring" as const, stiffness: 140, damping: 18 },
+  },
+};
 
 export const PlumbingTile = () => {
   return (
-    <ServiceTile
-      title="Plomberie"
-      subtitle="Fuites, robinets, WC, chauffe-eau"
-      className="bg-gradient-to-br from-sky-50 to-sky-100 dark:from-sky-950/30 dark:to-sky-900/20"
+    <motion.div
+      variants={baseTileVariants}
+      className="relative overflow-hidden rounded-2xl border border-accent/60 bg-card/90 shadow-lg p-4 md:p-5 bg-gradient-to-br from-sky-50 to-sky-100 dark:from-sky-950/30 dark:to-sky-900/20"
     >
-      <p>
-        Intervention rapide sur les fuites, débouchages, remplacements de
-        robinetterie et réparations urgentes.
-      </p>
+      <div className="flex items-center gap-3">
+        <div>
+          <h3 className="text-base md:text-lg font-semibold text-foreground">
+            Plomberie
+          </h3>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            Fuites, robinets, WC, chauffe-eau
+          </p>
+        </div>
+      </div>
 
-      {/* Gouttes d'eau */}
+      <div className="mt-3 md:mt-4 text-xs md:text-sm text-muted-foreground">
+        <p>
+          Intervention rapide sur les fuites, débouchages, remplacements de
+          robinetterie et réparations urgentes.
+        </p>
+      </div>
+
+      {/* Gouttes en haut à droite */}
       <motion.div
         className="pointer-events-none absolute right-6 top-6 h-2 w-2 rounded-full bg-sky-500"
         initial={{ y: -6, opacity: 0 }}
@@ -27,7 +47,7 @@ export const PlumbingTile = () => {
         transition={{ duration: 0.6, delay: 0.15, ease: "easeInOut" as const, repeat: 1 }}
       />
 
-      {/* Clé à molette */}
+      {/* Clé à molette en bas à gauche */}
       <motion.div
         className="pointer-events-none absolute -bottom-3 left-4 flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/50 text-lg shadow"
         initial={{ x: -40, y: 6, rotate: -15, opacity: 0 }}
@@ -36,6 +56,6 @@ export const PlumbingTile = () => {
       >
         🔧
       </motion.div>
-    </ServiceTile>
+    </motion.div>
   );
 };
