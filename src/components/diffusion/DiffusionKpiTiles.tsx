@@ -18,6 +18,11 @@ interface DiffusionKpiTilesProps {
   settings: DiffusionSettings;
 }
 
+const monthNames = [
+  'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
+  'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'
+];
+
 export const DiffusionKpiTiles = ({ currentMonthIndex, settings }: DiffusionKpiTilesProps) => {
   const { agence } = useAuth();
 
@@ -109,11 +114,6 @@ export const DiffusionKpiTiles = ({ currentMonthIndex, settings }: DiffusionKpiT
   );
   
   const ecartObjectif = currentMonthCA - settings.objectif_amount;
-  
-  const monthNames = [
-    'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
-    'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'
-  ];
 
   const tiles = [
     {
