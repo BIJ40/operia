@@ -1,9 +1,29 @@
-import { api } from "./api";
+import { api, getApiBaseUrl } from "./api";
 import { GlobalFilters } from "@/apogee-connect/contexts/FiltersContext";
 import { isWithinInterval, parseISO } from "date-fns";
 
+// TTL du cache en millisecondes (5 minutes)
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface CacheEntry {
+  data: {
+    users: any[];
+    clients: any[];
+    projects: any[];
+    interventions: any[];
+    factures: any[];
+    devis: any[];
+    creneaux: any[];
+  };
+  timestamp: number;
+  agencyUrl: string;
+}
+
 export class DataService {
-  // Cache des données brutes
+  // Cache des données brutes avec TTL par agence
+  private static cacheEntry: CacheEntry | null = null;
+  
+  // Cache en mémoire pour accès rapide (sans TTL check)
   private static cache: {
     users?: any[];
     clients?: any[];
@@ -14,16 +34,51 @@ export class DataService {
     creneaux?: any[];
   } = {};
 
+  // Vérifier si le cache est valide
+  private static isCacheValid(): boolean {
+    if (!this.cacheEntry) return false;
+    
+    const currentUrl = getApiBaseUrl();
+    const now = Date.now();
+    const age = now - this.cacheEntry.timestamp;
+    
+    // Cache invalide si : URL différente OU TTL expiré
+    if (this.cacheEntry.agencyUrl !== currentUrl) {
+      console.log('🔄 Cache invalidé: agence différente');
+      return false;
+    }
+    
+    if (age > CACHE_TTL_MS) {
+      console.log(`⏰ Cache expiré (âge: ${Math.round(age / 1000)}s, TTL: ${CACHE_TTL_MS / 1000}s)`);
+      return false;
+    }
+    
+    console.log(`✅ Cache valide (âge: ${Math.round(age / 1000)}s/${CACHE_TTL_MS / 1000}s)`);
+    return true;
+  }
+
   // Vider le cache
   static clearCache() {
     console.log('🗑️ Vidage du cache DataService');
     this.cache = {};
+    this.cacheEntry = null;
+  }
+  
+  // Obtenir l'âge du cache en secondes
+  static getCacheAge(): number {
+    if (!this.cacheEntry) return -1;
+    return Math.round((Date.now() - this.cacheEntry.timestamp) / 1000);
+  }
+  
+  // Forcer le rafraîchissement du cache
+  static async refreshCache(): Promise<void> {
+    console.log('🔄 Rafraîchissement forcé du cache');
+    this.cacheEntry = null;
+    await this.loadAllData(true);
   }
 
   // Charger toutes les données
-  static async loadAllData(isApiEnabled: boolean = true) {
-    // GUARD: Vérifier si BASE_URL est définie avant de faire des appels
-    const { getApiBaseUrl } = await import('./api');
+  static async loadAllData(isApiEnabled: boolean = true, forceRefresh: boolean = false) {
     const baseUrl = getApiBaseUrl();
     
     if (!baseUrl) {
@@ -39,7 +94,7 @@ export class DataService {
       };
     }
     
-    // Si l'API est désactivée et qu'on a déjà des données en cache, on les retourne
+    // Si l'API est désactivée, utiliser le cache existant s'il existe
     if (!isApiEnabled && Object.keys(this.cache).length > 0 && this.cache.users?.length) {
       console.log('🔇 API désactivée - Utilisation du cache existant');
       return this.cache;
@@ -49,8 +104,15 @@ export class DataService {
       console.log('🔇 API désactivée - Aucune donnée en cache disponible');
       return this.cache;
     }
+    
+    // Vérifier si le cache est valide (TTL non expiré et même agence)
+    if (!forceRefresh && this.isCacheValid() && this.cacheEntry) {
+      console.log('📦 Utilisation du cache (TTL valide)');
+      this.cache = this.cacheEntry.data;
+      return this.cache;
+    }
 
-    console.log('🔄 Chargement des données API...');
+    console.log('🔄 Chargement des données API (cache expiré ou forcé)...');
     
     const results = await Promise.allSettled([
       api.getUsers(),
@@ -97,8 +159,15 @@ export class DataService {
       devis: extractData(devisRes),
       creneaux: extractData(creneauxRes),
     };
+    
+    // Sauvegarder dans le cache avec TTL
+    this.cacheEntry = {
+      data: this.cache as CacheEntry['data'],
+      timestamp: Date.now(),
+      agencyUrl: baseUrl,
+    };
 
-    console.log('✅ Données extraites:', {
+    console.log('✅ Données extraites et mises en cache (TTL: 5min):', {
       users: this.cache.users.length,
       clients: this.cache.clients.length,
       projects: this.cache.projects.length,
