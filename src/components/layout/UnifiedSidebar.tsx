@@ -20,7 +20,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/use-permissions';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, ReactNode } from 'react';
 
 interface NavItem {
   title: string;
@@ -31,7 +31,8 @@ interface NavItem {
 }
 
 interface NavGroup {
-  label: string;
+  label: ReactNode;
+  labelKey: string;
   items: NavItem[];
   requiredRole?: 'admin' | 'support' | 'franchiseur';
 }
@@ -72,7 +73,8 @@ export function UnifiedSidebar() {
   // Navigation groups with permission-based filtering
   const navGroups: NavGroup[] = [
     {
-      label: 'HELP Academy',
+      label: <span>Help<span className="text-helpconfort-orange">!</span> Academy</span>,
+      labelKey: 'help-academy',
       items: [
         { title: 'Guide Apogée', url: '/apogee', icon: BookOpen, scope: 'apogee', description: 'Guide complet pour maîtriser le logiciel Apogée' },
         { title: 'Guide Apporteurs', url: '/apporteurs', icon: FileText, scope: 'apporteurs', description: 'Ressources pour les apporteurs d\'affaires' },
@@ -81,6 +83,7 @@ export function UnifiedSidebar() {
     },
     {
       label: 'Pilotage Agence',
+      labelKey: 'pilotage',
       items: [
         { title: 'Mes Indicateurs', url: '/mes-indicateurs', icon: BarChart3, scope: 'mes_indicateurs', description: 'Tableau de bord et KPI de votre agence' },
         { title: 'Indicateurs Apporteurs', url: '/mes-indicateurs/apporteurs', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques apporteurs' },
@@ -93,6 +96,7 @@ export function UnifiedSidebar() {
     },
     {
       label: 'Support',
+      labelKey: 'support',
       items: [
         { title: 'Mes Demandes', url: '/mes-demandes', icon: MessageSquare, scope: 'mes_demandes', description: 'Créer et suivre vos demandes de support' },
         { title: 'Gestion Tickets', url: '/admin/support', icon: Headset, scope: 'support_tickets', description: 'Traiter les demandes de support' },
@@ -101,6 +105,7 @@ export function UnifiedSidebar() {
     },
     {
       label: 'Réseau Franchiseur',
+      labelKey: 'franchiseur',
       items: [
         { title: 'Dashboard Réseau', url: '/tete-de-reseau', icon: Network, scope: 'franchiseur_dashboard' },
         { title: 'Agences', url: '/tete-de-reseau/agences', icon: Building2, scope: 'franchiseur_agencies' },
@@ -112,6 +117,7 @@ export function UnifiedSidebar() {
     },
     {
       label: 'Administration',
+      labelKey: 'admin',
       items: [
         { title: 'Utilisateurs', url: '/admin/users', icon: Users, scope: 'admin_users', description: 'Gérer les comptes utilisateurs' },
         { title: 'Rôles & Permissions', url: '/admin/role-permissions', icon: Shield, scope: 'admin_roles', description: 'Configurer les droits d\'accès' },
@@ -181,20 +187,20 @@ export function UnifiedSidebar() {
           const items = getFilteredItems(group.items);
           if (items.length === 0) return null;
 
-          const isGroupOpen = openGroups.has(group.label);
+          const isGroupOpen = openGroups.has(group.labelKey);
           const hasActiveItem = items.some(item => isActive(item.url));
 
           return (
             <Collapsible 
-              key={group.label} 
+              key={group.labelKey} 
               open={isGroupOpen || hasActiveItem}
-              onOpenChange={() => toggleGroup(group.label)}
+              onOpenChange={() => toggleGroup(group.labelKey)}
             >
               <SidebarGroup>
                 <CollapsibleTrigger asChild>
                   <SidebarGroupLabel className="cursor-pointer hover:bg-muted/50 rounded-lg transition-colors flex items-center justify-between px-3 py-2">
                     <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                      {!collapsed ? group.label : group.label.charAt(0)}
+                      {!collapsed ? group.label : group.labelKey.charAt(0).toUpperCase()}
                     </span>
                     {!collapsed && (
                       <ChevronRight 
