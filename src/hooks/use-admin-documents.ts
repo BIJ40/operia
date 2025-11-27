@@ -9,7 +9,7 @@ interface Block {
   type: string;
 }
 
-interface Document {
+export interface AdminDocument {
   id: string;
   title: string;
   description: string | null;
@@ -35,7 +35,7 @@ interface ChatbotQuery {
 
 export const useAdminDocuments = () => {
   const [blocks, setBlocks] = useState<Block[]>([]);
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<AdminDocument[]>([]);
   const [queries, setQueries] = useState<ChatbotQuery[]>([]);
   const [selectedScope, setSelectedScope] = useState<'apogee' | 'apporteur' | 'helpconfort'>('apogee');
   const [selectedBlock, setSelectedBlock] = useState<string>('');
@@ -183,7 +183,7 @@ export const useAdminDocuments = () => {
     }
   };
 
-  const startEditing = (doc: Document) => {
+  const startEditing = (doc: AdminDocument) => {
     setEditingDoc(doc.id);
     setEditTitle(doc.title);
     setEditDescription(doc.description || '');
