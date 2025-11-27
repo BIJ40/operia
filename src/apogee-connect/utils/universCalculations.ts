@@ -69,10 +69,10 @@ export const calculateUniversStats = (
     const project = projectsMap.get(facture.projectId);
     if (!project) return;
 
-    // Extraire les univers du projet ET les normaliser
-    const universes = (project.data?.universes || project.universes || []).map((u: string) => 
-      normalizeUniverseSlug(u)
-    );
+    // Extraire les univers du projet, normaliser ET dédupliquer
+    const rawUniverses = project.data?.universes || project.universes || [];
+    const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
+    const universes = [...new Set(normalizedUniverses)]; // Dédupliquer
     if (universes.length === 0) return;
 
     // Calculer le montant HT
@@ -115,9 +115,9 @@ export const calculateUniversStats = (
     const project = projectsMap.get(interv.projectId);
     if (!project) return;
 
-    const universes = (project.data?.universes || project.universes || []).map((u: string) => 
-      normalizeUniverseSlug(u)
-    );
+    const rawUniverses = project.data?.universes || project.universes || [];
+    const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
+    const universes = [...new Set(normalizedUniverses)]; // Dédupliquer
     if (universes.length === 0) return;
 
     universes.forEach((univers: string) => {
@@ -214,9 +214,9 @@ const calculateTauxSAVParUnivers = (
   
   projects.forEach(p => {
     const pid = p.id;
-    const universes = (p.data?.universes || p.universes || []).map((u: string) => 
-      normalizeUniverseSlug(u)
-    );
+    const rawUniverses = p.data?.universes || p.universes || [];
+    const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
+    const universes = [...new Set(normalizedUniverses)]; // Dédupliquer
     if (universes.length === 0) return;
 
     universes.forEach((univers: string) => {
@@ -281,10 +281,10 @@ export const calculateMonthlyUniversCA = (
       const project = projectsMap.get(facture.projectId);
       if (!project) return;
       
-      // Extraire les univers du projet ET les normaliser
-      const universes = (project.data?.universes || project.universes || []).map((u: string) => 
-        normalizeUniverseSlug(u)
-      );
+      // Extraire les univers du projet, normaliser ET dédupliquer
+      const rawUniverses = project.data?.universes || project.universes || [];
+      const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
+      const universes = [...new Set(normalizedUniverses)]; // Dédupliquer
       if (universes.length === 0) return;
       
       // Calculer le montant HT

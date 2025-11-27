@@ -37,10 +37,12 @@ export function calculateDossiersParUnivers(
       return;
     }
 
-    // Compter par univers
-    const universes = project.data?.universes || project.universes || [];
-    universes.forEach((univers: string) => {
-      const normalized = normalizeUniverseSlug(univers);
+    // Compter par univers (normaliser et dédupliquer pour éviter double comptage)
+    const rawUniverses = project.data?.universes || project.universes || [];
+    const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
+    const universes = [...new Set(normalizedUniverses)]; // Dédupliquer
+    
+    universes.forEach((normalized: string) => {
       countDossiers[normalized] = (countDossiers[normalized] || 0) + 1;
     });
   });
@@ -122,7 +124,9 @@ export function calculateTransfoParUnivers(
     const project = projectsMap.get(projectId);
     if (!project) return;
 
-    const universes = project.data?.universes || project.universes || [];
+    const rawUniverses = project.data?.universes || project.universes || [];
+    const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
+    const universes = [...new Set(normalizedUniverses)]; // Dédupliquer
     if (universes.length === 0) return;
 
     const nbUniverses = universes.length;
@@ -183,13 +187,14 @@ export function calculateTransfoParUnivers(
       return;
     }
 
-    const universes = project.data?.universes || project.universes || [];
+    const rawUniverses = project.data?.universes || project.universes || [];
+    const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
+    const universes = [...new Set(normalizedUniverses)]; // Dédupliquer
     if (universes.length === 0) return;
 
     const nbUniverses = universes.length;
 
-    universes.forEach((univers: string) => {
-      const normalized = normalizeUniverseSlug(univers);
+    universes.forEach((normalized: string) => {
       if (!stats[normalized]) {
         stats[normalized] = { caDevis: 0, caFactures: 0 };
       }
@@ -252,9 +257,9 @@ export function calculateUniversApporteurMatrix(
     if (!project) return;
 
     const caFacture = Number(f.data?.totalHT || f.totalHT || 0);
-    const universes = (project.data?.universes || project.universes || []).map((u: string) => 
-      normalizeUniverseSlug(u)
-    );
+    const rawUniverses = project.data?.universes || project.universes || [];
+    const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
+    const universes = [...new Set(normalizedUniverses)]; // Dédupliquer
     const nbUniverses = universes.length || 1;
 
     // Déterminer le type d'apporteur
@@ -268,7 +273,7 @@ export function calculateUniversApporteurMatrix(
       }
     }
 
-    // Répartir sur chaque univers
+    // Répartir sur chaque univers (déjà normalisés et dédupliqués)
     universes.forEach((univers: string) => {
       if (!matrix[univers]) {
         matrix[univers] = {};
