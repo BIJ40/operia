@@ -113,36 +113,36 @@ const SortableCategory = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 rounded-lg p-6 hover:shadow-lg transition-all ${getColorClass(category.colorPreset)}`}
+      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 overflow-visible ${getColorClass(category.colorPreset)}`}
     >
       {isEditMode && !editingId && (
-        <div className="absolute top-2 right-2 flex gap-1 bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm z-10">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 w-8 p-0 cursor-grab active:cursor-grabbing"
+        <>
+          <div
             {...attributes}
             {...listeners}
+            className="absolute -top-2 -left-2 cursor-grab active:cursor-grabbing z-10 bg-background rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            <GripVertical className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 w-8 p-0"
-            onClick={() => onEdit(category.id)}
-          >
-            <Edit2 className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 w-8 p-0 text-destructive"
-            onClick={() => onDelete(category.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+            <GripVertical className="w-4 h-4 text-muted-foreground hover:text-primary" />
+          </div>
+          <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <Button
+              onClick={() => onEdit(category.id)}
+              size="icon"
+              variant="outline"
+              className="h-7 w-7 bg-background shadow-md"
+            >
+              <Edit2 className="w-3 h-3" />
+            </Button>
+            <Button
+              onClick={() => onDelete(category.id)}
+              size="icon"
+              variant="destructive"
+              className="h-7 w-7 shadow-md"
+            >
+              <Trash2 className="w-3 h-3" />
+            </Button>
+          </div>
+        </>
       )}
       
       {editingId === category.id ? (
@@ -265,34 +265,28 @@ const SortableCategory = ({
           onClick={() => {
             toast.error("Accès restreint - Vous n'avez pas les permissions pour accéder à cette section");
           }}
-          className="block opacity-60 cursor-pointer relative"
+          className="flex items-center gap-3 flex-1 min-w-0 opacity-60 cursor-pointer relative"
         >
-          <div className="flex flex-col items-center justify-center gap-3">
-            {isCustomImage ? (
-              <img src={category.icon} alt={category.title} className="w-[120px] h-[120px] object-contain opacity-50" />
-            ) : (
-              <Icon className="w-[120px] h-[120px] text-primary opacity-50" />
-            )}
-            {category.showTitleOnCard !== false && (
-              <h3 className="text-xl font-semibold text-center">{category.title}</h3>
-            )}
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <Lock className="w-8 h-8 text-destructive drop-shadow-lg" />
-          </div>
+          {isCustomImage ? (
+            <img src={category.icon} alt={category.title} className="w-6 h-6 object-contain flex-shrink-0 opacity-50" />
+          ) : (
+            <Icon className="w-6 h-6 text-primary flex-shrink-0 opacity-50" />
+          )}
+          {category.showTitleOnCard !== false && (
+            <span className="text-base font-medium text-foreground truncate">{category.title}</span>
+          )}
+          <Lock className="w-4 h-4 text-destructive drop-shadow-lg ml-auto" />
         </div>
       ) : (
-        <Link to={`/apporteurs/category/${category.slug}`} className="block">
-          <div className="flex flex-col items-center justify-center gap-3">
-            {isCustomImage ? (
-              <img src={category.icon} alt={category.title} className="w-[120px] h-[120px] object-contain" />
-            ) : (
-              <Icon className="w-[120px] h-[120px] text-primary" />
-            )}
-            {category.showTitleOnCard !== false && (
-              <h3 className="text-xl font-semibold text-center">{category.title}</h3>
-            )}
-          </div>
+        <Link to={`/apporteurs/category/${category.slug}`} className="flex items-center gap-3 flex-1 min-w-0">
+          {isCustomImage ? (
+            <img src={category.icon} alt={category.title} className="w-6 h-6 object-contain flex-shrink-0" />
+          ) : (
+            <Icon className="w-6 h-6 text-primary flex-shrink-0" />
+          )}
+          {category.showTitleOnCard !== false && (
+            <span className="text-base font-medium text-foreground truncate">{category.title}</span>
+          )}
         </Link>
       )}
     </div>
@@ -339,16 +333,8 @@ export default function ApporteurGuide() {
   );
 
   const getColorClass = (color?: ColorPreset) => {
-    const colors = {
-      red: 'bg-red-50 border-red-200 hover:border-red-300',
-      blanc: 'bg-white border-gray-300 hover:border-gray-400',
-      blue: 'bg-blue-50 border-blue-200 hover:border-blue-300',
-      green: 'bg-green-50 border-green-200 hover:border-green-300',
-      yellow: 'bg-yellow-50 border-yellow-200 hover:border-yellow-300',
-      purple: 'bg-purple-50 border-purple-200 hover:border-purple-300',
-      orange: 'bg-orange-50 border-orange-200 hover:border-orange-300',
-    };
-    return colors[color || 'blue'] || colors.blue;
+    // Style unifié aux couleurs du site - même que ApogeeGuide
+    return "bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 border-helpconfort-orange/40 border-l-primary hover:border-helpconfort-orange/60 hover:border-l-accent hover:shadow-xl";
   };
 
   const IconComponent = (iconName: string) => {
@@ -529,7 +515,7 @@ export default function ApporteurGuide() {
             items={filteredCategories.map(c => c.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredCategories.map(category => (
                 <SortableCategory
                   key={category.id}

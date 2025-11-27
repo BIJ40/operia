@@ -273,23 +273,8 @@ export default function HelpConfort() {
   );
 
   const getColorClass = (color?: ColorPreset) => {
-    const colors = {
-      red: 'bg-red-50 border-l-red-500 hover:border-l-red-600',
-      blanc: 'bg-white border-l-gray-400 hover:border-l-gray-500',
-      white: 'bg-white border-l-gray-400 hover:border-l-gray-500',
-      blue: 'bg-blue-50 border-l-blue-500 hover:border-l-blue-600',
-      green: 'border-l-accent bg-gradient-to-r from-helpconfort-blue-light/20 to-helpconfort-blue-dark/20 hover:shadow-xl hover:border-l-accent/80',
-      yellow: 'bg-yellow-50 border-l-yellow-500 hover:border-l-yellow-600',
-      purple: 'bg-purple-50 border-l-purple-500 hover:border-l-purple-600',
-      orange: 'bg-orange-50 border-l-orange-500 hover:border-l-orange-600',
-      pink: 'bg-pink-50 border-l-pink-500 hover:border-l-pink-600',
-      cyan: 'bg-cyan-50 border-l-cyan-500 hover:border-l-cyan-600',
-      indigo: 'bg-indigo-50 border-l-indigo-500 hover:border-l-indigo-600',
-      teal: 'bg-teal-50 border-l-teal-500 hover:border-l-teal-600',
-      rose: 'bg-rose-50 border-l-rose-500 hover:border-l-rose-600',
-      gray: 'bg-gray-50 border-l-gray-400 hover:border-l-gray-500',
-    };
-    return colors[color || 'blue'] || colors.blue;
+    // Style unifié aux couleurs du site - même que ApogeeGuide
+    return "bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 border-helpconfort-orange/40 border-l-primary hover:border-helpconfort-orange/60 hover:border-l-accent hover:shadow-xl";
   };
 
   const IconComponent = (iconName: string) => {
@@ -445,7 +430,7 @@ export default function HelpConfort() {
                 items={filteredCategories.map(c => c.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   {filteredCategories.map(category => (
                     <SortableCategory
                       key={category.id}
@@ -489,7 +474,7 @@ export default function HelpConfort() {
                     onClick={() => {
                       toast.error("Accès restreint - Vous n'avez pas les permissions pour accéder à cette section");
                     }}
-                    className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 opacity-60 cursor-pointer ${getColorClass(category.colorPreset)}`}
+                    className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 opacity-60 cursor-pointer overflow-visible ${getColorClass(category.colorPreset)}`}
                   >
                     {isCustomImage ? (
                       <img 
@@ -514,7 +499,7 @@ export default function HelpConfort() {
                 <Link
                   key={category.id}
                   to={`/helpconfort/category/${category.slug}`}
-                  className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 ${getColorClass(category.colorPreset)}`}
+                  className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 overflow-visible ${getColorClass(category.colorPreset)}`}
                 >
                   {isCustomImage ? (
                     <img 
