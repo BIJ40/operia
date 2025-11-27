@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Block, AppData } from '@/types/block';
 import { loadAppData, saveAppData } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
@@ -27,10 +28,13 @@ const EditorContext = createContext<EditorContextType | undefined>(undefined);
 
 export function EditorProvider({ children }: { children: ReactNode }) {
   const [blocks, setBlocks] = useState<Block[]>([]);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { isAdmin, user } = useAuth();
+  const location = useLocation();
+  
+  // Derive isEditMode from URL parameter
+  const isEditMode = new URLSearchParams(location.search).get('edit') === 'true' && isAdmin;
 
   // Cache avec TTL de 5 minutes
   const CACHE_KEY = 'apogee_blocks_cache';
@@ -346,20 +350,16 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     toast({ title: 'Données réinitialisées', description: 'Les données par défaut ont été restaurées' });
   }, [toast]);
 
+  // toggleEditMode is now handled by URL parameter via UnifiedHeader
+  // This is kept for backwards compatibility but does nothing
   const toggleEditMode = useCallback(() => {
     if (!isAdmin) {
       toast({ title: 'Accès refusé', description: 'Seuls les administrateurs peuvent activer le mode édition', variant: 'destructive' });
-      return;
     }
-    setIsEditMode((prev) => {
-      const newValue = !prev;
-      // Synchroniser avec localStorage
-      localStorage.setItem('editMode', String(newValue));
-      // Émettre un événement personnalisé pour les autres composants
-      window.dispatchEvent(new Event('editModeChange'));
-      return newValue;
-    });
   }, [isAdmin, toast]);
+  
+  // setIsEditMode is now a no-op since edit mode is controlled via URL
+  const setIsEditMode = useCallback(() => {}, []);
 
   const reloadBlocks = useCallback(async () => {
     setLoading(true);
