@@ -1,30 +1,21 @@
-import { useParams, useLocation, Link, Navigate } from 'react-router-dom';
+import { useParams, Navigate } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Plus, ChevronsDownUp, ChevronsUpDown, Lightbulb } from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import { SectionEditForm } from '@/components/SectionEditForm';
 import { TipsEditForm } from '@/components/TipsEditForm';
-import { ColorPreset, TipsType } from '@/types/block';
 import { Accordion } from '@/components/ui/accordion';
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,15 +32,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CategorySortableItem, Section, CategoryBlock } from '@/components/category';
+import { CategorySortableItem, CategoryBlock } from '@/components/category';
+import { useCategoryLogic } from '@/hooks/use-category-logic';
 
 export default function CategoryHelpConfort() {
   const { slug } = useParams();
-  const location = useLocation();
 
   const { blocks, updateBlock, deleteBlock, addBlock, reorderBlocks, isEditMode } = useEditor();
   const { isAuthenticated, isAdmin, hasAccessToScope } = useAuth();
-  const { toast } = useToast();
   
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -67,94 +57,44 @@ export default function CategoryHelpConfort() {
       .sort((a, b) => a.order - b.order),
     [blocks]
   );
-  
-  const sections = useMemo(() => 
-    blocks
-      .filter(b => b.type === 'section' && b.parentId === category?.id)
-      .sort((a, b) => a.order - b.order) as Section[],
-    [blocks, category?.id]
-  );
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
-  const savedScrollPositionRef = useRef<number>(0);
-  const [openAccordions, setOpenAccordions] = useState<string[]>([]);
-  const [showTips, setShowTips] = useState(true);
-  const [showSections, setShowSections] = useState(true);
-
-  useEffect(() => {
-    const tipsIds = sections
-      .filter(s => s.contentType === 'tips' && !s.isSingleSection && !s.hideTitle)
-      .map(s => s.id);
-    
-    setOpenAccordions(prev => {
-      const newIds = tipsIds.filter(id => !prev.includes(id));
-      return [...prev, ...newIds];
-    });
-  }, [sections]);
-
-  useEffect(() => {
-    setShowTips(true);
-    setShowSections(true);
-  }, [slug]);
-
-  useEffect(() => {
-    if (!category) return;
-    
-    const hash = location.hash.replace('#', '');
-    if (hash && sections.some(s => s.id === hash)) {
-      setOpenAccordions(prev => prev.includes(hash) ? prev : [...prev, hash]);
-      
-      setTimeout(() => {
-        const element = document.getElementById(hash);
-        if (element) {
-          const headerOffset = 140;
-          const elementPosition = element.getBoundingClientRect().top;
-          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-          window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-        }
-      }, 400);
-    }
-  }, [location.hash, sections, category]);
-
-  useEffect(() => {
-    setOpenAccordions([]);
-  }, [isEditMode]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        savedScrollPositionRef.current = window.scrollY;
-      } else {
-        setTimeout(() => {
-          if (savedScrollPositionRef.current > 0) {
-            window.scrollTo({ top: savedScrollPositionRef.current, behavior: 'instant' });
-          }
-        }, 50);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  useEffect(() => {
-    const saveScrollPosition = () => {
-      if (editingId) {
-        savedScrollPositionRef.current = window.scrollY;
-      }
-    };
-
-    const intervalId = setInterval(saveScrollPosition, 1000);
-    return () => clearInterval(intervalId);
-  }, [editingId]);
+  const {
+    sections,
+    editingId,
+    editDialogOpen,
+    deleteDialogOpen,
+    openAccordions,
+    showTips,
+    showSections,
+    editingSection,
+    filteredSections,
+    hasTips,
+    hasSections,
+    sensors,
+    setOpenAccordions,
+    setShowTips,
+    setShowSections,
+    setDeleteDialogOpen,
+    handleEdit,
+    handleSave,
+    handleSaveTips,
+    handleMoveToCategory,
+    calculateNewOrder,
+    handleDragEnd,
+    handleDeleteClick,
+    confirmDelete,
+    handleDuplicate,
+    closeEditDialog,
+  } = useCategoryLogic({
+    blocks,
+    categoryId: category?.id,
+    isEditMode,
+    updateBlock,
+    deleteBlock,
+    addBlock,
+    reorderBlocks,
+    slugDependency: slug,
+  });
 
   if (!category) {
     return (
@@ -164,109 +104,7 @@ export default function CategoryHelpConfort() {
     );
   }
 
-  const handleEdit = (sectionId: string) => {
-    setEditingId(sectionId);
-    setOpenAccordions(prev => prev.includes(sectionId) ? prev : [...prev, sectionId]);
-    setEditDialogOpen(true);
-  };
-
-  const restoreScrollPosition = (scrollPos: number) => {
-    const currentHash = window.location.hash;
-    if (currentHash) {
-      history.replaceState(null, '', window.location.pathname + window.location.search);
-    }
-    
-    setEditDialogOpen(false);
-    setEditingId(null);
-    
-    requestAnimationFrame(() => {
-      window.scrollTo(0, scrollPos);
-      setTimeout(() => {
-        window.scrollTo(0, scrollPos);
-        if (currentHash) {
-          history.replaceState(null, '', window.location.pathname + window.location.search + currentHash);
-        }
-      }, 0);
-      setTimeout(() => window.scrollTo(0, scrollPos), 50);
-      setTimeout(() => window.scrollTo(0, scrollPos), 100);
-    });
-  };
-
-  const handleSave = async (data: {
-    title: string;
-    content: string;
-    colorPreset: ColorPreset;
-    hideFromSidebar?: boolean;
-  }) => {
-    if (editingId) {
-      const scrollPos = window.pageYOffset;
-      savedScrollPositionRef.current = scrollPos;
-      updateBlock(editingId, data);
-      restoreScrollPosition(scrollPos);
-    }
-  };
-
-  const handleSaveTips = async (
-    title: string,
-    content: string,
-    tipsType: TipsType,
-    hideFromSidebar: boolean
-  ) => {
-    if (editingId) {
-      const scrollPos = window.pageYOffset;
-      savedScrollPositionRef.current = scrollPos;
-      
-      const colorMap: Record<TipsType, ColorPreset> = {
-        danger: 'red',
-        warning: 'orange',
-        success: 'green',
-        information: 'blue',
-      };
-
-      updateBlock(editingId, {
-        title,
-        content,
-        colorPreset: colorMap[tipsType],
-        hideFromSidebar,
-        hideTitle: true,
-        tipsType,
-        contentType: 'tips',
-      });
-
-      restoreScrollPosition(scrollPos);
-    }
-  };
-
-  const handleMoveToCategory = (sectionId: string, newCategoryId: string) => {
-    const newCategorySections = blocks
-      .filter(b => b.type === 'section' && b.parentId === newCategoryId)
-      .sort((a, b) => a.order - b.order);
-    
-    const newOrder = newCategorySections.length > 0 
-      ? newCategorySections[0].order - 1 
-      : 0;
-    
-    updateBlock(sectionId, { parentId: newCategoryId, order: newOrder });
-  };
-
-  const calculateNewOrder = (afterSectionId?: string): number => {
-    if (afterSectionId) {
-      const afterSection = sections.find(s => s.id === afterSectionId);
-      const afterIndex = sections.findIndex(s => s.id === afterSectionId);
-      
-      if (afterIndex === sections.length - 1) {
-        return afterSection!.order + 1;
-      } else {
-        const nextSection = sections[afterIndex + 1];
-        return Math.floor((afterSection!.order + nextSection.order) / 2);
-      }
-    }
-    return sections.length > 0 ? sections[0].order - 1 : 0;
-  };
-
   const handleAddSection = async (afterSectionId?: string) => {
-    if (!category) return;
-    
     const newOrder = calculateNewOrder(afterSectionId);
     
     const newBlockId = await addBlock({
@@ -282,16 +120,11 @@ export default function CategoryHelpConfort() {
     });
     
     if (newBlockId) {
-      setTimeout(() => {
-        setEditingId(newBlockId);
-        setEditDialogOpen(true);
-      }, 100);
+      setTimeout(() => handleEdit(newBlockId), 100);
     }
   };
 
   const handleAddTips = async (afterSectionId?: string) => {
-    if (!category) return;
-    
     const newOrder = calculateNewOrder(afterSectionId);
     
     const newBlockId = await addBlock({
@@ -310,86 +143,13 @@ export default function CategoryHelpConfort() {
     });
     
     if (newBlockId) {
-      setTimeout(() => {
-        setEditingId(newBlockId);
-        setEditDialogOpen(true);
-      }, 100);
+      setTimeout(() => handleEdit(newBlockId), 100);
     }
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      const oldIndex = sections.findIndex((s) => s.id === active.id);
-      const newIndex = sections.findIndex((s) => s.id === over.id);
-
-      const reorderedSections = arrayMove(sections, oldIndex, newIndex);
-      const minOrder = Math.min(...sections.map(s => s.order));
-      const sectionsWithNewOrder = reorderedSections.map((section, index) => ({
-        ...section,
-        order: minOrder + index
-      }));
-      
-      await reorderBlocks(sectionsWithNewOrder);
-    }
+  const onDuplicate = (sectionId: string) => {
+    handleDuplicate(sectionId, category.id, category.slug);
   };
-
-  const handleDeleteClick = (sectionId: string) => {
-    setSectionToDelete(sectionId);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (sectionToDelete) {
-      deleteBlock(sectionToDelete);
-      setSectionToDelete(null);
-    }
-    setDeleteDialogOpen(false);
-  };
-
-  const handleDuplicate = async (sectionId: string) => {
-    const sectionToDuplicate = sections.find(s => s.id === sectionId);
-    if (!sectionToDuplicate) return;
-
-    const currentIndex = sections.findIndex(s => s.id === sectionId);
-    const nextSection = sections[currentIndex + 1];
-    const newOrder = nextSection 
-      ? (sectionToDuplicate.order + nextSection.order) / 2
-      : sectionToDuplicate.order + 1;
-
-    const newBlockId = await addBlock({
-      type: 'section',
-      title: `${sectionToDuplicate.title} (copie)`,
-      content: sectionToDuplicate.content,
-      colorPreset: sectionToDuplicate.colorPreset,
-      parentId: category.id,
-      slug: `${category.slug}-section-${Date.now()}`,
-      attachments: sectionToDuplicate.attachments || [],
-      hideFromSidebar: sectionToDuplicate.hideFromSidebar,
-      order: newOrder,
-    });
-
-    if (newBlockId) {
-      setTimeout(async () => {
-        await updateBlock(newBlockId, { order: newOrder });
-        toast({ 
-          title: 'Section dupliquée', 
-          description: 'La section a été dupliquée avec succès' 
-        });
-      }, 50);
-    }
-  };
-
-  const editingSection = sections.find(s => s.id === editingId);
-  const filteredSections = sections.filter(section => {
-    if (section.contentType === 'tips' && !showTips) return false;
-    if (section.contentType !== 'tips' && !showSections) return false;
-    return true;
-  });
-
-  const hasTips = sections.some(s => s.contentType === 'tips');
-  const hasSections = sections.some(s => s.contentType !== 'tips');
 
   return (
     <div className="space-y-6 pb-8">
@@ -469,7 +229,7 @@ export default function CategoryHelpConfort() {
                 scope="helpconfort"
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
-                onDuplicate={handleDuplicate}
+                onDuplicate={onDuplicate}
                 onMoveToCategory={handleMoveToCategory}
                 onAddSection={handleAddSection}
                 onAddTips={handleAddTips}
@@ -501,12 +261,7 @@ export default function CategoryHelpConfort() {
       </AlertDialog>
 
       {/* Edit Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={(open) => {
-        if (!open) {
-          setEditDialogOpen(false);
-          setEditingId(null);
-        }
-      }}>
+      <Dialog open={editDialogOpen} onOpenChange={(open) => !open && closeEditDialog()}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
@@ -522,10 +277,7 @@ export default function CategoryHelpConfort() {
                 initialTipsType={editingSection.tipsType || 'information'}
                 initialHideFromSidebar={editingSection.hideFromSidebar || false}
                 onSave={handleSaveTips}
-                onCancel={() => {
-                  setEditDialogOpen(false);
-                  setEditingId(null);
-                }}
+                onCancel={closeEditDialog}
               />
             ) : (
               <SectionEditForm
@@ -538,10 +290,7 @@ export default function CategoryHelpConfort() {
                 initialShowSummary={editingSection.showSummary || false}
                 initialHideTitle={editingSection.hideTitle || false}
                 onSave={handleSave}
-                onCancel={() => {
-                  setEditDialogOpen(false);
-                  setEditingId(null);
-                }}
+                onCancel={closeEditDialog}
               />
             )
           )}
