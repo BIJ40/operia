@@ -204,10 +204,10 @@ export function ApporteurSortableItem({
     <div ref={setNodeRef} style={style}>
       <AccordionItem value={section.slug} id={section.slug}>
         <AccordionTrigger>
-          <div className="flex items-center justify-between w-full text-white">
+          <div className="flex items-center justify-between w-full text-foreground">
             <div className="flex items-center gap-3 flex-1">
-              <ChevronDown className="h-4 w-4 shrink-0 text-white transition-transform duration-200" />
-              <h2 className="text-xl font-semibold text-left text-white">{section.title}</h2>
+              <ChevronDown className="h-4 w-4 shrink-0 text-primary transition-transform duration-200" />
+              <h2 className="text-xl font-semibold text-left text-foreground">{section.title}</h2>
               <SectionBadges />
             </div>
             {isEditMode && (
@@ -215,7 +215,7 @@ export function ApporteurSortableItem({
                 onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                 onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
               >
-                <EditControls variant="dark" />
+                <EditControls variant="light" />
               </div>
             )}
           </div>
