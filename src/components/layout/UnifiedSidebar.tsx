@@ -24,10 +24,11 @@ import { useState, useMemo, ReactNode } from 'react';
 
 interface NavItem {
   title: string;
-  url: string;
+  url?: string;
   icon: React.ElementType;
   scope?: string;
   description?: string;
+  children?: NavItem[];
 }
 
 interface NavGroup {
@@ -85,11 +86,18 @@ export function UnifiedSidebar() {
       label: 'Pilotage Agence',
       labelKey: 'pilotage',
       items: [
-        { title: 'Mes Indicateurs', url: '/mes-indicateurs', icon: BarChart3, scope: 'mes_indicateurs', description: 'Tableau de bord et KPI de votre agence' },
-        { title: 'Indicateurs Apporteurs', url: '/mes-indicateurs/apporteurs', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques apporteurs' },
-        { title: 'Indicateurs Univers', url: '/mes-indicateurs/univers', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques par univers' },
-        { title: 'Indicateurs Techniciens', url: '/mes-indicateurs/techniciens', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques techniciens' },
-        { title: 'Indicateurs SAV', url: '/mes-indicateurs/sav', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques SAV' },
+        { 
+          title: 'Statistiques', 
+          icon: BarChart3, 
+          scope: 'mes_indicateurs',
+          children: [
+            { title: 'Indicateurs généraux', url: '/mes-indicateurs', icon: BarChart3, scope: 'mes_indicateurs', description: 'Tableau de bord et KPI de votre agence' },
+            { title: 'Indicateurs Apporteurs', url: '/mes-indicateurs/apporteurs', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques apporteurs' },
+            { title: 'Indicateurs Univers', url: '/mes-indicateurs/univers', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques par univers' },
+            { title: 'Indicateurs Techniciens', url: '/mes-indicateurs/techniciens', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques techniciens' },
+            { title: 'Indicateurs SAV', url: '/mes-indicateurs/sav', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques SAV' },
+          ]
+        },
         { title: 'Actions à Mener', url: '/actions-a-mener', icon: ListTodo, scope: 'actions_a_mener', description: 'Suivi des actions et tâches en cours' },
         { title: 'Diffusion', url: '/diffusion', icon: Tv, scope: 'diffusion', description: 'Mode affichage TV agence' },
       ],
@@ -138,19 +146,49 @@ export function UnifiedSidebar() {
     return true;
   });
 
-  // Filter items within each group based on scope permissions
-  const getFilteredItems = (items: NavItem[]) => {
-    return items.filter(item => {
-      if (!item.scope) return true;
-      return canViewScope(item.scope);
-    });
+  // Filter items within each group based on scope permissions (including nested children)
+  const getFilteredItems = (items: NavItem[]): NavItem[] => {
+    return items.map(item => {
+      if (item.children) {
+        const filteredChildren = item.children.filter(child => {
+          if (!child.scope) return true;
+          return canViewScope(child.scope);
+        });
+        if (filteredChildren.length === 0) return null;
+        return { ...item, children: filteredChildren };
+      }
+      if (!item.scope) return item;
+      return canViewScope(item.scope) ? item : null;
+    }).filter(Boolean) as NavItem[];
   };
 
-  const isActive = (url: string) => {
+  const isActive = (url?: string) => {
+    if (!url) return false;
     if (url === '/') return location.pathname === '/';
     // For /admin, only match exact path to avoid highlighting when on /admin/users etc.
     if (url === '/admin') return location.pathname === '/admin';
     return location.pathname === url || location.pathname.startsWith(url + '/');
+  };
+
+  const isChildActive = (item: NavItem): boolean => {
+    if (item.url && isActive(item.url)) return true;
+    if (item.children) return item.children.some(child => isActive(child.url));
+    return false;
+  };
+
+  // State for open submenus
+  const [openSubmenus, setOpenSubmenus] = useState<Set<string>>(new Set(['statistiques']));
+
+  const toggleSubmenu = (key: string) => {
+    setOpenSubmenus(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(key)) {
+        newSet.delete(key);
+      } else {
+        newSet.add(key);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -188,7 +226,7 @@ export function UnifiedSidebar() {
           if (items.length === 0) return null;
 
           const isGroupOpen = openGroups.has(group.labelKey);
-          const hasActiveItem = items.some(item => isActive(item.url));
+          const hasActiveItem = items.some(item => isChildActive(item));
 
           return (
             <Collapsible 
@@ -214,6 +252,78 @@ export function UnifiedSidebar() {
                     <SidebarMenu>
                       {items.map((item) => {
                         const Icon = item.icon;
+                        
+                        // Item with children (submenu)
+                        if (item.children) {
+                          const submenuKey = item.title.toLowerCase().replace(/\s+/g, '-');
+                          const isSubmenuOpen = openSubmenus.has(submenuKey);
+                          const hasActiveChild = item.children.some(child => isActive(child.url));
+                          
+                          return (
+                            <Collapsible
+                              key={submenuKey}
+                              open={isSubmenuOpen || hasActiveChild}
+                              onOpenChange={() => toggleSubmenu(submenuKey)}
+                            >
+                              <SidebarMenuItem>
+                                <CollapsibleTrigger asChild>
+                                  <SidebarMenuButton 
+                                    className={`
+                                      cursor-pointer transition-all duration-200 
+                                      ${hasActiveChild 
+                                        ? 'bg-primary/10 text-primary' 
+                                        : 'hover:bg-muted hover:translate-x-1'
+                                      }
+                                    `}
+                                  >
+                                    <div className="flex items-center gap-3 w-full">
+                                      <Icon className="w-5 h-5 shrink-0" />
+                                      {!collapsed && (
+                                        <>
+                                          <span className="truncate flex-1">{item.title}</span>
+                                          <ChevronRight 
+                                            className={`w-4 h-4 text-muted-foreground transition-transform ${isSubmenuOpen || hasActiveChild ? 'rotate-90' : ''}`}
+                                          />
+                                        </>
+                                      )}
+                                    </div>
+                                  </SidebarMenuButton>
+                                </CollapsibleTrigger>
+                              </SidebarMenuItem>
+                              <CollapsibleContent>
+                                <div className="ml-4 border-l border-border/50 pl-2">
+                                  {item.children.map((child) => {
+                                    const ChildIcon = child.icon;
+                                    const childActive = isActive(child.url);
+                                    
+                                    return (
+                                      <SidebarMenuItem key={child.url}>
+                                        <SidebarMenuButton 
+                                          asChild 
+                                          className={`
+                                            transition-all duration-200 text-sm
+                                            ${childActive 
+                                              ? 'bg-primary text-primary-foreground shadow-md' 
+                                              : 'hover:bg-muted hover:translate-x-1'
+                                            }
+                                          `}
+                                          title={child.description}
+                                        >
+                                          <Link to={getUrlWithEditMode(child.url!)} className="flex items-center gap-3">
+                                            <ChildIcon className="w-4 h-4 shrink-0" />
+                                            {!collapsed && <span className="truncate">{child.title}</span>}
+                                          </Link>
+                                        </SidebarMenuButton>
+                                      </SidebarMenuItem>
+                                    );
+                                  })}
+                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          );
+                        }
+                        
+                        // Regular item (no children)
                         const active = isActive(item.url);
                         
                         return (
@@ -229,7 +339,7 @@ export function UnifiedSidebar() {
                               `}
                               title={item.description}
                             >
-                              <Link to={getUrlWithEditMode(item.url)} className="flex items-center gap-3">
+                              <Link to={getUrlWithEditMode(item.url!)} className="flex items-center gap-3">
                                 <Icon className="w-5 h-5 shrink-0" />
                                 {!collapsed && <span className="truncate">{item.title}</span>}
                               </Link>
