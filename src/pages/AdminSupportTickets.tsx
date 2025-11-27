@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MainLayout } from '@/components/layout';
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -221,9 +221,8 @@ export default function AdminSupportTickets() {
   }
 
   return (
-    <MainLayout>
-      <div className={darkMode ? 'dark' : ''}>
-        <div className="space-y-6">
+    <div className={darkMode ? 'dark' : ''}>
+      <div className="space-y-6 p-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
@@ -753,6 +752,6 @@ export default function AdminSupportTickets() {
           </div>
         </div>
       </div>
-    </MainLayout>
+    </div>
   );
 }
