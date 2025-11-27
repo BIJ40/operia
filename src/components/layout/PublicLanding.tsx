@@ -11,13 +11,8 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
       {/* Header minimal */}
       <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <img 
-            src={logoHelpconfort} 
-            alt="HelpConfort Services" 
-            className="h-12 object-contain"
-          />
-          <Button 
+        <div className="container mx-auto px-6 py-4 flex items-center justify-end">
+          <Button
             onClick={onLoginClick}
             size="lg"
             className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all"
