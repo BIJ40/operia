@@ -97,6 +97,8 @@ export const useCategory = () => {
           summary: updatedSection.summary,
           attachments: updatedSection.attachments as any || [],
           hide_from_sidebar: updatedSection.hideFromSidebar,
+          is_in_progress: updatedSection.isInProgress || false,
+          completed_at: updatedSection.completedAt || null,
         })
         .eq('id', updatedSection.id);
 
@@ -127,6 +129,8 @@ export const useCategory = () => {
           hide_title: updatedSection.hideTitle,
           attachments: updatedSection.attachments as any || [],
           hide_from_sidebar: updatedSection.hideFromSidebar,
+          is_in_progress: updatedSection.isInProgress || false,
+          completed_at: updatedSection.completedAt || null,
         })
         .eq('id', updatedSection.id);
 
