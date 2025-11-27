@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { GripVertical, Plus, Lightbulb, Edit2, Copy, FolderInput, Trash2, ChevronDown, Info } from 'lucide-react';
+import { GripVertical, Plus, Lightbulb, Edit2, Copy, FolderInput, Trash2, ChevronDown, Info, Clock, Sparkles } from 'lucide-react';
 import { createSanitizedHtml } from '@/lib/sanitize';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import {
@@ -21,6 +21,14 @@ import {
 } from '@/components/ui/tooltip';
 import { Section, CategoryBlock, CategoryScope } from './types';
 import { Block } from '@/types/block';
+
+// Helper to check if section is new (completed within 7 days)
+const isSectionNew = (completedAt?: string) => {
+  if (!completedAt) return false;
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  return new Date(completedAt) > sevenDaysAgo;
+};
 
 interface AccordionSectionProps {
   section: Section;
@@ -55,6 +63,8 @@ export function AccordionSection({
   onAddSection,
   onAddTips,
 }: AccordionSectionProps) {
+  const isNew = isSectionNew(section.completedAt);
+  
   return (
     <AccordionItem value={section.id} id={section.id}>
       <AccordionTrigger>
@@ -89,6 +99,19 @@ export function AccordionSection({
             <h2 className="text-xl font-semibold text-left text-white">
               {section.title}
             </h2>
+            {/* Section badges */}
+            {section.isInProgress && (
+              <span className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                En cours
+              </span>
+            )}
+            {isNew && !section.isInProgress && (
+              <span className="bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                New
+              </span>
+            )}
             {!isEditMode && !isAdmin && (
               <div onClick={(e) => e.stopPropagation()}>
                 <FavoriteButton

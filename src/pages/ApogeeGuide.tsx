@@ -1,10 +1,10 @@
 // Page dédiée au Guide Apogée (anciennement Home)
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
-import { Lock, Clock } from 'lucide-react';
+import { Lock, Clock, Sparkles } from 'lucide-react';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
 import { ImageUploader } from '@/components/ImageUploader';
+import { Block } from '@/types/block';
 import {
   DndContext,
   closestCenter,
@@ -49,13 +50,13 @@ interface SortableCategoryProps {
   editIcon: string;
   editImageUrl: string | null;
   editShowTitleOnCard: boolean;
-  editIsInProgress: boolean;
   isEditMode: boolean;
+  hasInProgress: boolean;
+  hasNew: boolean;
   onEditTitleChange: (value: string) => void;
   onEditIconChange: (value: string) => void;
   onEditImageUrlChange: (value: string | null) => void;
   onEditShowTitleOnCardChange: (value: boolean) => void;
-  onEditIsInProgressChange: (value: boolean) => void;
   onSave: () => void;
   onCancel: () => void;
   onEdit: (id: string) => void;
@@ -70,13 +71,13 @@ const SortableCategory = ({
   editIcon,
   editImageUrl,
   editShowTitleOnCard,
-  editIsInProgress,
   isEditMode,
+  hasInProgress,
+  hasNew,
   onEditTitleChange,
   onEditIconChange,
   onEditImageUrlChange,
   onEditShowTitleOnCardChange,
-  onEditIsInProgressChange,
   onSave,
   onCancel,
   onEdit,
@@ -110,11 +111,21 @@ const SortableCategory = ({
       style={style}
       className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 ${tileClass}`}
     >
-      {/* Cocarde "En cours" */}
-      {category.isInProgress && (
-        <div className="absolute -top-2 -right-2 z-20 bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-          <Clock className="w-3 h-3" />
-          En cours
+      {/* Badges calculés automatiquement depuis les sections */}
+      {(hasInProgress || hasNew) && !isEditMode && (
+        <div className="absolute -top-2 -right-2 z-20 flex gap-1">
+          {hasInProgress && (
+            <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              En cours
+            </div>
+          )}
+          {hasNew && (
+            <div className="bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+              <Sparkles className="w-3 h-3" />
+              New
+            </div>
+          )}
         </div>
       )}
       {isEditMode && (
@@ -180,17 +191,6 @@ const SortableCategory = ({
             </label>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="is-in-progress"
-              checked={editIsInProgress}
-              onCheckedChange={onEditIsInProgressChange}
-            />
-            <label htmlFor="is-in-progress" className="text-sm font-medium cursor-pointer flex items-center gap-1">
-              <Clock className="w-4 h-4 text-accent" />
-              Marquer "En cours"
-            </label>
-          </div>
           <div className="flex gap-2">
             <Button onClick={onSave} size="sm">
               Enregistrer
@@ -232,7 +232,6 @@ export default function ApogeeGuide() {
   const [editIcon, setEditIcon] = useState('BookOpen');
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const [editShowTitleOnCard, setEditShowTitleOnCard] = useState(true);
-  const [editIsInProgress, setEditIsInProgress] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -262,6 +261,22 @@ export default function ApogeeGuide() {
     .filter(b => b.type === 'category' && b.slug !== 'faq' && !b.title.toLowerCase().includes('faq') && !b.slug.startsWith('helpconfort-'))
     .sort((a, b) => a.order - b.order);
 
+  // Helper function to calculate category badges based on sections
+  const getCategoryBadges = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    return (categoryId: string) => {
+      const sections = blocks.filter(b => b.parentId === categoryId && b.type === 'section');
+      const hasInProgress = sections.some(s => s.isInProgress);
+      const hasNew = sections.some(s => {
+        if (!s.completedAt) return false;
+        return new Date(s.completedAt) > sevenDaysAgo;
+      });
+      return { hasInProgress, hasNew };
+    };
+  }, [blocks]);
+
   // Les dates de création/mise à jour ne sont plus nécessaires pour cette page
 
   // Style unifié aux couleurs du site
@@ -284,7 +299,6 @@ export default function ApogeeGuide() {
       setEditImageUrl(isImageUrl ? category.icon : null);
       
       setEditShowTitleOnCard(category.showTitleOnCard !== false);
-      setEditIsInProgress(category.isInProgress || false);
     }
   };
 
@@ -295,7 +309,6 @@ export default function ApogeeGuide() {
         icon: editImageUrl || editIcon,
         slug: editTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         showTitleOnCard: editShowTitleOnCard,
-        isInProgress: editIsInProgress,
       });
       setEditingId(null);
       setEditImageUrl(null);
@@ -422,29 +435,32 @@ export default function ApogeeGuide() {
               strategy={verticalListSortingStrategy}
             >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                {filteredCategories.map(category => (
-                  <SortableCategory
-                    key={category.id}
-                    category={category}
-                    editingId={editingId}
-                    editTitle={editTitle}
-                    editIcon={editIcon}
-                    editImageUrl={editImageUrl}
-                    editShowTitleOnCard={editShowTitleOnCard}
-                    editIsInProgress={editIsInProgress}
-                    isEditMode={isEditMode}
-                    onEditTitleChange={setEditTitle}
-                    onEditIconChange={setEditIcon}
-                    onEditImageUrlChange={setEditImageUrl}
-                    onEditShowTitleOnCardChange={setEditShowTitleOnCard}
-                    onEditIsInProgressChange={setEditIsInProgress}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    IconComponent={IconComponent}
-                  />
-                ))}
+                {filteredCategories.map(category => {
+                  const badges = getCategoryBadges(category.id);
+                  return (
+                    <SortableCategory
+                      key={category.id}
+                      category={category}
+                      editingId={editingId}
+                      editTitle={editTitle}
+                      editIcon={editIcon}
+                      editImageUrl={editImageUrl}
+                      editShowTitleOnCard={editShowTitleOnCard}
+                      isEditMode={isEditMode}
+                      hasInProgress={badges.hasInProgress}
+                      hasNew={badges.hasNew}
+                      onEditTitleChange={setEditTitle}
+                      onEditIconChange={setEditIcon}
+                      onEditImageUrlChange={setEditImageUrl}
+                      onEditShowTitleOnCardChange={setEditShowTitleOnCard}
+                      onSave={handleSave}
+                      onCancel={handleCancel}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      IconComponent={IconComponent}
+                    />
+                  );
+                })}
               </div>
             </SortableContext>
           </DndContext>
@@ -454,6 +470,7 @@ export default function ApogeeGuide() {
               const Icon = IconComponent(category.icon || 'BookOpen');
               const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
               const isLocked = isBlockLocked(category.id, blocks);
+              const badges = getCategoryBadges(category.id);
               
               if (isLocked) {
                 return (
@@ -468,11 +485,21 @@ export default function ApogeeGuide() {
                     }}
                     className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 cursor-pointer opacity-60 ${tileClass}`}
                   >
-                    {/* Cocarde "En cours" */}
-                    {category.isInProgress && (
-                      <div className="absolute -top-2 -right-2 z-20 bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        En cours
+                    {/* Badges calculés */}
+                    {(badges.hasInProgress || badges.hasNew) && (
+                      <div className="absolute -top-2 -right-2 z-20 flex gap-1">
+                        {badges.hasInProgress && (
+                          <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            En cours
+                          </div>
+                        )}
+                        {badges.hasNew && (
+                          <div className="bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            New
+                          </div>
+                        )}
                       </div>
                     )}
                     {/* Cadenas en overlay */}
@@ -504,11 +531,21 @@ export default function ApogeeGuide() {
                   to={`/apogee/category/${category.slug}`}
                   className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 ${tileClass}`}
                 >
-                  {/* Cocarde "En cours" */}
-                  {category.isInProgress && (
-                    <div className="absolute -top-2 -right-2 z-20 bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      En cours
+                  {/* Badges calculés */}
+                  {(badges.hasInProgress || badges.hasNew) && (
+                    <div className="absolute -top-2 -right-2 z-20 flex gap-1">
+                      {badges.hasInProgress && (
+                        <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          En cours
+                        </div>
+                      )}
+                      {badges.hasNew && (
+                        <div className="bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          New
+                        </div>
+                      )}
                     </div>
                   )}
                   {isCustomImage ? (

@@ -4,7 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { ColorPreset } from '@/types/block';
 import { useState, useEffect } from 'react';
-import { Save, X } from 'lucide-react';
+import { Save, X, Clock, Sparkles, Check } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +46,8 @@ interface SectionEditFormProps {
   initialShowSummary?: boolean;
   initialHideTitle?: boolean;
   initialHideFromSidebar?: boolean;
+  initialIsInProgress?: boolean;
+  initialCompletedAt?: string;
   onSave: (data: {
     title: string;
     content: string;
@@ -54,6 +56,8 @@ interface SectionEditFormProps {
     showSummary?: boolean;
     hideTitle?: boolean;
     hideFromSidebar?: boolean;
+    isInProgress?: boolean;
+    completedAt?: string;
   }) => void;
   onCancel: () => void;
 }
@@ -67,6 +71,8 @@ export function SectionEditForm({
   initialShowSummary = true,
   initialHideTitle = false,
   initialHideFromSidebar = false,
+  initialIsInProgress = false,
+  initialCompletedAt,
   onSave,
   onCancel,
 }: SectionEditFormProps) {
@@ -102,7 +108,12 @@ export function SectionEditForm({
     const saved = sessionStorage.getItem(`${storageKey}-hideFromSidebar`);
     return saved ? saved === 'true' : initialHideFromSidebar;
   });
+  const [isInProgress, setIsInProgress] = useState(initialIsInProgress);
+  const [completedAt, setCompletedAt] = useState(initialCompletedAt);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+
+  // Helper to check if section is new (completed within 7 days)
+  const isNew = completedAt && (new Date().getTime() - new Date(completedAt).getTime()) < 7 * 24 * 60 * 60 * 1000;
 
   // Sauvegarder automatiquement l'état lors des modifications
   useEffect(() => {
@@ -206,8 +217,28 @@ export function SectionEditForm({
   };
 
   const handleSave = () => {
-    onSave({ title, content, colorPreset: color, summary, showSummary, hideTitle, hideFromSidebar });
+    onSave({ 
+      title, 
+      content, 
+      colorPreset: color, 
+      summary, 
+      showSummary, 
+      hideTitle, 
+      hideFromSidebar,
+      isInProgress,
+      completedAt,
+    });
     clearStorage();
+  };
+
+  const handleMarkComplete = () => {
+    setIsInProgress(false);
+    setCompletedAt(new Date().toISOString());
+  };
+
+  const handleMarkInProgress = () => {
+    setIsInProgress(true);
+    setCompletedAt(undefined);
   };
 
   const handleCancel = () => {
@@ -320,6 +351,39 @@ export function SectionEditForm({
             Ne pas afficher dans le sommaire
           </label>
         </div>
+      </div>
+      
+      {/* Section status controls */}
+      <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
+        <label className="text-sm font-medium">Statut de la section</label>
+        <div className="flex gap-2">
+          <Button 
+            type="button"
+            size="sm"
+            variant={isInProgress ? "default" : "outline"}
+            onClick={handleMarkInProgress}
+            className="gap-1"
+          >
+            <Clock className="w-3 h-3" />
+            En cours
+          </Button>
+          <Button 
+            type="button"
+            size="sm"
+            variant={!isInProgress && completedAt ? "default" : "outline"}
+            onClick={handleMarkComplete}
+            className="gap-1"
+          >
+            <Check className="w-3 h-3" />
+            Terminé
+          </Button>
+        </div>
+        {isNew && (
+          <div className="flex items-center gap-1 text-xs text-accent">
+            <Sparkles className="w-3 h-3" />
+            Badge "New" affiché pendant 7 jours
+          </div>
+        )}
       </div>
       {!hideTitle && (
         <div className="flex items-center space-x-2 py-2">
