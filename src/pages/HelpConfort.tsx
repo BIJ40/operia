@@ -51,6 +51,7 @@ interface SortableCategoryProps {
   editColor: ColorPreset;
   editImageUrl: string | null;
   editShowTitleOnCard: boolean;
+  editIsEmpty: boolean;
   isEditMode: boolean;
   hasInProgress: boolean;
   hasNew: boolean;
@@ -61,6 +62,7 @@ interface SortableCategoryProps {
   onEditColorChange: (value: ColorPreset) => void;
   onEditImageUrlChange: (value: string | null) => void;
   onEditShowTitleOnCardChange: (value: boolean) => void;
+  onEditIsEmptyChange: (value: boolean) => void;
   onSave: () => void;
   onCancel: () => void;
   onEdit: (id: string) => void;
@@ -77,6 +79,7 @@ const SortableCategory = ({
   editColor,
   editImageUrl,
   editShowTitleOnCard,
+  editIsEmpty,
   isEditMode,
   hasInProgress,
   hasNew,
@@ -87,6 +90,7 @@ const SortableCategory = ({
   onEditColorChange,
   onEditImageUrlChange,
   onEditShowTitleOnCardChange,
+  onEditIsEmptyChange,
   onSave,
   onCancel,
   onEdit,
@@ -211,6 +215,17 @@ const SortableCategory = ({
               Afficher le titre sur la carte
             </label>
           </div>
+          
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="mark-empty-hc"
+              checked={editIsEmpty}
+              onCheckedChange={onEditIsEmptyChange}
+            />
+            <label htmlFor="mark-empty-hc" className="text-sm font-medium cursor-pointer text-muted-foreground">
+              Marquer comme vide (grise la catégorie)
+            </label>
+          </div>
           <div className="flex gap-2">
             <Button onClick={onSave} size="sm">
               Enregistrer
@@ -276,6 +291,7 @@ export default function HelpConfort() {
   const [editColor, setEditColor] = useState<ColorPreset>('blue');
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const [editShowTitleOnCard, setEditShowTitleOnCard] = useState(true);
+  const [editIsEmpty, setEditIsEmpty] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -351,6 +367,7 @@ export default function HelpConfort() {
       setEditImageUrl(isImageUrl ? category.icon : null);
       
       setEditShowTitleOnCard(category.showTitleOnCard !== false);
+      setEditIsEmpty(category.isEmpty || false);
     }
   };
 
@@ -362,6 +379,7 @@ export default function HelpConfort() {
         colorPreset: editColor,
         slug: `helpconfort-${editTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
         showTitleOnCard: editShowTitleOnCard,
+        isEmpty: editIsEmpty,
       });
       setEditingId(null);
       setEditImageUrl(null);
@@ -500,6 +518,7 @@ export default function HelpConfort() {
                         editColor={editColor}
                         editImageUrl={editImageUrl}
                         editShowTitleOnCard={editShowTitleOnCard}
+                        editIsEmpty={editIsEmpty}
                         isEditMode={isEditMode}
                         hasInProgress={hasInProgress}
                         hasNew={hasNew}
@@ -510,6 +529,7 @@ export default function HelpConfort() {
                         onEditColorChange={setEditColor}
                         onEditImageUrlChange={setEditImageUrl}
                         onEditShowTitleOnCardChange={setEditShowTitleOnCard}
+                        onEditIsEmptyChange={setEditIsEmpty}
                         onSave={handleSave}
                         onCancel={handleCancel}
                         onEdit={handleEdit}
