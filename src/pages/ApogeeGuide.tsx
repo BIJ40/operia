@@ -4,17 +4,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
-import { Lock } from 'lucide-react';
+import { Lock, Clock } from 'lucide-react';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ColorPreset } from '@/types/block';
 import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
-import { ColorPicker } from '@/components/ColorPicker';
 import { ImageUploader } from '@/components/ImageUploader';
 import {
   DndContext,
@@ -50,20 +47,19 @@ interface SortableCategoryProps {
   editingId: string | null;
   editTitle: string;
   editIcon: string;
-  editColor: ColorPreset;
   editImageUrl: string | null;
   editShowTitleOnCard: boolean;
+  editIsInProgress: boolean;
   isEditMode: boolean;
   onEditTitleChange: (value: string) => void;
   onEditIconChange: (value: string) => void;
-  onEditColorChange: (value: ColorPreset) => void;
   onEditImageUrlChange: (value: string | null) => void;
   onEditShowTitleOnCardChange: (value: boolean) => void;
+  onEditIsInProgressChange: (value: boolean) => void;
   onSave: () => void;
   onCancel: () => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  getColorClass: (color?: ColorPreset) => string;
   IconComponent: (iconName: string) => any;
 }
 
@@ -72,20 +68,19 @@ const SortableCategory = ({
   editingId,
   editTitle,
   editIcon,
-  editColor,
   editImageUrl,
   editShowTitleOnCard,
+  editIsInProgress,
   isEditMode,
   onEditTitleChange,
   onEditIconChange,
-  onEditColorChange,
   onEditImageUrlChange,
   onEditShowTitleOnCardChange,
+  onEditIsInProgressChange,
   onSave,
   onCancel,
   onEdit,
   onDelete,
-  getColorClass,
   IconComponent,
 }: SortableCategoryProps) => {
   const {
@@ -106,12 +101,22 @@ const SortableCategory = ({
   const Icon = IconComponent(category.icon || 'BookOpen');
   const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
 
+  // Style unifié aux couleurs du site
+  const tileClass = "bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 border-l-primary hover:border-l-accent hover:shadow-xl";
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 ${getColorClass(category.colorPreset)}`}
+      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 ${tileClass}`}
     >
+      {/* Cocarde "En cours" */}
+      {category.isInProgress && (
+        <div className="absolute -top-2 -right-2 z-20 bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+          <Clock className="w-3 h-3" />
+          En cours
+        </div>
+      )}
       {isEditMode && (
         <>
           <div
@@ -164,11 +169,6 @@ const SortableCategory = ({
             onChange={onEditIconChange}
           />
           
-          <ColorPicker
-            value={editColor}
-            onChange={onEditColorChange}
-          />
-          
           <div className="flex items-center gap-2">
             <Checkbox
               id="show-title-on-card"
@@ -177,6 +177,18 @@ const SortableCategory = ({
             />
             <label htmlFor="show-title-on-card" className="text-sm font-medium cursor-pointer">
               Afficher le titre sur la carte
+            </label>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="is-in-progress"
+              checked={editIsInProgress}
+              onCheckedChange={onEditIsInProgressChange}
+            />
+            <label htmlFor="is-in-progress" className="text-sm font-medium cursor-pointer flex items-center gap-1">
+              <Clock className="w-4 h-4 text-accent" />
+              Marquer "En cours"
             </label>
           </div>
           <div className="flex gap-2">
@@ -218,9 +230,9 @@ export default function ApogeeGuide() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
-  const [editColor, setEditColor] = useState<ColorPreset>('blue');
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const [editShowTitleOnCard, setEditShowTitleOnCard] = useState(true);
+  const [editIsInProgress, setEditIsInProgress] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -252,25 +264,8 @@ export default function ApogeeGuide() {
 
   // Les dates de création/mise à jour ne sont plus nécessaires pour cette page
 
-  const getColorClass = (color?: ColorPreset) => {
-    const colors = {
-      red: 'bg-red-50 border-l-red-500 hover:border-l-red-600',
-      blanc: 'bg-white border-l-gray-400 hover:border-l-gray-500',
-      white: 'bg-white border-l-gray-400 hover:border-l-gray-500',
-      blue: 'bg-blue-50 border-l-blue-500 hover:border-l-blue-600',
-      green: 'border-l-accent bg-gradient-to-r from-helpconfort-blue-light/20 to-helpconfort-blue-dark/20 hover:shadow-xl hover:border-l-accent/80',
-      yellow: 'bg-yellow-50 border-l-yellow-500 hover:border-l-yellow-600',
-      purple: 'bg-purple-50 border-l-purple-500 hover:border-l-purple-600',
-      orange: 'bg-orange-50 border-l-orange-500 hover:border-l-orange-600',
-      pink: 'bg-pink-50 border-l-pink-500 hover:border-l-pink-600',
-      cyan: 'bg-cyan-50 border-l-cyan-500 hover:border-l-cyan-600',
-      indigo: 'bg-indigo-50 border-l-indigo-500 hover:border-l-indigo-600',
-      teal: 'bg-teal-50 border-l-teal-500 hover:border-l-teal-600',
-      rose: 'bg-rose-50 border-l-rose-500 hover:border-l-rose-600',
-      gray: 'bg-gray-50 border-l-gray-400 hover:border-l-gray-500',
-    };
-    return colors[color || 'blue'] || colors.blue;
-  };
+  // Style unifié aux couleurs du site
+  const tileClass = "bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 border-l-primary hover:border-l-accent hover:shadow-xl";
 
   const IconComponent = (iconName: string) => {
     const Icon = (Icons as any)[iconName] || Icons.BookOpen;
@@ -283,13 +278,13 @@ export default function ApogeeGuide() {
       setEditingId(id);
       setEditTitle(category.title);
       setEditIcon(category.icon || 'BookOpen');
-      setEditColor(category.colorPreset || 'blue');
       
       // Vérifier si l'icône est une URL d'image
       const isImageUrl = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
       setEditImageUrl(isImageUrl ? category.icon : null);
       
       setEditShowTitleOnCard(category.showTitleOnCard !== false);
+      setEditIsInProgress(category.isInProgress || false);
     }
   };
 
@@ -298,9 +293,9 @@ export default function ApogeeGuide() {
       updateBlock(editingId, {
         title: editTitle,
         icon: editImageUrl || editIcon,
-        colorPreset: editColor,
         slug: editTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         showTitleOnCard: editShowTitleOnCard,
+        isInProgress: editIsInProgress,
       });
       setEditingId(null);
       setEditImageUrl(null);
@@ -434,20 +429,19 @@ export default function ApogeeGuide() {
                     editingId={editingId}
                     editTitle={editTitle}
                     editIcon={editIcon}
-                    editColor={editColor}
                     editImageUrl={editImageUrl}
                     editShowTitleOnCard={editShowTitleOnCard}
+                    editIsInProgress={editIsInProgress}
                     isEditMode={isEditMode}
                     onEditTitleChange={setEditTitle}
                     onEditIconChange={setEditIcon}
-                    onEditColorChange={setEditColor}
                     onEditImageUrlChange={setEditImageUrl}
                     onEditShowTitleOnCardChange={setEditShowTitleOnCard}
+                    onEditIsInProgressChange={setEditIsInProgress}
                     onSave={handleSave}
                     onCancel={handleCancel}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
-                    getColorClass={getColorClass}
                     IconComponent={IconComponent}
                   />
                 ))}
@@ -472,8 +466,15 @@ export default function ApogeeGuide() {
                         variant: 'destructive',
                       });
                     }}
-                    className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 cursor-pointer opacity-60 ${getColorClass(category.colorPreset)}`}
+                    className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 cursor-pointer opacity-60 ${tileClass}`}
                   >
+                    {/* Cocarde "En cours" */}
+                    {category.isInProgress && (
+                      <div className="absolute -top-2 -right-2 z-20 bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        En cours
+                      </div>
+                    )}
                     {/* Cadenas en overlay */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <Lock className="w-8 h-8 text-destructive drop-shadow-lg" />
@@ -501,8 +502,15 @@ export default function ApogeeGuide() {
                 <Link
                   key={category.id}
                   to={`/apogee/category/${category.slug}`}
-                  className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 ${getColorClass(category.colorPreset)}`}
+                  className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 ${tileClass}`}
                 >
+                  {/* Cocarde "En cours" */}
+                  {category.isInProgress && (
+                    <div className="absolute -top-2 -right-2 z-20 bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      En cours
+                    </div>
+                  )}
                   {isCustomImage ? (
                     <img 
                       src={category.icon} 

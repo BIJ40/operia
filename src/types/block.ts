@@ -31,6 +31,7 @@ export interface Block {
   summary?: string;
   showSummary?: boolean;
   hideTitle?: boolean;
+  isInProgress?: boolean;
 }
 
 export interface AppData {
