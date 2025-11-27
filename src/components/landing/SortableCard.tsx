@@ -119,59 +119,61 @@ export function SortableCard({
       )}
       
       {editingId === card.id ? (
-        <div className="space-y-3">
-          <Input
-            value={editTitle}
-            onChange={(e) => onEditTitleChange(e.target.value)}
-            placeholder="Titre de la carte"
-            autoFocus
-          />
-          <Input
-            value={editDescription}
-            onChange={(e) => onEditDescriptionChange(e.target.value)}
-            placeholder="Description"
-          />
-          <Input
-            value={editLink}
-            onChange={(e) => onEditLinkChange(e.target.value)}
-            placeholder="Lien (ex: /apogee)"
-          />
-          <IconPicker
-            value={editIcon}
-            onChange={onEditIconChange}
-          />
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Couleur</label>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { value: 'red', color: 'bg-red-50 border-2 border-red-200', label: 'Rouge' },
-                { value: 'blanc', color: 'bg-white border-2 border-gray-300', label: 'Blanc' },
-                { value: 'blue', color: 'bg-blue-50 border-2 border-blue-200', label: 'Bleu' },
-                { value: 'green', color: 'bg-green-50 border-2 border-green-200', label: 'Vert' },
-                { value: 'yellow', color: 'bg-yellow-50 border-2 border-yellow-200', label: 'Jaune' },
-                { value: 'purple', color: 'bg-purple-50 border-2 border-purple-200', label: 'Violet' },
-                { value: 'orange', color: 'bg-orange-50 border-2 border-orange-200', label: 'Orange' },
-              ].map((preset) => (
-                <button
-                  key={preset.value}
-                  type="button"
-                  onClick={() => onEditColorChange(preset.value as ColorPreset)}
-                  className={`${preset.color} px-3 py-1.5 rounded text-xs font-medium ${
-                    editColor === preset.value ? 'ring-2 ring-primary' : ''
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              ))}
+        <div className="absolute inset-0 z-20 bg-card border-2 border-primary rounded-2xl p-4 shadow-xl overflow-y-auto max-h-[400px]">
+          <div className="space-y-3">
+            <Input
+              value={editTitle}
+              onChange={(e) => onEditTitleChange(e.target.value)}
+              placeholder="Titre de la carte"
+              autoFocus
+            />
+            <Input
+              value={editDescription}
+              onChange={(e) => onEditDescriptionChange(e.target.value)}
+              placeholder="Description"
+            />
+            <Input
+              value={editLink}
+              onChange={(e) => onEditLinkChange(e.target.value)}
+              placeholder="Lien (ex: /apogee)"
+            />
+            <IconPicker
+              value={editIcon}
+              onChange={onEditIconChange}
+            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Couleur</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: 'red', color: 'bg-red-100 border-2 border-red-300 text-red-800', label: 'Rouge' },
+                  { value: 'blanc', color: 'bg-white border-2 border-gray-300 text-gray-800', label: 'Blanc' },
+                  { value: 'blue', color: 'bg-blue-100 border-2 border-blue-300 text-blue-800', label: 'Bleu' },
+                  { value: 'green', color: 'bg-green-100 border-2 border-green-300 text-green-800', label: 'Vert' },
+                  { value: 'yellow', color: 'bg-yellow-100 border-2 border-yellow-300 text-yellow-800', label: 'Jaune' },
+                  { value: 'purple', color: 'bg-purple-100 border-2 border-purple-300 text-purple-800', label: 'Violet' },
+                  { value: 'orange', color: 'bg-orange-100 border-2 border-orange-300 text-orange-800', label: 'Orange' },
+                ].map((preset) => (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    onClick={() => onEditColorChange(preset.value as ColorPreset)}
+                    className={`${preset.color} px-3 py-1.5 rounded text-xs font-medium ${
+                      editColor === preset.value ? 'ring-2 ring-primary ring-offset-2' : ''
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={onSave} size="sm">
-              Enregistrer
-            </Button>
-            <Button onClick={onCancel} size="sm" variant="outline">
-              Annuler
-            </Button>
+            <div className="flex gap-2 pt-2">
+              <Button onClick={onSave} size="sm">
+                Enregistrer
+              </Button>
+              <Button onClick={onCancel} size="sm" variant="outline">
+                Annuler
+              </Button>
+            </div>
           </div>
         </div>
       ) : (

@@ -47,7 +47,7 @@ export function ActionsAMenerCard() {
         <AlertCircle className="w-12 h-12 text-orange-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-bold text-foreground">Actions à mener</h2>
-          <p className="text-xs text-muted-foreground">Dossiers à surveiller</p>
+          <p className="text-xs text-muted-foreground">Restez à jour</p>
         </div>
       </div>
 
