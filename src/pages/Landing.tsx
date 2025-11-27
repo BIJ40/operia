@@ -1,328 +1,153 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useEffect } from 'react';
-import * as Icons from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Plus, LogIn } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { LoginDialog } from '@/components/LoginDialog';
-import { Header } from '@/components/Header';
-import { arrayMove } from '@dnd-kit/sortable';
-import { DragEndEvent } from '@dnd-kit/core';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Link } from 'react-router-dom';
+import { 
+  BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
+  MessageSquare, Network, ArrowRight
+} from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { HomeCard, ColorPreset } from '@/components/landing/types';
-import { UnauthenticatedGrid } from '@/components/landing/UnauthenticatedGrid';
-import { AuthenticatedGrid } from '@/components/landing/AuthenticatedGrid';
-
-const supabaseAny = supabase as any;
+interface DashboardCard {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  url: string;
+  color: 'primary' | 'accent';
+  scope?: string;
+}
 
 export default function Landing() {
-  const { isAdmin, isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  const [homeCards, setHomeCards] = useState<HomeCard[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [editLink, setEditLink] = useState('');
-  const [editIcon, setEditIcon] = useState('BookOpen');
-  const [editColor, setEditColor] = useState<ColorPreset>('blue');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [cardToDelete, setCardToDelete] = useState<string | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(false);
+  const { canViewScope, isFranchiseur, isAdmin } = useAuth();
 
-  useEffect(() => {
-    loadCards();
-    
-    if (isAuthenticated) {
-      setLoginOpen(false);
-    }
-    
-    const storedEditMode = localStorage.getItem('editMode') === 'true';
-    setIsEditMode(storedEditMode);
-    
-    const handleStorageChange = () => {
-      const newEditMode = localStorage.getItem('editMode') === 'true';
-      setIsEditMode(newEditMode);
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('editModeChange', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('editModeChange', handleStorageChange);
-    };
-  }, [isAuthenticated]);
+  const helpAcademyCards: DashboardCard[] = [
+    { title: 'Guide Apogée', description: 'Guide complet pour maîtriser le logiciel Apogée', icon: BookOpen, url: '/apogee', color: 'primary', scope: 'apogee' },
+    { title: 'Guide Apporteurs', description: 'Ressources pour les apporteurs d\'affaires', icon: FileText, url: '/apporteurs', color: 'primary', scope: 'apporteurs' },
+    { title: 'Base Documentaire', description: 'Documents et ressources HelpConfort', icon: FolderOpen, url: '/helpconfort', color: 'primary', scope: 'helpconfort' },
+  ];
 
-  const loadCards = async () => {
-    try {
-      const { data, error } = await supabaseAny
-        .from('home_cards')
-        .select('*')
-        .order('display_order', { ascending: true });
+  const pilotageCards: DashboardCard[] = [
+    { title: 'Mes Indicateurs', description: 'Tableau de bord et KPI de votre agence', icon: BarChart3, url: '/mes-indicateurs', color: 'accent', scope: 'mes_indicateurs' },
+    { title: 'Actions à Mener', description: 'Suivi des actions et tâches en cours', icon: ListTodo, url: '/actions-a-mener', color: 'accent', scope: 'actions_a_mener' },
+    { title: 'Diffusion', description: 'Mode affichage TV agence', icon: Tv, url: '/diffusion', color: 'accent', scope: 'diffusion' },
+  ];
 
-      if (error) {
-        console.error('Error loading cards:', error);
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de charger les cartes',
-          variant: 'destructive',
-        });
-      } else {
-        setHomeCards(data || []);
-      }
-    } catch (e) {
-      console.error('Exception loading cards:', e);
-    }
+  const supportCards: DashboardCard[] = [
+    { title: 'Mes Demandes', description: 'Créer et suivre vos demandes de support', icon: MessageSquare, url: '/mes-demandes', color: 'primary', scope: 'mes_demandes' },
+  ];
+
+  const franchiseurCard: DashboardCard = { 
+    title: 'Réseau Franchiseur', 
+    description: 'Pilotage multi-agences et statistiques réseau', 
+    icon: Network, 
+    url: '/tete-de-reseau', 
+    color: 'accent',
+    scope: 'franchiseur_dashboard'
   };
 
-  const handleEdit = (id: string) => {
-    const card = homeCards.find(c => c.id === id);
-    if (card) {
-      setEditingId(id);
-      setEditTitle(card.title);
-      setEditDescription(card.description);
-      setEditLink(card.link);
-      setEditIcon(card.icon || 'BookOpen');
-      setEditColor(card.color_preset || 'blue');
-    }
+  const filterCards = (cards: DashboardCard[]) => {
+    return cards.filter(card => !card.scope || canViewScope(card.scope));
   };
 
-  const handleSave = async () => {
-    if (editingId) {
-      const { error } = await supabaseAny
-        .from('home_cards')
-        .update({
-          title: editTitle,
-          description: editDescription,
-          link: editLink,
-          icon: editIcon,
-          color_preset: editColor,
-        })
-        .eq('id', editingId);
+  const filteredHelpCards = filterCards(helpAcademyCards);
+  const filteredPilotageCards = filterCards(pilotageCards);
+  const filteredSupportCards = filterCards(supportCards);
+  const showFranchiseur = (isFranchiseur || isAdmin) && canViewScope('franchiseur_dashboard');
 
-      if (error) {
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de sauvegarder',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Succès',
-          description: 'Carte mise à jour',
-        });
-        loadCards();
-        setEditingId(null);
-      }
-    }
-  };
+  return (
+    <div className="container mx-auto px-6 py-8 space-y-10">
+      {/* Welcome section */}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
+          Bienvenue sur <span className="text-primary">HC Services</span>
+        </h1>
+        <p className="text-muted-foreground">
+          Votre espace centralisé pour piloter votre agence HelpConfort
+        </p>
+      </div>
 
-  const handleCancel = () => {
-    setEditingId(null);
-  };
+      {/* HELP Academy Section */}
+      {filteredHelpCards.length > 0 && (
+        <section>
+          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-primary" />
+            HELP Academy
+          </h2>
+          <div className="grid md:grid-cols-3 gap-4">
+            {filteredHelpCards.map((card) => (
+              <DashboardCardComponent key={card.url} card={card} />
+            ))}
+          </div>
+        </section>
+      )}
 
-  const handleDelete = (id: string) => {
-    setCardToDelete(id);
-    setDeleteDialogOpen(true);
-  };
+      {/* Pilotage Section */}
+      {filteredPilotageCards.length > 0 && (
+        <section>
+          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-accent" />
+            Pilotage Agence
+          </h2>
+          <div className="grid md:grid-cols-3 gap-4">
+            {filteredPilotageCards.map((card) => (
+              <DashboardCardComponent key={card.url} card={card} />
+            ))}
+          </div>
+        </section>
+      )}
 
-  const confirmDelete = async () => {
-    if (cardToDelete) {
-      const { error } = await supabaseAny
-        .from('home_cards')
-        .delete()
-        .eq('id', cardToDelete);
+      {/* Support Section */}
+      {filteredSupportCards.length > 0 && (
+        <section>
+          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-primary" />
+            Support
+          </h2>
+          <div className="grid md:grid-cols-3 gap-4">
+            {filteredSupportCards.map((card) => (
+              <DashboardCardComponent key={card.url} card={card} />
+            ))}
+          </div>
+        </section>
+      )}
 
-      if (error) {
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de supprimer',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Succès',
-          description: 'Carte supprimée',
-        });
-        loadCards();
-      }
-      setCardToDelete(null);
-    }
-    setDeleteDialogOpen(false);
-  };
+      {/* Franchiseur Section */}
+      {showFranchiseur && (
+        <section>
+          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Network className="w-5 h-5 text-accent" />
+            Réseau
+          </h2>
+          <div className="max-w-md">
+            <DashboardCardComponent card={franchiseurCard} />
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
 
-  const handleAddCard = async () => {
-    const maxOrder = homeCards.length > 0 
-      ? Math.max(...homeCards.map(c => c.display_order))
-      : -1;
-
-    const timestamp = Date.now();
-    const slug = `categorie-${timestamp}`;
-    const categoryId = `block-${timestamp}-${Math.random().toString(36).substr(2, 9)}`;
-
-    try {
-      const { error: blockError } = await supabaseAny
-        .from('blocks')
-        .insert({
-          id: categoryId,
-          title: 'Nouvelle section',
-          slug: slug,
-          type: 'category',
-          content: '',
-          parent_id: null,
-          order: maxOrder + 1,
-          color_preset: 'blue',
-          icon: 'BookOpen',
-          hide_from_sidebar: false,
-          attachments: [],
-        });
-
-      if (blockError) {
-        throw blockError;
-      }
-
-      const { error: cardError } = await supabaseAny
-        .from('home_cards')
-        .insert({
-          title: 'Nouvelle section',
-          description: 'Description',
-          link: `/apogee/category/${slug}`,
-          icon: 'BookOpen',
-          color_preset: 'blue',
-          display_order: maxOrder + 1,
-        });
-
-      if (cardError) {
-        throw cardError;
-      }
-
-      toast({
-        title: 'Succès',
-        description: 'Section créée avec succès',
-      });
-      loadCards();
-      
-      window.location.reload();
-    } catch (error) {
-      console.error('Error adding card:', error);
-      toast({
-        title: 'Erreur',
-        description: "Impossible d'ajouter la section",
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      const oldIndex = homeCards.findIndex(c => c.id === active.id);
-      const newIndex = homeCards.findIndex(c => c.id === over.id);
-      
-      const reorderedCards = arrayMove(homeCards, oldIndex, newIndex);
-      setHomeCards(reorderedCards);
-      
-      for (let i = 0; i < reorderedCards.length; i++) {
-        await supabaseAny
-          .from('home_cards')
-          .update({ display_order: i })
-          .eq('id', reorderedCards[i].id);
-      }
-    }
+function DashboardCardComponent({ card }: { card: DashboardCard }) {
+  const Icon = card.icon;
+  const colorClasses = {
+    primary: 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground',
+    accent: 'bg-accent/10 text-accent group-hover:bg-accent group-hover:text-accent-foreground',
   };
 
   return (
-    <>
-      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-      
-      {!isAuthenticated ? (
-        <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-          <div className="container mx-auto px-4 py-4 flex justify-end">
-            <Button
-              onClick={() => setLoginOpen(true)}
-              variant="ghost"
-              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
-            >
-              <LogIn className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-foreground">SE CONNECTER</span>
-            </Button>
-          </div>
-
-          <div className="container max-w-6xl mx-auto px-4 py-8">
-            <UnauthenticatedGrid 
-              homeCards={homeCards} 
-              onLoginClick={() => setLoginOpen(true)} 
-            />
-          </div>
-        </div>
-      ) : (
-        <>
-          <Header />
-          <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-            <div className="container max-w-6xl mx-auto px-4 py-12">
-              <AuthenticatedGrid
-                homeCards={homeCards}
-                isEditMode={isEditMode}
-                isAdmin={isAdmin}
-                editingId={editingId}
-                editTitle={editTitle}
-                editDescription={editDescription}
-                editLink={editLink}
-                editIcon={editIcon}
-                editColor={editColor}
-                onEditTitleChange={setEditTitle}
-                onEditDescriptionChange={setEditDescription}
-                onEditLinkChange={setEditLink}
-                onEditIconChange={setEditIcon}
-                onEditColorChange={setEditColor}
-                onSave={handleSave}
-                onCancel={handleCancel}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onDragEnd={handleDragEnd}
-              />
-
-              {isEditMode && isAdmin && (
-                <div className="flex justify-end mt-8">
-                  <Button onClick={handleAddCard} size="sm" variant="ghost" className="gap-1 text-muted-foreground hover:text-foreground">
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
+    <Link to={card.url}>
+      <Card className="group h-full hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${colorClasses[card.color]}`}>
+              <Icon className="w-6 h-6" />
             </div>
+            <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
-
-          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Êtes-vous sûr de vouloir supprimer cette carte ?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Supprimer
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </>
-      )}
-    </>
+        </CardHeader>
+        <CardContent>
+          <CardTitle className="text-lg mb-1">{card.title}</CardTitle>
+          <CardDescription className="text-sm">{card.description}</CardDescription>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
