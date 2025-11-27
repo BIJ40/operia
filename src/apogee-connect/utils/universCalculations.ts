@@ -62,10 +62,6 @@ export const calculateUniversStats = (
       return;
     }
 
-    // Exclure les avoirs
-    const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-    if (typeFacture === "avoir") return;
-
     const project = projectsMap.get(facture.projectId);
     if (!project) return;
 
@@ -75,14 +71,18 @@ export const calculateUniversStats = (
     const universes = [...new Set(normalizedUniverses)]; // Dédupliquer
     if (universes.length === 0) return;
 
-    // Calculer le montant HT
-    const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
-    const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-    
-    if (isNaN(montant)) return;
+    // Déterminer le type de facture et le montant net (aligné sur calculateCaJour)
+    const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
+    const montantRaw = facture.totalHT || facture.data?.totalHT || facture.montantHT || facture.data?.montantHT || "0";
+    const montantParsed = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+    if (isNaN(montantParsed)) return;
 
-    // Si le projet a plusieurs univers, diviser le CA équitablement
-    const caParUnivers = montant / universes.length;
+    const montantNet = typeFacture === "avoir" || typeFacture === "Avoir"
+      ? -Math.abs(montantParsed)
+      : montantParsed;
+
+    // Si le projet a plusieurs univers, diviser le CA équitablement (montant net)
+    const caParUnivers = montantNet / universes.length;
 
     universes.forEach((univers: string) => {
       if (!statsParUnivers.has(univers)) {
@@ -274,9 +274,15 @@ export const calculateMonthlyUniversCA = (
       const factureDate = parseISO(dateReelle);
       if (!isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end })) return;
       
-      // Exclure les avoirs
+      // Déterminer le type de facture et le montant net (aligné sur calculateCaJour)
       const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-      if (typeFacture === "avoir") return;
+      const montantRaw = facture.totalHT || facture.data?.totalHT || facture.montantHT || facture.data?.montantHT || "0";
+      const montantParsed = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+      if (isNaN(montantParsed)) return;
+      
+      const montantNet = typeFacture === "avoir" || typeFacture === "Avoir"
+        ? -Math.abs(montantParsed)
+        : montantParsed;
       
       const project = projectsMap.get(facture.projectId);
       if (!project) return;
@@ -287,14 +293,8 @@ export const calculateMonthlyUniversCA = (
       const universes = [...new Set(normalizedUniverses)]; // Dédupliquer
       if (universes.length === 0) return;
       
-      // Calculer le montant HT
-      const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
-      const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-      
-      if (isNaN(montant)) return;
-      
-      // Diviser le CA équitablement entre les univers
-      const caParUnivers = montant / universes.length;
+      // Diviser le CA (net) équitablement entre les univers
+      const caParUnivers = montantNet / universes.length;
       
       // Récupérer le mois (format: "Jan", "Fév", etc.)
       const monthKey = factureDate.toLocaleDateString('fr-FR', { month: 'short' });
