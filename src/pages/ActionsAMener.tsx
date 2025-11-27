@@ -47,16 +47,32 @@ function ActionsAMenerContent() {
   });
 
   // Notification automatique pour les actions qui vont passer en retard dans J+1
+  // Affichée une seule fois après 5 minutes de session active
   useEffect(() => {
     if (!actions) return;
     
-    const actionsDueSoon = actions.filter(action => action.isDueSoon);
+    const notificationShown = sessionStorage.getItem('actionsNotificationShown');
+    if (notificationShown === 'true') return;
     
-    if (actionsDueSoon.length > 0) {
-      toast({
-        title: "⚠️ Actions urgentes à venir",
-        description: `${actionsDueSoon.length} action${actionsDueSoon.length > 1 ? 's' : ''} ${actionsDueSoon.length > 1 ? 'vont' : 'va'} passer en retard dans les 24h`,
-      });
+    let sessionStart = sessionStorage.getItem('sessionStartTime');
+    if (!sessionStart) {
+      sessionStorage.setItem('sessionStartTime', Date.now().toString());
+      return;
+    }
+    
+    const timeElapsed = Date.now() - parseInt(sessionStart);
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    if (timeElapsed >= fiveMinutes) {
+      const actionsDueSoon = actions.filter(action => action.isDueSoon);
+      
+      if (actionsDueSoon.length > 0) {
+        toast({
+          title: "⚠️ Actions urgentes à venir",
+          description: `${actionsDueSoon.length} action${actionsDueSoon.length > 1 ? 's' : ''} ${actionsDueSoon.length > 1 ? 'vont' : 'va'} passer en retard dans les 24h`,
+        });
+        sessionStorage.setItem('actionsNotificationShown', 'true');
+      }
     }
   }, [actions]);
 
