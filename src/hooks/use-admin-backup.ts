@@ -1,215 +1,282 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
-interface CategoryData {
+interface CategoryBlock {
   id: string;
   title: string;
-  scope: string;
-  display_order: number;
-  icon: string;
-  color_preset: string;
+  slug?: string;
+  order?: number;
 }
 
 export const useAdminBackup = () => {
-  const [categories, setCategories] = useState<CategoryData[]>([]);
+  const { toast } = useToast();
+  const [apogeeCategories, setApogeeCategories] = useState<CategoryBlock[]>([]);
+  const [apporteurCategories, setApporteurCategories] = useState<CategoryBlock[]>([]);
   const [selectedApogeeCategory, setSelectedApogeeCategory] = useState<string>('');
   const [selectedApporteurCategory, setSelectedApporteurCategory] = useState<string>('');
-  const [isExporting, setIsExporting] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
+  const [exportingApogee, setExportingApogee] = useState(false);
+  const [exportingApporteur, setExportingApporteur] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [lastBackup, setLastBackup] = useState<Date | null>(null);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   const loadCategories = async () => {
     try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('scope', { ascending: true })
-        .order('display_order', { ascending: true });
+      const [apogeeResult, apporteurResult] = await Promise.all([
+        supabase.from('blocks').select('id, title, slug, order').eq('type', 'category').order('order'),
+        supabase.from('apporteur_blocks').select('id, title, slug, order').eq('type', 'category').order('order'),
+      ]);
 
-      if (error) throw error;
-      setCategories(data || []);
+      if (apogeeResult.data) setApogeeCategories(apogeeResult.data);
+      if (apporteurResult.data) setApporteurCategories(apporteurResult.data);
     } catch (error) {
-      console.error('Error loading categories:', error);
-      toast.error('Erreur lors du chargement des catégories');
+      console.error('Erreur chargement catégories:', error);
     }
   };
 
   const extractPlainText = (html: string): string => {
+    if (!html) return '';
     const temp = document.createElement('div');
     temp.innerHTML = html;
     return temp.textContent || temp.innerText || '';
   };
 
   const cleanHtmlForExport = (html: string): string => {
+    if (!html) return '';
     const temp = document.createElement('div');
     temp.innerHTML = html;
-    const elements = temp.querySelectorAll('*');
-    elements.forEach((el) => {
-      const attrs = Array.from(el.attributes);
-      attrs.forEach((attr) => {
-        if (!['href', 'src', 'alt', 'title'].includes(attr.name)) {
-          el.removeAttribute(attr.name);
+    
+    const cleanElement = (element: Element) => {
+      const attributesToKeep = ['href', 'src', 'alt', 'title'];
+      const attributes = Array.from(element.attributes);
+      attributes.forEach(attr => {
+        if (!attributesToKeep.includes(attr.name)) {
+          element.removeAttribute(attr.name);
         }
       });
-    });
-    return temp.innerHTML;
+      Array.from(element.children).forEach(child => cleanElement(child));
+    };
+    
+    cleanElement(temp);
+    return temp.innerHTML.replace(/></g, '>\n<').replace(/\n\s*\n/g, '\n').trim();
+  };
+
+  const downloadFile = (content: string, filename: string, type: string) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const exportApogeeData = async () => {
-    setIsExporting(true);
+    setExportingApogee(true);
     try {
-      const { data: blocks, error: blocksError } = await supabase
-        .from('blocks')
-        .select('*')
-        .order('order', { ascending: true });
+      const { data: blocks, error } = await supabase.from('blocks').select('*').order('order');
+      if (error) throw error;
 
-      if (blocksError) throw blocksError;
+      const categories = blocks?.filter(b => b.type === 'category') || [];
+      const sections = blocks?.filter(b => b.type === 'section') || [];
 
-      const categoriesData = blocks?.filter((b) => b.type === 'category') || [];
-      const sectionsData = blocks?.filter((b) => b.type === 'section') || [];
-
-      const structured = {
+      const exportData = {
         version: '1.0',
-        export_date: new Date().toISOString(),
-        scope: 'apogee',
-        categories: categoriesData.map((cat) => ({
-          id: cat.id,
-          title: cat.title,
-          slug: cat.slug,
-          icon: cat.icon,
-          color_preset: cat.color_preset,
-          order: cat.order,
-          sections: sectionsData
-            .filter((s) => s.parent_id === cat.id)
-            .map((s) => ({
-              id: s.id,
-              title: s.title,
-              content: cleanHtmlForExport(s.content),
-              slug: s.slug,
-              order: s.order,
-              content_type: s.content_type,
-              tips_type: s.tips_type,
-              hide_title: s.hide_title,
-              show_summary: s.show_summary,
-              summary: s.summary,
-              attachments: s.attachments,
-            })),
-        })),
+        exportDate: new Date().toISOString(),
+        type: 'apogee',
+        categories: categories.map(cat => ({
+          id: cat.id, title: cat.title, slug: cat.slug, icon: cat.icon,
+          colorPreset: cat.color_preset, order: cat.order,
+          sections: sections.filter(s => s.parent_id === cat.id).map(s => ({
+            id: s.id, title: s.title, slug: s.slug,
+            contentText: extractPlainText(s.content),
+            contentHtml: cleanHtmlForExport(s.content),
+            contentRaw: s.content, summary: s.summary, showSummary: s.show_summary,
+            icon: s.icon, colorPreset: s.color_preset, order: s.order,
+            contentType: s.content_type, tipsType: s.tips_type, hideFromSidebar: s.hide_from_sidebar,
+          })).sort((a, b) => a.order - b.order)
+        })).sort((a, b) => a.order - b.order),
+        stats: { totalCategories: categories.length, totalSections: sections.length }
       };
 
-      const blob = new Blob([JSON.stringify(structured, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `apogee-backup-${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-
-      toast.success('Export JSON Apogée terminé');
+      downloadFile(JSON.stringify(exportData, null, 2), `export-apogee-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
+      toast({ title: 'Export Apogée réussi !', description: `${categories.length} catégories, ${sections.length} sections` });
     } catch (error) {
-      console.error('Error exporting data:', error);
-      toast.error('Erreur lors de l\'export');
+      console.error('Erreur export:', error);
+      toast({ title: "Erreur d'export", description: 'Impossible d\'exporter les données Apogée', variant: 'destructive' });
     } finally {
-      setIsExporting(false);
+      setExportingApogee(false);
     }
   };
 
   const exportApporteurData = async () => {
-    setIsExporting(true);
+    setExportingApporteur(true);
     try {
-      const { data: blocks, error: blocksError } = await supabase
-        .from('apporteur_blocks')
-        .select('*')
-        .order('order', { ascending: true });
+      const { data: blocks, error } = await supabase.from('apporteur_blocks').select('*').order('order');
+      if (error) throw error;
 
-      if (blocksError) throw blocksError;
+      const categories = blocks?.filter(b => b.type === 'category') || [];
+      const sections = blocks?.filter(b => b.type === 'section') || [];
 
-      const categoriesData = blocks?.filter((b) => b.type === 'category') || [];
-      const sectionsData = blocks?.filter((b) => b.type === 'section') || [];
-
-      const structured = {
+      const exportData = {
         version: '1.0',
-        export_date: new Date().toISOString(),
-        scope: 'apporteur',
-        categories: categoriesData.map((cat) => ({
-          id: cat.id,
-          title: cat.title,
-          slug: cat.slug,
-          icon: cat.icon,
-          color_preset: cat.color_preset,
-          order: cat.order,
-          sections: sectionsData
-            .filter((s) => s.parent_id === cat.id)
-            .map((s) => ({
-              id: s.id,
-              title: s.title,
-              content: cleanHtmlForExport(s.content),
-              slug: s.slug,
-              order: s.order,
-              content_type: s.content_type,
-              tips_type: s.tips_type,
-              hide_title: s.hide_title,
-              show_summary: s.show_summary,
-              summary: s.summary,
-              attachments: s.attachments,
-            })),
-        })),
+        exportDate: new Date().toISOString(),
+        type: 'apporteur',
+        categories: categories.map(cat => ({
+          id: cat.id, title: cat.title, slug: cat.slug, icon: cat.icon,
+          colorPreset: cat.color_preset, order: cat.order,
+          isSingleSection: cat.is_single_section, showTitleInMenu: cat.show_title_in_menu, showTitleOnCard: cat.show_title_on_card,
+          sections: sections.filter(s => s.parent_id === cat.id).map(s => ({
+            id: s.id, title: s.title, slug: s.slug,
+            contentText: extractPlainText(s.content),
+            contentHtml: cleanHtmlForExport(s.content),
+            contentRaw: s.content, summary: s.summary, showSummary: s.show_summary,
+            icon: s.icon, colorPreset: s.color_preset, order: s.order,
+            contentType: s.content_type, tipsType: s.tips_type, hideFromSidebar: s.hide_from_sidebar,
+          })).sort((a, b) => a.order - b.order)
+        })).sort((a, b) => a.order - b.order),
+        stats: { totalCategories: categories.length, totalSections: sections.length }
       };
 
-      const blob = new Blob([JSON.stringify(structured, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `apporteur-backup-${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-
-      toast.success('Export JSON Apporteurs terminé');
+      downloadFile(JSON.stringify(exportData, null, 2), `export-apporteur-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
+      toast({ title: 'Export Apporteur réussi !', description: `${categories.length} catégories, ${sections.length} sections` });
     } catch (error) {
-      console.error('Error exporting data:', error);
-      toast.error('Erreur lors de l\'export');
+      console.error('Erreur export:', error);
+      toast({ title: "Erreur d'export", description: 'Impossible d\'exporter les données Apporteur', variant: 'destructive' });
     } finally {
-      setIsExporting(false);
+      setExportingApporteur(false);
+    }
+  };
+
+  const exportTextOnly = async (scope: 'apogee' | 'apporteur') => {
+    const setLoading = scope === 'apogee' ? setExportingApogee : setExportingApporteur;
+    const tableName = scope === 'apogee' ? 'blocks' : 'apporteur_blocks';
+    const title = scope === 'apogee' ? 'MANUEL APOGÉE' : 'GUIDE APPORTEUR';
+    
+    setLoading(true);
+    try {
+      const { data: blocks, error } = await supabase.from(tableName).select('*').order('order');
+      if (error) throw error;
+
+      const categories = blocks?.filter(b => b.type === 'category') || [];
+      const sections = blocks?.filter(b => b.type === 'section') || [];
+
+      let textContent = `${title} - Export du ${new Date().toLocaleDateString('fr-FR')}\n${'='.repeat(70)}\n\n`;
+
+      categories.forEach(cat => {
+        textContent += `\n${'#'.repeat(70)}\nCATÉGORIE: ${cat.title.toUpperCase()}\n${'#'.repeat(70)}\n\n`;
+        sections.filter(s => s.parent_id === cat.id).sort((a, b) => a.order - b.order).forEach(section => {
+          textContent += `\n${'-'.repeat(60)}\nSECTION: ${section.title}\n${'-'.repeat(60)}\n\n${extractPlainText(section.content)}\n\n`;
+        });
+      });
+
+      downloadFile(textContent, `export-${scope}-texte-${new Date().toISOString().split('T')[0]}.txt`, 'text/plain;charset=utf-8');
+      toast({ title: `Export texte ${scope === 'apogee' ? 'Apogée' : 'Apporteur'} réussi !`, description: `${categories.length} catégories exportées` });
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast({ title: "Erreur d'export", variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportSingleCategory = async (scope: 'apogee' | 'apporteur', format: 'json' | 'txt') => {
+    const categoryId = scope === 'apogee' ? selectedApogeeCategory : selectedApporteurCategory;
+    const setLoading = scope === 'apogee' ? setExportingApogee : setExportingApporteur;
+    const tableName = scope === 'apogee' ? 'blocks' : 'apporteur_blocks';
+    const guideTitle = scope === 'apogee' ? 'MANUEL APOGÉE' : 'GUIDE APPORTEUR';
+
+    if (!categoryId) {
+      toast({ title: 'Aucune catégorie sélectionnée', variant: 'destructive' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data: blocks, error } = await supabase.from(tableName).select('*')
+        .or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order');
+      if (error) throw error;
+
+      const category = blocks?.find(b => b.id === categoryId);
+      const sections = blocks?.filter(b => b.parent_id === categoryId) || [];
+      if (!category) throw new Error('Catégorie non trouvée');
+
+      if (format === 'txt') {
+        let textContent = `${guideTitle} - ${category.title.toUpperCase()}\nExport du ${new Date().toLocaleDateString('fr-FR')}\n${'='.repeat(70)}\n\n`;
+        sections.sort((a, b) => a.order - b.order).forEach(section => {
+          textContent += `\n${'-'.repeat(60)}\nSECTION: ${section.title}\n${'-'.repeat(60)}\n\n${extractPlainText(section.content)}\n\n`;
+        });
+        downloadFile(textContent, `export-${scope}-${category.slug}-${new Date().toISOString().split('T')[0]}.txt`, 'text/plain;charset=utf-8');
+      } else {
+        const catAny = category as any;
+        const exportData = {
+          version: '1.0', exportDate: new Date().toISOString(), type: `${scope}-single-category`,
+          category: {
+            id: category.id, title: category.title, slug: category.slug, icon: category.icon,
+            colorPreset: category.color_preset, order: category.order,
+            ...(scope === 'apporteur' && { isSingleSection: catAny.is_single_section, showTitleInMenu: catAny.show_title_in_menu, showTitleOnCard: catAny.show_title_on_card }),
+            sections: sections.map(s => ({
+              id: s.id, title: s.title, slug: s.slug,
+              contentText: extractPlainText(s.content), contentHtml: cleanHtmlForExport(s.content), contentRaw: s.content,
+              summary: s.summary, showSummary: s.show_summary, icon: s.icon, colorPreset: s.color_preset, order: s.order,
+              contentType: s.content_type, tipsType: s.tips_type, hideFromSidebar: s.hide_from_sidebar,
+            })).sort((a, b) => a.order - b.order)
+          }
+        };
+        downloadFile(JSON.stringify(exportData, null, 2), `export-${scope}-${category.slug}-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
+      }
+
+      toast({ title: `Export ${format.toUpperCase()} réussi !`, description: `"${category.title}" avec ${sections.length} sections` });
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast({ title: "Erreur d'export", description: error instanceof Error ? error.message : 'Erreur', variant: 'destructive' });
+    } finally {
+      setLoading(false);
     }
   };
 
   const exportAllData = async () => {
-    setIsExporting(true);
+    setExporting(true);
     try {
-      const { data: blocks, error: blocksError } = await supabase.from('blocks').select('*');
-      const { data: apporteurBlocks, error: apporteurError } = await supabase.from('apporteur_blocks').select('*');
-      const { data: documents, error: documentsError } = await supabase.from('documents').select('*');
-      const { data: categories, error: categoriesError } = await supabase.from('categories').select('*');
-      const { data: sections, error: sectionsError } = await supabase.from('sections').select('*');
+      const [blocksResult, apporteurBlocksResult, documentsResult, categoriesResult, sectionsResult] = await Promise.all([
+        supabase.from('blocks').select('*').order('order'),
+        supabase.from('apporteur_blocks').select('*').order('order'),
+        supabase.from('documents').select('*'),
+        supabase.from('categories').select('*'),
+        supabase.from('sections').select('*'),
+      ]);
 
-      if (blocksError || apporteurError || documentsError || categoriesError || sectionsError) {
-        throw blocksError || apporteurError || documentsError || categoriesError || sectionsError;
+      if (blocksResult.error || apporteurBlocksResult.error || documentsResult.error || categoriesResult.error || sectionsResult.error) {
+        throw blocksResult.error || apporteurBlocksResult.error || documentsResult.error || categoriesResult.error || sectionsResult.error;
       }
 
-      const backup = {
-        version: '2.0',
-        export_date: new Date().toISOString(),
-        blocks: blocks || [],
-        apporteur_blocks: apporteurBlocks || [],
-        documents: documents || [],
-        categories: categories || [],
-        sections: sections || [],
+      const backupData = {
+        version: '1.0', exportDate: new Date().toISOString(),
+        data: {
+          blocks: blocksResult.data || [], apporteur_blocks: apporteurBlocksResult.data || [],
+          documents: documentsResult.data || [], categories: categoriesResult.data || [], sections: sectionsResult.data || [],
+        },
+        stats: {
+          totalBlocks: (blocksResult.data?.length || 0) + (apporteurBlocksResult.data?.length || 0),
+          totalDocuments: documentsResult.data?.length || 0, totalCategories: categoriesResult.data?.length || 0, totalSections: sectionsResult.data?.length || 0,
+        }
       };
 
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `complete-backup-${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-
-      toast.success('Sauvegarde complète terminée');
+      downloadFile(JSON.stringify(backupData, null, 2), `backup-helpogee-complet-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
+      setLastBackup(new Date());
+      toast({ title: 'Export complet réussi !', description: `${backupData.stats.totalBlocks} blocs, ${backupData.stats.totalDocuments} documents` });
     } catch (error) {
-      console.error('Error creating backup:', error);
-      toast.error('Erreur lors de la sauvegarde');
+      console.error('Erreur export:', error);
+      toast({ title: "Erreur d'export", variant: 'destructive' });
     } finally {
-      setIsExporting(false);
+      setExporting(false);
     }
   };
 
@@ -217,74 +284,43 @@ export const useAdminBackup = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setIsImporting(true);
+    setImporting(true);
     try {
       const text = await file.text();
-      const backup = JSON.parse(text);
+      const backupData = JSON.parse(text);
+      if (!backupData.data) throw new Error('Format de fichier invalide');
 
-      if (!backup.version) {
-        throw new Error('Format de sauvegarde invalide');
-      }
-
-      const confirmMessage = `Êtes-vous sûr de vouloir restaurer cette sauvegarde ? Toutes les données actuelles seront SUPPRIMÉES et remplacées.`;
-      if (!window.confirm(confirmMessage)) {
-        setIsImporting(false);
+      if (!confirm(`⚠️ ATTENTION: Cette opération va ÉCRASER toutes les données actuelles.\n\nVoulez-vous vraiment continuer ?\n\nDonnées à importer:\n- ${backupData.stats?.totalBlocks || 0} blocs\n- ${backupData.stats?.totalDocuments || 0} documents`)) {
+        setImporting(false);
         return;
       }
 
-      await supabase.from('blocks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('apporteur_blocks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('documents').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('categories').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('sections').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await Promise.all([
+        supabase.from('blocks').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        supabase.from('apporteur_blocks').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+      ]);
 
-      if (backup.blocks?.length > 0) {
-        const { error } = await supabase.from('blocks').insert(backup.blocks);
-        if (error) throw error;
-      }
+      const insertPromises = [];
+      if (backupData.data.blocks?.length > 0) insertPromises.push(supabase.from('blocks').insert(backupData.data.blocks));
+      if (backupData.data.apporteur_blocks?.length > 0) insertPromises.push(supabase.from('apporteur_blocks').insert(backupData.data.apporteur_blocks));
+      await Promise.all(insertPromises);
 
-      if (backup.apporteur_blocks?.length > 0) {
-        const { error } = await supabase.from('apporteur_blocks').insert(backup.apporteur_blocks);
-        if (error) throw error;
-      }
-
-      if (backup.documents?.length > 0) {
-        const { error } = await supabase.from('documents').insert(backup.documents);
-        if (error) throw error;
-      }
-
-      if (backup.categories?.length > 0) {
-        const { error } = await supabase.from('categories').insert(backup.categories);
-        if (error) throw error;
-      }
-
-      if (backup.sections?.length > 0) {
-        const { error } = await supabase.from('sections').insert(backup.sections);
-        if (error) throw error;
-      }
-
-      toast.success('Restauration terminée avec succès');
+      toast({ title: 'Import réussi !', description: 'Les données ont été restaurées. Rechargez la page.' });
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
-      console.error('Error importing data:', error);
-      toast.error('Erreur lors de l\'import');
+      console.error('Erreur import:', error);
+      toast({ title: "Erreur d'import", description: error instanceof Error ? error.message : 'Fichier invalide', variant: 'destructive' });
     } finally {
-      setIsImporting(false);
+      setImporting(false);
+      event.target.value = '';
     }
   };
 
   return {
-    categories,
-    selectedApogeeCategory,
-    selectedApporteurCategory,
-    isExporting,
-    isImporting,
-    setSelectedApogeeCategory,
-    setSelectedApporteurCategory,
-    loadCategories,
-    exportApogeeData,
-    exportApporteurData,
-    exportAllData,
-    importData,
+    apogeeCategories, apporteurCategories,
+    selectedApogeeCategory, selectedApporteurCategory,
+    setSelectedApogeeCategory, setSelectedApporteurCategory,
+    exportingApogee, exportingApporteur, exporting, importing, lastBackup,
+    exportApogeeData, exportApporteurData, exportTextOnly, exportSingleCategory, exportAllData, importData,
   };
 };
