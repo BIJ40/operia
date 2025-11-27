@@ -55,7 +55,6 @@ export default function FranchiseurStats() {
   const { data: agencies, isLoading: isLoadingAgencies } = useAgencies();
   const { selectedAgencies, isLoading: isLoadingContext } = useFranchiseur();
   const { dateRange } = useNetworkFilters();
-  const [showInactive, setShowInactive] = useState(false);
   const [techMode, setTechMode] = useState<"ca" | "heures" | "caParHeure">("ca");
 
   // Déterminer les agences à charger
@@ -202,8 +201,8 @@ export default function FranchiseurStats() {
                   universes={UNIVERSES}
                   loading={false}
                   mode="ca"
-                  showInactive={showInactive}
-                  onToggleInactive={setShowInactive}
+                  showInactive={false}
+                  hideInactiveToggle
                 />
               </TabsContent>
 
@@ -213,8 +212,8 @@ export default function FranchiseurStats() {
                   universes={UNIVERSES}
                   loading={false}
                   mode="heures"
-                  showInactive={showInactive}
-                  onToggleInactive={setShowInactive}
+                  showInactive={false}
+                  hideInactiveToggle
                 />
               </TabsContent>
 
@@ -224,8 +223,8 @@ export default function FranchiseurStats() {
                   universes={UNIVERSES}
                   loading={false}
                   mode="caParHeure"
-                  showInactive={showInactive}
-                  onToggleInactive={setShowInactive}
+                  showInactive={false}
+                  hideInactiveToggle
                 />
               </TabsContent>
             </Tabs>
