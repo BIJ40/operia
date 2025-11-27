@@ -99,6 +99,7 @@ export const useCategory = () => {
           hide_from_sidebar: updatedSection.hideFromSidebar,
           is_in_progress: updatedSection.isInProgress || false,
           completed_at: updatedSection.completedAt || null,
+          content_updated_at: updatedSection.contentUpdatedAt || null,
         })
         .eq('id', updatedSection.id);
 
@@ -131,6 +132,7 @@ export const useCategory = () => {
           hide_from_sidebar: updatedSection.hideFromSidebar,
           is_in_progress: updatedSection.isInProgress || false,
           completed_at: updatedSection.completedAt || null,
+          content_updated_at: updatedSection.contentUpdatedAt || null,
         })
         .eq('id', updatedSection.id);
 

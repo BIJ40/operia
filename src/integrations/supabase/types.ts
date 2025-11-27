@@ -198,6 +198,7 @@ export type Database = {
           color_preset: string
           content: string
           content_type: string | null
+          content_updated_at: string | null
           created_at: string
           hide_from_sidebar: boolean | null
           hide_title: boolean | null
@@ -221,6 +222,7 @@ export type Database = {
           color_preset?: string
           content?: string
           content_type?: string | null
+          content_updated_at?: string | null
           created_at?: string
           hide_from_sidebar?: boolean | null
           hide_title?: boolean | null
@@ -244,6 +246,7 @@ export type Database = {
           color_preset?: string
           content?: string
           content_type?: string | null
+          content_updated_at?: string | null
           created_at?: string
           hide_from_sidebar?: boolean | null
           hide_title?: boolean | null
@@ -271,6 +274,7 @@ export type Database = {
           completed_at: string | null
           content: string
           content_type: string | null
+          content_updated_at: string | null
           created_at: string
           hide_from_sidebar: boolean | null
           hide_title: boolean | null
@@ -293,6 +297,7 @@ export type Database = {
           completed_at?: string | null
           content?: string
           content_type?: string | null
+          content_updated_at?: string | null
           created_at?: string
           hide_from_sidebar?: boolean | null
           hide_title?: boolean | null
@@ -315,6 +320,7 @@ export type Database = {
           completed_at?: string | null
           content?: string
           content_type?: string | null
+          content_updated_at?: string | null
           created_at?: string
           hide_from_sidebar?: boolean | null
           hide_title?: boolean | null

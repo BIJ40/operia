@@ -379,6 +379,9 @@ export default function CategoryHelpConfort() {
                 initialSummary={editingSection.summary || ''}
                 initialShowSummary={editingSection.showSummary || false}
                 initialHideTitle={editingSection.hideTitle || false}
+                initialIsInProgress={editingSection.isInProgress || false}
+                initialCompletedAt={editingSection.completedAt}
+                initialContentUpdatedAt={editingSection.contentUpdatedAt}
                 onSave={handleSave}
                 onCancel={closeEditDialog}
               />

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
-import { Lock, Clock, Sparkles } from 'lucide-react';
+import { Lock, Clock, Sparkles, RefreshCw } from 'lucide-react';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -273,7 +273,11 @@ export default function ApogeeGuide() {
         if (!s.completedAt) return false;
         return new Date(s.completedAt) > sevenDaysAgo;
       });
-      return { hasInProgress, hasNew };
+      const hasUpdate = sections.some(s => {
+        if (!s.contentUpdatedAt) return false;
+        return new Date(s.contentUpdatedAt) > sevenDaysAgo;
+      });
+      return { hasInProgress, hasNew, hasUpdate };
     };
   }, [blocks]);
 
@@ -502,6 +506,16 @@ export default function ApogeeGuide() {
                         </div>
                       </div>
                     )}
+                    {/* Badge M.A.J - panneau avec pied */}
+                    {badges.hasUpdate && !badges.hasInProgress && (
+                      <div className="absolute -top-3 -right-1 z-20 flex flex-col items-center">
+                        <div className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 shadow-md border border-primary-foreground/20">
+                          <RefreshCw className="w-2.5 h-2.5" />
+                          M.A.J
+                        </div>
+                        <div className="w-0.5 h-2 bg-primary/80 rounded-b" />
+                      </div>
+                    )}
                     {/* Cadenas en overlay */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <Lock className="w-8 h-8 text-destructive drop-shadow-lg" />
@@ -546,6 +560,16 @@ export default function ApogeeGuide() {
                         <Clock className="w-3 h-3" />
                         En cours
                       </div>
+                    </div>
+                  )}
+                  {/* Badge M.A.J - panneau avec pied - positionné à gauche du En cours */}
+                  {badges.hasUpdate && !badges.hasInProgress && (
+                    <div className="absolute -top-3 -right-1 z-20 flex flex-col items-center">
+                      <div className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 shadow-md border border-primary-foreground/20">
+                        <RefreshCw className="w-2.5 h-2.5" />
+                        M.A.J
+                      </div>
+                      <div className="w-0.5 h-2 bg-primary/80 rounded-b" />
                     </div>
                   )}
                   {isCustomImage ? (
