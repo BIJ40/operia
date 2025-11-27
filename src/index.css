@@ -6,8 +6,10 @@
    DESIGN SYSTEM - HelpConfort Services
    ============================================
    Palette:
-   - Bleu principal: #003A70 → HSL(207, 100%, 22%)
-   - Orange accent: #FF7A00 → HSL(29, 100%, 50%)
+   - Bleu principal: #0092dd → HSL(200, 100%, 43%)
+   - Bleu dégradé: #007ecb → HSL(203, 100%, 40%)
+   - Orange accent: #ffb705 → HSL(43, 100%, 51%)
+   - Orange dégradé: #fea710 → HSL(38, 99%, 53%)
    - Gris fond: #F4F6F8 → HSL(210, 20%, 97%)
    
    Typography: Inter
@@ -28,9 +30,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 20% 20%;
 
-    /* Primary - Bleu HelpConfort #003A70 */
-    --primary: 207 100% 22%;
+    /* Primary - Bleu HelpConfort #0092dd */
+    --primary: 200 100% 43%;
     --primary-foreground: 0 0% 100%;
+    --primary-dark: 203 100% 40%;
 
     /* Secondary - Gris clair */
     --secondary: 210 20% 97%;
@@ -40,9 +43,10 @@
     --muted: 210 20% 97%;
     --muted-foreground: 210 10% 50%;
 
-    /* Accent - Orange HelpConfort #FF7A00 */
-    --accent: 29 100% 50%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent - Orange HelpConfort #ffb705 */
+    --accent: 43 100% 51%;
+    --accent-foreground: 210 20% 20%;
+    --accent-dark: 38 99% 53%;
 
     /* Destructive */
     --destructive: 0 84% 60%;
@@ -51,7 +55,7 @@
     /* Borders & Inputs */
     --border: 210 20% 90%;
     --input: 210 20% 90%;
-    --ring: 207 100% 22%;
+    --ring: 200 100% 43%;
 
     /* Border radius - 8px */
     --radius: 0.5rem;
@@ -59,28 +63,29 @@
     /* Sidebar */
     --sidebar-background: 210 20% 98%;
     --sidebar-foreground: 210 20% 20%;
-    --sidebar-primary: 207 100% 22%;
+    --sidebar-primary: 200 100% 43%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 20% 95%;
     --sidebar-accent-foreground: 210 20% 20%;
     --sidebar-border: 210 20% 90%;
-    --sidebar-ring: 207 100% 22%;
+    --sidebar-ring: 200 100% 43%;
 
     /* Palette HelpConfort étendue */
-    --hc-blue: 207 100% 22%;
-    --hc-blue-light: 207 80% 35%;
-    --hc-blue-dark: 207 100% 15%;
-    --hc-orange: 29 100% 50%;
-    --hc-orange-light: 29 100% 60%;
+    --hc-blue: 200 100% 43%;
+    --hc-blue-light: 200 100% 50%;
+    --hc-blue-dark: 203 100% 40%;
+    --hc-orange: 43 100% 51%;
+    --hc-orange-light: 43 100% 60%;
+    --hc-orange-dark: 38 99% 53%;
     --hc-gray: 210 20% 97%;
     --hc-gray-dark: 210 15% 85%;
 
     /* Legacy aliases */
-    --blue-light: 207 80% 35%;
-    --blue-main: 207 100% 22%;
-    --blue-dark: 207 100% 15%;
-    --orange-accent: 29 100% 50%;
-    --cyan: 207 100% 22%;
+    --blue-light: 200 100% 50%;
+    --blue-main: 200 100% 43%;
+    --blue-dark: 203 100% 40%;
+    --orange-accent: 43 100% 51%;
+    --cyan: 200 100% 43%;
     --cyan-foreground: 0 0% 100%;
   }
 
@@ -94,8 +99,9 @@
     --popover: 222 20% 10%;
     --popover-foreground: 210 20% 95%;
 
-    --primary: 207 80% 50%;
+    --primary: 200 100% 50%;
     --primary-foreground: 0 0% 100%;
+    --primary-dark: 203 100% 45%;
 
     --secondary: 222 15% 15%;
     --secondary-foreground: 210 20% 95%;
@@ -103,26 +109,27 @@
     --muted: 222 15% 15%;
     --muted-foreground: 210 10% 60%;
 
-    --accent: 29 100% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 43 100% 51%;
+    --accent-foreground: 210 20% 20%;
+    --accent-dark: 38 99% 53%;
 
     --destructive: 0 60% 40%;
     --destructive-foreground: 210 20% 95%;
 
     --border: 222 15% 20%;
     --input: 222 15% 20%;
-    --ring: 207 80% 50%;
+    --ring: 200 100% 50%;
 
     --sidebar-background: 222 20% 6%;
     --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 207 80% 50%;
+    --sidebar-primary: 200 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 222 15% 12%;
     --sidebar-accent-foreground: 210 20% 95%;
     --sidebar-border: 222 15% 15%;
-    --sidebar-ring: 207 80% 50%;
+    --sidebar-ring: 200 100% 50%;
 
-    --cyan: 207 80% 50%;
+    --cyan: 200 100% 50%;
     --cyan-foreground: 0 0% 100%;
   }
 }
