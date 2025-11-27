@@ -1299,6 +1299,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_agency: { Args: { _user_id: string }; Returns: string }
       has_franchiseur_role: {
         Args: {
           _role: Database["public"]["Enums"]["franchiseur_role"]
