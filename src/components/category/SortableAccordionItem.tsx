@@ -63,59 +63,61 @@ export function SortableAccordionItem({
   if (section.contentType === 'tips') {
     return (
       <div ref={setNodeRef} style={style}>
-        <Card className={`p-6 ${getTipsColor(section.tipsType)} border-2`}>
-          <div className="flex items-start gap-4">
-            {isAdmin && (
-              <div {...attributes} {...listeners} className="cursor-move mt-1">
-                <GripVertical className="w-5 h-5 text-muted-foreground" />
-              </div>
-            )}
-            <div className="flex-shrink-0 mt-1">{getTipsIcon(section.tipsType)}</div>
-            <div className="flex-1">
-              {!section.hideTitle && <h3 className="font-semibold text-lg mb-2">{section.title}</h3>}
-              <div
-                className="prose prose-sm max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <FavoriteButton blockId={section.id} blockSlug={section.slug} blockTitle={section.title} categorySlug="" scope="apogee" />
+        <Card className="rounded-2xl overflow-hidden border-2 border-l-4 border-primary/40 border-l-helpconfort-orange bg-card shadow-sm hover:border-primary/60 hover:shadow-md transition-all">
+          <div className="p-6 bg-gradient-to-r from-helpconfort-orange/20 to-helpconfort-orange/10">
+            <div className="flex items-start gap-4">
               {isAdmin && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => onEdit(section)}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Modifier
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDuplicate(section)}>
-                      <Copy className="w-4 h-4 mr-2" />
-                      Dupliquer
-                    </DropdownMenuItem>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <MoveRight className="w-4 h-4 mr-2" />
-                        Déplacer vers
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        {availableCategories.map((cat) => (
-                          <DropdownMenuItem key={cat.id} onClick={() => onMove(section.id, cat.id)}>
-                            {cat.title}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                    <DropdownMenuItem onClick={() => onDelete(section)} className="text-destructive">
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Supprimer
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div {...attributes} {...listeners} className="cursor-move mt-1">
+                  <GripVertical className="w-5 h-5 text-muted-foreground" />
+                </div>
               )}
+              <div className="flex-shrink-0 mt-1 text-helpconfort-orange">{getTipsIcon(section.tipsType)}</div>
+              <div className="flex-1">
+                {!section.hideTitle && <h3 className="font-semibold text-lg mb-2">{section.title}</h3>}
+                <div
+                  className="prose prose-sm max-w-none dark:prose-invert"
+                  dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <FavoriteButton blockId={section.id} blockSlug={section.slug} blockTitle={section.title} categorySlug="" scope="apogee" />
+                {isAdmin && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => onEdit(section)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Modifier
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onDuplicate(section)}>
+                        <Copy className="w-4 h-4 mr-2" />
+                        Dupliquer
+                      </DropdownMenuItem>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <MoveRight className="w-4 h-4 mr-2" />
+                          Déplacer vers
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          {availableCategories.map((cat) => (
+                            <DropdownMenuItem key={cat.id} onClick={() => onMove(section.id, cat.id)}>
+                              {cat.title}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                      <DropdownMenuItem onClick={() => onDelete(section)} className="text-destructive">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Supprimer
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
             </div>
           </div>
         </Card>

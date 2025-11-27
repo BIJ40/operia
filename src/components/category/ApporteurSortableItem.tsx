@@ -172,18 +172,18 @@ export function ApporteurSortableItem({
   if (section.isSingleSection || section.hideFromSidebar) {
     return (
       <div ref={setNodeRef} style={style} className="mb-4">
-        <div className="rounded-2xl overflow-hidden border-2 border-l-4 border-helpconfort-orange/40 border-l-primary bg-card shadow-sm hover:border-helpconfort-orange/60 hover:shadow-md transition-all">
-          <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white relative">
+        <div className="rounded-2xl overflow-hidden border-2 border-l-4 border-primary/40 border-l-helpconfort-orange bg-card shadow-sm hover:border-primary/60 hover:shadow-md transition-all">
+          <div className="p-6 bg-gradient-to-r from-helpconfort-orange/20 to-helpconfort-orange/10 relative">
             {isEditMode && (
               <div className="absolute top-2 right-2">
-                <EditControls variant="dark" />
+                <EditControls variant="light" />
               </div>
             )}
             <div className="flex items-center gap-2">
               {!section.hideTitle && section.title && section.title.trim() !== '' ? (
-                <h3 className="text-lg font-semibold text-white">{section.title}</h3>
+                <h3 className="text-lg font-semibold text-foreground">{section.title}</h3>
               ) : !section.hideTitle ? (
-                <h3 className="text-lg font-semibold text-white">💡 Information / Astuce</h3>
+                <h3 className="text-lg font-semibold text-foreground">💡 Information / Astuce</h3>
               ) : null}
               <SectionBadges />
             </div>
