@@ -13,11 +13,11 @@ export function useAnimators() {
   return useQuery({
     queryKey: ['animators'],
     queryFn: async () => {
-      // Get all users with franchiseur role = animateur
+      // Get all users with any franchiseur role (animateur, directeur, dg)
+      // They can all be assigned as animators for agencies
       const { data: franchiseurRoles, error: rolesError } = await supabase
         .from('franchiseur_roles')
-        .select('user_id')
-        .eq('franchiseur_role', 'animateur');
+        .select('user_id, franchiseur_role');
 
       if (rolesError) throw rolesError;
 
@@ -36,7 +36,14 @@ export function useAnimators() {
 
       if (profilesError) throw profilesError;
 
-      return profiles as Animator[];
+      // Enrich with role info
+      return (profiles || []).map(p => {
+        const roleInfo = franchiseurRoles.find(r => r.user_id === p.id);
+        return {
+          ...p,
+          franchiseur_role: roleInfo?.franchiseur_role || 'animateur'
+        };
+      }) as (Animator & { franchiseur_role: string })[];
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
