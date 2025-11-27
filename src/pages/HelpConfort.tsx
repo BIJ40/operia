@@ -1,14 +1,14 @@
 // Page dédiée à la Base de connaissance HelpConfort
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical, Lock } from 'lucide-react';
+import { Plus, Trash2, Search, GripVertical, Lock, Clock, Sparkles } from 'lucide-react';
 import { useIsBlockLocked } from '@/hooks/use-permissions';
 import { toast } from 'sonner';
 import { IconPicker } from '@/components/IconPicker';
@@ -52,6 +52,8 @@ interface SortableCategoryProps {
   editImageUrl: string | null;
   editShowTitleOnCard: boolean;
   isEditMode: boolean;
+  hasInProgress: boolean;
+  hasNew: boolean;
   isBlockLocked: (blockId: string, blocks: any[]) => boolean;
   onEditTitleChange: (value: string) => void;
   onEditIconChange: (value: string) => void;
@@ -75,6 +77,8 @@ const SortableCategory = ({
   editImageUrl,
   editShowTitleOnCard,
   isEditMode,
+  hasInProgress,
+  hasNew,
   isBlockLocked,
   onEditTitleChange,
   onEditIconChange,
@@ -110,8 +114,25 @@ const SortableCategory = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 ${getColorClass(category.colorPreset)}`}
+      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 overflow-visible ${getColorClass(category.colorPreset)}`}
     >
+      {/* Badge New en écharpe diagonale verte - décalé aux 3/4 */}
+      {hasNew && !isEditMode && (
+        <div className="absolute -top-2 left-3/4 -translate-x-1/2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
+          <div className="absolute top-3 -left-5 w-20 bg-green-500 text-white text-[10px] font-bold py-0.5 text-center transform -rotate-45 shadow-md">
+            NEW
+          </div>
+        </div>
+      )}
+      {/* Badge En cours - arrondi accentué orange */}
+      {hasInProgress && !isEditMode && (
+        <div className="absolute -top-2 -right-2 z-20">
+          <div className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            En cours
+          </div>
+        </div>
+      )}
       {isEditMode && (
         <>
           <div
@@ -282,6 +303,22 @@ export default function HelpConfort() {
     return Icon;
   };
 
+  // Calculate category status (hasInProgress, hasNew)
+  const getCategoryStatus = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    return (categoryId: string) => {
+      const sections = blocks.filter(b => b.parentId === categoryId && b.type === 'section');
+      const hasInProgress = sections.some(s => s.isInProgress);
+      const hasNew = sections.some(s => {
+        if (!s.completedAt) return false;
+        return new Date(s.completedAt) > sevenDaysAgo;
+      });
+      return { hasInProgress, hasNew };
+    };
+  }, [blocks]);
+
   const handleEdit = (id: string) => {
     const category = helpconfortCategories.find(c => c.id === id);
     if (category) {
@@ -431,31 +468,36 @@ export default function HelpConfort() {
                 strategy={verticalListSortingStrategy}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  {filteredCategories.map(category => (
-                    <SortableCategory
-                      key={category.id}
-                      category={category}
-                      editingId={editingId}
-                      editTitle={editTitle}
-                      editIcon={editIcon}
-                      editColor={editColor}
-                      editImageUrl={editImageUrl}
-                      editShowTitleOnCard={editShowTitleOnCard}
-                      isEditMode={isEditMode}
-                      isBlockLocked={isBlockLocked}
-                      onEditTitleChange={setEditTitle}
-                      onEditIconChange={setEditIcon}
-                      onEditColorChange={setEditColor}
-                      onEditImageUrlChange={setEditImageUrl}
-                      onEditShowTitleOnCardChange={setEditShowTitleOnCard}
-                      onSave={handleSave}
-                      onCancel={handleCancel}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      getColorClass={getColorClass}
-                      IconComponent={IconComponent}
-                    />
-                  ))}
+                  {filteredCategories.map(category => {
+                    const { hasInProgress, hasNew } = getCategoryStatus(category.id);
+                    return (
+                      <SortableCategory
+                        key={category.id}
+                        category={category}
+                        editingId={editingId}
+                        editTitle={editTitle}
+                        editIcon={editIcon}
+                        editColor={editColor}
+                        editImageUrl={editImageUrl}
+                        editShowTitleOnCard={editShowTitleOnCard}
+                        isEditMode={isEditMode}
+                        hasInProgress={hasInProgress}
+                        hasNew={hasNew}
+                        isBlockLocked={isBlockLocked}
+                        onEditTitleChange={setEditTitle}
+                        onEditIconChange={setEditIcon}
+                        onEditColorChange={setEditColor}
+                        onEditImageUrlChange={setEditImageUrl}
+                        onEditShowTitleOnCardChange={setEditShowTitleOnCard}
+                        onSave={handleSave}
+                        onCancel={handleCancel}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        getColorClass={getColorClass}
+                        IconComponent={IconComponent}
+                      />
+                    );
+                  })}
                 </div>
               </SortableContext>
             </DndContext>
@@ -466,6 +508,7 @@ export default function HelpConfort() {
               const Icon = IconComponent(category.icon || 'BookOpen');
               const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
               const locked = isBlockLocked(category.id, [category]);
+              const { hasInProgress, hasNew } = getCategoryStatus(category.id);
               
               if (locked) {
                 return (
@@ -501,6 +544,23 @@ export default function HelpConfort() {
                   to={`/helpconfort/category/${category.slug}`}
                   className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 overflow-visible ${getColorClass(category.colorPreset)}`}
                 >
+                  {/* Badge New en écharpe diagonale verte - décalé aux 3/4 */}
+                  {hasNew && (
+                    <div className="absolute -top-2 left-3/4 -translate-x-1/2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
+                      <div className="absolute top-3 -left-5 w-20 bg-green-500 text-white text-[10px] font-bold py-0.5 text-center transform -rotate-45 shadow-md">
+                        NEW
+                      </div>
+                    </div>
+                  )}
+                  {/* Badge En cours - arrondi accentué orange */}
+                  {hasInProgress && (
+                    <div className="absolute -top-2 -right-2 z-20">
+                      <div className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        En cours
+                      </div>
+                    </div>
+                  )}
                   {isCustomImage ? (
                     <img 
                       src={category.icon} 
