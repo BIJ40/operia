@@ -210,6 +210,9 @@ export default function Category() {
               </TooltipProvider>
               
               <h1 className="text-2xl font-bold text-foreground">{category.title}</h1>
+              <span className="text-sm text-muted-foreground font-medium px-2 py-0.5 bg-muted rounded">
+                {currentCategoryIndex + 1}/{availableCategories.length}
+              </span>
               
               <TooltipProvider>
                 <Tooltip>

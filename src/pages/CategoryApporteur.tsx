@@ -1,8 +1,8 @@
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams, Navigate, Link } from 'react-router-dom';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronsDownUp, ChevronsUpDown, Lightbulb } from 'lucide-react';
+import { Plus, ChevronsDownUp, ChevronsUpDown, Lightbulb, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
 import { Accordion } from '@/components/ui/accordion';
 import {
@@ -31,6 +31,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useCategoryLogic } from '@/hooks/use-category-logic';
 import { ApporteurSortableItem } from '@/components/category/ApporteurSortableItem';
 import { CategoryBlock } from '@/components/category/types';
@@ -61,6 +67,15 @@ export default function CategoryApporteur() {
       .sort((a, b) => a.order - b.order),
     [blocks, category.id]
   );
+
+  // Navigation between subcategories
+  const currentSubcategoryIndex = useMemo(() => 
+    availableSubcategories.findIndex(c => c.slug === subslug),
+    [availableSubcategories, subslug]
+  );
+  
+  const prevSubcategory = currentSubcategoryIndex > 0 ? availableSubcategories[currentSubcategoryIndex - 1] : null;
+  const nextSubcategory = currentSubcategoryIndex < availableSubcategories.length - 1 ? availableSubcategories[currentSubcategoryIndex + 1] : null;
 
   const {
     sections,
@@ -121,7 +136,68 @@ export default function CategoryApporteur() {
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm pb-4 pt-2 -mx-4 px-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-foreground">{subcategory.title}</h1>
+            <Link to={`/apporteurs/${slug}`}>
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Retour
+              </Button>
+            </Link>
+            
+            {/* Subcategory navigation with arrows */}
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Link to={prevSubcategory ? `/apporteurs/${slug}/${prevSubcategory.slug}` : '#'}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          disabled={!prevSubcategory}
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                      </Link>
+                    </span>
+                  </TooltipTrigger>
+                  {prevSubcategory && (
+                    <TooltipContent side="bottom">
+                      {prevSubcategory.title}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+              
+              <h1 className="text-2xl font-bold text-foreground">{subcategory.title}</h1>
+              <span className="text-sm text-muted-foreground font-medium px-2 py-0.5 bg-muted rounded">
+                {currentSubcategoryIndex + 1}/{availableSubcategories.length}
+              </span>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Link to={nextSubcategory ? `/apporteurs/${slug}/${nextSubcategory.slug}` : '#'}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          disabled={!nextSubcategory}
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </Button>
+                      </Link>
+                    </span>
+                  </TooltipTrigger>
+                  {nextSubcategory && (
+                    <TooltipContent side="bottom">
+                      {nextSubcategory.title}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
           
           <div className="flex items-center gap-2">
