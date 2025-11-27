@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { BarChart3, BookOpen, Headset, Network, LogIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HomeTilesSection } from '@/components/home/HomeTilesSection';
 import { useState, useEffect } from 'react';
 
 interface PublicLandingProps {
@@ -68,19 +67,6 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
             </Button>
           </motion.div>
         </div>
-
-        {/* Nos domaines d'intervention - 4 tuiles métiers animées */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 9 }}
-          className="max-w-5xl mx-auto mb-16"
-        >
-          <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-8">
-            Nos domaines d'intervention
-          </h2>
-          <HomeTilesSection />
-        </motion.div>
 
         {/* Features Grid with elaborate animations */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
