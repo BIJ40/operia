@@ -1,15 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { MessageSquare, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { MessageSquare, CheckCircle2, Clock, AlertCircle, Mail, MailOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { SupportTicket } from '@/hooks/use-admin-support';
+import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 
 interface TicketListProps {
   tickets: SupportTicket[];
   selectedTicket: SupportTicket | null;
   onSelectTicket: (ticket: SupportTicket) => void;
+  showResolved?: boolean;
 }
 
 const getStatusColor = (status: string) => {
@@ -49,36 +50,71 @@ const getPriorityIcon = (priority: string) => {
   }
 };
 
-export function TicketList({ tickets, selectedTicket, onSelectTicket }: TicketListProps) {
+export function TicketList({ tickets, selectedTicket, onSelectTicket, showResolved = false }: TicketListProps) {
+  // Séparer les tickets actifs des résolus
+  const activeTickets = tickets.filter(t => t.status !== 'resolved');
+  const resolvedTickets = tickets.filter(t => t.status === 'resolved');
+  
+  // Trier: tickets avec réponse non lue en premier
+  const sortedActiveTickets = [...activeTickets].sort((a, b) => {
+    // Tickets avec réponse support non lue en premier
+    if (a.has_unread_support_response && !b.has_unread_support_response) return -1;
+    if (!a.has_unread_support_response && b.has_unread_support_response) return 1;
+    // Puis par date de création (plus récent en premier)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  const displayTickets = showResolved ? resolvedTickets : sortedActiveTickets;
+
+  if (displayTickets.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-sm text-muted-foreground">
+          {showResolved ? 'Aucun ticket clôturé' : 'Aucun ticket actif'}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-2">
-      {tickets.map((ticket) => (
+      {displayTickets.map((ticket) => (
         <Card
           key={ticket.id}
-          className={`cursor-pointer transition-colors ${
+          className={`cursor-pointer transition-all ${
             selectedTicket?.id === ticket.id
-              ? 'border-primary bg-primary/5'
+              ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+              : ticket.has_unread_support_response
+              ? 'border-orange-400 bg-orange-50 dark:bg-orange-950/20 hover:bg-orange-100 dark:hover:bg-orange-950/30 shadow-md'
               : 'hover:bg-accent'
           }`}
           onClick={() => onSelectTicket(ticket)}
         >
           <CardHeader className="p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 space-y-1">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  Ticket #{ticket.id.slice(0, 8)}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 space-y-1 min-w-0">
+                <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
+                  <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">#{ticket.id.slice(0, 8)}</span>
                   {getPriorityIcon(ticket.priority)}
+                  {ticket.has_unread_support_response && (
+                    <Badge variant="destructive" className="text-xs flex items-center gap-1">
+                      <Mail className="w-3 h-3" />
+                      Réponse non lue
+                    </Badge>
+                  )}
                 </CardTitle>
-                <CardDescription className="text-xs">
-                  {format(new Date(ticket.created_at), "d MMM 'à' HH:mm", {
-                    locale: fr,
-                  })}
+                <CardDescription className="text-xs flex items-center gap-2 flex-wrap">
+                  {format(new Date(ticket.created_at), "d MMM 'à' HH:mm", { locale: fr })}
+                  {ticket.service && <ServiceBadge service={ticket.service} />}
                 </CardDescription>
+                {ticket.subject && (
+                  <p className="text-xs text-muted-foreground truncate">{ticket.subject}</p>
+                )}
               </div>
               <Badge
                 variant="secondary"
-                className={`${getStatusColor(ticket.status)} text-white`}
+                className={`${getStatusColor(ticket.status)} text-white flex-shrink-0`}
               >
                 {getStatusLabel(ticket.status)}
               </Badge>
