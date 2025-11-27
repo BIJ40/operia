@@ -34,6 +34,7 @@ export interface Block {
   isInProgress?: boolean;
   completedAt?: string; // ISO date when section was marked as completed
   contentUpdatedAt?: string; // ISO date when content was updated (for M.A.J badge)
+  isEmpty?: boolean; // When true, section is grayed out to indicate it's not yet done
 }
 
 export interface AppData {
