@@ -1,5 +1,7 @@
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Table,
   TableBody,
@@ -12,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, AlertTriangle, Clock, BellRing } from 'lucide-react';
 import { ActionRow } from '../types/actions';
+import { DataService } from '../services/dataService';
 
 interface ActionsAMenerTableProps {
   actions: ActionRow[];
@@ -19,6 +22,51 @@ interface ActionsAMenerTableProps {
 }
 
 export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTableProps) {
+  // Récupérer les IDs des techniciens à lookup
+  const technicienIds = useMemo(() => {
+    const ids = new Set<number>();
+    actions.forEach(action => {
+      if (action.technicienId) {
+        ids.add(action.technicienId);
+      }
+    });
+    return Array.from(ids);
+  }, [actions]);
+
+  // Charger les infos des techniciens via GetUsers
+  const { data: users } = useQuery({
+    queryKey: ['techniciens', technicienIds],
+    enabled: technicienIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const apiData = await DataService.loadAllData(true);
+      return apiData.users || [];
+    },
+  });
+
+  // Créer un map userId -> nom complet
+  const techniciensMap = useMemo(() => {
+    const map = new Map<number, string>();
+    if (users) {
+      users.forEach((user: any) => {
+        const fullName = [user.prenom, user.nom].filter(Boolean).join(' ') || 'Technicien';
+        map.set(user.id, fullName);
+      });
+    }
+    return map;
+  }, [users]);
+
+  // Fonction pour récupérer le nom du technicien
+  const getTechnicienName = (action: ActionRow): string => {
+    if (action.technicienName && action.technicienName !== 'Technicien inconnu') {
+      return action.technicienName;
+    }
+    if (action.technicienId && techniciensMap.has(action.technicienId)) {
+      return techniciensMap.get(action.technicienId)!;
+    }
+    return action.technicienName || '-';
+  };
+
   if (actions.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -76,7 +124,7 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
                 {action.clientName}
               </TableCell>
               <TableCell className="text-sm">
-                {action.technicienName || '-'}
+                {getTechnicienName(action)}
               </TableCell>
               <TableCell className="text-center">
                 {action.isLate ? (

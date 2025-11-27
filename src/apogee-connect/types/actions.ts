@@ -17,6 +17,7 @@ export type ActionRow = {
   clientName: string;
   daysLate?: number;
   technicienName?: string; // Nom du technicien (pour relance_technicien)
+  technicienId?: number; // ID du technicien pour récupération depuis GetUsers
 };
 
 export type ActionsConfig = {
