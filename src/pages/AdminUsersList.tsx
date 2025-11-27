@@ -3,15 +3,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Edit, Users, Shield, Key, ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash2, Users, ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EditUserDialog } from '@/components/EditUserDialog';
-import { ManageSystemRoleDialog } from '@/components/ManageSystemRoleDialog';
-import { ManageUserPermissionsDialog } from '@/components/ManageUserPermissionsDialog';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, UserX } from 'lucide-react';
+import { ColumnFilter } from '@/components/admin/user/ColumnFilter';
 
 interface UserProfile {
   id: string;
@@ -24,6 +23,7 @@ interface UserProfile {
   created_at: string;
   system_roles?: string[];
   must_change_password: boolean | null;
+  support_level?: number;
 }
 
 type SortColumn = 'email' | 'first_name' | 'last_name' | 'agence' | 'created_at';
@@ -41,6 +41,32 @@ const getRoleLabel = (roleValue: string | null): string => {
   return roles[roleValue] || roleValue;
 };
 
+// Options de filtres
+const ROLE_AGENCE_OPTIONS = [
+  { value: 'dirigeant', label: 'Dirigeant(e)' },
+  { value: 'assistante', label: 'Assistante' },
+  { value: 'commercial', label: 'Commercial' },
+  { value: 'tete_de_reseau', label: 'Tête de réseau' },
+  { value: 'externe', label: 'Externe' },
+  { value: 'null', label: '(Non défini)' },
+];
+
+const SYSTEM_ROLE_OPTIONS = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'support', label: 'Support' },
+  { value: 'franchiseur', label: 'Franchiseur' },
+  { value: 'user', label: 'Utilisateur' },
+];
+
+const COMPETENCE_OPTIONS = [
+  { value: 'apogee', label: 'Apogée' },
+  { value: 'apporteurs', label: 'Apporteurs' },
+  { value: 'conseil', label: 'Conseil' },
+  { value: 'helpconfort_animateur_reseau', label: 'HC - Animateur' },
+  { value: 'helpconfort_directeur_reseau', label: 'HC - Directeur' },
+  { value: 'helpconfort_dg', label: 'HC - DG' },
+];
+
 export default function AdminUsersList() {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
@@ -48,13 +74,13 @@ export default function AdminUsersList() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [managingRoleUserId, setManagingRoleUserId] = useState<string | null>(null);
-  const [managingRoleUserName, setManagingRoleUserName] = useState<string | null>(null);
-  const [showRoleDialog, setShowRoleDialog] = useState(false);
-  const [managingPermissionsUser, setManagingPermissionsUser] = useState<UserProfile | null>(null);
-  const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
   const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  // États des filtres
+  const [roleAgenceFilters, setRoleAgenceFilters] = useState<string[]>([]);
+  const [systemRoleFilters, setSystemRoleFilters] = useState<string[]>([]);
+  const [competenceFilters, setCompetenceFilters] = useState<string[]>([]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -73,7 +99,6 @@ export default function AdminUsersList() {
 
       if (profilesError) throw profilesError;
 
-      // Récupérer TOUS les rôles système pour chaque utilisateur
       const usersWithRoles = await Promise.all(
         (profilesData || []).map(async (profile) => {
           const { data: rolesData } = await supabase
@@ -124,7 +149,6 @@ export default function AdminUsersList() {
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
-      // Cycle: asc -> desc -> null
       if (sortDirection === 'asc') {
         setSortDirection('desc');
       } else if (sortDirection === 'desc') {
@@ -137,18 +161,48 @@ export default function AdminUsersList() {
     }
   };
 
-  const getSortedUsers = () => {
-    if (!sortColumn || !sortDirection) return users;
+  const getFilteredAndSortedUsers = () => {
+    let filtered = users;
 
-    return [...users].sort((a, b) => {
+    // Filtre par poste occupé
+    if (roleAgenceFilters.length > 0) {
+      filtered = filtered.filter(u => {
+        const value = u.role_agence || 'null';
+        return roleAgenceFilters.includes(value);
+      });
+    }
+
+    // Filtre par rôle système (OR logic)
+    if (systemRoleFilters.length > 0) {
+      filtered = filtered.filter(u =>
+        u.system_roles?.some(r => systemRoleFilters.includes(r))
+      );
+    }
+
+    // Filtre par compétences
+    if (competenceFilters.length > 0) {
+      filtered = filtered.filter(u => {
+        const comp = u.service_competencies || {};
+        return competenceFilters.some(c => {
+          if (c.startsWith('helpconfort_')) {
+            const hcValue = c.replace('helpconfort_', '');
+            return comp.helpconfort === hcValue;
+          }
+          return comp[c] === true;
+        });
+      });
+    }
+
+    // Tri
+    if (!sortColumn || !sortDirection) return filtered;
+
+    return [...filtered].sort((a, b) => {
       let aValue: any = a[sortColumn];
       let bValue: any = b[sortColumn];
 
-      // Traiter les valeurs nulles
       if (aValue === null) return sortDirection === 'asc' ? 1 : -1;
       if (bValue === null) return sortDirection === 'asc' ? -1 : 1;
 
-      // Comparaison pour les dates
       if (sortColumn === 'created_at') {
         const aTime = new Date(aValue as string).getTime();
         const bTime = new Date(bValue as string).getTime();
@@ -157,7 +211,6 @@ export default function AdminUsersList() {
         return 0;
       }
 
-      // Comparaison pour les chaînes (case-insensitive)
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         const aLower = aValue.toLowerCase();
         const bLower = bValue.toLowerCase();
@@ -179,7 +232,14 @@ export default function AdminUsersList() {
       : <ArrowDown className="w-4 h-4 ml-1 text-primary" />;
   };
 
-  const sortedUsers = getSortedUsers();
+  const sortedUsers = getFilteredAndSortedUsers();
+  const hasActiveFilters = roleAgenceFilters.length > 0 || systemRoleFilters.length > 0 || competenceFilters.length > 0;
+
+  const clearAllFilters = () => {
+    setRoleAgenceFilters([]);
+    setSystemRoleFilters([]);
+    setCompetenceFilters([]);
+  };
 
   return (
     <div className="min-h-screen w-full p-8 space-y-6">
@@ -210,10 +270,21 @@ export default function AdminUsersList() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Utilisateurs enregistrés</CardTitle>
-          <CardDescription>
-            {users.length} utilisateur{users.length > 1 ? 's' : ''} au total
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Utilisateurs enregistrés</CardTitle>
+              <CardDescription>
+                {sortedUsers.length} utilisateur{sortedUsers.length > 1 ? 's' : ''} 
+                {hasActiveFilters && ` (filtré sur ${users.length})`}
+              </CardDescription>
+            </div>
+            {hasActiveFilters && (
+              <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                <X className="w-4 h-4 mr-1" />
+                Effacer les filtres
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -255,9 +326,30 @@ export default function AdminUsersList() {
                     <SortIcon column="agence" />
                   </div>
                 </TableHead>
-                <TableHead>Poste occupé</TableHead>
-                <TableHead>Rôle système</TableHead>
-                <TableHead>Compétences</TableHead>
+                <TableHead>
+                  <ColumnFilter
+                    title="Poste occupé"
+                    options={ROLE_AGENCE_OPTIONS}
+                    selected={roleAgenceFilters}
+                    onChange={setRoleAgenceFilters}
+                  />
+                </TableHead>
+                <TableHead>
+                  <ColumnFilter
+                    title="Rôle système"
+                    options={SYSTEM_ROLE_OPTIONS}
+                    selected={systemRoleFilters}
+                    onChange={setSystemRoleFilters}
+                  />
+                </TableHead>
+                <TableHead>
+                  <ColumnFilter
+                    title="Compétences"
+                    options={COMPETENCE_OPTIONS}
+                    selected={competenceFilters}
+                    onChange={setCompetenceFilters}
+                  />
+                </TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50 select-none"
                   onClick={() => handleSort('created_at')}
@@ -354,31 +446,6 @@ export default function AdminUsersList() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
-                          setManagingPermissionsUser(user);
-                          setShowPermissionsDialog(true);
-                        }}
-                        title="Gérer les permissions individuelles"
-                      >
-                        <Key className="w-4 h-4 text-accent" />
-                      </Button>
-                      {!user.system_roles?.includes('admin') && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                          setManagingRoleUserId(user.id);
-                            setManagingRoleUserName(`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Utilisateur');
-                            setShowRoleDialog(true);
-                          }}
-                          title="Gérer le rôle système"
-                        >
-                          <Shield className="w-4 h-4 text-blue-500" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
                         onClick={() => handleDeleteUser(user.id)}
                         title="Supprimer"
                       >
@@ -390,8 +457,8 @@ export default function AdminUsersList() {
               ))}
               {sortedUsers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                    Aucun utilisateur enregistré
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                    {hasActiveFilters ? 'Aucun utilisateur ne correspond aux filtres' : 'Aucun utilisateur enregistré'}
                   </TableCell>
                 </TableRow>
               )}
@@ -405,22 +472,6 @@ export default function AdminUsersList() {
         onOpenChange={setShowEditDialog}
         user={editingUser}
         onSuccess={loadUsers}
-      />
-
-      <ManageSystemRoleDialog
-        open={showRoleDialog}
-        onOpenChange={setShowRoleDialog}
-        userId={managingRoleUserId}
-        userName={managingRoleUserName}
-        onSuccess={loadUsers}
-      />
-
-      <ManageUserPermissionsDialog
-        open={showPermissionsDialog}
-        onOpenChange={setShowPermissionsDialog}
-        userId={managingPermissionsUser?.id || ''}
-        userName={`${managingPermissionsUser?.first_name || ''} ${managingPermissionsUser?.last_name || ''}`.trim() || 'Utilisateur'}
-        userRole={managingPermissionsUser?.role_agence || null}
       />
     </div>
   );

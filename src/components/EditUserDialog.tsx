@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { RefreshCw, Copy } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserSystemRolesSection } from '@/components/admin/user/UserSystemRolesSection';
+import { UserSupportConfigSection } from '@/components/admin/user/UserSupportConfigSection';
+import { UserFranchiseurConfigSection } from '@/components/admin/user/UserFranchiseurConfigSection';
+import { UserPermissionsSection } from '@/components/admin/user/UserPermissionsSection';
+import { UserPasswordSection } from '@/components/admin/user/UserPasswordSection';
 
 interface UserProfile {
   id: string;
@@ -20,7 +21,8 @@ interface UserProfile {
   role_agence: string | null;
   service_competencies: any;
   created_at: string;
-  system_role?: string;
+  system_roles?: string[];
+  support_level?: number;
 }
 
 interface EditUserDialogProps {
@@ -41,100 +43,104 @@ const ROLE_OPTIONS = [
 export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUserDialogProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  
+  // Infos de base
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [agence, setAgence] = useState('');
   const [roleAgence, setRoleAgence] = useState('');
+  
+  // Rôles système
+  const [systemRoles, setSystemRoles] = useState<string[]>([]);
+  
+  // Support config
+  const [supportLevel, setSupportLevel] = useState(1);
   const [serviceCompetencies, setServiceCompetencies] = useState<any>({});
-  const [generatedPassword, setGeneratedPassword] = useState('');
-  const [generatingPassword, setGeneratingPassword] = useState(false);
-  const [sendPasswordEmail, setSendPasswordEmail] = useState(true);
-  const [systemRole, setSystemRole] = useState<string>('user');
+  
+  // Franchiseur config
+  const [franchiseurRole, setFranchiseurRole] = useState('animateur');
+  const [assignedAgencies, setAssignedAgencies] = useState<string[]>([]);
 
   useEffect(() => {
-    if (user) {
-      setEmail(user.email || '');
-      setFirstName(user.first_name || '');
-      setLastName(user.last_name || '');
-      setAgence(user.agence || '');
-      setRoleAgence(user.role_agence || '');
-      setServiceCompetencies(user.service_competencies || {});
-      setSystemRole(user.system_role || 'user');
+    if (user && open) {
+      loadUserFullData();
     }
-  }, [user]);
+  }, [user, open]);
 
-  const generateRandomPassword = () => {
-    // Garantir au moins un caractère de chaque catégorie
-    const lowercase = "abcdefghijklmnopqrstuvwxyz";
-    const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const numbers = "0123456789";
-    const symbols = "!@#$%&*";
-    
-    // Commencer avec un caractère obligatoire de chaque type
-    let password = "";
-    password += lowercase.charAt(Math.floor(Math.random() * lowercase.length));
-    password += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
-    password += numbers.charAt(Math.floor(Math.random() * numbers.length));
-    password += symbols.charAt(Math.floor(Math.random() * symbols.length));
-    
-    // Compléter jusqu'à 12 caractères avec tous les caractères possibles
-    const allChars = lowercase + uppercase + numbers + symbols;
-    for (let i = password.length; i < 12; i++) {
-      password += allChars.charAt(Math.floor(Math.random() * allChars.length));
-    }
-    
-    // Mélanger le mot de passe pour ne pas avoir un pattern prévisible
-    return password.split('').sort(() => Math.random() - 0.5).join('');
-  };
-
-  const handleGeneratePassword = async () => {
+  const loadUserFullData = async () => {
     if (!user) return;
 
-    setGeneratingPassword(true);
+    // Infos de base depuis user prop
+    setEmail(user.email || '');
+    setFirstName(user.first_name || '');
+    setLastName(user.last_name || '');
+    setAgence(user.agence || '');
+    setRoleAgence(user.role_agence || '');
+    setServiceCompetencies(user.service_competencies || {});
+    setSupportLevel(user.support_level || 1);
+
     try {
-      const newPassword = generateRandomPassword();
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Non authentifié');
+      // Charger les rôles système
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
 
-      const response = await supabase.functions.invoke('reset-user-password', {
-        body: { 
-          userId: user.id, 
-          newPassword,
-          sendEmail: sendPasswordEmail
-        }
-      });
+      const roles = rolesData?.map(r => r.role) || [];
+      setSystemRoles(roles);
 
-      if (response.error) throw response.error;
+      // Charger le rôle franchiseur
+      const { data: frRole } = await supabase
+        .from('franchiseur_roles')
+        .select('franchiseur_role')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      setGeneratedPassword(newPassword);
-      
-      toast({
-        title: 'Mot de passe généré',
-        description: sendPasswordEmail
-          ? 'Le mot de passe temporaire a été créé et envoyé par email. L\'utilisateur devra le changer à la prochaine connexion.'
-          : 'Le mot de passe temporaire a été créé. L\'utilisateur devra le changer à la prochaine connexion.',
-      });
-    } catch (error: any) {
-      console.error('Erreur génération mot de passe:', error);
-      toast({
-        title: 'Erreur',
-        description: error.message || 'Impossible de générer le mot de passe',
-        variant: 'destructive',
-      });
-    } finally {
-      setGeneratingPassword(false);
+      if (frRole) {
+        setFranchiseurRole(frRole.franchiseur_role);
+      } else {
+        setFranchiseurRole('animateur');
+      }
+
+      // Charger les assignations d'agences
+      const { data: assignments } = await supabase
+        .from('franchiseur_agency_assignments')
+        .select('agency_id')
+        .eq('user_id', user.id);
+
+      setAssignedAgencies(assignments?.map(a => a.agency_id) || []);
+
+      // Charger le niveau support
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('support_level')
+        .eq('id', user.id)
+        .single();
+
+      if (profile) {
+        setSupportLevel(profile.support_level || 1);
+      }
+    } catch (error) {
+      console.error('Erreur chargement données complètes:', error);
     }
   };
 
-  const copyPasswordToClipboard = () => {
-    navigator.clipboard.writeText(generatedPassword);
-    toast({
-      title: 'Copié',
-      description: 'Le mot de passe a été copié dans le presse-papiers',
-    });
-  };
+  // Auto-cocher support et franchiseur si "tête de réseau"
+  useEffect(() => {
+    if (roleAgence === 'tete_de_reseau') {
+      setSystemRoles(prev => {
+        const newRoles = [...prev];
+        if (!newRoles.includes('support')) newRoles.push('support');
+        if (!newRoles.includes('franchiseur')) newRoles.push('franchiseur');
+        return newRoles;
+      });
+    }
+  }, [roleAgence]);
+
+  const isTeteDeReseau = roleAgence === 'tete_de_reseau';
+  const hasSupport = systemRoles.includes('support');
+  const hasFranchiseur = systemRoles.includes('franchiseur');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,18 +153,14 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
 
       // Si l'email a changé, synchroniser avec Supabase Auth
       if (emailChanged && newEmail) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error('Non authentifié');
-
         const response = await supabase.functions.invoke('update-user-email', {
           body: { userId: user.id, newEmail }
         });
-
         if (response.error) throw response.error;
       }
 
-      // Mettre à jour les autres informations du profil
-      const { error } = await supabase
+      // 1. Mettre à jour le profil
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           email: newEmail || null,
@@ -167,13 +169,65 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
           agence: agence.trim() || null,
           role_agence: roleAgence || null,
           service_competencies: serviceCompetencies,
+          support_level: supportLevel,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
-      // Auto-créer l'agence si elle n'existe pas déjà
+      // 2. Synchroniser les rôles système
+      await supabase.from('user_roles').delete().eq('user_id', user.id);
+      for (const role of systemRoles) {
+        await supabase.from('user_roles').insert({
+          user_id: user.id,
+          role: role as 'admin' | 'support' | 'user' | 'franchiseur'
+        });
+      }
+
+      // 3. Gérer le rôle franchiseur
+      if (hasFranchiseur) {
+        // Upsert franchiseur_roles
+        const { data: existingFr } = await supabase
+          .from('franchiseur_roles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (existingFr) {
+          await supabase
+            .from('franchiseur_roles')
+            .update({ franchiseur_role: franchiseurRole as 'animateur' | 'directeur' | 'dg' })
+            .eq('user_id', user.id);
+        } else {
+          await supabase
+            .from('franchiseur_roles')
+            .insert({
+              user_id: user.id,
+              franchiseur_role: franchiseurRole as 'animateur' | 'directeur' | 'dg'
+            });
+        }
+
+        // 4. Gérer les assignations d'agences (seulement pour animateur)
+        if (franchiseurRole === 'animateur') {
+          await supabase
+            .from('franchiseur_agency_assignments')
+            .delete()
+            .eq('user_id', user.id);
+
+          for (const agencyId of assignedAgencies) {
+            await supabase
+              .from('franchiseur_agency_assignments')
+              .insert({ user_id: user.id, agency_id: agencyId });
+          }
+        }
+      } else {
+        // Supprimer les données franchiseur si le rôle est retiré
+        await supabase.from('franchiseur_roles').delete().eq('user_id', user.id);
+        await supabase.from('franchiseur_agency_assignments').delete().eq('user_id', user.id);
+      }
+
+      // Auto-créer l'agence si elle n'existe pas
       if (agence.trim() && agence.trim() !== user.agence) {
         const agencySlug = agence.trim().toLowerCase().replace(/[^a-z0-9]/g, '-');
         const { data: existingAgency } = await supabase
@@ -183,59 +237,15 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
           .maybeSingle();
 
         if (!existingAgency) {
-          const { error: agencyError } = await supabase
+          await supabase
             .from('apogee_agencies')
-            .insert({
-              slug: agencySlug,
-              label: agence.trim(),
-              is_active: true
-            });
-
-          if (agencyError) {
-            console.error('Erreur création agence:', agencyError);
-            // On continue même si la création d'agence échoue
-          } else {
-            console.log('Agence créée automatiquement:', agencySlug);
-          }
-        }
-      }
-
-      // Règle automatique : si le poste devient "tete_de_reseau", attribuer les rôles "franchiseur" et "support"
-      if (roleAgence === 'tete_de_reseau' && roleAgence !== user.role_agence) {
-        console.log('Changement vers tête de réseau détecté pour utilisateur:', user.id);
-        
-        // Récupérer les rôles existants
-        const { data: existingRoles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
-        
-        const currentRoles = existingRoles?.map(r => r.role) || [];
-        
-        // Ajouter "franchiseur" si pas déjà présent
-        if (!currentRoles.includes('franchiseur')) {
-          console.log('Attribution automatique du rôle franchiseur');
-          await supabase.from('user_roles').insert({
-            user_id: user.id,
-            role: 'franchiseur'
-          });
-        }
-        
-        // Ajouter "support" si pas déjà présent
-        if (!currentRoles.includes('support')) {
-          console.log('Attribution automatique du rôle support');
-          await supabase.from('user_roles').insert({
-            user_id: user.id,
-            role: 'support'
-          });
+            .insert({ slug: agencySlug, label: agence.trim(), is_active: true });
         }
       }
 
       toast({
         title: 'Utilisateur modifié',
-        description: emailChanged 
-          ? 'Les informations et l\'email d\'authentification ont été mis à jour avec succès'
-          : 'Les informations ont été mises à jour avec succès',
+        description: 'Les informations ont été mises à jour avec succès',
       });
 
       onSuccess();
@@ -254,226 +264,121 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Modifier l'utilisateur</DialogTitle>
           <DialogDescription>
-            Modifiez les informations de l'utilisateur
+            Configuration complète de l'utilisateur
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="edit-email">Email</Label>
-            <Input
-              id="edit-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="utilisateur@exemple.com"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          {/* Section A - Informations de base */}
+          <div className="space-y-4 p-4 border rounded-lg">
+            <h3 className="font-medium text-sm text-muted-foreground">Informations de base</h3>
+            
             <div className="space-y-2">
-              <Label htmlFor="edit-firstName">Prénom</Label>
+              <Label htmlFor="edit-email">Email</Label>
               <Input
-                id="edit-firstName"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Jean"
+                id="edit-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="utilisateur@exemple.com"
+                required
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-firstName">Prénom</Label>
+                <Input
+                  id="edit-firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Jean"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-lastName">Nom</Label>
+                <Input
+                  id="edit-lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Dupont"
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="edit-lastName">Nom</Label>
+              <Label htmlFor="edit-agence">Agence</Label>
               <Input
-                id="edit-lastName"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Dupont"
+                id="edit-agence"
+                value={agence}
+                onChange={(e) => setAgence(e.target.value)}
+                placeholder="Nom de l'agence"
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="edit-agence">Agence</Label>
-            <Input
-              id="edit-agence"
-              value={agence}
-              onChange={(e) => setAgence(e.target.value)}
-              placeholder="Nom de l'agence"
-            />
-          </div>
-
-          <div className="space-y-3">
-            <Label>Poste occupé</Label>
-            <RadioGroup value={roleAgence} onValueChange={setRoleAgence}>
-              {ROLE_OPTIONS.map((role) => (
-                <div key={role.value} className="flex items-center space-x-2">
-                  <RadioGroupItem value={role.value} id={`edit-role-${role.value}`} />
-                  <Label htmlFor={`edit-role-${role.value}`} className="cursor-pointer font-normal">
-                    {role.label}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          {systemRole !== 'user' && (
-            <Card className="border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Compétences services</CardTitle>
-                <CardDescription className="text-xs">
-                  Sélectionnez les services sur lesquels cet utilisateur peut intervenir
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Services généraux</Label>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={serviceCompetencies.apogee ? "default" : "outline"}
-                      onClick={() => {
-                        const newCompetencies = { ...serviceCompetencies };
-                        if (newCompetencies.apogee) {
-                          delete newCompetencies.apogee;
-                        } else {
-                          newCompetencies.apogee = true;
-                        }
-                        setServiceCompetencies(newCompetencies);
-                      }}
-                    >
-                      Apogée
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={serviceCompetencies.apporteurs ? "default" : "outline"}
-                      onClick={() => {
-                        const newCompetencies = { ...serviceCompetencies };
-                        if (newCompetencies.apporteurs) {
-                          delete newCompetencies.apporteurs;
-                        } else {
-                          newCompetencies.apporteurs = true;
-                        }
-                        setServiceCompetencies(newCompetencies);
-                      }}
-                    >
-                      Apporteurs
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={serviceCompetencies.conseil ? "default" : "outline"}
-                      onClick={() => {
-                        const newCompetencies = { ...serviceCompetencies };
-                        if (newCompetencies.conseil) {
-                          delete newCompetencies.conseil;
-                        } else {
-                          newCompetencies.conseil = true;
-                        }
-                        setServiceCompetencies(newCompetencies);
-                      }}
-                    >
-                      Conseil
-                    </Button>
+            <div className="space-y-2">
+              <Label>Poste occupé</Label>
+              <RadioGroup value={roleAgence} onValueChange={setRoleAgence} className="flex flex-wrap gap-4">
+                {ROLE_OPTIONS.map((role) => (
+                  <div key={role.value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={role.value} id={`edit-role-${role.value}`} />
+                    <Label htmlFor={`edit-role-${role.value}`} className="cursor-pointer font-normal">
+                      {role.label}
+                    </Label>
                   </div>
-                </div>
+                ))}
+              </RadioGroup>
+            </div>
+          </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground" htmlFor="helpconfort-role">
-                    HelpConfort
-                  </Label>
-                  <Select
-                    value={serviceCompetencies.helpconfort || 'none'}
-                    onValueChange={(value) => {
-                      const newCompetencies = { ...serviceCompetencies };
-                      if (value === 'none') {
-                        delete newCompetencies.helpconfort;
-                      } else {
-                        newCompetencies.helpconfort = value;
-                      }
-                      setServiceCompetencies(newCompetencies);
-                    }}
-                  >
-                    <SelectTrigger id="helpconfort-role">
-                      <SelectValue placeholder="Sélectionner un rôle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Aucun</SelectItem>
-                      <SelectItem value="animateur_reseau">Animateur Réseau</SelectItem>
-                      <SelectItem value="directeur_reseau">Directeur Réseau</SelectItem>
-                      <SelectItem value="dg">Directeur Général</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Section B - Rôles système */}
+          <UserSystemRolesSection
+            systemRoles={systemRoles}
+            onRolesChange={setSystemRoles}
+            isTeteDeReseau={isTeteDeReseau}
+          />
+
+          {/* Section C - Configuration Support (si support coché) */}
+          {hasSupport && (
+            <UserSupportConfigSection
+              supportLevel={supportLevel}
+              onSupportLevelChange={setSupportLevel}
+              serviceCompetencies={serviceCompetencies}
+              onServiceCompetenciesChange={setServiceCompetencies}
+            />
           )}
 
-          <Card className="border-destructive/50 bg-destructive/5">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Réinitialisation mot de passe</CardTitle>
-              <CardDescription className="text-xs">
-                Génère un mot de passe temporaire et force le changement à la prochaine connexion
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center space-x-2 pb-2">
-                <Checkbox
-                  id="sendPasswordEmail"
-                  checked={sendPasswordEmail}
-                  onCheckedChange={(checked) => setSendPasswordEmail(checked as boolean)}
-                />
-                <Label
-                  htmlFor="sendPasswordEmail"
-                  className="text-xs font-normal cursor-pointer"
-                >
-                  Envoyer le mot de passe par email
-                </Label>
-              </div>
-              
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={handleGeneratePassword}
-                disabled={generatingPassword}
-                className="w-full"
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${generatingPassword ? 'animate-spin' : ''}`} />
-                {generatingPassword ? 'Génération...' : 'Générer mot de passe'}
-              </Button>
-              
-              {generatedPassword && (
-                <div className="space-y-2">
-                  <Label className="text-xs">Mot de passe généré :</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={generatedPassword}
-                      readOnly
-                      className="font-mono text-sm"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={copyPasswordToClipboard}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Communiquez ce mot de passe à l'utilisateur. Il devra le changer à la connexion.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Section D - Configuration Franchiseur (si franchiseur coché) */}
+          {hasFranchiseur && (
+            <UserFranchiseurConfigSection
+              franchiseurRole={franchiseurRole}
+              onFranchiseurRoleChange={setFranchiseurRole}
+              assignedAgencies={assignedAgencies}
+              onAssignedAgenciesChange={setAssignedAgencies}
+              serviceCompetencies={serviceCompetencies}
+              onServiceCompetenciesChange={setServiceCompetencies}
+              isTeteDeReseau={isTeteDeReseau}
+            />
+          )}
 
-          <div className="flex gap-2 pt-4">
+          {/* Section E - Permissions individuelles */}
+          {user && (
+            <UserPermissionsSection
+              userId={user.id}
+              userRole={roleAgence}
+            />
+          )}
+
+          {/* Section F - Mot de passe */}
+          {user && (
+            <UserPasswordSection userId={user.id} />
+          )}
+
+          {/* Boutons */}
+          <div className="flex gap-2 pt-4 border-t">
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
