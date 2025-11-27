@@ -25,15 +25,24 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
       {/* Hero Section */}
       <section className="container mx-auto px-6 py-16 md:py-24">
         <div className="text-center max-w-4xl mx-auto mb-16">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
+          <h1 
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight animate-fade-in opacity-0"
+            style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}
+          >
             <span className="text-primary">Pilotez</span> votre agence.
             <br />
             <span className="text-primary">Maîtrisez</span> le logiciel Apogée.
           </h1>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
+          <h1 
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight animate-fade-in opacity-0"
+            style={{ animationDelay: '150ms', animationFillMode: 'forwards' }}
+          >
             <span className="text-accent">Accédez</span> à toutes les ressources.
           </h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p 
+            className="text-xl text-muted-foreground mb-8 animate-fade-in opacity-0"
+            style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}
+          >
             La plateforme complète pour gérer votre franchise HelpConfort
           </p>
           <Button 
