@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { GripVertical, Plus, Lightbulb, Edit2, Copy, FolderInput, Trash2 } from 'lucide-react';
+import { GripVertical, Plus, Lightbulb, Edit2, Copy, FolderInput, Trash2, Clock, Sparkles } from 'lucide-react';
 import { createSanitizedHtml } from '@/lib/sanitize';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import {
@@ -10,6 +10,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Section, CategoryBlock, CategoryScope } from './types';
 import { Block } from '@/types/block';
+
+// Helper to check if section is new (completed within 7 days)
+const isSectionNew = (completedAt?: string) => {
+  if (!completedAt) return false;
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  return new Date(completedAt) > sevenDaysAgo;
+};
 
 interface TipsSectionProps {
   section: Section;
@@ -45,9 +53,10 @@ export function TipsSection({
   onAddTips,
 }: TipsSectionProps) {
   const isTips = section.contentType === 'tips';
+  const isNew = isSectionNew(section.completedAt);
 
   return (
-    <div className={`rounded-2xl overflow-hidden border-2 border-l-4 border-helpconfort-orange/40 border-l-primary bg-card shadow-sm hover:border-helpconfort-orange/60 hover:shadow-md transition-all`}>
+    <div className="rounded-2xl overflow-hidden border-2 border-l-4 border-helpconfort-orange/40 border-l-primary bg-card shadow-sm hover:border-helpconfort-orange/60 hover:shadow-md transition-all">
       <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white relative">
         {isEditMode && isAdmin && (
           <div className="absolute top-2 right-2 flex gap-2 z-10">
@@ -147,20 +156,35 @@ export function TipsSection({
             />
           </div>
         )}
-        {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
-          <div className="flex items-center justify-between gap-2 w-full">
-            <h3 className="text-lg font-semibold text-white flex-1">{section.title}</h3>
-            {!isEditMode && !isAdmin && (
-              <FavoriteButton
-                blockId={section.id}
-                blockTitle={section.title}
-                blockSlug={section.slug}
-                categorySlug={category.slug}
-                scope={scope}
-              />
-            )}
-          </div>
-        ) : null}
+        <div className="flex items-center gap-2 flex-wrap">
+          {!section.hideTitle && section.title && section.title.trim() !== '' && section.contentType !== 'tips' ? (
+            <>
+              <h3 className="text-lg font-semibold text-white">{section.title}</h3>
+              {!isEditMode && !isAdmin && (
+                <FavoriteButton
+                  blockId={section.id}
+                  blockTitle={section.title}
+                  blockSlug={section.slug}
+                  categorySlug={category.slug}
+                  scope={scope}
+                />
+              )}
+            </>
+          ) : null}
+          {/* Section badges */}
+          {section.isInProgress && (
+            <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              En cours
+            </span>
+          )}
+          {isNew && !section.isInProgress && (
+            <span className="bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
+              <Sparkles className="w-3 h-3" />
+              New
+            </span>
+          )}
+        </div>
       </div>
       <div className="p-6 bg-card">
         <div
