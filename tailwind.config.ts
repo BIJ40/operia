@@ -141,6 +141,16 @@ export default {
             borderColor: "rgba(239, 68, 68, 0.5)",
           },
         },
+        "pulse-progress": {
+          "0%, 100%": {
+            opacity: "1",
+            transform: "scaleX(1)",
+          },
+          "50%": {
+            opacity: "0.7",
+            transform: "scaleX(1.02)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -149,6 +159,7 @@ export default {
         "fade-out": "fade-out 0.2s ease-out",
         "spin-slow": "spin-slow 3s linear infinite",
         "pulse-red": "pulse-red 2s ease-in-out infinite",
+        "pulse-progress": "pulse-progress 1s ease-in-out",
       },
     },
   },
