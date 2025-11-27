@@ -291,7 +291,7 @@ function ReplacementTitle({ prefix, words, delay }: {
         {prefix}
       </motion.span>
       {" "}
-      <span className="inline-block relative min-w-[280px] md:min-w-[500px] whitespace-nowrap">
+      <span className="inline-block relative min-w-[320px] md:min-w-[600px] whitespace-nowrap">
         <AnimatePresence mode="wait">
           {currentIndex >= 0 && (
             <motion.span
