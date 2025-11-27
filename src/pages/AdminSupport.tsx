@@ -3,15 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, CheckCircle2, Clock, AlertCircle, LayoutGrid, List, Moon, Sun, Bell, BellOff } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
+import { MessageSquare, CheckCircle2, Clock, AlertCircle, LayoutGrid, List, Moon, Sun, Bell, BellOff, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { AppSidebarAdmin } from '@/components/AppSidebarAdmin';
-import { Header } from '@/components/Header';
-import { ImageModal } from '@/components/ImageModal';
-import { Chatbot } from '@/components/Chatbot';
 import { useAdminSupport } from '@/hooks/use-admin-support';
 import { TicketList } from '@/components/admin/support/TicketList';
 import { TicketDetails } from '@/components/admin/support/TicketDetails';
@@ -19,7 +13,6 @@ import { SupportChat } from '@/components/admin/support/SupportChat';
 import { SatisfactionChart } from '@/components/SatisfactionChart';
 import { KanbanView } from '@/components/admin/support/KanbanView';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { TrendingUp } from 'lucide-react';
 
 export default function AdminSupport() {
   const {
@@ -123,55 +116,46 @@ export default function AdminSupport() {
   };
 
   return (
-    <div className={darkMode ? 'dark' : ''}>
-      <SidebarProvider>
-        <div className="min-h-screen w-full flex bg-background text-foreground overflow-x-auto">
-          <AppSidebarAdmin />
-          
-          <div className="flex-1 flex flex-col min-h-screen min-w-0">
-            <Header />
-
-            <main className="flex-1">
-              <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Support Tickets</h1>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setDarkMode(!darkMode)}
-              className="gap-2"
-            >
-              {darkMode ? (
-                <>
-                  <Sun className="w-4 h-4" />
-                  Clair
-                </>
-              ) : (
-                <>
-                  <Moon className="w-4 h-4" />
-                  Sombre
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleEmailNotifications}
-              className="gap-2"
-            >
-              {emailNotificationsEnabled ? (
-                <>
-                  <Bell className="w-4 h-4" />
-                  Emails ON
-                </>
-              ) : (
-                <>
-                  <BellOff className="w-4 h-4" />
-                  Emails OFF
-                </>
-              )}
-            </Button>
+    <div className={`${darkMode ? 'dark' : ''} space-y-6`}>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Support Tickets</h1>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setDarkMode(!darkMode)}
+            className="gap-2"
+          >
+            {darkMode ? (
+              <>
+                <Sun className="w-4 h-4" />
+                Clair
+              </>
+            ) : (
+              <>
+                <Moon className="w-4 h-4" />
+                Sombre
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleEmailNotifications}
+            className="gap-2"
+          >
+            {emailNotificationsEnabled ? (
+              <>
+                <Bell className="w-4 h-4" />
+                Emails ON
+              </>
+            ) : (
+              <>
+                <BellOff className="w-4 h-4" />
+                Emails OFF
+              </>
+            )}
+          </Button>
           <Button
             variant={viewMode === 'list' ? 'default' : 'outline'}
             size="sm"
@@ -193,8 +177,7 @@ export default function AdminSupport() {
         </div>
       </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-3">
           <div className="flex items-center gap-2 mb-1">
             <MessageSquare className="w-3.5 h-3.5" />
@@ -237,7 +220,6 @@ export default function AdminSupport() {
         </Card>
       </div>
 
-      {/* Satisfaction Chart */}
       <Accordion type="single" collapsible className="mb-4">
         <AccordionItem value="chart" className="border rounded-lg">
           <AccordionTrigger className="px-4 py-2 hover:no-underline">
@@ -286,7 +268,6 @@ export default function AdminSupport() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Ticket List */}
           <div className="lg:col-span-1">
             <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
               <TabsList className="grid w-full grid-cols-3 mb-4">
@@ -330,7 +311,6 @@ export default function AdminSupport() {
             </Tabs>
           </div>
 
-          {/* Chat Interface */}
           <div className="lg:col-span-2">
             {!selectedTicket ? (
               <Card className="h-[600px] flex items-center justify-center">
@@ -362,16 +342,7 @@ export default function AdminSupport() {
             )}
           </div>
         </div>
-        )}
-              </div>
-            </main>
-          </div>
-        </div>
-
-        <ImageModal />
-        <Chatbot />
-      </SidebarProvider>
+      )}
     </div>
   );
 }
-

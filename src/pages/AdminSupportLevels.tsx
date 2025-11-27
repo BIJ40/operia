@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,7 +55,6 @@ export default function AdminSupportLevels() {
   const loadSupportUsers = async () => {
     setIsLoading(true);
     try {
-      // Récupérer tous les utilisateurs ayant le rôle support
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id')
@@ -137,176 +135,170 @@ export default function AdminSupportLevels() {
 
   if (isLoading) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center h-screen">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </Layout>
+      <div className="flex items-center justify-center h-[50vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
     );
   }
 
   return (
-    <Layout>
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-              Gestion des Compétences Support
-            </h1>
-            <p className="text-muted-foreground">
-              Gérer les niveaux Apogée (N1/N2/N3) et les compétences par service
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => navigate('/admin/support')}
-            className="gap-2"
-          >
-            Retour aux tickets
-          </Button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+            Gestion des Compétences Support
+          </h1>
+          <p className="text-muted-foreground">
+            Gérer les niveaux Apogée (N1/N2/N3) et les compétences par service
+          </p>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => navigate('/admin/support')}
+          className="gap-2"
+        >
+          Retour aux tickets
+        </Button>
+      </div>
 
-        {/* Stats rapides */}
-        <div className="grid gap-4 md:grid-cols-3">
-          {[1, 2, 3].map(level => {
-            const users = getUsersByLevel(level);
-            return (
-              <Card key={level} className="border-l-4 border-l-accent">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Shield className={`w-4 h-4 ${getSupportLevelColor(level)} text-white rounded-full p-0.5`} />
-                    {getSupportLevelLabel(level)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{users.length}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {users.length === 0 ? 'Aucun utilisateur' : users.length === 1 ? 'utilisateur' : 'utilisateurs'}
+      <div className="grid gap-4 md:grid-cols-3">
+        {[1, 2, 3].map(level => {
+          const users = getUsersByLevel(level);
+          return (
+            <Card key={level} className="border-l-4 border-l-accent">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Shield className={`w-4 h-4 ${getSupportLevelColor(level)} text-white rounded-full p-0.5`} />
+                  {getSupportLevelLabel(level)}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{users.length}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {users.length === 0 ? 'Aucun utilisateur' : users.length === 1 ? 'utilisateur' : 'utilisateurs'}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="space-y-6">
+        {[1, 2, 3].map(level => {
+          const users = getUsersByLevel(level);
+          return (
+            <Card key={level} className="rounded-2xl shadow-lg border-l-4 border-l-accent">
+              <CardHeader className="bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10">
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className={`w-5 h-5 ${getSupportLevelColor(level)} text-white rounded-full p-1`} />
+                  {getSupportLevelLabel(level)}
+                  <Badge variant="outline" className="ml-auto">
+                    {users.length} {users.length === 1 ? 'membre' : 'membres'}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {users.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Aucun utilisateur à ce niveau
                   </p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Liste des utilisateurs par niveau */}
-        <div className="space-y-6">
-          {[1, 2, 3].map(level => {
-            const users = getUsersByLevel(level);
-            return (
-              <Card key={level} className="rounded-2xl shadow-lg border-l-4 border-l-accent">
-                <CardHeader className="bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10">
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className={`w-5 h-5 ${getSupportLevelColor(level)} text-white rounded-full p-1`} />
-                    {getSupportLevelLabel(level)}
-                    <Badge variant="outline" className="ml-auto">
-                      {users.length} {users.length === 1 ? 'membre' : 'membres'}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  {users.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      Aucun utilisateur à ce niveau
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {users.map(user => (
-                        <div
-                          key={user.id}
-                          className="flex items-center justify-between p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-full ${getSupportLevelColor(level)} flex items-center justify-center text-white font-bold`}>
-                              {user.first_name?.[0]}{user.last_name?.[0]}
-                            </div>
-                            <div>
-                              <p className="font-medium">
-                                {user.first_name} {user.last_name}
-                              </p>
-                              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                <User className="w-3 h-3" />
-                                {user.email}
-                                {user.agence && (
-                                  <>
-                                    <span>•</span>
-                                    <Badge variant="outline" className="text-xs">
-                                      {user.agence}
-                                    </Badge>
-                                  </>
-                                )}
-                              </p>
-                            </div>
+                ) : (
+                  <div className="space-y-3">
+                    {users.map(user => (
+                      <div
+                        key={user.id}
+                        className="flex items-center justify-between p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full ${getSupportLevelColor(level)} flex items-center justify-center text-white font-bold`}>
+                            {user.first_name?.[0]}{user.last_name?.[0]}
                           </div>
-                          <div className="flex flex-col gap-4 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">Niveau Apogée :</span>
-                              <Select
-                                value={user.support_level.toString()}
-                                onValueChange={(value) => updateSupportLevel(user.id, parseInt(value))}
-                              >
-                                <SelectTrigger className="w-[200px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="1">
-                                    <span className="flex items-center gap-2">
-                                      <Shield className="w-4 h-4 bg-blue-500 text-white rounded-full p-0.5" />
-                                      N1 - Aide de base
-                                    </span>
-                                  </SelectItem>
-                                  <SelectItem value="2">
-                                    <span className="flex items-center gap-2">
-                                      <Shield className="w-4 h-4 bg-orange-500 text-white rounded-full p-0.5" />
-                                      N2 - Technique
-                                    </span>
-                                  </SelectItem>
-                                  <SelectItem value="3">
-                                    <span className="flex items-center gap-2">
-                                      <Shield className="w-4 h-4 bg-red-500 text-white rounded-full p-0.5" />
-                                      N3 - Développeur
-                                    </span>
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-sm text-muted-foreground">Compétences services :</span>
-                                <Button
-                                  size="sm"
-                                  variant={user.service_competencies?.apogee ? "default" : "outline"}
-                                  onClick={() => toggleServiceCompetency(user.id, 'apogee', user.service_competencies || {})}
-                                >
-                                  Apogée
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant={user.service_competencies?.apporteurs ? "default" : "outline"}
-                                  onClick={() => toggleServiceCompetency(user.id, 'apporteurs', user.service_competencies || {})}
-                                >
-                                  Apporteurs
-                                </Button>
+                          <div>
+                            <p className="font-medium">
+                              {user.first_name} {user.last_name}
+                            </p>
+                            <p className="text-sm text-muted-foreground flex items-center gap-2">
+                              <User className="w-3 h-3" />
+                              {user.email}
+                              {user.agence && (
+                                <>
+                                  <span>•</span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {user.agence}
+                                  </Badge>
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-4 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">Niveau Apogée :</span>
+                            <Select
+                              value={user.support_level.toString()}
+                              onValueChange={(value) => updateSupportLevel(user.id, parseInt(value))}
+                            >
+                              <SelectTrigger className="w-[200px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1">
+                                  <span className="flex items-center gap-2">
+                                    <Shield className="w-4 h-4 bg-blue-500 text-white rounded-full p-0.5" />
+                                    N1 - Aide de base
+                                  </span>
+                                </SelectItem>
+                                <SelectItem value="2">
+                                  <span className="flex items-center gap-2">
+                                    <Shield className="w-4 h-4 bg-orange-500 text-white rounded-full p-0.5" />
+                                    N2 - Technique
+                                  </span>
+                                </SelectItem>
+                                <SelectItem value="3">
+                                  <span className="flex items-center gap-2">
+                                    <Shield className="w-4 h-4 bg-red-500 text-white rounded-full p-0.5" />
+                                    N3 - Développeur
+                                  </span>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm text-muted-foreground">Compétences services :</span>
                               <Button
-                                  size="sm"
-                                  variant={user.service_competencies?.helpconfort ? "default" : "outline"}
-                                  onClick={() => toggleServiceCompetency(user.id, 'helpconfort', user.service_competencies || {})}
-                                >
-                                  HelpConfort
-                                </Button>
-                              </div>
+                                size="sm"
+                                variant={user.service_competencies?.apogee ? "default" : "outline"}
+                                onClick={() => toggleServiceCompetency(user.id, 'apogee', user.service_competencies || {})}
+                              >
+                                Apogée
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={user.service_competencies?.apporteurs ? "default" : "outline"}
+                                onClick={() => toggleServiceCompetency(user.id, 'apporteurs', user.service_competencies || {})}
+                              >
+                                Apporteurs
+                              </Button>
+                            <Button
+                                size="sm"
+                                variant={user.service_competencies?.helpconfort ? "default" : "outline"}
+                                onClick={() => toggleServiceCompetency(user.id, 'helpconfort', user.service_competencies || {})}
+                              >
+                                HelpConfort
+                              </Button>
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
-    </Layout>
+    </div>
   );
 }
