@@ -42,7 +42,7 @@ export function HiddenTitleSection({
   onAddTips,
 }: HiddenTitleSectionProps) {
   return (
-    <div className="rounded-lg border-2 border-border bg-card shadow-sm p-6">
+    <div className="rounded-2xl border-2 border-l-4 border-helpconfort-orange/40 border-l-primary bg-card shadow-sm p-6 hover:border-helpconfort-orange/60 hover:shadow-md transition-all">
       {isEditMode && isAdmin && (
         <div className="flex gap-2 mb-4 justify-end bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm">
           <Button
