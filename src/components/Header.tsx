@@ -26,6 +26,7 @@ export function Header() {
   const isSupport = isImpersonating ? (impersonatedProfile?.hasSupportRole ?? false) : realIsSupport;
   const isFranchiseur = isImpersonating ? (impersonatedProfile?.hasFranchiseurRole ?? false) : realIsFranchiseur;
   const roleAgence = isImpersonating ? impersonatedProfile?.roleAgence : realRoleAgence;
+  const hasIndicateursAccess = isImpersonating ? (impersonatedProfile?.hasIndicateursAccess ?? false) : true;
   
   // Déterminer quel contexte utiliser selon la page
   const isApporteurPage = location.pathname.startsWith('/apporteurs');
@@ -179,6 +180,16 @@ export function Header() {
               <Home className="w-5 h-5 text-primary" />
               <span className="font-semibold text-foreground">ACCUEIL</span>
             </Link>
+
+            {hasIndicateursAccess && (
+              <Link
+                to="/mes-indicateurs"
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
+              >
+                <BarChart3 className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-foreground">STATS</span>
+              </Link>
+            )}
 
             {isSupport && (
               <Link

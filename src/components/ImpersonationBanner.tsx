@@ -1,6 +1,6 @@
 import { useImpersonation, ROLE_AGENCE_OPTIONS, FRANCHISEUR_ROLE_OPTIONS } from '@/contexts/ImpersonationContext';
 import { Button } from '@/components/ui/button';
-import { X, Eye } from 'lucide-react';
+import { X, Eye, BarChart3, Headset, Network } from 'lucide-react';
 
 export function ImpersonationBanner() {
   const { isImpersonating, impersonatedProfile, stopImpersonation } = useImpersonation();
@@ -16,13 +16,28 @@ export function ImpersonationBanner() {
         <div className="flex items-center gap-3">
           <Eye className="h-5 w-5" />
           <span className="font-medium">Mode simulation actif</span>
-          <span className="text-sm">
+          <span className="text-sm flex items-center gap-2 flex-wrap">
             — Rôle: <strong>{roleAgenceLabel}</strong>
             {impersonatedProfile.agence && (
               <>, Agence: <strong>{impersonatedProfile.agence}</strong></>
             )}
             {franchiseurRoleLabel && franchiseurRoleLabel !== 'Aucun' && (
-              <>, Franchiseur: <strong>{franchiseurRoleLabel}</strong></>
+              <span className="inline-flex items-center gap-1 bg-amber-600/30 px-2 py-0.5 rounded">
+                <Network className="h-3 w-3" />
+                <strong>{franchiseurRoleLabel}</strong>
+              </span>
+            )}
+            {impersonatedProfile.hasSupportRole && (
+              <span className="inline-flex items-center gap-1 bg-amber-600/30 px-2 py-0.5 rounded">
+                <Headset className="h-3 w-3" />
+                Support
+              </span>
+            )}
+            {impersonatedProfile.hasIndicateursAccess && (
+              <span className="inline-flex items-center gap-1 bg-amber-600/30 px-2 py-0.5 rounded">
+                <BarChart3 className="h-3 w-3" />
+                Indicateurs
+              </span>
             )}
           </span>
         </div>
@@ -33,7 +48,7 @@ export function ImpersonationBanner() {
           className="gap-2 bg-amber-100 hover:bg-amber-200 text-amber-900"
         >
           <X className="h-4 w-4" />
-          Arrêter la simulation
+          Arrêter
         </Button>
       </div>
     </div>
