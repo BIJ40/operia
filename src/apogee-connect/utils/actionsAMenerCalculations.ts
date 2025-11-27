@@ -90,7 +90,7 @@ export function buildActionsAMener(
     const label = project.name || project.label || 'Sans libellé';
     
     // === RÈGLE 1: Dossiers en "devis à faire" ===
-    // Vérifier data.history pour trouver le dernier état "Devis à faire"
+    // Vérifier data.history pour trouver le dernier état " => Devis à faire"
     if (project.data?.history && Array.isArray(project.data.history)) {
       // Trier l'historique par dateModif pour avoir le plus récent en premier
       const sortedHistory = [...project.data.history].sort((a, b) => {
@@ -100,10 +100,10 @@ export function buildActionsAMener(
         return dateB.getTime() - dateA.getTime();
       });
       
-      // Vérifier si le dernier état contient "Devis à faire"
+      // Vérifier si le dernier état contient exactement " => Devis à faire"
       if (sortedHistory.length > 0 && sortedHistory[0].labelKind) {
-        const lastState = sortedHistory[0].labelKind.toLowerCase();
-        if (lastState.includes('devis') && lastState.includes('faire')) {
+        const lastState = sortedHistory[0].labelKind;
+        if (lastState.includes(' => Devis à faire')) {
           const dateDepart = parseDate(sortedHistory[0].dateModif) || parseDate(project.updated_at) || parseDate(project.created_at);
           if (dateDepart) {
             const deadline = addDays(dateDepart, config.delai_devis_a_faire);
