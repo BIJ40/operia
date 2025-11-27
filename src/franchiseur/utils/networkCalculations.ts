@@ -631,7 +631,7 @@ export function aggregateUniversApporteurMatrix(
     const clientsMap = new Map(agency.data.clients.map((c: any) => [c.id, c]));
 
     agency.data.factures.forEach((facture: any) => {
-      if (facture.state === "canceled" || facture.data?.type === "avoir") return;
+      if (facture.state === "canceled") return;
 
       const dateReelle = facture.dateEmission || facture.dateReelle || facture.created_at;
       if (!dateReelle) return;
@@ -642,16 +642,18 @@ export function aggregateUniversApporteurMatrix(
       const project = projectsMap.get(facture.projectId) as any;
       if (!project) return;
 
-      // Extraire le montant HT
-      const montantRaw = facture.totalHT || facture.data?.totalHT || facture.montantHT || facture.data?.montantHT || "0";
-      const montantStr = String(montantRaw).replace(/[^0-9.-]/g, '');
-      const montant = parseFloat(montantStr);
-      if (isNaN(montant)) return;
+      // Déterminer le type de facture et le montant net (aligné sur calculateCaJour)
+      const rawType = facture.typeFacture || facture.data?.type || facture.state || "";
+      const typeFacture = String(rawType).toLowerCase();
 
-      const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-      const caFacture = typeFacture === "avoir" || typeFacture === "Avoir"
-        ? -Math.abs(montant)
-        : montant;
+      const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
+      const montantParsed = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+      if (isNaN(montantParsed) || montantParsed === 0) return;
+
+      // Montant net : factures en positif, avoirs en négatif
+      const caFacture = typeFacture === "avoir"
+        ? -Math.abs(montantParsed)
+        : montantParsed;
 
       const rawUniverses = project?.data?.universes || project?.universes || [];
       const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
