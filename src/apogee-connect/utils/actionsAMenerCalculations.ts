@@ -206,34 +206,37 @@ export function buildActionsAMener(
     const statusTime = lastStatusChange.dateModif ? parseDateModif(lastStatusChange.dateModif) : 0;
     const statutLabel = isAttTech ? 'ATT TECH (manuel)' : 'RT en cours';
     
-    // 3) Chercher le dernier RDV réalisé (kind === 14) avant le passage à ce statut
-    const rdvEntries = history
-      .filter((h: any) => 
-        h.kind === 14 &&
-        h.data &&
-        typeof h.data.content === 'string' &&
-        h.data.content.includes('R.D.V. : Planifié => Réalisé')
-      )
-      .sort((a: any, b: any) => {
-        const dateA = a.dateModif ? parseDateModif(a.dateModif) : 0;
-        const dateB = b.dateModif ? parseDateModif(b.dateModif) : 0;
-        return dateA - dateB;
-      });
+    // 3) Essayer d'abord le userStr/userId du changement de statut lui-même
+    let technicienName = lastStatusChange.userStr || 'Technicien inconnu';
+    let technicienId: number | undefined = lastStatusChange.userId;
     
-    let technicienName = 'Technicien inconnu';
-    let technicienId: number | undefined = undefined;
-    
-    if (rdvEntries.length > 0) {
-      // Ne garder que les RDV avant ou à la même date que le statut
-      const rdvAvant = rdvEntries.filter((h: any) => {
-        const rdvTime = h.dateModif ? parseDateModif(h.dateModif) : 0;
-        return rdvTime <= statusTime;
-      });
+    // 4) Si pas de technicien dans le statut, chercher le dernier RDV réalisé (kind === 14) avant le passage à ce statut
+    if (!lastStatusChange.userStr || lastStatusChange.userStr === 'Technicien inconnu') {
+      const rdvEntries = history
+        .filter((h: any) => 
+          h.kind === 14 &&
+          h.data &&
+          typeof h.data.content === 'string' &&
+          h.data.content.includes('R.D.V. : Planifié => Réalisé')
+        )
+        .sort((a: any, b: any) => {
+          const dateA = a.dateModif ? parseDateModif(a.dateModif) : 0;
+          const dateB = b.dateModif ? parseDateModif(b.dateModif) : 0;
+          return dateA - dateB;
+        });
       
-      if (rdvAvant.length > 0) {
-        const lastRdv = rdvAvant[rdvAvant.length - 1];
-        technicienName = lastRdv.userStr || lastRdv.data?.userName || 'Technicien inconnu';
-        technicienId = lastRdv.userId; // Toujours récupérer l'ID pour lookup ultérieur
+      if (rdvEntries.length > 0) {
+        // Ne garder que les RDV avant ou à la même date que le statut
+        const rdvAvant = rdvEntries.filter((h: any) => {
+          const rdvTime = h.dateModif ? parseDateModif(h.dateModif) : 0;
+          return rdvTime <= statusTime;
+        });
+        
+        if (rdvAvant.length > 0) {
+          const lastRdv = rdvAvant[rdvAvant.length - 1];
+          technicienName = lastRdv.userStr || lastRdv.data?.userName || 'Technicien inconnu';
+          technicienId = lastRdv.userId;
+        }
       }
     }
     
