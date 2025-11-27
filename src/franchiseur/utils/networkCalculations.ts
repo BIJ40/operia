@@ -751,12 +751,7 @@ export function aggregateTechnicienUniversStats(
     };
   }> = new Map();
 
-  // Couleurs par défaut pour les techniciens
-  const defaultColors = [
-    "#3b82f6", "#ef4444", "#22c55e", "#f59e0b", "#8b5cf6",
-    "#06b6d4", "#ec4899", "#84cc16", "#f97316", "#6366f1"
-  ];
-  let colorIndex = 0;
+  // Les couleurs sont récupérées directement depuis l'API GetUsers
 
   agencyData.forEach((agency, agencyIndex) => {
     if (!agency.data?.factures || !agency.data?.projects || !agency.data?.interventions || !agency.data?.users) return;
@@ -845,15 +840,25 @@ export function aggregateTechnicienUniversStats(
 
         if (!techStats.has(uniqueTechId)) {
           const user = usersMap.get(Number(techId)) as any;
-          const nom = user 
-            ? `${user?.firstName || user?.data?.firstName || ''} ${user?.lastName || user?.data?.lastName || ''}`.trim() || `Tech ${techId}`
-            : `Tech ${techId}`;
-          const color = defaultColors[colorIndex++ % defaultColors.length];
+          // Utiliser firstname/name comme dans techTools.ts
+          const prenom = (user?.firstname || '').trim();
+          const nomFamille = (user?.name || '').trim();
+          const nomComplet = `${prenom} ${nomFamille}`.trim() || `Tech ${techId}`;
+          
+          // Couleur depuis l'API GetUsers (comme dans techTools.ts)
+          const color = user?.data?.bgcolor?.hex 
+            || user?.bgcolor?.hex 
+            || user?.data?.color?.hex 
+            || user?.color?.hex 
+            || "#808080";
+          
+          // Statut actif (comme dans techTools.ts)
+          const actif = user?.is_on === true || user?.isActive === true;
 
           techStats.set(uniqueTechId, {
-            nom: `${nom} (${agency.agencyLabel || agency.agencyId})`,
+            nom: `${nomComplet} (${agency.agencyLabel || agency.agencyId})`,
             color,
-            actif: user?.data?.isActif ?? true,
+            actif,
             agencySlug: agency.agencyId,
             universes: {},
           });
