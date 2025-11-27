@@ -233,7 +233,7 @@ const SortableCategory = ({
           <Lock className="w-4 h-4 text-destructive drop-shadow-lg ml-auto" />
         </div>
       ) : (
-        <Link to={`/helpconfort/category/${category.slug}`} className="flex items-center gap-3 flex-1 min-w-0">
+        <Link to={`/helpconfort/category/${category.slug}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
           {(isCustomImage && category.icon) || editImageUrl ? (
             <img 
               src={editImageUrl || category.icon} 

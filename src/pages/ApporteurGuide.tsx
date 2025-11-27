@@ -278,7 +278,7 @@ const SortableCategory = ({
           <Lock className="w-4 h-4 text-destructive drop-shadow-lg ml-auto" />
         </div>
       ) : (
-        <Link to={`/apporteurs/category/${category.slug}`} className="flex items-center gap-3 flex-1 min-w-0">
+        <Link to={`/apporteurs/category/${category.slug}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
           {isCustomImage ? (
             <img src={category.icon} alt={category.title} className="w-6 h-6 object-contain flex-shrink-0" />
           ) : (

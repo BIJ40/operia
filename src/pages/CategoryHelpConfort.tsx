@@ -1,4 +1,4 @@
-import { useParams, Navigate, Link } from 'react-router-dom';
+import { useParams, Navigate, Link, useSearchParams } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -43,9 +43,13 @@ import { useCategoryLogic } from '@/hooks/use-category-logic';
 
 export default function CategoryHelpConfort() {
   const { slug } = useParams();
+  const [searchParams] = useSearchParams();
 
   const { blocks, updateBlock, deleteBlock, addBlock, reorderBlocks, isEditMode } = useEditor();
   const { isAuthenticated, isAdmin, hasAccessToScope } = useAuth();
+  
+  // Helper to preserve edit mode in navigation
+  const getEditUrl = (url: string) => isEditMode ? `${url}?edit=true` : url;
   
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -173,7 +177,7 @@ export default function CategoryHelpConfort() {
         <div className="flex items-center justify-between gap-2">
           {/* Left zone: Retour + left arrow */}
           <div className="flex items-center gap-2 shrink-0">
-            <Link to="/helpconfort">
+            <Link to={getEditUrl("/helpconfort")}>
               <Button variant="ghost" size="sm" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Retour
@@ -184,7 +188,7 @@ export default function CategoryHelpConfort() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>
-                    <Link to={prevCategory ? `/helpconfort/category/${prevCategory.slug}` : '#'}>
+                    <Link to={prevCategory ? getEditUrl(`/helpconfort/category/${prevCategory.slug}`) : '#'}>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -225,7 +229,7 @@ export default function CategoryHelpConfort() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>
-                    <Link to={nextCategory ? `/helpconfort/category/${nextCategory.slug}` : '#'}>
+                    <Link to={nextCategory ? getEditUrl(`/helpconfort/category/${nextCategory.slug}`) : '#'}>
                       <Button 
                         variant="ghost" 
                         size="icon" 
