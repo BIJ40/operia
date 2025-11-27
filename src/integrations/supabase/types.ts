@@ -1005,6 +1005,7 @@ export type Database = {
           delai_devis_a_faire: number
           delai_devis_envoye: number
           delai_facture_non_reglee: number
+          delai_relance_technicien: number
           id: string
           updated_at: string
           user_id: string
@@ -1016,6 +1017,7 @@ export type Database = {
           delai_devis_a_faire?: number
           delai_devis_envoye?: number
           delai_facture_non_reglee?: number
+          delai_relance_technicien?: number
           id?: string
           updated_at?: string
           user_id: string
@@ -1027,6 +1029,7 @@ export type Database = {
           delai_devis_a_faire?: number
           delai_devis_envoye?: number
           delai_facture_non_reglee?: number
+          delai_relance_technicien?: number
           id?: string
           updated_at?: string
           user_id?: string
