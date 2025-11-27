@@ -227,6 +227,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       if (updates.order !== undefined) updateData.order = updates.order;
       if (updates.parentId !== undefined) updateData.parent_id = updates.parentId;
       if (updates.hideFromSidebar !== undefined) updateData.hide_from_sidebar = updates.hideFromSidebar;
+      if (updates.hideTitle !== undefined) updateData.hide_title = updates.hideTitle;
       if (updates.attachments !== undefined) updateData.attachments = updates.attachments;
       if (updates.contentType !== undefined) updateData.content_type = updates.contentType;
       if (updates.tipsType !== undefined) updateData.tips_type = updates.tipsType;
