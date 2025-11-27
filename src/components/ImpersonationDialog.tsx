@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { useImpersonation, ROLE_AGENCE_OPTIONS, FRANCHISEUR_ROLE_OPTIONS, type ImpersonatedProfile } from '@/contexts/ImpersonationContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye } from 'lucide-react';
+import { Eye, Info } from 'lucide-react';
 
 interface ImpersonationDialogProps {
   open: boolean;
@@ -18,11 +18,32 @@ export function ImpersonationDialog({ open, onOpenChange }: ImpersonationDialogP
   const { startImpersonation } = useImpersonation();
   
   const [roleAgence, setRoleAgence] = useState<string>('dirigeant');
-  const [franchiseurRole, setFranchiseurRole] = useState<string>('none');
+  const [franchiseurRole, setFranchiseurRole] = useState<string>('animateur');
   const [agence, setAgence] = useState<string>('');
   const [hasIndicateursAccess, setHasIndicateursAccess] = useState(true);
   const [hasSupportRole, setHasSupportRole] = useState(false);
-  const [hasFranchiseurRole, setHasFranchiseurRole] = useState(false);
+
+  // Déterminer si c'est un rôle "Tête de réseau" (franchiseur)
+  const isTeteDeReseau = roleAgence === 'tete_de_reseau';
+
+  // Appliquer les règles automatiques quand le rôle change
+  useEffect(() => {
+    if (isTeteDeReseau) {
+      // Tête de réseau = franchiseur + support automatiquement
+      setHasSupportRole(true);
+      setHasIndicateursAccess(true);
+      setAgence(''); // Pas d'agence de rattachement
+      if (franchiseurRole === 'none') {
+        setFranchiseurRole('animateur'); // Par défaut animateur
+      }
+    } else {
+      // Autres rôles
+      setFranchiseurRole('none');
+      // Dirigeant a accès indicateurs par défaut, pas les autres
+      setHasIndicateursAccess(roleAgence === 'dirigeant');
+      setHasSupportRole(false);
+    }
+  }, [roleAgence, isTeteDeReseau]);
 
   // Charger les agences
   const { data: agencies } = useQuery({
@@ -40,15 +61,22 @@ export function ImpersonationDialog({ open, onOpenChange }: ImpersonationDialogP
   const handleStart = () => {
     const profile: ImpersonatedProfile = {
       roleAgence: roleAgence || null,
-      franchiseurRole: franchiseurRole === 'none' ? null : franchiseurRole as 'animateur' | 'directeur' | 'dg',
-      agence: agence || null,
+      franchiseurRole: isTeteDeReseau && franchiseurRole !== 'none' 
+        ? franchiseurRole as 'animateur' | 'directeur' | 'dg' 
+        : null,
+      agence: isTeteDeReseau ? null : (agence || null),
       hasIndicateursAccess,
-      hasSupportRole,
-      hasFranchiseurRole: franchiseurRole !== 'none',
+      hasSupportRole: isTeteDeReseau ? true : hasSupportRole,
+      hasFranchiseurRole: isTeteDeReseau,
     };
     startImpersonation(profile);
     onOpenChange(false);
   };
+
+  // Filtrer les options franchiseur pour exclure "Aucun" si tête de réseau
+  const franchiseurOptions = isTeteDeReseau 
+    ? FRANCHISEUR_ROLE_OPTIONS.filter(opt => opt.value !== null)
+    : FRANCHISEUR_ROLE_OPTIONS;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,39 +109,53 @@ export function ImpersonationDialog({ open, onOpenChange }: ImpersonationDialogP
             </Select>
           </div>
 
-          {/* Agence */}
-          <div className="space-y-2">
-            <Label>Agence de rattachement</Label>
-            <Select value={agence} onValueChange={setAgence}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une agence" />
-              </SelectTrigger>
-              <SelectContent>
-                {agencies?.map(a => (
-                  <SelectItem key={a.slug} value={a.slug}>
-                    {a.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Message informatif pour Tête de réseau */}
+          {isTeteDeReseau && (
+            <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm">
+              <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+              <span className="text-amber-800 dark:text-amber-300">
+                Le rôle "Tête de réseau" attribue automatiquement les rôles Franchiseur et Support, sans agence de rattachement.
+              </span>
+            </div>
+          )}
 
-          {/* Rôle franchiseur */}
-          <div className="space-y-2">
-            <Label>Rôle franchiseur</Label>
-            <Select value={franchiseurRole} onValueChange={setFranchiseurRole}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un rôle" />
-              </SelectTrigger>
-              <SelectContent>
-                {FRANCHISEUR_ROLE_OPTIONS.map(opt => (
-                  <SelectItem key={opt.value || 'none'} value={opt.value || 'none'}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Agence - seulement si pas Tête de réseau */}
+          {!isTeteDeReseau && (
+            <div className="space-y-2">
+              <Label>Agence de rattachement</Label>
+              <Select value={agence} onValueChange={setAgence}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une agence" />
+                </SelectTrigger>
+                <SelectContent>
+                  {agencies?.map(a => (
+                    <SelectItem key={a.slug} value={a.slug}>
+                      {a.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Rôle franchiseur - seulement si Tête de réseau */}
+          {isTeteDeReseau && (
+            <div className="space-y-2">
+              <Label>Niveau franchiseur</Label>
+              <Select value={franchiseurRole} onValueChange={setFranchiseurRole}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un niveau" />
+                </SelectTrigger>
+                <SelectContent>
+                  {franchiseurOptions.map(opt => (
+                    <SelectItem key={opt.value || 'none'} value={opt.value || 'none'}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Accès indicateurs */}
           <div className="flex items-center justify-between">
@@ -127,17 +169,19 @@ export function ImpersonationDialog({ open, onOpenChange }: ImpersonationDialogP
             />
           </div>
 
-          {/* Rôle support */}
-          <div className="flex items-center justify-between">
-            <Label htmlFor="support-role" className="cursor-pointer">
-              Rôle Support
-            </Label>
-            <Switch
-              id="support-role"
-              checked={hasSupportRole}
-              onCheckedChange={setHasSupportRole}
-            />
-          </div>
+          {/* Rôle support - seulement si pas Tête de réseau */}
+          {!isTeteDeReseau && (
+            <div className="flex items-center justify-between">
+              <Label htmlFor="support-role" className="cursor-pointer">
+                Rôle Support
+              </Label>
+              <Switch
+                id="support-role"
+                checked={hasSupportRole}
+                onCheckedChange={setHasSupportRole}
+              />
+            </div>
+          )}
         </div>
 
         <DialogFooter>
