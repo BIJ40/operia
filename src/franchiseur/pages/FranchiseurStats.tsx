@@ -112,15 +112,17 @@ export default function FranchiseurStats() {
     );
   }
 
-  // Adapter les stats technicien pour le composant
-  const adaptedTechStats: TechnicienUniversStats[] = (data?.technicienStats || []).map(stat => ({
-    technicienId: stat.technicienId,
-    technicienNom: stat.technicienNom,
-    technicienColor: stat.technicienColor,
-    technicienActif: stat.technicienActif,
-    universes: stat.universes,
-    totaux: stat.totaux,
-  }));
+  // Adapter les stats technicien pour le composant - TOP 5 uniquement
+  const adaptedTechStats: TechnicienUniversStats[] = (data?.technicienStats || [])
+    .slice(0, 5) // TOP 5 techniciens par CA
+    .map(stat => ({
+      technicienId: stat.technicienId,
+      technicienNom: stat.technicienNom,
+      technicienColor: stat.technicienColor,
+      technicienActif: stat.technicienActif,
+      universes: stat.universes,
+      totaux: stat.totaux,
+    }));
 
   return (
     <div className="space-y-6">
