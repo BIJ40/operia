@@ -55,8 +55,10 @@ import NotFound from "./pages/NotFound";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
 import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
+import { ImpersonationProvider } from "./contexts/ImpersonationContext";
 import { Layout } from "./components/Layout";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
+import { ImpersonationBanner } from "./components/ImpersonationBanner";
 
 const queryClient = new QueryClient();
 
@@ -145,16 +147,19 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <CacheBackupNotification />
-          <EditorProvider>
-            <ApporteurEditorProvider>
-              <AppContent />
-            </ApporteurEditorProvider>
-          </EditorProvider>
-        </TooltipProvider>
+        <ImpersonationProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <CacheBackupNotification />
+            <ImpersonationBanner />
+            <EditorProvider>
+              <ApporteurEditorProvider>
+                <AppContent />
+              </ApporteurEditorProvider>
+            </EditorProvider>
+          </TooltipProvider>
+        </ImpersonationProvider>
       </AuthProvider>
     </BrowserRouter>
   </QueryClientProvider>

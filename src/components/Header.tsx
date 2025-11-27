@@ -1,10 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, Home, Edit3, Square, LogIn, Settings, User, Heart, Loader2, BarChart3, Headset, Network } from 'lucide-react';
+import { LogOut, Home, Edit3, Square, LogIn, Settings, User, Heart, Loader2, BarChart3, Headset, Network, Eye } from 'lucide-react';
 import { useEditor } from '@/contexts/EditorContext';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { Button } from '@/components/ui/button';
 import { LoginDialog } from '@/components/LoginDialog';
+import { ImpersonationDialog } from '@/components/ImpersonationDialog';
 import { ChatbotNotifications } from '@/components/ChatbotNotifications';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
 import { useState } from 'react';
@@ -14,8 +16,10 @@ export function Header() {
   const editorContext = useEditor();
   const apporteurContext = useApporteurEditor();
   const { isAuthenticated, isAdmin, isSupport, isFranchiseur, roleAgence, isLoggingOut, logout } = useAuth();
+  const { isImpersonating } = useImpersonation();
   const { hasNewTickets, newTicketsCount, assignedToMeCount, unreadMessagesCount } = useSupportNotifications();
   const [loginOpen, setLoginOpen] = useState(false);
+  const [impersonationOpen, setImpersonationOpen] = useState(false);
   
   // Déterminer quel contexte utiliser selon la page
   const isApporteurPage = location.pathname.startsWith('/apporteurs');
@@ -86,6 +90,17 @@ export function Header() {
               <Settings className="w-5 h-5 text-primary" />
               <span className="font-semibold text-foreground">ADMIN</span>
             </Link>
+
+            {!isImpersonating && (
+              <Button
+                onClick={() => setImpersonationOpen(true)}
+                variant="ghost"
+                className="flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-300 dark:border-amber-700 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-800/50 hover:border-amber-400 hover:scale-[1.02] transition-all duration-300"
+              >
+                <Eye className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                <span className="font-semibold text-amber-700 dark:text-amber-300">VOIR EN TANT QUE</span>
+              </Button>
+            )}
 
             {isFranchiseur && (
               <Link
@@ -245,6 +260,7 @@ export function Header() {
 
       
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+      <ImpersonationDialog open={impersonationOpen} onOpenChange={setImpersonationOpen} />
     </>
   );
 }

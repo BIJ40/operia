@@ -12,6 +12,7 @@ import { useStorageQuota } from '@/hooks/use-storage-quota';
 import { useUserPresence } from '@/hooks/use-user-presence';
 import { useConnectionLogger } from '@/hooks/use-connection-logger';
 import { useAdminConnectionNotifications } from '@/hooks/use-admin-connection-notifications';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 
 interface LayoutProps {
   children: ReactNode;
@@ -26,6 +27,8 @@ export function Layout({ children, showHeader = true, showSidebar = true, sideba
   useConnectionLogger(); // Log des connexions/déconnexions
   // useAdminConnectionNotifications(); // Notifications temps réel pour les admins - DÉSACTIVÉ
   
+  const { isImpersonating } = useImpersonation();
+  
   const SidebarComponent = sidebarType === 'apporteur' 
     ? AppSidebarApporteur 
     : sidebarType === 'helpconfort'
@@ -38,7 +41,7 @@ export function Layout({ children, showHeader = true, showSidebar = true, sideba
   
   return (
     <SidebarProvider>
-      <div className="min-h-screen w-full flex bg-background overflow-x-auto">
+      <div className={`min-h-screen w-full flex bg-background overflow-x-auto ${isImpersonating ? 'pt-10' : ''}`}>
         {showSidebar && <SidebarComponent />}
         
         <div className="flex-1 flex flex-col min-h-screen min-w-0">
