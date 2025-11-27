@@ -36,7 +36,7 @@ export const useCategoryHelpConfort = () => {
   const sections = useMemo(() => {
     if (!category) return [];
     return blocks
-      .filter((b) => b.parentId === category.id)
+      .filter((b) => b.parentId === category.id && !b.hideFromSidebar)
       .sort((a, b) => a.order - b.order);
   }, [blocks, category]);
 
@@ -153,26 +153,29 @@ export const useCategoryHelpConfort = () => {
     try {
       const contentLength = sectionToDelete.content?.length || 0;
 
-      if (contentLength < 20) {
+      if (contentLength < 50) {
+        // Suppression définitive pour les sections vides ou quasi-vides
         const { error } = await supabase
           .from('blocks')
           .delete()
           .eq('id', sectionToDelete.id);
 
         if (error) throw error;
+        toast.success('Section supprimée définitivement');
       } else {
+        // Archivage pour les sections avec contenu
         const { error } = await supabase
           .from('blocks')
           .update({ hide_from_sidebar: true })
           .eq('id', sectionToDelete.id);
 
         if (error) throw error;
+        toast.success('Section archivée (contenu conservé en base)');
       }
 
       await reloadBlocks();
       setDeleteDialogOpen(false);
       setSectionToDelete(null);
-      toast.success('Section supprimée');
     } catch (error) {
       console.error('Error deleting section:', error);
       toast.error('Erreur lors de la suppression');
