@@ -81,10 +81,10 @@ export function UserSupportConfigSection({
             <Button
               type="button"
               size="sm"
-              variant={serviceCompetencies.conseil ? "default" : "outline"}
-              onClick={() => toggleCompetency('conseil')}
+              variant={serviceCompetencies.helpconfort ? "default" : "outline"}
+              onClick={() => toggleCompetency('helpconfort')}
             >
-              Conseil
+              HelpConfort
             </Button>
           </div>
         </div>
