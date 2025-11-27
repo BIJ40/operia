@@ -1,20 +1,6 @@
-import { motion } from "framer-motion";
-
-export const baseTileVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 140, damping: 18 },
-  },
-};
-
 export const PlumbingTile = () => {
   return (
-    <motion.div
-      variants={baseTileVariants}
-      className="relative overflow-hidden rounded-2xl border border-accent/60 bg-card/90 shadow-lg p-4 md:p-5 bg-gradient-to-br from-sky-50 to-sky-100 dark:from-sky-950/30 dark:to-sky-900/20"
-    >
+    <div className="relative overflow-hidden rounded-2xl border border-accent/60 bg-card/90 shadow-lg p-4 md:p-5 bg-gradient-to-br from-sky-50 to-sky-100 dark:from-sky-950/30 dark:to-sky-900/20">
       <div className="flex items-center gap-3">
         <div>
           <h3 className="text-base md:text-lg font-semibold text-foreground">
@@ -32,30 +18,6 @@ export const PlumbingTile = () => {
           robinetterie et réparations urgentes.
         </p>
       </div>
-
-      {/* Gouttes en haut à droite */}
-      <motion.div
-        className="pointer-events-none absolute right-6 top-6 h-2 w-2 rounded-full bg-sky-500"
-        initial={{ y: -6, opacity: 0 }}
-        animate={{ y: 10, opacity: [0, 1, 0] }}
-        transition={{ duration: 0.7, ease: "easeInOut" as const, repeat: 1 }}
-      />
-      <motion.div
-        className="pointer-events-none absolute right-9 top-7 h-2 w-2 rounded-full bg-sky-300"
-        initial={{ y: -6, opacity: 0 }}
-        animate={{ y: 10, opacity: [0, 1, 0] }}
-        transition={{ duration: 0.6, delay: 0.15, ease: "easeInOut" as const, repeat: 1 }}
-      />
-
-      {/* Clé à molette en bas à gauche */}
-      <motion.div
-        className="pointer-events-none absolute -bottom-3 left-4 flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/50 text-lg shadow"
-        initial={{ x: -40, y: 6, rotate: -15, opacity: 0 }}
-        animate={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.7, ease: "easeOut" as const }}
-      >
-        🔧
-      </motion.div>
-    </motion.div>
+    </div>
   );
 };
