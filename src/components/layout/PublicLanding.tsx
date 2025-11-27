@@ -370,10 +370,10 @@ function SpinFromTopCard({ icon: Icon, title, description, color, delay = 0 }: C
 function ScaleInCard({ icon: Icon, title, description, color, delay = 0 }: CardProps) {
   return (
     <motion.div
-      className="group bg-card border rounded-2xl p-6 hover:shadow-lg hover:border-primary/30 transition-all duration-300"
-      initial={{ opacity: 0, scale: 5 }}
+      className="group bg-card border rounded-2xl p-6 hover:shadow-lg hover:border-primary/30 transition-all duration-300 origin-center"
+      initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 1.4, delay, type: "spring", stiffness: 50, damping: 12 }}
+      transition={{ duration: 0.8, delay, type: "spring", stiffness: 100, damping: 12 }}
       whileHover={{ scale: 1.02, y: -4 }}
     >
       <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${colorClasses[color]}`}>
