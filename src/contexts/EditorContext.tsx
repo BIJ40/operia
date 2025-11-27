@@ -232,6 +232,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       if (updates.tipsType !== undefined) updateData.tips_type = updates.tipsType;
       if (updates.summary !== undefined) updateData.summary = updates.summary;
       if (updates.showSummary !== undefined) updateData.show_summary = updates.showSummary;
+      if (updates.isInProgress !== undefined) updateData.is_in_progress = updates.isInProgress;
+      if (updates.completedAt !== undefined) updateData.completed_at = updates.completedAt;
       
       const { error } = await supabase
         .from('blocks')
