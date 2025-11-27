@@ -12,7 +12,8 @@ import {
   HardDrive,
   Activity,
   Building2,
-  Network
+  Network,
+  Monitor
 } from 'lucide-react';
 import {
   Sidebar,
@@ -76,6 +77,11 @@ const adminMenuItems = [
     title: 'Interface Franchiseur',
     url: '/tete-de-reseau',
     icon: Network,
+  },
+  {
+    title: 'Diffusion écran',
+    url: '/diffusion',
+    icon: Monitor,
   },
   {
     title: 'Mme Michu',
