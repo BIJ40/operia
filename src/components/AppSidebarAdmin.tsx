@@ -11,7 +11,6 @@ import {
   ChevronRight,
   HardDrive,
   Activity,
-  Building2,
   Network,
   Monitor
 } from 'lucide-react';
@@ -67,11 +66,6 @@ const adminMenuItems = [
     title: 'Agences',
     url: '/admin/agencies',
     icon: Settings,
-  },
-  {
-    title: 'Tête de réseau',
-    url: '/admin/franchiseur-roles',
-    icon: Building2,
   },
   {
     title: 'Interface Franchiseur',
