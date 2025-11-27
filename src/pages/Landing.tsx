@@ -842,11 +842,11 @@ export default function Landing() {
                         // Insérer le logo
                         if (logoCard && !logoRendered) {
                           allElements.push(
-                            <div key="logo-fixed" className="flex items-center justify-center p-4">
+                            <div key="logo-fixed" className="flex items-center justify-center p-4 md:col-start-2">
                               <img 
                                 src={helpConfortServicesImg} 
                                 alt={logoCard.title} 
-                                className="w-full max-w-[180px] h-auto pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
+                                className="w-full max-w-[160px] h-auto pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
                                 draggable="false"
                               />
                             </div>
