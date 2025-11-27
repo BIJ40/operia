@@ -101,13 +101,13 @@ export function AccordionSection({
             </h2>
             {/* Section badges */}
             {section.isInProgress && (
-              <span className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 En cours
               </span>
             )}
             {isNew && !section.isInProgress && (
-              <span className="bg-green-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 New
               </span>

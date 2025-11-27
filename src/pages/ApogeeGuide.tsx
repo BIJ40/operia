@@ -111,18 +111,18 @@ const SortableCategory = ({
       style={style}
       className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 overflow-visible ${tileClass}`}
     >
-      {/* Badge New en écharpe diagonale verte */}
+      {/* Badge New en écharpe diagonale verte - décalé aux 3/4 */}
       {hasNew && !isEditMode && (
-        <div className="absolute -top-2 -left-2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
+        <div className="absolute -top-2 left-3/4 -translate-x-1/2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
           <div className="absolute top-3 -left-5 w-20 bg-green-500 text-white text-[10px] font-bold py-0.5 text-center transform -rotate-45 shadow-md">
             NEW
           </div>
         </div>
       )}
-      {/* Badge En cours */}
+      {/* Badge En cours - arrondi accentué orange */}
       {hasInProgress && !isEditMode && (
         <div className="absolute -top-2 -right-2 z-20">
-          <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+          <div className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
             <Clock className="w-3 h-3" />
             En cours
           </div>
@@ -485,18 +485,18 @@ export default function ApogeeGuide() {
                     }}
                     className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 cursor-pointer opacity-60 overflow-visible ${tileClass}`}
                   >
-                    {/* Badge New en écharpe diagonale verte */}
+                    {/* Badge New en écharpe diagonale verte - décalé aux 3/4 */}
                     {badges.hasNew && (
-                      <div className="absolute -top-2 -left-2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
+                      <div className="absolute -top-2 left-3/4 -translate-x-1/2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
                         <div className="absolute top-3 -left-5 w-20 bg-green-500 text-white text-[10px] font-bold py-0.5 text-center transform -rotate-45 shadow-md">
                           NEW
                         </div>
                       </div>
                     )}
-                    {/* Badge En cours */}
+                    {/* Badge En cours - arrondi accentué orange */}
                     {badges.hasInProgress && (
                       <div className="absolute -top-2 -right-2 z-20">
-                        <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                        <div className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           En cours
                         </div>
@@ -531,18 +531,18 @@ export default function ApogeeGuide() {
                   to={`/apogee/category/${category.slug}`}
                   className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 overflow-visible ${tileClass}`}
                 >
-                  {/* Badge New en écharpe diagonale verte */}
+                  {/* Badge New en écharpe diagonale verte - décalé aux 3/4 */}
                   {badges.hasNew && (
-                    <div className="absolute -top-2 -left-2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
+                    <div className="absolute -top-2 left-3/4 -translate-x-1/2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
                       <div className="absolute top-3 -left-5 w-20 bg-green-500 text-white text-[10px] font-bold py-0.5 text-center transform -rotate-45 shadow-md">
                         NEW
                       </div>
                     </div>
                   )}
-                  {/* Badge En cours */}
+                  {/* Badge En cours - arrondi accentué orange */}
                   {badges.hasInProgress && (
                     <div className="absolute -top-2 -right-2 z-20">
-                      <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                      <div className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         En cours
                       </div>
