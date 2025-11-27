@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Section, CategoryBlock } from './types';
+import { Section, CategoryBlock, CategoryScope } from './types';
 import { Block } from '@/types/block';
 
 interface TipsSectionProps {
@@ -17,6 +17,7 @@ interface TipsSectionProps {
   isEditMode: boolean;
   isAdmin: boolean;
   availableCategories: Block[];
+  scope: CategoryScope;
   dragAttributes: Record<string, any>;
   dragListeners: Record<string, any> | undefined;
   onEdit: (sectionId: string) => void;
@@ -33,6 +34,7 @@ export function TipsSection({
   isEditMode,
   isAdmin,
   availableCategories,
+  scope,
   dragAttributes,
   dragListeners,
   onEdit,
@@ -141,7 +143,7 @@ export function TipsSection({
               blockTitle={section.title || 'TIPS'}
               blockSlug={section.slug}
               categorySlug={category.slug}
-              scope="apogee"
+              scope={scope}
             />
           </div>
         )}
@@ -154,7 +156,7 @@ export function TipsSection({
                 blockTitle={section.title}
                 blockSlug={section.slug}
                 categorySlug={category.slug}
-                scope="apogee"
+                scope={scope}
               />
             )}
           </div>

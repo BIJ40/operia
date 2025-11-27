@@ -1,5 +1,7 @@
 import { Block, ColorPreset, TipsType } from '@/types/block';
 
+export type CategoryScope = 'apogee' | 'helpconfort' | 'apporteurs';
+
 export interface Section extends Block {
   contentType?: 'section' | 'tips';
   tipsType?: TipsType;
@@ -28,6 +30,7 @@ export interface SortableAccordionItemProps {
   isAdmin: boolean;
   availableCategories: Block[];
   editingId: string | null;
+  scope: CategoryScope;
   onEdit: (sectionId: string) => void;
   onDelete: (sectionId: string) => void;
   onDuplicate: (sectionId: string) => void;

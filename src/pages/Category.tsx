@@ -488,6 +488,7 @@ export default function Category() {
                 isAdmin={isAdmin}
                 availableCategories={availableCategories}
                 editingId={editingId}
+                scope="apogee"
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
                 onDuplicate={handleDuplicate}

@@ -18,7 +18,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
-import { Section, CategoryBlock } from './types';
+import { Section, CategoryBlock, CategoryScope } from './types';
 import { Block } from '@/types/block';
 
 interface AccordionSectionProps {
@@ -27,6 +27,7 @@ interface AccordionSectionProps {
   isEditMode: boolean;
   isAdmin: boolean;
   availableCategories: Block[];
+  scope: CategoryScope;
   dragAttributes: Record<string, any>;
   dragListeners: Record<string, any> | undefined;
   onEdit: (sectionId: string) => void;
@@ -43,6 +44,7 @@ export function AccordionSection({
   isEditMode,
   isAdmin,
   availableCategories,
+  scope,
   dragAttributes,
   dragListeners,
   onEdit,
@@ -90,7 +92,7 @@ export function AccordionSection({
                   blockTitle={section.title}
                   blockSlug={section.slug}
                   categorySlug={category.slug}
-                  scope="apogee"
+                  scope={scope}
                 />
               </div>
             )}
