@@ -2,7 +2,13 @@ import { useParams, Navigate, Link } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronsDownUp, ChevronsUpDown, Lightbulb, ArrowLeft } from 'lucide-react';
+import { Plus, ChevronsDownUp, ChevronsUpDown, Lightbulb, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { DocumentsList } from '@/components/DocumentsList';
 import { SectionEditForm } from '@/components/SectionEditForm';
 import { TipsEditForm } from '@/components/TipsEditForm';
@@ -61,6 +67,15 @@ export default function Category() {
       .sort((a, b) => a.order - b.order),
     [blocks]
   );
+
+  // Navigation between categories
+  const currentCategoryIndex = useMemo(() => 
+    availableCategories.findIndex(c => c.slug === slug),
+    [availableCategories, slug]
+  );
+  
+  const prevCategory = currentCategoryIndex > 0 ? availableCategories[currentCategoryIndex - 1] : null;
+  const nextCategory = currentCategoryIndex < availableCategories.length - 1 ? availableCategories[currentCategoryIndex + 1] : null;
 
   const {
     sections,
@@ -167,7 +182,59 @@ export default function Category() {
                 Retour
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold text-foreground">{category.title}</h1>
+            
+            {/* Category navigation with arrows */}
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Link to={prevCategory ? `/apogee/category/${prevCategory.slug}` : '#'}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          disabled={!prevCategory}
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                      </Link>
+                    </span>
+                  </TooltipTrigger>
+                  {prevCategory && (
+                    <TooltipContent side="bottom">
+                      {prevCategory.title}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+              
+              <h1 className="text-2xl font-bold text-foreground">{category.title}</h1>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Link to={nextCategory ? `/apogee/category/${nextCategory.slug}` : '#'}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          disabled={!nextCategory}
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </Button>
+                      </Link>
+                    </span>
+                  </TooltipTrigger>
+                  {nextCategory && (
+                    <TooltipContent side="bottom">
+                      {nextCategory.title}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
           
           <div className="flex items-center gap-2">
