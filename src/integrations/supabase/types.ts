@@ -416,6 +416,42 @@ export type Database = {
         }
         Relationships: []
       }
+      diffusion_settings: {
+        Row: {
+          auto_rotation_enabled: boolean
+          created_at: string
+          enabled_slides: string[]
+          id: string
+          objectif_amount: number
+          objectif_title: string
+          rotation_speed_seconds: number
+          saviez_vous_templates: string[]
+          updated_at: string
+        }
+        Insert: {
+          auto_rotation_enabled?: boolean
+          created_at?: string
+          enabled_slides?: string[]
+          id?: string
+          objectif_amount?: number
+          objectif_title?: string
+          rotation_speed_seconds?: number
+          saviez_vous_templates?: string[]
+          updated_at?: string
+        }
+        Update: {
+          auto_rotation_enabled?: boolean
+          created_at?: string
+          enabled_slides?: string[]
+          id?: string
+          objectif_amount?: number
+          objectif_title?: string
+          rotation_speed_seconds?: number
+          saviez_vous_templates?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           apporteur_block_id: string | null
