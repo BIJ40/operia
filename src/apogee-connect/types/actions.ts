@@ -7,7 +7,8 @@ export type ActionType =
 
 export type ActionRow = {
   projectId: number;
-  ref: string;
+  ref: string; // Format AAAAMMXXX
+  label: string; // Libellé du dossier
   statut: string;
   actionLabel: string;
   actionType: ActionType;

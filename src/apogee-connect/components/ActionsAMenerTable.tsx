@@ -34,7 +34,8 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[120px]">Réf. dossier</TableHead>
+            <TableHead className="w-[100px]">Réf.</TableHead>
+            <TableHead className="w-[200px]">Libellé</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Action à mener</TableHead>
             <TableHead className="w-[140px]">Date limite</TableHead>
@@ -46,8 +47,11 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
         <TableBody>
           {actions.map((action, index) => (
             <TableRow key={`${action.projectId}-${index}`}>
-              <TableCell className="font-medium">
+              <TableCell className="font-medium text-xs">
                 {action.ref}
+              </TableCell>
+              <TableCell className="font-medium">
+                {action.label}
               </TableCell>
               <TableCell>
                 <span className="text-sm text-muted-foreground">

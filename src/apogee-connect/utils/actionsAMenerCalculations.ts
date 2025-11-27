@@ -86,27 +86,44 @@ export function buildActionsAMener(
     const client = clientId ? clientsMap.get(clientId) : null;
     const clientName = client?.nom || client?.name || client?.raisonSociale || 'Client inconnu';
     
-    const ref = project.name || project.label || project.ref || `#${project.id}`;
+    const ref = project.ref || `#${project.id}`;
+    const label = project.name || project.label || 'Sans libellé';
     
     // === RÈGLE 1: Dossiers en "devis à faire" ===
-    if (status.includes('devis') && status.includes('faire')) {
-      const dateDepart = parseDate(project.updated_at) || parseDate(project.created_at);
-      if (dateDepart) {
-        const deadline = addDays(dateDepart, config.delai_devis_a_faire);
-        const isLate = deadline < today;
-        
-        actions.push({
-          projectId: project.id,
-          ref,
-          statut: 'Devis à faire',
-          actionLabel: ACTION_LABELS.devis_a_faire,
-          actionType: 'devis_a_faire',
-          deadline,
-          dateDepart,
-          isLate,
-          clientName,
-          daysLate: isLate ? differenceInDays(today, deadline) : 0,
-        });
+    // Vérifier data.history pour trouver le dernier état "Devis à faire"
+    if (project.data?.history && Array.isArray(project.data.history)) {
+      // Trier l'historique par dateModif pour avoir le plus récent en premier
+      const sortedHistory = [...project.data.history].sort((a, b) => {
+        const dateA = parseDate(a.dateModif);
+        const dateB = parseDate(b.dateModif);
+        if (!dateA || !dateB) return 0;
+        return dateB.getTime() - dateA.getTime();
+      });
+      
+      // Vérifier si le dernier état contient "Devis à faire"
+      if (sortedHistory.length > 0 && sortedHistory[0].labelKind) {
+        const lastState = sortedHistory[0].labelKind.toLowerCase();
+        if (lastState.includes('devis') && lastState.includes('faire')) {
+          const dateDepart = parseDate(sortedHistory[0].dateModif) || parseDate(project.updated_at) || parseDate(project.created_at);
+          if (dateDepart) {
+            const deadline = addDays(dateDepart, config.delai_devis_a_faire);
+            const isLate = deadline < today;
+            
+            actions.push({
+              projectId: project.id,
+              ref,
+              label,
+              statut: 'Devis à faire',
+              actionLabel: ACTION_LABELS.devis_a_faire,
+              actionType: 'devis_a_faire',
+              deadline,
+              dateDepart,
+              isLate,
+              clientName,
+              daysLate: isLate ? differenceInDays(today, deadline) : 0,
+            });
+          }
+        }
       }
     }
     
@@ -144,6 +161,7 @@ export function buildActionsAMener(
           actions.push({
             projectId: project.id,
             ref,
+            label,
             statut: 'Devis envoyé',
             actionLabel: ACTION_LABELS.devis_envoye,
             actionType: 'devis_envoye',
@@ -167,6 +185,7 @@ export function buildActionsAMener(
         actions.push({
           projectId: project.id,
           ref,
+          label,
           statut: 'À facturer',
           actionLabel: ACTION_LABELS.a_facturer,
           actionType: 'a_facturer',
@@ -189,6 +208,7 @@ export function buildActionsAMener(
         actions.push({
           projectId: project.id,
           ref,
+          label,
           statut: 'À commander',
           actionLabel: ACTION_LABELS.a_commander,
           actionType: 'a_commander',
@@ -222,11 +242,13 @@ export function buildActionsAMener(
           
           if (isLate) {
             const clientName = client?.nom || client?.name || client?.raisonSociale || 'Client inconnu';
-            const ref = project.name || project.label || project.ref || `#${project.id}`;
+            const ref = project.ref || `#${project.id}`;
+            const label = project.name || project.label || 'Sans libellé';
             
             actions.push({
               projectId: project.id,
               ref,
+              label,
               statut: 'Facture en attente',
               actionLabel: ACTION_LABELS.facture_non_reglee,
               actionType: 'facture_non_reglee',
