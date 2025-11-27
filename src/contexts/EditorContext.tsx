@@ -64,7 +64,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         // First load metadata without content to avoid timeout
         const { data, error } = await supabase
           .from('blocks')
-          .select('id,type,title,slug,parent_id,order,icon,color_preset,hide_from_sidebar,hide_title,attachments,content_type,tips_type,summary,show_summary')
+          .select('id,type,title,slug,parent_id,order,icon,color_preset,hide_from_sidebar,hide_title,attachments,content_type,tips_type,summary,show_summary,is_in_progress,completed_at')
           .order('order');
 
         if (error) throw error;
@@ -107,6 +107,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             tipsType: block.tips_type,
             summary: block.summary || '',
             showSummary: block.show_summary !== false,
+            isInProgress: block.is_in_progress || false,
+            completedAt: block.completed_at || null,
           }));
 
           setBlocks(transformedBlocks);
