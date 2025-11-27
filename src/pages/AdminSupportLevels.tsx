@@ -17,6 +17,7 @@ interface SupportUser {
   email: string;
   support_level: number;
   agence: string | null;
+  role_agence: string | null;
   service_competencies: any;
 }
 
@@ -72,7 +73,7 @@ export default function AdminSupportLevels() {
 
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, email, support_level, agence, service_competencies')
+        .select('id, first_name, last_name, email, support_level, agence, role_agence, service_competencies')
         .in('id', userIds)
         .order('support_level', { ascending: true })
         .order('last_name', { ascending: true });
@@ -320,23 +321,25 @@ export default function AdminSupportLevels() {
                                 </Button>
                               </div>
                               
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground">Rôle HelpConfort :</span>
-                                <Select
-                                  value={user.service_competencies?.helpconfort || 'none'}
-                                  onValueChange={(value) => updateHelpConfortRole(user.id, value, user.service_competencies || {})}
-                                >
-                                  <SelectTrigger className="w-[220px]">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="none">Aucun</SelectItem>
-                                    <SelectItem value="animateur_reseau">Animateur Réseau</SelectItem>
-                                    <SelectItem value="directeur_reseau">Directeur Réseau</SelectItem>
-                                    <SelectItem value="dg">Directeur Général</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
+                              {user.role_agence === 'tete_de_reseau' && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-muted-foreground">Rôle HelpConfort :</span>
+                                  <Select
+                                    value={user.service_competencies?.helpconfort || 'none'}
+                                    onValueChange={(value) => updateHelpConfortRole(user.id, value, user.service_competencies || {})}
+                                  >
+                                    <SelectTrigger className="w-[220px]">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="none">Aucun</SelectItem>
+                                      <SelectItem value="animateur_reseau">Animateur Réseau</SelectItem>
+                                      <SelectItem value="directeur_reseau">Directeur Réseau</SelectItem>
+                                      <SelectItem value="dg">Directeur Général</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
