@@ -15,7 +15,7 @@ interface AuthContextType {
   userPermissions: string[];
   isLoggingOut: boolean;
   hasAccessToBlock: (blockId: string) => boolean;
-  hasAccessToScope: (scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs') => boolean;
+  hasAccessToScope: (scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs' | 'actions_a_mener' | 'mes_demandes') => boolean;
   canManageTickets: () => boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -264,7 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return hasAccessToScope(scope);
   };
 
-  const hasAccessToScope = (scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs'): boolean => {
+  const hasAccessToScope = (scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs' | 'actions_a_mener' | 'mes_demandes'): boolean => {
     // Les admins ont accès à tout
     if (isAdmin) return true;
     
@@ -282,8 +282,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     // PRIORITÉ 2: Fallback sur permissions de rôle
-    // Nouveaux scopes (mes_indicateurs) : bloqués par défaut
-    const newScopes = ['mes_indicateurs'];
+    // Nouveaux scopes : bloqués par défaut (sauf si permission explicite)
+    const newScopes = ['mes_indicateurs', 'actions_a_mener', 'mes_demandes'];
     if (newScopes.includes(scope)) {
       return userPermissions.includes(scope);
     }
