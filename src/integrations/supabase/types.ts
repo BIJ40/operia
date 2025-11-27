@@ -268,6 +268,7 @@ export type Database = {
         Row: {
           attachments: Json | null
           color_preset: string
+          completed_at: string | null
           content: string
           content_type: string | null
           created_at: string
@@ -275,6 +276,7 @@ export type Database = {
           hide_title: boolean | null
           icon: string | null
           id: string
+          is_in_progress: boolean | null
           order: number
           parent_id: string | null
           show_summary: boolean | null
@@ -288,6 +290,7 @@ export type Database = {
         Insert: {
           attachments?: Json | null
           color_preset?: string
+          completed_at?: string | null
           content?: string
           content_type?: string | null
           created_at?: string
@@ -295,6 +298,7 @@ export type Database = {
           hide_title?: boolean | null
           icon?: string | null
           id?: string
+          is_in_progress?: boolean | null
           order?: number
           parent_id?: string | null
           show_summary?: boolean | null
@@ -308,6 +312,7 @@ export type Database = {
         Update: {
           attachments?: Json | null
           color_preset?: string
+          completed_at?: string | null
           content?: string
           content_type?: string | null
           created_at?: string
@@ -315,6 +320,7 @@ export type Database = {
           hide_title?: boolean | null
           icon?: string | null
           id?: string
+          is_in_progress?: boolean | null
           order?: number
           parent_id?: string | null
           show_summary?: boolean | null
