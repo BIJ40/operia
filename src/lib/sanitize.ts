@@ -7,6 +7,11 @@ import DOMPurify from 'dompurify';
 export function sanitizeHtml(html: string): string {
   if (!html) return '';
   
+  // Only run in browser environment
+  if (typeof window === 'undefined') {
+    return html;
+  }
+  
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: [
       'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike',
@@ -18,7 +23,6 @@ export function sanitizeHtml(html: string): string {
       'div', 'span',
       'hr',
       'sub', 'sup',
-      // Callout support
       'section',
     ],
     ALLOWED_ATTR: [
