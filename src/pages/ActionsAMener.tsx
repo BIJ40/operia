@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Layout } from '@/components/Layout';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle } from 'lucide-react';
@@ -96,7 +96,7 @@ function ActionsAMenerContent() {
   };
 
   return (
-    <Layout showSidebar sidebarType="actions">
+    <>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="space-y-6">
           {/* En-tête */}
@@ -213,7 +213,7 @@ function ActionsAMenerContent() {
           projectId={selectedProjectId}
         />
       )}
-    </Layout>
+    </>
   );
 }
 
