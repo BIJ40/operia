@@ -271,11 +271,21 @@ export function AgencyProfileDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Aucun animateur</SelectItem>
-                    {animators?.map((animator) => (
-                      <SelectItem key={animator.id} value={animator.id}>
-                        {animator.first_name} {animator.last_name} ({animator.email})
-                      </SelectItem>
-                    ))}
+                    {animators?.map((animator: any) => {
+                      const roleLabel = animator.franchiseur_role === 'dg' 
+                        ? 'DG' 
+                        : animator.franchiseur_role === 'directeur' 
+                          ? 'Directeur' 
+                          : 'Animateur';
+                      return (
+                        <SelectItem key={animator.id} value={animator.id}>
+                          {animator.first_name} {animator.last_name}
+                          <span className="ml-2 text-muted-foreground text-xs">
+                            ({roleLabel})
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 {animators?.length === 0 && (
