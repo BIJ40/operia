@@ -200,24 +200,34 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
         }
       }
 
-      // Règle automatique : si le poste devient "tete_de_reseau", attribuer le rôle système "franchiseur"
+      // Règle automatique : si le poste devient "tete_de_reseau", attribuer les rôles "franchiseur" et "support"
       if (roleAgence === 'tete_de_reseau' && roleAgence !== user.role_agence) {
         console.log('Changement vers tête de réseau détecté pour utilisateur:', user.id);
-        const { data: existingRole } = await supabase
+        
+        // Récupérer les rôles existants
+        const { data: existingRoles } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id)
-          .maybeSingle();
+          .eq('user_id', user.id);
         
-        // Attribuer "franchiseur" si l'utilisateur n'a pas déjà un rôle ou si son rôle est "user"
-        if (!existingRole || existingRole.role === 'user') {
+        const currentRoles = existingRoles?.map(r => r.role) || [];
+        
+        // Ajouter "franchiseur" si pas déjà présent
+        if (!currentRoles.includes('franchiseur')) {
           console.log('Attribution automatique du rôle franchiseur');
-          await supabase.from('user_roles').upsert({
+          await supabase.from('user_roles').insert({
             user_id: user.id,
             role: 'franchiseur'
           });
-        } else {
-          console.log('Rôle existant conservé:', existingRole.role);
+        }
+        
+        // Ajouter "support" si pas déjà présent
+        if (!currentRoles.includes('support')) {
+          console.log('Attribution automatique du rôle support');
+          await supabase.from('user_roles').insert({
+            user_id: user.id,
+            role: 'support'
+          });
         }
       }
 

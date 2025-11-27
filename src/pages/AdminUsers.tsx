@@ -170,13 +170,13 @@ export default function AdminUsers() {
 
       if (error) throw error;
 
-      // Règle automatique : si le poste est "tete_de_reseau", attribuer le rôle système "franchiseur"
+      // Règle automatique : si le poste est "tete_de_reseau", attribuer les rôles "franchiseur" et "support"
       if (roleAgence.trim() === 'tete_de_reseau' && data?.user?.id) {
-        console.log('Attribution automatique du rôle franchiseur pour utilisateur tête de réseau:', data.user.id);
-        await supabase.from('user_roles').upsert({
-          user_id: data.user.id,
-          role: 'franchiseur'
-        });
+        console.log('Attribution automatique des rôles franchiseur + support pour utilisateur tête de réseau:', data.user.id);
+        await supabase.from('user_roles').insert([
+          { user_id: data.user.id, role: 'franchiseur' },
+          { user_id: data.user.id, role: 'support' }
+        ]);
       }
 
       toast({
