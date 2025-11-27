@@ -27,8 +27,6 @@ const UNIVERSES = [
   { slug: "serrurerie", label: "Serrurerie", colorHex: "#FF12BD" },
   { slug: "vitrerie", label: "Vitrerie", colorHex: "#7FFE2E" },
   { slug: "menuiserie", label: "Menuiserie", colorHex: "#FF7018" },
-  { slug: "chauffage", label: "Chauffage", colorHex: "#EF4444" },
-  { slug: "climatisation", label: "Climatisation", colorHex: "#06B6D4" },
 ];
 
 // Adapter le type pour le composant TechnicienUniversHeatmap
@@ -177,10 +175,10 @@ export default function FranchiseurStats() {
       <Card>
         <CardHeader>
           <CardTitle className="bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-            Performance Techniciens × Univers (Réseau)
+            TOP 5 Collaborateurs du Réseau
           </CardTitle>
           <CardDescription>
-            Analyse croisée du CA, des heures et de la performance par technicien et domaine d'intervention sur l'ensemble du réseau
+            Meilleurs collaborateurs par CA, heures et performance sur l'ensemble du réseau
           </CardDescription>
         </CardHeader>
         <CardContent>
