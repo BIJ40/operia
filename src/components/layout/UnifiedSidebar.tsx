@@ -19,7 +19,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/use-permissions';
-import logoHelpconfort from '@/assets/logo_helpogee.png';
+import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { useState } from 'react';
 
 interface NavItem {
@@ -135,16 +135,13 @@ export function UnifiedSidebar() {
 
   return (
     <Sidebar className="border-r bg-sidebar" collapsible="icon">
-      <SidebarHeader className="p-3 border-b">
-        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+      <SidebarHeader className="border-b p-4">
+        <Link to="/" className="flex items-center justify-center">
           <img 
-            src={logoHelpconfort} 
+            src={logoHelpconfortServices} 
             alt="HelpConfort Services" 
-            className={`object-contain transition-all ${collapsed ? 'h-8 w-8' : 'h-12'}`}
+            className={`object-contain transition-all ${collapsed ? 'h-10 w-10' : 'h-20'}`}
           />
-          {!collapsed && (
-            <span className="font-bold text-lg text-primary">HC Services</span>
-          )}
         </Link>
       </SidebarHeader>
 
