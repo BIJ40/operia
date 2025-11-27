@@ -241,7 +241,8 @@ export function calculateUniversApporteurMatrix(
   factures.forEach((f) => {
     if (f.state === "canceled" || f.data?.type === "avoir") return;
 
-    const dateReelle = f.dateReelle || f.date;
+    // Utiliser la même logique de date que calculateCaJour pour rester cohérent
+    const dateReelle = f.dateEmission || f.dateReelle || f.created_at;
     if (!dateReelle) return;
 
     try {
