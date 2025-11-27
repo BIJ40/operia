@@ -691,7 +691,10 @@ export default function Landing() {
                       c.link?.includes('/mes-demandes') ||
                       c.link?.includes('/support')
                     );
-                    // Ne pas insérer actionsCard dans le tableau, on va le gérer manuellement
+                    const mesIndicateursIndex = regularCards.findIndex(c => 
+                      c.link?.includes('/mes-indicateurs')
+                    );
+                    
                     const allElements: JSX.Element[] = [];
                     let actionsRendered = false;
                     let logoRendered = false;
@@ -799,7 +802,24 @@ export default function Landing() {
                         }
                       }
                       
-                      // Après le support card, insérer Actions puis Logo
+                      // Après "Mes indicateurs", insérer le logo
+                      if (index === mesIndicateursIndex && !logoRendered) {
+                        if (logoCard) {
+                          allElements.push(
+                            <div key="logo-fixed" className="flex items-center justify-center p-2">
+                              <img 
+                                src={helpConfortServicesImg} 
+                                alt={logoCard.title} 
+                                className="w-full max-w-[140px] h-auto pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
+                                draggable="false"
+                              />
+                            </div>
+                          );
+                          logoRendered = true;
+                        }
+                      }
+                      
+                      // Après "Mes demandes de support", insérer Actions à mener
                       if (index === supportCardIndex && !actionsRendered) {
                         // Insérer Actions à mener
                         if (actionsCard) {
@@ -837,21 +857,6 @@ export default function Landing() {
                             );
                           }
                           actionsRendered = true;
-                        }
-                        
-                        // Insérer le logo
-                        if (logoCard && !logoRendered) {
-                          allElements.push(
-                            <div key="logo-fixed" className="flex items-center justify-center p-4 md:col-start-2">
-                              <img 
-                                src={helpConfortServicesImg} 
-                                alt={logoCard.title} 
-                                className="w-full max-w-[160px] h-auto pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
-                                draggable="false"
-                              />
-                            </div>
-                          );
-                          logoRendered = true;
                         }
                       }
                     });
