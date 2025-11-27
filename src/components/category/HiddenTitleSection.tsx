@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { GripVertical, Plus, Lightbulb, Edit2, Copy, FolderInput, Trash2 } from 'lucide-react';
+import { GripVertical, Plus, Lightbulb, Edit2, Copy, FolderInput, Trash2, Clock, Sparkles } from 'lucide-react';
 import { createSanitizedHtml } from '@/lib/sanitize';
 import {
   DropdownMenu,
@@ -9,6 +9,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Section, CategoryBlock } from './types';
 import { Block } from '@/types/block';
+
+// Helper to check if section is new (completed within 7 days)
+const isSectionNew = (completedAt?: string) => {
+  if (!completedAt) return false;
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  return new Date(completedAt) > sevenDaysAgo;
+};
 
 interface HiddenTitleSectionProps {
   section: Section;
@@ -41,87 +49,127 @@ export function HiddenTitleSection({
   onAddSection,
   onAddTips,
 }: HiddenTitleSectionProps) {
+  const isNew = isSectionNew(section.completedAt);
+
   return (
     <div className="rounded-2xl border-2 border-l-4 border-helpconfort-orange/40 border-l-primary bg-card shadow-sm p-6 hover:border-helpconfort-orange/60 hover:shadow-md transition-all">
       {isEditMode && isAdmin && (
-        <div className="flex gap-2 mb-4 justify-end bg-background/95 backdrop-blur-sm rounded-lg p-1 shadow-sm">
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="cursor-move"
-            {...dragAttributes}
-            {...dragListeners}
-          >
-            <GripVertical className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            title="Insérer une section après"
-            onClick={() => onAddSection(section.id)}
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            title="Insérer un TIPS après"
-            onClick={() => onAddTips(section.id)}
-          >
-            <Lightbulb className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={() => onEdit(section.id)}
-          >
-            <Edit2 className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            title="Dupliquer la section"
-            onClick={() => onDuplicate(section.id)}
-          >
-            <Copy className="w-4 h-4" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                title="Changer de catégorie"
-              >
-                <FolderInput className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-background border shadow-md z-[200]">
-              {availableCategories
-                .filter(cat => cat.id !== category?.id)
-                .map((cat) => (
-                  <DropdownMenuItem
-                    key={cat.id}
-                    onClick={() => onMoveToCategory(section.id, cat.id)}
-                  >
-                    {cat.title}
-                  </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={() => onDelete(section.id)}
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex gap-2">
+            {section.isInProgress && (
+              <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                En cours
+              </span>
+            )}
+            {isNew && !section.isInProgress && (
+              <span className="bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                New
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="cursor-move h-8 w-8 p-0"
+              {...dragAttributes}
+              {...dragListeners}
+            >
+              <GripVertical className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              title="Insérer une section après"
+              className="h-8 w-8 p-0"
+              onClick={() => onAddSection(section.id)}
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              title="Insérer un TIPS après"
+              className="h-8 w-8 p-0"
+              onClick={() => onAddTips(section.id)}
+            >
+              <Lightbulb className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              onClick={() => onEdit(section.id)}
+            >
+              <Edit2 className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              title="Dupliquer la section"
+              className="h-8 w-8 p-0"
+              onClick={() => onDuplicate(section.id)}
+            >
+              <Copy className="w-4 h-4" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  title="Changer de catégorie"
+                  className="h-8 w-8 p-0"
+                >
+                  <FolderInput className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-background border shadow-md z-[200]">
+                {availableCategories
+                  .filter(cat => cat.id !== category?.id)
+                  .map((cat) => (
+                    <DropdownMenuItem
+                      key={cat.id}
+                      onClick={() => onMoveToCategory(section.id, cat.id)}
+                    >
+                      {cat.title}
+                    </DropdownMenuItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 hover:bg-destructive/20"
+              onClick={() => onDelete(section.id)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+      {!isEditMode && (section.isInProgress || isNew) && (
+        <div className="flex gap-2 mb-4">
+          {section.isInProgress && (
+            <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              En cours
+            </span>
+          )}
+          {isNew && !section.isInProgress && (
+            <span className="bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
+              <Sparkles className="w-3 h-3" />
+              New
+            </span>
+          )}
         </div>
       )}
       <div
