@@ -1,6 +1,4 @@
 import { Outlet, Navigate } from "react-router-dom";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { IndicateursSidebar } from "@/apogee-connect/components/layout/IndicateursSidebar";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
 import { FiltersProvider } from "@/apogee-connect/contexts/FiltersContext";
@@ -13,7 +11,7 @@ export default function IndicateursLayout() {
   const { agence, hasAccessToScope } = useAuth();
   const { toast } = useToast();
 
-  // Bloquer l'accès si pas d'agence définie
+  // Block access if no agency defined
   useEffect(() => {
     if (!agence) {
       toast({
@@ -24,7 +22,7 @@ export default function IndicateursLayout() {
     }
   }, [agence, toast]);
 
-  // Rediriger vers l'accueil si pas d'agence
+  // Redirect if no agency or no permission
   if (!agence || !hasAccessToScope('mes_indicateurs')) {
     return <Navigate to="/" replace />;
   }
@@ -34,14 +32,7 @@ export default function IndicateursLayout() {
       <AgencyProvider>
         <FiltersProvider>
           <SecondaryFiltersProvider>
-            <SidebarProvider>
-              <div className="flex min-h-screen w-full">
-                <IndicateursSidebar />
-                <main className="flex-1 p-6">
-                  <Outlet />
-                </main>
-              </div>
-            </SidebarProvider>
+            <Outlet />
           </SecondaryFiltersProvider>
         </FiltersProvider>
       </AgencyProvider>

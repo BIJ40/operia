@@ -125,7 +125,7 @@ function AppContent() {
           <Route path="/documents" element={<MainLayout><Documents /></MainLayout>} />
           
           {/* Pilotage Agence */}
-          <Route path="/mes-indicateurs" element={<MainLayout showSidebar={false}><IndicateursLayout /></MainLayout>}>
+          <Route path="/mes-indicateurs" element={<MainLayout><IndicateursLayout /></MainLayout>}>
             <Route index element={<IndicateursAccueil />} />
             <Route path="apporteurs" element={<IndicateursApporteurs />} />
             <Route path="univers" element={<IndicateursUnivers />} />
@@ -142,7 +142,7 @@ function AppContent() {
           <Route path="/mes-demandes" element={<MainLayout><UserDemands /></MainLayout>} />
           
           {/* Franchiseur */}
-          <Route path="/tete-de-reseau" element={<FranchiseurLayout />}>
+          <Route path="/tete-de-reseau" element={<MainLayout><FranchiseurLayout /></MainLayout>}>
             <Route index element={<FranchiseurHome />} />
             <Route path="agences" element={<FranchiseurAgencies />} />
             <Route path="agences/:agencyId" element={<FranchiseurAgencyProfile />} />
