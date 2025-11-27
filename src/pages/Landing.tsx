@@ -677,40 +677,55 @@ export default function Landing() {
                   })()}
                 </DndContext>
               ) : (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-                    {(() => {
-                      const logoCard = homeCards.find(c => c.is_logo);
-                      const actionsCard = homeCards.find(c => 
-                        c.link?.includes('/actions-a-mener') || 
-                        (c.title?.toLowerCase().includes('actions') && c.title?.toLowerCase().includes('mener'))
-                      );
-                      const regularCards = homeCards.filter(c => !c.is_logo && c.id !== actionsCard?.id);
-                      const supportCardIndex = regularCards.findIndex(c => 
-                        c.title?.toLowerCase().includes('support') || 
-                        c.title?.toLowerCase().includes('demande') ||
-                        c.link?.includes('/mes-demandes') ||
-                        c.link?.includes('/support')
-                      );
-                      const reorderedCards = [...regularCards];
-                      if (actionsCard && supportCardIndex !== -1) {
-                        reorderedCards.splice(supportCardIndex + 1, 0, actionsCard);
-                      } else if (actionsCard) {
-                        reorderedCards.push(actionsCard);
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                  {(() => {
+                    const logoCard = homeCards.find(c => c.is_logo);
+                    const actionsCard = homeCards.find(c => 
+                      c.link?.includes('/actions-a-mener') || 
+                      (c.title?.toLowerCase().includes('actions') && c.title?.toLowerCase().includes('mener'))
+                    );
+                    const regularCards = homeCards.filter(c => !c.is_logo && c.id !== actionsCard?.id);
+                    const supportCardIndex = regularCards.findIndex(c => 
+                      c.title?.toLowerCase().includes('support') || 
+                      c.title?.toLowerCase().includes('demande') ||
+                      c.link?.includes('/mes-demandes') ||
+                      c.link?.includes('/support')
+                    );
+                    const reorderedCards = [...regularCards];
+                    if (actionsCard && supportCardIndex !== -1) {
+                      reorderedCards.splice(supportCardIndex + 1, 0, actionsCard);
+                    } else if (actionsCard) {
+                      reorderedCards.push(actionsCard);
+                    }
+                    
+                    const allElements: JSX.Element[] = [];
+                    
+                    reorderedCards.forEach((currentCard, index) => {
+                      // Insérer le logo réduit après "Mes demandes de support"
+                      if (index === supportCardIndex + 1 && logoCard) {
+                        allElements.push(
+                          <div key="logo-fixed" className="flex items-center justify-center p-4">
+                            <img 
+                              src={helpConfortServicesImg} 
+                              alt={logoCard.title} 
+                              className="w-full max-w-[180px] h-auto pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
+                              draggable="false"
+                            />
+                          </div>
+                        );
                       }
                       
-                      return reorderedCards.map((card) => {
-                          const Icon = IconComponent(card.icon || 'BookOpen');
-                          const isLarge = (card.size === 'large') || card.title === 'Actions à mener';
+                      const Icon = IconComponent(currentCard.icon || 'BookOpen');
+                      const isLarge = (currentCard.size === 'large') || currentCard.title === 'Actions à mener';
 
                           // Gérer spécialement "Mes indicateurs"
-                          if (card.link?.includes('/mes-indicateurs')) {
+                          if (currentCard.link?.includes('/mes-indicateurs')) {
                             const scope = 'mes_indicateurs';
                             const isLocked = !hasAccessToScope(scope) || !agence;
                             
                             if (!isLocked && agence) {
-                              return (
-                                <div key={card.id} className={isLarge ? "min-h-[240px]" : ""}>
+                              allElements.push(
+                                <div key={currentCard.id} className={isLarge ? "min-h-[240px]" : ""}>
                                   <ApiToggleProvider>
                                     <AgencyProvider>
                                       <MesIndicateursCard />
@@ -719,9 +734,9 @@ export default function Landing() {
                                 </div>
                               );
                             } else {
-                              return (
+                              allElements.push(
                                 <div
-                                  key={card.id}
+                                  key={currentCard.id}
                                   onClick={() => {
                                     toast({
                                       title: 'Accès restreint',
@@ -740,12 +755,12 @@ export default function Landing() {
                           }
 
                           // Gérer spécialement "Actions à mener"
-                          else if (card.link?.includes('/actions-a-mener')) {
+                          else if (currentCard.link?.includes('/actions-a-mener')) {
                             const isLocked = !agence;
                             
                             if (!isLocked && agence) {
-                              return (
-                                <div key={card.id} className={isLarge ? "min-h-[240px]" : ""}>
+                              allElements.push(
+                                <div key={currentCard.id} className={isLarge ? "min-h-[240px]" : ""}>
                                   <ApiToggleProvider>
                                     <AgencyProvider>
                                       <ActionsAMenerCard />
@@ -754,9 +769,9 @@ export default function Landing() {
                                 </div>
                               );
                             } else {
-                              return (
+                              allElements.push(
                                 <div
-                                  key={card.id}
+                                  key={currentCard.id}
                                   onClick={() => {
                                     toast({
                                       title: 'Accès restreint',
@@ -777,9 +792,9 @@ export default function Landing() {
                           // Vérifier les permissions pour les autres cartes
                           else {
                             let scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs' | null = null;
-                            if (card.link?.includes('/apogee')) scope = 'apogee';
-                            else if (card.link?.includes('/apporteur')) scope = 'apporteurs';
-                            else if (card.link?.includes('/helpconfort')) scope = 'helpconfort';
+                            if (currentCard.link?.includes('/apogee')) scope = 'apogee';
+                            else if (currentCard.link?.includes('/apporteur')) scope = 'apporteurs';
+                            else if (currentCard.link?.includes('/helpconfort')) scope = 'helpconfort';
                             
                             const isLocked = scope ? !hasAccessToScope(scope) : false;
 
@@ -788,9 +803,9 @@ export default function Landing() {
                               : "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2";
                             
                             if (isLocked) {
-                              return (
+                              allElements.push(
                                 <div
-                                  key={card.id}
+                                  key={currentCard.id}
                                   onClick={() => {
                                     toast({
                                       title: 'Accès restreint',
@@ -805,58 +820,42 @@ export default function Landing() {
                                   </div>
                                   <Icon className={isLarge ? "w-12 h-12 text-primary mb-4 opacity-50" : "w-12 h-12 text-primary flex-shrink-0 opacity-50"} />
                                   <div className={isLarge ? "" : "flex-1 min-w-0"}>
-                                    <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{card.title}</h2>
-                                    <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{card.description}</p>
+                                    <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{currentCard.title}</h2>
+                                    <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{currentCard.description}</p>
                                   </div>
                                 </div>
                               );
-                            } else if (card.link && card.link !== '#') {
-                              return (
+                            } else if (currentCard.link && currentCard.link !== '#') {
+                              allElements.push(
                                 <Link
-                                  key={card.id}
-                                  to={card.link}
+                                  key={currentCard.id}
+                                  to={currentCard.link}
                                   className={baseClassName}
                                 >
                                   <Icon className={isLarge ? "w-12 h-12 text-primary mb-4" : "w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300"} />
                                   <div className={isLarge ? "" : "flex-1 min-w-0"}>
-                                    <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{card.title}</h2>
-                                    <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{card.description}</p>
+                                    <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{currentCard.title}</h2>
+                                    <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{currentCard.description}</p>
                                   </div>
                                 </Link>
                               );
                             } else {
-                              return (
-                                <div key={card.id} className={baseClassName}>
+                              allElements.push(
+                                <div key={currentCard.id} className={baseClassName}>
                                   <Icon className={isLarge ? "w-12 h-12 text-primary mb-4" : "w-12 h-12 text-primary flex-shrink-0"} />
                                   <div className={isLarge ? "" : "flex-1 min-w-0"}>
-                                    <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{card.title}</h2>
-                                    <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{card.description}</p>
+                                    <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{currentCard.title}</h2>
+                                    <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{currentCard.description}</p>
                                   </div>
                                 </div>
                               );
                             }
                           }
-                      });
-                    })()}
-                  </div>
-                  
-                  {/* Logo FIXE en dessous de toute la grille */}
-                  {(() => {
-                    const logoCard = homeCards.find(c => c.is_logo);
-                    return logoCard && (
-                      <div className="flex justify-center mt-6">
-                        <div className="w-full max-w-md">
-                          <img 
-                            src={helpConfortServicesImg} 
-                            alt={logoCard.title} 
-                            className="w-full h-auto pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
-                            draggable="false"
-                          />
-                        </div>
-                      </div>
-                    );
+                        });
+                    
+                    return allElements;
                   })()}
-                </>
+                </div>
               )}
 
               {isEditMode && isAdmin && (
