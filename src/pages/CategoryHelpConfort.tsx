@@ -172,19 +172,19 @@ export default function CategoryHelpConfort() {
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm pb-4 pt-2 -mx-4 px-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
-            <Link to="/helpconfort">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Retour
-              </Button>
-            </Link>
-            
-            {/* Category navigation with arrows */}
-            <div className="flex items-center gap-2 flex-1 min-w-0">
+            {/* Left zone: Retour + left arrow */}
+            <div className="flex items-center gap-2 shrink-0">
+              <Link to="/helpconfort">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Retour
+                </Button>
+              </Link>
+              
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="shrink-0">
+                    <span>
                       <Link to={prevCategory ? `/helpconfort/category/${prevCategory.slug}` : '#'}>
                         <Button 
                           variant="ghost" 
@@ -204,10 +204,12 @@ export default function CategoryHelpConfort() {
                   )}
                 </Tooltip>
               </TooltipProvider>
-              
-              <h1 className="text-2xl font-bold text-foreground truncate flex-1 min-w-0">{category.title}</h1>
             </div>
             
+            {/* Center zone: Title (truncates if too long) */}
+            <h1 className="text-2xl font-bold text-foreground truncate flex-1 min-w-0 text-center">{category.title}</h1>
+            
+            {/* Right zone: Progress bar + indicator + right arrow (FIXED position) */}
             <div className="flex items-center gap-2 shrink-0">
               <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
                 <div 
