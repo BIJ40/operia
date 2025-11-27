@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { BarChart3, BookOpen, Headset, Network, LogIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { HomeTilesSection } from '@/components/home/HomeTilesSection';
 
 interface PublicLandingProps {
   onLoginClick: () => void;
@@ -105,6 +106,14 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
             color="accent"
             delay={13.5}
           />
+        </div>
+
+        {/* Service Tiles Section */}
+        <div className="max-w-6xl mx-auto mt-16">
+          <h2 className="text-2xl font-bold text-foreground text-center mb-8">
+            Nos domaines d'intervention
+          </h2>
+          <HomeTilesSection />
         </div>
       </section>
 
