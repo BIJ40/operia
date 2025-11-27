@@ -289,10 +289,10 @@ export default function AdminSupportLevels() {
                                 </Button>
                               <Button
                                   size="sm"
-                                  variant={user.service_competencies?.conseil ? "default" : "outline"}
-                                  onClick={() => toggleServiceCompetency(user.id, 'conseil', user.service_competencies || {})}
+                                  variant={user.service_competencies?.helpconfort ? "default" : "outline"}
+                                  onClick={() => toggleServiceCompetency(user.id, 'helpconfort', user.service_competencies || {})}
                                 >
-                                  Conseil
+                                  HelpConfort
                                 </Button>
                               </div>
                             </div>
