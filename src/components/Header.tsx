@@ -15,11 +15,17 @@ export function Header() {
   const location = useLocation();
   const editorContext = useEditor();
   const apporteurContext = useApporteurEditor();
-  const { isAuthenticated, isAdmin, isSupport, isFranchiseur, roleAgence, isLoggingOut, logout } = useAuth();
-  const { isImpersonating } = useImpersonation();
+  const { isAuthenticated, isAdmin: realIsAdmin, isSupport: realIsSupport, isFranchiseur: realIsFranchiseur, roleAgence: realRoleAgence, isLoggingOut, logout } = useAuth();
+  const { isImpersonating, impersonatedProfile } = useImpersonation();
   const { hasNewTickets, newTicketsCount, assignedToMeCount, unreadMessagesCount } = useSupportNotifications();
   const [loginOpen, setLoginOpen] = useState(false);
   const [impersonationOpen, setImpersonationOpen] = useState(false);
+
+  // Utiliser les valeurs simulées si en mode impersonation
+  const isAdmin = isImpersonating ? false : realIsAdmin; // Admin perd ses droits admin en simulation
+  const isSupport = isImpersonating ? (impersonatedProfile?.hasSupportRole ?? false) : realIsSupport;
+  const isFranchiseur = isImpersonating ? (impersonatedProfile?.hasFranchiseurRole ?? false) : realIsFranchiseur;
+  const roleAgence = isImpersonating ? impersonatedProfile?.roleAgence : realRoleAgence;
   
   // Déterminer quel contexte utiliser selon la page
   const isApporteurPage = location.pathname.startsWith('/apporteurs');
@@ -51,7 +57,8 @@ export function Header() {
         </div>
       )}
 
-      {isAdmin ? (
+      {/* Header admin réel (non simulé) */}
+      {realIsAdmin && !isImpersonating ? (
         <header className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 transition-all duration-300 ${
           hasNewTickets ? 'animate-[pulse-red_2s_ease-in-out_infinite] shadow-[0_0_30px_rgba(239,68,68,0.5)]' : ''
         }`}>
@@ -91,16 +98,14 @@ export function Header() {
               <span className="font-semibold text-foreground">ADMIN</span>
             </Link>
 
-            {!isImpersonating && (
-              <Button
-                onClick={() => setImpersonationOpen(true)}
-                variant="ghost"
-                className="flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-300 dark:border-amber-700 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-800/50 hover:border-amber-400 hover:scale-[1.02] transition-all duration-300"
-              >
-                <Eye className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                <span className="font-semibold text-amber-700 dark:text-amber-300">VOIR EN TANT QUE</span>
-              </Button>
-            )}
+            <Button
+              onClick={() => setImpersonationOpen(true)}
+              variant="ghost"
+              className="flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-300 dark:border-amber-700 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-800/50 hover:border-amber-400 hover:scale-[1.02] transition-all duration-300"
+            >
+              <Eye className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              <span className="font-semibold text-amber-700 dark:text-amber-300">VOIR EN TANT QUE</span>
+            </Button>
 
             {isFranchiseur && (
               <Link
@@ -142,6 +147,79 @@ export function Header() {
                     {unreadMessagesCount}
                   </span>
                 )}
+              </Link>
+              <Link
+                to="/profile"
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
+              >
+                <User className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-foreground">PROFIL</span>
+              </Link>
+              <Button
+                onClick={logout}
+                variant="ghost"
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
+              >
+                <LogOut className="w-5 h-5 text-muted-foreground" />
+                <span className="font-semibold text-foreground">QUITTER</span>
+              </Button>
+            </div>
+          </div>
+        </header>
+      ) : realIsAdmin && isImpersonating ? (
+        /* Header en mode simulation - montre ce que l'utilisateur simulé verrait */
+        <header className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 transition-all duration-300 ${
+          isSupport && hasNewTickets ? 'animate-[pulse-red_2s_ease-in-out_infinite] shadow-[0_0_30px_rgba(239,68,68,0.5)]' : ''
+        }`}>
+          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+            <Link 
+              to="/" 
+              className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
+            >
+              <Home className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-foreground">ACCUEIL</span>
+            </Link>
+
+            {isSupport && (
+              <Link
+                to="/support"
+                state={{ filterStatus: hasNewTickets ? 'waiting' : undefined }}
+                className={`flex items-center gap-2 px-4 py-2 bg-card border-2 rounded-xl hover:bg-accent hover:scale-[1.02] transition-all duration-300 relative ${
+                  hasNewTickets 
+                    ? 'border-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.5)]' 
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <Headset className={`w-5 h-5 ${hasNewTickets ? 'text-red-500' : 'text-primary'}`} />
+                <span className={`font-semibold ${hasNewTickets ? 'text-red-500' : 'text-foreground'}`}>
+                  SUPPORT
+                </span>
+                {hasNewTickets && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-bounce">
+                    {newTicketsCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            {isFranchiseur && (
+              <Link
+                to="/tete-de-reseau"
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
+              >
+                <Network className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-foreground">RÉSEAU</span>
+              </Link>
+            )}
+
+            <div className="ml-auto flex items-center gap-2">
+              <ChatbotNotifications />
+              <Link
+                to="/favorites"
+                className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-border rounded-xl hover:bg-accent hover:border-primary/50 hover:scale-[1.02] transition-all duration-300"
+              >
+                <Heart className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-foreground">FAVORIS</span>
               </Link>
               <Link
                 to="/profile"
