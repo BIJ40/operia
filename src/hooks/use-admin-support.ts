@@ -10,11 +10,15 @@ export interface SupportTicket {
   assigned_to: string | null;
   status: string;
   priority: string;
+  service: string | null;
+  subject: string;
   chatbot_conversation: any;
   created_at: string;
   resolved_at: string | null;
   rating: number | null;
   rating_comment: string | null;
+  viewed_by_support_at: string | null;
+  has_unread_support_response?: boolean;
 }
 
 export interface SupportMessage {
@@ -49,7 +53,31 @@ export const useAdminSupport = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTickets(data || []);
+      
+      // Pour chaque ticket, vérifier s'il y a des réponses support non lues
+      const ticketsWithUnreadStatus = await Promise.all(
+        (data || []).map(async (ticket) => {
+          // Récupérer les messages du ticket
+          const { data: messages } = await supabase
+            .from('support_messages')
+            .select('is_from_support, read_at')
+            .eq('ticket_id', ticket.id)
+            .order('created_at', { ascending: false })
+            .limit(5);
+          
+          // Vérifier s'il y a un message du support non lu par l'utilisateur
+          const hasUnreadSupportResponse = messages?.some(
+            msg => msg.is_from_support && !msg.read_at
+          ) || false;
+          
+          return {
+            ...ticket,
+            has_unread_support_response: hasUnreadSupportResponse
+          };
+        })
+      );
+      
+      setTickets(ticketsWithUnreadStatus);
     } catch (error) {
       console.error('Error loading tickets:', error);
       toast.error('Erreur lors du chargement des tickets');

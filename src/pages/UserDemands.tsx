@@ -36,7 +36,7 @@ export default function UserDemands() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTicket, setNewTicket] = useState({
     subject: '',
-    service: 'autre',
+    service: 'apogee',
     category: 'question',
     description: '',
   });
@@ -64,7 +64,7 @@ export default function UserDemands() {
     );
 
     if (ticket) {
-      setNewTicket({ subject: '', service: 'autre', category: 'question', description: '' });
+      setNewTicket({ subject: '', service: 'apogee', category: 'question', description: '' });
       setFiles([]);
       setShowCreateForm(false);
     }

@@ -73,6 +73,14 @@ export function UserSupportConfigSection({
             <Button
               type="button"
               size="sm"
+              variant={serviceCompetencies.helpconfort ? "default" : "outline"}
+              onClick={() => toggleCompetency('helpconfort')}
+            >
+              HelpConfort
+            </Button>
+            <Button
+              type="button"
+              size="sm"
               variant={serviceCompetencies.apporteurs ? "default" : "outline"}
               onClick={() => toggleCompetency('apporteurs')}
             >
@@ -81,10 +89,18 @@ export function UserSupportConfigSection({
             <Button
               type="button"
               size="sm"
-              variant={serviceCompetencies.helpconfort ? "default" : "outline"}
-              onClick={() => toggleCompetency('helpconfort')}
+              variant={serviceCompetencies.conseil ? "default" : "outline"}
+              onClick={() => toggleCompetency('conseil')}
             >
-              HelpConfort
+              Conseil
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={serviceCompetencies.autre ? "default" : "outline"}
+              onClick={() => toggleCompetency('autre')}
+            >
+              Autre
             </Button>
           </div>
         </div>

@@ -305,7 +305,14 @@ export default function AdminSupport() {
               </TabsList>
 
               <TabsContent value={filter} className="space-y-2 mt-0">
-                {filteredTickets.length === 0 ? (
+                {filter === 'resolved' ? (
+                  <TicketList
+                    tickets={tickets}
+                    selectedTicket={selectedTicket}
+                    onSelectTicket={selectTicket}
+                    showResolved={true}
+                  />
+                ) : filteredTickets.length === 0 ? (
                   <Card>
                     <CardContent className="py-8 text-center text-sm text-muted-foreground">
                       Aucun ticket
@@ -316,6 +323,7 @@ export default function AdminSupport() {
                     tickets={filteredTickets}
                     selectedTicket={selectedTicket}
                     onSelectTicket={selectTicket}
+                    showResolved={false}
                   />
                 )}
               </TabsContent>
