@@ -1000,11 +1000,8 @@ export type Database = {
       user_actions_config: {
         Row: {
           created_at: string
-          delai_a_commander: number
           delai_a_facturer: number
           delai_devis_a_faire: number
-          delai_devis_envoye: number
-          delai_facture_non_reglee: number
           delai_relance_technicien: number
           id: string
           updated_at: string
@@ -1012,11 +1009,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          delai_a_commander?: number
           delai_a_facturer?: number
           delai_devis_a_faire?: number
-          delai_devis_envoye?: number
-          delai_facture_non_reglee?: number
           delai_relance_technicien?: number
           id?: string
           updated_at?: string
@@ -1024,11 +1018,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          delai_a_commander?: number
           delai_a_facturer?: number
           delai_devis_a_faire?: number
-          delai_devis_envoye?: number
-          delai_facture_non_reglee?: number
           delai_relance_technicien?: number
           id?: string
           updated_at?: string

@@ -155,21 +155,21 @@ function ActionsAMenerContent() {
               </Card>
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">Devis à relancer</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {filteredActions.filter(a => a.actionType === 'devis_envoye' && a.isLate).length}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium">Factures à faire</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
                     {filteredActions.filter(a => a.actionType === 'a_facturer' && a.isLate).length}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">Relances technicien</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {filteredActions.filter(a => a.actionType === 'relance_technicien' && a.isLate).length}
                   </div>
                 </CardContent>
               </Card>

@@ -129,136 +129,38 @@ export function buildActionsAMener(
       }
     }
     
-    // === RÈGLE 2: Dossiers en "devis envoyé" ===
-    const hasDevisEnvoye = status.includes('devis') && status.includes('envoy');
-    const projectDevis = devisByProject.get(project.id) || [];
-    const devisEnvoyes = projectDevis.filter(d => {
-      const dStatus = normalizeStatus(d.state);
-      return dStatus.includes('sent') || dStatus.includes('envoy');
-    });
-    
-    if ((hasDevisEnvoye || devisEnvoyes.length > 0)) {
-      // Vérifier qu'il n'y a pas de facture acceptée/payée
-      const projectFactures = facturesByProject.get(project.id) || [];
-      const hasFactureAccepted = projectFactures.some(f => {
-        const fStatus = normalizeStatus(f.state || '');
-        return fStatus.includes('paid') || fStatus.includes('payment') || fStatus.includes('accept');
-      });
-      
-      if (!hasFactureAccepted && devisEnvoyes.length > 0) {
-        // Prendre le devis le plus récent
-        const latestDevis = devisEnvoyes.sort((a, b) => {
-          const dateA = parseDate(a.dateEnvoi || a.updated_at || a.created_at);
-          const dateB = parseDate(b.dateEnvoi || b.updated_at || b.created_at);
-          if (!dateA) return 1;
-          if (!dateB) return -1;
-          return dateB.getTime() - dateA.getTime();
-        })[0];
-        
-        const dateDepart = parseDate(latestDevis.dateEnvoi || latestDevis.updated_at || latestDevis.created_at);
-        if (dateDepart) {
-          const deadline = addDays(dateDepart, config.delai_devis_envoye);
-          const isLate = deadline < today;
-          
-          actions.push({
-            projectId: project.id,
-            ref,
-            label,
-            statut: 'Devis envoyé',
-            actionLabel: ACTION_LABELS.devis_envoye,
-            actionType: 'devis_envoye',
-            deadline,
-            dateDepart,
-            isLate,
-            clientName,
-            daysLate: isLate ? differenceInDays(today, deadline) : 0,
-          });
-        }
-      }
-    }
-    
-    // === RÈGLE 3: Dossiers en "à facturer" ===
-    if (status.includes('facturer')) {
-      const dateDepart = parseDate(project.updated_at) || parseDate(project.created_at);
-      if (dateDepart) {
-        const deadline = addDays(dateDepart, config.delai_a_facturer);
-        const isLate = deadline < today;
-        
-        actions.push({
-          projectId: project.id,
-          ref,
-          label,
-          statut: 'À facturer',
-          actionLabel: ACTION_LABELS.a_facturer,
-          actionType: 'a_facturer',
-          deadline,
-          dateDepart,
-          isLate,
-          clientName,
-          daysLate: isLate ? differenceInDays(today, deadline) : 0,
+    // === RÈGLE 2: Dossiers en "à facturer" ===
+    // Même logique que "devis à faire" : vérifier l'historique
+    if (project.data?.history && Array.isArray(project.data.history)) {
+      const statusChanges = project.data.history
+        .filter((h: any) => h.kind === 2 && typeof h.labelKind === 'string')
+        .sort((a: any, b: any) => {
+          const dateA = parseDate(a.dateModif);
+          const dateB = parseDate(b.dateModif);
+          if (!dateA || !dateB) return 0;
+          return dateA.getTime() - dateB.getTime();
         });
-      }
-    }
-    
-    // === RÈGLE 4: Dossiers en "à commander" ===
-    if (status.includes('commander')) {
-      const dateDepart = parseDate(project.updated_at) || parseDate(project.created_at);
-      if (dateDepart) {
-        const deadline = addDays(dateDepart, config.delai_a_commander);
-        const isLate = deadline < today;
-        
-        actions.push({
-          projectId: project.id,
-          ref,
-          label,
-          statut: 'À commander',
-          actionLabel: ACTION_LABELS.a_commander,
-          actionType: 'a_commander',
-          deadline,
-          dateDepart,
-          isLate,
-          clientName,
-          daysLate: isLate ? differenceInDays(today, deadline) : 0,
-        });
-      }
-    }
-  });
-  
-  // === RÈGLE 5: Factures non réglées ===
-  factures.forEach(facture => {
-    const fStatus = normalizeStatus(facture.state || '');
-    if (fStatus.includes('payment') && fStatus.includes('wait')) {
-      const project = projects.find(p => p.id === facture.projectId);
-      if (!project) return;
       
-      // Vérifier si c'est un particulier (pas d'apporteur)
-      const clientId = project.clientId || project.client_id || project.data?.commanditaireId;
-      const client = clientId ? clientsMap.get(clientId) : null;
-      const isParticulier = !project.data?.commanditaireId;
-      
-      if (isParticulier) {
-        const dateDepart = parseDate(facture.dateEmission || facture.dateReelle || facture.created_at);
-        if (dateDepart) {
-          const deadline = addDays(dateDepart, config.delai_facture_non_reglee);
-          const isLate = deadline < today;
-          
-          if (isLate) {
-            const clientName = client?.nom || client?.name || client?.raisonSociale || 'Client inconnu';
-            const ref = project.ref || `#${project.id}`;
-            const label = project.name || project.label || 'Sans libellé';
+      if (statusChanges.length > 0) {
+        const lastStatus = statusChanges[statusChanges.length - 1];
+        if (lastStatus.labelKind && lastStatus.labelKind.includes(' => À facturer')) {
+          const dateDepart = parseDate(lastStatus.dateModif) || parseDate(project.updated_at) || parseDate(project.created_at);
+          if (dateDepart) {
+            const deadline = addDays(dateDepart, config.delai_a_facturer);
+            const isLate = deadline < today;
             
             actions.push({
               projectId: project.id,
               ref,
               label,
-              statut: 'Facture en attente',
-              actionLabel: ACTION_LABELS.facture_non_reglee,
-              actionType: 'facture_non_reglee',
+              statut: 'À facturer',
+              actionLabel: ACTION_LABELS.a_facturer,
+              actionType: 'a_facturer',
               deadline,
               dateDepart,
-              isLate: true,
+              isLate,
               clientName,
-              daysLate: differenceInDays(today, deadline),
+              daysLate: isLate ? differenceInDays(today, deadline) : 0,
             });
           }
         }
@@ -266,7 +168,7 @@ export function buildActionsAMener(
     }
   });
   
-  // === RÈGLE 6: Dossiers en attente technicien "ATT TECH (manuel)" ===
+  // === RÈGLE 3: Dossiers en attente technicien "ATT TECH (manuel)" ===
   projects.forEach(project => {
     if (!project.data?.history || !Array.isArray(project.data.history)) return;
     
@@ -381,13 +283,11 @@ export function buildActionsAMener(
  * Calcule les statistiques pour la tuile de la landing page
  */
 export function calculateActionsStats(actions: ActionRow[]) {
-  const devisARelancer = actions.filter(a => a.actionType === 'devis_envoye' && a.isLate).length;
   const facturesAFaire = actions.filter(a => a.actionType === 'a_facturer' && a.isLate).length;
   const dossiersEnRetard = actions.filter(a => a.isLate).length;
   const totalActions = actions.length;
   
   return {
-    devisARelancer,
     facturesAFaire,
     dossiersEnRetard,
     totalActions,

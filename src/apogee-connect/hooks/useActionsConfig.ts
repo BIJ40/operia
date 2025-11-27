@@ -32,10 +32,8 @@ export function useActionsConfig() {
 
       return {
         delai_devis_a_faire: data.delai_devis_a_faire,
-        delai_devis_envoye: data.delai_devis_envoye,
         delai_a_facturer: data.delai_a_facturer,
-        delai_a_commander: data.delai_a_commander,
-        delai_facture_non_reglee: data.delai_facture_non_reglee,
+        delai_relance_technicien: data.delai_relance_technicien,
       } as ActionsConfig;
     },
   });
@@ -58,10 +56,8 @@ export function useActionsConfig() {
           .from('user_actions_config')
           .update({
             delai_devis_a_faire: newConfig.delai_devis_a_faire,
-            delai_devis_envoye: newConfig.delai_devis_envoye,
             delai_a_facturer: newConfig.delai_a_facturer,
-            delai_a_commander: newConfig.delai_a_commander,
-            delai_facture_non_reglee: newConfig.delai_facture_non_reglee,
+            delai_relance_technicien: newConfig.delai_relance_technicien,
             updated_at: new Date().toISOString(),
           })
           .eq('user_id', user.id);
@@ -74,10 +70,8 @@ export function useActionsConfig() {
           .insert({
             user_id: user.id,
             delai_devis_a_faire: newConfig.delai_devis_a_faire,
-            delai_devis_envoye: newConfig.delai_devis_envoye,
             delai_a_facturer: newConfig.delai_a_facturer,
-            delai_a_commander: newConfig.delai_a_commander,
-            delai_facture_non_reglee: newConfig.delai_facture_non_reglee,
+            delai_relance_technicien: newConfig.delai_relance_technicien,
           });
 
         if (error) throw error;
@@ -103,10 +97,8 @@ export function useActionsConfig() {
         .from('user_actions_config')
         .update({
           delai_devis_a_faire: DEFAULT_CONFIG.delai_devis_a_faire,
-          delai_devis_envoye: DEFAULT_CONFIG.delai_devis_envoye,
           delai_a_facturer: DEFAULT_CONFIG.delai_a_facturer,
-          delai_a_commander: DEFAULT_CONFIG.delai_a_commander,
-          delai_facture_non_reglee: DEFAULT_CONFIG.delai_facture_non_reglee,
+          delai_relance_technicien: DEFAULT_CONFIG.delai_relance_technicien,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', user.id);
