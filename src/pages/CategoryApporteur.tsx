@@ -144,11 +144,11 @@ export default function CategoryApporteur() {
             </Link>
             
             {/* Subcategory navigation with arrows */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span>
+                    <span className="shrink-0">
                       <Link to={prevSubcategory ? `/apporteurs/${slug}/${prevSubcategory.slug}` : '#'}>
                         <Button 
                           variant="ghost" 
@@ -169,42 +169,44 @@ export default function CategoryApporteur() {
                 </Tooltip>
               </TooltipProvider>
               
-              <h1 className="text-2xl font-bold text-foreground">{subcategory.title}</h1>
-              <div className="flex items-center gap-2">
-                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+              <h1 className="text-2xl font-bold text-foreground truncate min-w-0">{subcategory.title}</h1>
+              
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-primary transition-all duration-300"
+                    key={currentSubcategoryIndex}
+                    className="h-full bg-primary transition-all duration-300 origin-left animate-pulse-progress"
                     style={{ width: `${((currentSubcategoryIndex + 1) / availableSubcategories.length) * 100}%` }}
                   />
                 </div>
-                <span className="text-sm text-muted-foreground font-medium">
+                <span className="text-sm text-muted-foreground font-medium whitespace-nowrap">
                   {currentSubcategoryIndex + 1}/{availableSubcategories.length}
                 </span>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Link to={nextSubcategory ? `/apporteurs/${slug}/${nextSubcategory.slug}` : '#'}>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            disabled={!nextSubcategory}
+                          >
+                            <ChevronRight className="h-5 w-5" />
+                          </Button>
+                        </Link>
+                      </span>
+                    </TooltipTrigger>
+                    {nextSubcategory && (
+                      <TooltipContent side="bottom">
+                        {nextSubcategory.title}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Link to={nextSubcategory ? `/apporteurs/${slug}/${nextSubcategory.slug}` : '#'}>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8"
-                          disabled={!nextSubcategory}
-                        >
-                          <ChevronRight className="h-5 w-5" />
-                        </Button>
-                      </Link>
-                    </span>
-                  </TooltipTrigger>
-                  {nextSubcategory && (
-                    <TooltipContent side="bottom">
-                      {nextSubcategory.title}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
             </div>
           </div>
           
