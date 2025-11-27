@@ -170,9 +170,17 @@ export default function CategoryApporteur() {
               </TooltipProvider>
               
               <h1 className="text-2xl font-bold text-foreground">{subcategory.title}</h1>
-              <span className="text-sm text-muted-foreground font-medium px-2 py-0.5 bg-muted rounded">
-                {currentSubcategoryIndex + 1}/{availableSubcategories.length}
-              </span>
+              <div className="flex items-center gap-2">
+                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: `${((currentSubcategoryIndex + 1) / availableSubcategories.length) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm text-muted-foreground font-medium">
+                  {currentSubcategoryIndex + 1}/{availableSubcategories.length}
+                </span>
+              </div>
               
               <TooltipProvider>
                 <Tooltip>
