@@ -256,20 +256,27 @@ export function calculateUniversApporteurMatrix(
     const project = projectsMap.get(f.projectId);
     if (!project) return;
 
-    const caFacture = Number(f.data?.totalHT || f.totalHT || 0);
+    // Extraire le montant HT avec tous les chemins possibles
+    const montantRaw = f.montantHT || f.data?.montantHT || f.data?.totalHT || f.totalHT || "0";
+    const montantStr = String(montantRaw).replace(/[^0-9.-]/g, '');
+    const caFacture = parseFloat(montantStr);
+    
+    if (isNaN(caFacture) || caFacture === 0) return;
+
     const rawUniverses = project.data?.universes || project.universes || [];
     const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
     const universes = [...new Set(normalizedUniverses)]; // Dédupliquer
     const nbUniverses = universes.length || 1;
 
-    // Déterminer le type d'apporteur
+    // Déterminer le type d'apporteur avec tous les chemins possibles
     const commanditaireId = f.data?.commanditaireId || project.data?.commanditaireId;
     let typeApporteur = "particulier";
     
     if (commanditaireId) {
       const client = clientsMap.get(commanditaireId);
       if (client) {
-        typeApporteur = client.data?.type || "particulier";
+        // Chercher le type dans tous les chemins possibles
+        typeApporteur = client.data?.type || client.type || "particulier";
       }
     }
 
