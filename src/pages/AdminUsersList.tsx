@@ -61,7 +61,7 @@ const SYSTEM_ROLE_OPTIONS = [
 const COMPETENCE_OPTIONS = [
   { value: 'apogee', label: 'Apogée' },
   { value: 'apporteurs', label: 'Apporteurs' },
-  { value: 'conseil', label: 'Conseil' },
+  { value: 'helpconfort', label: 'HelpConfort' },
   { value: 'helpconfort_animateur_reseau', label: 'HC - Animateur' },
   { value: 'helpconfort_directeur_reseau', label: 'HC - Directeur' },
   { value: 'helpconfort_dg', label: 'HC - DG' },
@@ -417,14 +417,14 @@ export default function AdminUsersList() {
                             Apporteurs
                           </Badge>
                         )}
-                        {user.service_competencies?.conseil && (
-                          <Badge className="bg-purple-500 hover:bg-purple-600 text-white text-xs">
-                            Conseil
+                        {user.service_competencies?.helpconfort && (
+                          <Badge className="bg-orange-500 hover:bg-orange-600 text-white text-xs">
+                            HelpConfort
                           </Badge>
                         )}
                         {!user.service_competencies?.apogee && 
                          !user.service_competencies?.apporteurs && 
-                         !user.service_competencies?.conseil && (
+                         !user.service_competencies?.helpconfort && (
                           <span className="text-xs text-muted-foreground">Aucune</span>
                         )}
                       </div>
