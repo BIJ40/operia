@@ -122,13 +122,33 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
 
 function PaintedTitle({ text, suffix, delay }: { text: string; suffix: string; delay: number }) {
   const letters = text.split('');
+  const [key, setKey] = useState(0);
+  const cycleDuration = 4000; // durée totale du cycle en ms
+
+  useEffect(() => {
+    const startDelay = setTimeout(() => {
+      const interval = setInterval(() => {
+        setKey(k => k + 1);
+      }, cycleDuration);
+      return () => clearInterval(interval);
+    }, delay * 1000);
+    
+    const interval = setInterval(() => {
+      setKey(k => k + 1);
+    }, cycleDuration);
+    
+    return () => {
+      clearTimeout(startDelay);
+      clearInterval(interval);
+    };
+  }, [delay]);
   
   return (
     <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
-      <span className="inline-flex">
+      <span className="inline-flex" key={key}>
         {letters.map((letter, index) => (
           <motion.span
-            key={index}
+            key={`${key}-${index}`}
             className="text-primary inline-block"
             initial={{ 
               opacity: 0, 
@@ -137,15 +157,16 @@ function PaintedTitle({ text, suffix, delay }: { text: string; suffix: string; d
               filter: "blur(10px)"
             }}
             animate={{ 
-              opacity: 1, 
-              y: 0,
-              rotateX: 0,
-              filter: "blur(0px)"
+              opacity: [0, 1, 1, 0],
+              y: [-50, 0, 0, -50],
+              rotateX: [-90, 0, 0, -90],
+              filter: ["blur(10px)", "blur(0px)", "blur(0px)", "blur(10px)"]
             }}
             transition={{ 
-              duration: 0.4,
-              delay: delay + (index * 0.12),
-              ease: "easeOut"
+              duration: 3.5,
+              delay: index * 0.12,
+              ease: "easeOut",
+              times: [0, 0.2, 0.8, 1]
             }}
             style={{ 
               transformOrigin: "bottom",
@@ -157,9 +178,14 @@ function PaintedTitle({ text, suffix, delay }: { text: string; suffix: string; d
         ))}
       </span>
       <motion.span
+        key={`suffix-${key}`}
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: delay + (letters.length * 0.12) + 0.3, duration: 0.5 }}
+        animate={{ opacity: [0, 1, 1, 0] }}
+        transition={{ 
+          duration: 3.5,
+          delay: letters.length * 0.12,
+          times: [0, 0.15, 0.8, 1]
+        }}
       >
         {suffix}
       </motion.span>
@@ -174,18 +200,32 @@ function RepairedTitle({ prefix, brokenWord, suffix, delay }: {
   delay: number;
 }) {
   const [repairPhase, setRepairPhase] = useState(0);
-  
+  const cycleDuration = 4000;
+
   useEffect(() => {
-    const timers = [
-      setTimeout(() => setRepairPhase(1), delay * 1000),
-      setTimeout(() => setRepairPhase(2), (delay + 0.8) * 1000),
-      setTimeout(() => setRepairPhase(3), (delay + 1.6) * 1000),
-    ];
-    return () => timers.forEach(clearTimeout);
+    let interval: NodeJS.Timeout;
+    
+    const runCycle = () => {
+      setRepairPhase(0);
+      setTimeout(() => setRepairPhase(1), 200);
+      setTimeout(() => setRepairPhase(2), 1000);
+      setTimeout(() => setRepairPhase(3), 1800);
+      setTimeout(() => setRepairPhase(4), 3200); // fade out
+    };
+
+    const startDelay = setTimeout(() => {
+      runCycle();
+      interval = setInterval(runCycle, cycleDuration);
+    }, delay * 1000);
+    
+    return () => {
+      clearTimeout(startDelay);
+      if (interval) clearInterval(interval);
+    };
   }, [delay]);
 
   const getBrokenText = () => {
-    if (repairPhase === 0) return "";
+    if (repairPhase === 0 || repairPhase === 4) return "";
     if (repairPhase === 1) {
       return brokenWord.split('').map((char, i) => 
         i % 2 === 0 ? char : String.fromCharCode(char.charCodeAt(0) + Math.floor(Math.random() * 10))
@@ -203,17 +243,18 @@ function RepairedTitle({ prefix, brokenWord, suffix, delay }: {
     <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
       <motion.span
         className="text-primary"
-        initial={{ opacity: 0, x: -30 }}
-        animate={{ opacity: repairPhase >= 1 ? 1 : 0, x: repairPhase >= 1 ? 0 : -30 }}
-        transition={{ duration: 0.5 }}
+        animate={{ 
+          opacity: repairPhase >= 1 && repairPhase < 4 ? 1 : 0, 
+          x: repairPhase >= 1 && repairPhase < 4 ? 0 : -30 
+        }}
+        transition={{ duration: 0.4 }}
       >
         {prefix}
       </motion.span>
       {" "}
       <motion.span
         className="inline-block relative"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: repairPhase >= 1 ? 1 : 0 }}
+        animate={{ opacity: repairPhase >= 1 && repairPhase < 4 ? 1 : 0 }}
       >
         <AnimatePresence mode="wait">
           <motion.span
@@ -250,9 +291,8 @@ function RepairedTitle({ prefix, brokenWord, suffix, delay }: {
         )}
       </motion.span>
       <motion.span
-        initial={{ opacity: 0 }}
-        animate={{ opacity: repairPhase >= 3 ? 1 : 0 }}
-        transition={{ duration: 0.5 }}
+        animate={{ opacity: repairPhase >= 3 && repairPhase < 4 ? 1 : 0 }}
+        transition={{ duration: 0.4 }}
       >
         {suffix}
       </motion.span>
@@ -267,27 +307,49 @@ function ReplacementTitle({ prefix, words, delay }: {
 }) {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [isVisible, setIsVisible] = useState(false);
+  const cycleDuration = 5000;
 
   useEffect(() => {
-    const startTimer = setTimeout(() => {
+    let interval: NodeJS.Timeout;
+    
+    const runCycle = () => {
       setIsVisible(true);
       setCurrentIndex(0);
-    }, delay * 1000);
-    return () => clearTimeout(startTimer);
-  }, [delay]);
+      
+      // Cycle through words
+      let wordIndex = 0;
+      const wordInterval = setInterval(() => {
+        wordIndex++;
+        if (wordIndex < words.length) {
+          setCurrentIndex(wordIndex);
+        } else {
+          clearInterval(wordInterval);
+        }
+      }, 1200);
+      
+      // Reset after showing all
+      setTimeout(() => {
+        setIsVisible(false);
+        setCurrentIndex(-1);
+        clearInterval(wordInterval);
+      }, cycleDuration - 500);
+    };
 
-  useEffect(() => {
-    if (currentIndex >= 0 && currentIndex < words.length - 1) {
-      const timer = setTimeout(() => setCurrentIndex(prev => prev + 1), 1200);
-      return () => clearTimeout(timer);
-    }
-  }, [currentIndex, words.length]);
+    const startDelay = setTimeout(() => {
+      runCycle();
+      interval = setInterval(runCycle, cycleDuration);
+    }, delay * 1000);
+    
+    return () => {
+      clearTimeout(startDelay);
+      if (interval) clearInterval(interval);
+    };
+  }, [delay, words.length]);
 
   return (
     <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
       <motion.span
         className="text-accent"
-        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
         transition={{ duration: 0.5 }}
       >
@@ -303,7 +365,7 @@ function ReplacementTitle({ prefix, words, delay }: {
               initial={{ opacity: 0, y: 40, rotateX: -45, filter: "blur(8px)" }}
               animate={{ opacity: 1, y: 0, rotateX: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, y: -40, rotateX: 45, filter: "blur(8px)" }}
-              transition={{ duration: 0.6, ease: "easeInOut" }}
+              transition={{ duration: 0.6, ease: "easeInOut" as const }}
             >
               {words[currentIndex]}
               {currentIndex < words.length - 1 && (
