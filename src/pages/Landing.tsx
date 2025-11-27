@@ -648,26 +648,47 @@ export default function Landing() {
                 </DndContext>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-                  {homeCards.map(card => {
-                    const Icon = IconComponent(card.icon || 'BookOpen');
-                    const isLarge = (card.size === 'large') || card.title === 'Actions à mener';
-                    const isLogo = card.is_logo || false;
-
-                    // Si c'est un logo, afficher l'image avec taille limitée
-                    if (isLogo) {
-                      return (
-                        <div key={card.id} className="w-full max-w-sm mx-auto">
-                          <img 
-                            src={helpConfortServicesImg} 
-                            alt={card.title} 
-                            className="w-full h-auto pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
-                            draggable="false"
-                          />
-                        </div>
-                      );
+                  {(() => {
+                    // Séparer le logo des autres cartes
+                    const logoCard = homeCards.find(c => c.is_logo);
+                    const regularCards = homeCards.filter(c => !c.is_logo);
+                    
+                    // Trouver l'index de "Mes demandes de support"
+                    const supportCardIndex = regularCards.findIndex(c => 
+                      c.title?.toLowerCase().includes('support') || 
+                      c.title?.toLowerCase().includes('demande') ||
+                      c.link?.includes('/mes-demandes') ||
+                      c.link?.includes('/support')
+                    );
+                    
+                    // Réorganiser: insérer le logo après la carte support
+                    const reorderedCards = [...regularCards];
+                    if (logoCard && supportCardIndex !== -1) {
+                      reorderedCards.splice(supportCardIndex + 1, 0, logoCard);
+                    } else if (logoCard) {
+                      reorderedCards.push(logoCard);
                     }
+                    
+                    return reorderedCards.map(card => {
+                      const Icon = IconComponent(card.icon || 'BookOpen');
+                      const isLarge = (card.size === 'large') || card.title === 'Actions à mener';
+                      const isLogo = card.is_logo || false;
 
-                    // Gérer spécialement "Mes indicateurs"
+                      // Si c'est un logo, afficher l'image avec taille limitée
+                      if (isLogo) {
+                        return (
+                          <div key={card.id} className="w-full max-w-sm mx-auto">
+                            <img 
+                              src={helpConfortServicesImg} 
+                              alt={card.title} 
+                              className="w-full h-auto pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
+                              draggable="false"
+                            />
+                          </div>
+                      );
+                      }
+
+                      // Gérer spécialement "Mes indicateurs"
                     if (card.link?.includes('/mes-indicateurs')) {
                       const scope = 'mes_indicateurs';
                       const isLocked = !hasAccessToScope(scope) || !agence;
@@ -797,10 +818,11 @@ export default function Landing() {
                         <div className={isLarge ? "" : "flex-1 min-w-0"}>
                           <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{card.title}</h2>
                           <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{card.description}</p>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    });
+                  })()}
                 </div>
               )}
 
