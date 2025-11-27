@@ -256,12 +256,16 @@ export function calculateUniversApporteurMatrix(
     const project = projectsMap.get(f.projectId);
     if (!project) return;
 
-    // Extraire le montant HT avec tous les chemins possibles
-    const montantRaw = f.montantHT || f.data?.montantHT || f.data?.totalHT || f.totalHT || "0";
+    // Extraire le montant HT avec tous les chemins possibles (aligné sur calculateCaJour)
+    const montantRaw = f.totalHT || f.data?.totalHT || f.montantHT || f.data?.montantHT || "0";
     const montantStr = String(montantRaw).replace(/[^0-9.-]/g, '');
-    const caFacture = parseFloat(montantStr);
-    
-    if (isNaN(caFacture) || caFacture === 0) return;
+    const montant = parseFloat(montantStr);
+    if (isNaN(montant)) return;
+
+    const typeFacture = f.typeFacture || f.data?.type || f.state;
+    const caFacture = typeFacture === "avoir" || typeFacture === "Avoir"
+      ? -Math.abs(montant)
+      : montant;
 
     const rawUniverses = project.data?.universes || project.universes || [];
     const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
