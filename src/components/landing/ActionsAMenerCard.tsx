@@ -61,19 +61,6 @@ export function ActionsAMenerCard() {
           </>
         ) : stats ? (
           <>
-            {/* Devis à relancer */}
-            <div className="bg-background/60 backdrop-blur-sm rounded-lg p-2 border border-border/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                  <span className="text-xs text-muted-foreground font-medium">Devis à relancer</span>
-                </div>
-                <div className="text-lg font-bold text-foreground">
-                  {stats.devisARelancer}
-                </div>
-              </div>
-            </div>
-
             {/* Factures à faire */}
             <div className="bg-background/60 backdrop-blur-sm rounded-lg p-2 border border-border/50">
               <div className="flex items-center justify-between">
@@ -96,6 +83,19 @@ export function ActionsAMenerCard() {
                 </div>
                 <div className="text-lg font-bold text-destructive">
                   {stats.dossiersEnRetard}
+                </div>
+              </div>
+            </div>
+
+            {/* Total actions */}
+            <div className="bg-background/60 backdrop-blur-sm rounded-lg p-2 border border-border/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-orange-600" />
+                  <span className="text-xs text-muted-foreground font-medium">Total actions</span>
+                </div>
+                <div className="text-lg font-bold text-foreground">
+                  {stats.totalActions}
                 </div>
               </div>
             </div>
