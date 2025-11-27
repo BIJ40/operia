@@ -124,7 +124,7 @@ function PaintedTitle({ text, suffix, delay }: { text: string; suffix: string; d
   const letters = text.split('');
   
   return (
-    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
+    <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
       <span className="inline-flex">
         {letters.map((letter, index) => (
           <motion.span
@@ -204,7 +204,7 @@ function RepairedTitle({ prefix, brokenWord, suffix, delay }: {
   };
 
   return (
-    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight whitespace-nowrap">
+    <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight whitespace-nowrap">
       <motion.span
         className="text-primary"
         initial={{ opacity: 0, x: -30 }}
@@ -281,7 +281,7 @@ function ReplacementTitle({ prefix, words, delay }: {
   }, [delay, words.length]);
 
   return (
-    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight whitespace-nowrap">
+    <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6 leading-tight whitespace-nowrap">
       <motion.span
         className="text-accent"
         initial={{ opacity: 0, y: 20 }}
