@@ -20,9 +20,8 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
           <Button 
             onClick={onLoginClick}
             size="lg"
-            className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all"
           >
-            <LogIn className="w-5 h-5" />
             Se connecter
           </Button>
         </div>
@@ -59,24 +58,28 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
             title="Pilotage d'agence"
             description="KPI, CA, actions à mener. Visualisez les performances de votre agence en temps réel."
             color="primary"
+            delay={0}
           />
           <FeatureCard
             icon={BookOpen}
             title="Documentation"
             description="Guides complets, FAQ, ressources. Tout pour maîtriser Apogée et vos process."
             color="accent"
+            delay={100}
           />
           <FeatureCard
             icon={Headset}
             title="Support"
             description="Tickets, demandes, assistance. Une équipe dédiée pour vous accompagner."
             color="primary"
+            delay={200}
           />
           <FeatureCard
             icon={Network}
             title="Réseau"
             description="Pilotage franchiseur, statistiques réseau, gestion globale."
             color="accent"
+            delay={300}
           />
         </div>
       </section>
@@ -96,16 +99,20 @@ interface FeatureCardProps {
   title: string;
   description: string;
   color: 'primary' | 'accent';
+  delay?: number;
 }
 
-function FeatureCard({ icon: Icon, title, description, color }: FeatureCardProps) {
+function FeatureCard({ icon: Icon, title, description, color, delay = 0 }: FeatureCardProps) {
   const colorClasses = {
     primary: 'bg-primary/10 text-primary border-primary/20',
     accent: 'bg-accent/10 text-accent border-accent/20',
   };
 
   return (
-    <div className="group bg-card border rounded-2xl p-6 hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1">
+    <div 
+      className="group bg-card border rounded-2xl p-6 hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 animate-fade-in opacity-0"
+      style={{ animationDelay: `${delay}ms`, animationFillMode: 'forwards' }}
+    >
       <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${colorClasses[color]}`}>
         <Icon className="w-7 h-7" />
       </div>
