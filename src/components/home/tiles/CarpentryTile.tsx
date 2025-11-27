@@ -18,18 +18,45 @@ export const CarpentryTile = () => {
           et sécurisation des accès.
         </p>
 
-        {/* "Planche" */}
-        <div className="pointer-events-none absolute left-4 right-4 bottom-4 h-2 rounded-full bg-amber-300/70" />
+        {/* Planche qui se fait découper */}
+        <div className="pointer-events-none absolute left-4 right-4 bottom-4 h-3 rounded-full bg-amber-300/70 overflow-hidden">
+          {/* Trait de coupe qui traverse */}
+          <motion.div
+            className="absolute top-0 bottom-0 w-1 bg-amber-900/60"
+            initial={{ left: "-10%" }}
+            animate={{ left: "110%" }}
+            transition={{ delay: 0.6, duration: 1.2, ease: "easeInOut" }}
+          />
+        </div>
+
+        {/* Copeaux qui volent */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="pointer-events-none absolute w-1 h-1 rounded-full bg-amber-400"
+            style={{ bottom: 16, left: `${30 + i * 8}%` }}
+            initial={{ opacity: 0, y: 0, x: 0 }}
+            animate={{ 
+              opacity: [0, 1, 0],
+              y: [-5, -15 - Math.random() * 10],
+              x: [0, (Math.random() - 0.5) * 20]
+            }}
+            transition={{ 
+              delay: 0.7 + i * 0.1, 
+              duration: 0.5,
+              ease: "easeOut"
+            }}
+          />
+        ))}
 
         {/* Scie qui traverse */}
         <motion.div
-          className="pointer-events-none absolute left-2 bottom-2 h-8 px-3 rounded-full bg-amber-500/90 text-xs text-white font-semibold flex items-center gap-1"
-          initial={{ x: -40, y: 4, rotate: -10, opacity: 0 }}
-          animate={{ x: 60, y: 8, rotate: 8, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.7, ease: "easeInOut" }}
+          className="pointer-events-none absolute left-2 bottom-2 h-8 w-8 rounded-full bg-amber-500/90 flex items-center justify-center text-lg"
+          initial={{ x: -40, rotate: -10, opacity: 0 }}
+          animate={{ x: 120, rotate: 10, opacity: 1 }}
+          transition={{ delay: 0.5, duration: 1.2, ease: "easeInOut" }}
         >
           🪚
-          <span className="hidden md:inline">Découpe</span>
         </motion.div>
       </ServiceTile>
     </motion.div>
