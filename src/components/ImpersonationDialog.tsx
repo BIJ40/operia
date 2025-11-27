@@ -29,9 +29,9 @@ export function ImpersonationDialog({ open, onOpenChange }: ImpersonationDialogP
   // Appliquer les règles automatiques quand le rôle change
   useEffect(() => {
     if (isTeteDeReseau) {
-      // Tête de réseau = franchiseur + support automatiquement
+      // Tête de réseau = franchiseur + support automatiquement, MAIS pas d'indicateurs (pas d'agence)
       setHasSupportRole(true);
-      setHasIndicateursAccess(true);
+      setHasIndicateursAccess(false); // Pas d'agence = pas d'indicateurs
       setAgence(''); // Pas d'agence de rattachement
       if (franchiseurRole === 'none') {
         setFranchiseurRole('animateur'); // Par défaut animateur
