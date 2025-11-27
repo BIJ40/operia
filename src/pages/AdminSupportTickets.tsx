@@ -222,8 +222,8 @@ export default function AdminSupportTickets() {
 
   return (
     <div className={darkMode ? 'dark' : ''}>
-      <div className="space-y-6 p-6">
-          <div className="flex items-center justify-between">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
                 Support & Tickets
@@ -752,6 +752,5 @@ export default function AdminSupportTickets() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

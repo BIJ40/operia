@@ -2,103 +2,127 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ============================================
+   DESIGN SYSTEM - HelpConfort Services
+   ============================================
+   Palette:
+   - Bleu principal: #003A70 → HSL(207, 100%, 22%)
+   - Orange accent: #FF7A00 → HSL(29, 100%, 50%)
+   - Gris fond: #F4F6F8 → HSL(210, 20%, 97%)
+   
+   Typography: Inter
+   Border radius: 8px (0.5rem)
+   ============================================ */
 
 @layer base {
   :root {
+    /* Background & Foreground */
     --background: 0 0% 100%;
-    --foreground: 0 0% 29%;
+    --foreground: 210 20% 20%;
 
+    /* Cards */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 29%;
+    --card-foreground: 210 20% 20%;
 
+    /* Popovers */
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 29%;
+    --popover-foreground: 210 20% 20%;
 
-    /* Bleu principal Help Confort */
-    --primary: 198 100% 42%;
+    /* Primary - Bleu HelpConfort #003A70 */
+    --primary: 207 100% 22%;
     --primary-foreground: 0 0% 100%;
 
-    /* Bleu clair pour surfaces */
-    --secondary: 204 24% 93%;
-    --secondary-foreground: 0 0% 29%;
+    /* Secondary - Gris clair */
+    --secondary: 210 20% 97%;
+    --secondary-foreground: 210 20% 20%;
 
-    --muted: 204 24% 93%;
-    --muted-foreground: 0 0% 50%;
+    /* Muted */
+    --muted: 210 20% 97%;
+    --muted-foreground: 210 10% 50%;
 
-    /* Orange Help Confort pour accents - #F7A600 */
-    --accent: 40 100% 48%;
+    /* Accent - Orange HelpConfort #FF7A00 */
+    --accent: 29 100% 50%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
+    /* Destructive */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 204 24% 90%;
-    --input: 204 24% 90%;
-    --ring: 198 100% 42%;
+    /* Borders & Inputs */
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 207 100% 22%;
 
+    /* Border radius - 8px */
     --radius: 0.5rem;
 
-    /* Bleu clair pour sidebar */
-    --sidebar-background: 204 24% 98%;
-    --sidebar-foreground: 0 0% 29%;
-    --sidebar-primary: 198 100% 42%;
+    /* Sidebar */
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 210 20% 20%;
+    --sidebar-primary: 207 100% 22%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 204 24% 93%;
-    --sidebar-accent-foreground: 0 0% 29%;
-    --sidebar-border: 204 24% 90%;
-    --sidebar-ring: 198 100% 42%;
+    --sidebar-accent: 210 20% 95%;
+    --sidebar-accent-foreground: 210 20% 20%;
+    --sidebar-border: 210 20% 90%;
+    --sidebar-ring: 207 100% 22%;
 
-    /* Palette Help Confort complète */
-    --blue-light: 194 100% 46%;
-    --blue-main: 198 100% 42%;
-    --blue-dark: 207 100% 33%;
-    --orange-accent: 40 100% 48%; /* #F7A600 */
-    
-    --cyan: 198 100% 42%;
+    /* Palette HelpConfort étendue */
+    --hc-blue: 207 100% 22%;
+    --hc-blue-light: 207 80% 35%;
+    --hc-blue-dark: 207 100% 15%;
+    --hc-orange: 29 100% 50%;
+    --hc-orange-light: 29 100% 60%;
+    --hc-gray: 210 20% 97%;
+    --hc-gray-dark: 210 15% 85%;
+
+    /* Legacy aliases */
+    --blue-light: 207 80% 35%;
+    --blue-main: 207 100% 22%;
+    --blue-dark: 207 100% 15%;
+    --orange-accent: 29 100% 50%;
+    --cyan: 207 100% 22%;
     --cyan-foreground: 0 0% 100%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 222 20% 8%;
+    --foreground: 210 20% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 222 20% 10%;
+    --card-foreground: 210 20% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 20% 10%;
+    --popover-foreground: 210 20% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 207 80% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 222 15% 15%;
+    --secondary-foreground: 210 20% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 222 15% 15%;
+    --muted-foreground: 210 10% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 29 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 60% 40%;
+    --destructive-foreground: 210 20% 95%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: 222 15% 20%;
+    --input: 222 15% 20%;
+    --ring: 207 80% 50%;
+
+    --sidebar-background: 222 20% 6%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 207 80% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 222 15% 12%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 222 15% 15%;
+    --sidebar-ring: 207 80% 50%;
 
-    --cyan: 180 100% 45%;
+    --cyan: 207 80% 50%;
     --cyan-foreground: 0 0% 100%;
   }
 }
@@ -108,18 +132,85 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+  }
+
+  /* Typography Scale */
+  h1 {
+    @apply text-2xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-lg font-semibold;
+  }
+
+  h4 {
+    @apply text-base font-medium;
   }
 }
 
-/* TipTap Editor Styles - Fix cursor visibility */
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+@layer components {
+  /* Page container */
+  .page-container {
+    @apply p-6 space-y-6;
+  }
+
+  /* Section spacing */
+  .section {
+    @apply py-8 px-6;
+  }
+
+  /* Card consistent styling */
+  .card-hc {
+    @apply bg-card rounded-lg border shadow-sm;
+  }
+
+  /* Button HelpConfort primary */
+  .btn-hc-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 font-medium transition-colors;
+  }
+
+  /* Button HelpConfort outline */
+  .btn-hc-outline {
+    @apply border border-primary text-primary hover:bg-primary/10 rounded-lg px-4 py-2 font-medium transition-colors;
+  }
+
+  /* Grid gaps */
+  .grid-gap-sm {
+    @apply gap-3;
+  }
+
+  .grid-gap-md {
+    @apply gap-4;
+  }
+
+  .grid-gap-lg {
+    @apply gap-6;
+  }
+}
+
+/* ============================================
+   TIPTAP EDITOR STYLES
+   ============================================ */
+
 .ProseMirror {
   min-height: 200px;
   outline: none;
 }
 
-/* Heading styles in editor */
 .ProseMirror h1 {
   font-size: 1.875rem;
   font-weight: 700;
@@ -147,7 +238,10 @@ All colors MUST be HSL.
   display: block;
 }
 
-/* Styles pour l'affichage du contenu (mode lecture) */
+/* ============================================
+   PROSE STYLES (Reading Mode)
+   ============================================ */
+
 .prose p {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
@@ -258,7 +352,6 @@ All colors MUST be HSL.
   height: 0;
 }
 
-/* Force cursor visibility */
 .ProseMirror-focused {
   outline: none;
 }
@@ -285,7 +378,6 @@ All colors MUST be HSL.
   }
 }
 
-/* Ensure cursor is always visible at line breaks */
 .ProseMirror br {
   display: inline;
 }
@@ -294,13 +386,16 @@ All colors MUST be HSL.
   content: '\200B';
 }
 
-/* Callout styles for reading mode (when HTML is displayed via dangerouslySetInnerHTML) */
+/* ============================================
+   CALLOUT STYLES
+   ============================================ */
+
 div[data-callout] {
   @apply border-l-4 p-4 rounded-lg my-4 relative;
 }
 
 div[data-callout][data-type="warning"] {
-  @apply bg-yellow-50 border-l-yellow-500;
+  @apply bg-amber-50 border-l-amber-500;
 }
 
 div[data-callout][data-type="info"] {
@@ -308,7 +403,7 @@ div[data-callout][data-type="info"] {
 }
 
 div[data-callout][data-type="tip"] {
-  @apply bg-green-50 border-l-green-500;
+  @apply bg-emerald-50 border-l-emerald-500;
 }
 
 div[data-callout][data-type="danger"] {
@@ -320,10 +415,13 @@ div[data-callout] .font-bold {
 }
 
 div[data-callout] p {
-  @apply text-sm text-gray-800 my-1;
+  @apply text-sm text-foreground/80 my-1;
 }
 
-/* Make images in content clickable with cursor pointer */
+/* ============================================
+   IMAGE STYLES
+   ============================================ */
+
 .prose img {
   cursor: pointer;
   transition: opacity 0.2s;
@@ -337,7 +435,6 @@ div[data-callout] p {
   opacity: 0.8;
 }
 
-/* Image positioning classes */
 .prose .image-float-left {
   float: left !important;
   margin: 0 1rem 0.5rem 0 !important;
@@ -359,14 +456,12 @@ div[data-callout] p {
   max-width: 100% !important;
 }
 
-/* Clear floats */
 .prose::after {
   content: "";
   display: table;
   clear: both;
 }
 
-/* Make image modal buttons clickable in rendered content */
 .prose button[data-image-modal],
 button[data-image-modal] {
   pointer-events: auto !important;
@@ -382,10 +477,9 @@ button[data-image-modal] {
   cursor: pointer !important;
 }
 
-/* Hover effect for image preview buttons */
 .image-preview-btn:hover {
-  background: #eff6ff !important;
-  border-color: #3b82f6 !important;
+  background: hsl(var(--primary) / 0.1) !important;
+  border-color: hsl(var(--primary)) !important;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 2px 4px hsl(var(--primary) / 0.1);
 }
