@@ -258,9 +258,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     const blockToDelete = blocks.find(b => b.id === id);
     const contentLength = blockToDelete?.content?.replace(/<[^>]*>/g, '').trim().length || 0;
     
-    // Si le contenu est vide ou très court (< 20 caractères), on supprime définitivement
+    // Si le contenu est vide ou très court (< 50 caractères), on supprime définitivement
     // Sinon, on archive pour éviter les pertes accidentelles
-    const shouldDeletePermanently = contentLength < 20;
+    const shouldDeletePermanently = contentLength < 50;
     
     try {
       if (shouldDeletePermanently) {
@@ -273,9 +273,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
         
         setBlocks((prev) => prev.filter((block) => block.id !== id));
-        toast({ title: 'Bloc supprimé', description: 'Le bloc vide a été supprimé définitivement.' });
+        toast({ title: 'Bloc supprimé', description: 'Le bloc a été supprimé définitivement.' });
       } else {
-        // Archivage (pour contenu non vide)
+        // Archivage (pour contenu significatif)
         const { error } = await supabase
           .from('blocks')
           .update({ hide_from_sidebar: true })
@@ -283,10 +283,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         
         if (error) throw error;
         
-        setBlocks((prev) => prev.map((block) =>
-          block.id === id ? { ...block, hideFromSidebar: true } : block
-        ));
-        toast({ title: 'Bloc archivé', description: 'Le contenu est caché mais toujours présent en base.' });
+        setBlocks((prev) => prev.filter((block) => block.id !== id));
+        toast({ title: 'Bloc archivé', description: 'Le contenu est conservé en base mais masqué.' });
       }
     } catch (error) {
       console.error('Erreur suppression:', error);
