@@ -1,30 +1,107 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
+import { ScopeSlug, EffectivePermission, PERMISSION_LEVELS } from '@/types/permissions';
 
 interface Block {
   id: string;
   parentId?: string | null;
-  [key: string]: any;
 }
 
-// Ne plus filtrer, mais retourner tous les blocks
+// Hook pour obtenir les blocks filtrés (conservé pour compatibilité)
 export function useFilteredBlocks<T extends Block>(blocks: T[]): T[] {
   return blocks;
 }
 
-// Nouvelle fonction pour vérifier si un block est verrouillé
+// Hook pour vérifier si un block est verrouillé
 export function useIsBlockLocked() {
   const { hasAccessToBlock, isAdmin, roleAgence } = useAuth();
 
   return useMemo(() => {
-    return (blockId: string, blocks: Block[] = []): boolean => {
-      // Les admins et les utilisateurs sans rôle spécifique ont accès à tout
+    return (blockId: string, _blocks: Block[] = []): boolean => {
       if (isAdmin || !roleAgence) {
         return false;
       }
-
-      // Vérifier l'accès au block
       return !hasAccessToBlock(blockId);
     };
   }, [hasAccessToBlock, isAdmin, roleAgence]);
+}
+
+// Hook principal pour les permissions de scope
+export function usePermissions() {
+  const { 
+    canViewScope, 
+    canEditScope, 
+    canCreateScope, 
+    canDeleteScope,
+    getEffectivePermission,
+    hasCapability,
+    isAdmin,
+    isSupport,
+    isFranchiseur,
+    scopes
+  } = useAuth();
+
+  // Vérifier l'accès à un scope
+  const checkAccess = useCallback((scopeSlug: ScopeSlug | string, action: 'view' | 'edit' | 'create' | 'delete' = 'view'): boolean => {
+    switch (action) {
+      case 'view': return canViewScope(scopeSlug);
+      case 'edit': return canEditScope(scopeSlug);
+      case 'create': return canCreateScope(scopeSlug);
+      case 'delete': return canDeleteScope(scopeSlug);
+      default: return canViewScope(scopeSlug);
+    }
+  }, [canViewScope, canEditScope, canCreateScope, canDeleteScope]);
+
+  // Obtenir le niveau de permission effectif
+  const getPermissionLevel = useCallback((scopeSlug: ScopeSlug | string): number => {
+    return getEffectivePermission(scopeSlug).level;
+  }, [getEffectivePermission]);
+
+  // Vérifier si l'utilisateur a un niveau minimum
+  const hasMinLevel = useCallback((scopeSlug: ScopeSlug | string, minLevel: number): boolean => {
+    return getPermissionLevel(scopeSlug) >= minLevel;
+  }, [getPermissionLevel]);
+
+  // Obtenir tous les scopes accessibles par area
+  const getScopesByArea = useCallback((area: string): typeof scopes => {
+    return scopes.filter(s => s.area === area && canViewScope(s.slug));
+  }, [scopes, canViewScope]);
+
+  // Vérifier si l'utilisateur peut gérer le support
+  const canManageSupport = useMemo(() => {
+    return isAdmin || isSupport || isFranchiseur || hasCapability('support');
+  }, [isAdmin, isSupport, isFranchiseur, hasCapability]);
+
+  // Vérifier si l'utilisateur peut éditer le contenu
+  const canEditContent = useMemo(() => {
+    return isAdmin || hasCapability('content_editor');
+  }, [isAdmin, hasCapability]);
+
+  return {
+    checkAccess,
+    getPermissionLevel,
+    hasMinLevel,
+    getScopesByArea,
+    getEffectivePermission,
+    hasCapability,
+    canManageSupport,
+    canEditContent,
+    isAdmin,
+    isSupport,
+    isFranchiseur,
+    scopes,
+    PERMISSION_LEVELS
+  };
+}
+
+// Hook simplifié pour vérifier rapidement un accès
+export function useCanAccess(scopeSlug: ScopeSlug | string, action: 'view' | 'edit' | 'create' | 'delete' = 'view'): boolean {
+  const { checkAccess } = usePermissions();
+  return useMemo(() => checkAccess(scopeSlug, action), [checkAccess, scopeSlug, action]);
+}
+
+// Hook pour obtenir la permission effective d'un scope
+export function useScopePermission(scopeSlug: ScopeSlug | string): EffectivePermission {
+  const { getEffectivePermission } = usePermissions();
+  return useMemo(() => getEffectivePermission(scopeSlug), [getEffectivePermission, scopeSlug]);
 }

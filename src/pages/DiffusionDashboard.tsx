@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Settings, Maximize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDiffusionSettings } from '@/hooks/use-diffusion-settings';
@@ -10,10 +11,22 @@ import { DiffusionSlides } from '@/components/diffusion/DiffusionSlides';
 import { DiffusionSettingsPanel } from '@/components/diffusion/DiffusionSettingsPanel';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { SCOPE_SLUGS } from '@/types/permissions';
 
 export default function DiffusionDashboard() {
   const { settings, isLoading, updateSettings } = useDiffusionSettings();
+  const { isAuthenticated, canViewScope } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Vérifier les permissions
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (!canViewScope(SCOPE_SLUGS.DIFFUSION)) {
+    return <Navigate to="/" replace />;
+  }
 
   const nbMonths = 12; // Mois de l'année
   const nbSlides = settings?.enabled_slides?.length || 4;

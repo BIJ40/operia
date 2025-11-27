@@ -721,6 +721,7 @@ export type Database = {
           last_name: string | null
           must_change_password: boolean | null
           role_agence: string | null
+          role_id: string | null
           service_competencies: Json | null
           support_level: number | null
           updated_at: string
@@ -736,6 +737,7 @@ export type Database = {
           last_name?: string | null
           must_change_password?: boolean | null
           role_agence?: string | null
+          role_id?: string | null
           service_competencies?: Json | null
           support_level?: number | null
           updated_at?: string
@@ -751,6 +753,7 @@ export type Database = {
           last_name?: string | null
           must_change_password?: boolean | null
           role_agence?: string | null
+          role_id?: string | null
           service_competencies?: Json | null
           support_level?: number | null
           updated_at?: string
@@ -761,25 +764,115 @@ export type Database = {
         Row: {
           block_id: string
           can_access: boolean
+          can_create: boolean | null
+          can_delete: boolean | null
+          can_edit: boolean | null
+          can_view: boolean | null
           created_at: string | null
           id: string
+          level: number | null
           role_agence: string
+          scope_id: string | null
           updated_at: string | null
         }
         Insert: {
           block_id: string
           can_access?: boolean
+          can_create?: boolean | null
+          can_delete?: boolean | null
+          can_edit?: boolean | null
+          can_view?: boolean | null
           created_at?: string | null
           id?: string
+          level?: number | null
           role_agence: string
+          scope_id?: string | null
           updated_at?: string | null
         }
         Update: {
           block_id?: string
           can_access?: boolean
+          can_create?: boolean | null
+          can_delete?: boolean | null
+          can_edit?: boolean | null
+          can_view?: boolean | null
           created_at?: string | null
           id?: string
+          level?: number | null
           role_agence?: string
+          scope_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      roles: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          label: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      scopes: {
+        Row: {
+          area: string
+          created_at: string | null
+          default_level: number | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          label: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          area: string
+          created_at?: string | null
+          default_level?: number | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          area?: string
+          created_at?: string | null
+          default_level?: number | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          slug?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -1099,6 +1192,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_capabilities: {
+        Row: {
+          capability: string
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          capability: string
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          capability?: string
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_connection_logs: {
         Row: {
           connected_at: string
@@ -1166,24 +1289,45 @@ export type Database = {
         Row: {
           block_id: string
           can_access: boolean
+          can_create: boolean | null
+          can_delete: boolean | null
+          can_edit: boolean | null
+          can_view: boolean | null
           created_at: string | null
+          deny: boolean | null
           id: string
+          level: number | null
+          scope_id: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           block_id: string
           can_access?: boolean
+          can_create?: boolean | null
+          can_delete?: boolean | null
+          can_edit?: boolean | null
+          can_view?: boolean | null
           created_at?: string | null
+          deny?: boolean | null
           id?: string
+          level?: number | null
+          scope_id?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           block_id?: string
           can_access?: boolean
+          can_create?: boolean | null
+          can_delete?: boolean | null
+          can_edit?: boolean | null
+          can_view?: boolean | null
           created_at?: string | null
+          deny?: boolean | null
           id?: string
+          level?: number | null
+          scope_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
