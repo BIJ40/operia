@@ -102,10 +102,11 @@ export function Header() {
             <Button
               onClick={() => setImpersonationOpen(true)}
               variant="ghost"
-              className="flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-300 dark:border-amber-700 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-800/50 hover:border-amber-400 hover:scale-[1.02] transition-all duration-300"
+              size="icon"
+              className="p-2 bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-300 dark:border-amber-700 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-800/50 hover:border-amber-400 hover:scale-[1.02] transition-all duration-300"
+              title="Voir en tant que"
             >
               <Eye className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-              <span className="font-semibold text-amber-700 dark:text-amber-300">VOIR EN TANT QUE</span>
             </Button>
 
             {isFranchiseur && (
