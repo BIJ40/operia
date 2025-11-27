@@ -16,7 +16,6 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Header } from '@/components/Header';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { EscalateTicketDialog } from '@/components/admin/support/EscalateTicketDialog';
@@ -51,7 +50,6 @@ export default function Support() {
   const [darkMode, setDarkMode] = useState(false);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
 
-  // Transformer supportUsers pour le format attendu
   const formattedSupportUsers = supportUsers.map(u => ({
     id: u.id,
     name: `${u.first_name} ${u.last_name}`,
@@ -94,17 +92,14 @@ export default function Support() {
     }
   }, [isSupport, isAdmin, navigate]);
 
-  // Appliquer le filtre depuis la navigation header si présent
   useEffect(() => {
     const state = location.state as { filterStatus?: string } | null;
     if (state?.filterStatus) {
       setFilters(prev => ({ ...prev, status: state.filterStatus as any }));
-      // Nettoyer le state pour éviter de réappliquer le filtre
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state]);
 
-  // Charger les préférences email
   useEffect(() => {
     const loadEmailPreferences = async () => {
       if (user) {
@@ -180,479 +175,424 @@ export default function Support() {
   const stats = getStats();
 
   return (
-    <>
-      <Header />
-      <div className={`min-h-screen ${darkMode ? 'dark' : ''} bg-gradient-to-br from-background to-muted/20`}>
-        <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-                Support & Tickets
-              </h1>
-              <p className="text-muted-foreground mt-1">Console unifiée de gestion des demandes</p>
+    <div className={`${darkMode ? 'dark' : ''} space-y-6`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+            Support & Tickets
+          </h1>
+          <p className="text-muted-foreground mt-1">Console unifiée de gestion des demandes</p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setDarkMode(!darkMode)}
+            title={darkMode ? 'Mode clair' : 'Mode sombre'}
+          >
+            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleEmailNotifications}
+            title={emailNotificationsEnabled ? 'Désactiver les emails' : 'Activer les emails'}
+          >
+            {emailNotificationsEnabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Card 
+          className={getCardClassName('all')}
+          onClick={() => setFilters({ ...filters, status: 'all' })}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+        <Card 
+          className={getCardClassName('waiting')}
+          onClick={() => setFilters({ ...filters, status: 'waiting' })}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">En attente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{stats.waiting}</div>
+          </CardContent>
+        </Card>
+        <Card 
+          className={getCardClassName('in_progress')}
+          onClick={() => setFilters({ ...filters, status: 'in_progress' })}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">En cours</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
+          </CardContent>
+        </Card>
+        <Card 
+          className={getCardClassName('resolved')}
+          onClick={() => setFilters({ ...filters, status: 'resolved' })}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Résolus</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
+          </CardContent>
+        </Card>
+        <Card 
+          className={getCardClassName('unresolved')}
+          onClick={() => setFilters({ ...filters, status: 'unresolved' })}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Non résolus</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{stats.unresolved}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-5">
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Demandes</CardTitle>
+            <CardDescription>Chats en cours et tickets</CardDescription>
+            
+            <div className="grid grid-cols-2 gap-2 pt-4">
+              <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les statuts</SelectItem>
+                  <SelectItem value="waiting">En attente</SelectItem>
+                  <SelectItem value="in_progress">En cours</SelectItem>
+                  <SelectItem value="resolved">Résolu</SelectItem>
+                  <SelectItem value="unresolved">Non résolu</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes les catégories</SelectItem>
+                  <SelectItem value="bug">Bug</SelectItem>
+                  <SelectItem value="improvement">Amélioration</SelectItem>
+                  <SelectItem value="blocking">Blocage</SelectItem>
+                  <SelectItem value="question">Question</SelectItem>
+                  <SelectItem value="other">Autre</SelectItem>
+                </SelectContent>
+              </Select>
+
+               <Select value={filters.source} onValueChange={(v) => setFilters({ ...filters, source: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Type de demande" />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  <SelectItem value="all">Tous les types</SelectItem>
+                  <SelectItem value="live_chat">🟢 Chats en cours</SelectItem>
+                  <SelectItem value="escalated">🔄 Ex-Demandes</SelectItem>
+                  <SelectItem value="portal">🎫 Tickets</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filters.priority} onValueChange={(v) => setFilters({ ...filters, priority: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Degré d'urgence" />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  <SelectItem value="all">Tous les niveaux</SelectItem>
+                  <SelectItem value="low">🟢 Faible</SelectItem>
+                  <SelectItem value="normal">🔵 Normal</SelectItem>
+                  <SelectItem value="high">🟠 Élevé</SelectItem>
+                  <SelectItem value="urgent">🔴 Urgent</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setDarkMode(!darkMode)}
-                title={darkMode ? 'Mode clair' : 'Mode sombre'}
-              >
-                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={toggleEmailNotifications}
-                title={emailNotificationsEnabled ? 'Désactiver les emails' : 'Activer les emails'}
-              >
-                {emailNotificationsEnabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
-              </Button>
-            </div>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-            <Card 
-              className={getCardClassName('all')}
-              onClick={() => setFilters({ ...filters, status: 'all' })}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total}</div>
-              </CardContent>
-            </Card>
-            <Card 
-              className={getCardClassName('waiting')}
-              onClick={() => setFilters({ ...filters, status: 'waiting' })}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">En attente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{stats.waiting}</div>
-              </CardContent>
-            </Card>
-            <Card 
-              className={getCardClassName('in_progress')}
-              onClick={() => setFilters({ ...filters, status: 'in_progress' })}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">En cours</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
-              </CardContent>
-            </Card>
-            <Card 
-              className={getCardClassName('resolved')}
-              onClick={() => setFilters({ ...filters, status: 'resolved' })}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Résolus</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
-              </CardContent>
-            </Card>
-            <Card 
-              className={getCardClassName('unresolved')}
-              onClick={() => setFilters({ ...filters, status: 'unresolved' })}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Non résolus</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">{stats.unresolved}</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-5">
-            {/* Tickets List */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Demandes</CardTitle>
-                <CardDescription>Chats en cours et tickets</CardDescription>
-                
-                {/* Filters - 2 lignes */}
-                <div className="grid grid-cols-2 gap-2 pt-4">
-                  <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Statut" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tous les statuts</SelectItem>
-                      <SelectItem value="waiting">En attente</SelectItem>
-                      <SelectItem value="in_progress">En cours</SelectItem>
-                      <SelectItem value="resolved">Résolu</SelectItem>
-                      <SelectItem value="unresolved">Non résolu</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Catégorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Toutes les catégories</SelectItem>
-                      <SelectItem value="bug">Bug</SelectItem>
-                      <SelectItem value="improvement">Amélioration</SelectItem>
-                      <SelectItem value="blocking">Blocage</SelectItem>
-                      <SelectItem value="question">Question</SelectItem>
-                      <SelectItem value="other">Autre</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                   <Select value={filters.source} onValueChange={(v) => setFilters({ ...filters, source: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Type de demande" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      <SelectItem value="all">Tous les types</SelectItem>
-                      <SelectItem value="live_chat">🟢 Chats en cours</SelectItem>
-                      <SelectItem value="escalated">🔄 Ex-Demandes</SelectItem>
-                      <SelectItem value="portal">🎫 Tickets</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={filters.priority} onValueChange={(v) => setFilters({ ...filters, priority: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Degré d'urgence" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      <SelectItem value="all">Tous les niveaux</SelectItem>
-                      <SelectItem value="low">🟢 Faible</SelectItem>
-                      <SelectItem value="normal">🔵 Normal</SelectItem>
-                      <SelectItem value="high">🟠 Élevé</SelectItem>
-                      <SelectItem value="urgent">🔴 Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[600px]">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[600px]">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              ) : tickets.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Aucune demande</p>
+              ) : (
+                <div className="space-y-2">
+                  {tickets.map((ticket) => (
+                    <Card
+                      key={ticket.id}
+                      className={`cursor-pointer transition-all hover:shadow-md ${
+                        selectedTicket?.id === ticket.id ? 'border-primary border-2' : ''
+                      }`}
+                      onClick={() => setSelectedTicket(ticket)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold truncate">{ticket.subject || 'Sans sujet'}</p>
+                            {ticket.assigned_to && (
+                              <p className="text-xs text-primary font-medium mt-1">
+                                👤 {formattedSupportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Assigné'}
+                              </p>
+                            )}
+                          </div>
+                          {getStatusBadge(ticket.status)}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {getDemandTypeBadge(ticket)}
+                          <SupportLevelBadge level={ticket.support_level || 1} />
+                          <ServiceBadge service={ticket.service} />
+                          {ticket.category && <TicketCategoryBadge category={ticket.category} />}
+                          {getPriorityBadge(ticket.priority)}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {format(new Date(ticket.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
+                        </p>
+                        {ticket.agency_slug && (
+                          <Badge variant="outline" className="mt-2">
+                            {ticket.agency_slug}
+                          </Badge>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-3">
+          <CardHeader>
+            <CardTitle>
+              {selectedTicket ? 'Détail de la demande' : 'Sélectionnez une demande'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!selectedTicket ? (
+              <p className="text-center text-muted-foreground py-8">
+                Sélectionnez une demande dans la liste pour voir les détails
+              </p>
+            ) : (
+              <Tabs defaultValue="conversation">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="conversation">Conversation</TabsTrigger>
+                  <TabsTrigger value="details">Détails</TabsTrigger>
+                  <TabsTrigger value="attachments">
+                    Pièces jointes ({attachments.length})
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="conversation" className="space-y-4">
+                  <div className="flex gap-2 flex-wrap">
+                    <Select
+                      value={selectedTicket.status}
+                      onValueChange={(v) => updateTicketStatus(selectedTicket.id, v)}
+                    >
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="waiting">En attente</SelectItem>
+                        <SelectItem value="in_progress">En cours</SelectItem>
+                        <SelectItem value="resolved">Résolu</SelectItem>
+                        <SelectItem value="unresolved">Non résolu</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={selectedTicket.priority}
+                      onValueChange={(v) => updateTicketPriority(selectedTicket.id, v)}
+                    >
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Faible</SelectItem>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="high">Élevée</SelectItem>
+                        <SelectItem value="urgent">Urgente</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {!selectedTicket.assigned_to && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => user && takeTicket(selectedTicket.id, user.id)}
+                      >
+                        Prendre en charge
+                      </Button>
+                    )}
+
+                    {selectedTicket.status === 'resolved' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => reopenTicket(selectedTicket.id)}
+                      >
+                        Rouvrir
+                      </Button>
+                    )}
+
+                    <EscalateTicketDialog
+                      ticket={selectedTicket}
+                      supportUsers={formattedSupportUsers}
+                      onEscalate={(targetLevel, targetUserId, reason) => 
+                        escalateTicket(selectedTicket.id, targetLevel, targetUserId, reason)
+                      }
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <ScrollArea className="h-[400px]">
+                    <div className="space-y-4">
+                      {messages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`flex ${msg.is_from_support ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[80%] rounded-lg p-3 ${
+                              msg.is_from_support
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted'
+                            }`}
+                          >
+                            <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                            <p className="text-xs opacity-70 mt-1">
+                              {format(new Date(msg.created_at), 'HH:mm', { locale: fr })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ) : tickets.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">Aucune demande</p>
+                  </ScrollArea>
+
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Répondre..."
+                      className="flex-1"
+                      rows={3}
+                    />
+                    <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="details" className="space-y-4">
+                  <div className="grid gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Sujet</label>
+                      <p className="text-sm text-muted-foreground">{selectedTicket.subject || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">ID Utilisateur</label>
+                      <p className="text-sm text-muted-foreground">{selectedTicket.user_id}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Agence</label>
+                      <p className="text-sm text-muted-foreground">{selectedTicket.agency_slug || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Service</label>
+                      <div className="mt-1">
+                        <ServiceBadge service={selectedTicket.service} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Type de demande</label>
+                      <div className="mt-1">
+                        {getDemandTypeBadge(selectedTicket)}
+                      </div>
+                    </div>
+                    {selectedTicket.category && (
+                      <div>
+                        <label className="text-sm font-medium">Catégorie</label>
+                        <div className="mt-1">
+                          <TicketCategoryBadge category={selectedTicket.category} />
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <label className="text-sm font-medium">Créé le</label>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(selectedTicket.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                      </p>
+                    </div>
+                    {selectedTicket.resolved_at && (
+                      <div>
+                        <label className="text-sm font-medium">Résolu le</label>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(selectedTicket.resolved_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                        </p>
+                      </div>
+                    )}
+                    {selectedTicket.rating && (
+                      <div>
+                        <label className="text-sm font-medium">Note de satisfaction</label>
+                        <p className="text-sm text-muted-foreground">{selectedTicket.rating} / 5</p>
+                        {selectedTicket.rating_comment && (
+                          <p className="text-sm text-muted-foreground italic mt-1">
+                            "{selectedTicket.rating_comment}"
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="attachments" className="space-y-4">
+                  {attachments.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      Aucune pièce jointe
+                    </p>
                   ) : (
                     <div className="space-y-2">
-                      {tickets.map((ticket) => (
-                        <Card
-                          key={ticket.id}
-                          className={`cursor-pointer transition-all hover:shadow-md ${
-                            selectedTicket?.id === ticket.id ? 'border-primary border-2' : ''
-                          }`}
-                          onClick={() => setSelectedTicket(ticket)}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="font-semibold truncate">{ticket.subject || 'Sans sujet'}</p>
-                                {ticket.assigned_to && (
-                                  <p className="text-xs text-primary font-medium mt-1">
-                                    👤 {formattedSupportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Assigné'}
-                                  </p>
-                                )}
-                              </div>
-                              {getStatusBadge(ticket.status)}
+                      {attachments.map((att) => (
+                        <Card key={att.id} className="p-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-sm">{att.file_name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {(att.file_size / 1024).toFixed(1)} KB
+                              </p>
                             </div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {getDemandTypeBadge(ticket)}
-                              <SupportLevelBadge level={ticket.support_level || 1} />
-                              <ServiceBadge service={ticket.service} />
-                              {ticket.category && <TicketCategoryBadge category={ticket.category} />}
-                              {getPriorityBadge(ticket.priority)}
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              {format(new Date(ticket.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
-                            </p>
-                            {ticket.agency_slug && (
-                              <Badge variant="outline" className="mt-2">
-                                {ticket.agency_slug}
-                              </Badge>
-                            )}
-                          </CardContent>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => downloadAttachment(att)}
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </Card>
                       ))}
                     </div>
                   )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-
-            {/* Ticket Detail */}
-            <Card className="md:col-span-3">
-              <CardHeader>
-                <CardTitle>
-                  {selectedTicket ? 'Détail de la demande' : 'Sélectionnez une demande'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!selectedTicket ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    Sélectionnez une demande dans la liste pour voir les détails
-                  </p>
-                ) : (
-                  <Tabs defaultValue="conversation">
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="conversation">Conversation</TabsTrigger>
-                      <TabsTrigger value="details">Détails</TabsTrigger>
-                      <TabsTrigger value="attachments">
-                        Pièces jointes ({attachments.length})
-                      </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="conversation" className="space-y-4">
-                      {/* Controls */}
-                      <div className="flex gap-2 flex-wrap items-center">
-                        {selectedTicket.status === 'waiting' && selectedTicket.assigned_to !== user?.id && (
-                          <Button
-                            onClick={() => user && takeTicket(selectedTicket.id, user.id)}
-                            className="bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white hover:opacity-90 rounded-2xl shadow-lg border-l-4 border-l-accent"
-                          >
-                            👋 Prendre en charge
-                          </Button>
-                        )}
-
-                        <EscalateTicketDialog
-                          ticket={selectedTicket}
-                          supportUsers={formattedSupportUsers}
-                          onEscalate={(targetLevel, targetUserId, reason) => 
-                            escalateTicket(selectedTicket.id, targetLevel, targetUserId, reason)
-                          }
-                        />
-
-                        <Select
-                          value={selectedTicket.assigned_to || 'none'}
-                          onValueChange={(v) => assignTicket(selectedTicket.id, v === 'none' ? '' : v)}
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Non assigné" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Non assigné</SelectItem>
-                            {formattedSupportUsers.map(u => (
-                              <SelectItem key={u.id} value={u.id}>
-                                👤 {u.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-
-                        <Select
-                          value={selectedTicket.status}
-                          onValueChange={(v) => updateTicketStatus(selectedTicket.id, v)}
-                        >
-                          <SelectTrigger className="w-[150px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="waiting">En attente</SelectItem>
-                            <SelectItem value="in_progress">En cours</SelectItem>
-                            <SelectItem value="resolved">Résolu</SelectItem>
-                            <SelectItem value="unresolved">Non résolu</SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        <Select
-                          value={selectedTicket.priority}
-                          onValueChange={(v) => updateTicketPriority(selectedTicket.id, v)}
-                        >
-                          <SelectTrigger className="w-[150px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">Faible</SelectItem>
-                            <SelectItem value="normal">Normal</SelectItem>
-                            <SelectItem value="high">Élevée</SelectItem>
-                            <SelectItem value="urgent">Urgente</SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        {(selectedTicket.status === 'resolved' || selectedTicket.status === 'unresolved') && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => reopenTicket(selectedTicket.id)}
-                            className="ml-auto"
-                          >
-                            Réouvrir le ticket
-                          </Button>
-                        )}
-                      </div>
-
-                      <Separator />
-
-                      {/* Messages */}
-                      <ScrollArea className="h-[400px]">
-                        <div className="space-y-4">
-                          {messages.map((msg) => (
-                            <div
-                              key={msg.id}
-                              className={`flex ${msg.is_from_support ? 'justify-end' : 'justify-start'}`}
-                            >
-                              <div
-                                className={`max-w-[70%] rounded-lg p-3 ${
-                                  msg.is_from_support
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-muted'
-                                }`}
-                              >
-                                <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
-                                <p className="text-xs opacity-70 mt-1">
-                                  {format(new Date(msg.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-
-                      {/* Message Input */}
-                      {selectedTicket.status !== 'resolved' && selectedTicket.status !== 'unresolved' && (
-                        <div className="flex gap-2">
-                          <Textarea
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            placeholder="Votre réponse..."
-                            className="flex-1"
-                            rows={3}
-                          />
-                          <Button
-                            onClick={handleSendMessage}
-                            disabled={!newMessage.trim()}
-                            size="icon"
-                            className="self-end"
-                          >
-                            <Send className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </TabsContent>
-
-                    <TabsContent value="details" className="space-y-4">
-                      <div className="grid gap-4">
-                        <div>
-                          <label className="text-sm font-medium">Sujet</label>
-                          <p className="text-sm text-muted-foreground">{selectedTicket.subject || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium">ID Utilisateur</label>
-                          <p className="text-sm text-muted-foreground">{selectedTicket.user_id}</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium">Assigné à</label>
-                          <p className="text-sm text-muted-foreground">
-                            {selectedTicket.assigned_to 
-                              ? `👤 ${formattedSupportUsers.find(u => u.id === selectedTicket.assigned_to)?.name || 'Utilisateur inconnu'}`
-                              : 'Non assigné'}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium">Agence</label>
-                          <p className="text-sm text-muted-foreground">{selectedTicket.agency_slug || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium">Type de demande</label>
-                          <div className="mt-1">
-                            {getDemandTypeBadge(selectedTicket)}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium">Service</label>
-                          <div className="mt-1">
-                            <ServiceBadge service={selectedTicket.service} />
-                          </div>
-                        </div>
-                        {selectedTicket.category && (
-                          <div>
-                            <label className="text-sm font-medium">Catégorie</label>
-                            <div className="mt-1">
-                              <TicketCategoryBadge category={selectedTicket.category} />
-                            </div>
-                          </div>
-                        )}
-                        <div>
-                          <label className="text-sm font-medium">Niveau de support</label>
-                          <div className="mt-1">
-                            <SupportLevelBadge level={selectedTicket.support_level || 1} showLabel />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium">Créé le</label>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(selectedTicket.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
-                          </p>
-                        </div>
-                        {selectedTicket.resolved_at && (
-                          <div>
-                            <label className="text-sm font-medium">Résolu le</label>
-                            <p className="text-sm text-muted-foreground">
-                              {format(new Date(selectedTicket.resolved_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
-                            </p>
-                          </div>
-                        )}
-                        {selectedTicket.rating && (
-                          <div>
-                            <label className="text-sm font-medium">Note de satisfaction</label>
-                            <div className="flex items-center gap-1">
-                              {[...Array(5)].map((_, i) => (
-                                <span key={i} className={i < selectedTicket.rating! ? 'text-yellow-400' : 'text-gray-300'}>
-                                  ★
-                                </span>
-                              ))}
-                            </div>
-                            {selectedTicket.rating_comment && (
-                              <p className="text-sm text-muted-foreground mt-1 italic">
-                                "{selectedTicket.rating_comment}"
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="attachments">
-                      {attachments.length === 0 ? (
-                        <p className="text-center text-muted-foreground py-8">
-                          Aucune pièce jointe
-                        </p>
-                      ) : (
-                        <div className="space-y-2">
-                          {attachments.map((att) => (
-                            <div key={att.id} className="flex items-center justify-between p-3 border rounded">
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{att.file_name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {(att.file_size / 1024).toFixed(2)} KB
-                                </p>
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => downloadAttachment(att)}
-                              >
-                                <Download className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </TabsContent>
-                  </Tabs>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                </TabsContent>
+              </Tabs>
+            )}
+          </CardContent>
+        </Card>
       </div>
-    </>
+    </div>
   );
 }
