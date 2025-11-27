@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAgency } from "../hooks/useAgencies";
@@ -49,8 +49,9 @@ export function AgencyProfileDialog({
     adresse: "",
     ville: "",
     code_postal: "",
-    animateur_id: "",
   });
+
+  const [selectedAnimateurs, setSelectedAnimateurs] = useState<string[]>([]);
 
   useEffect(() => {
     if (agency) {
@@ -64,10 +65,18 @@ export function AgencyProfileDialog({
         adresse: agency.adresse || "",
         ville: agency.ville || "",
         code_postal: agency.code_postal || "",
-        animateur_id: agency.animateur_id || "",
       });
+      setSelectedAnimateurs(agency.animateurs?.map(a => a.id) || []);
     }
   }, [agency]);
+
+  const toggleAnimateur = (animateurId: string) => {
+    if (selectedAnimateurs.includes(animateurId)) {
+      setSelectedAnimateurs(selectedAnimateurs.filter(id => id !== animateurId));
+    } else {
+      setSelectedAnimateurs([...selectedAnimateurs, animateurId]);
+    }
+  };
 
   const handleSave = async () => {
     if (!canManage) {
@@ -86,8 +95,9 @@ export function AgencyProfileDialog({
         adresse: formData.adresse || null,
         ville: formData.ville || null,
         code_postal: formData.code_postal || null,
-        animateur_id: formData.animateur_id === "none" ? null : (formData.animateur_id || null),
       };
+
+      let savedAgencyId = agencyId;
 
       if (agencyId) {
         // Update existing agency
@@ -97,19 +107,46 @@ export function AgencyProfileDialog({
           .eq('id', agencyId);
 
         if (error) throw error;
-        toast.success("Agence mise à jour avec succès");
       } else {
         // Create new agency
-        const { error } = await supabase
+        const { data: newAgency, error } = await supabase
           .from('apogee_agencies')
-          .insert(dataToSave);
+          .insert(dataToSave)
+          .select('id')
+          .single();
 
         if (error) throw error;
-        toast.success("Agence créée avec succès");
+        savedAgencyId = newAgency.id;
       }
+
+      // Update animator assignments (only for existing agencies or after creation)
+      if (savedAgencyId) {
+        // Delete existing assignments for this agency
+        await supabase
+          .from('franchiseur_agency_assignments')
+          .delete()
+          .eq('agency_id', savedAgencyId);
+
+        // Insert new assignments
+        if (selectedAnimateurs.length > 0) {
+          const assignments = selectedAnimateurs.map(userId => ({
+            agency_id: savedAgencyId,
+            user_id: userId,
+          }));
+
+          const { error: assignError } = await supabase
+            .from('franchiseur_agency_assignments')
+            .insert(assignments);
+
+          if (assignError) throw assignError;
+        }
+      }
+
+      toast.success(agencyId ? "Agence mise à jour avec succès" : "Agence créée avec succès");
 
       queryClient.invalidateQueries({ queryKey: ['franchiseur-agencies'] });
       queryClient.invalidateQueries({ queryKey: ['franchiseur-agency', agencyId] });
+      queryClient.invalidateQueries({ queryKey: ['franchiseur-agency-assignments'] });
       onOpenChange(false);
     } catch (error: any) {
       console.error('Error saving agency:', error);
@@ -118,6 +155,9 @@ export function AgencyProfileDialog({
       setIsSaving(false);
     }
   };
+
+  // Filter to only show animateurs (not directeurs or DG)
+  const availableAnimators = animators?.filter((a: any) => a.franchiseur_role === 'animateur') || [];
 
   if (isLoading && agencyId) {
     return null;
@@ -257,43 +297,40 @@ export function AgencyProfileDialog({
             </div>
 
             <div className="space-y-4">
-              <h3 className="font-semibold">Animateur réseau</h3>
+              <h3 className="font-semibold">Animateurs réseau</h3>
+              <p className="text-xs text-muted-foreground">
+                Sélectionnez les animateurs rattachés à cette agence. Une agence peut avoir plusieurs animateurs.
+              </p>
               
-              <div className="space-y-2">
-                <Label htmlFor="animateur_id">Animateur rattaché</Label>
-                <Select
-                  value={formData.animateur_id || "none"}
-                  onValueChange={(value) => setFormData({ ...formData, animateur_id: value })}
-                  disabled={!canManage}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un animateur" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Aucun animateur</SelectItem>
-                    {animators?.map((animator: any) => {
-                      const roleLabel = animator.franchiseur_role === 'dg' 
-                        ? 'DG' 
-                        : animator.franchiseur_role === 'directeur' 
-                          ? 'Directeur' 
-                          : 'Animateur';
-                      return (
-                        <SelectItem key={animator.id} value={animator.id}>
-                          {animator.first_name} {animator.last_name}
-                          <span className="ml-2 text-muted-foreground text-xs">
-                            ({roleLabel})
-                          </span>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-                {animators?.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Aucun animateur disponible. Créez d'abord des utilisateurs avec le rôle "Animateur".
+              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded p-2">
+                {availableAnimators.length === 0 ? (
+                  <p className="text-xs text-muted-foreground col-span-2 py-2">
+                    Aucun animateur disponible. Créez d'abord des utilisateurs avec le rôle "Animateur réseau".
                   </p>
+                ) : (
+                  availableAnimators.map((animator: any) => (
+                    <div
+                      key={animator.id}
+                      className="flex items-center space-x-2 p-1.5 rounded hover:bg-muted cursor-pointer"
+                      onClick={() => canManage && toggleAnimateur(animator.id)}
+                    >
+                      <Checkbox
+                        checked={selectedAnimateurs.includes(animator.id)}
+                        onCheckedChange={() => canManage && toggleAnimateur(animator.id)}
+                        disabled={!canManage}
+                      />
+                      <span className="text-sm truncate">
+                        {animator.first_name} {animator.last_name}
+                      </span>
+                    </div>
+                  ))
                 )}
               </div>
+              {selectedAnimateurs.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {selectedAnimateurs.length} animateur(s) sélectionné(s)
+                </p>
+              )}
             </div>
           </TabsContent>
 

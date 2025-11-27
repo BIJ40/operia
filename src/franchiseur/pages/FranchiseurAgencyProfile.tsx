@@ -56,9 +56,9 @@ export default function FranchiseurAgencyProfile() {
             {!agency.is_active && (
               <Badge variant="secondary">Inactive</Badge>
             )}
-            {agency.animateur_profile ? (
+            {agency.animateurs && agency.animateurs.length > 0 ? (
               <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-                Animateur assigné
+                {agency.animateurs.length} Animateur{agency.animateurs.length > 1 ? 's' : ''}
               </Badge>
             ) : (
               <Badge variant="secondary">
@@ -112,13 +112,13 @@ export default function FranchiseurAgencyProfile() {
                   </div>
                 )}
 
-                {agency.animateur_profile && (
+                {agency.animateurs && agency.animateurs.length > 0 && (
                   <div className="flex items-center gap-3">
                     <Users className="h-5 w-5 text-primary" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Animateur réseau</p>
+                      <p className="text-sm text-muted-foreground">Animateurs réseau</p>
                       <p className="font-medium">
-                        {agency.animateur_profile.first_name} {agency.animateur_profile.last_name}
+                        {agency.animateurs.map(a => `${a.first_name} ${a.last_name}`).join(', ')}
                       </p>
                     </div>
                   </div>
