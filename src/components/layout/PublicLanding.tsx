@@ -52,7 +52,20 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
           >
             La plateforme complète pour gérer votre franchise HelpConfort
           </motion.p>
-          <AnimatedButton onClick={onLoginClick} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 8.5 }}
+          >
+            <Button 
+              onClick={onLoginClick}
+              size="lg"
+              className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl hover:shadow-2xl transition-all text-lg px-8 py-6"
+            >
+              <LogIn className="w-6 h-6" />
+              Accéder à mon espace
+            </Button>
+          </motion.div>
         </div>
 
         {/* Features Grid */}
@@ -307,136 +320,6 @@ function ReplacementTitle({ prefix, words, delay }: {
         </AnimatePresence>
       </span>
     </h1>
-  );
-}
-
-// ========== ANIMATED BUTTON ==========
-
-const buttonVariants = {
-  initial: { opacity: 0, scale: 0.8 },
-  animate: { 
-    opacity: 1, 
-    scale: 1,
-    transition: { duration: 0.5, delay: 8.5 }
-  }
-};
-
-const hammerVariants = {
-  initial: { opacity: 0, x: -30, y: -20, rotate: -45 },
-  animate: { 
-    opacity: 1, 
-    x: 0, 
-    y: 0, 
-    rotate: [0, -20, 0],
-    transition: { 
-      delay: 9, 
-      duration: 0.6,
-      rotate: { delay: 9.3, duration: 0.4, repeat: 2 }
-    }
-  }
-};
-
-const screwdriverVariants = {
-  initial: { opacity: 0, x: 30, y: -20, rotate: 45 },
-  animate: { 
-    opacity: 1, 
-    x: 0, 
-    y: 0, 
-    rotate: [0, 15, 0],
-    transition: { 
-      delay: 9.2, 
-      duration: 0.6,
-      rotate: { delay: 9.5, duration: 0.3, repeat: 2 }
-    }
-  }
-};
-
-const sawVariants = {
-  initial: { opacity: 0, x: -20, y: 20 },
-  animate: { 
-    opacity: 1, 
-    x: [0, 10, 0], 
-    y: 0,
-    transition: { 
-      delay: 9.4, 
-      duration: 0.5,
-      x: { delay: 9.6, duration: 0.4, repeat: 2 }
-    }
-  }
-};
-
-const rollerVariants = {
-  initial: { opacity: 0, y: -30 },
-  animate: { 
-    opacity: 1, 
-    y: 0,
-    x: [0, 20, 0],
-    transition: { 
-      delay: 9.6, 
-      duration: 0.5,
-      x: { delay: 9.8, duration: 0.6 }
-    }
-  }
-};
-
-function AnimatedButton({ onClick }: { onClick: () => void }) {
-  return (
-    <div className="relative inline-block">
-      <motion.div
-        variants={buttonVariants}
-        initial="initial"
-        animate="animate"
-      >
-        <Button 
-          onClick={onClick}
-          size="lg"
-          className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl hover:shadow-2xl transition-all text-lg px-8 py-6"
-        >
-          <LogIn className="w-6 h-6" />
-          Accéder à mon espace
-        </Button>
-      </motion.div>
-
-      {/* Marteau */}
-      <motion.div
-        className="pointer-events-none absolute -top-3 -left-6 flex h-8 w-8 items-center justify-center text-lg"
-        variants={hammerVariants}
-        initial="initial"
-        animate="animate"
-      >
-        🔨
-      </motion.div>
-
-      {/* Tournevis */}
-      <motion.div
-        className="pointer-events-none absolute -top-1 -right-6 flex h-8 w-8 items-center justify-center text-lg"
-        variants={screwdriverVariants}
-        initial="initial"
-        animate="animate"
-      >
-        🪛
-      </motion.div>
-
-      {/* Scie en bas */}
-      <motion.div
-        className="pointer-events-none absolute -bottom-3 -left-4 flex h-7 w-7 items-center justify-center text-lg"
-        variants={sawVariants}
-        initial="initial"
-        animate="animate"
-      >
-        🪚
-      </motion.div>
-
-      {/* Rouleau de peinture */}
-      <motion.div
-        className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 flex h-8 w-8 items-center justify-center text-lg"
-        variants={rollerVariants}
-        initial="initial"
-        animate="animate"
-      >
-        🖌️
-      </motion.div>
-    </div>
   );
 }
 
