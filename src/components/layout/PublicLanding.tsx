@@ -1,6 +1,6 @@
-import { Button } from '@/components/ui/button';
-import { BarChart3, BookOpen, Headset, Network, LogIn } from 'lucide-react';
+import { BarChart3, BookOpen, Headset, Network } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AccessSpaceCta } from '@/components/home/AccessSpaceCta';
 import { useState, useEffect } from 'react';
 
 interface PublicLandingProps {
@@ -57,14 +57,7 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 8.5 }}
           >
-            <Button 
-              onClick={onLoginClick}
-              size="lg"
-              className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl hover:shadow-2xl transition-all text-lg px-8 py-6"
-            >
-              <LogIn className="w-6 h-6" />
-              Accéder à mon espace
-            </Button>
+            <AccessSpaceCta onClick={onLoginClick} />
           </motion.div>
         </div>
 
