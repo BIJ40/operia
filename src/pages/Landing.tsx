@@ -846,11 +846,11 @@ export default function Landing() {
   
                   {/* Logo en ABSOLU dans la zone sous "Mes demandes de support" */}
                   {homeCards.some(c => c.is_logo) && (
-                    <div className="pointer-events-none absolute inset-x-0 top-[260px] flex justify-center">
+                    <div className="pointer-events-none absolute inset-x-0 top-[180px] flex justify-center">
                       <img
                         src={helpConfortServicesImg}
                         alt="Help Confort Services"
-                        className="w-full max-w-[180px] h-auto opacity-95"
+                        className="w-full max-w-[200px] h-auto opacity-95"
                         draggable="false"
                       />
                     </div>
