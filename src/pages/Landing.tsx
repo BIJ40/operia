@@ -541,45 +541,83 @@ export default function Landing() {
           </div>
 
           <div className="container max-w-6xl mx-auto px-4 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {homeCards.map(card => {
-                const Icon = IconComponent(card.icon || 'BookOpen');
-                return (
-                  <div
-                    key={card.id}
-                    onClick={() => {
-                      toast({
-                        title: 'Accès restreint',
-                        description: 'Veuillez vous connecter pour accéder à cette section',
-                        variant: 'destructive',
-                      });
-                      setLoginOpen(true);
-                    }}
-                    className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 cursor-pointer opacity-60"
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
-                    </div>
-                    
-                    <Icon className="w-12 h-12 text-primary flex-shrink-0 opacity-50" />
-                    <div className="flex-1 min-w-0">
-                      <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
-                      <p className="text-xs text-muted-foreground truncate">{card.description}</p>
-                    </div>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+              {(() => {
+                const logoCard = homeCards.find(c => c.is_logo);
+                const regularCards = homeCards.filter(c => !c.is_logo);
+                const supportCardIndex = regularCards.findIndex(c => 
+                  c.title?.toLowerCase().includes('support') || 
+                  c.title?.toLowerCase().includes('demande') ||
+                  c.link?.includes('/mes-demandes') ||
+                  c.link?.includes('/support')
                 );
-              })}
-            </div>
-
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="md:col-start-1 lg:col-start-2">
-                <img 
-                  src={helpConfortServicesImg} 
-                  alt="Help Confort Services" 
-                  className="w-full pointer-events-auto select-none transition-all duration-500 hover:scale-105 hover:brightness-110 cursor-pointer"
-                  draggable="false"
-                />
-              </div>
+                
+                return regularCards.map((card, index) => {
+                  const Icon = IconComponent(card.icon || 'BookOpen');
+                  const isSupportCard = index === supportCardIndex;
+                  
+                  // Cas spécial: Support + Logo empilés
+                  if (isSupportCard && logoCard) {
+                    return (
+                      <div key={card.id} className="flex flex-col gap-3 min-h-[240px]">
+                        <div
+                          onClick={() => {
+                            toast({
+                              title: 'Accès restreint',
+                              description: 'Veuillez vous connecter pour accéder à cette section',
+                              variant: 'destructive',
+                            });
+                            setLoginOpen(true);
+                          }}
+                          className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 cursor-pointer opacity-60"
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <Lock className="w-8 h-8 text-destructive drop-shadow-lg" />
+                          </div>
+                          <Icon className="w-12 h-12 text-primary flex-shrink-0 opacity-50" />
+                          <div className="flex-1 min-w-0">
+                            <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
+                            <p className="text-xs text-muted-foreground truncate">{card.description}</p>
+                          </div>
+                        </div>
+                        {/* Logo HelpConfort Services */}
+                        <div className="flex-1 flex items-center justify-center p-2">
+                          <img 
+                            src={helpConfortServicesImg} 
+                            alt="Help Confort Services" 
+                            className="w-full max-w-[180px] h-auto object-contain opacity-90"
+                            draggable="false"
+                          />
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div
+                      key={card.id}
+                      onClick={() => {
+                        toast({
+                          title: 'Accès restreint',
+                          description: 'Veuillez vous connecter pour accéder à cette section',
+                          variant: 'destructive',
+                        });
+                        setLoginOpen(true);
+                      }}
+                      className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 cursor-pointer opacity-60"
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
+                      </div>
+                      <Icon className="w-12 h-12 text-primary flex-shrink-0 opacity-50" />
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-lg font-bold text-foreground truncate">{card.title}</h2>
+                        <p className="text-xs text-muted-foreground truncate">{card.description}</p>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>
@@ -677,40 +715,200 @@ export default function Landing() {
                   })()}
                 </DndContext>
               ) : (
-                <div className="relative">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-                    {(() => {
-                      const logoCard = homeCards.find(c => c.is_logo);
-                      const actionsCard = homeCards.find(c => 
-                        c.link?.includes('/actions-a-mener') || 
-                        (c.title?.toLowerCase().includes('actions') && c.title?.toLowerCase().includes('mener'))
-                      );
-                      const regularCards = homeCards.filter(c => !c.is_logo && c.id !== actionsCard?.id);
-                      const supportCardIndex = regularCards.findIndex(c => 
-                        c.title?.toLowerCase().includes('support') || 
-                        c.title?.toLowerCase().includes('demande') ||
-                        c.link?.includes('/mes-demandes') ||
-                        c.link?.includes('/support')
-                      );
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                  {(() => {
+                    const logoCard = homeCards.find(c => c.is_logo);
+                    const actionsCard = homeCards.find(c => 
+                      c.link?.includes('/actions-a-mener') || 
+                      (c.title?.toLowerCase().includes('actions') && c.title?.toLowerCase().includes('mener'))
+                    );
+                    const regularCards = homeCards.filter(c => !c.is_logo && c.id !== actionsCard?.id);
+                    const supportCardIndex = regularCards.findIndex(c => 
+                      c.title?.toLowerCase().includes('support') || 
+                      c.title?.toLowerCase().includes('demande') ||
+                      c.link?.includes('/mes-demandes') ||
+                      c.link?.includes('/support')
+                    );
+                    
+                    const allElements: JSX.Element[] = [];
+                    let actionsRendered = false;
+                    
+                    regularCards.forEach((currentCard, index) => {
+                      const Icon = IconComponent(currentCard.icon || 'BookOpen');
+                      const isLarge = (currentCard.size === 'large');
                       
-                      const allElements: JSX.Element[] = [];
-                      let actionsRendered = false;
+                      // Cas spécial: "Mes demandes de support" avec logo en dessous
+                      const isSupportCard = currentCard.title?.toLowerCase().includes('support') || 
+                        currentCard.title?.toLowerCase().includes('demande') ||
+                        currentCard.link?.includes('/mes-demandes') ||
+                        currentCard.link?.includes('/support');
                       
-                      regularCards.forEach((currentCard, index) => {
-                        const Icon = IconComponent(currentCard.icon || 'BookOpen');
-                        const isLarge = (currentCard.size === 'large');
-  
-                        // Gérer spécialement "Mes indicateurs"
-                        if (currentCard.link?.includes('/mes-indicateurs')) {
-                          const scope = 'mes_indicateurs';
-                          const isLocked = !hasAccessToScope(scope) || !agence;
+                      if (isSupportCard && logoCard) {
+                        // Conteneur flex vertical: Support + Logo
+                        // Permission toujours accordée pour "Mes demandes de support" (tout utilisateur authentifié)
+                        const isLocked = false;
+                        
+                        const supportElement = isLocked ? (
+                          <div
+                            onClick={() => {
+                              toast({
+                                title: 'Accès restreint',
+                                description: 'Vous n\'avez pas les permissions pour accéder à cette section',
+                                variant: 'destructive',
+                              });
+                            }}
+                            className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 transition-all duration-300 cursor-pointer opacity-60 flex items-center gap-2"
+                          >
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <Lock className="w-8 h-8 text-destructive drop-shadow-lg" />
+                            </div>
+                            <Icon className="w-12 h-12 text-primary flex-shrink-0 opacity-50" />
+                            <div className="flex-1 min-w-0">
+                              <h2 className="text-lg font-bold text-foreground truncate">{currentCard.title}</h2>
+                              <p className="text-xs text-muted-foreground truncate">{currentCard.description}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <Link
+                            to={currentCard.link || '#'}
+                            className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
+                          >
+                            <Icon className="w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
+                            <div className="flex-1 min-w-0">
+                              <h2 className="text-lg font-bold text-foreground truncate">{currentCard.title}</h2>
+                              <p className="text-xs text-muted-foreground truncate">{currentCard.description}</p>
+                            </div>
+                          </Link>
+                        );
+                        
+                        allElements.push(
+                          <div key={currentCard.id} className="flex flex-col gap-3 min-h-[240px]">
+                            {supportElement}
+                            {/* Logo HelpConfort Services */}
+                            <div className="flex-1 flex items-center justify-center p-2">
+                              <img 
+                                src={helpConfortServicesImg} 
+                                alt="Help Confort Services" 
+                                className="w-full max-w-[180px] h-auto object-contain opacity-90"
+                                draggable="false"
+                              />
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // Gérer spécialement "Mes indicateurs"
+                      else if (currentCard.link?.includes('/mes-indicateurs')) {
+                        const scope = 'mes_indicateurs';
+                        const isLocked = !hasAccessToScope(scope) || !agence;
+                        
+                        if (!isLocked && agence) {
+                          allElements.push(
+                            <div key={currentCard.id} className={isLarge ? "min-h-[240px]" : ""}>
+                              <ApiToggleProvider>
+                                <AgencyProvider>
+                                  <MesIndicateursCard />
+                                </AgencyProvider>
+                              </ApiToggleProvider>
+                            </div>
+                          );
+                        } else {
+                          allElements.push(
+                            <div
+                              key={currentCard.id}
+                              onClick={() => {
+                                toast({
+                                  title: 'Accès restreint',
+                                  description: 'Vous n\'avez pas les permissions pour accéder à cette section',
+                                  variant: 'destructive',
+                                });
+                              }}
+                              className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-4 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer opacity-60 min-h-[240px] flex items-center justify-center"
+                            >
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
+                              </div>
+                            </div>
+                          );
+                        }
+                      }
+
+                      // Vérifier les permissions pour les autres cartes
+                      else {
+                        let scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs' | null = null;
+                        if (currentCard.link?.includes('/apogee')) scope = 'apogee';
+                        else if (currentCard.link?.includes('/apporteur')) scope = 'apporteurs';
+                        else if (currentCard.link?.includes('/helpconfort')) scope = 'helpconfort';
+                        
+                        const isLocked = scope ? !hasAccessToScope(scope) : false;
+
+                        const baseClassName = isLarge
+                          ? "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-6 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 min-h-[240px] flex flex-col"
+                          : "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2";
+                        
+                        if (isLocked) {
+                          allElements.push(
+                            <div
+                              key={currentCard.id}
+                              onClick={() => {
+                                toast({
+                                  title: 'Accès restreint',
+                                  description: 'Vous n\'avez pas les permissions pour accéder à cette section',
+                                  variant: 'destructive',
+                                });
+                              }}
+                              className={`${baseClassName} cursor-pointer opacity-60`}
+                            >
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
+                              </div>
+                              <Icon className={isLarge ? "w-12 h-12 text-primary mb-4 opacity-50" : "w-12 h-12 text-primary flex-shrink-0 opacity-50"} />
+                              <div className={isLarge ? "" : "flex-1 min-w-0"}>
+                                <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{currentCard.title}</h2>
+                                <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{currentCard.description}</p>
+                              </div>
+                            </div>
+                          );
+                        } else if (currentCard.link && currentCard.link !== '#') {
+                          allElements.push(
+                            <Link
+                              key={currentCard.id}
+                              to={currentCard.link}
+                              className={baseClassName}
+                            >
+                              <Icon className={isLarge ? "w-12 h-12 text-primary mb-4" : "w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300"} />
+                              <div className={isLarge ? "" : "flex-1 min-w-0"}>
+                                <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{currentCard.title}</h2>
+                                <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{currentCard.description}</p>
+                              </div>
+                            </Link>
+                          );
+                        } else {
+                          allElements.push(
+                            <div key={currentCard.id} className={baseClassName}>
+                              <Icon className={isLarge ? "w-12 h-12 text-primary mb-4" : "w-12 h-12 text-primary flex-shrink-0"} />
+                              <div className={isLarge ? "" : "flex-1 min-w-0"}>
+                                <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{currentCard.title}</h2>
+                                <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{currentCard.description}</p>
+                              </div>
+                            </div>
+                          );
+                        }
+                      }
+                      
+                      // Après "Mes demandes de support", insérer Actions à mener
+                      if (index === supportCardIndex && !actionsRendered) {
+                        if (actionsCard) {
+                          const Icon = IconComponent(actionsCard.icon || 'BookOpen');
+                          const isLarge = true;
+                          const isLocked = !agence;
                           
                           if (!isLocked && agence) {
                             allElements.push(
-                              <div key={currentCard.id} className={isLarge ? "min-h-[240px]" : ""}>
+                              <div key={actionsCard.id} className="min-h-[240px]">
                                 <ApiToggleProvider>
                                   <AgencyProvider>
-                                    <MesIndicateursCard />
+                                    <ActionsAMenerCard />
                                   </AgencyProvider>
                                 </ApiToggleProvider>
                               </div>
@@ -718,15 +916,15 @@ export default function Landing() {
                           } else {
                             allElements.push(
                               <div
-                                key={currentCard.id}
+                                key={actionsCard.id}
                                 onClick={() => {
                                   toast({
                                     title: 'Accès restreint',
-                                    description: 'Vous n\'avez pas les permissions pour accéder à cette section',
+                                    description: 'Vous devez être rattaché à une agence',
                                     variant: 'destructive',
                                   });
                                 }}
-                                className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-4 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer opacity-60 min-h-[240px] flex items-center justify-center"
+                                className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-orange-50/50 to-red-50/50 dark:from-orange-950/20 dark:to-red-950/20 rounded-2xl p-4 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer opacity-60 min-h-[240px] flex items-center justify-center"
                               >
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                   <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
@@ -734,127 +932,13 @@ export default function Landing() {
                               </div>
                             );
                           }
+                          actionsRendered = true;
                         }
-  
-                        // Vérifier les permissions pour les autres cartes
-                        else {
-                          let scope: 'apogee' | 'apporteurs' | 'helpconfort' | 'mes_indicateurs' | null = null;
-                          if (currentCard.link?.includes('/apogee')) scope = 'apogee';
-                          else if (currentCard.link?.includes('/apporteur')) scope = 'apporteurs';
-                          else if (currentCard.link?.includes('/helpconfort')) scope = 'helpconfort';
-                          
-                          const isLocked = scope ? !hasAccessToScope(scope) : false;
-  
-                          const baseClassName = isLarge
-                            ? "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-6 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 min-h-[240px] flex flex-col"
-                            : "group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-full px-4 py-2 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex items-center gap-2";
-                          
-                          if (isLocked) {
-                            allElements.push(
-                              <div
-                                key={currentCard.id}
-                                onClick={() => {
-                                  toast({
-                                    title: 'Accès restreint',
-                                    description: 'Vous n\'avez pas les permissions pour accéder à cette section',
-                                    variant: 'destructive',
-                                  });
-                                }}
-                                className={`${baseClassName} cursor-pointer opacity-60`}
-                              >
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                  <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
-                                </div>
-                                <Icon className={isLarge ? "w-12 h-12 text-primary mb-4 opacity-50" : "w-12 h-12 text-primary flex-shrink-0 opacity-50"} />
-                                <div className={isLarge ? "" : "flex-1 min-w-0"}>
-                                  <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{currentCard.title}</h2>
-                                  <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{currentCard.description}</p>
-                                </div>
-                              </div>
-                            );
-                          } else if (currentCard.link && currentCard.link !== '#') {
-                            allElements.push(
-                              <Link
-                                key={currentCard.id}
-                                to={currentCard.link}
-                                className={baseClassName}
-                              >
-                                <Icon className={isLarge ? "w-12 h-12 text-primary mb-4" : "w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300"} />
-                                <div className={isLarge ? "" : "flex-1 min-w-0"}>
-                                  <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{currentCard.title}</h2>
-                                  <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{currentCard.description}</p>
-                                </div>
-                              </Link>
-                            );
-                          } else {
-                            allElements.push(
-                              <div key={currentCard.id} className={baseClassName}>
-                                <Icon className={isLarge ? "w-12 h-12 text-primary mb-4" : "w-12 h-12 text-primary flex-shrink-0"} />
-                                <div className={isLarge ? "" : "flex-1 min-w-0"}>
-                                  <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{currentCard.title}</h2>
-                                  <p className={isLarge ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground truncate"}>{currentCard.description}</p>
-                                </div>
-                              </div>
-                            );
-                          }
-                        }
-                        
-                        // Après "Mes demandes de support", insérer Actions à mener
-                        if (index === supportCardIndex && !actionsRendered) {
-                          if (actionsCard) {
-                            const Icon = IconComponent(actionsCard.icon || 'BookOpen');
-                            const isLarge = true;
-                            const isLocked = !agence;
-                            
-                            if (!isLocked && agence) {
-                              allElements.push(
-                                <div key={actionsCard.id} className="min-h-[240px]">
-                                  <ApiToggleProvider>
-                                    <AgencyProvider>
-                                      <ActionsAMenerCard />
-                                    </AgencyProvider>
-                                  </ApiToggleProvider>
-                                </div>
-                              );
-                            } else {
-                              allElements.push(
-                                <div
-                                  key={actionsCard.id}
-                                  onClick={() => {
-                                    toast({
-                                      title: 'Accès restreint',
-                                      description: 'Vous devez être rattaché à une agence',
-                                      variant: 'destructive',
-                                    });
-                                  }}
-                                  className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-orange-50/50 to-red-50/50 dark:from-orange-950/20 dark:to-red-950/20 rounded-2xl p-4 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer opacity-60 min-h-[240px] flex items-center justify-center"
-                                >
-                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <Lock className="w-12 h-12 text-destructive drop-shadow-lg" />
-                                  </div>
-                                </div>
-                              );
-                            }
-                            actionsRendered = true;
-                          }
-                        }
-                      });
-                      
-                      return allElements;
-                    })()}
-                  </div>
-  
-                  {/* Logo en ABSOLU dans la zone sous "Mes demandes de support" */}
-                  {homeCards.some(c => c.is_logo) && (
-                    <div className="pointer-events-none absolute inset-x-0 top-[180px] flex justify-center">
-                      <img
-                        src={helpConfortServicesImg}
-                        alt="Help Confort Services"
-                        className="w-full max-w-[200px] h-auto opacity-95"
-                        draggable="false"
-                      />
-                    </div>
-                  )}
+                      }
+                    });
+                    
+                    return allElements;
+                  })()}
                 </div>
               )}
 
