@@ -57,7 +57,7 @@ export function TipsSection({
 
   return (
     <div className="rounded-2xl overflow-hidden border-2 border-l-4 border-helpconfort-orange/40 border-l-primary bg-card shadow-sm hover:border-helpconfort-orange/60 hover:shadow-md transition-all">
-      <div className="p-6 bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white relative">
+      <div className="p-6 bg-gradient-to-r from-helpconfort-orange to-helpconfort-orange/80 text-white relative">
         {isEditMode && isAdmin && (
           <div className="absolute top-2 right-2 flex gap-2 z-10">
             <Button
