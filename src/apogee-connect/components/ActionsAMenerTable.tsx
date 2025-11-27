@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, AlertTriangle, Clock } from 'lucide-react';
+import { ExternalLink, AlertTriangle, Clock, BellRing } from 'lucide-react';
 import { ActionRow } from '../types/actions';
 
 interface ActionsAMenerTableProps {
@@ -79,6 +79,11 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
                   <Badge variant="destructive" className="gap-1">
                     <AlertTriangle className="w-3 h-3" />
                     En retard
+                  </Badge>
+                ) : action.isDueSoon ? (
+                  <Badge variant="default" className="gap-1 bg-orange-500 hover:bg-orange-600 text-white">
+                    <BellRing className="w-3 h-3" />
+                    J+1
                   </Badge>
                 ) : (
                   <Badge variant="secondary" className="gap-1">

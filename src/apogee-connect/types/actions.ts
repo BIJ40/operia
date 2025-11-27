@@ -15,6 +15,7 @@ export type ActionRow = {
   deadline: Date;
   dateDepart: Date;
   isLate: boolean;
+  isDueSoon?: boolean; // Va passer en retard dans les 24h
   clientName: string;
   daysLate?: number;
 };
