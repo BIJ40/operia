@@ -21,7 +21,7 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
 
       {/* Hero Section */}
       <section className="container mx-auto px-6 py-16 md:py-24">
-        <div className="text-center max-w-4xl mx-auto mb-16">
+        <div className="text-center max-w-5xl mx-auto mb-16">
           {/* Title 1: Paint effect - letters appear like being painted */}
           <PaintedTitle 
             text="Pilotez"
@@ -204,7 +204,7 @@ function RepairedTitle({ prefix, brokenWord, suffix, delay }: {
   };
 
   return (
-    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
+    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight whitespace-nowrap">
       <motion.span
         className="text-primary"
         initial={{ opacity: 0, x: -30 }}
@@ -281,7 +281,7 @@ function ReplacementTitle({ prefix, words, delay }: {
   }, [delay, words.length]);
 
   return (
-    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
+    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight whitespace-nowrap">
       <motion.span
         className="text-accent"
         initial={{ opacity: 0, y: 20 }}
@@ -291,7 +291,7 @@ function ReplacementTitle({ prefix, words, delay }: {
         {prefix}
       </motion.span>
       {" "}
-      <span className="inline-block relative min-w-[320px] md:min-w-[600px] whitespace-nowrap">
+      <span className="inline-block relative">
         <AnimatePresence mode="wait">
           {currentIndex >= 0 && (
             <motion.span
