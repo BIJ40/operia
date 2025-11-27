@@ -14,10 +14,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Section, CategoryBlock, CategoryScope } from './types';
 import { Block } from '@/types/block';
 
@@ -60,25 +60,30 @@ export function AccordionSection({
         <div className="flex items-center justify-between w-full text-white">
           <div className="flex items-center gap-3 flex-1">
             {section.showSummary && section.summary ? (
-              <HoverCard openDelay={200}>
-                <HoverCardTrigger asChild>
-                  <div 
-                    className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-white shrink-0 cursor-help"
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button 
+                    type="button"
+                    className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-white shrink-0 cursor-pointer hover:bg-white/30 transition-colors"
                     onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
                       if (isEditMode && isAdmin) {
-                        e.stopPropagation();
-                        e.preventDefault();
                         onEdit(section.id);
                       }
                     }}
                   >
                     <Info className="h-4 w-4" />
-                  </div>
-                </HoverCardTrigger>
-                <HoverCardContent className="w-[500px] bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200" side="right">
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="w-[400px] bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 z-[100]" 
+                  side="right"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">{section.summary}</p>
-                </HoverCardContent>
-              </HoverCard>
+                </PopoverContent>
+              </Popover>
             ) : (
               <ChevronDown className="h-4 w-4 shrink-0 text-white transition-transform duration-200" />
             )}
