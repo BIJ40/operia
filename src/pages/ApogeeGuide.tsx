@@ -109,23 +109,23 @@ const SortableCategory = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 ${tileClass}`}
+      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 overflow-visible ${tileClass}`}
     >
-      {/* Badges calculés automatiquement depuis les sections */}
-      {(hasInProgress || hasNew) && !isEditMode && (
-        <div className="absolute -top-2 -right-2 z-20 flex gap-1">
-          {hasInProgress && (
-            <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              En cours
-            </div>
-          )}
-          {hasNew && (
-            <div className="bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-              <Sparkles className="w-3 h-3" />
-              New
-            </div>
-          )}
+      {/* Badge New en écharpe diagonale verte */}
+      {hasNew && !isEditMode && (
+        <div className="absolute -top-2 -left-2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
+          <div className="absolute top-3 -left-5 w-20 bg-green-500 text-white text-[10px] font-bold py-0.5 text-center transform -rotate-45 shadow-md">
+            NEW
+          </div>
+        </div>
+      )}
+      {/* Badge En cours */}
+      {hasInProgress && !isEditMode && (
+        <div className="absolute -top-2 -right-2 z-20">
+          <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            En cours
+          </div>
         </div>
       )}
       {isEditMode && (
@@ -483,23 +483,23 @@ export default function ApogeeGuide() {
                         variant: 'destructive',
                       });
                     }}
-                    className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 cursor-pointer opacity-60 ${tileClass}`}
+                    className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 cursor-pointer opacity-60 overflow-visible ${tileClass}`}
                   >
-                    {/* Badges calculés */}
-                    {(badges.hasInProgress || badges.hasNew) && (
-                      <div className="absolute -top-2 -right-2 z-20 flex gap-1">
-                        {badges.hasInProgress && (
-                          <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            En cours
-                          </div>
-                        )}
-                        {badges.hasNew && (
-                          <div className="bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" />
-                            New
-                          </div>
-                        )}
+                    {/* Badge New en écharpe diagonale verte */}
+                    {badges.hasNew && (
+                      <div className="absolute -top-2 -left-2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
+                        <div className="absolute top-3 -left-5 w-20 bg-green-500 text-white text-[10px] font-bold py-0.5 text-center transform -rotate-45 shadow-md">
+                          NEW
+                        </div>
+                      </div>
+                    )}
+                    {/* Badge En cours */}
+                    {badges.hasInProgress && (
+                      <div className="absolute -top-2 -right-2 z-20">
+                        <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          En cours
+                        </div>
                       </div>
                     )}
                     {/* Cadenas en overlay */}
@@ -529,23 +529,23 @@ export default function ApogeeGuide() {
                 <Link
                   key={category.id}
                   to={`/apogee/category/${category.slug}`}
-                  className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 ${tileClass}`}
+                  className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 overflow-visible ${tileClass}`}
                 >
-                  {/* Badges calculés */}
-                  {(badges.hasInProgress || badges.hasNew) && (
-                    <div className="absolute -top-2 -right-2 z-20 flex gap-1">
-                      {badges.hasInProgress && (
-                        <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          En cours
-                        </div>
-                      )}
-                      {badges.hasNew && (
-                        <div className="bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          New
-                        </div>
-                      )}
+                  {/* Badge New en écharpe diagonale verte */}
+                  {badges.hasNew && (
+                    <div className="absolute -top-2 -left-2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
+                      <div className="absolute top-3 -left-5 w-20 bg-green-500 text-white text-[10px] font-bold py-0.5 text-center transform -rotate-45 shadow-md">
+                        NEW
+                      </div>
+                    </div>
+                  )}
+                  {/* Badge En cours */}
+                  {badges.hasInProgress && (
+                    <div className="absolute -top-2 -right-2 z-20">
+                      <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        En cours
+                      </div>
                     </div>
                   )}
                   {isCustomImage ? (
