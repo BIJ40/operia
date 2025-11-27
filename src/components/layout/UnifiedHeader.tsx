@@ -1,5 +1,5 @@
-import { Link, useLocation } from 'react-router-dom';
-import { LogOut, User, Settings, Headset, Loader2, Menu } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { LogOut, User, Settings, Headset, Loader2, Menu, Pencil } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -12,6 +12,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
 import logoHelpconfort from '@/assets/logo_helpogee.png';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const pageTitles: Record<string, string> = {
   '/': 'Tableau de bord',
@@ -58,6 +64,7 @@ const pageTitles: Record<string, string> = {
 
 export function UnifiedHeader() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAdmin, isSupport, isLoggingOut, logout } = useAuth();
   const { toggleSidebar } = useSidebar();
   const { hasNewTickets, newTicketsCount } = useSupportNotifications();
@@ -76,6 +83,24 @@ export function UnifiedHeader() {
     }
     return 'HC Services';
   };
+
+  // Check if current page is editable (guides)
+  const isEditablePage = location.pathname.startsWith('/apogee') || 
+                          location.pathname.startsWith('/apporteurs') || 
+                          location.pathname.startsWith('/helpconfort');
+
+  // Toggle edit mode via URL param
+  const handleToggleEditMode = () => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('edit') === 'true') {
+      params.delete('edit');
+    } else {
+      params.set('edit', 'true');
+    }
+    navigate(`${location.pathname}${params.toString() ? '?' + params.toString() : ''}`, { replace: true });
+  };
+
+  const isInEditMode = new URLSearchParams(location.search).get('edit') === 'true';
 
   return (
     <>
@@ -122,6 +147,27 @@ export function UnifiedHeader() {
 
           {/* Right side actions */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Edit mode button for admin on editable pages */}
+            {isAdmin && isEditablePage && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant={isInEditMode ? "default" : "ghost"}
+                      size="icon" 
+                      onClick={handleToggleEditMode}
+                      className={isInEditMode ? "bg-primary text-primary-foreground" : ""}
+                    >
+                      <Pencil className="w-5 h-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isInEditMode ? "Désactiver le mode édition" : "Activer le mode édition"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
             {/* Support button for support staff */}
             {(isSupport || isAdmin) && (
               <Link to="/admin/support">

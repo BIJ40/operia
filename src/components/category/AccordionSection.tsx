@@ -14,10 +14,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Section, CategoryBlock, CategoryScope } from './types';
 import { Block } from '@/types/block';
 
@@ -60,30 +61,28 @@ export function AccordionSection({
         <div className="flex items-center justify-between w-full text-white">
           <div className="flex items-center gap-3 flex-1">
             {section.showSummary && section.summary ? (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button 
-                    type="button"
-                    className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-white shrink-0 cursor-pointer hover:bg-white/30 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      if (isEditMode && isAdmin) {
-                        onEdit(section.id);
-                      }
-                    }}
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button 
+                      type="button"
+                      className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-white shrink-0 cursor-pointer hover:bg-white/30 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                      }}
+                    >
+                      <Info className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent 
+                    side="right" 
+                    className="max-w-[400px] bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 z-[100] p-3"
                   >
-                    <Info className="h-4 w-4" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent 
-                  className="w-[400px] bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 z-[100]" 
-                  side="right"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">{section.summary}</p>
-                </PopoverContent>
-              </Popover>
+                    <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">{section.summary}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ) : (
               <ChevronDown className="h-4 w-4 shrink-0 text-white transition-transform duration-200" />
             )}
