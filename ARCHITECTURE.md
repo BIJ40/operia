@@ -14,6 +14,9 @@ Application web de gestion de guides métiers (Apogée, Apporteurs, HelpConfort)
 - Chatbot IA (Mme MICHU) utilisant RAG (Retrieval-Augmented Generation)
 - Système de support utilisateur avec tickets et chat en temps réel
 - Back-office admin pour gestion des contenus, utilisateurs, permissions, documents et sauvegardes
+- **Module "Mes indicateurs"** : Dashboard KPIs temps réel via API Apogée
+- **Module "Tête de Réseau"** : Interface multi-agences pour franchiseurs (animateurs, directeurs, DG)
+- **Mode Diffusion** : Dashboard TV plein écran pour affichage KPIs en agence
 
 ---
 
@@ -23,357 +26,547 @@ Application web de gestion de guides métiers (Apogée, Apporteurs, HelpConfort)
 
 ```
 src/
-├── pages/              # Pages principales de l'application (routes React Router)
-│   ├── Landing.tsx
-│   ├── ApogeeGuide.tsx
-│   ├── ApporteurGuide.tsx
-│   ├── HelpConfort.tsx
-│   ├── Category.tsx
+├── pages/                    # Pages principales de l'application (routes React Router)
+│   ├── Landing.tsx           # Page d'accueil authentifiée avec widgets
+│   ├── ApogeeGuide.tsx       # Guide Apogée
+│   ├── ApporteurGuide.tsx    # Guide Apporteurs
+│   ├── HelpConfort.tsx       # Guide HelpConfort
+│   ├── Category.tsx          # Page catégorie générique
 │   ├── CategoryHelpConfort.tsx
-│   ├── AdminIndex.tsx
-│   ├── AdminUsers.tsx
-│   ├── AdminDocuments.tsx
-│   ├── AdminBackup.tsx
-│   ├── AdminSupport.tsx
+│   ├── ActionsAMener.tsx     # Suivi des actions à mener
+│   ├── DiffusionDashboard.tsx # Mode TV plein écran
+│   ├── Profile.tsx           # Profil utilisateur
+│   ├── UserTickets.tsx       # Tickets support utilisateur
+│   ├── Admin*.tsx            # Pages d'administration
 │   └── ...
 │
-├── components/         # Composants UI réutilisables
-│   ├── ui/            # Composants shadcn/ui (Button, Dialog, Card, etc.)
-│   ├── category/      # Composants spécifiques aux pages Category
-│   ├── chatbot/       # Composants du chatbot et support
-│   ├── admin/         # Composants du back-office admin
-│   ├── Header.tsx
-│   ├── Layout.tsx
-│   ├── Chatbot.tsx
+├── components/               # Composants UI réutilisables
+│   ├── ui/                   # Composants shadcn/ui (Button, Dialog, Card, etc.)
+│   ├── category/             # Composants pages Category (Accordion, Sortable, Tips)
+│   ├── chatbot/              # Composants chatbot et support (ChatInput, ChatHistory)
+│   ├── admin/                # Composants back-office admin
+│   │   ├── backup/           # Gestion des sauvegardes
+│   │   ├── support/          # Interface support (Kanban, TicketDetails)
+│   │   └── franchiseur/      # Gestion rôles franchiseur
+│   ├── landing/              # Composants page d'accueil (SortableCard, Grid)
+│   ├── diffusion/            # Composants Mode TV (Slides, KpiTiles, Settings)
+│   ├── dashboard/            # Widgets KPI génériques
+│   ├── tickets/              # Badges et composants tickets
+│   ├── Header.tsx            # En-tête avec navigation
+│   ├── Layout.tsx            # Layout principal avec sidebar
+│   ├── Chatbot.tsx           # Chatbot Mme MICHU
 │   └── ...
 │
-├── contexts/           # Contextes React pour état global
-│   ├── AuthContext.tsx          # Authentification utilisateur, rôles
-│   ├── EditorContext.tsx        # Gestion des blocs/catégories
-│   └── ApporteurEditorContext.tsx
+├── apogee-connect/           # Module "Mes indicateurs" (API Apogée)
+│   ├── components/           # Composants spécifiques indicateurs
+│   │   ├── layout/           # AppLayout, IndicateursSidebar
+│   │   ├── widgets/          # MetricCard, ChartCard, PipelineChart, etc.
+│   │   └── filters/          # PeriodSelector, SecondaryPeriodSelector
+│   ├── contexts/             # Contextes spécifiques (Filters, Agency, ApiToggle)
+│   ├── hooks/                # Hooks métiers (useActionsConfig, useTechniciens)
+│   ├── pages/                # Pages indicateurs (Dashboard, Univers, SAV, etc.)
+│   ├── services/             # API et DataService avec cache TTL
+│   ├── types/                # Types TypeScript spécifiques
+│   └── utils/                # Fonctions de calcul (CA, SAV, transformations)
 │
-├── hooks/              # Custom hooks métiers et techniques
-│   ├── use-auth.ts
-│   ├── use-category.ts
-│   ├── use-chatbot.ts
-│   ├── use-admin-backup.ts
-│   ├── use-admin-documents.ts
-│   ├── use-support-ticket.ts
+├── franchiseur/              # Module "Tête de Réseau" (multi-agences)
+│   ├── components/           # Composants franchiseur
+│   │   ├── layout/           # FranchiseurLayout, FranchiseurSidebar
+│   │   ├── widgets/          # NetworkKpiTile, TopAgencies, Charts
+│   │   └── filters/          # AgencySelector, NetworkPeriodSelector
+│   ├── contexts/             # FranchiseurContext, NetworkFiltersContext
+│   ├── hooks/                # useAgencies, useNetworkStats, useRoyaltyConfig
+│   ├── pages/                # FranchiseurHome, Stats, Agencies, Royalties
+│   ├── services/             # networkDataService, royaltyCalculationService
+│   └── utils/                # networkCalculations (agrégation multi-agences)
+│
+├── contexts/                 # Contextes React globaux
+│   ├── AuthContext.tsx       # Authentification, rôles, profil utilisateur
+│   ├── EditorContext.tsx     # Gestion blocs/catégories guides
+│   ├── ApporteurEditorContext.tsx
+│   └── ImpersonationContext.tsx # Simulation de rôles (admin)
+│
+├── hooks/                    # Custom hooks métiers et techniques
+│   ├── use-category.ts       # Logique pages catégories
+│   ├── use-chatbot.ts        # Logique chatbot
+│   ├── use-permissions.ts    # Vérification permissions
+│   ├── use-admin-*.ts        # Hooks admin (backup, documents, stats)
+│   ├── use-support-*.ts      # Hooks support (tickets, notifications)
+│   ├── use-diffusion-settings.ts # Configuration Mode TV
 │   └── ...
 │
-├── integrations/supabase/  # Client Supabase, types auto-générés
-│   ├── client.ts           # Instance du client Supabase
-│   └── types.ts            # Types TypeScript générés depuis le schéma DB
+├── integrations/supabase/    # Client Supabase, types auto-générés
+│   ├── client.ts             # Instance du client Supabase (NE PAS MODIFIER)
+│   └── types.ts              # Types TypeScript générés (NE PAS MODIFIER)
 │
-├── lib/                # Utilitaires et helpers
-│   ├── db.ts
-│   ├── db-apporteurs.ts
-│   ├── utils.ts
-│   └── mentions.ts
+├── lib/                      # Utilitaires et helpers
+│   ├── db.ts                 # Fonctions BDD guides Apogée
+│   ├── db-apporteurs.ts      # Fonctions BDD guides Apporteurs
+│   ├── sanitize.ts           # DOMPurify pour sécurité XSS
+│   ├── cache-manager.ts      # Gestionnaire cache local
+│   ├── cache-backup.ts       # Sauvegarde cache
+│   ├── mentions.ts           # Système mentions @
+│   └── utils.ts              # Utilitaires généraux (cn, formatters)
 │
-├── extensions/         # Extensions TipTap pour éditeur rich-text
-│   ├── Callout.tsx
-│   ├── ResizableImage.tsx
-│   ├── Mention.tsx
+├── extensions/               # Extensions TipTap pour éditeur rich-text
+│   ├── Callout.tsx           # Blocs callout colorés
+│   ├── ResizableImage.tsx    # Images redimensionnables
+│   ├── Mention.tsx           # Mentions @utilisateur
+│   ├── InlineFile.tsx        # Fichiers inline
 │   └── ...
 │
-├── assets/             # Images, logos, icônes
-└── index.css           # Styles globaux + design tokens Tailwind
+├── assets/                   # Images, logos, icônes
+├── data/                     # Données statiques JSON
+└── index.css                 # Styles globaux + design tokens Tailwind
 
 supabase/
-├── migrations/         # Migrations SQL versionnées
-└── functions/          # Edge Functions Supabase (Deno)
-    ├── chat-guide/
-    ├── search-embeddings/
-    ├── generate-embeddings/
-    ├── index-document/
-    ├── parse-document/
-    ├── create-user/
-    ├── delete-user/
-    └── notify-support-ticket/
+├── config.toml               # Configuration Supabase (NE PAS MODIFIER)
+├── migrations/               # Migrations SQL versionnées
+└── functions/                # Edge Functions Supabase (Deno)
+    ├── chat-guide/           # Chatbot IA avec RAG
+    ├── search-embeddings/    # Recherche vectorielle
+    ├── generate-embeddings/  # Génération embeddings OpenAI
+    ├── index-document/       # Indexation documents PDF
+    ├── parse-document/       # Parsing documents
+    ├── create-user/          # Création utilisateurs
+    ├── delete-user/          # Suppression utilisateurs
+    ├── update-user-email/    # Mise à jour email
+    ├── reset-user-password/  # Reset mot de passe
+    ├── notify-support-ticket/ # Notifications email/SMS tickets
+    ├── notify-escalation/    # Notifications escalade
+    ├── get-kpis/             # KPIs agence (OBSOLÈTE - frontend direct)
+    └── network-kpis/         # KPIs réseau franchiseur
+
 ```
 
 ---
 
-## Modèle de données (niveau macro)
+## Modèle de données
 
 ### Tables principales
 
 #### `profiles`
 Profils utilisateurs étendant `auth.users`.  
-Contient : `pseudo`, `first_name`, `last_name`, `agence`, `role_agence` (poste occupé), `avatar_url`, `must_change_password`.
+- `id`, `email`, `first_name`, `last_name`, `agence`, `role_agence` (poste occupé)
+- `avatar_url`, `must_change_password`, `support_level` (niveau support N1/N2/N3)
+- `service_competencies` (JSON compétences par service), `email_notifications_enabled`
 
 #### `user_roles`
-Rôles applicatifs des utilisateurs (séparé du profil pour la sécurité).  
-Enum `app_role` : `admin`, `user`, `support`.  
-Clé étrangère vers `auth.users`.
+Rôles applicatifs des utilisateurs.  
+Enum `app_role` : `admin`, `user`, `support`, `franchiseur`.  
 
-#### `role_permissions`
-Permissions granulaires par rôle et par bloc de contenu.  
-Colonnes : `role_agence` (poste), `block_id`, `can_access`.  
-Permet de restreindre l'accès à certaines sections selon le poste occupé (technicien, assistante, dirigeant, commercial).
+#### `franchiseur_roles`
+Rôles spécifiques franchiseur pour le module "Tête de Réseau".  
+Enum `franchiseur_role` : `animateur`, `directeur`, `dg`.  
+- `user_id`, `franchiseur_role`, `permissions` (JSON)
+
+#### `franchiseur_agency_assignments`
+Associations animateurs ↔ agences (restriction de visibilité optionnelle).  
+- `user_id`, `agency_id`
 
 #### `blocks`
 Blocs de contenu pour le guide Apogée (catégories et sections).  
-Colonnes : `title`, `slug`, `content` (HTML), `type` (category/section), `parent_id`, `order`, `icon`, `color_preset`, `content_type`, `tips_type`, `hide_title`, `show_summary`, `summary`, `attachments`.
+- `title`, `slug`, `content` (HTML), `type` (category/section), `parent_id`, `order`
+- `icon`, `color_preset`, `content_type`, `tips_type`, `hide_title`, `show_summary`, `summary`, `attachments`
 
 #### `apporteur_blocks`
-Blocs de contenu pour le guide Apporteurs (même structure que `blocks` mais table séparée).
+Blocs de contenu pour le guide Apporteurs (même structure que `blocks`).
 
-#### `categories`
-Catégories legacy utilisées par l'ancien système (backup/export).  
-Contient : `title`, `slug`, `scope` (apogee/apporteur/helpconfort), `icon`, `color_preset`, `display_order`.
-
-#### `sections`
-Sections legacy (backup/export).  
-Colonnes : `title`, `content` (JSON), `category_id`, `display_order`.
+#### `categories` / `sections`
+Tables legacy utilisées pour backup/export.
 
 #### `guide_chunks`
-Chunks de texte indexés pour le RAG (Retrieval-Augmented Generation).  
-Contient : `block_id`, `block_slug`, `block_title`, `block_type`, `chunk_index`, `chunk_text`, `embedding` (vecteur JSON), `metadata`.  
-Utilisé par Mme MICHU pour rechercher le contenu pertinent via embeddings.
+Chunks de texte indexés pour le RAG (chatbot Mme MICHU).  
+- `block_id`, `block_slug`, `block_title`, `block_type`, `chunk_index`, `chunk_text`
+- `embedding` (vecteur JSON), `metadata`
 
 #### `documents`
-Documents uploadés par les admins (PDF, images, etc.) associés à des blocs.  
-Colonnes : `title`, `description`, `file_path`, `file_type`, `file_size`, `scope`, `block_id`, `apporteur_block_id`.  
-Stockés dans le bucket Supabase Storage `documents`.
+Documents uploadés par les admins (PDF, images).  
+- `title`, `description`, `file_path`, `file_type`, `file_size`, `scope`
+- `block_id`, `apporteur_block_id`
 
 #### `support_tickets`
-Tickets de support créés par les utilisateurs.  
-Colonnes : `user_id`, `user_pseudo`, `status` (waiting/in_progress/resolved), `priority`, `assigned_to` (support agent), `chatbot_conversation` (JSON), `rating`, `rating_comment`, `created_at`, `resolved_at`.
+Tickets de support.  
+- `user_id`, `status` (waiting/in_progress/resolved), `priority`, `assigned_to`
+- `service` (apogee/helpconfort/apporteurs/conseil/autre), `category`
+- `chatbot_conversation` (JSON), `escalation_history` (JSON)
+- `rating`, `rating_comment`, `support_level`, `is_live_chat`
 
 #### `support_messages`
-Messages échangés dans les tickets de support.  
-Colonnes : `ticket_id`, `sender_id`, `message`, `is_from_support`, `read_at`, `created_at`.
+Messages échangés dans les tickets.  
+- `ticket_id`, `sender_id`, `message`, `is_from_support`, `read_at`
 
 #### `support_presence`
-Présence en temps réel des agents support (typage, statut).  
-Colonnes : `user_id`, `status` (online/offline/typing), `last_seen`.
+Présence temps réel des agents support.  
+- `user_id`, `status` (online/offline/typing), `last_seen`
 
 #### `chatbot_queries`
-Questions posées au chatbot Mme MICHU pour tracking et amélioration.  
-Colonnes : `question`, `answer`, `user_id`, `user_pseudo`, `status` (pending/resolved), `is_incomplete`, `admin_notes`, `context_found`, `similarity_scores`, `reviewed_at`, `reviewed_by`.
+Questions posées au chatbot pour tracking.  
+- `question`, `answer`, `user_id`, `status`, `is_incomplete`
+- `admin_notes`, `context_found`, `similarity_scores`
 
-#### `favorites`
-Favoris des utilisateurs (blocs sauvegardés pour accès rapide).  
-Colonnes : `user_id`, `block_id`, `block_slug`, `block_title`, `category_slug`, `scope`.
-
-#### `user_history`
-Historique de navigation des utilisateurs (tracking des blocs consultés).  
-Colonnes : `user_id`, `block_id`, `block_slug`, `block_title`, `category_slug`, `scope`, `visited_at`.
+#### `favorites` / `user_history`
+Favoris et historique de navigation utilisateurs.
 
 #### `user_widget_preferences`
-Préférences des widgets personnalisables sur le dashboard utilisateur.  
-Colonnes : `user_id`, `widget_key`, `is_enabled`, `size`, `display_order`.
+Préférences widgets dashboard.  
+- `user_id`, `widget_key`, `is_enabled`, `size`, `display_order`
 
-#### `knowledge_base`
-Base de connaissance supplémentaire (legacy ou usage futur).  
-Colonnes : `title`, `content`, `category`, `metadata`.
+#### `home_cards`
+Cartes personnalisables de la page d'accueil.  
+- `title`, `description`, `link`, `icon`, `color_preset`, `size`, `display_order`, `is_logo`
+
+#### `diffusion_settings`
+Configuration Mode TV (diffusion).  
+- `auto_rotation_enabled`, `rotation_speed_seconds`, `enabled_slides` (array)
+- `objectif_title`, `objectif_amount`, `saviez_vous_templates` (array)
+
+### Tables Agences & Redevances
 
 #### `apogee_agencies`
-Configuration des agences pour le module "Mes indicateurs".  
-Colonnes : `slug`, `label`, `is_active`.  
-Utilisé pour associer chaque utilisateur (`profiles.agence`) à une agence. L'URL de l'API est construite dynamiquement : `https://{slug}.hc-apogee.fr/api`.  
-La clé API est unique et partagée par toutes les agences, stockée dans les secrets Supabase (`APOGEE_API_KEY`).
+Configuration des agences pour le module indicateurs.  
+- `slug` (utilisé pour construire l'URL API), `label`, `is_active`
+- `adresse`, `code_postal`, `ville`, `contact_email`, `contact_phone`
+- `date_ouverture`, `animateur_id`
+
+#### `agency_royalty_config`
+Configuration des redevances par agence.  
+- `agency_id`, `model_name`, `is_active`, `valid_from`, `valid_to`
+
+#### `agency_royalty_tiers`
+Paliers de redevances (système progressif).  
+- `config_id`, `tier_order`, `from_amount`, `to_amount`, `percentage`
+
+#### `agency_royalty_calculations`
+Historique des calculs de redevances.  
+- `agency_id`, `config_id`, `year`, `month`, `ca_cumul_annuel`
+- `redevance_calculee`, `detail_tranches` (JSON), `calculated_by`
+
+### Tables Permissions
+
+#### `role_permissions`
+Permissions par rôle_agence (poste) et bloc.  
+- `role_agence`, `block_id`, `can_access`
+
+#### `user_permissions`
+Permissions individuelles par utilisateur.  
+- `user_id`, `block_id`, `can_access`
 
 ---
 
-## Rôles & permissions
+## Rôles & Permissions
 
 ### Rôles applicatifs (`app_role`)
 
-1. **`admin`** : Accès total à l'application (gestion utilisateurs, contenus, documents, sauvegardes, support).
-2. **`support`** : Accès à l'interface de support pour gérer les tickets utilisateurs.
-3. **`user`** : Utilisateur standard avec accès aux guides selon son poste (`role_agence`).
+| Rôle | Description |
+|------|-------------|
+| `admin` | Accès total à l'application |
+| `support` | Accès interface support pour gérer tickets |
+| `franchiseur` | Accès interface Tête de Réseau |
+| `user` | Utilisateur standard |
+
+### Rôles franchiseur (`franchiseur_role`)
+
+| Rôle | Accès |
+|------|-------|
+| `animateur` | Statistiques, navigation agences, données nationales agrégées. PAS accès redevances. |
+| `directeur` | Tout animateur + gestion redevances + affectation animateurs |
+| `dg` | Accès complet |
 
 ### Postes occupés (`role_agence`)
 
-Indépendant des rôles applicatifs, utilisé pour filtrer les permissions granulaires :
-- `technicien`, `assistante`, `dirigeant`, `commercial`, etc.
+Indépendant des rôles applicatifs :
+- `dirigeant`, `assistante`, `commercial`, `tete_de_reseau`, `externe`
+
+**Note** : `tete_de_reseau` déclenche automatiquement l'assignation des rôles `franchiseur` + `support`.
 
 ### Mécanisme de permissions
 
-- **Table `user_roles`** : Associe chaque utilisateur à un ou plusieurs rôles applicatifs (`admin`, `support`, `user`).
-- **Table `role_permissions`** : Définit quels postes (`role_agence`) peuvent accéder à quels blocs (`block_id`).
-- **Fonction SQL `has_role(_user_id, _role)`** : Fonction SECURITY DEFINER pour vérifier les rôles sans déclencher de récursion RLS.
+- **Permissions par catégorie** : L'accès est géré au niveau des 3 principales catégories (Apogée, Apporteurs, HelpConfort).
+- **Fonction SQL `has_role(_user_id, _role)`** : Vérifie les rôles sans déclencher de récursion RLS.
+- **Fonction SQL `has_franchiseur_role(_user_id, _role)`** : Vérifie les rôles franchiseur.
+- **Fonction SQL `get_user_agency(_user_id)`** : Récupère l'agence de l'utilisateur (SECURITY DEFINER).
 
 ### Row Level Security (RLS)
 
 Toutes les tables sensibles ont des policies RLS :
-- **Lecture publique** : `blocks`, `apporteur_blocks`, `categories`, `sections`, `guide_chunks` (accessibles aux utilisateurs authentifiés).
-- **Écriture admin uniquement** : `blocks`, `apporteur_blocks`, `documents`, `categories`, `sections` (INSERT/UPDATE/DELETE réservés aux admins).
-- **Accès par utilisateur** : `favorites`, `user_history`, `user_widget_preferences` (chaque user ne voit que ses données via `auth.uid() = user_id`).
-- **Support** : `support_tickets`, `support_messages` (users voient leurs tickets, support voit tous les tickets).
-- **Chatbot queries** : Users voient leurs questions, admins voient toutes les questions.
+- **`profiles`** : Users voient/modifient uniquement leur profil. Admins voient tout.
+- **`apogee_agencies`** : Admin/franchiseur/support voient toutes les agences. Users voient uniquement leur agence.
+- **`blocks`/`apporteur_blocks`** : Lecture authentifiés. Écriture admin uniquement.
+- **`guide_chunks`** : Lecture authentifiés. CRUD admin uniquement.
+- **`support_tickets`** : Users voient leurs tickets. Support/franchiseur/admin voient tout.
+- **`favorites`/`user_history`** : Chaque user ne voit que ses données.
+
+---
+
+## Module "Mes indicateurs" (Apogee-Connect)
+
+### Architecture
+
+Le module utilise une architecture frontend-only avec appels directs à l'API Apogée (les edge functions ne peuvent pas appeler l'API Apogée due à des restrictions IP/CORS).
+
+```
+Frontend → API Apogée (https://{agence}.hc-apogee.fr/api/)
+```
+
+### Cache client avec TTL
+
+Le `DataService` implémente un cache côté client avec TTL de 5 minutes :
+
+```typescript
+// src/apogee-connect/services/dataService.ts
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+interface CacheEntry {
+  data: { users, clients, projects, interventions, factures, devis, creneaux };
+  timestamp: number;
+  agencyUrl: string; // Invalidation si changement d'agence
+}
+```
+
+### Flux de données
+
+1. **Initialisation séquentielle** (critique pour éviter race conditions) :
+   - AuthContext charge session/profil
+   - AgencyContext attend `isAuthLoading=false` puis définit `BASE_URL`
+   - Pages statistiques attendent `isAgencyReady=true`
+
+2. **Appel API** :
+   - Vérification cache TTL valide
+   - Si expiré : appel API POST avec `API_KEY` dans body JSON
+   - Stockage résultat en cache avec timestamp
+
+3. **Calculs** :
+   - Fonctions utilitaires dans `utils/` (dashboardCalculations, universCalculations, etc.)
+   - Filtrage par période via `FiltersContext`
+
+### Règles métier importantes
+
+- **Avoirs** : Traités comme montants négatifs dans tous les calculs CA.
+- **Multi-univers** : CA distribué proportionnellement entre univers d'un projet.
+- **8 univers valides** : PMR, Volets roulants, Rénovation, Électricité, Plomberie, Serrurerie, Vitrerie, Menuiserie.
+- **Types apporteurs** : agence_immo → "gestion locative", facility_services → "maintenanceur", gestion_syndic → "syndic".
+
+---
+
+## Module "Tête de Réseau" (Franchiseur)
+
+### Architecture
+
+Interface multi-agences pour les utilisateurs franchiseur (animateurs, directeurs, DG).
+
+### Chargement des données
+
+**CRITIQUE** : Chargement séquentiel obligatoire (pas de Promise.allSettled) pour éviter les race conditions sur BASE_URL.
+
+```typescript
+// Chargement une agence à la fois
+for (const agency of agencies) {
+  await setApiBaseUrl(agency.slug);
+  const data = await DataService.loadAllData();
+  cache[agency.slug] = data;
+}
+```
+
+### KPIs agrégés
+
+Les KPIs réseau sont des sommes arithmétiques simples des KPIs individuels déjà calculés :
+- CA réseau = Σ CA agences
+- SAV global = (Σ projets SAV) / (Σ projets totaux) × 100
+- SAV moyen agences = (Σ taux SAV agences) / N
+
+### Redevances
+
+Système de calcul progressif par paliers basé sur le CA HT cumulé annuel :
+- Modèle A (80% agences) : paliers standards
+- Modèle B : paliers personnalisés
+- Calcul mensuel avec historique permanent
+
+---
+
+## Mode Diffusion (TV)
+
+### Description
+
+Dashboard plein écran (1920×1080) pour affichage en agence sur écran TV.
+
+### Composants
+
+- **Bandeau animé** : Message motivationnel défilant
+- **10 KPI tiles** : CA, Top apporteurs, Taux conversion, SAV, Objectif, etc.
+- **"Le Saviez-tu?"** : Facts éducatifs avec tokens dynamiques
+- **Carousel de slides** : 4 visualisations rotatives
+  - Slide A : Distribution univers + types apporteurs
+  - Slide B : CA par technicien (6 mois)
+  - Slide C : Segmentation particuliers/apporteurs
+  - Slide D : Top apporteurs + SAV
+
+### Rotation automatique
+
+- Configurable : ON/OFF, vitesse (5-60s)
+- Cycle : slides → mois suivant → slides...
+- Pause automatique si panneau settings ouvert
+
+### Configuration
+
+Persistée dans table `diffusion_settings` Supabase :
+- `auto_rotation_enabled`, `rotation_speed_seconds`
+- `enabled_slides` (array de slugs)
+- `objectif_title`, `objectif_amount`
+- `saviez_vous_templates` (array avec tokens)
 
 ---
 
 ## Edge Functions Supabase
 
-Les Edge Functions sont des fonctions serverless Deno déployées sur Supabase, appelées depuis le frontend via `supabase.functions.invoke()`.
-
 ### `create-user`
-**Rôle** : Créer un nouvel utilisateur dans Supabase Auth et insérer son profil dans `profiles` + `user_roles`.  
-**Appelé par** : Admins depuis la page AdminUsers.  
-**Paramètres** : `email`, `password`, `first_name`, `last_name`, `pseudo`, `agence`, `role_agence`, `role` (app_role).
+Création utilisateur avec profil et rôles. Création automatique agence si nécessaire.
 
 ### `delete-user`
-**Rôle** : Supprimer un utilisateur de Supabase Auth et toutes ses données associées (cascade).  
-**Appelé par** : Admins depuis la page AdminUsers.  
-**Paramètres** : `userId`.
+Suppression utilisateur et données associées.
+
+### `update-user-email`
+Synchronisation email entre `profiles` et `auth.users`.
+
+### `reset-user-password`
+Génération mot de passe temporaire avec flag `must_change_password`.
 
 ### `generate-embeddings`
-**Rôle** : Générer des embeddings vectoriels pour tous les blocs du guide (chunking + OpenAI embeddings).  
-**Appelé par** : Admins depuis le bouton "MAJ BOT" (AdminIndex ou AdminDocuments).  
-**Paramètres** : Aucun (traite tous les blocs automatiquement par batch).
+Génération embeddings OpenAI pour tous les blocs (chunking + vectorisation).
 
 ### `search-embeddings`
-**Rôle** : Rechercher les chunks les plus pertinents pour une question donnée (similarité cosinus sur les embeddings).  
-**Appelé par** : Chatbot Mme MICHU lors de chaque question utilisateur.  
-**Paramètres** : `query` (question), `scope` (apogee/apporteur/helpconfort), `topK` (nombre de résultats, défaut 15).
+Recherche vectorielle pour RAG (similarité cosinus, topK résultats).
 
-### `index-document`
-**Rôle** : Indexer un document PDF uploadé (parsing + chunking + embeddings) pour le RAG.  
-**Appelé par** : Admins après upload d'un document PDF (AdminDocuments).  
-**Paramètres** : `documentUrl`, `documentId`.
-
-### `parse-document`
-**Rôle** : Parser un document (PDF, DOCX, etc.) et extraire le texte brut.  
-**Appelé par** : `index-document` en interne ou directement par les admins.  
-**Paramètres** : `documentUrl`.
+### `index-document` / `parse-document`
+Parsing et indexation documents PDF pour RAG.
 
 ### `chat-guide`
-**Rôle** : Gérer la conversation avec Mme MICHU (streaming de réponses OpenAI GPT-4o basé sur contexte RAG).  
-**Appelé par** : Chatbot lors de l'envoi d'un message utilisateur en mode IA.  
-**Paramètres** : `messages` (historique conversation), `context` (chunks RAG), `userPseudo`, `scope`.
+Chatbot IA avec streaming GPT-4o et contexte RAG.
 
 ### `notify-support-ticket`
-**Rôle** : Envoyer des notifications email (Resend) et SMS (AllMySMS) aux agents support lors de la création d'un ticket.  
-**Appelé par** : Frontend automatiquement après création d'un ticket support.  
-**Paramètres** : `ticketId`.
+Notifications email (Resend) et SMS (AllMySMS) lors création ticket.
+Routage par service :
+- Apogée → support + admin
+- HelpConfort/Apporteurs/Conseil → franchiseur + admin
+- Autre → tous
 
-### `get-kpis`
-**Rôle** : Récupérer les indicateurs de performance (KPIs) pour l'agence de l'utilisateur connecté.  
-**Appelé par** : Page "Mes indicateurs" au chargement initial et sur actualisation.  
-**Paramètres** : `period` (month/year, optionnel).  
-**Retour** : JSON contenant CA mensuel/annuel, nombre de factures et interventions pour l'agence.  
-**Fonctionnement** :
-  1. Récupère le profil de l'utilisateur (`profiles.agence`).
-  2. Construit l'URL dynamiquement : `https://{agence}.hc-apogee.fr/api/{endpoint}`.
-  3. Récupère la clé API partagée depuis `APOGEE_API_KEY` (secret Supabase).
-  4. Appelle l'API Apogée avec méthode POST, clé API dans le body JSON.
-  5. Retourne les KPIs structurés pour affichage frontend.
+### `notify-escalation`
+Notifications lors d'escalade de tickets.
 
-**Structure de l'appel API Apogée** :
-```javascript
-fetch(`https://${agence}.hc-apogee.fr/api/${endpoint}`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    API_KEY: 'HC-...',
-    ...additionalData // Filtres optionnels (dates, etc.)
-  })
-})
-```
+### `network-kpis`
+KPIs agrégés pour franchiseur (expérimental, limitations API backend).
 
 ---
 
 ## Flux principaux
 
-### 1. Connexion / Gestion de session / Récupération du rôle
+### 1. Authentification
 
-1. L'utilisateur accède à la page Landing (ou toute page protégée).
-2. `AuthContext` vérifie la session Supabase (`supabase.auth.getSession()`).
-3. Si non authentifié, affiche `LoginDialog` (login par pseudo ou email + mot de passe).
-4. Fonction SQL `get_email_from_pseudo` convertit le pseudo en email si nécessaire.
-5. Après authentification réussie, récupération du profil (`profiles`) et des rôles (`user_roles`).
-6. `AuthContext` expose `user`, `profile`, `isAdmin`, `isSupport` à toute l'application.
-7. Redirection automatique si mot de passe temporaire (`must_change_password`).
+1. Vérification session Supabase
+2. Si non authentifié → `LoginDialog` (email + mot de passe)
+3. Récupération profil (`profiles`) et rôles (`user_roles`, `franchiseur_roles`)
+4. Redirection si `must_change_password`
+5. `AuthContext` expose : `user`, `profile`, `isAdmin`, `isSupport`, `franchiseurRole`
 
-### 2. Consultation du guide + Recherche + Chatbot
+### 2. Consultation guide + Chatbot
 
-1. L'utilisateur navigue vers ApogeeGuide, ApporteurGuide ou HelpConfort.
-2. `EditorContext` charge les blocs (`blocks` ou `apporteur_blocks`) et catégories depuis Supabase.
-3. Affichage des catégories filtrées (permissions granulaires via `role_permissions`).
-4. Clic sur une catégorie → navigation vers `/apogee/:slug` (composant `Category`).
-5. Affichage des sections avec accordéons, favoris, filtres (TIPS/Tutoriels).
-6. **Recherche via chatbot Mme MICHU** :
-   - Clic sur le bouton chatbot (choix IA ou Support).
-   - Mode IA : envoi de la question → `search-embeddings` (topK=15) → `chat-guide` avec contexte RAG.
-   - Réponse streaming affichée dans l'interface chatbot.
-   - Tracking de la question dans `chatbot_queries` si réponse incomplète.
+1. Navigation vers guide (Apogée/Apporteurs/HelpConfort)
+2. `EditorContext` charge les blocs depuis Supabase
+3. Filtrage par permissions catégorie
+4. Mode IA chatbot : `search-embeddings` → `chat-guide` (streaming)
+5. Tracking dans `chatbot_queries`
 
-### 3. Création/Gestion de tickets support + Présence support
+### 3. Support tickets
 
-1. Utilisateur clique "Support" dans le chatbot ou "Parler à un conseiller".
-2. Création d'un ticket dans `support_tickets` (statut `waiting`, conversation chatbot sauvegardée en JSON).
-3. Notification envoyée aux agents support (email Resend + SMS AllMySMS) via `notify-support-ticket`.
-4. Agent support voit le ticket dans AdminSupport (ou interface dédiée Support).
-5. Agent clique "Prendre en charge" → ticket passe en `in_progress`, `assigned_to` mis à jour.
-6. **Chat en temps réel** :
-   - Utilisateur et agent échangent des messages via `support_messages`.
-   - Real-time Supabase (`postgres_changes` sur `support_messages`).
-   - Typing indicators via `support_presence` (Supabase Realtime Presence).
-7. Agent clique "Résoudre" → ticket passe en `resolved`, `resolved_at` enregistré.
-8. Utilisateur rate la résolution (1-5 étoiles + commentaire optionnel) → `rating` et `rating_comment` enregistrés.
+1. Création ticket (chatbot "Support" ou formulaire)
+2. Notification agents (`notify-support-ticket`)
+3. Prise en charge par agent (`assigned_to`)
+4. Chat temps réel (Supabase Realtime)
+5. Résolution + rating
 
-### 4. Gestion de documents et indexation IA côté admin
+### 4. Indicateurs (Mes indicateurs)
 
-1. Admin accède à AdminDocuments.
-2. Sélection du scope (Apogée/Apporteurs/HelpConfort), du bloc associé.
-3. Upload d'un document (PDF, image, etc.) → stockage dans bucket `documents`.
-4. Métadonnées insérées dans table `documents`.
-5. **Indexation automatique si PDF** :
-   - Appel de `index-document` avec l'URL publique du PDF.
-   - Parsing du PDF (`parse-document`), chunking du texte.
-   - Génération des embeddings OpenAI (`text-embedding-3-small`).
-   - Insertion des chunks dans `guide_chunks`.
-6. Le chatbot Mme MICHU peut désormais récupérer ce contenu via `search-embeddings`.
+1. Vérification accès (dirigeant par défaut OU permission individuelle)
+2. Initialisation AgencyContext avec `profile.agence`
+3. Chargement données via `DataService` (cache TTL 5min)
+4. Calculs et affichage KPIs
 
-### 5. Consultation des indicateurs de performance (KPIs)
+### 5. Franchiseur (Tête de Réseau)
 
-1. Utilisateur accède à "Mes indicateurs" depuis la Landing page.
-2. Page `MyIndicators` charge via hook `useAgencyKpis()`.
-3. Hook appelle edge function `get-kpis` avec le JWT de l'utilisateur.
-4. `get-kpis` :
-   - Vérifie l'authentification et récupère `profiles.agence`.
-   - Construit l'URL dynamiquement : `https://{agence}.hc-apogee.fr/api/kpis`.
-   - Récupère la clé API partagée depuis secret `APOGEE_API_KEY`.
-   - Appelle l'API Apogée en POST avec la clé API dans le body JSON + filtres (dates).
-   - Parse et retourne les KPIs (CA mensuel, CA annuel, factures, interventions).
-5. Affichage des KPIs dans des cartes shadcn (Euro, TrendingUp, FileText, Wrench).
-6. Bouton "Actualiser" pour recharger les données.
-
-**Admin** : Configuration des agences disponible dans `AdminAgencies` (ajout/modification des slugs, labels, statut actif/inactif). L'URL de l'API est automatiquement construite à partir du slug.
-
-**Extension future** : Dashboard franchiseur (multi-agences) avec agrégation des KPIs.
+1. Vérification rôle franchiseur
+2. Chargement séquentiel données toutes agences
+3. Agrégation KPIs réseau
+4. Affichage dashboard multi-agences
 
 ---
 
-## Points d'attention pour les développeurs
+## Sécurité
 
-### Refactoring en cours
-Plusieurs gros composants (Category.tsx, Chatbot.tsx, AdminBackup.tsx, AdminDocuments.tsx, AdminSupport.tsx) ont été refactorisés en sous-composants et hooks pour améliorer la maintenabilité. Respecter la structure :
-- **Hooks métiers** dans `src/hooks/` (use-category.ts, use-chatbot.ts, etc.).
-- **Composants UI** dans `src/components/[nom-feature]/`.
-- **Fichiers de page** ne doivent pas dépasser 300-400 lignes.
+### Sanitization HTML
 
-### Sécurité
-- **Jamais de vérification de rôles côté client** (localStorage, hardcoded).
-- **Toujours utiliser RLS** et fonction `has_role()` pour les permissions.
-- **Secrets gérés via Supabase Secrets** (OPENAI_API_KEY, RESEND_API_KEY, ALLMYSMS_API_KEY, etc.).
+Tous les `dangerouslySetInnerHTML` utilisent DOMPurify :
 
-### Types TypeScript
-- **Ne jamais éditer manuellement** `src/integrations/supabase/types.ts` (auto-généré).
-- Utiliser `Database['public']['Tables']['nom_table']['Row']` pour typer les données.
+```typescript
+import { createSanitizedHtml } from '@/lib/sanitize';
+
+<div dangerouslySetInnerHTML={createSanitizedHtml(content)} />
+```
+
+### Validation mot de passe
+
+Minimum 8 caractères avec :
+- Majuscules
+- Minuscules
+- Chiffres
+- Symboles spéciaux
+
+Appliqué uniformément : création ET modification.
+
+### Protection API Apogée
+
+- Clé API stockée dans secret Supabase `APOGEE_API_KEY`
+- URL API construite dynamiquement depuis `profile.agence`
+- Isolation données par agence (RLS sur `apogee_agencies`)
+
+---
+
+## Points d'attention développeurs
+
+### Fichiers NE PAS MODIFIER
+
+- `src/integrations/supabase/client.ts` (auto-généré)
+- `src/integrations/supabase/types.ts` (auto-généré)
+- `supabase/config.toml` (géré par Lovable Cloud)
+- `.env` (géré automatiquement)
 
 ### Design system
-- **Utiliser les tokens Tailwind** (`--primary`, `--secondary`, `--accent`, etc.) définis dans `index.css`.
-- **Éviter les couleurs directes** (text-white, bg-black). Toujours utiliser les variables HSL.
+
+Utiliser les tokens Tailwind CSS définis dans `index.css` :
+- `--primary`, `--secondary`, `--accent`, `--muted`
+- `--background`, `--foreground`, `--border`
+- **Éviter** : `text-white`, `bg-black`, couleurs directes
+
+Toutes les couleurs en HSL.
+
+### Refactoring
+
+Fichiers ne doivent pas dépasser 300-400 lignes :
+- Hooks métiers dans `src/hooks/`
+- Composants UI dans `src/components/[feature]/`
+- Utilitaires dans `src/lib/` ou `[module]/utils/`
 
 ### Real-time Supabase
-- **Activer les publications** : `ALTER PUBLICATION supabase_realtime ADD TABLE public.nom_table;`.
-- **Souscrire aux changements** via `supabase.channel()` pour les mises à jour live (messages support, typing indicators).
+
+```typescript
+// Activer publication
+ALTER PUBLICATION supabase_realtime ADD TABLE public.support_messages;
+
+// Souscrire
+const channel = supabase
+  .channel('messages')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'support_messages' }, callback)
+  .subscribe();
+```
 
 ---
 
@@ -384,8 +577,10 @@ Plusieurs gros composants (Category.tsx, Chatbot.tsx, AdminBackup.tsx, AdminDocu
 - **Documentation Tailwind CSS** : https://tailwindcss.com/docs
 - **Documentation React Router** : https://reactrouter.com/
 - **Documentation TipTap** : https://tiptap.dev/
+- **Documentation Recharts** : https://recharts.org/
+- **Documentation DOMPurify** : https://github.com/cure53/DOMPurify
 
 ---
 
 **Auteur** : Projet généré et maintenu via Lovable AI.  
-**Dernière mise à jour** : 2025-01-XX (refactoring architecture).
+**Dernière mise à jour** : 2025-11-27
