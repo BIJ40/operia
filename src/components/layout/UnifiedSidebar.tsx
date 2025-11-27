@@ -73,7 +73,7 @@ export function UnifiedSidebar() {
   // Navigation groups with permission-based filtering
   const navGroups: NavGroup[] = [
     {
-      label: <span>Help<span className="text-helpconfort-orange">!</span> Academy</span>,
+      label: <span>Help<span className="text-helpconfort-orange animate-pulse">!</span> Academy</span>,
       labelKey: 'help-academy',
       items: [
         { title: 'Guide Apogée', url: '/apogee', icon: BookOpen, scope: 'apogee', description: 'Guide complet pour maîtriser le logiciel Apogée' },
