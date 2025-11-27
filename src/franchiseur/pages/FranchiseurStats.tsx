@@ -17,16 +17,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
-// Définition des univers avec couleurs
+// Définition des univers avec couleurs (alignées sur enrichmentService.ts)
 const UNIVERSES = [
-  { slug: "plomberie", label: "Plomberie", colorHex: "#3b82f6" },
-  { slug: "electricite", label: "Électricité", colorHex: "#f59e0b" },
-  { slug: "serrurerie", label: "Serrurerie", colorHex: "#8b5cf6" },
-  { slug: "chauffage", label: "Chauffage", colorHex: "#ef4444" },
-  { slug: "climatisation", label: "Climatisation", colorHex: "#06b6d4" },
-  { slug: "pmr", label: "PMR", colorHex: "#22c55e" },
-  { slug: "volet_roulant", label: "Volets roulants", colorHex: "#ec4899" },
-  { slug: "electromenager", label: "Électroménager", colorHex: "#84cc16" },
+  { slug: "pmr", label: "PMR", colorHex: "#2B15E0" },
+  { slug: "volet_roulant", label: "Volets roulants", colorHex: "#9817F0" },
+  { slug: "renovation", label: "Rénovation", colorHex: "#A38D77" },
+  { slug: "electricite", label: "Électricité", colorHex: "#FD9A2C" },
+  { slug: "plomberie", label: "Plomberie", colorHex: "#3BA6FF" },
+  { slug: "serrurerie", label: "Serrurerie", colorHex: "#FF12BD" },
+  { slug: "vitrerie", label: "Vitrerie", colorHex: "#7FFE2E" },
+  { slug: "menuiserie", label: "Menuiserie", colorHex: "#FF7018" },
+  { slug: "chauffage", label: "Chauffage", colorHex: "#EF4444" },
+  { slug: "climatisation", label: "Climatisation", colorHex: "#06B6D4" },
 ];
 
 // Adapter le type pour le composant TechnicienUniversHeatmap
