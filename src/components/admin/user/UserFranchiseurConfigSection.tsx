@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Agency {
   id: string;
@@ -18,9 +17,6 @@ interface UserFranchiseurConfigSectionProps {
   onFranchiseurRoleChange: (role: string) => void;
   assignedAgencies: string[];
   onAssignedAgenciesChange: (agencies: string[]) => void;
-  serviceCompetencies: any;
-  onServiceCompetenciesChange: (competencies: any) => void;
-  isTeteDeReseau: boolean;
 }
 
 const FRANCHISEUR_ROLES = [
@@ -34,9 +30,6 @@ export function UserFranchiseurConfigSection({
   onFranchiseurRoleChange,
   assignedAgencies,
   onAssignedAgenciesChange,
-  serviceCompetencies,
-  onServiceCompetenciesChange,
-  isTeteDeReseau,
 }: UserFranchiseurConfigSectionProps) {
   const [agencies, setAgencies] = useState<Agency[]>([]);
 
@@ -110,34 +103,6 @@ export function UserFranchiseurConfigSection({
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {isTeteDeReseau && (
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Rôle HelpConfort</Label>
-            <Select
-              value={serviceCompetencies.helpconfort || 'none'}
-              onValueChange={(value) => {
-                const newCompetencies = { ...serviceCompetencies };
-                if (value === 'none') {
-                  delete newCompetencies.helpconfort;
-                } else {
-                  newCompetencies.helpconfort = value;
-                }
-                onServiceCompetenciesChange(newCompetencies);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un rôle" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Aucun</SelectItem>
-                <SelectItem value="animateur_reseau">Animateur Réseau</SelectItem>
-                <SelectItem value="directeur_reseau">Directeur Réseau</SelectItem>
-                <SelectItem value="dg">Directeur Général</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         )}
       </CollapsibleContent>

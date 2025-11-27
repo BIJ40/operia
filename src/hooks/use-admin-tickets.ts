@@ -10,6 +10,7 @@ interface SupportUser {
   last_name: string;
   support_level: number;
   service_competencies: any;
+  franchiseur_role?: string;
 }
 
 export const useAdminTickets = () => {
@@ -423,7 +424,19 @@ export const useAdminTickets = () => {
 
       if (profilesError) throw profilesError;
 
-      setSupportUsers(profiles as SupportUser[]);
+      // Also load franchiseur roles for these users
+      const { data: franchiseurRoles } = await supabase
+        .from('franchiseur_roles')
+        .select('user_id, franchiseur_role')
+        .in('user_id', userIds);
+
+      // Merge franchiseur_role into profiles
+      const usersWithRoles = (profiles || []).map(profile => ({
+        ...profile,
+        franchiseur_role: franchiseurRoles?.find(fr => fr.user_id === profile.id)?.franchiseur_role
+      }));
+
+      setSupportUsers(usersWithRoles as SupportUser[]);
     } catch (error) {
       console.error('Error loading support users:', error);
     }
@@ -439,27 +452,39 @@ export const useAdminTickets = () => {
       const currentTicket = tickets.find(t => t.id === ticketId) || selectedTicket;
       if (!currentTicket) throw new Error('Ticket not found');
 
-      // Get current user info
+      // Get current user info with franchiseur role
       const { data: currentUser } = await supabase
         .from('profiles')
-        .select('first_name, last_name, service_competencies')
+        .select('first_name, last_name')
         .eq('id', user?.id)
         .single();
+      
+      const { data: currentUserFranchiseurRole } = await supabase
+        .from('franchiseur_roles')
+        .select('franchiseur_role')
+        .eq('user_id', user?.id || '')
+        .maybeSingle();
 
-      // Get target user info
+      // Get target user info with franchiseur role
       const { data: targetUser } = await supabase
         .from('profiles')
-        .select('first_name, last_name, service_competencies')
+        .select('first_name, last_name')
         .eq('id', targetUserId)
         .single();
+        
+      const { data: targetUserFranchiseurRole } = await supabase
+        .from('franchiseur_roles')
+        .select('franchiseur_role')
+        .eq('user_id', targetUserId)
+        .maybeSingle();
 
       let fromRole = undefined;
       let toRole = undefined;
 
-      // For HelpConfort, determine roles
+      // For HelpConfort, determine roles from franchiseur_roles table
       if (currentTicket.service === 'HelpConfort') {
-        fromRole = (currentUser?.service_competencies as any)?.helpconfort || 'animateur_reseau';
-        toRole = (targetUser?.service_competencies as any)?.helpconfort || 'directeur_reseau';
+        fromRole = currentUserFranchiseurRole?.franchiseur_role || 'animateur';
+        toRole = targetUserFranchiseurRole?.franchiseur_role || 'directeur';
       }
 
       const escalationEntry = {

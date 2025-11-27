@@ -358,9 +358,6 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
               onFranchiseurRoleChange={setFranchiseurRole}
               assignedAgencies={assignedAgencies}
               onAssignedAgenciesChange={setAssignedAgencies}
-              serviceCompetencies={serviceCompetencies}
-              onServiceCompetenciesChange={setServiceCompetencies}
-              isTeteDeReseau={isTeteDeReseau}
             />
           )}
 

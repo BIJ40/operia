@@ -422,17 +422,9 @@ export default function AdminUsersList() {
                             Conseil
                           </Badge>
                         )}
-                        {user.service_competencies?.helpconfort && (
-                          <Badge className="bg-accent hover:bg-accent/90 text-white text-xs">
-                            {user.service_competencies.helpconfort === 'animateur_reseau' && 'HC - Animateur'}
-                            {user.service_competencies.helpconfort === 'directeur_reseau' && 'HC - Directeur'}
-                            {user.service_competencies.helpconfort === 'dg' && 'HC - DG'}
-                          </Badge>
-                        )}
                         {!user.service_competencies?.apogee && 
                          !user.service_competencies?.apporteurs && 
-                         !user.service_competencies?.conseil && 
-                         !user.service_competencies?.helpconfort && (
+                         !user.service_competencies?.conseil && (
                           <span className="text-xs text-muted-foreground">Aucune</span>
                         )}
                       </div>

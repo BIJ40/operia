@@ -23,6 +23,7 @@ interface SupportUser {
   last_name: string;
   support_level: number;
   service_competencies: any;
+  franchiseur_role?: string;
 }
 
 interface EscalateTicketDialogProps {
@@ -40,6 +41,16 @@ const getSupportLevelLabel = (level: number) => {
   }
 };
 
+// Map franchiseur_role to display label
+const getFranchiseurRoleLabel = (role: string) => {
+  switch (role) {
+    case 'animateur': return 'Animateur Réseau';
+    case 'directeur': return 'Directeur Réseau';
+    case 'dg': return 'Directeur Général';
+    default: return role;
+  }
+};
+
 export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: EscalateTicketDialogProps) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -47,20 +58,33 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [reason, setReason] = useState('');
   const [userLevel, setUserLevel] = useState<number>(1);
+  const [userFranchiseurRole, setUserFranchiseurRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadUserLevel = async () => {
+    const loadUserData = async () => {
       if (!user?.id) return;
-      const { data } = await supabase
+      
+      // Load support level
+      const { data: profile } = await supabase
         .from('profiles')
         .select('support_level')
         .eq('id', user.id)
         .single();
-      if (data) {
-        setUserLevel(data.support_level || 1);
+      if (profile) {
+        setUserLevel(profile.support_level || 1);
+      }
+      
+      // Load franchiseur role
+      const { data: franchiseurRole } = await supabase
+        .from('franchiseur_roles')
+        .select('franchiseur_role')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (franchiseurRole) {
+        setUserFranchiseurRole(franchiseurRole.franchiseur_role);
       }
     };
-    loadUserLevel();
+    loadUserData();
   }, [user?.id]);
 
   // Déterminer si l'escalade est possible selon le service
@@ -69,52 +93,31 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
     
     // Pour Apogée : système N1/N2/N3
     if (ticket.service === 'Apogée') {
-      if (userLevel === 1 && currentLevel === 1) return true; // N1 -> N2
-      if (userLevel === 2 && currentLevel <= 2) return true; // N2 -> N3
-      if (userLevel === 3 && currentLevel <= 3) return true; // N3 -> N3
+      if (userLevel === 1 && currentLevel === 1) return true;
+      if (userLevel === 2 && currentLevel <= 2) return true;
+      if (userLevel === 3 && currentLevel <= 3) return true;
       return false;
     }
     
     // Pour HelpConfort : système Animateur -> Directeur -> DG
     if (ticket.service === 'HelpConfort') {
-      return true; // Tous peuvent escalader
+      return !!userFranchiseurRole;
     }
     
     return false;
   };
 
-  // Get user's HelpConfort role from service_competencies
-  const [userHelpConfortRole, setUserHelpConfortRole] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const loadUserHelpConfortRole = async () => {
-      if (!user?.id) return;
-      const { data } = await supabase
-        .from('profiles')
-        .select('service_competencies')
-        .eq('id', user.id)
-        .single();
-      if (data?.service_competencies) {
-        const competencies = data.service_competencies as any;
-        if (competencies?.helpconfort) {
-          setUserHelpConfortRole(competencies.helpconfort);
-        }
-      }
-    };
-    loadUserHelpConfortRole();
-  }, [user?.id]);
-
   // Déterminer les rôles d'escalade disponibles (pour HelpConfort)
   const getAvailableHelpConfortRoles = () => {
-    const currentRole = ticket.escalation_history?.[ticket.escalation_history.length - 1]?.to_role || 'animateur_reseau';
+    const currentRole = ticket.escalation_history?.[ticket.escalation_history.length - 1]?.to_role || 'animateur';
     
-    if (userHelpConfortRole === 'animateur_reseau' && currentRole === 'animateur_reseau') {
-      return [{ value: 'directeur_reseau', label: 'Directeur Réseau' }];
+    if (userFranchiseurRole === 'animateur' && currentRole === 'animateur') {
+      return [{ value: 'directeur', label: 'Directeur Réseau' }];
     }
-    if (userHelpConfortRole === 'directeur_reseau' && currentRole === 'directeur_reseau') {
+    if (userFranchiseurRole === 'directeur' && currentRole === 'directeur') {
       return [{ value: 'dg', label: 'Directeur Général' }];
     }
-    if (userHelpConfortRole === 'dg' && currentRole === 'dg') {
+    if (userFranchiseurRole === 'dg' && currentRole === 'dg') {
       return [{ value: 'dg', label: 'Directeur Général (Réassignation)' }];
     }
     
@@ -126,9 +129,9 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
     const currentLevel = ticket.support_level || 1;
     
     if (ticket.service === 'Apogée') {
-      if (userLevel === 1 && currentLevel === 1) return [2]; // N1 -> N2
-      if (userLevel === 2 && currentLevel === 2) return [3]; // N2 -> N3
-      if (userLevel === 3 && currentLevel === 3) return [3]; // N3 -> N3 (autre collègue)
+      if (userLevel === 1 && currentLevel === 1) return [2];
+      if (userLevel === 2 && currentLevel === 2) return [3];
+      if (userLevel === 3 && currentLevel === 3) return [3];
     }
     
     return [];
@@ -145,13 +148,11 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
     const currentLevel = ticket.support_level || 1;
     
     if (ticket.service === 'Apogée') {
-      // Vérifier le niveau
       const correctLevel = u.support_level === targetLevel;
       if (!correctLevel) return false;
       
       const hasApogeeCompetency = u.service_competencies?.apogee !== false;
       
-      // N3 -> N3 : exclure l'utilisateur actuel
       if (targetLevel === currentLevel && targetLevel === 3) {
         return hasApogeeCompetency && u.id !== user?.id;
       }
@@ -160,15 +161,12 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
     }
     
     if (ticket.service === 'HelpConfort') {
-      const userRole = u.service_competencies?.helpconfort;
+      // Use franchiseur_role instead of service_competencies.helpconfort
+      if (targetRole && u.franchiseur_role !== targetRole) return false;
       
-      // Filtrer par rôle cible
-      if (targetRole && userRole !== targetRole) return false;
+      if (targetRole === 'dg' && u.franchiseur_role === 'dg' && u.id === user?.id) return false;
       
-      // DG -> DG : exclure l'utilisateur actuel
-      if (targetRole === 'dg' && userRole === 'dg' && u.id === user?.id) return false;
-      
-      return userRole === targetRole;
+      return u.franchiseur_role === targetRole;
     }
     
     return false;
@@ -177,9 +175,8 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
   const handleEscalate = () => {
     if (!selectedUserId || !reason.trim()) return;
     
-    // Pour HelpConfort, on passe le rôle au lieu du niveau
     if (ticket.service === 'HelpConfort') {
-      onEscalate(0, selectedUserId, reason); // Le niveau sera ignoré pour HelpConfort
+      onEscalate(0, selectedUserId, reason);
     } else {
       onEscalate(targetLevel, selectedUserId, reason);
     }
