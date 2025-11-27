@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
-import logoHelpconfort from '@/assets/logo_helpogee.png';
 import {
   Tooltip,
   TooltipContent,
@@ -128,15 +127,6 @@ export function UnifiedHeader() {
           >
             <Menu className="w-5 h-5" />
           </Button>
-
-          {/* Logo (clickable to home) */}
-          <Link to="/" className="shrink-0 hidden sm:block">
-            <img 
-              src={logoHelpconfort} 
-              alt="HelpConfort" 
-              className="h-10 object-contain hover:opacity-80 transition-opacity"
-            />
-          </Link>
 
           {/* Page title - centered */}
           <div className="flex-1 flex justify-center">
