@@ -29,7 +29,17 @@ export function UserSystemRolesSection({
     }
   };
 
-  const activeRolesCount = systemRoles.filter(r => r !== 'user').length;
+  // Calculer le nombre de rôles actifs en tenant compte des auto-assignés pour Tête de réseau
+  const getActiveRolesCount = () => {
+    const baseRoles = systemRoles.filter(r => r !== 'user');
+    if (isTeteDeReseau) {
+      const autoRoles = ['support', 'franchiseur'];
+      const combined = new Set([...baseRoles, ...autoRoles]);
+      return combined.size;
+    }
+    return baseRoles.length;
+  };
+  const activeRolesCount = getActiveRolesCount();
 
   return (
     <Collapsible defaultOpen className="border rounded-lg">
@@ -56,7 +66,11 @@ export function UserSystemRolesSection({
             <div key={role.value} className="flex items-start space-x-3">
               <Checkbox
                 id={`role-${role.value}`}
-                checked={systemRoles.includes(role.value)}
+                checked={
+                  isTeteDeReseau && (role.value === 'support' || role.value === 'franchiseur')
+                    ? true
+                    : systemRoles.includes(role.value)
+                }
                 onCheckedChange={() => handleToggleRole(role.value)}
                 disabled={isTeteDeReseau && (role.value === 'support' || role.value === 'franchiseur')}
               />
