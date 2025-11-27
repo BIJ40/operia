@@ -140,7 +140,7 @@ export function UnifiedSidebar() {
           <img 
             src={logoHelpconfortServices} 
             alt="HelpConfort Services" 
-            className={`object-contain transition-all ${collapsed ? 'h-10 w-10' : 'h-20'}`}
+            className={`object-contain transition-all ${collapsed ? 'h-8 w-8' : 'w-full max-h-28'}`}
           />
         </Link>
       </SidebarHeader>
