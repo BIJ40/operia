@@ -72,7 +72,8 @@ import {
   Shield,
   UserCog,
   Zap,
-  Eye
+  Eye,
+  Wand2
 } from 'lucide-react';
 import {
   Tooltip,
@@ -338,6 +339,27 @@ export default function AdminUsersUnified() {
     },
   });
 
+  // Batch migration mutation (V2 à tous)
+  const batchMigrateMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('migrate-user-roles-v2', {
+        body: {},
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      const { migrated = 0, skipped = 0 } = data || {};
+      logAuth.info(`[V2] Migration batch terminée: ${migrated} migrés, ${skipped} ignorés`);
+      toast.success(`Migration V2 terminée : ${migrated} profil(s) mis à jour, ${skipped} déjà migrés`);
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+    },
+    onError: (error: Error) => {
+      logAuth.error('[V2] Erreur migration batch:', error);
+      toast.error(`Erreur migration : ${error.message || 'Inconnue'}`);
+    },
+  });
+
   // Apply V2 suggestion
   const applyV2 = (user: typeof usersWithSuggestions[0]) => {
     if (!user.suggestedGlobalRole) return;
@@ -518,10 +540,27 @@ export default function AdminUsersUnified() {
           <Badge variant="outline" className="text-lg px-4 py-2">
             {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
           </Badge>
-          <Badge variant="secondary" className="px-3 py-1.5">
-            <Info className="w-3 h-3 mr-1" />
-            V2 en préparation
-          </Badge>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => batchMigrateMutation.mutate()}
+                disabled={batchMigrateMutation.isPending}
+              >
+                {batchMigrateMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Wand2 className="w-4 h-4 mr-2" />
+                )}
+                Appliquer V2 à tous
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Migrer tous les utilisateurs vers le système V2.0</p>
+              <p className="text-xs text-muted-foreground">Basé sur leurs rôles legacy</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         {/* Filters Bar */}
