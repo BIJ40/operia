@@ -137,7 +137,7 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
 
 export default function AdminUsersUnified() {
   const queryClient = useQueryClient();
-  const { globalRole: currentUserRole, isAdmin } = useAuth();
+  const { globalRole: currentUserRole, isAdmin, user, agence: currentUserAgency } = useAuth();
   
   // Vérifier que l'utilisateur peut gérer des utilisateurs (N3+ ou admin legacy)
   const userCanManage = canManageUsers(currentUserRole) || isAdmin;
@@ -227,21 +227,37 @@ export default function AdminUsersUnified() {
     },
   });
 
-  // Get current user's role level for filtering
+  // Get current user's role level and agency for filtering
   const currentUserLevel = getRoleLevel(currentUserRole);
   
   // Calculate suggestions for each user
   const usersWithSuggestions = useMemo(() => {
     if (!users) return [];
     
-    // Filter users by role level: user can only see users with level <= their own level
-    // N5+ (platform_admin, superadmin) see everyone
-    const visibleUsers = currentUserLevel >= GLOBAL_ROLES.platform_admin 
-      ? users 
-      : users.filter(user => {
-          const userLevel = user.global_role ? GLOBAL_ROLES[user.global_role] : 0;
-          return userLevel <= currentUserLevel;
-        });
+    // Filter users based on role level hierarchy:
+    // N3+ (franchisor_user, franchisor_admin, platform_admin, superadmin): all users
+    // N2 (franchisee_admin): only users from same agency
+    // N1 (franchisee_user): only users from same agency
+    // N0 (base_user): only themselves
+    const visibleUsers = users.filter(u => {
+      // N3+ sees everyone
+      if (currentUserLevel >= GLOBAL_ROLES.franchisor_user) {
+        return true;
+      }
+      
+      // N2 (franchisee_admin): same agency only
+      if (currentUserLevel === GLOBAL_ROLES.franchisee_admin) {
+        return u.agence === currentUserAgency;
+      }
+      
+      // N1 (franchisee_user): same agency only
+      if (currentUserLevel === GLOBAL_ROLES.franchisee_user) {
+        return u.agence === currentUserAgency;
+      }
+      
+      // N0 (base_user): only themselves
+      return u.id === user?.id;
+    });
     
     return visibleUsers.map(user => {
       const userCaps = capabilities?.filter(c => c.user_id === user.id) || [];
