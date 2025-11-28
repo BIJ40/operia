@@ -25,7 +25,7 @@ export default function Landing() {
   ];
 
   const pilotageCards: DashboardCard[] = [
-    { title: 'Mes Indicateurs', description: 'Tableau de bord et KPI de votre agence', icon: BarChart3, url: '/mes-indicateurs', color: 'accent', scope: 'mes_indicateurs' },
+    { title: 'Indicateurs généraux', description: 'Tableau de bord et KPI de votre agence', icon: BarChart3, url: '/mes-indicateurs', color: 'accent', scope: 'mes_indicateurs' },
     { title: 'Actions à Mener', description: 'Suivi des actions et tâches en cours', icon: ListTodo, url: '/actions-a-mener', color: 'accent', scope: 'actions_a_mener' },
     { title: 'Diffusion', description: 'Mode affichage TV agence', icon: Tv, url: '/diffusion', color: 'accent', scope: 'diffusion' },
   ];

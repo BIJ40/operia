@@ -88,7 +88,7 @@ export function UnifiedSidebar() {
       items: [
         { 
           title: 'Statistiques', 
-          icon: BarChart3, 
+          icon: PieChart, 
           scope: 'mes_indicateurs',
           children: [
             { title: 'Indicateurs généraux', url: '/mes-indicateurs', icon: BarChart3, scope: 'mes_indicateurs', description: 'Tableau de bord et KPI de votre agence' },

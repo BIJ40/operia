@@ -162,7 +162,7 @@ export default function IndicateursAccueil() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-          Mes Indicateurs
+          Indicateurs généraux
         </h1>
       </div>
 
