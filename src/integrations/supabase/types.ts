@@ -1563,11 +1563,19 @@ export type Database = {
         | { Args: { _scope_slug: string; _user_id: string }; Returns: number }
         | { Args: { _scope_slug: string; _user_id: string }; Returns: number }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
+      get_user_global_role_level: {
+        Args: { _user_id: string }
+        Returns: number
+      }
       has_franchiseur_role: {
         Args: {
           _role: Database["public"]["Enums"]["franchiseur_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      has_min_global_role: {
+        Args: { _min_level: number; _user_id: string }
         Returns: boolean
       }
       has_role: {
