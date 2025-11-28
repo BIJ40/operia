@@ -141,7 +141,7 @@ function DashboardTileCard({ tile }: { tile: DashboardTile }) {
     <Link to={tile.route}>
       <Card className="group h-full hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 cursor-pointer relative">
         {tile.badge && (
-          <span className="absolute top-3 right-3 text-[10px] font-medium bg-orange-500 text-white px-2 py-0.5 rounded-full z-10">
+          <span className="absolute bottom-3 right-3 text-[10px] font-medium bg-orange-500 text-white px-2 py-0.5 rounded-full z-10">
             {tile.badge}
           </span>
         )}
