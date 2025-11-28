@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, CheckCircle2, Clock, AlertCircle, LayoutGrid, List, Moon, Sun, Bell, BellOff, TrendingUp } from 'lucide-react';
+import { MessageSquare, CheckCircle2, Clock, AlertCircle, LayoutGrid, List, Moon, Sun, Bell, BellOff, TrendingUp, CircleDot, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAdminSupport } from '@/hooks/use-admin-support';
@@ -12,28 +12,40 @@ import { TicketDetails } from '@/components/admin/support/TicketDetails';
 import { SupportChat } from '@/components/admin/support/SupportChat';
 import { SatisfactionChart } from '@/components/SatisfactionChart';
 import { KanbanView } from '@/components/admin/support/KanbanView';
+import { TicketFilters } from '@/components/admin/support/TicketFilters';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { usePermissions } from '@/hooks/use-permissions';
 import { PERMISSION_LEVELS } from '@/types/permissions';
+import { TICKET_STATUS_LABELS, type TicketStatus, type TicketPriority, type TicketService } from '@/services/supportService';
 
 export default function AdminSupport() {
   const {
     isAdmin,
     user,
     tickets,
+    filteredTickets,
     selectedTicket,
     messages,
     newMessage,
     filter,
+    priorityFilter,
+    serviceFilter,
+    assignmentFilter,
     isUserTyping,
+    isInternalNote,
     messagesEndRef,
     setNewMessage,
     setFilter,
+    setPriorityFilter,
+    setServiceFilter,
+    setAssignmentFilter,
+    setIsInternalNote,
     loadTickets,
     selectTicket,
     sendMessage,
     resolveTicket,
     reopenTicket,
+    clearFilters,
   } = useAdminSupport();
 
   const navigate = useNavigate();
@@ -88,9 +100,9 @@ export default function AdminSupport() {
     );
   };
 
-  // Reset filter to 'waiting' on mount - force immediately
+  // Reset filter to 'new' on mount (nouveau statut par défaut)
   useEffect(() => {
-    setFilter('waiting');
+    setFilter('new');
   }, [setFilter]);
 
   useEffect(() => {
@@ -101,21 +113,23 @@ export default function AdminSupport() {
     loadTickets();
   }, [canView, isAdmin, user, navigate, loadTickets]);
 
-  const filteredTickets = tickets.filter((t) => t.status === filter);
-  const waitingCount = tickets.filter((t) => t.status === 'waiting').length;
+  // Compteurs pour les onglets - utiliser les nouveaux statuts
+  const newCount = tickets.filter((t) => t.status === 'new').length;
+  const waitingUserCount = tickets.filter((t) => t.status === 'waiting_user' || t.status === 'waiting').length;
   const inProgressCount = tickets.filter((t) => t.status === 'in_progress').length;
 
   const stats = {
     totalTickets: tickets.length,
-    resolvedCount: tickets.filter((t) => t.status === 'resolved').length,
+    resolvedCount: tickets.filter((t) => t.status === 'resolved' || t.status === 'closed').length,
     resolutionRate:
       tickets.length > 0
         ? Math.round(
-            (tickets.filter((t) => t.status === 'resolved').length / tickets.length) * 100
+            (tickets.filter((t) => t.status === 'resolved' || t.status === 'closed').length / tickets.length) * 100
           )
         : 0,
     inProgressCount,
-    waitingCount,
+    newCount,
+    waitingUserCount,
     avgRating:
       tickets.filter((t) => t.rating !== null).length > 0
         ? (
@@ -217,9 +231,9 @@ export default function AdminSupport() {
             <h3 className="text-xs font-medium">En cours</h3>
           </div>
           <div className="text-xl font-bold">
-            {stats.inProgressCount + stats.waitingCount}
+            {stats.inProgressCount + stats.newCount}
           </div>
-          <p className="text-xs text-muted-foreground">{stats.waitingCount} en attente</p>
+          <p className="text-xs text-muted-foreground">{stats.newCount} nouveaux</p>
         </Card>
 
         <Card className="p-3">
@@ -263,15 +277,17 @@ export default function AdminSupport() {
                 onResolve={resolveTicket}
                 onReopen={reopenTicket}
               />
-              {selectedTicket.status !== 'resolved' && (
+              {selectedTicket.status !== 'resolved' && selectedTicket.status !== 'closed' && (
                 <Card>
                   <SupportChat
                     messages={messages}
                     newMessage={newMessage}
                     isUserTyping={isUserTyping}
                     messagesEndRef={messagesEndRef}
+                    isInternalNote={isInternalNote}
                     onMessageChange={setNewMessage}
                     onSendMessage={sendMessage}
+                    onInternalNoteChange={setIsInternalNote}
                   />
                 </Card>
               )}
@@ -280,66 +296,42 @@ export default function AdminSupport() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <Tabs value={filter} defaultValue="waiting" onValueChange={(v) => setFilter(v as 'waiting' | 'in_progress' | 'resolved')}>
-              <TabsList className="grid w-full grid-cols-3 mb-4">
-                <TabsTrigger value="waiting" className="gap-1 text-xs">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  Attente ({waitingCount})
-                </TabsTrigger>
-                <TabsTrigger value="in_progress" className="gap-1 text-xs">
-                  <Clock className="w-3.5 h-3.5" />
-                  En cours ({inProgressCount})
-                </TabsTrigger>
-                <TabsTrigger value="resolved" className="gap-1 text-xs">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Résolus
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="waiting" className="space-y-2 mt-0">
-                {filteredTickets.length === 0 ? (
-                  <Card>
-                    <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                      Aucun ticket en attente
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <TicketList
-                    tickets={filteredTickets}
-                    selectedTicket={selectedTicket}
-                    onSelectTicket={selectTicket}
-                    showResolved={false}
-                  />
-                )}
-              </TabsContent>
-
-              <TabsContent value="in_progress" className="space-y-2 mt-0">
-                {tickets.filter(t => t.status === 'in_progress').length === 0 ? (
-                  <Card>
-                    <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                      Aucun ticket en cours
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <TicketList
-                    tickets={tickets.filter(t => t.status === 'in_progress')}
-                    selectedTicket={selectedTicket}
-                    onSelectTicket={selectTicket}
-                    showResolved={false}
-                  />
-                )}
-              </TabsContent>
-
-              <TabsContent value="resolved" className="space-y-2 mt-0">
+          <div className="lg:col-span-1 space-y-4">
+            {/* Filtres avancés */}
+            <TicketFilters
+              statusFilter={filter}
+              priorityFilter={priorityFilter}
+              serviceFilter={serviceFilter}
+              assignmentFilter={assignmentFilter}
+              onStatusChange={setFilter}
+              onPriorityChange={setPriorityFilter}
+              onServiceChange={setServiceFilter}
+              onAssignmentChange={setAssignmentFilter}
+              onClearFilters={clearFilters}
+            />
+            
+            {/* Liste des tickets filtrés */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm text-muted-foreground px-1">
+                <span>{filteredTickets.length} ticket(s)</span>
+                {filter !== 'all' && <span>Filtre: {TICKET_STATUS_LABELS[filter] || filter}</span>}
+              </div>
+              
+              {filteredTickets.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                    Aucun ticket ne correspond aux filtres
+                  </CardContent>
+                </Card>
+              ) : (
                 <TicketList
-                  tickets={tickets}
+                  tickets={filteredTickets}
                   selectedTicket={selectedTicket}
                   onSelectTicket={selectTicket}
-                  showResolved={true}
+                  showResolved={filter === 'resolved' || filter === 'closed'}
                 />
-              </TabsContent>
-            </Tabs>
+              )}
+            </div>
           </div>
 
           <div className="lg:col-span-2">
@@ -357,15 +349,17 @@ export default function AdminSupport() {
                   onResolve={resolveTicket}
                   onReopen={reopenTicket}
                 />
-                {selectedTicket.status !== 'resolved' && (
+                {selectedTicket.status !== 'resolved' && selectedTicket.status !== 'closed' && (
                   <Card>
                     <SupportChat
                       messages={messages}
                       newMessage={newMessage}
                       isUserTyping={isUserTyping}
                       messagesEndRef={messagesEndRef}
+                      isInternalNote={isInternalNote}
                       onMessageChange={setNewMessage}
                       onSendMessage={sendMessage}
+                      onInternalNoteChange={setIsInternalNote}
                     />
                   </Card>
                 )}
