@@ -209,7 +209,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (p.scope_id && scope) {
         return p.scope_id === scope.id;
       }
-      return p.block_id === scopeSlug;
+      // LEGACY: block_id – à supprimer quand toutes les permissions auront un scope_id
+      if (p.block_id && !scope) {
+        console.warn('[LEGACY] user_permissions.block_id encore utilisé pour', scopeSlug);
+        return p.block_id === scopeSlug;
+      }
+      return false;
     });
 
     if (userOverride) {
@@ -238,7 +243,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (p.scope_id && scope) {
         return p.scope_id === scope.id;
       }
-      return p.block_id === scopeSlug;
+      // LEGACY: block_id – à supprimer quand toutes les permissions auront un scope_id
+      if (p.block_id && !scope) {
+        console.warn('[LEGACY] role_permissions.block_id encore utilisé pour', scopeSlug);
+        return p.block_id === scopeSlug;
+      }
+      return false;
     });
 
     if (rolePerm) {
@@ -296,7 +306,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return canViewScope(scope);
   }, [canViewScope]);
 
+  /**
+   * @deprecated Utiliser canViewScope(scopeSlug) à la place
+   */
   const hasAccessToBlock = useCallback((blockId: string): boolean => {
+    console.warn('[DEPRECATED] hasAccessToBlock est déprécié, utiliser canViewScope(scopeSlug) à la place');
     if (isAdmin) return true;
     if (!roleAgence) return true;
     

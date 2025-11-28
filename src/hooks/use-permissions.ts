@@ -12,7 +12,10 @@ export function useFilteredBlocks<T extends Block>(blocks: T[]): T[] {
   return blocks;
 }
 
-// Hook pour vérifier si un block est verrouillé
+/**
+ * @deprecated Utiliser les fonctions basées sur scope (canViewScope, getEffectivePermission) à la place
+ * Hook pour vérifier si un block est verrouillé
+ */
 export function useIsBlockLocked() {
   const { hasAccessToBlock, isAdmin, roleAgence } = useAuth();
 
