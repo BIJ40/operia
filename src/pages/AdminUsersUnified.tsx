@@ -137,12 +137,14 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
 
 export default function AdminUsersUnified() {
   const queryClient = useQueryClient();
-  const { globalRole: currentUserRole, isAdmin, user, agence: currentUserAgency } = useAuth();
+  const { globalRole, suggestedGlobalRole, isAdmin, user, agence: currentUserAgency } = useAuth();
   
   // ============================================================================
   // PERMISSIONS V2 - Helpers locaux
   // ============================================================================
-  const currentUserLevel = getRoleLevel(currentUserRole);
+  // Utiliser le rôle effectif (DB ou suggestion depuis legacy)
+  const effectiveUserRole = globalRole ?? suggestedGlobalRole;
+  const currentUserLevel = getRoleLevel(effectiveUserRole);
   
   // N2+ peut accéder à la page
   const canAccessPage = currentUserLevel >= GLOBAL_ROLES.franchisee_admin || isAdmin;
@@ -177,7 +179,7 @@ export default function AdminUsersUnified() {
     return targetLevel <= currentUserLevel;
   };
   
-  const assignableRoles = useMemo(() => getAssignableRoles(currentUserRole), [currentUserRole]);
+  const assignableRoles = useMemo(() => getAssignableRoles(effectiveUserRole), [effectiveUserRole]);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -898,7 +900,7 @@ export default function AdminUsersUnified() {
                             </Select>
                             {userCanBeEdited && assignableRoles.length < 7 && (
                               <p className="text-xs text-amber-600">
-                                Vous pouvez assigner des rôles jusqu'à N{currentUserRole ? GLOBAL_ROLES[currentUserRole] : 0}
+                                Vous pouvez assigner des rôles jusqu'à N{effectiveUserRole ? GLOBAL_ROLES[effectiveUserRole] : 0}
                               </p>
                             )}
                             {user.suggestedGlobalRole && (
