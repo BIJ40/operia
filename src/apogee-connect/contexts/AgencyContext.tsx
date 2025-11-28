@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { setApiBaseUrl } from '@/apogee-connect/services/api';
 import { DataService } from '@/apogee-connect/services/dataService';
@@ -20,6 +20,7 @@ const AgencyContext = createContext<AgencyContextType | undefined>(undefined);
 
 export function AgencyProvider({ children }: { children: ReactNode }) {
   const { agence, isAuthLoading } = useAuth();
+  const [isApiConfigured, setIsApiConfigured] = useState(false);
   
   // Construire l'agence à partir du profil utilisateur
   const currentAgency: Agency | null = agence 
@@ -31,8 +32,9 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
     : null;
 
   useEffect(() => {
-    // Ne rien faire tant que l'authentification charge
+    // Reset le flag si l'auth recharge
     if (isAuthLoading) {
+      setIsApiConfigured(false);
       logApogee.debug('Authentification en cours - Attente avant configuration API');
       return;
     }
@@ -41,6 +43,7 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
     if (!agence) {
       logApogee.warn('Aucune agence définie pour l\'utilisateur - BASE_URL ne sera pas initialisée');
       setApiBaseUrl("");
+      setIsApiConfigured(true); // Marqué comme configuré même sans agence
       return;
     }
 
@@ -49,10 +52,12 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
       logApogee.info(`Configuration de l'agence: ${currentAgency.id}`);
       setApiBaseUrl(currentAgency.baseUrl);
       DataService.clearCache();
+      setIsApiConfigured(true); // API configurée avec succès
     }
   }, [isAuthLoading, agence, currentAgency?.baseUrl]);
 
-  const isAgencyReady = !isAuthLoading && !!agence;
+  // isAgencyReady = auth terminée + agence définie + API configurée
+  const isAgencyReady = !isAuthLoading && !!agence && isApiConfigured;
 
   return (
     <AgencyContext.Provider value={{ currentAgency, agencyChangeCounter: 0, isAgencyReady }}>
