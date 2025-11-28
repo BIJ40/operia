@@ -5,14 +5,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashboardTiles';
 import { useMemo, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useHasGlobalRole } from '@/hooks/useHasGlobalRole';
 
 export default function Landing() {
-  const { canViewScope, isFranchiseur, isAdmin, isSupport } = useAuth();
+  const { canViewScope, agence } = useAuth();
   const [pendingTicketsCount, setPendingTicketsCount] = useState<number>(0);
+
+  // V2 role checks
+  const canAccessPilotage = useHasGlobalRole('franchisee_admin'); // N2+
+  const canAccessFranchiseur = useHasGlobalRole('franchisor_user'); // N3+
+  const canAccessAdmin = useHasGlobalRole('platform_admin'); // N5+
+  const canAccessSupport = useHasGlobalRole('franchisee_admin'); // N2+ for support console
 
   // Fetch pending tickets count for support users
   useEffect(() => {
-    if (!isSupport && !isAdmin) return;
+    if (!canAccessSupport) return;
 
     const fetchPendingCount = async () => {
       const { count, error } = await supabase
@@ -40,26 +47,32 @@ export default function Landing() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isSupport, isAdmin]);
+  }, [canAccessSupport]);
 
-  // Filtrer les tuiles par permissions
+  // Filtrer les tuiles par permissions V2
   const visibleTiles = useMemo(() => {
     return DASHBOARD_TILES.filter(tile => {
-      // Cas spécial admin : nécessite le rôle admin
-      if (tile.requiresAdmin) {
-        return isAdmin && canViewScope(tile.scopeSlug);
+      // N5+ voit tout (admin)
+      if (canAccessAdmin) return true;
+      
+      // Cas spécial admin : nécessite N5+
+      if (tile.requiresAdmin) return false;
+      
+      // Cas spécial support console : nécessite N2+
+      if (tile.requiresSupport) return canAccessSupport;
+      
+      // Cas spécial franchiseur : nécessite N3+
+      if (tile.group === 'franchiseur') return canAccessFranchiseur;
+      
+      // Pilotage agence : nécessite N2+ ET une agence
+      if (tile.group === 'pilotage') {
+        return canAccessPilotage && !!agence;
       }
-      // Cas spécial support : nécessite le rôle support ou admin
-      if (tile.requiresSupport) {
-        return (isSupport || isAdmin) && canViewScope(tile.scopeSlug);
-      }
-      // Cas spécial franchiseur : nécessite le rôle + le scope
-      if (tile.group === 'franchiseur') {
-        return (isFranchiseur || isAdmin) && canViewScope(tile.scopeSlug);
-      }
-      return canViewScope(tile.scopeSlug);
+      
+      // Help Academy et Support user : toujours visible pour authentifiés
+      return true;
     });
-  }, [canViewScope, isFranchiseur, isAdmin, isSupport]);
+  }, [canAccessAdmin, canAccessFranchiseur, canAccessPilotage, canAccessSupport, agence]);
 
   // Grouper les tuiles visibles par catégorie
   const tilesByGroup = useMemo(() => {

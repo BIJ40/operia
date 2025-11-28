@@ -42,29 +42,18 @@ interface NavGroup {
 export function UnifiedSidebar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { canViewScope, isAdmin, globalRole, suggestedGlobalRole, isAuthLoading } = useAuth();
+  const { canViewScope, isAdmin } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['help-academy', 'pilotage']));
-  
+
   // V2 role checks
   const canAccessFranchiseeAdmin = useHasGlobalRole('franchisee_admin'); // N2+
   const canAccessFranchiseur = useHasGlobalRole('franchisor_user'); // N3+
   const canAccessAdmin = useHasGlobalRole('platform_admin'); // N5+
-  
-  // DEBUG V2 - À SUPPRIMER
-  console.log('[Sidebar V2 DEBUG]', {
-    isAuthLoading,
-    globalRole,
-    suggestedGlobalRole,
-    isAdmin,
-    canAccessFranchiseeAdmin,
-    canAccessFranchiseur,
-    canAccessAdmin,
-  });
 
   // Check if currently in edit mode (admin legacy pour édition)
-  const isInEditMode = searchParams.get('edit') === 'true' && isAdmin;
+  const isInEditMode = searchParams.get('edit') === 'true' && (isAdmin || canAccessAdmin);
 
   // Helper to preserve edit mode for guide URLs
   const getUrlWithEditMode = (url: string) => {
