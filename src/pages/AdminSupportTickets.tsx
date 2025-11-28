@@ -403,10 +403,11 @@ export default function AdminSupportTickets() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Tous les statuts</SelectItem>
-                      <SelectItem value="waiting">En attente</SelectItem>
+                      <SelectItem value="new">Nouveau</SelectItem>
                       <SelectItem value="in_progress">En cours</SelectItem>
+                      <SelectItem value="waiting_user">Attente utilisateur</SelectItem>
                       <SelectItem value="resolved">Résolu</SelectItem>
-                      <SelectItem value="unresolved">Non résolu</SelectItem>
+                      <SelectItem value="closed">Fermé</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -442,10 +443,11 @@ export default function AdminSupportTickets() {
                     </SelectTrigger>
                     <SelectContent className="bg-background z-50">
                       <SelectItem value="all">Tous les niveaux</SelectItem>
-                      <SelectItem value="low">🟢 Faible</SelectItem>
+                      <SelectItem value="mineur">🟢 Mineur</SelectItem>
                       <SelectItem value="normal">🔵 Normal</SelectItem>
-                      <SelectItem value="high">🟠 Élevé</SelectItem>
+                      <SelectItem value="important">🟠 Important</SelectItem>
                       <SelectItem value="urgent">🔴 Urgent</SelectItem>
+                      <SelectItem value="bloquant">⛔ Bloquant</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
