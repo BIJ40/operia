@@ -185,7 +185,7 @@ function DashboardTileCard({ tile, dynamicBadge }: { tile: DashboardTile; dynami
     <Link to={tile.route}>
       <Card className="group h-full hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 cursor-pointer relative">
         {badgeContent && (
-          <span className={`absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full z-10 ${
+          <span className={`absolute bottom-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full z-10 ${
             typeof badgeContent === 'number' 
               ? 'bg-red-500 text-white animate-pulse min-w-[24px] text-center' 
               : 'bg-orange-500 text-white text-[10px]'
