@@ -168,9 +168,9 @@ function AppContent() {
           <Route path="/admin/tickets" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
           <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminBackup /></RoleGuard></MainLayout>} />
           <Route path="/admin/helpconfort-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminHelpConfortBackup /></RoleGuard></MainLayout>} />
-          {/* User Management - All routes point to V2 unified page */}
-          <Route path="/admin/users" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminUsersUnified /></RoleGuard></MainLayout>} />
-          <Route path="/admin/users-unified" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminUsersUnified /></RoleGuard></MainLayout>} />
+          {/* User Management - N2+ can access, but filtering is done inside the page */}
+          <Route path="/admin/users" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminUsersUnified /></RoleGuard></MainLayout>} />
+          <Route path="/admin/users-unified" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminUsersUnified /></RoleGuard></MainLayout>} />
           <Route path="/admin/role-permissions" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminRolePermissions /></RoleGuard></MainLayout>} />
           <Route path="/admin/agencies" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminAgencies /></RoleGuard></MainLayout>} />
           <Route path="/admin/storage-quota" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminStorageQuota /></RoleGuard></MainLayout>} />
@@ -211,7 +211,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <BrowserRouter>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
           <AuthProvider>
             <ImpersonationProvider>
               <EditorProvider>

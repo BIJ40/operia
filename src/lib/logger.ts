@@ -1,14 +1,8 @@
 /**
  * Utilitaire de logs centralisé
  * 
- * Niveaux de logs :
- * - logDebug : Actif uniquement en DEV ou si VITE_DEBUG_LOGS=true
- * - logInfo  : Toujours actif
- * - logWarn  : Toujours actif
- * - logError : Toujours actif
- * 
- * Pour activer les logs détaillés en production :
- * Ajouter VITE_DEBUG_LOGS=true dans les variables d'environnement
+ * En production, seuls les logs d'erreur sont affichés.
+ * En développement (ou avec VITE_DEBUG_LOGS=true), tous les logs sont actifs.
  */
 
 const isDev = import.meta.env.DEV;
@@ -26,36 +20,40 @@ export const logDebug = (...args: unknown[]): void => {
 };
 
 /**
- * Log d'information - toujours actif
+ * Log d'information - n'apparaît qu'en développement
  * Utiliser pour les événements importants normaux
  */
 export const logInfo = (...args: unknown[]): void => {
-  console.info('[INFO]', ...args);
+  if (canDebug) {
+    console.info('[INFO]', ...args);
+  }
 };
 
 /**
- * Log d'avertissement - toujours actif
+ * Log d'avertissement - n'apparaît qu'en développement
  * Utiliser pour les situations anormales mais non bloquantes
  */
 export const logWarn = (...args: unknown[]): void => {
-  console.warn('[WARN]', ...args);
+  if (canDebug) {
+    console.warn('[WARN]', ...args);
+  }
 };
 
 /**
- * Log d'erreur - toujours actif
- * Utiliser pour les erreurs et exceptions
+ * Log d'erreur - toujours actif (même en production)
+ * Utiliser pour les erreurs et exceptions critiques
  */
 export const logError = (...args: unknown[]): void => {
   console.error('[ERROR]', ...args);
 };
 
 /**
- * Log de dépréciation - toujours actif en dev, une seule fois en prod
+ * Log de dépréciation - n'apparaît qu'une seule fois par message, uniquement en dev
  * Utiliser pour marquer les fonctions/méthodes obsolètes
  */
 const deprecationWarnings = new Set<string>();
 export const logDeprecation = (message: string): void => {
-  if (canDebug || !deprecationWarnings.has(message)) {
+  if (canDebug && !deprecationWarnings.has(message)) {
     console.warn('[DEPRECATED]', message);
     deprecationWarnings.add(message);
   }
@@ -98,3 +96,18 @@ export const logCache = {
   warn: (...args: unknown[]) => logWarn('[CACHE]', ...args),
   error: (...args: unknown[]) => logError('[CACHE]', ...args),
 };
+
+/**
+ * Log Connection - catégorisé pour le logging de connexion
+ */
+export const logConnection = {
+  debug: (...args: unknown[]) => logDebug('[CONNECTION]', ...args),
+  info: (...args: unknown[]) => logInfo('[CONNECTION]', ...args),
+  warn: (...args: unknown[]) => logWarn('[CONNECTION]', ...args),
+  error: (...args: unknown[]) => logError('[CONNECTION]', ...args),
+};
+
+/**
+ * Vérifie si on est en mode développement
+ */
+export const isDevMode = (): boolean => canDebug;

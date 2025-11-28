@@ -4,11 +4,12 @@
  */
 
 import { CacheBackup } from './cache-backup';
+import { logCache, isDevMode } from './logger';
 
-interface CacheEntry<T = any> {
+interface CacheEntry<T = unknown> {
   data: T;
   timestamp: number;
-  size: number; // Taille en bytes
+  size: number;
 }
 
 interface CacheMetrics {
@@ -25,7 +26,7 @@ export class CacheManager {
   /**
    * Calcule la taille d'une entrée en bytes
    */
-  private static calculateSize(data: any): number {
+  private static calculateSize(data: unknown): number {
     try {
       return new Blob([JSON.stringify(data)]).size;
     } catch {
@@ -59,7 +60,9 @@ export class CacheManager {
               }
             }
           }
-        } catch {}
+        } catch {
+          // Ignorer les erreurs de parsing
+        }
       }
     }
 
@@ -86,7 +89,9 @@ export class CacheManager {
               cacheEntries.push({ key, timestamp: parsed.timestamp, size });
             }
           }
-        } catch {}
+        } catch {
+          // Ignorer les erreurs de parsing
+        }
       }
     }
 
@@ -104,13 +109,13 @@ export class CacheManager {
         localStorage.removeItem(entry.key);
         freedSpace += entry.size;
         removedCount++;
-        console.log(`🗑️ Cache supprimé: ${entry.key} (${(entry.size / 1024).toFixed(2)} KB)`);
+        logCache.debug(`Cache supprimé: ${entry.key} (${(entry.size / 1024).toFixed(2)} KB)`);
       } catch (e) {
-        console.error(`Erreur suppression ${entry.key}:`, e);
+        logCache.error(`Erreur suppression ${entry.key}:`, e);
       }
     }
 
-    console.log(`✅ Nettoyage: ${removedCount} entrées supprimées, ${(freedSpace / 1024).toFixed(2)} KB libérés`);
+    logCache.debug(`Nettoyage: ${removedCount} entrées supprimées, ${(freedSpace / 1024).toFixed(2)} KB libérés`);
     return freedSpace >= neededSpace;
   }
 
@@ -136,19 +141,18 @@ export class CacheManager {
               if (age > parsed.ttl) {
                 localStorage.removeItem(key);
                 cleanedCount++;
-                console.log(`🗑️ Cache expiré supprimé: ${key}`);
+                logCache.debug(`Cache expiré supprimé: ${key}`);
               }
             }
           }
-        } catch (e) {
+        } catch {
           // Ignorer les erreurs de parsing sans supprimer
-          console.warn(`⚠️ Erreur parsing cache ${key}:`, e);
         }
       }
     }
 
     if (cleanedCount > 0) {
-      console.log(`🧹 ${cleanedCount} entrées expirées nettoyées`);
+      logCache.debug(`${cleanedCount} entrées expirées nettoyées`);
     }
     return cleanedCount;
   }
@@ -165,7 +169,7 @@ export class CacheManager {
 
       // Vérifier si l'entrée est trop volumineuse
       if (size > this.MAX_ENTRY_SIZE) {
-        console.warn(`⚠️ Entrée trop volumineuse pour le cache: ${key} (${(size / 1024).toFixed(2)} KB)`);
+        logCache.warn(`Entrée trop volumineuse pour le cache: ${key} (${(size / 1024).toFixed(2)} KB)`);
         return false;
       }
 
@@ -186,11 +190,11 @@ export class CacheManager {
       // Si on dépasse la limite, nettoyer les anciennes entrées
       if (projectedSize > this.MAX_CACHE_SIZE) {
         const neededSpace = projectedSize - this.MAX_CACHE_SIZE + (this.MAX_CACHE_SIZE * 0.2); // Libérer 20% supplémentaire
-        console.log(`⚠️ Cache plein (${(metrics.totalSize / 1024).toFixed(2)} KB), nettoyage de ${(neededSpace / 1024).toFixed(2)} KB...`);
+        logCache.debug(`Cache plein (${(metrics.totalSize / 1024).toFixed(2)} KB), nettoyage de ${(neededSpace / 1024).toFixed(2)} KB...`);
         
         const cleaned = this.cleanOldestEntries(neededSpace);
         if (!cleaned) {
-          console.warn('❌ Impossible de libérer assez d\'espace dans le cache');
+          logCache.warn('Impossible de libérer assez d\'espace dans le cache');
           return false;
         }
       }
@@ -200,27 +204,29 @@ export class CacheManager {
       
       // Sauvegarder automatiquement dans IndexedDB pour backup
       CacheBackup.backup(key, data).catch(err => {
-        console.warn(`⚠️ Backup automatique échoué pour ${key}:`, err);
+        logCache.warn(`Backup automatique échoué pour ${key}:`, err);
       });
       
-      console.log(`💾 Cache sauvegardé: ${key} (${(entrySize / 1024).toFixed(2)} KB, TTL: ${ttl / 1000}s)`);
+      logCache.debug(`Cache sauvegardé: ${key} (${(entrySize / 1024).toFixed(2)} KB, TTL: ${ttl / 1000}s)`);
       return true;
     } catch (e) {
       if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-        console.error('❌ QuotaExceededError malgré le nettoyage:', e);
+        logCache.error('QuotaExceededError malgré le nettoyage:', e);
         
         // Dernier recours: nettoyer TOUS les caches
         try {
           for (let i = localStorage.length - 1; i >= 0; i--) {
-            const key = localStorage.key(i);
-            if (key && (key.includes('_cache') || key.includes('Cache'))) {
-              localStorage.removeItem(key);
+            const storageKey = localStorage.key(i);
+            if (storageKey && (storageKey.includes('_cache') || storageKey.includes('Cache'))) {
+              localStorage.removeItem(storageKey);
             }
           }
-          console.log('🧹 Tous les caches ont été nettoyés');
-        } catch {}
+          logCache.debug('Tous les caches ont été nettoyés');
+        } catch {
+          // Ignorer
+        }
       } else {
-        console.error('Erreur sauvegarde cache:', e);
+        logCache.error('Erreur sauvegarde cache:', e);
       }
       return false;
     }
@@ -234,7 +240,7 @@ export class CacheManager {
       const value = localStorage.getItem(key);
       if (!value) {
         // Tenter de restaurer depuis le backup
-        console.log(`⚠️ Cache absent: ${key}, tentative de restauration depuis backup...`);
+        logCache.debug(`Cache absent: ${key}, tentative de restauration depuis backup...`);
         return this.restoreFromBackup<T>(key);
       }
 
@@ -244,31 +250,33 @@ export class CacheManager {
       // Vérifier si l'entrée est expirée
       if (entry.ttl && age > entry.ttl) {
         localStorage.removeItem(key);
-        console.log(`⏰ Cache expiré: ${key} (${Math.round(age / 1000)}s)`);
+        logCache.debug(`Cache expiré: ${key} (${Math.round(age / 1000)}s)`);
         
         // Tenter de restaurer depuis le backup si disponible
         return this.restoreFromBackup<T>(key);
       }
 
-      console.log(`⚡ Cache hit: ${key} (${Math.round(age / 1000)}s)`);
+      logCache.debug(`Cache hit: ${key} (${Math.round(age / 1000)}s)`);
       return entry.data;
     } catch (e) {
-      console.warn(`❌ Erreur lecture cache ${key}:`, e);
+      logCache.warn(`Erreur lecture cache ${key}:`, e);
       
       // Tenter de restaurer depuis le backup
-      console.log(`♻️ Tentative de restauration depuis backup pour ${key}...`);
+      logCache.debug(`Tentative de restauration depuis backup pour ${key}...`);
       const restored = this.restoreFromBackup<T>(key);
       
       if (restored) {
         // Sauvegarder à nouveau dans localStorage
         this.setItem(key, restored);
-        console.log(`✅ Cache restauré et resauvegardé: ${key}`);
+        logCache.debug(`Cache restauré et resauvegardé: ${key}`);
       }
       
       // Supprimer l'entrée corrompue de localStorage
       try {
         localStorage.removeItem(key);
-      } catch {}
+      } catch {
+        // Ignorer
+      }
       
       return restored;
     }
@@ -282,13 +290,13 @@ export class CacheManager {
     // pour ne pas bloquer l'exécution
     CacheBackup.restore(key).then(value => {
       if (value) {
-        console.log(`✅ Backup trouvé pour ${key}, resauvegarde dans localStorage...`);
+        logCache.debug(`Backup trouvé pour ${key}, resauvegarde dans localStorage...`);
         this.setItem(key, value);
       } else {
-        console.log(`⚠️ Aucun backup trouvé pour ${key}`);
+        logCache.debug(`Aucun backup trouvé pour ${key}`);
       }
     }).catch(err => {
-      console.warn(`❌ Erreur restauration backup ${key}:`, err);
+      logCache.warn(`Erreur restauration backup ${key}:`, err);
     });
     
     return null;
@@ -300,9 +308,9 @@ export class CacheManager {
   static removeItem(key: string): void {
     try {
       localStorage.removeItem(key);
-      console.log(`🗑️ Cache supprimé: ${key}`);
+      logCache.debug(`Cache supprimé: ${key}`);
     } catch (e) {
-      console.warn(`Erreur suppression cache ${key}:`, e);
+      logCache.warn(`Erreur suppression cache ${key}:`, e);
     }
   }
 
@@ -325,16 +333,20 @@ export class CacheManager {
               count++;
             }
           }
-        } catch {}
+        } catch {
+          // Ignorer
+        }
       }
     }
-    console.log(`🧹 ${count} entrées de cache CacheManager supprimées`);
+    logCache.debug(`${count} entrées de cache CacheManager supprimées`);
   }
 
   /**
-   * Affiche un rapport sur l'état du cache et des backups
+   * Affiche un rapport sur l'état du cache et des backups (uniquement en dev)
    */
   static async printReport(): Promise<void> {
+    if (!isDevMode()) return;
+    
     const metrics = this.getCacheMetrics();
     const usagePercent = (metrics.totalSize / this.MAX_CACHE_SIZE) * 100;
     
