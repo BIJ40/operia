@@ -50,9 +50,17 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
 
     setLoading(true);
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      console.log('🔐 LoginDialog: attempting login for:', email.trim());
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
+      });
+      
+      console.log('🔐 LoginDialog: signIn result:', { 
+        success: !signInError, 
+        user: data?.user?.email,
+        session: !!data?.session,
+        error: signInError?.message 
       });
 
       if (signInError) {
