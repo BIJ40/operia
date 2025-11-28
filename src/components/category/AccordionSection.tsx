@@ -72,7 +72,7 @@ export function AccordionSection({
       id={section.id}
       className={isEmptySection ? 'opacity-50' : ''}
     >
-      <AccordionTrigger className={isEmptySection ? 'cursor-default' : ''} disabled={isEmptySection}>
+      <AccordionTrigger className={isEmptySection && !isEditMode ? 'cursor-default' : ''} disabled={isEmptySection && !isEditMode}>
         <div className="flex items-center justify-between w-full text-foreground">
           <div className="flex items-center gap-3 flex-1">
             {section.showSummary && section.summary && !isEmptySection ? (
