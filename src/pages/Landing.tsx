@@ -3,10 +3,44 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, BarChart3, MessageSquare, Network, Settings } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashboardTiles';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Landing() {
   const { canViewScope, isFranchiseur, isAdmin, isSupport } = useAuth();
+  const [pendingTicketsCount, setPendingTicketsCount] = useState<number>(0);
+
+  // Fetch pending tickets count for support users
+  useEffect(() => {
+    if (!isSupport && !isAdmin) return;
+
+    const fetchPendingCount = async () => {
+      const { count, error } = await supabase
+        .from('support_tickets')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['new', 'in_progress', 'waiting_user']);
+
+      if (!error && count !== null) {
+        setPendingTicketsCount(count);
+      }
+    };
+
+    fetchPendingCount();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('pending-tickets-count')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'support_tickets' },
+        () => fetchPendingCount()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isSupport, isAdmin]);
 
   // Filtrer les tuiles par permissions
   const visibleTiles = useMemo(() => {
@@ -95,7 +129,11 @@ export default function Landing() {
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
             {tilesByGroup.support.map(tile => (
-              <DashboardTileCard key={tile.id} tile={tile} />
+              <DashboardTileCard 
+                key={tile.id} 
+                tile={tile} 
+                dynamicBadge={tile.id === 'CONSOLE_SUPPORT' && pendingTicketsCount > 0 ? pendingTicketsCount : undefined}
+              />
             ))}
           </div>
         </section>
@@ -134,19 +172,25 @@ export default function Landing() {
   );
 }
 
-function DashboardTileCard({ tile }: { tile: DashboardTile }) {
+function DashboardTileCard({ tile, dynamicBadge }: { tile: DashboardTile; dynamicBadge?: number }) {
   const Icon = tile.icon;
   const colorClasses = {
     primary: 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground',
     accent: 'bg-accent/10 text-accent group-hover:bg-accent group-hover:text-accent-foreground',
   };
 
+  const badgeContent = dynamicBadge ?? tile.badge;
+
   return (
     <Link to={tile.route}>
       <Card className="group h-full hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 cursor-pointer relative">
-        {tile.badge && (
-          <span className="absolute bottom-3 right-3 text-[10px] font-medium bg-orange-500 text-white px-2 py-0.5 rounded-full z-10">
-            {tile.badge}
+        {badgeContent && (
+          <span className={`absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full z-10 ${
+            typeof badgeContent === 'number' 
+              ? 'bg-red-500 text-white animate-pulse min-w-[24px] text-center' 
+              : 'bg-orange-500 text-white text-[10px]'
+          }`}>
+            {badgeContent}
           </span>
         )}
         <CardHeader className="pb-3">
