@@ -221,10 +221,27 @@ En mode développement, AuthContext affiche des logs détaillés :
 - Guards V2 exposés
 - Logging de debug
 
-### Phase 3 : UI Admin (à venir)
-- Interface de gestion
-- Éditeur de rôles/modules
+### Phase 3 : UI Admin ✅
+- `/admin/users-unified` - **Page principale unifiée** pour gestion quotidienne des utilisateurs et permissions V2
+- `/admin/permissions-v2` - Page avancée/détaillée pour édition fine
+- `/admin/roles-v2` - Page d'audit et migration V2
 
 ### Phase 4 : Migration finale (à venir)
 - Calcul des valeurs pour tous les users
 - Suppression code legacy (optionnel)
+
+## Pages Admin V2
+
+| Page | URL | Usage |
+|------|-----|-------|
+| **Utilisateurs & Permissions V2** | `/admin/users-unified` | Vue quotidienne - gestion centralisée des utilisateurs avec global_role et enabled_modules |
+| Permissions V2 (avancé) | `/admin/permissions-v2` | Vue détaillée - accordéons avec tous les détails |
+| Audit V2 | `/admin/roles-v2` | Comparaison DB vs suggestions legacy |
+| Liste utilisateurs (legacy) | `/admin/users-list` | Ancienne liste - conservée pour référence |
+
+### Workflow recommandé
+
+1. **Audit initial** via `/admin/roles-v2` - Voir le statut V2 de chaque utilisateur
+2. **Préparation/peuplement** via `/admin/users-unified` - Appliquer les suggestions V2 ou éditer manuellement
+3. **Validation fine** via `/admin/permissions-v2` - Vérifier les détails si nécessaire
+4. **Après stabilisation** - Activer les guards V2 dans le code applicatif

@@ -84,19 +84,46 @@ function getGlobalRoleFromLegacy(params) {
 - [x] Exposer `globalRole`, `suggestedGlobalRole`, `enabledModules`, `suggestedEnabledModules`
 - [x] Ajouter les guards V2.0 : `hasGlobalRole`, `hasModule`, `hasModuleOption`
 
-### Étape 3 : Migration des données
-- [ ] Script SQL pour calculer `global_role` pour tous les users
-- [ ] Script SQL pour calculer `enabled_modules` pour tous les users
-- [ ] Validation par échantillonnage
+### Étape 3 : Interface Admin V2 (FAIT ✅)
+- [x] `/admin/users-unified` - Page unifiée de gestion des utilisateurs
+- [x] `/admin/permissions-v2` - Page détaillée des permissions V2
+- [x] `/admin/roles-v2` - Page d'audit et migration
+- [x] Filtres (recherche, agence, rôle, module)
+- [x] Bouton "Sauver" pour modifications manuelles
+- [x] Bouton "V2" pour appliquer les suggestions
 
-### Étape 4 : Bascule progressive
-- [ ] Activer V2.0 pour les admins d'abord
-- [ ] Étendre progressivement
+### Étape 4 : Migration des données
+- [ ] Appliquer V2 utilisateur par utilisateur via l'interface
+- [ ] OU script SQL batch pour tous les users
+- [ ] Validation via `/admin/roles-v2`
+
+### Étape 5 : Bascule progressive
+- [ ] Activer les guards V2 dans le code (remplacer legacy checks)
 - [ ] Monitorer les erreurs
+- [ ] Étendre progressivement
 
-### Étape 5 : Nettoyage (optionnel)
+### Étape 6 : Nettoyage (optionnel)
 - [ ] Marquer l'ancien système comme deprecated
 - [ ] Supprimer les références legacy après stabilisation
+
+## Workflow de Migration Recommandé
+
+1. **Audit** (`/admin/roles-v2`)
+   - Vérifier le statut V2 de tous les utilisateurs
+   - Identifier les "Non configuré" et "À appliquer"
+
+2. **Préparation** (`/admin/users-unified`)
+   - Utiliser le bouton "V2" pour appliquer les suggestions
+   - Ou éditer manuellement global_role et modules
+   - Sauvegarder les modifications
+
+3. **Validation** (`/admin/permissions-v2`)
+   - Vérifier les détails pour les cas complexes
+   - Ajuster les sous-options des modules
+
+4. **Bascule** (code)
+   - Une fois tous les users en "V2 OK"
+   - Activer les guards V2 dans le code applicatif
 
 ## Script de Migration SQL
 

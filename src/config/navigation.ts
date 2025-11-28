@@ -187,10 +187,10 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { 
         title: 'Utilisateurs', 
-        url: '/admin/users-list', 
+        url: '/admin/users-unified', 
         icon: Users, 
         scope: 'admin_users', 
-        description: 'Gérer les comptes utilisateurs' 
+        description: 'Gestion centralisée des utilisateurs et permissions V2' 
       },
       { 
         title: 'Permissions', 
@@ -200,8 +200,9 @@ export const NAV_GROUPS: NavGroup[] = [
           { title: 'Groupes', url: '/admin/permissions/groups', icon: Users, scope: 'admin_roles', description: 'Gérer les groupes et leurs permissions' },
           { title: 'Utilisateurs', url: '/admin/permissions/users', icon: User, scope: 'admin_roles', description: 'Permissions individuelles' },
           { title: 'Matrice', url: '/admin/permissions/matrix', icon: Grid3X3, scope: 'admin_roles', description: 'Vue matricielle globale' },
-          { title: 'Permissions V2', url: '/admin/permissions-v2', icon: Shield, scope: 'admin_roles', description: 'Gestion rôles globaux et modules V2' },
+          { title: 'Permissions V2', url: '/admin/permissions-v2', icon: Shield, scope: 'admin_roles', description: 'Gestion rôles globaux et modules V2 (avancé)' },
           { title: 'Audit V2', url: '/admin/roles-v2', icon: Shield, scope: 'admin_roles', description: 'Audit et migration des rôles V2' },
+          { title: 'Liste (legacy)', url: '/admin/users-list', icon: Users, scope: 'admin_users', description: 'Ancienne liste utilisateurs' },
         ]
       },
       { title: 'Agences', url: '/admin/agencies', icon: Building2, scope: 'admin_settings' },
@@ -258,6 +259,7 @@ export const PAGE_TITLES: Record<string, string> = {
   '/admin/permissions/matrix': 'Matrice des permissions',
   '/admin/roles-v2': 'Audit Rôles V2',
   '/admin/permissions-v2': 'Permissions V2',
+  '/admin/users-unified': 'Utilisateurs & Permissions V2',
   '/admin/agencies': 'Gestion Agences',
   '/admin/backup': 'Sauvegardes',
   '/admin/documents': 'Documents Admin',

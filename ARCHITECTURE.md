@@ -570,6 +570,15 @@ src/types/
 └── accessControl.ts   # Guards unifiés (hasGlobalRole, hasModule, hasModuleOption)
 ```
 
+### Pages Admin V2
+
+| Route | Fichier | Description |
+|-------|---------|-------------|
+| `/admin/users-unified` | `AdminUsersUnified.tsx` | **Page principale** - Gestion centralisée utilisateurs & permissions V2 |
+| `/admin/permissions-v2` | `AdminPermissionsV2.tsx` | Page avancée - Édition détaillée des modules/options |
+| `/admin/roles-v2` | `AdminRolesV2.tsx` | Audit - Comparaison DB vs suggestions legacy |
+| `/admin/users-list` | `AdminUsersList.tsx` | Legacy - Ancienne liste utilisateurs (conservée) |
+
 ### Colonnes DB (table `profiles`)
 
 ```sql

@@ -67,6 +67,7 @@ const AdminCacheBackup = lazy(() => import("./pages/AdminCacheBackup"));
 const AdminUserActivity = lazy(() => import("./pages/AdminUserActivity"));
 const AdminRolesV2 = lazy(() => import("./pages/AdminRolesV2"));
 const AdminPermissionsV2 = lazy(() => import("./pages/AdminPermissionsV2"));
+const AdminUsersUnified = lazy(() => import("./pages/AdminUsersUnified"));
 
 // Lazy loaded pages - Permissions
 const PermissionsGroups = lazy(() => import("./pages/admin/permissions/PermissionsGroups"));
@@ -177,6 +178,7 @@ function AppContent() {
           <Route path="/admin/user-activity" element={<MainLayout><AdminUserActivity /></MainLayout>} />
           <Route path="/admin/roles-v2" element={<MainLayout><AdminRolesV2 /></MainLayout>} />
           <Route path="/admin/permissions-v2" element={<MainLayout><AdminPermissionsV2 /></MainLayout>} />
+          <Route path="/admin/users-unified" element={<MainLayout><AdminUsersUnified /></MainLayout>} />
           
           {/* Permissions Management */}
           <Route path="/admin/permissions/groups" element={<MainLayout><PermissionsGroups /></MainLayout>} />
