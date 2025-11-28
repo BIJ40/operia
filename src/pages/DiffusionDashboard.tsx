@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { Settings, Maximize } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Settings, Maximize, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDiffusionSettings } from '@/hooks/use-diffusion-settings';
 import { useAutoRotation } from '@/hooks/use-auto-rotation';
@@ -17,7 +17,18 @@ import { SCOPE_SLUGS } from '@/types/permissions';
 export default function DiffusionDashboard() {
   const { settings, isLoading, updateSettings } = useDiffusionSettings();
   const { isAuthenticated, canViewScope } = useAuth();
+  const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Écouter les changements de mode plein écran
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   // Vérifier les permissions
   if (!isAuthenticated) {
@@ -68,24 +79,37 @@ export default function DiffusionDashboard() {
     <ApiToggleProvider>
       <AgencyProvider>
         <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/5 overflow-hidden">
-          {/* Header avec boutons de contrôle */}
-          <div className="absolute top-4 right-4 z-50 flex gap-2">
-            <Button
-              onClick={toggleFullscreen}
-              variant="outline"
-              size="icon"
-              className="bg-background/80 backdrop-blur"
-            >
-              <Maximize className="h-5 w-5" />
-            </Button>
-            <Button
-              onClick={handleSettingsOpen}
-              className="bg-green-500 hover:bg-green-600 text-white"
-              size="icon"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
-          </div>
+          {/* Header avec boutons de contrôle - masqués en plein écran */}
+          {!isFullscreen && (
+            <div className="absolute top-4 right-4 z-50 flex gap-2">
+              <Button
+                onClick={() => navigate(-1)}
+                variant="outline"
+                size="icon"
+                className="bg-background/80 backdrop-blur"
+                title="Retour"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <Button
+                onClick={toggleFullscreen}
+                variant="outline"
+                size="icon"
+                className="bg-background/80 backdrop-blur"
+                title="Plein écran"
+              >
+                <Maximize className="h-5 w-5" />
+              </Button>
+              <Button
+                onClick={handleSettingsOpen}
+                className="bg-green-500 hover:bg-green-600 text-white"
+                size="icon"
+                title="Paramètres"
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
+            </div>
+          )}
 
           {/* Bandeau motivant */}
           <DiffusionBandeau />
