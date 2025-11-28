@@ -265,8 +265,9 @@ function ReplacementTitle({ prefix, words, delay }: {
   useEffect(() => {
     const timeouts: NodeJS.Timeout[] = [];
     
+    // Timing ajusté pour laisser le temps à la barre de se dessiner (1.8s par mot)
     words.forEach((_, index) => {
-      timeouts.push(setTimeout(() => setCurrentIndex(index), delay * 1000 + index * 1200));
+      timeouts.push(setTimeout(() => setCurrentIndex(index), delay * 1000 + index * 1800));
     });
     
     return () => timeouts.forEach(clearTimeout);
@@ -288,23 +289,24 @@ function ReplacementTitle({ prefix, words, delay }: {
           {currentIndex >= 0 && (
             <motion.span
               key={currentIndex}
-              className={`inline-block ${currentIndex === words.length - 1 ? "text-foreground" : "text-muted-foreground"}`}
+              className="inline-block text-foreground relative"
               initial={{ opacity: 0, y: 40, rotateX: -45, filter: "blur(8px)" }}
               animate={{ opacity: 1, y: 0, rotateX: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, y: -40, rotateX: 45, filter: "blur(8px)" }}
               transition={{ duration: 0.6, ease: "easeInOut" as const }}
             >
               {words[currentIndex]}
+              {/* Barre rouge animée de gauche à droite pour les mots intermédiaires */}
               {currentIndex < words.length - 1 && (
                 <motion.span
-                  className="absolute -right-2 top-0 text-destructive"
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: [0, 1, 1, 0], scale: [0.5, 1, 1, 0.5], rotate: [0, 0, 0, 45] }}
-                  transition={{ duration: 1, times: [0, 0.2, 0.8, 1] }}
-                >
-                  ✗
-                </motion.span>
+                  className="absolute left-0 top-1/2 h-[3px] bg-destructive rounded-full"
+                  style={{ transform: "translateY(-50%)" }}
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 0.8, delay: 0.4, ease: "easeInOut" }}
+                />
               )}
+              {/* Coche verte pour le dernier mot */}
               {currentIndex === words.length - 1 && (
                 <motion.span
                   className="absolute -right-8 top-0 text-green-500"
