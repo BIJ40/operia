@@ -320,19 +320,21 @@ function ReplacementTitle({ prefix, words, delay }: {
                   {/* Confettis/Particules */}
                   {[...Array(12)].map((_, i) => {
                     const angle = (i * 30) * (Math.PI / 180);
-                    const distance = 25 + Math.random() * 15;
+                    const distance = 40 + Math.random() * 25;
                     const colors = ['#22c55e', '#f97316', '#3b82f6', '#eab308', '#ec4899'];
+                    const rotation = (Math.random() - 0.5) * 720; // Rotation aléatoire entre -360 et 360 degrés
                     return (
                       <motion.span
                         key={i}
                         className="absolute -right-6 top-2 w-2 h-2 rounded-full"
                         style={{ backgroundColor: colors[i % colors.length] }}
-                        initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+                        initial={{ opacity: 0, scale: 0, x: 0, y: 0, rotate: 0 }}
                         animate={{ 
                           opacity: [0, 1, 1, 0],
                           scale: [0, 1, 0.8, 0],
                           x: Math.cos(angle) * distance,
                           y: Math.sin(angle) * distance,
+                          rotate: rotation,
                         }}
                         transition={{ 
                           duration: 0.8, 
