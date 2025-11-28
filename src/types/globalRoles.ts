@@ -88,12 +88,28 @@ export function getAllRolesSorted(): GlobalRole[] {
 }
 
 /**
+ * Niveau minimum requis pour gérer des utilisateurs (créer, modifier)
+ * Seuls les N3+ peuvent gérer des utilisateurs
+ */
+export const MIN_ROLE_TO_MANAGE_USERS: GlobalRole = 'franchisor_user'; // N3
+
+/**
+ * Vérifie si un utilisateur peut gérer d'autres utilisateurs
+ */
+export function canManageUsers(role: GlobalRole | null): boolean {
+  if (!role) return false;
+  return GLOBAL_ROLES[role] >= GLOBAL_ROLES[MIN_ROLE_TO_MANAGE_USERS];
+}
+
+/**
  * Obtient les rôles assignables par un utilisateur donné
  * Un utilisateur ne peut assigner que des rôles inférieurs ou égaux au sien
+ * Minimum N3 requis pour assigner des rôles
  */
 export function getAssignableRoles(assignerRole: GlobalRole | null): GlobalRole[] {
   if (!assignerRole) return [];
-  const assignerLevel = GLOBAL_ROLES[assignerRole];
+  if (!canManageUsers(assignerRole)) return [];
   
+  const assignerLevel = GLOBAL_ROLES[assignerRole];
   return getAllRolesSorted().filter(role => GLOBAL_ROLES[role] <= assignerLevel);
 }

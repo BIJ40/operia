@@ -237,6 +237,7 @@ En mode développement, AuthContext affiche des logs détaillés :
 | **Utilisateurs & Permissions V2** | `/admin/users-unified` | Vue quotidienne - gestion centralisée des utilisateurs avec global_role et enabled_modules |
 | Permissions V2 (avancé) | `/admin/permissions-v2` | Vue détaillée - accordéons avec tous les détails |
 | Audit V2 | `/admin/roles-v2` | Comparaison DB vs suggestions legacy |
+| Création utilisateurs | `/admin/users` | Création de nouveaux utilisateurs avec attribution rôle V2 |
 | Liste utilisateurs (legacy) | `/admin/users-list` | Ancienne liste - conservée pour référence |
 
 ### Workflow recommandé
@@ -245,3 +246,48 @@ En mode développement, AuthContext affiche des logs détaillés :
 2. **Préparation/peuplement** via `/admin/users-unified` - Appliquer les suggestions V2 ou éditer manuellement
 3. **Validation fine** via `/admin/permissions-v2` - Vérifier les détails si nécessaire
 4. **Après stabilisation** - Activer les guards V2 dans le code applicatif
+
+## Règles de Plafonnement des Rôles
+
+### Principe fondamental
+
+Un utilisateur ne peut **jamais** assigner un rôle supérieur au sien. Cette règle est appliquée à la fois côté client (UI) et côté serveur (edge function).
+
+### Conditions d'accès à la gestion des utilisateurs
+
+| Niveau | Peut gérer des utilisateurs ? | Rôles assignables |
+|--------|------------------------------|-------------------|
+| N0-N2 | ❌ Non | Aucun |
+| N3 | ✅ Oui | N0, N1, N2, N3 |
+| N4 | ✅ Oui | N0, N1, N2, N3, N4 |
+| N5 | ✅ Oui | N0, N1, N2, N3, N4, N5 |
+| N6 | ✅ Oui | Tous (N0-N6) |
+| Admin legacy | ✅ Oui | Tous (N0-N6) |
+
+### Fonctions TypeScript
+
+```typescript
+import { canManageUsers, getAssignableRoles } from '@/types/globalRoles';
+
+// Vérifier si l'utilisateur peut gérer d'autres utilisateurs
+if (canManageUsers(currentUserRole)) {
+  // Afficher le bouton "Créer un utilisateur"
+}
+
+// Obtenir les rôles que l'utilisateur peut assigner
+const roles = getAssignableRoles(currentUserRole);
+// Pour N3: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user']
+// Pour N6: tous les rôles
+```
+
+### Validation serveur (edge function)
+
+L'edge function `create-user` valide également :
+1. Que l'appelant est au moins N3 (ou admin legacy)
+2. Que le rôle demandé ne dépasse pas le niveau de l'appelant
+3. En cas de tentative d'escalade de privilèges : erreur 400 avec message explicite
+
+Exemple de log en cas de tentative d'escalade :
+```
+[create-user] ESCALADE DE PRIVILÈGES BLOQUÉE: user abc123 (N3) a tenté d'assigner superadmin (N6)
+```
