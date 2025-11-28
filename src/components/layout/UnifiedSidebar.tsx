@@ -212,16 +212,16 @@ export function UnifiedSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="pt-2">
+      <SidebarContent className="pt-1 space-y-0">
         {/* Home link */}
-        <SidebarGroup>
+        <SidebarGroup className="py-1">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild className={isActive('/') && location.pathname === '/' ? 'bg-primary/10 text-primary' : ''}>
-                  <Link to="/" className="flex items-center gap-3">
-                    <Home className="w-5 h-5" />
-                    {!collapsed && <span>Accueil</span>}
+                  <Link to="/" className="flex items-center gap-2 py-1.5">
+                    <Home className="w-4 h-4" />
+                    {!collapsed && <span className="text-sm">Accueil</span>}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -240,25 +240,33 @@ export function UnifiedSidebar() {
           return (
             <Collapsible 
               key={group.labelKey} 
-              open={isGroupOpen || hasActiveItem}
+              open={isGroupOpen}
               onOpenChange={() => toggleGroup(group.labelKey)}
             >
-              <SidebarGroup>
+              <SidebarGroup className="py-0.5">
                 <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel className="cursor-pointer hover:bg-muted/50 rounded-lg transition-colors flex items-center justify-between px-3 py-2">
-                    <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                  <SidebarGroupLabel 
+                    className={`
+                      cursor-pointer rounded-md transition-colors flex items-center justify-between px-2 py-1.5 mx-1
+                      ${hasActiveItem && !isGroupOpen 
+                        ? 'bg-primary/15 text-primary border-l-2 border-primary' 
+                        : 'hover:bg-muted/50'
+                      }
+                    `}
+                  >
+                    <span className={`text-xs font-semibold tracking-wide uppercase ${hasActiveItem ? 'text-primary' : 'text-muted-foreground'}`}>
                       {!collapsed ? group.label : group.labelKey.charAt(0).toUpperCase()}
                     </span>
                     {!collapsed && (
                       <ChevronRight 
-                        className={`w-4 h-4 text-muted-foreground transition-transform ${isGroupOpen ? 'rotate-90' : ''}`}
+                        className={`w-3.5 h-3.5 transition-transform ${hasActiveItem ? 'text-primary' : 'text-muted-foreground'} ${isGroupOpen ? 'rotate-90' : ''}`}
                       />
                     )}
                   </SidebarGroupLabel>
                 </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
+                <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <SidebarGroupContent className="pt-0.5">
+                    <SidebarMenu className="space-y-0.5">
                       {items.map((item) => {
                         const Icon = item.icon;
                         
@@ -271,27 +279,29 @@ export function UnifiedSidebar() {
                           return (
                             <Collapsible
                               key={submenuKey}
-                              open={isSubmenuOpen || hasActiveChild}
+                              open={isSubmenuOpen}
                               onOpenChange={() => toggleSubmenu(submenuKey)}
                             >
                               <SidebarMenuItem>
                                 <CollapsibleTrigger asChild>
                                   <SidebarMenuButton 
                                     className={`
-                                      cursor-pointer transition-all duration-200 
+                                      cursor-pointer transition-all duration-200 py-1.5
                                       ${hasActiveChild 
-                                        ? 'bg-primary/10 text-primary' 
-                                        : 'hover:bg-muted hover:translate-x-1'
+                                        ? isSubmenuOpen 
+                                          ? 'bg-primary/10 text-primary' 
+                                          : 'bg-primary/15 text-primary border-l-2 border-primary'
+                                        : 'hover:bg-muted hover:translate-x-0.5'
                                       }
                                     `}
                                   >
-                                    <div className="flex items-center gap-3 w-full">
-                                      <Icon className="w-5 h-5 shrink-0" />
+                                    <div className="flex items-center gap-2 w-full">
+                                      <Icon className="w-4 h-4 shrink-0" />
                                       {!collapsed && (
                                         <>
-                                          <span className="truncate flex-1">{item.title}</span>
+                                          <span className="truncate flex-1 text-sm">{item.title}</span>
                                           <ChevronRight 
-                                            className={`w-4 h-4 text-muted-foreground transition-transform ${isSubmenuOpen || hasActiveChild ? 'rotate-90' : ''}`}
+                                            className={`w-3.5 h-3.5 transition-transform ${hasActiveChild ? 'text-primary' : 'text-muted-foreground'} ${isSubmenuOpen ? 'rotate-90' : ''}`}
                                           />
                                         </>
                                       )}
@@ -300,7 +310,7 @@ export function UnifiedSidebar() {
                                 </CollapsibleTrigger>
                               </SidebarMenuItem>
                               <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                                <div className="ml-4 border-l border-border/50 pl-2 py-1">
+                                <div className="ml-3 border-l border-border/50 pl-2 py-0.5 space-y-0.5">
                                   {item.children.map((child) => {
                                     const ChildIcon = child.icon;
                                     const childActive = isActive(child.url);
@@ -310,16 +320,16 @@ export function UnifiedSidebar() {
                                         <SidebarMenuButton 
                                           asChild 
                                           className={`
-                                            transition-all duration-200 text-sm
+                                            transition-all duration-200 text-xs py-1
                                             ${childActive 
-                                              ? 'bg-primary text-primary-foreground shadow-md' 
-                                              : 'hover:bg-muted hover:translate-x-1'
+                                              ? 'bg-primary text-primary-foreground shadow-sm' 
+                                              : 'hover:bg-muted hover:translate-x-0.5'
                                             }
                                           `}
                                           title={child.description}
                                         >
-                                          <Link to={getUrlWithEditMode(child.url!)} className="flex items-center gap-3">
-                                            <ChildIcon className="w-4 h-4 shrink-0" />
+                                          <Link to={getUrlWithEditMode(child.url!)} className="flex items-center gap-2">
+                                            <ChildIcon className="w-3.5 h-3.5 shrink-0" />
                                             {!collapsed && <span className="truncate">{child.title}</span>}
                                           </Link>
                                         </SidebarMenuButton>
@@ -340,17 +350,17 @@ export function UnifiedSidebar() {
                             <SidebarMenuButton 
                               asChild 
                               className={`
-                                transition-all duration-200 
+                                transition-all duration-200 py-1.5
                                 ${active 
-                                  ? 'bg-primary text-primary-foreground shadow-md' 
-                                  : 'hover:bg-muted hover:translate-x-1'
+                                  ? 'bg-primary text-primary-foreground shadow-sm' 
+                                  : 'hover:bg-muted hover:translate-x-0.5'
                                 }
                               `}
                               title={item.description}
                             >
-                              <Link to={getUrlWithEditMode(item.url!)} className="flex items-center gap-3">
-                                <Icon className="w-5 h-5 shrink-0" />
-                                {!collapsed && <span className="truncate">{item.title}</span>}
+                              <Link to={getUrlWithEditMode(item.url!)} className="flex items-center gap-2">
+                                <Icon className="w-4 h-4 shrink-0" />
+                                {!collapsed && <span className="truncate text-sm">{item.title}</span>}
                               </Link>
                             </SidebarMenuButton>
                           </SidebarMenuItem>
