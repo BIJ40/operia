@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,9 +10,7 @@ import { EditUserDialog } from '@/components/EditUserDialog';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, UserX } from 'lucide-react';
 import { ColumnFilter } from '@/components/admin/user/ColumnFilter';
-import { usePermissions } from '@/hooks/use-permissions';
-import { ConditionalRender } from '@/components/PermissionGuard';
-import { PERMISSION_LEVELS } from '@/types/permissions';
+import { useHasGlobalRole } from '@/hooks/useHasGlobalRole';
 
 interface UserProfile {
   id: string;
@@ -71,8 +68,6 @@ const COMPETENCE_OPTIONS = [
 ];
 
 export default function AdminUsersList() {
-  const { isAdmin } = useAuth();
-  const { canViewScope, canEditScope, canDeleteScope, canAdminScope, getPermissionLevel } = usePermissions();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -86,19 +81,17 @@ export default function AdminUsersList() {
   const [systemRoleFilters, setSystemRoleFilters] = useState<string[]>([]);
   const [competenceFilters, setCompetenceFilters] = useState<string[]>([]);
 
-  // Permissions pour admin_users
-  const canView = canViewScope('admin_users');
-  const canEdit = canEditScope('admin_users');
-  const canDelete = canDeleteScope('admin_users');
-  const canAdmin = canAdminScope('admin_users');
+  // V2 Permissions - N3+ can view/edit users, N5+ can delete
+  const canManageUsers = useHasGlobalRole('franchisor_user'); // N3+
+  const canDeleteUsers = useHasGlobalRole('platform_admin'); // N5+
 
   useEffect(() => {
-    if (!canView && !isAdmin) {
+    if (!canManageUsers) {
       navigate('/');
       return;
     }
     loadUsers();
-  }, [canView, isAdmin, navigate]);
+  }, [canManageUsers, navigate]);
 
   const loadUsers = async () => {
     try {
@@ -269,15 +262,15 @@ export default function AdminUsersList() {
             Liste des utilisateurs
           </h1>
         </div>
-        <ConditionalRender scope="admin_users" requiredLevel={PERMISSION_LEVELS.ADMIN}>
+        {canManageUsers && (
           <Button
-            onClick={() => navigate('/admin/users')}
+            onClick={() => navigate('/admin/users/create')}
             className="flex items-center gap-2"
           >
             <Users className="w-4 h-4" />
             Créer un utilisateur
           </Button>
-        </ConditionalRender>
+        )}
       </div>
 
       <Card>
@@ -447,7 +440,7 @@ export default function AdminUsersList() {
                   <TableCell>{new Date(user.created_at).toLocaleDateString('fr-FR')}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
-                      <ConditionalRender scope="admin_users" requiredLevel={PERMISSION_LEVELS.ADMIN}>
+                      {canDeleteUsers && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -456,7 +449,7 @@ export default function AdminUsersList() {
                         >
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
-                      </ConditionalRender>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
