@@ -35,3 +35,12 @@ verify_jwt = true
 
 [functions.migrate-user-roles-v2]
 verify_jwt = true
+
+[functions.network-kpis]
+verify_jwt = true
+
+[functions.notify-escalation]
+verify_jwt = true
+
+[functions.seed-test-users]
+verify_jwt = false
