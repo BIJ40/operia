@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, Plus, Search, Users, Calendar, Phone, Mail, MapPin } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { usePermissions } from "@/hooks/use-permissions";
 import { ConditionalRender } from "@/components/PermissionGuard";
 import { PERMISSION_LEVELS } from "@/types/permissions";
 
+// Note: Cette page est protégée par RoleGuard minRole="franchisor_user" dans App.tsx
+
 export default function FranchiseurAgencies() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,17 +22,10 @@ export default function FranchiseurAgencies() {
   
   const { data: agencies, isLoading } = useAgencies();
   const { franchiseurRole } = useFranchiseur();
-  const { canViewScope, canEditScope, canAdminScope, isAdmin, isFranchiseur } = usePermissions();
+  const { canAdminScope } = usePermissions();
   
   // Permissions scopes
-  const canView = canViewScope('franchiseur_agencies');
   const canManageAgencies = canAdminScope('franchiseur_agencies') || franchiseurRole === 'directeur' || franchiseurRole === 'dg';
-
-  useEffect(() => {
-    if (!canView && !isAdmin && !isFranchiseur) {
-      navigate('/');
-    }
-  }, [canView, isAdmin, isFranchiseur, navigate]);
 
   const filteredAgencies = agencies?.filter(agency => {
     const matchesSearch = 
