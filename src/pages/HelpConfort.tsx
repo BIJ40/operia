@@ -55,6 +55,7 @@ interface SortableCategoryProps {
   isEditMode: boolean;
   hasInProgress: boolean;
   hasNew: boolean;
+  hasUpdate: boolean;
   isEmpty: boolean;
   isBlockLocked: (blockId: string, blocks: any[]) => boolean;
   onEditTitleChange: (value: string) => void;
@@ -83,6 +84,7 @@ const SortableCategory = ({
   isEditMode,
   hasInProgress,
   hasNew,
+  hasUpdate,
   isEmpty,
   isBlockLocked,
   onEditTitleChange,
@@ -146,6 +148,16 @@ const SortableCategory = ({
             <Clock className="w-3 h-3" />
             En cours
           </div>
+        </div>
+      )}
+      {/* Badge M.A.J - panneau avec pied */}
+      {hasUpdate && !hasInProgress && !hasNew && !isEmpty && !isEditMode && (
+        <div className="absolute -top-3 -right-1 z-20 flex flex-col items-center">
+          <div className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 shadow-md border border-primary-foreground/20">
+            <RefreshCw className="w-2.5 h-2.5" />
+            M.A.J
+          </div>
+          <div className="w-0.5 h-2 bg-primary/80 rounded-b" />
         </div>
       )}
       {isEditMode && (
@@ -506,8 +518,8 @@ export default function HelpConfort() {
                 strategy={verticalListSortingStrategy}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  {filteredCategories.map(category => {
-                    const { hasInProgress, hasNew, isEmpty } = getCategoryStatus(category.id, category);
+                {filteredCategories.map(category => {
+                    const { hasInProgress, hasNew, hasUpdate, isEmpty } = getCategoryStatus(category.id, category);
                     return (
                       <SortableCategory
                         key={category.id}
@@ -522,6 +534,7 @@ export default function HelpConfort() {
                         isEditMode={isEditMode}
                         hasInProgress={hasInProgress}
                         hasNew={hasNew}
+                        hasUpdate={hasUpdate}
                         isEmpty={isEmpty}
                         isBlockLocked={isBlockLocked}
                         onEditTitleChange={setEditTitle}
@@ -635,7 +648,7 @@ export default function HelpConfort() {
                     </div>
                   )}
                   {/* Badge M.A.J - panneau avec pied */}
-                  {hasUpdate && !hasInProgress && (
+                  {hasUpdate && !hasInProgress && !hasNew && (
                     <div className="absolute -top-3 -right-1 z-20 flex flex-col items-center">
                       <div className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 shadow-md border border-primary-foreground/20">
                         <RefreshCw className="w-2.5 h-2.5" />
