@@ -1,6 +1,7 @@
 import { 
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
-  MessageSquare, Network, Users, Shield, Database, Settings, LucideIcon
+  MessageSquare, Network, Users, Shield, Database, Settings, LucideIcon,
+  PieChart, Coins
 } from 'lucide-react';
 
 export interface DashboardTile {
@@ -94,13 +95,34 @@ export const DASHBOARD_TILES: DashboardTile[] = [
   // Franchiseur
   {
     id: 'RESEAU_FRANCHISEUR',
-    title: 'Réseau Franchiseur',
-    description: 'Pilotage multi-agences et statistiques réseau',
+    title: 'Dashboard Réseau',
+    description: 'Pilotage multi-agences et KPIs réseau',
     icon: Network,
     route: '/tete-de-reseau',
     scopeSlug: 'franchiseur_dashboard',
     color: 'accent',
     group: 'franchiseur',
+  },
+  {
+    id: 'FRANCHISEUR_STATS',
+    title: 'Statistiques Réseau',
+    description: 'Matrices de performance multi-agences',
+    icon: PieChart,
+    route: '/tete-de-reseau/stats',
+    scopeSlug: 'franchiseur_kpi',
+    color: 'accent',
+    group: 'franchiseur',
+  },
+  {
+    id: 'FRANCHISEUR_ROYALTIES',
+    title: 'Redevances',
+    description: 'Calcul et suivi mensuel des redevances',
+    icon: Coins,
+    route: '/tete-de-reseau/redevances',
+    scopeSlug: 'franchiseur_royalties',
+    color: 'accent',
+    group: 'franchiseur',
+    badge: 'En cours',
   },
   // Administration
   {
