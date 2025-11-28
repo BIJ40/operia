@@ -104,7 +104,7 @@ export default function Landing() {
             <Network className={`w-5 h-5 ${DASHBOARD_GROUPS.franchiseur.colorClass}`} />
             {DASHBOARD_GROUPS.franchiseur.title}
           </h2>
-          <div className="max-w-md">
+          <div className="grid md:grid-cols-3 gap-4">
             {tilesByGroup.franchiseur.map(tile => (
               <DashboardTileCard key={tile.id} tile={tile} />
             ))}
