@@ -11,9 +11,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Copy, Trash2, Settings, ChevronRight, Info } from 'lucide-react';
+import { Plus, Copy, Trash2, Settings, ChevronRight, Info, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPermissionHelpText, PermissionLevel } from '@/config/permissionsHelpTexts';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 const SYSTEM_ROLES: { value: SystemRole; label: string }[] = [
   { value: 'visiteur', label: 'Visiteur' },
@@ -23,6 +25,8 @@ const SYSTEM_ROLES: { value: SystemRole; label: string }[] = [
 ];
 
 export default function PermissionsGroups() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: groups, isLoading: groupsLoading } = useGroups();
   const { data: scopes, isLoading: scopesLoading } = useScopes();
   const createGroup = useCreateGroup();
@@ -38,6 +42,7 @@ export default function PermissionsGroups() {
   const [newGroupType, setNewGroupType] = useState<'franchise' | 'franchiseur'>('franchise');
   const [newGroupRoleLimit, setNewGroupRoleLimit] = useState<SystemRole>('utilisateur');
   const [cloneLabel, setCloneLabel] = useState('');
+  const [isApplyingAll, setIsApplyingAll] = useState<number | null>(null);
   
   const { data: groupPermissions } = useGroupPermissions(selectedGroupId);
   
@@ -70,6 +75,40 @@ export default function PermissionsGroups() {
   const handlePermissionChange = (scopeId: string, level: number) => {
     if (selectedGroupId) {
       upsertGroupPermission.mutate({ groupId: selectedGroupId, scopeId, level });
+    }
+  };
+  
+  const handleApplyLevelToAllScopes = async (level: number) => {
+    if (!selectedGroupId || !scopes || isApplyingAll !== null) return;
+    
+    const levelLabel = PERMISSION_LEVELS.find(l => l.value === level)?.label || String(level);
+    setIsApplyingAll(level);
+    
+    try {
+      // Apply level to all scopes sequentially to avoid overwhelming the API
+      const promises = scopes.map(scope => 
+        upsertGroupPermission.mutateAsync({ groupId: selectedGroupId, scopeId: scope.id, level })
+      );
+      
+      await Promise.all(promises);
+      
+      // Invalidate queries to refresh data
+      await queryClient.invalidateQueries({ queryKey: ['group-permissions', selectedGroupId] });
+      await queryClient.invalidateQueries({ queryKey: ['all-group-permissions'] });
+      
+      toast({
+        title: 'Permissions mises à jour',
+        description: `Niveau "${levelLabel}" appliqué à tous les scopes pour le groupe ${selectedGroup?.label}.`,
+      });
+    } catch (error) {
+      console.error('Error applying level to all scopes:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Une erreur est survenue lors de la mise à jour des permissions.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsApplyingAll(null);
     }
   };
   
@@ -276,6 +315,38 @@ export default function PermissionsGroups() {
             <CardContent>
               {selectedGroup ? (
                 <div className="space-y-6">
+                  {/* Apply to all buttons */}
+                  <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg border border-border/50">
+                    <span className="text-sm font-medium text-muted-foreground mr-2">Appliquer à tous :</span>
+                    {PERMISSION_LEVELS.map(level => (
+                      <Tooltip key={level.value}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleApplyLevelToAllScopes(level.value)}
+                            disabled={isApplyingAll !== null}
+                            className={cn(
+                              "text-xs min-w-[70px]",
+                              isApplyingAll === level.value && "opacity-50"
+                            )}
+                          >
+                            {isApplyingAll === level.value ? (
+                              <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                            ) : null}
+                            {level.label}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p className="text-xs">Appliquer "{level.label}" à tous les scopes du groupe</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                    {isApplyingAll !== null && (
+                      <span className="text-xs text-muted-foreground ml-2">Application en cours...</span>
+                    )}
+                  </div>
+                  
                   {scopesByArea && Object.entries(scopesByArea).map(([area, areaScopes]) => (
                     <div key={area}>
                       <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">{area}</h3>
