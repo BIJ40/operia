@@ -25,7 +25,7 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
           {/* Title 1: Paint effect - letters appear like being painted */}
           <PaintedTitle 
             text="Pilotez"
-            suffix=" votre agence."
+            suffix={<> votre agence Help<span className="text-accent">!</span> Confort.</>}
             delay={0.3}
           />
           
@@ -112,7 +112,7 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
 
 // ========== TITLE ANIMATIONS ==========
 
-function PaintedTitle({ text, suffix, delay }: { text: string; suffix: string; delay: number }) {
+function PaintedTitle({ text, suffix, delay }: { text: string; suffix: React.ReactNode; delay: number }) {
   const letters = text.split('');
   
   return (
