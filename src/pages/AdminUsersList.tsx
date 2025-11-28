@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, Users, ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react';
@@ -68,6 +69,7 @@ const COMPETENCE_OPTIONS = [
 ];
 
 export default function AdminUsersList() {
+  const { user: currentUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -81,8 +83,9 @@ export default function AdminUsersList() {
   const [systemRoleFilters, setSystemRoleFilters] = useState<string[]>([]);
   const [competenceFilters, setCompetenceFilters] = useState<string[]>([]);
 
-  // V2 Permissions - N3+ can view/edit users, N5+ can delete
+  // V2 Permissions - N3+ can view/edit users, N5+ can see all/delete
   const canManageUsers = useHasGlobalRole('franchisor_user'); // N3+
+  const canSeeAllUsers = useHasGlobalRole('platform_admin'); // N5+ sees all users
   const canDeleteUsers = useHasGlobalRole('platform_admin'); // N5+
 
   useEffect(() => {
@@ -91,14 +94,18 @@ export default function AdminUsersList() {
       return;
     }
     loadUsers();
-  }, [canManageUsers, navigate]);
+  }, [canManageUsers, navigate, currentUser?.id, canSeeAllUsers]);
 
   const loadUsers = async () => {
     try {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // N3/N4 users see only themselves, N5+ see all
+      let query = supabase.from('profiles').select('*');
+      
+      if (!canSeeAllUsers && currentUser?.id) {
+        query = query.eq('id', currentUser.id);
+      }
+      
+      const { data: profilesData, error: profilesError } = await query.order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
 

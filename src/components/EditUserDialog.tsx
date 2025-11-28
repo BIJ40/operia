@@ -11,6 +11,7 @@ import { UserSupportConfigSection } from '@/components/admin/user/UserSupportCon
 import { UserFranchiseurConfigSection } from '@/components/admin/user/UserFranchiseurConfigSection';
 import { UserPermissionsSection } from '@/components/admin/user/UserPermissionsSection';
 import { UserPasswordSection } from '@/components/admin/user/UserPasswordSection';
+import { useHasGlobalRole } from '@/hooks/useHasGlobalRole';
 
 interface UserProfile {
   id: string;
@@ -42,6 +43,7 @@ const ROLE_OPTIONS = [
 
 export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUserDialogProps) {
   const { toast } = useToast();
+  const canEditRoles = useHasGlobalRole('platform_admin'); // N5+ can edit roles/permissions
   const [loading, setLoading] = useState(false);
   
   // Infos de base
@@ -378,15 +380,17 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
             </div>
           </div>
 
-          {/* Section B - Rôles système */}
-          <UserSystemRolesSection
-            systemRoles={systemRoles}
-            onRolesChange={setSystemRoles}
-            isTeteDeReseau={isTeteDeReseau}
-          />
+          {/* Section B - Rôles système (N5+ only) */}
+          {canEditRoles && (
+            <UserSystemRolesSection
+              systemRoles={systemRoles}
+              onRolesChange={setSystemRoles}
+              isTeteDeReseau={isTeteDeReseau}
+            />
+          )}
 
-          {/* Section C - Configuration Support (si support coché) */}
-          {hasSupport && (
+          {/* Section C - Configuration Support (N5+ et si support coché) */}
+          {canEditRoles && hasSupport && (
             <UserSupportConfigSection
               supportLevel={supportLevel}
               onSupportLevelChange={setSupportLevel}
@@ -395,8 +399,8 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
             />
           )}
 
-          {/* Section D - Configuration Franchiseur (si franchiseur coché) */}
-          {hasFranchiseur && (
+          {/* Section D - Configuration Franchiseur (N5+ et si franchiseur coché) */}
+          {canEditRoles && hasFranchiseur && (
             <UserFranchiseurConfigSection
               franchiseurRole={franchiseurRole}
               onFranchiseurRoleChange={setFranchiseurRole}
@@ -405,8 +409,8 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
             />
           )}
 
-          {/* Section E - Permissions individuelles */}
-          {user && (
+          {/* Section E - Permissions individuelles (N5+ only) */}
+          {canEditRoles && user && (
             <UserPermissionsSection
               userId={user.id}
               userRole={roleAgence}
