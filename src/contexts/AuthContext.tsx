@@ -477,11 +477,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSuggestedEnabledModules(computedEnabledModules);
 
       // Charger les valeurs réelles V2.0 depuis la DB (si définies)
+      // AVEC FALLBACK sur les valeurs calculées depuis legacy si DB est null
       const dbGlobalRole = profile?.global_role as GlobalRole | null;
       const dbEnabledModules = profile?.enabled_modules as EnabledModules | null;
       
-      setGlobalRole(dbGlobalRole);
-      setEnabledModules(dbEnabledModules);
+      // Appliquer le fallback: si global_role est null en DB, utiliser le rôle calculé
+      const effectiveGlobalRole = dbGlobalRole ?? computedGlobalRole;
+      const effectiveEnabledModules = dbEnabledModules ?? computedEnabledModules;
+      
+      setGlobalRole(effectiveGlobalRole);
+      setEnabledModules(effectiveEnabledModules);
 
       // ========================================================================
       // SYSTÈME V2.0 - Logging de debug (dev uniquement)
@@ -495,14 +500,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (dbGlobalRole) {
           logAuth.info(`  ✅ Using DB global_role: ${dbGlobalRole}`);
         } else {
-          logAuth.info(`  ⚠️ Using suggested global_role (DB is null): ${computedGlobalRole}`);
+          logAuth.info(`  ⚠️ DB global_role is null, using computed fallback: ${effectiveGlobalRole}`);
         }
         
         if (dbEnabledModules) {
           logAuth.info(`  ✅ Using DB enabled_modules:`, dbEnabledModules);
         } else {
-          logAuth.info(`  ⚠️ Using suggested enabled_modules (DB is null):`, computedEnabledModules);
+          logAuth.info(`  ⚠️ DB enabled_modules is null, using computed fallback:`, effectiveEnabledModules);
         }
+        
+        logAuth.info(`  📍 Effective globalRole stored in state: ${effectiveGlobalRole}`);
       }
 
       // Charger les données de permissions legacy
