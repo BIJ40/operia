@@ -103,11 +103,47 @@ export default function PermissionsGroups() {
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Gestion des Groupes</h1>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" /> Nouveau groupe</Button>
-            </DialogTrigger>
-            <DialogContent>
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Info className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="max-w-md p-4 text-left">
+                <div className="space-y-3 text-xs">
+                  <p className="font-semibold text-sm">Plafond par rôle système</p>
+                  <div className="space-y-1">
+                    <p><strong>visiteur</strong> → plafond 1 (Lecture max)</p>
+                    <p><strong>utilisateur</strong> → plafond 2 (Écriture max)</p>
+                    <p><strong>support</strong> → plafond 3 (Gestion max)</p>
+                    <p><strong>admin</strong> → plafond 4 (Admin max)</p>
+                  </div>
+                  <p className="text-muted-foreground">
+                    Calcul : <code className="bg-muted px-1 rounded">min(override, groupe, plafond_role)</code>
+                  </p>
+                  <div className="border-t pt-2">
+                    <p className="font-semibold">Exemple Dirigeant :</p>
+                    <p>Groupe = Admin (4), system_role = admin → niveau final = 4</p>
+                    <p>Groupe = Admin (4), system_role = utilisateur → niveau final = 2</p>
+                  </div>
+                  <div className="border-t pt-2">
+                    <p className="font-semibold">Exemple Assistante :</p>
+                    <p>Guide Apogée (groupe=1) + plafond=2 → Lecture</p>
+                    <p>Mes Demandes (groupe=2) + plafond=2 → Écriture</p>
+                    <p>Admin Users (groupe=0) → Aucun accès</p>
+                  </div>
+                  <p className="text-muted-foreground italic">
+                    Mettez les groupes au niveau max du poste. Pilotez la puissance réelle via system_role.
+                  </p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button><Plus className="w-4 h-4 mr-2" /> Nouveau groupe</Button>
+              </DialogTrigger>
+              <DialogContent>
               <DialogHeader>
                 <DialogTitle>Créer un groupe</DialogTitle>
               </DialogHeader>
@@ -143,7 +179,8 @@ export default function PermissionsGroups() {
                 <Button onClick={handleCreateGroup} disabled={!newGroupLabel}>Créer</Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
