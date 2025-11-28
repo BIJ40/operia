@@ -29,6 +29,7 @@ interface NavItem {
   scope?: string;
   description?: string;
   children?: NavItem[];
+  badge?: string;
 }
 
 interface NavGroup {
@@ -99,7 +100,7 @@ export function UnifiedSidebar() {
           ]
         },
         { title: 'Actions à Mener', url: '/actions-a-mener', icon: ListTodo, scope: 'actions_a_mener', description: 'Suivi des actions et tâches en cours' },
-        { title: 'Diffusion', url: '/diffusion', icon: Tv, scope: 'diffusion', description: 'Mode affichage TV agence' },
+        { title: 'Diffusion', url: '/diffusion', icon: Tv, scope: 'diffusion', description: 'Mode affichage TV agence', badge: 'En cours' },
       ],
     },
     {
@@ -360,7 +361,16 @@ export function UnifiedSidebar() {
                             >
                               <Link to={getUrlWithEditMode(item.url!)} className="flex items-center gap-2">
                                 <Icon className="w-4 h-4 shrink-0" />
-                                {!collapsed && <span className="truncate text-sm">{item.title}</span>}
+                                {!collapsed && (
+                                  <>
+                                    <span className="truncate text-sm flex-1">{item.title}</span>
+                                    {item.badge && (
+                                      <span className="text-[10px] font-medium bg-orange-500 text-white px-1.5 py-0.5 rounded-full">
+                                        {item.badge}
+                                      </span>
+                                    )}
+                                  </>
+                                )}
                               </Link>
                             </SidebarMenuButton>
                           </SidebarMenuItem>
