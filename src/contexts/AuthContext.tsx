@@ -362,14 +362,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let hasHandledInitial = false;
 
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[AuthContext] init() démarré');
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log('[AuthContext] getSession résultat:', { hasSession: !!session, userId: session?.user?.id, error });
       setUser(session?.user ?? null);
 
       if (session?.user) {
         setIsAuthLoading(true);
+        console.log('[AuthContext] Chargement des données utilisateur pour:', session.user.id);
         await loadUserData(session.user.id);
+        console.log('[AuthContext] loadUserData terminé');
         setIsAuthLoading(false);
       } else {
+        console.log('[AuthContext] Pas de session, isAuthLoading = false');
         setIsAuthLoading(false);
       }
       hasHandledInitial = true;
