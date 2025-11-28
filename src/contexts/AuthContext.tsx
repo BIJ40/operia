@@ -359,16 +359,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadPermissionsData]);
 
   useEffect(() => {
+    let isInitialized = false;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // Ignorer INITIAL_SESSION si déjà initialisé par getSession
+        if (event === 'INITIAL_SESSION' && isInitialized) {
+          return;
+        }
+        
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          setIsAuthLoading(true);
-          setTimeout(async () => {
+          // Ne pas recharger si c'est juste INITIAL_SESSION après getSession
+          if (event !== 'INITIAL_SESSION') {
+            setIsAuthLoading(true);
             await loadUserData(session.user.id);
             setIsAuthLoading(false);
-          }, 0);
+          }
         } else {
           // Reset tous les états
           setIsAdmin(false);
@@ -382,7 +390,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setCapabilities([]);
           setScopes([]);
           setRolePermissions([]);
+          setGroupPermissions([]);
           setUserOverrides([]);
+          setSystemRole(null);
           setIsAuthLoading(false);
         }
       }
@@ -399,6 +409,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setIsAuthLoading(false);
       }
+      isInitialized = true;
     });
 
     return () => subscription.unsubscribe();
