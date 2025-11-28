@@ -5,9 +5,12 @@ import { Database, FileJson, FileText, CheckCircle2 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { useAdminBackup } from '@/hooks/use-admin-backup';
 import { ExportCard, CategoryExportCard, CompleteBackupCard } from '@/components/admin/backup';
+import { SCOPE_SLUGS, PERMISSION_LEVELS } from '@/types/permissions';
+import { usePermissions } from '@/hooks/use-permissions';
 
 export default function AdminBackup() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, canViewScope, canEditScope, canAdminScope } = useAuth();
+  const { getPermissionLevel } = usePermissions();
   const {
     apogeeCategories,
     apporteurCategories,
@@ -28,7 +31,12 @@ export default function AdminBackup() {
     importData,
   } = useAdminBackup();
 
-  if (!isAdmin) {
+  // Vérifications de permissions
+  const canView = canViewScope(SCOPE_SLUGS.ADMIN_BACKUP);
+  const canExport = canEditScope(SCOPE_SLUGS.ADMIN_BACKUP); // Niveau 2 : créer backup
+  const canRestore = getPermissionLevel(SCOPE_SLUGS.ADMIN_BACKUP) >= PERMISSION_LEVELS.MANAGE; // Niveau 3 : restaurer
+
+  if (!canView) {
     return <Navigate to="/" replace />;
   }
 

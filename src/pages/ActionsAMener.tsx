@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Navigate } from 'react-router-dom';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, BellRing, AlertTriangle } from 'lucide-react';
+import { AlertCircle, BellRing, AlertTriangle, Lock } from 'lucide-react';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { buildActionsAMener } from '@/apogee-connect/utils/actionsAMenerCalculations';
@@ -16,11 +17,35 @@ import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { ActionType } from '@/apogee-connect/types/actions';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { SCOPE_SLUGS, PERMISSION_LEVELS } from '@/types/permissions';
+import { ConditionalRender } from '@/components/PermissionGuard';
 
 function ActionsAMenerContent() {
   const { isAgencyReady, currentAgency } = useAgency();
   const { config, isLoading: isLoadingConfig } = useActionsConfig();
+  const { canViewScope, canEditScope, canAdminScope } = useAuth();
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  
+  // Vérifications de permissions
+  const canView = canViewScope(SCOPE_SLUGS.ACTIONS_A_MENER);
+  const canEdit = canEditScope(SCOPE_SLUGS.ACTIONS_A_MENER);
+  const canAdmin = canAdminScope(SCOPE_SLUGS.ACTIONS_A_MENER);
+  
+  // Rediriger si pas d'accès
+  if (!canView) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
+        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-4">
+          <Lock className="w-8 h-8 text-destructive" />
+        </div>
+        <h2 className="text-xl font-semibold text-foreground mb-2">Accès refusé</h2>
+        <p className="text-muted-foreground text-center max-w-md">
+          Vous n'avez pas les permissions nécessaires pour accéder aux Actions à mener.
+        </p>
+      </div>
+    );
+  }
   
   // États des filtres
   const [actionTypeFilter, setActionTypeFilter] = useState<ActionType | 'all'>('all');
@@ -140,7 +165,10 @@ function ActionsAMenerContent() {
                 Dossiers nécessitant une action de votre part
               </p>
             </div>
-            <ActionsConfigDialog />
+            {/* Configuration visible uniquement si niveau >= 3 (Gestion) */}
+            <ConditionalRender scope={SCOPE_SLUGS.ACTIONS_A_MENER} requiredLevel={PERMISSION_LEVELS.MANAGE}>
+              <ActionsConfigDialog />
+            </ConditionalRender>
           </div>
 
           {/* Bandeau en cours d'élaboration */}

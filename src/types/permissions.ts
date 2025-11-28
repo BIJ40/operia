@@ -25,7 +25,7 @@ export interface Scope {
   label: string;
   area: ScopeArea;
   description?: string;
-  default_level: number; // 0-3
+  default_level: number; // 0-4
   is_active: boolean;
   display_order: number;
 }
@@ -35,7 +35,7 @@ export interface RolePermission {
   role_agence: string;
   scope_id: string;
   block_id?: string;
-  level: number; // 0-3
+  level: number; // 0-4
   can_view: boolean;
   can_edit: boolean;
   can_create: boolean;
@@ -47,7 +47,7 @@ export interface UserPermission {
   user_id: string;
   scope_id?: string;
   block_id?: string;
-  level?: number; // 0-3
+  level?: number; // 0-4
   can_view?: boolean;
   can_edit?: boolean;
   can_create?: boolean;
@@ -65,13 +65,32 @@ export interface UserCapability {
   metadata?: Record<string, unknown>;
 }
 
-// Permission levels
+// Permission levels - 5 niveaux métiers
 export const PERMISSION_LEVELS = {
-  NONE: 0,
-  VIEW: 1,
-  EDIT: 2,
-  ADMIN: 3,
+  NONE: 0,      // Aucun - pas d'accès
+  VIEW: 1,      // Lecture - consultation seule
+  EDIT: 2,      // Écriture - peut créer/modifier son contenu
+  MANAGE: 3,    // Gestion - peut gérer tout le contenu du scope
+  ADMIN: 4,     // Admin - configuration et paramétrage du module
 } as const;
+
+// Labels pour affichage UI
+export const PERMISSION_LEVEL_LABELS: Record<number, string> = {
+  0: 'Aucun',
+  1: 'Lecture',
+  2: 'Écriture',
+  3: 'Gestion',
+  4: 'Admin',
+};
+
+// Couleurs pour affichage badges
+export const PERMISSION_LEVEL_COLORS: Record<number, string> = {
+  0: 'bg-muted text-muted-foreground',
+  1: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  2: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  3: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+  4: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+};
 
 // Capabilities disponibles
 export const CAPABILITIES = {
@@ -85,10 +104,11 @@ export type CapabilityType = typeof CAPABILITIES[keyof typeof CAPABILITIES];
 // Résultat du calcul des permissions effectives
 export interface EffectivePermission {
   level: number;
-  canView: boolean;
-  canEdit: boolean;
-  canCreate: boolean;
-  canDelete: boolean;
+  canView: boolean;    // level >= 1
+  canEdit: boolean;    // level >= 2
+  canCreate: boolean;  // level >= 2
+  canDelete: boolean;  // level >= 3
+  canAdmin: boolean;   // level >= 4
   source: 'default' | 'role' | 'user_override' | 'denied';
 }
 
@@ -119,3 +139,8 @@ export const SCOPE_SLUGS = {
 } as const;
 
 export type ScopeSlug = typeof SCOPE_SLUGS[keyof typeof SCOPE_SLUGS];
+
+// Helper pour vérifier les niveaux requis
+export function meetsLevel(effectiveLevel: number, requiredLevel: number): boolean {
+  return effectiveLevel >= requiredLevel;
+}
