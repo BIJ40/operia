@@ -88,10 +88,10 @@ export default function AdminSupport() {
     );
   };
 
-  // Reset filter to 'waiting' on mount
+  // Reset filter to 'waiting' on mount - force immediately
   useEffect(() => {
     setFilter('waiting');
-  }, []);
+  }, [setFilter]);
 
   useEffect(() => {
     if (!canView && !isAdmin && !user) {
@@ -99,7 +99,7 @@ export default function AdminSupport() {
       return;
     }
     loadTickets();
-  }, [canView, isAdmin, user, navigate]);
+  }, [canView, isAdmin, user, navigate, loadTickets]);
 
   const filteredTickets = tickets.filter((t) => t.status === filter);
   const waitingCount = tickets.filter((t) => t.status === 'waiting').length;
@@ -281,7 +281,7 @@ export default function AdminSupport() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
-            <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
+            <Tabs value={filter} defaultValue="waiting" onValueChange={(v) => setFilter(v as 'waiting' | 'in_progress' | 'resolved')}>
               <TabsList className="grid w-full grid-cols-3 mb-4">
                 <TabsTrigger value="waiting" className="gap-1 text-xs">
                   <AlertCircle className="w-3.5 h-3.5" />
@@ -297,18 +297,11 @@ export default function AdminSupport() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value={filter} className="space-y-2 mt-0">
-                {filter === 'resolved' ? (
-                  <TicketList
-                    tickets={tickets}
-                    selectedTicket={selectedTicket}
-                    onSelectTicket={selectTicket}
-                    showResolved={true}
-                  />
-                ) : filteredTickets.length === 0 ? (
+              <TabsContent value="waiting" className="space-y-2 mt-0">
+                {filteredTickets.length === 0 ? (
                   <Card>
                     <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                      Aucun ticket
+                      Aucun ticket en attente
                     </CardContent>
                   </Card>
                 ) : (
@@ -319,6 +312,32 @@ export default function AdminSupport() {
                     showResolved={false}
                   />
                 )}
+              </TabsContent>
+
+              <TabsContent value="in_progress" className="space-y-2 mt-0">
+                {tickets.filter(t => t.status === 'in_progress').length === 0 ? (
+                  <Card>
+                    <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                      Aucun ticket en cours
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <TicketList
+                    tickets={tickets.filter(t => t.status === 'in_progress')}
+                    selectedTicket={selectedTicket}
+                    onSelectTicket={selectTicket}
+                    showResolved={false}
+                  />
+                )}
+              </TabsContent>
+
+              <TabsContent value="resolved" className="space-y-2 mt-0">
+                <TicketList
+                  tickets={tickets}
+                  selectedTicket={selectedTicket}
+                  onSelectTicket={selectTicket}
+                  showResolved={true}
+                />
               </TabsContent>
             </Tabs>
           </div>
