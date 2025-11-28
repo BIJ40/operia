@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BookOpen, BarChart3, MessageSquare, Network } from 'lucide-react';
+import { ArrowRight, BookOpen, BarChart3, MessageSquare, Network, Settings } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashboardTiles';
 import { useMemo } from 'react';
@@ -11,6 +11,10 @@ export default function Landing() {
   // Filtrer les tuiles par permissions
   const visibleTiles = useMemo(() => {
     return DASHBOARD_TILES.filter(tile => {
+      // Cas spécial admin : nécessite le rôle admin
+      if (tile.requiresAdmin) {
+        return isAdmin && canViewScope(tile.scopeSlug);
+      }
       // Cas spécial franchiseur : nécessite le rôle + le scope
       if (tile.group === 'franchiseur') {
         return (isFranchiseur || isAdmin) && canViewScope(tile.scopeSlug);
@@ -26,6 +30,7 @@ export default function Landing() {
       pilotage: [],
       support: [],
       franchiseur: [],
+      admin: [],
     };
     
     visibleTiles.forEach(tile => {
@@ -101,6 +106,21 @@ export default function Landing() {
           </h2>
           <div className="max-w-md">
             {tilesByGroup.franchiseur.map(tile => (
+              <DashboardTileCard key={tile.id} tile={tile} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Admin Section */}
+      {tilesByGroup.admin.length > 0 && (
+        <section>
+          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Settings className={`w-5 h-5 ${DASHBOARD_GROUPS.admin.colorClass}`} />
+            {DASHBOARD_GROUPS.admin.title}
+          </h2>
+          <div className="grid md:grid-cols-4 gap-4">
+            {tilesByGroup.admin.map(tile => (
               <DashboardTileCard key={tile.id} tile={tile} />
             ))}
           </div>
