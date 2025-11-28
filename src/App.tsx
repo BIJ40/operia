@@ -59,6 +59,7 @@ const AdminSupportLevels = lazy(() => import("./pages/AdminSupportLevels"));
 const AdminEscalationHistory = lazy(() => import("./pages/AdminEscalationHistory"));
 const AdminBackup = lazy(() => import("./pages/AdminBackup"));
 const AdminHelpConfortBackup = lazy(() => import("./pages/AdminHelpConfortBackup"));
+const AdminUsersHub = lazy(() => import("./pages/AdminUsersHub"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const AdminUsersList = lazy(() => import("./pages/AdminUsersList"));
 const AdminRolePermissions = lazy(() => import("./pages/AdminRolePermissions"));
@@ -170,7 +171,10 @@ function AppContent() {
           <Route path="/admin/tickets" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
           <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminBackup /></RoleGuard></MainLayout>} />
           <Route path="/admin/helpconfort-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminHelpConfortBackup /></RoleGuard></MainLayout>} />
-          <Route path="/admin/users" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminUsers /></RoleGuard></MainLayout>} />
+          <Route path="/admin/users" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminUsersHub /></RoleGuard></MainLayout>} />
+          <Route path="/admin/users/create" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminUsers /></RoleGuard></MainLayout>} />
+          <Route path="/admin/users/list" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminUsersList /></RoleGuard></MainLayout>} />
+          <Route path="/admin/users/permissions" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminUsersUnified /></RoleGuard></MainLayout>} />
           <Route path="/admin/users-list" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminUsersList /></RoleGuard></MainLayout>} />
           <Route path="/admin/role-permissions" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminRolePermissions /></RoleGuard></MainLayout>} />
           <Route path="/admin/agencies" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminAgencies /></RoleGuard></MainLayout>} />
