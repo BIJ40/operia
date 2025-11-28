@@ -127,7 +127,7 @@ export function UnifiedSidebar() {
       label: 'Administration',
       labelKey: 'admin',
       items: [
-        { title: 'Utilisateurs', url: '/admin/users', icon: Users, scope: 'admin_users', description: 'Gérer les comptes utilisateurs' },
+        { title: 'Utilisateurs', url: '/admin/users-list', icon: Users, scope: 'admin_users', description: 'Gérer les comptes utilisateurs' },
         { 
           title: 'Permissions', 
           icon: Shield, 
