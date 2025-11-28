@@ -72,7 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [capabilities, setCapabilities] = useState<UserCapability[]>([]);
   const [scopes, setScopes] = useState<Scope[]>([]);
   const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
+  const [groupPermissions, setGroupPermissions] = useState<{ scope_id: string; level: number }[]>([]);
   const [userOverrides, setUserOverrides] = useState<UserPermission[]>([]);
+  const [systemRole, setSystemRole] = useState<string | null>(null);
   
   // Anciennes propriétés (compatibilité)
   const [mustChangePassword, setMustChangePassword] = useState(false);
@@ -81,8 +83,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
 
   // Charger les données de permissions
-  const loadPermissionsData = useCallback(async (userId: string, profileRoleAgence: string | null, profileRoleId: string | null) => {
+  const loadPermissionsData = useCallback(async (
+    userId: string, 
+    profileRoleAgence: string | null, 
+    profileRoleId: string | null,
+    profileGroupId: string | null,
+    profileSystemRole: string | null
+  ) => {
     try {
+      // Sauvegarder le system_role pour le calcul des plafonds
+      setSystemRole(profileSystemRole);
+
       // Charger tous les scopes
       const { data: scopesData, error: scopesError } = await (supabase as any)
         .from('scopes')
@@ -118,7 +129,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Charger les permissions du rôle (ancien système + nouveau)
+      // Charger les permissions du groupe (NOUVEAU SYSTÈME PRIORITAIRE)
+      if (profileGroupId) {
+        const { data: groupPermsData } = await (supabase as any)
+          .from('group_permissions')
+          .select('scope_id, level')
+          .eq('group_id', profileGroupId);
+        
+        setGroupPermissions(groupPermsData || []);
+      }
+
+      // Charger les permissions du rôle (ancien système pour compatibilité)
       if (profileRoleAgence) {
         const { data: rolePermsData } = await supabase
           .from('role_permissions')
@@ -155,12 +176,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * 1. Override utilisateur : Si existe, appliqué TEL QUEL (sans plafond system_role)
    *    - deny = true → niveau 0
    *    - sinon → override.level (0-4) directement
-   * 2. Permission du rôle : Appliquée telle quelle (plafond géré côté DB/service)
-   * 3. Défaut du scope
+   * 2. Permission du groupe (NOUVEAU système)
+   * 3. Permission du rôle agence (ancien système pour compatibilité)
+   * 4. Défaut du scope
    */
   const getEffectivePermission = useCallback((scopeSlug: string): EffectivePermission => {
     const scope = scopes.find(s => s.slug === scopeSlug);
     const defaultLevel = scope?.default_level || PERMISSION_LEVELS.NONE;
+    
+    // Calculer le plafond du system_role
+    const getSystemRoleCeiling = (): number => {
+      switch (systemRole) {
+        case 'admin': return 4;
+        case 'support': return 3;
+        case 'utilisateur': return 2;
+        case 'visiteur': return 1;
+        default: return 2; // Par défaut utilisateur
+      }
+    };
+    const systemRoleCeiling = getSystemRoleCeiling();
     
     // Permission par défaut basée sur le niveau
     const buildPermission = (level: number, source: EffectivePermission['source']): EffectivePermission => ({
@@ -197,7 +231,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return buildPermission(overrideLevel, 'user_override');
     }
 
-    // 2. Chercher la permission du rôle
+    // 2. Chercher la permission du groupe (NOUVEAU SYSTÈME PRIORITAIRE)
+    if (scope && groupPermissions.length > 0) {
+      const groupPerm = groupPermissions.find(p => p.scope_id === scope.id);
+      if (groupPerm) {
+        // Appliquer le plafond du system_role
+        const effectiveLevel = Math.min(groupPerm.level, systemRoleCeiling);
+        return buildPermission(effectiveLevel, 'role');
+      }
+    }
+
+    // 3. Chercher la permission du rôle agence (ancien système)
     const rolePerm = rolePermissions.find(p => {
       if (p.scope_id && scope) {
         return p.scope_id === scope.id;
@@ -206,13 +250,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (rolePerm) {
-      const roleLevel = rolePerm.level ?? PERMISSION_LEVELS.NONE;
-      return buildPermission(roleLevel, 'role');
+      // Ancien système: si can_access est true, donner niveau 1 (lecture)
+      // Sinon utiliser le niveau défini
+      const roleLevel = rolePerm.can_access ? Math.max(1, rolePerm.level ?? 0) : (rolePerm.level ?? PERMISSION_LEVELS.NONE);
+      const effectiveLevel = Math.min(roleLevel, systemRoleCeiling);
+      return buildPermission(effectiveLevel, 'role');
     }
 
-    // 3. Retourner la permission par défaut du scope
-    return buildPermission(defaultLevel, 'default');
-  }, [scopes, userOverrides, rolePermissions, isAdmin]);
+    // 4. Retourner la permission par défaut du scope (avec plafond)
+    const effectiveDefault = Math.min(defaultLevel, systemRoleCeiling);
+    return buildPermission(effectiveDefault, 'default');
+  }, [scopes, userOverrides, groupPermissions, rolePermissions, isAdmin, systemRole]);
 
   // Helpers de permissions - mapping générique des niveaux
   // canViewScope   => level >= 1 (Lecture)
@@ -285,17 +333,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsSupport(hasSupportRole);
       setIsFranchiseur(hasFranchiseur);
 
-      // Charger le profil
-      const { data: profile } = await supabase
+      // Charger le profil complet
+      const { data: profile } = await (supabase as any)
         .from('profiles')
-        .select('must_change_password, role_agence, agence')
-        .eq('id', userId)
-        .single();
-      
-      // Charger role_id séparément
-      const { data: profileWithRoleId } = await (supabase as any)
-        .from('profiles')
-        .select('role_id')
+        .select('must_change_password, role_agence, agence, role_id, group_id, system_role')
         .eq('id', userId)
         .single();
       
@@ -304,7 +345,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAgence(profile?.agence || null);
 
       // Charger les données de permissions
-      await loadPermissionsData(userId, profile?.role_agence || null, profileWithRoleId?.role_id || null);
+      await loadPermissionsData(
+        userId, 
+        profile?.role_agence || null, 
+        profile?.role_id || null,
+        profile?.group_id || null,
+        profile?.system_role || null
+      );
 
     } catch (error) {
       console.error('Erreur chargement données utilisateur:', error);

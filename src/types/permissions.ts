@@ -36,6 +36,7 @@ export interface RolePermission {
   scope_id: string;
   block_id?: string;
   level: number; // 0-4
+  can_access?: boolean; // Ancien système
   can_view: boolean;
   can_edit: boolean;
   can_create: boolean;
