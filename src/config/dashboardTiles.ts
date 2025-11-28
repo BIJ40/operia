@@ -1,6 +1,6 @@
 import { 
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
-  MessageSquare, Network, LucideIcon
+  MessageSquare, Network, Users, Shield, Database, Settings, LucideIcon
 } from 'lucide-react';
 
 export interface DashboardTile {
@@ -11,7 +11,8 @@ export interface DashboardTile {
   route: string;
   scopeSlug: string;
   color: 'primary' | 'accent';
-  group: 'help_academy' | 'pilotage' | 'support' | 'franchiseur';
+  group: 'help_academy' | 'pilotage' | 'support' | 'franchiseur' | 'admin';
+  requiresAdmin?: boolean;
 }
 
 export const DASHBOARD_TILES: DashboardTile[] = [
@@ -99,6 +100,51 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'accent',
     group: 'franchiseur',
   },
+  // Administration
+  {
+    id: 'ADMIN_USERS',
+    title: 'Utilisateurs',
+    description: 'Gestion des comptes utilisateurs',
+    icon: Users,
+    route: '/admin/users',
+    scopeSlug: 'admin_users',
+    color: 'primary',
+    group: 'admin',
+    requiresAdmin: true,
+  },
+  {
+    id: 'ADMIN_ROLES',
+    title: 'Rôles & Permissions',
+    description: 'Configuration des droits d\'accès',
+    icon: Shield,
+    route: '/admin/roles',
+    scopeSlug: 'admin_roles',
+    color: 'primary',
+    group: 'admin',
+    requiresAdmin: true,
+  },
+  {
+    id: 'ADMIN_BACKUP',
+    title: 'Sauvegarde',
+    description: 'Import/export des données',
+    icon: Database,
+    route: '/admin/backup',
+    scopeSlug: 'admin_backup',
+    color: 'primary',
+    group: 'admin',
+    requiresAdmin: true,
+  },
+  {
+    id: 'ADMIN_SETTINGS',
+    title: 'Paramètres',
+    description: 'Configuration du système',
+    icon: Settings,
+    route: '/admin',
+    scopeSlug: 'admin_settings',
+    color: 'primary',
+    group: 'admin',
+    requiresAdmin: true,
+  },
 ];
 
 export const DASHBOARD_GROUPS = {
@@ -121,5 +167,10 @@ export const DASHBOARD_GROUPS = {
     title: 'Réseau',
     icon: Network,
     colorClass: 'text-accent',
+  },
+  admin: {
+    title: 'Administration',
+    icon: Settings,
+    colorClass: 'text-destructive',
   },
 } as const;
