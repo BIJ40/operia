@@ -319,8 +319,9 @@ export const useAdminTickets = () => {
 
       if (error) throw error;
 
-      // Update ticket status to in_progress if it was waiting
-      if (selectedTicket?.status === 'waiting') {
+      // Update ticket status to in_progress if it was new or waiting_user
+      // Compatibilité avec l'ancien statut 'waiting'
+      if (selectedTicket?.status === 'new' || selectedTicket?.status === 'waiting' || selectedTicket?.status === 'waiting_user') {
         await updateTicketStatus(ticketId, 'in_progress');
       }
     } catch (error) {
@@ -363,10 +364,11 @@ export const useAdminTickets = () => {
 
   const reopenTicket = async (ticketId: string) => {
     try {
+      // Utiliser le nouveau statut 'in_progress' pour réouverture
       const { error } = await supabase
         .from('support_tickets')
         .update({ 
-          status: 'waiting',
+          status: 'in_progress',
           resolved_at: null,
           updated_at: new Date().toISOString()
         })
@@ -564,14 +566,18 @@ export const useAdminTickets = () => {
     }
   };
 
+  // Statistiques utilisant les nouveaux statuts
   const getStats = () => {
     const total = allTickets.length;
-    const waiting = allTickets.filter((t) => t.status === 'waiting').length;
+    // 'new' = nouveaux tickets non pris en charge
+    const newTickets = allTickets.filter((t) => t.status === 'new').length;
+    // Compatibilité : compter 'waiting' et 'waiting_user' ensemble
+    const waitingUser = allTickets.filter((t) => t.status === 'waiting_user' || t.status === 'waiting').length;
     const inProgress = allTickets.filter((t) => t.status === 'in_progress').length;
     const resolved = allTickets.filter((t) => t.status === 'resolved').length;
-    const unresolved = allTickets.filter((t) => t.status === 'unresolved').length;
+    const closed = allTickets.filter((t) => t.status === 'closed').length;
 
-    return { total, waiting, inProgress, resolved, unresolved };
+    return { total, newTickets, waitingUser, inProgress, resolved, closed };
   };
 
   useEffect(() => {

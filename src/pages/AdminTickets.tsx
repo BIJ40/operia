@@ -138,10 +138,10 @@ export default function AdminTickets() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">En attente</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Nouveaux</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.waiting}</div>
+            <div className="text-2xl font-bold text-blue-600">{stats.newTickets}</div>
           </CardContent>
         </Card>
         <Card>

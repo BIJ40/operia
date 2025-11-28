@@ -1,10 +1,17 @@
+/**
+ * Liste des tickets support
+ * Mise à jour Phase 3 : utilise les constantes centralisées de supportService.ts
+ */
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, CheckCircle2, Clock, AlertCircle, Mail, MailOpen } from 'lucide-react';
+import { MessageSquare, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { SupportTicket } from '@/hooks/use-admin-support';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
+import { TicketStatusBadge } from './TicketStatusBadge';
+import { TicketPriorityBadge } from './TicketPriorityBadge';
 
 interface TicketListProps {
   tickets: SupportTicket[];
@@ -13,49 +20,18 @@ interface TicketListProps {
   showResolved?: boolean;
 }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'waiting':
-      return 'bg-yellow-500';
-    case 'in_progress':
-      return 'bg-blue-500';
-    case 'resolved':
-      return 'bg-green-500';
-    default:
-      return 'bg-gray-500';
-  }
-};
-
-const getStatusLabel = (status: string) => {
-  switch (status) {
-    case 'waiting':
-      return 'En attente';
-    case 'in_progress':
-      return 'En cours';
-    case 'resolved':
-      return 'Résolu';
-    default:
-      return status;
-  }
-};
-
-const getPriorityIcon = (priority: string) => {
-  switch (priority) {
-    case 'high':
-      return <AlertCircle className="w-4 h-4 text-red-500" />;
-    case 'normal':
-      return <Clock className="w-4 h-4 text-yellow-500" />;
-    default:
-      return null;
-  }
-};
-
 export function TicketList({ tickets, selectedTicket, onSelectTicket, showResolved = false }: TicketListProps) {
-  // Séparer les tickets actifs des résolus
-  const activeTickets = tickets.filter(t => t.status !== 'resolved');
-  const resolvedTickets = tickets.filter(t => t.status === 'resolved');
+  // Séparer les tickets actifs des résolus/fermés
+  // Tickets actifs = new, in_progress, waiting_user
+  // Tickets terminés = resolved, closed
+  const activeTickets = tickets.filter(t => 
+    !['resolved', 'closed'].includes(t.status)
+  );
+  const resolvedTickets = tickets.filter(t => 
+    ['resolved', 'closed'].includes(t.status)
+  );
   
-  // Trier: tickets avec réponse non lue en premier
+  // Trier: tickets avec réponse non lue en premier, puis par date
   const sortedActiveTickets = [...activeTickets].sort((a, b) => {
     // Tickets avec réponse support non lue en premier
     if (a.has_unread_support_response && !b.has_unread_support_response) return -1;
@@ -96,7 +72,8 @@ export function TicketList({ tickets, selectedTicket, onSelectTicket, showResolv
                 <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
                   <MessageSquare className="w-4 h-4 flex-shrink-0" />
                   <span className="truncate">#{ticket.id.slice(0, 8)}</span>
-                  {getPriorityIcon(ticket.priority)}
+                  {/* Badge de priorité avec les nouvelles valeurs */}
+                  <TicketPriorityBadge priority={ticket.priority} size="sm" />
                   {ticket.has_unread_support_response && (
                     <Badge variant="destructive" className="text-xs flex items-center gap-1">
                       <Mail className="w-3 h-3" />
@@ -112,12 +89,8 @@ export function TicketList({ tickets, selectedTicket, onSelectTicket, showResolv
                   <p className="text-xs text-muted-foreground truncate">{ticket.subject}</p>
                 )}
               </div>
-              <Badge
-                variant="secondary"
-                className={`${getStatusColor(ticket.status)} text-white flex-shrink-0`}
-              >
-                {getStatusLabel(ticket.status)}
-              </Badge>
+              {/* Badge de statut avec les nouvelles valeurs */}
+              <TicketStatusBadge status={ticket.status} size="sm" />
             </div>
           </CardHeader>
           {ticket.rating !== null && (

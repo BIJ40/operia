@@ -41,7 +41,8 @@ export function useAdminStats() {
           supabase.from('blocks').select('*', { count: 'exact', head: true }),
           supabase.from('documents').select('*', { count: 'exact', head: true }),
           supabase.from('support_tickets').select('*', { count: 'exact', head: true }),
-          supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'waiting'),
+          // Compter les tickets en attente (nouveaux et waiting_user, + legacy 'waiting')
+          supabase.from('support_tickets').select('*', { count: 'exact', head: true }).in('status', ['new', 'waiting', 'waiting_user']),
           supabase.from('chatbot_queries').select('*', { count: 'exact', head: true }),
           supabase.from('apogee_agencies').select('*', { count: 'exact', head: true }),
         ]);

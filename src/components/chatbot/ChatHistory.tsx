@@ -67,7 +67,8 @@ export function ChatHistory({
                   <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {activeTicket.status === 'waiting'
+                  {/* Compatibilité avec les nouveaux statuts */}
+                  {(activeTicket.status === 'new' || activeTicket.status === 'waiting' || activeTicket.status === 'waiting_user')
                     ? 'Patientez quelques instants, un conseiller va se connecter...'
                     : 'Conseiller connecté - Vous pouvez échanger'}
                 </div>

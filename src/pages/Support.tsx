@@ -143,11 +143,14 @@ export default function Support() {
   };
 
   const getStatusBadge = (status: string) => {
-    const badges = {
-      waiting: <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200">En attente</Badge>,
+    // Badges de statut avec les nouvelles valeurs
+    const badges: Record<string, JSX.Element> = {
+      new: <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">Nouveau</Badge>,
+      waiting_user: <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">Attente utilisateur</Badge>,
+      waiting: <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200">En attente</Badge>, // Legacy
       in_progress: <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">En cours</Badge>,
       resolved: <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Résolu</Badge>,
-      unresolved: <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">Non résolu</Badge>,
+      closed: <Badge variant="secondary" className="bg-gray-100 text-gray-800 border-gray-200">Fermé</Badge>,
     };
     return badges[status as keyof typeof badges] || null;
   };
@@ -216,14 +219,25 @@ export default function Support() {
           </CardContent>
         </Card>
         <Card 
-          className={getCardClassName('waiting')}
-          onClick={() => setFilters({ ...filters, status: 'waiting' })}
+          className={getCardClassName('new')}
+          onClick={() => setFilters({ ...filters, status: 'new' })}
         >
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">En attente</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Nouveaux</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.waiting}</div>
+            <div className="text-2xl font-bold text-blue-600">{stats.newTickets}</div>
+          </CardContent>
+        </Card>
+        <Card 
+          className={getCardClassName('waiting_user')}
+          onClick={() => setFilters({ ...filters, status: 'waiting_user' })}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Attente utilisateur</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{stats.waitingUser}</div>
           </CardContent>
         </Card>
         <Card 
@@ -234,7 +248,7 @@ export default function Support() {
             <CardTitle className="text-sm font-medium text-muted-foreground">En cours</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
+            <div className="text-2xl font-bold text-yellow-600">{stats.inProgress}</div>
           </CardContent>
         </Card>
         <Card 
@@ -249,14 +263,14 @@ export default function Support() {
           </CardContent>
         </Card>
         <Card 
-          className={getCardClassName('unresolved')}
-          onClick={() => setFilters({ ...filters, status: 'unresolved' })}
+          className={getCardClassName('closed')}
+          onClick={() => setFilters({ ...filters, status: 'closed' })}
         >
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Non résolus</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Fermés</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.unresolved}</div>
+            <div className="text-2xl font-bold text-gray-600">{stats.closed}</div>
           </CardContent>
         </Card>
       </div>

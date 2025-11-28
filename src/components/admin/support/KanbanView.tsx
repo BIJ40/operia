@@ -1,3 +1,8 @@
+/**
+ * Vue Kanban des tickets support
+ * Mise à jour Phase 3 : utilise les nouveaux statuts (new, in_progress, waiting_user, resolved, closed)
+ */
+
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,9 +13,15 @@ import { CSS } from '@dnd-kit/utilities';
 import { SupportTicket } from '@/hooks/use-admin-support';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MessageSquare, AlertCircle, Clock } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { TicketPriorityBadge } from './TicketPriorityBadge';
+import {
+  TICKET_STATUSES,
+  TICKET_STATUS_LABELS,
+  TICKET_STATUS_COLORS,
+} from '@/services/supportService';
 
 interface KanbanViewProps {
   tickets: SupportTicket[];
@@ -25,10 +36,38 @@ interface KanbanColumn {
   color: string;
 }
 
+// Colonnes Kanban avec les NOUVEAUX statuts
 const columns: KanbanColumn[] = [
-  { id: 'waiting', title: 'En attente', status: 'waiting', color: 'bg-yellow-100 border-yellow-300' },
-  { id: 'in_progress', title: 'En cours', status: 'in_progress', color: 'bg-blue-100 border-blue-300' },
-  { id: 'resolved', title: 'Résolus', status: 'resolved', color: 'bg-green-100 border-green-300' },
+  { 
+    id: TICKET_STATUSES.NEW, 
+    title: TICKET_STATUS_LABELS.new, 
+    status: TICKET_STATUSES.NEW, 
+    color: 'bg-blue-100 border-blue-300' 
+  },
+  { 
+    id: TICKET_STATUSES.IN_PROGRESS, 
+    title: TICKET_STATUS_LABELS.in_progress, 
+    status: TICKET_STATUSES.IN_PROGRESS, 
+    color: 'bg-orange-100 border-orange-300' 
+  },
+  { 
+    id: TICKET_STATUSES.WAITING_USER, 
+    title: TICKET_STATUS_LABELS.waiting_user, 
+    status: TICKET_STATUSES.WAITING_USER, 
+    color: 'bg-yellow-100 border-yellow-300' 
+  },
+  { 
+    id: TICKET_STATUSES.RESOLVED, 
+    title: TICKET_STATUS_LABELS.resolved, 
+    status: TICKET_STATUSES.RESOLVED, 
+    color: 'bg-green-100 border-green-300' 
+  },
+  { 
+    id: TICKET_STATUSES.CLOSED, 
+    title: TICKET_STATUS_LABELS.closed, 
+    status: TICKET_STATUSES.CLOSED, 
+    color: 'bg-gray-100 border-gray-300' 
+  },
 ];
 
 function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
@@ -52,17 +91,6 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
-      case 'normal':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      default:
-        return null;
-    }
-  };
-
   return (
     <div
       ref={setNodeRef}
@@ -73,20 +101,31 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
       className="bg-white border-2 border-border rounded-xl p-4 mb-3 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
     >
       <div className="flex items-start justify-between mb-2">
-        <span className="font-semibold text-foreground">Ticket #{ticket.id.slice(0, 8)}</span>
-        {getPriorityIcon(ticket.priority)}
+        <span className="font-semibold text-foreground text-sm">#{ticket.id.slice(0, 8)}</span>
+        {/* Utiliser le badge de priorité centralisé */}
+        <TicketPriorityBadge priority={ticket.priority} size="sm" />
       </div>
-      <div className="text-sm text-muted-foreground mb-2">
+      {ticket.subject && (
+        <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{ticket.subject}</p>
+      )}
+      <div className="text-xs text-muted-foreground mb-2">
         {format(new Date(ticket.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
       </div>
-      {ticket.assigned_to && (
-        <Badge variant="outline" className="text-xs">
-          Assigné
-        </Badge>
-      )}
+      <div className="flex items-center gap-2 flex-wrap">
+        {ticket.assigned_to && (
+          <Badge variant="outline" className="text-xs">
+            Assigné
+          </Badge>
+        )}
+        {ticket.support_level && ticket.support_level > 1 && (
+          <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
+            N{ticket.support_level}
+          </Badge>
+        )}
+      </div>
       <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
         <MessageSquare className="w-3 h-3" />
-        <span>Ticket #{ticket.id.slice(0, 8)}</span>
+        <span>Ticket</span>
       </div>
     </div>
   );
@@ -102,8 +141,14 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
     setLocalTickets(tickets);
   }, [tickets]);
 
+  // Mapper les anciens statuts 'waiting' vers 'waiting_user' pour compatibilité
+  const normalizeStatus = (status: string) => {
+    if (status === 'waiting') return TICKET_STATUSES.WAITING_USER;
+    return status;
+  };
+
   const getTicketsByStatus = (status: string) => {
-    return localTickets.filter(ticket => ticket.status === status);
+    return localTickets.filter(ticket => normalizeStatus(ticket.status) === status);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -122,7 +167,7 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
 
     const ticketId = active.id as string;
     
-    // Déterminer le statut de la colonne de destination à partir des données DnD
+    // Déterminer le statut de la colonne de destination
     let newStatus: string | undefined;
 
     const overType = over.data?.current?.type as string | undefined;
@@ -135,12 +180,15 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
     if (!newStatus) return;
 
     const ticket = localTickets.find(t => t.id === ticketId);
-    if (ticket && ticket.status !== newStatus) {
+    const currentStatus = ticket ? normalizeStatus(ticket.status) : null;
+
+    if (ticket && currentStatus !== newStatus) {
       // Mise à jour optimiste de l'UI
+      const isResolved = newStatus === TICKET_STATUSES.RESOLVED || newStatus === TICKET_STATUSES.CLOSED;
       const updatedTicket = {
         ...ticket,
         status: newStatus,
-        resolved_at: newStatus === 'resolved' ? new Date().toISOString() : null
+        resolved_at: isResolved ? new Date().toISOString() : null
       };
       
       setLocalTickets(prev =>
@@ -151,10 +199,9 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
       const updateData: any = { status: newStatus };
       
       // Gérer le champ resolved_at selon le nouveau statut
-      if (newStatus === 'resolved') {
+      if (isResolved) {
         updateData.resolved_at = new Date().toISOString();
       } else {
-        // Si on sort de "resolved" (réouverture), on reset resolved_at
         updateData.resolved_at = null;
       }
 
@@ -175,15 +222,9 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
           variant: 'destructive',
         });
       } else {
-        const statusLabels: Record<string, string> = {
-          waiting: 'En attente',
-          in_progress: 'En cours',
-          resolved: 'Résolu'
-        };
-        
         toast({
-          title: newStatus === 'resolved' ? 'Ticket résolu' : 'Ticket réouvert',
-          description: `Statut : ${statusLabels[newStatus] || newStatus}`,
+          title: 'Statut mis à jour',
+          description: `Ticket passé en "${TICKET_STATUS_LABELS[newStatus] || newStatus}"`,
         });
         onTicketsUpdate();
       }
@@ -196,30 +237,28 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-3 gap-6 h-[calc(100vh-240px)]">
+      <div className="grid grid-cols-5 gap-4 h-[calc(100vh-240px)] overflow-x-auto">
         {columns.map((column) => {
           const columnTickets = getTicketsByStatus(column.status);
           
           return (
             <DroppableColumn key={column.id} id={column.status}>
-              <Card className={`flex flex-col ${column.color} border-2 h-full`}>
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center justify-between">
+              <Card className={`flex flex-col ${column.color} border-2 h-full min-w-[200px]`}>
+                <CardHeader className="pb-2 px-3">
+                  <CardTitle className="flex items-center justify-between text-sm">
                     <span>{column.title}</span>
-                    <Badge variant="secondary" className="ml-2">
+                    <Badge variant="secondary" className="ml-2 text-xs">
                       {columnTickets.length}
                     </Badge>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="flex-1 overflow-auto">
+                <CardContent className="flex-1 overflow-auto px-3 pb-3">
                   <SortableContext
                     id={column.status}
                     items={columnTickets.map(t => t.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div 
-                      className="space-y-3 min-h-[100px]"
-                    >
+                    <div className="space-y-2 min-h-[100px]">
                       {columnTickets.map((ticket) => (
                         <SortableTicketCard
                           key={ticket.id}
@@ -228,7 +267,7 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
                         />
                       ))}
                       {columnTickets.length === 0 && (
-                        <div className="text-center py-8 text-muted-foreground text-sm">
+                        <div className="text-center py-8 text-muted-foreground text-xs">
                           Aucun ticket
                         </div>
                       )}
@@ -244,7 +283,7 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
       <DragOverlay>
         {activeTicket && (
           <div className="bg-white border-2 border-primary rounded-xl p-4 shadow-2xl opacity-90">
-            <div className="font-semibold text-foreground">Ticket #{activeTicket.id.slice(0, 8)}</div>
+            <div className="font-semibold text-foreground">#{activeTicket.id.slice(0, 8)}</div>
             <div className="text-sm text-muted-foreground">
               {format(new Date(activeTicket.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
             </div>
