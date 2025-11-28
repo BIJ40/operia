@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, TrendingUp } from 'lucide-react';
@@ -28,8 +27,10 @@ interface AgencyActivity {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D'];
 
+// Note: Cette page est protégée par RoleGuard minRole="platform_admin" dans App.tsx
+// Plus besoin de check isAdmin ici
+
 export default function AdminUserActivity() {
-  const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [period, setPeriod] = useState<'7' | '30'>('7');
   const [evolutionData, setEvolutionData] = useState<ConnectionEvolution[]>([]);
@@ -37,12 +38,8 @@ export default function AdminUserActivity() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isAdmin) {
-      navigate('/');
-      return;
-    }
     loadActivityData();
-  }, [isAdmin, navigate, period]);
+  }, [period]);
 
   const loadActivityData = async () => {
     try {

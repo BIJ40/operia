@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePermissions } from '@/hooks/use-permissions';
+import { useHasGlobalRole } from '@/hooks/useHasGlobalRole';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { useState, useMemo, ReactNode } from 'react';
 
@@ -36,18 +36,23 @@ interface NavGroup {
   label: ReactNode;
   labelKey: string;
   items: NavItem[];
-  requiredRole?: 'admin' | 'support' | 'franchiseur';
+  minRole?: 'franchisee_admin' | 'franchisor_user' | 'platform_admin';
 }
 
 export function UnifiedSidebar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { isAdmin, isSupport, isFranchiseur, canViewScope } = useAuth();
+  const { canViewScope, isAdmin } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['help-academy', 'pilotage']));
+  
+  // V2 role checks
+  const canAccessFranchiseur = useHasGlobalRole('franchisor_user');
+  const canAccessAdmin = useHasGlobalRole('platform_admin');
+  const canAccessSupport = useHasGlobalRole('franchisor_user'); // N3+ peut voir support
 
-  // Check if currently in edit mode
+  // Check if currently in edit mode (admin legacy pour édition)
   const isInEditMode = searchParams.get('edit') === 'true' && isAdmin;
 
   // Helper to preserve edit mode for guide URLs
@@ -110,7 +115,7 @@ export function UnifiedSidebar() {
         { title: 'Mes Demandes', url: '/mes-demandes', icon: MessageSquare, scope: 'mes_demandes', description: 'Créer et suivre vos demandes de support' },
         { title: 'Gestion Tickets', url: '/admin/support', icon: Headset, scope: 'support_tickets', description: 'Traiter les demandes de support' },
       ],
-      requiredRole: 'support',
+      minRole: 'franchisor_user', // N3+ pour support
     },
     {
       label: 'Réseau Franchiseur',
@@ -122,7 +127,7 @@ export function UnifiedSidebar() {
         { title: 'Comparatifs', url: '/tete-de-reseau/comparatifs', icon: GitCompare, scope: 'franchiseur_kpi' },
         { title: 'Redevances', url: '/tete-de-reseau/redevances', icon: Coins, scope: 'franchiseur_royalties' },
       ],
-      requiredRole: 'franchiseur',
+      minRole: 'franchisor_user', // N3+ pour franchiseur
     },
     {
       label: 'Administration',
@@ -144,15 +149,16 @@ export function UnifiedSidebar() {
         { title: 'Activité', url: '/admin/user-activity', icon: Activity, scope: 'admin_settings' },
         { title: 'Paramètres', url: '/admin', icon: Settings, scope: 'admin_settings', description: 'Configuration du système' },
       ],
-      requiredRole: 'admin',
+      minRole: 'platform_admin', // N5+ pour admin plateforme
     },
   ];
 
-  // Filter groups based on roles
+  // Filter groups based on V2 roles
   const filteredGroups = navGroups.filter(group => {
-    if (group.requiredRole === 'admin' && !isAdmin) return false;
-    if (group.requiredRole === 'support' && !isSupport && !isAdmin) return false;
-    if (group.requiredRole === 'franchiseur' && !isFranchiseur && !isAdmin) return false;
+    if (!group.minRole) return true;
+    if (group.minRole === 'platform_admin') return canAccessAdmin;
+    if (group.minRole === 'franchisor_user') return canAccessFranchiseur || canAccessSupport;
+    if (group.minRole === 'franchisee_admin') return true; // N2+ handled by scope filtering
     return true;
   });
 
