@@ -74,19 +74,23 @@ serve(async (req) => {
       }
     )
 
-    // Authentification via JWT
+    // Authentification via JWT - Utilisation de l'API Supabase (sécurisé)
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       throw new Error('Non autorisé')
     }
 
     const token = authHeader.replace('Bearer ', '')
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    const userId = payload.sub
-
-    if (!userId) {
-      throw new Error('Token invalide')
+    
+    // Validation sécurisée du token via Supabase Auth API
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token)
+    
+    if (authError || !authUser) {
+      console.error('[reset-user-password] Erreur auth:', authError)
+      throw new Error('Token invalide ou expiré')
     }
+    
+    const userId = authUser.id
 
     // Récupérer le profil de l'appelant
     const { data: callerProfile } = await supabaseAdmin
