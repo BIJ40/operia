@@ -91,8 +91,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profileSystemRole: string | null
   ) => {
     try {
-      console.log('🔐 loadPermissionsData called:', { userId, profileGroupId, profileSystemRole });
-      
       // Sauvegarder le system_role pour le calcul des plafonds
       setSystemRole(profileSystemRole);
 
@@ -133,15 +131,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Charger les permissions du groupe (NOUVEAU SYSTÈME PRIORITAIRE)
       if (profileGroupId) {
-        const { data: groupPermsData, error: groupPermsError } = await (supabase as any)
+        const { data: groupPermsData } = await (supabase as any)
           .from('group_permissions')
           .select('scope_id, level')
           .eq('group_id', profileGroupId);
         
-        console.log('🔐 Group permissions loaded:', { profileGroupId, count: groupPermsData?.length, error: groupPermsError });
         setGroupPermissions(groupPermsData || []);
-      } else {
-        console.log('🔐 No group_id found for user');
       }
 
       // Charger les permissions du rôle (ancien système pour compatibilité)
@@ -324,8 +319,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Charger les données utilisateur
   const loadUserData = useCallback(async (userId: string) => {
     try {
-      console.log('🔐 loadUserData started for:', userId);
-      
       // Charger les rôles système
       const { data: roles } = await supabase
         .from('user_roles')
@@ -336,20 +329,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const hasSupportRole = roles?.some(r => r.role === 'support') || false;
       const hasFranchiseur = roles?.some(r => r.role === 'franchiseur') || false;
       
-      console.log('🔐 System roles loaded:', { hasAdmin, hasSupportRole, hasFranchiseur });
-      
       setIsAdmin(hasAdmin);
       setIsSupport(hasSupportRole);
       setIsFranchiseur(hasFranchiseur);
 
       // Charger le profil complet
-      const { data: profile, error: profileError } = await (supabase as any)
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('must_change_password, role_agence, agence, role_id, group_id, system_role')
         .eq('id', userId)
         .single();
-      
-      console.log('🔐 Profile loaded:', { profile, error: profileError });
       
       setMustChangePassword(profile?.must_change_password || false);
       setRoleAgence(profile?.role_agence || null);
@@ -374,8 +363,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let isLoadingUserData = false;
     let isMounted = true;
     
-    console.log('🔐 AuthContext useEffect mounting...');
-    
     /**
      * IMPORTANT: Pattern recommandé par Supabase pour éviter le deadlock
      * - onAuthStateChange ne doit PAS faire d'appels DB synchrones dans son callback
@@ -385,15 +372,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Fonction d'initialisation - appelée une seule fois au mount
     const init = async () => {
-      console.log('🔐 init() starting...');
-      
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        console.log('🔐 getSession result:', { 
-          hasSession: !!session, 
-          userEmail: session?.user?.email,
-          error: error?.message 
-        });
+        const { data: { session } } = await supabase.auth.getSession();
         
         if (!isMounted) return;
         
@@ -402,26 +382,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           // DIFFÉRER le chargement des données avec setTimeout pour éviter deadlock
           setTimeout(async () => {
-            if (!isMounted || isLoadingUserData) {
-              console.log('🔐 init() skipping loadUserData (unmounted or already loading)');
-              return;
-            }
+            if (!isMounted || isLoadingUserData) return;
             isLoadingUserData = true;
             setIsAuthLoading(true);
-            console.log('🔐 init() loading user data...');
             await loadUserData(session.user.id);
             if (isMounted) {
               setIsAuthLoading(false);
-              console.log('🔐 init() completed - user data loaded');
             }
             isLoadingUserData = false;
           }, 0);
         } else {
           setIsAuthLoading(false);
-          console.log('🔐 init() completed - no session');
         }
       } catch (error) {
-        console.error('🔐 init() error:', error);
+        console.error('Erreur initialisation auth:', error);
         if (isMounted) {
           setIsAuthLoading(false);
         }
@@ -435,15 +409,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // IMPORTANT: Le callback NE DOIT PAS être async pour éviter les deadlocks
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('🔐 onAuthStateChange fired:', { 
-          event, 
-          userEmail: session?.user?.email, 
-          hasSession: !!session
-        });
-        
         // Ignorer INITIAL_SESSION car init() gère la session initiale
         if (event === 'INITIAL_SESSION') {
-          console.log('🔐 Ignoring INITIAL_SESSION (handled by init)');
           return;
         }
         
@@ -453,27 +420,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           // DIFFÉRER les appels DB avec setTimeout(0) - pattern Supabase recommandé
           setTimeout(async () => {
-            if (!isMounted) {
-              console.log('🔐 onAuthStateChange skipping (unmounted)');
-              return;
-            }
-            if (isLoadingUserData) {
-              console.log('🔐 onAuthStateChange skipping loadUserData (already loading)');
-              return;
-            }
+            if (!isMounted || isLoadingUserData) return;
             
             isLoadingUserData = true;
-            console.log('🔐 onAuthStateChange: Loading user data for:', session.user.email);
             setIsAuthLoading(true);
             
             try {
               await loadUserData(session.user.id);
               if (isMounted) {
                 setIsAuthLoading(false);
-                console.log('🔐 onAuthStateChange: User data loaded successfully');
               }
             } catch (error) {
-              console.error('🔐 onAuthStateChange loadUserData error:', error);
+              console.error('Erreur chargement données utilisateur:', error);
               if (isMounted) {
                 setIsAuthLoading(false);
               }
@@ -482,7 +440,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isLoadingUserData = false;
           }, 0);
         } else {
-          console.log('🔐 Resetting all auth state (no session)');
           // Reset synchrone - pas de risque de deadlock
           setIsAdmin(false);
           setIsSupport(false);
@@ -504,7 +461,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => {
-      console.log('🔐 AuthContext useEffect cleanup');
       isMounted = false;
       subscription.unsubscribe();
     };
@@ -512,13 +468,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      console.log('🔐 AuthContext.login() called for:', email);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      console.log('🔐 signInWithPassword result:', { user: data?.user?.email, error: error?.message });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { success: false, error: error.message };
       return { success: true };
     } catch (err) {
-      console.error('🔐 login exception:', err);
+      console.error('Erreur connexion:', err);
       return { success: false, error: 'Une erreur est survenue' };
     }
   };
