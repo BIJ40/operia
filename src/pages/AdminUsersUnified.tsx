@@ -10,7 +10,8 @@ import {
   GlobalRole,
   getAllRolesSorted,
   getAssignableRoles,
-  canManageUsers 
+  canManageUsers,
+  getRoleLevel
 } from '@/types/globalRoles';
 import { 
   MODULE_DEFINITIONS, 
@@ -226,11 +227,23 @@ export default function AdminUsersUnified() {
     },
   });
 
+  // Get current user's role level for filtering
+  const currentUserLevel = getRoleLevel(currentUserRole);
+  
   // Calculate suggestions for each user
   const usersWithSuggestions = useMemo(() => {
     if (!users) return [];
     
-    return users.map(user => {
+    // Filter users by role level: user can only see users with level <= their own level
+    // N5+ (platform_admin, superadmin) see everyone
+    const visibleUsers = currentUserLevel >= GLOBAL_ROLES.platform_admin 
+      ? users 
+      : users.filter(user => {
+          const userLevel = user.global_role ? GLOBAL_ROLES[user.global_role] : 0;
+          return userLevel <= currentUserLevel;
+        });
+    
+    return visibleUsers.map(user => {
       const userCaps = capabilities?.filter(c => c.user_id === user.id) || [];
       const userAppRoles = userRoles?.filter(r => r.user_id === user.id) || [];
       const userFranchiseurRole = franchiseurRoles?.find(r => r.user_id === user.id);
