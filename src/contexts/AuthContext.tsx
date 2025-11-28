@@ -9,7 +9,8 @@ import {
   UserCapability,
   EffectivePermission,
   PERMISSION_LEVELS,
-  ScopeSlug
+  ScopeSlug,
+  getSystemRoleCeiling as getSystemRoleCeilingFn
 } from '@/types/permissions';
 
 interface AuthContextType {
@@ -184,17 +185,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const scope = scopes.find(s => s.slug === scopeSlug);
     const defaultLevel = scope?.default_level || PERMISSION_LEVELS.NONE;
     
-    // Calculer le plafond du system_role
-    const getSystemRoleCeiling = (): number => {
-      switch (systemRole) {
-        case 'admin': return 4;
-        case 'support': return 3;
-        case 'utilisateur': return 2;
-        case 'visiteur': return 1;
-        default: return 2; // Par défaut utilisateur
-      }
-    };
-    const systemRoleCeiling = getSystemRoleCeiling();
+    // Calculer le plafond du system_role via la fonction centralisée
+    const systemRoleCeiling = getSystemRoleCeilingFn(systemRole);
     
     // Permission par défaut basée sur le niveau
     const buildPermission = (level: number, source: EffectivePermission['source']): EffectivePermission => ({
@@ -319,19 +311,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Charger les données utilisateur
   const loadUserData = useCallback(async (userId: string) => {
     try {
-      // Charger les rôles système
+      // Charger les rôles système (app-level: admin, user, franchiseur)
+      // Note: "support" n'est plus un rôle, c'est une capability
       const { data: roles } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
       
       const hasAdmin = roles?.some(r => r.role === 'admin') || false;
-      const hasSupportRole = roles?.some(r => r.role === 'support') || false;
       const hasFranchiseur = roles?.some(r => r.role === 'franchiseur') || false;
       
       setIsAdmin(hasAdmin);
-      setIsSupport(hasSupportRole);
       setIsFranchiseur(hasFranchiseur);
+
+      // Charger les capabilities (support est maintenant une capability)
+      const { data: capabilitiesData } = await (supabase as any)
+        .from('user_capabilities')
+        .select('capability, is_active')
+        .eq('user_id', userId)
+        .eq('is_active', true);
+      
+      // isSupport vient des capabilities, pas des roles
+      const hasSupportCapability = capabilitiesData?.some(
+        (c: { capability: string }) => c.capability === 'support'
+      ) || false;
+      setIsSupport(hasSupportCapability);
 
       // Charger le profil complet
       const { data: profile } = await (supabase as any)

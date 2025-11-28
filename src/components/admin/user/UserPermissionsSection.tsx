@@ -8,9 +8,19 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface UserPermission {
-  block_id: string;
-  can_access: boolean;
+interface UserPermissionOverride {
+  id: string;
+  scope_id: string;
+  level: number | null;
+  deny: boolean | null;
+}
+
+interface Scope {
+  id: string;
+  slug: string;
+  label: string;
+  area: string;
+  default_level: number | null;
 }
 
 interface UserPermissionsSectionProps {
@@ -18,49 +28,38 @@ interface UserPermissionsSectionProps {
   userRole: string | null;
 }
 
-const AVAILABLE_PERMISSIONS = [
-  { scope: 'apogee', label: 'Guide Apogée', description: 'Accès au guide Apogée' },
-  { scope: 'apporteurs', label: 'Guide Apporteurs', description: 'Accès au guide Apporteurs' },
-  { scope: 'helpconfort', label: 'Guide HelpConfort', description: 'Accès au guide HelpConfort' },
-  { scope: 'mes_indicateurs', label: 'Indicateurs généraux', description: 'Accès aux KPIs et statistiques' },
-];
-
 export function UserPermissionsSection({ userId, userRole }: UserPermissionsSectionProps) {
   const { toast } = useToast();
-  const [permissions, setPermissions] = useState<UserPermission[]>([]);
-  const [rolePermissions, setRolePermissions] = useState<Record<string, boolean>>({});
+  const [overrides, setOverrides] = useState<UserPermissionOverride[]>([]);
+  const [scopes, setScopes] = useState<Scope[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (userId) {
-      loadPermissions();
+      loadData();
     }
-  }, [userId, userRole]);
+  }, [userId]);
 
-  const loadPermissions = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      // Charger les permissions individuelles
-      const { data: userPerms } = await supabase
+      // Charger les scopes actifs
+      const { data: scopesData } = await supabase
+        .from('scopes')
+        .select('id, slug, label, area, default_level')
+        .eq('is_active', true)
+        .order('display_order');
+
+      setScopes((scopesData as Scope[]) || []);
+
+      // Charger les overrides utilisateur
+      const { data: overridesData } = await supabase
         .from('user_permissions')
-        .select('block_id, can_access')
-        .eq('user_id', userId);
+        .select('id, scope_id, level, deny')
+        .eq('user_id', userId)
+        .not('scope_id', 'is', null);
 
-      setPermissions(userPerms || []);
-
-      // Charger les permissions du rôle
-      if (userRole) {
-        const { data: rolePerms } = await supabase
-          .from('role_permissions')
-          .select('block_id, can_access')
-          .eq('role_agence', userRole);
-
-        const rolePermsMap: Record<string, boolean> = {};
-        rolePerms?.forEach(p => {
-          rolePermsMap[p.block_id] = p.can_access;
-        });
-        setRolePermissions(rolePermsMap);
-      }
+      setOverrides((overridesData as UserPermissionOverride[]) || []);
     } catch (error) {
       console.error('Erreur chargement permissions:', error);
     } finally {
@@ -68,30 +67,39 @@ export function UserPermissionsSection({ userId, userRole }: UserPermissionsSect
     }
   };
 
-  const handleTogglePermission = async (scope: string, currentValue: boolean | null) => {
+  const handleTogglePermission = async (scope: Scope) => {
     try {
-      const existingPerm = permissions.find(p => p.block_id === scope);
+      const existingOverride = overrides.find(o => o.scope_id === scope.id);
       
-      if (existingPerm) {
-        // Mettre à jour
-        await supabase
-          .from('user_permissions')
-          .update({ can_access: !existingPerm.can_access })
-          .eq('user_id', userId)
-          .eq('block_id', scope);
+      if (existingOverride) {
+        // Toggle: si deny ou level=0, donner level=1 (lecture), sinon deny
+        if (existingOverride.deny || (existingOverride.level !== null && existingOverride.level === 0)) {
+          // Donner accès lecture
+          await supabase
+            .from('user_permissions')
+            .update({ level: 1, deny: false })
+            .eq('id', existingOverride.id);
+        } else {
+          // Bloquer
+          await supabase
+            .from('user_permissions')
+            .update({ level: 0, deny: true })
+            .eq('id', existingOverride.id);
+        }
       } else {
-        // Créer
-        const roleDefault = rolePermissions[scope] ?? true;
+        // Créer un override qui bloque (inverse du défaut)
+        const defaultHasAccess = (scope.default_level ?? 0) > 0;
         await supabase
           .from('user_permissions')
           .insert({
             user_id: userId,
-            block_id: scope,
-            can_access: !roleDefault,
+            scope_id: scope.id,
+            level: defaultHasAccess ? 0 : 1,
+            deny: defaultHasAccess,
           });
       }
 
-      await loadPermissions();
+      await loadData();
     } catch (error) {
       console.error('Erreur modification permission:', error);
       toast({
@@ -107,28 +115,46 @@ export function UserPermissionsSection({ userId, userRole }: UserPermissionsSect
       await supabase
         .from('user_permissions')
         .delete()
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .not('scope_id', 'is', null);
 
-      setPermissions([]);
+      setOverrides([]);
       toast({
         title: 'Permissions réinitialisées',
-        description: 'Les permissions sont revenues aux valeurs par défaut du rôle',
+        description: 'Les permissions sont revenues aux valeurs par défaut',
       });
     } catch (error) {
       console.error('Erreur réinitialisation:', error);
     }
   };
 
-  const getPermissionStatus = (scope: string) => {
-    const userPerm = permissions.find(p => p.block_id === scope);
-    if (userPerm) {
-      return { value: userPerm.can_access, isCustom: true };
+  const getPermissionStatus = (scope: Scope) => {
+    const override = overrides.find(o => o.scope_id === scope.id);
+    if (override) {
+      const hasAccess = !override.deny && (override.level ?? 0) > 0;
+      return { value: hasAccess, isCustom: true, isDenied: override.deny };
     }
-    const rolePerm = rolePermissions[scope];
-    return { value: rolePerm ?? true, isCustom: false };
+    // Par défaut du scope
+    const defaultHasAccess = (scope.default_level ?? 0) > 0;
+    return { value: defaultHasAccess, isCustom: false, isDenied: false };
   };
 
-  const hasCustomPermissions = permissions.length > 0;
+  const hasCustomPermissions = overrides.length > 0;
+
+  // Grouper les scopes par area pour un affichage organisé
+  const scopesByArea = scopes.reduce((acc, scope) => {
+    if (!acc[scope.area]) acc[scope.area] = [];
+    acc[scope.area].push(scope);
+    return acc;
+  }, {} as Record<string, Scope[]>);
+
+  const areaLabels: Record<string, string> = {
+    'help_academy': 'HELP Academy',
+    'pilotage_agence': 'Pilotage Agence',
+    'support': 'Support',
+    'pilotage_franchiseur': 'Réseau Franchiseur',
+    'administration': 'Administration',
+  };
 
   return (
     <Collapsible className="border rounded-lg border-amber-200 bg-amber-50/30">
@@ -138,7 +164,7 @@ export function UserPermissionsSection({ userId, userRole }: UserPermissionsSect
           <span className="font-medium">Permissions individuelles</span>
           {hasCustomPermissions && (
             <Badge variant="outline" className="ml-2 text-amber-600 border-amber-300">
-              {permissions.length} surcharge{permissions.length > 1 ? 's' : ''}
+              {overrides.length} surcharge{overrides.length > 1 ? 's' : ''}
             </Badge>
           )}
         </div>
@@ -146,7 +172,7 @@ export function UserPermissionsSection({ userId, userRole }: UserPermissionsSect
       </CollapsibleTrigger>
       <CollapsibleContent className="px-4 pb-4 space-y-4">
         <p className="text-xs text-muted-foreground">
-          Surcharges par rapport aux permissions du rôle "{userRole || 'aucun'}"
+          Surcharges par rapport aux permissions du groupe/rôle
         </p>
 
         {hasCustomPermissions && (
@@ -158,37 +184,50 @@ export function UserPermissionsSection({ userId, userRole }: UserPermissionsSect
             className="w-full"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
-            Réinitialiser aux valeurs du rôle
+            Réinitialiser aux valeurs par défaut
           </Button>
         )}
 
-        <div className="space-y-3">
-          {AVAILABLE_PERMISSIONS.map((perm) => {
-            const status = getPermissionStatus(perm.scope);
-            return (
-              <div
-                key={perm.scope}
-                className="flex items-center justify-between p-2 rounded border"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{perm.label}</span>
-                    {status.isCustom && (
-                      <Badge variant="secondary" className="text-xs">
-                        Personnalisé
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">{perm.description}</p>
-                </div>
-                <Switch
-                  checked={status.value}
-                  onCheckedChange={() => handleTogglePermission(perm.scope, status.value)}
-                  disabled={loading}
-                />
+        <div className="space-y-4">
+          {Object.entries(scopesByArea).map(([area, areaScopes]) => (
+            <div key={area} className="space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                {areaLabels[area] || area}
+              </h4>
+              <div className="space-y-2">
+                {areaScopes.map((scope) => {
+                  const status = getPermissionStatus(scope);
+                  return (
+                    <div
+                      key={scope.id}
+                      className={`flex items-center justify-between p-2 rounded border ${
+                        status.isDenied ? 'bg-red-50 border-red-200' : ''
+                      }`}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{scope.label}</span>
+                          {status.isCustom && (
+                            <Badge 
+                              variant={status.isDenied ? "destructive" : "secondary"} 
+                              className="text-xs"
+                            >
+                              {status.isDenied ? 'Bloqué' : 'Personnalisé'}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <Switch
+                        checked={status.value}
+                        onCheckedChange={() => handleTogglePermission(scope)}
+                        disabled={loading}
+                      />
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </CollapsibleContent>
     </Collapsible>

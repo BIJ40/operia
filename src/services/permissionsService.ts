@@ -1,11 +1,20 @@
 import { supabase } from '@/integrations/supabase/client';
+import { 
+  type SystemRole, 
+  SYSTEM_ROLE_LEVELS, 
+  getSystemRoleCeiling 
+} from '@/types/permissions';
+
+// Re-export pour compatibilité
+export type { SystemRole };
+export { SYSTEM_ROLE_LEVELS, getSystemRoleCeiling };
 
 export interface Group {
   id: string;
   label: string;
   description: string | null;
   type: 'franchise' | 'franchiseur';
-  system_role_limit: 'visiteur' | 'utilisateur' | 'support' | 'admin';
+  system_role_limit: SystemRole;
   is_active: boolean;
   display_order: number;
   created_at: string;
@@ -40,22 +49,17 @@ export interface UserPermissionOverride {
   deny: boolean | null;
 }
 
-export type SystemRole = 'visiteur' | 'utilisateur' | 'support' | 'admin';
-
-export const SYSTEM_ROLE_LEVELS: Record<SystemRole, number> = {
-  visiteur: 1,
-  utilisateur: 2,
-  support: 3,
-  admin: 4,
-};
-
-export const PERMISSION_LEVELS = [
+// Labels de permissions pour l'UI
+export const PERMISSION_LEVELS_UI = [
   { value: 0, label: 'Aucun', color: 'bg-muted text-muted-foreground' },
   { value: 1, label: 'Lecture', color: 'bg-blue-100 text-blue-800' },
   { value: 2, label: 'Écriture', color: 'bg-green-100 text-green-800' },
   { value: 3, label: 'Gestion', color: 'bg-orange-100 text-orange-800' },
   { value: 4, label: 'Admin', color: 'bg-red-100 text-red-800' },
 ];
+
+// Alias pour compatibilité
+export const PERMISSION_LEVELS = PERMISSION_LEVELS_UI;
 
 // ========== GROUPS ==========
 
