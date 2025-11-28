@@ -46,6 +46,9 @@ export default function AdminSupport() {
     resolveTicket,
     reopenTicket,
     clearFilters,
+    updateStatus,
+    updatePriority,
+    escalateTicketToNextLevel,
   } = useAdminSupport();
 
   const navigate = useNavigate();
@@ -276,6 +279,9 @@ export default function AdminSupport() {
                 ticket={selectedTicket}
                 onResolve={resolveTicket}
                 onReopen={reopenTicket}
+                onStatusChange={updateStatus.bind(null, selectedTicket.id)}
+                onPriorityChange={updatePriority.bind(null, selectedTicket.id)}
+                onEscalate={escalateTicketToNextLevel}
               />
               {selectedTicket.status !== 'resolved' && selectedTicket.status !== 'closed' && (
                 <Card>
@@ -348,6 +354,9 @@ export default function AdminSupport() {
                   ticket={selectedTicket}
                   onResolve={resolveTicket}
                   onReopen={reopenTicket}
+                  onStatusChange={updateStatus.bind(null, selectedTicket.id)}
+                  onPriorityChange={updatePriority.bind(null, selectedTicket.id)}
+                  onEscalate={escalateTicketToNextLevel}
                 />
                 {selectedTicket.status !== 'resolved' && selectedTicket.status !== 'closed' && (
                   <Card>

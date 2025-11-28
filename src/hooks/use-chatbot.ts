@@ -371,13 +371,14 @@ export const useChatbot = () => {
         : 'Utilisateur';
 
       // Create ticket with source='chat' and escalated_from_chat=true
+      // Utiliser le nouveau statut 'new' au lieu de 'waiting'
       const { data: ticket, error: ticketError } = await supabase
         .from('support_tickets')
         .insert({
           user_id: user.id,
           subject,
           category,
-          status: 'waiting',
+          status: 'new', // Nouveau statut initial
           priority: 'normal',
           source: 'chat',
           agency_slug: profile?.agence || null,
@@ -385,6 +386,7 @@ export const useChatbot = () => {
           is_live_chat: false,
           escalated_from_chat: true,
           chatbot_conversation: JSON.stringify(messages),
+          support_level: 1, // Niveau initial N1
         } as any)
         .select()
         .single();
