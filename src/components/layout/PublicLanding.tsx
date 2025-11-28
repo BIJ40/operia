@@ -26,7 +26,7 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
           <PaintedTitle 
             text="Pilotez"
             suffix={<> votre agence Help<span className="text-accent">!</span> Confort.</>}
-            delay={0.3}
+            delay={0.2}
           />
           
           {/* Title 2: Repair effect - word appears broken then repairs */}
@@ -34,28 +34,28 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
             prefix="Maîtrisez"
             brokenWord="le logiciel"
             suffix=" Apogée."
-            delay={2.5}
+            delay={1.6}
           />
           
           {/* Title 3: Replacement effect - words swap/replace */}
           <ReplacementTitle 
             prefix="Accédez"
             words={["aux outils", "aux guides", "à toutes les ressources"]}
-            delay={5}
+            delay={3.5}
           />
 
           <motion.p 
             className="text-xl text-muted-foreground mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 2.5 }}
+            transition={{ duration: 0.6, delay: 1.8 }}
           >
             La plateforme complète pour gérer votre franchise HelpConfort
           </motion.p>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 3 }}
+            transition={{ duration: 0.5, delay: 2.2 }}
           >
             <Button 
               onClick={onLoginClick}
@@ -265,9 +265,9 @@ function ReplacementTitle({ prefix, words, delay }: {
   useEffect(() => {
     const timeouts: NodeJS.Timeout[] = [];
     
-    // Timing ajusté pour laisser le temps à la barre de se dessiner (1.8s par mot)
+    // Timing ajusté pour laisser le temps à la barre de se dessiner (1.5s par mot)
     words.forEach((_, index) => {
-      timeouts.push(setTimeout(() => setCurrentIndex(index), delay * 1000 + index * 1800));
+      timeouts.push(setTimeout(() => setCurrentIndex(index), delay * 1000 + index * 1500));
     });
     
     return () => timeouts.forEach(clearTimeout);
