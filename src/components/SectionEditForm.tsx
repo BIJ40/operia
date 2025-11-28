@@ -227,6 +227,10 @@ export function SectionEditForm({
   };
 
   const handleSave = () => {
+    // Automatically set contentUpdatedAt if content changed
+    const hasContentChanged = content !== initialContent;
+    const newContentUpdatedAt = hasContentChanged ? new Date().toISOString() : contentUpdatedAt;
+    
     onSave({ 
       title, 
       content, 
@@ -237,7 +241,7 @@ export function SectionEditForm({
       hideFromSidebar,
       isInProgress,
       completedAt,
-      contentUpdatedAt,
+      contentUpdatedAt: newContentUpdatedAt,
       isEmpty,
     });
     clearStorage();
