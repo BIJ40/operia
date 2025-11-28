@@ -58,8 +58,15 @@ import {
   CheckCircle2,
   MinusCircle,
   Users,
-  Loader2
+  Loader2,
+  Info
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { Json } from '@/integrations/supabase/types';
 
 interface UserProfile {
@@ -497,6 +504,7 @@ export default function AdminPermissionsV2() {
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : (
+        <TooltipProvider>
         <div className="border rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
@@ -504,9 +512,35 @@ export default function AdminPermissionsV2() {
                 <TableHead className="w-[220px]">Utilisateur</TableHead>
                 <TableHead className="w-[120px]">Agence</TableHead>
                 <TableHead className="w-[200px]">Rôle global</TableHead>
-                <TableHead className="w-[160px]">Suggestion</TableHead>
+                <TableHead className="w-[160px]">
+                  <div className="flex items-center gap-1">
+                    Suggestion
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[250px]">
+                        <p>Rôle suggéré calculé automatiquement à partir des permissions V1 (legacy). Utilisez "V2" pour appliquer cette suggestion.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TableHead>
                 <TableHead className="min-w-[300px]">Modules</TableHead>
-                <TableHead className="w-[100px]">Statut</TableHead>
+                <TableHead className="w-[100px]">
+                  <div className="flex items-center gap-1">
+                    Statut
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[250px]">
+                        <p><strong>V2 OK</strong> : Configuration V2 alignée avec les suggestions.<br/>
+                        <strong>À appliquer</strong> : Valeurs V2 vides, suggestion disponible.<br/>
+                        <strong>Différent</strong> : Configuration V2 différente de la suggestion.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TableHead>
                 <TableHead className="w-[140px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -697,6 +731,7 @@ export default function AdminPermissionsV2() {
             </TableBody>
           </Table>
         </div>
+        </TooltipProvider>
       )}
 
       {/* Pagination */}
