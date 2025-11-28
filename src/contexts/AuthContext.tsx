@@ -91,6 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profileSystemRole: string | null
   ) => {
     try {
+      console.log('🔐 loadPermissionsData called:', { userId, profileGroupId, profileSystemRole });
+      
       // Sauvegarder le system_role pour le calcul des plafonds
       setSystemRole(profileSystemRole);
 
@@ -131,12 +133,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Charger les permissions du groupe (NOUVEAU SYSTÈME PRIORITAIRE)
       if (profileGroupId) {
-        const { data: groupPermsData } = await (supabase as any)
+        const { data: groupPermsData, error: groupPermsError } = await (supabase as any)
           .from('group_permissions')
           .select('scope_id, level')
           .eq('group_id', profileGroupId);
         
+        console.log('🔐 Group permissions loaded:', { profileGroupId, count: groupPermsData?.length, error: groupPermsError });
         setGroupPermissions(groupPermsData || []);
+      } else {
+        console.log('🔐 No group_id found for user');
       }
 
       // Charger les permissions du rôle (ancien système pour compatibilité)
@@ -319,6 +324,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Charger les données utilisateur
   const loadUserData = useCallback(async (userId: string) => {
     try {
+      console.log('🔐 loadUserData started for:', userId);
+      
       // Charger les rôles système
       const { data: roles } = await supabase
         .from('user_roles')
@@ -329,16 +336,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const hasSupportRole = roles?.some(r => r.role === 'support') || false;
       const hasFranchiseur = roles?.some(r => r.role === 'franchiseur') || false;
       
+      console.log('🔐 System roles loaded:', { hasAdmin, hasSupportRole, hasFranchiseur });
+      
       setIsAdmin(hasAdmin);
       setIsSupport(hasSupportRole);
       setIsFranchiseur(hasFranchiseur);
 
       // Charger le profil complet
-      const { data: profile } = await (supabase as any)
+      const { data: profile, error: profileError } = await (supabase as any)
         .from('profiles')
         .select('must_change_password, role_agence, agence, role_id, group_id, system_role')
         .eq('id', userId)
         .single();
+      
+      console.log('🔐 Profile loaded:', { profile, error: profileError });
       
       setMustChangePassword(profile?.must_change_password || false);
       setRoleAgence(profile?.role_agence || null);
@@ -361,22 +372,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isInitialized = false;
     
+    // Fonction d'initialisation
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔐 getSession result:', session?.user?.email);
+      
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        setIsAuthLoading(true);
+        await loadUserData(session.user.id);
+        setIsAuthLoading(false);
+      } else {
+        setIsAuthLoading(false);
+      }
+      isInitialized = true;
+    };
+    
+    // Initialiser d'abord
+    init();
+    
+    // Puis écouter les changements (mais ignorer INITIAL_SESSION car déjà géré par init)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // Ignorer INITIAL_SESSION si déjà initialisé par getSession
-        if (event === 'INITIAL_SESSION' && isInitialized) {
+        console.log('🔐 onAuthStateChange:', event, session?.user?.email, 'isInitialized:', isInitialized);
+        
+        // Ignorer TOUS les INITIAL_SESSION car init() gère ça
+        if (event === 'INITIAL_SESSION') {
           return;
         }
         
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Ne pas recharger si c'est juste INITIAL_SESSION après getSession
-          if (event !== 'INITIAL_SESSION') {
-            setIsAuthLoading(true);
-            await loadUserData(session.user.id);
-            setIsAuthLoading(false);
-          }
+          setIsAuthLoading(true);
+          await loadUserData(session.user.id);
+          setIsAuthLoading(false);
         } else {
           // Reset tous les états
           setIsAdmin(false);
@@ -397,20 +428,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     );
-
-    // Vérifier la session existante
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        setIsAuthLoading(true);
-        await loadUserData(session.user.id);
-        setIsAuthLoading(false);
-      } else {
-        setIsAuthLoading(false);
-      }
-      isInitialized = true;
-    });
 
     return () => subscription.unsubscribe();
   }, [loadUserData]);
