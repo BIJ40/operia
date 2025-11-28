@@ -14,6 +14,28 @@ import {
 } from '@/types/permissions';
 import { logAuth, logPermissions, logDeprecation } from '@/lib/logger';
 
+// ============================================================================
+// SYSTÈME V2.0 - Imports des types et fonctions de mapping
+// ============================================================================
+import { GlobalRole } from '@/types/globalRoles';
+import { EnabledModules, ModuleKey } from '@/types/modules';
+import { 
+  AccessControlContext,
+  createAccessContext,
+  getGlobalRoleFromLegacy,
+  getEnabledModulesFromLegacy,
+  hasGlobalRole as hasGlobalRoleFn,
+  hasModule as hasModuleFn,
+  hasModuleOption as hasModuleOptionFn,
+  isPlatformAdmin,
+  isSuperAdmin,
+  isSupportAgent,
+  isSupportAdmin,
+  hasFranchisorAccess,
+  canManageRoyalties,
+  canEdit as canEditV2
+} from '@/types/accessControl';
+
 interface AuthContextType {
   // État utilisateur
   isAuthenticated: boolean;
@@ -25,7 +47,7 @@ interface AuthContextType {
   isSupport: boolean;
   isFranchiseur: boolean;
   
-  // Nouveau système
+  // Nouveau système legacy
   role: Role | null;
   capabilities: UserCapability[];
   scopes: Scope[];
@@ -37,7 +59,23 @@ interface AuthContextType {
   userPermissions: string[];
   isLoggingOut: boolean;
   
-  // Helpers de permissions - NOUVEAU SYSTÈME (5 niveaux)
+  // ============================================================================
+  // SYSTÈME V2.0 - Rôle global unique + modules activables
+  // ============================================================================
+  // Valeurs réelles (depuis profiles.global_role / profiles.enabled_modules)
+  globalRole: GlobalRole | null;
+  enabledModules: EnabledModules | null;
+  // Valeurs suggérées (calculées depuis legacy si globalRole/enabledModules sont null)
+  suggestedGlobalRole: GlobalRole;
+  suggestedEnabledModules: EnabledModules;
+  // Contexte d'accès V2.0 (pour les guards unifiés)
+  accessContext: AccessControlContext;
+  // Guards V2.0
+  hasGlobalRole: (requiredRole: GlobalRole) => boolean;
+  hasModule: (moduleKey: ModuleKey) => boolean;
+  hasModuleOption: (moduleKey: ModuleKey, optionKey: string) => boolean;
+  
+  // Helpers de permissions - ANCIEN SYSTÈME (5 niveaux) - compatibilité
   canViewScope: (scopeSlug: ScopeSlug | string) => boolean;
   canEditScope: (scopeSlug: ScopeSlug | string) => boolean;
   canCreateScope: (scopeSlug: ScopeSlug | string) => boolean;
@@ -69,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isSupport, setIsSupport] = useState(false);
   const [isFranchiseur, setIsFranchiseur] = useState(false);
   
-  // Nouveau système
+  // Nouveau système legacy
   const [role, setRole] = useState<Role | null>(null);
   const [capabilities, setCapabilities] = useState<UserCapability[]>([]);
   const [scopes, setScopes] = useState<Scope[]>([]);
@@ -83,6 +121,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [agence, setAgence] = useState<string | null>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  
+  // ============================================================================
+  // SYSTÈME V2.0 - État rôle global + modules
+  // ============================================================================
+  // Valeurs réelles depuis la DB (profiles.global_role, profiles.enabled_modules)
+  const [globalRole, setGlobalRole] = useState<GlobalRole | null>(null);
+  const [enabledModules, setEnabledModules] = useState<EnabledModules | null>(null);
+  // Valeurs suggérées calculées depuis le legacy
+  const [suggestedGlobalRole, setSuggestedGlobalRole] = useState<GlobalRole>('base_user');
+  const [suggestedEnabledModules, setSuggestedEnabledModules] = useState<EnabledModules>({});
+  // Franchiseur role pour le mapping
+  const [franchiseurRole, setFranchiseurRole] = useState<string | null>(null);
 
   // Charger les données de permissions
   const loadPermissionsData = useCallback(async (
@@ -323,6 +373,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return isAdmin || isSupport || isFranchiseur || hasCapability('support');
   }, [isAdmin, isSupport, isFranchiseur, hasCapability]);
 
+  // ============================================================================
+  // SYSTÈME V2.0 - Calcul de l'accessContext et guards
+  // ============================================================================
+  
+  // Calculer le contexte d'accès V2.0 (priorité aux valeurs réelles si définies)
+  const accessContext: AccessControlContext = {
+    globalRole: globalRole ?? suggestedGlobalRole,
+    enabledModules: enabledModules ?? suggestedEnabledModules,
+    legacyIsAdmin: isAdmin,
+    legacyIsSupport: isSupport,
+    legacyIsFranchiseur: isFranchiseur,
+  };
+
+  // Guards V2.0
+  const hasGlobalRoleGuard = useCallback((requiredRole: GlobalRole): boolean => {
+    return hasGlobalRoleFn(accessContext, requiredRole);
+  }, [accessContext]);
+
+  const hasModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
+    return hasModuleFn(accessContext, moduleKey);
+  }, [accessContext]);
+
+  const hasModuleOptionGuard = useCallback((moduleKey: ModuleKey, optionKey: string): boolean => {
+    return hasModuleOptionFn(accessContext, moduleKey, optionKey);
+  }, [accessContext]);
+
   // Charger les données utilisateur
   const loadUserData = useCallback(async (userId: string) => {
     try {
@@ -352,10 +428,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ) || false;
       setIsSupport(hasSupportCapability);
 
-      // Charger le profil complet
+      // ========================================================================
+      // SYSTÈME V2.0 - Charger global_role et enabled_modules depuis profiles
+      // ========================================================================
       const { data: profile } = await (supabase as any)
         .from('profiles')
-        .select('must_change_password, role_agence, agence, role_id, group_id, system_role')
+        .select('must_change_password, role_agence, agence, role_id, group_id, system_role, global_role, enabled_modules, support_level')
         .eq('id', userId)
         .single();
       
@@ -363,7 +441,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRoleAgence(profile?.role_agence || null);
       setAgence(profile?.agence || null);
 
-      // Charger les données de permissions
+      // Charger le rôle franchiseur si applicable
+      let userFranchiseurRole: string | null = null;
+      if (hasFranchiseur) {
+        const { data: franchiseurRoleData } = await (supabase as any)
+          .from('franchiseur_roles')
+          .select('franchiseur_role')
+          .eq('user_id', userId)
+          .single();
+        userFranchiseurRole = franchiseurRoleData?.franchiseur_role || null;
+        setFranchiseurRole(userFranchiseurRole);
+      }
+
+      // ========================================================================
+      // SYSTÈME V2.0 - Mapping Legacy → V2.0
+      // ========================================================================
+      const legacyData = {
+        systemRole: profile?.system_role,
+        roleAgence: profile?.role_agence,
+        hasAdminRole: hasAdmin,
+        hasSupportRole: hasSupportCapability,
+        hasFranchiseurRole: hasFranchiseur,
+        franchiseurRole: userFranchiseurRole,
+        supportLevel: profile?.support_level,
+      };
+
+      // Calculer les valeurs suggérées depuis le legacy
+      const computedGlobalRole = getGlobalRoleFromLegacy(legacyData);
+      const computedEnabledModules = getEnabledModulesFromLegacy({
+        globalRole: computedGlobalRole,
+        ...legacyData,
+      });
+
+      setSuggestedGlobalRole(computedGlobalRole);
+      setSuggestedEnabledModules(computedEnabledModules);
+
+      // Charger les valeurs réelles V2.0 depuis la DB (si définies)
+      const dbGlobalRole = profile?.global_role as GlobalRole | null;
+      const dbEnabledModules = profile?.enabled_modules as EnabledModules | null;
+      
+      setGlobalRole(dbGlobalRole);
+      setEnabledModules(dbEnabledModules);
+
+      // ========================================================================
+      // SYSTÈME V2.0 - Logging de debug (dev uniquement)
+      // ========================================================================
+      if (import.meta.env.DEV) {
+        logAuth.info('[AUTH][V2] Mapping Legacy → V2.0:');
+        logAuth.info(`  Legacy data: systemRole=${profile?.system_role}, roleAgence=${profile?.role_agence}, isAdmin=${hasAdmin}, isSupport=${hasSupportCapability}, isFranchiseur=${hasFranchiseur}, franchiseurRole=${userFranchiseurRole}`);
+        logAuth.info(`  Computed globalRole: ${computedGlobalRole}`);
+        logAuth.info(`  Computed enabledModules:`, computedEnabledModules);
+        
+        if (dbGlobalRole) {
+          logAuth.info(`  ✅ Using DB global_role: ${dbGlobalRole}`);
+        } else {
+          logAuth.info(`  ⚠️ Using suggested global_role (DB is null): ${computedGlobalRole}`);
+        }
+        
+        if (dbEnabledModules) {
+          logAuth.info(`  ✅ Using DB enabled_modules:`, dbEnabledModules);
+        } else {
+          logAuth.info(`  ⚠️ Using suggested enabled_modules (DB is null):`, computedEnabledModules);
+        }
+      }
+
+      // Charger les données de permissions legacy
       await loadPermissionsData(
         userId, 
         profile?.role_agence || null, 
@@ -474,6 +616,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setGroupPermissions([]);
           setUserOverrides([]);
           setSystemRole(null);
+          // Reset V2.0
+          setGlobalRole(null);
+          setEnabledModules(null);
+          setSuggestedGlobalRole('base_user');
+          setSuggestedEnabledModules({});
+          setFranchiseurRole(null);
           setIsAuthLoading(false);
         }
       }
@@ -522,7 +670,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       localStorage.removeItem('editMode');
       
-      // Reset tous les états
+      // Reset tous les états (legacy)
       setIsAdmin(false);
       setIsSupport(false);
       setIsFranchiseur(false);
@@ -538,6 +686,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserOverrides([]);
       setSystemRole(null);
       setUser(null);
+      
+      // Reset états V2.0
+      setGlobalRole(null);
+      setEnabledModules(null);
+      setSuggestedGlobalRole('base_user');
+      setSuggestedEnabledModules({});
+      setFranchiseurRole(null);
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     } finally {
@@ -561,7 +716,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       agence,
       userPermissions,
       isLoggingOut,
-      // Nouveaux helpers (5 niveaux)
+      
+      // ========================================================================
+      // SYSTÈME V2.0 - Rôle global + modules
+      // ========================================================================
+      globalRole,
+      enabledModules,
+      suggestedGlobalRole,
+      suggestedEnabledModules,
+      accessContext,
+      hasGlobalRole: hasGlobalRoleGuard,
+      hasModule: hasModuleGuard,
+      hasModuleOption: hasModuleOptionGuard,
+      
+      // Helpers legacy (5 niveaux) - compatibilité
       canViewScope,
       canEditScope,
       canCreateScope,

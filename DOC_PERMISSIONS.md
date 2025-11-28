@@ -111,26 +111,41 @@ enabled_modules jsonb       -- Structure des modules activés
 
 ### Fichiers principaux
 
-- `src/types/globalRoles.ts` - Définition des rôles
-- `src/types/modules.ts` - Définition des modules
-- `src/types/accessControl.ts` - Guards et helpers
+- `src/types/globalRoles.ts` - Définition des rôles (7 niveaux)
+- `src/types/modules.ts` - Définition des modules (5 modules + options)
+- `src/types/accessControl.ts` - Guards et helpers + mapping legacy
 
-### Guards unifiés
+### Guards unifiés (via AuthContext)
 
 ```typescript
-import { hasGlobalRole, hasModule, hasModuleOption } from '@/types/accessControl';
+import { useAuth } from '@/contexts/AuthContext';
+
+const { hasGlobalRole, hasModule, hasModuleOption } = useAuth();
 
 // Vérifier le niveau de rôle
-if (hasGlobalRole(ctx, 'franchisee_admin')) { ... }
+if (hasGlobalRole('franchisee_admin')) { ... }
 
 // Vérifier l'accès à un module
-if (hasModule(ctx, 'pilotage_agence')) { ... }
+if (hasModule('pilotage_agence')) { ... }
 
 // Vérifier une option spécifique
-if (hasModuleOption(ctx, 'support', 'agent')) { ... }
+if (hasModuleOption('support', 'agent')) { ... }
 ```
 
-### Raccourcis courants
+### Variables exposées par AuthContext
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `globalRole` | `GlobalRole \| null` | Valeur réelle depuis DB |
+| `suggestedGlobalRole` | `GlobalRole` | Valeur calculée depuis legacy |
+| `enabledModules` | `EnabledModules \| null` | Valeur réelle depuis DB |
+| `suggestedEnabledModules` | `EnabledModules` | Valeur calculée depuis legacy |
+| `accessContext` | `AccessControlContext` | Contexte combiné |
+| `hasGlobalRole(role)` | Function | Guard de niveau |
+| `hasModule(module)` | Function | Guard de module |
+| `hasModuleOption(module, option)` | Function | Guard d'option |
+
+### Raccourcis courants (dans accessControl.ts)
 
 ```typescript
 isPlatformAdmin(ctx)    // N5+
@@ -149,21 +164,23 @@ canEdit(ctx)            // help_academy.edition ou N5+
 Le système calcule automatiquement le rôle global et les modules depuis l'ancien système :
 
 ```typescript
-import { createAccessContext } from '@/types/accessControl';
-
-const ctx = createAccessContext({
-  // Nouvelles données (prioritaires si présentes)
-  globalRole: user.global_role,
-  enabledModules: user.enabled_modules,
-  
-  // Données legacy (fallback)
+// AuthContext charge les données legacy et calcule les valeurs suggérées
+const suggestedGlobalRole = getGlobalRoleFromLegacy({
   systemRole: profile.system_role,
   roleAgence: profile.role_agence,
   hasAdminRole: roles.includes('admin'),
-  hasSupportRole: roles.includes('support'),
+  hasSupportRole: capabilities.includes('support'),
   hasFranchiseurRole: roles.includes('franchiseur'),
   franchiseurRole: franchiseurRole?.franchiseur_role,
   supportLevel: profile.support_level,
+});
+
+const suggestedEnabledModules = getEnabledModulesFromLegacy({
+  globalRole: suggestedGlobalRole,
+  hasAdminRole,
+  hasSupportRole,
+  hasFranchiseurRole,
+  supportLevel,
 });
 ```
 
@@ -179,6 +196,18 @@ const ctx = createAccessContext({
 | utilisateur standard | `franchisee_user` |
 | visiteur/non défini | `base_user` |
 
+## Logging de Debug (Mode DEV)
+
+En mode développement, AuthContext affiche des logs détaillés :
+
+```
+[AUTH][V2] Mapping Legacy → V2.0:
+  Legacy data: systemRole=utilisateur, roleAgence=Dirigeant, isAdmin=false...
+  Computed globalRole: franchisee_admin
+  Computed enabledModules: { help_academy: {...}, pilotage_agence: {...} }
+  ⚠️ Using suggested global_role (DB is null): franchisee_admin
+```
+
 ## Migration Progressive
 
 ### Phase 1 : Types & Modèle ✅
@@ -186,18 +215,16 @@ const ctx = createAccessContext({
 - Colonnes DB ajoutées (nullables)
 - Documentation
 
-### Phase 2 : Mapping Legacy
+### Phase 2 : Mapping Legacy ✅
 - Fonctions de conversion
-- Tests de compatibilité
-
-### Phase 3 : Guards & AuthContext
-- Nouveaux guards
 - Intégration AuthContext
+- Guards V2 exposés
+- Logging de debug
 
-### Phase 4 : UI Admin
+### Phase 3 : UI Admin (à venir)
 - Interface de gestion
 - Éditeur de rôles/modules
 
-### Phase 5 : Migration finale
+### Phase 4 : Migration finale (à venir)
 - Calcul des valeurs pour tous les users
 - Suppression code legacy (optionnel)

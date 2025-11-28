@@ -72,15 +72,17 @@ function getGlobalRoleFromLegacy(params) {
 
 ## Plan de Migration
 
-### Étape 1 : Préparation (FAIT)
-- [x] Créer les types TypeScript
-- [x] Ajouter les colonnes DB (nullables)
+### Étape 1 : Préparation (FAIT ✅)
+- [x] Créer les types TypeScript (`globalRoles.ts`, `modules.ts`, `accessControl.ts`)
+- [x] Ajouter les colonnes DB (nullables) : `global_role`, `enabled_modules`
 - [x] Documenter le mapping
 
-### Étape 2 : Double lecture
-- [ ] Modifier AuthContext pour lire les deux systèmes
-- [ ] Utiliser V2.0 si `global_role` est défini, sinon calculer depuis legacy
-- [ ] Logger les différences pour validation
+### Étape 2 : Double lecture (FAIT ✅)
+- [x] Modifier AuthContext pour lire les deux systèmes
+- [x] Utiliser V2.0 si `global_role` est défini, sinon calculer depuis legacy
+- [x] Logger les différences pour validation (en mode DEV)
+- [x] Exposer `globalRole`, `suggestedGlobalRole`, `enabledModules`, `suggestedEnabledModules`
+- [x] Ajouter les guards V2.0 : `hasGlobalRole`, `hasModule`, `hasModuleOption`
 
 ### Étape 3 : Migration des données
 - [ ] Script SQL pour calculer `global_role` pour tous les users
@@ -123,18 +125,12 @@ WHERE p.global_role IS NULL;
 Pendant la transition, les deux systèmes coexistent :
 
 ```typescript
-// AuthContext.tsx - Exemple de double lecture
-const accessCtx = createAccessContext({
+// AuthContext.tsx - Double lecture implémentée
+const accessCtx = {
   // Priorité au nouveau système si défini
-  globalRole: profile.global_role,
-  enabledModules: profile.enabled_modules,
-  
-  // Fallback sur legacy
-  systemRole: profile.system_role,
-  roleAgence: profile.role_agence,
-  hasAdminRole: roles.includes('admin'),
-  // ...
-});
+  globalRole: profile.global_role ?? suggestedGlobalRole,
+  enabledModules: profile.enabled_modules ?? suggestedEnabledModules,
+};
 
 // Les guards fonctionnent dans les deux cas
 if (hasModule(accessCtx, 'pilotage_agence')) {
@@ -142,11 +138,33 @@ if (hasModule(accessCtx, 'pilotage_agence')) {
 }
 ```
 
+## Fichiers Clés Phase 2
+
+| Fichier | Rôle |
+|---------|------|
+| `src/types/globalRoles.ts` | Définition des 7 rôles hiérarchiques |
+| `src/types/modules.ts` | Définition des 5 modules et sous-options |
+| `src/types/accessControl.ts` | Guards unifiés + fonctions de mapping legacy |
+| `src/contexts/AuthContext.tsx` | Double lecture + exposition des valeurs V2 |
+
+## Variables exposées par AuthContext (Phase 2)
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `globalRole` | `GlobalRole \| null` | Valeur réelle depuis DB (null si non migrée) |
+| `suggestedGlobalRole` | `GlobalRole` | Valeur calculée depuis legacy |
+| `enabledModules` | `EnabledModules \| null` | Valeur réelle depuis DB |
+| `suggestedEnabledModules` | `EnabledModules` | Valeur calculée depuis legacy |
+| `accessContext` | `AccessControlContext` | Contexte combiné pour les guards |
+| `hasGlobalRole(role)` | `boolean` | Vérifie si niveau ≥ role |
+| `hasModule(module)` | `boolean` | Vérifie accès au module |
+| `hasModuleOption(module, option)` | `boolean` | Vérifie accès à l'option |
+
 ## Rollback
 
 En cas de problème :
 1. Remettre `global_role` et `enabled_modules` à NULL
-2. Le système utilise automatiquement le legacy
+2. Le système utilise automatiquement le legacy (via `suggested*`)
 3. Aucune perte de données
 
 ## Validation
