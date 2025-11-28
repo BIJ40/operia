@@ -88,6 +88,11 @@ export default function AdminSupport() {
     );
   };
 
+  // Reset filter to 'waiting' on mount
+  useEffect(() => {
+    setFilter('waiting');
+  }, []);
+
   useEffect(() => {
     if (!canView && !isAdmin && !user) {
       navigate('/');
