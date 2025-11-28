@@ -159,7 +159,16 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
         if (response.error) throw response.error;
       }
 
-      // 1. Mettre à jour le profil
+      // Déterminer le system_role le plus élevé pour profiles
+      // Hiérarchie: admin > support > utilisateur
+      let profileSystemRole: 'admin' | 'support' | 'utilisateur' = 'utilisateur';
+      if (systemRoles.includes('admin')) {
+        profileSystemRole = 'admin';
+      } else if (systemRoles.includes('support')) {
+        profileSystemRole = 'support';
+      }
+
+      // 1. Mettre à jour le profil (avec system_role synchronisé)
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -170,13 +179,14 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
           role_agence: roleAgence || null,
           service_competencies: serviceCompetencies,
           support_level: supportLevel,
+          system_role: profileSystemRole,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
 
       if (profileError) throw profileError;
 
-      // 2. Synchroniser les rôles système
+      // 2. Synchroniser les rôles système dans user_roles
       await supabase.from('user_roles').delete().eq('user_id', user.id);
       for (const role of systemRoles) {
         await supabase.from('user_roles').insert({
