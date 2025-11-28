@@ -359,26 +359,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadPermissionsData]);
 
   useEffect(() => {
-    let isInitialized = false;
-    
+    let hasHandledInitial = false;
+
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        setIsAuthLoading(true);
+        await loadUserData(session.user.id);
+        setIsAuthLoading(false);
+      } else {
+        setIsAuthLoading(false);
+      }
+      hasHandledInitial = true;
+    };
+
+    init();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // Ignorer INITIAL_SESSION si déjà initialisé par getSession
-        if (event === 'INITIAL_SESSION' && isInitialized) {
+        // Laisser init() gérer TOUS les INITIAL_SESSION
+        if (event === 'INITIAL_SESSION') {
           return;
         }
-        
+
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          // Ne pas recharger si c'est juste INITIAL_SESSION après getSession
-          if (event !== 'INITIAL_SESSION') {
-            setIsAuthLoading(true);
-            await loadUserData(session.user.id);
-            setIsAuthLoading(false);
-          }
+          setIsAuthLoading(true);
+          await loadUserData(session.user.id);
+          setIsAuthLoading(false);
         } else {
-          // Reset tous les états
+          // Reset complet des états
           setIsAdmin(false);
           setIsSupport(false);
           setIsFranchiseur(false);
@@ -397,20 +410,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     );
-
-    // Vérifier la session existante
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        setIsAuthLoading(true);
-        await loadUserData(session.user.id);
-        setIsAuthLoading(false);
-      } else {
-        setIsAuthLoading(false);
-      }
-      isInitialized = true;
-    });
 
     return () => subscription.unsubscribe();
   }, [loadUserData]);
@@ -451,7 +450,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       localStorage.removeItem('editMode');
       
-      // Reset tous les états
+      // Reset TOUS les états (incluant groupPermissions et systemRole)
       setIsAdmin(false);
       setIsSupport(false);
       setIsFranchiseur(false);
@@ -463,12 +462,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCapabilities([]);
       setScopes([]);
       setRolePermissions([]);
+      setGroupPermissions([]);
       setUserOverrides([]);
+      setSystemRole(null);
       setUser(null);
-
-      window.location.href = '/';
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
+    } finally {
+      setIsLoggingOut(false);
       window.location.href = '/';
     }
   };
