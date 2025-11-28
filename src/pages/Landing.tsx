@@ -139,7 +139,12 @@ function DashboardTileCard({ tile }: { tile: DashboardTile }) {
 
   return (
     <Link to={tile.route}>
-      <Card className="group h-full hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+      <Card className="group h-full hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 cursor-pointer relative">
+        {tile.badge && (
+          <span className="absolute top-3 right-3 text-[10px] font-medium bg-orange-500 text-white px-2 py-0.5 rounded-full z-10">
+            {tile.badge}
+          </span>
+        )}
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${colorClasses[tile.color]}`}>

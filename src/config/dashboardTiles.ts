@@ -13,6 +13,7 @@ export interface DashboardTile {
   color: 'primary' | 'accent';
   group: 'help_academy' | 'pilotage' | 'support' | 'franchiseur' | 'admin';
   requiresAdmin?: boolean;
+  badge?: string;
 }
 
 export const DASHBOARD_TILES: DashboardTile[] = [
@@ -77,6 +78,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'diffusion',
     color: 'accent',
     group: 'pilotage',
+    badge: 'En cours',
   },
   // Support
   {
