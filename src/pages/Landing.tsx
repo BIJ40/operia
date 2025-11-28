@@ -55,13 +55,16 @@ export default function Landing() {
       // N5+ voit tout (admin)
       if (canAccessAdmin) return true;
       
-      // Cas spécial admin : nécessite N5+
+      // Cas spécial admin strict : nécessite N5+
       if (tile.requiresAdmin) return false;
+      
+      // Cas spécial franchiseur (N3+) pour gestion users
+      if (tile.requiresFranchisor) return canAccessFranchiseur;
       
       // Cas spécial support console : nécessite N2+
       if (tile.requiresSupport) return canAccessSupport;
       
-      // Cas spécial franchiseur : nécessite N3+
+      // Cas spécial franchiseur section : nécessite N3+
       if (tile.group === 'franchiseur') return canAccessFranchiseur;
       
       // Pilotage agence : nécessite N2+ ET une agence
