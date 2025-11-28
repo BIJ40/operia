@@ -10,6 +10,42 @@ export type ScopeArea =
 
 export type RoleCategory = 'franchise' | 'franchiseur' | 'externe';
 
+// ========== SYSTÈME DE RÔLES CENTRALISÉ ==========
+
+/**
+ * Rôles système (app-level) - stockés dans user_roles
+ * - admin: accès total
+ * - user: utilisateur standard agence  
+ * - franchiseur: accès multi-agence (tête de réseau)
+ * 
+ * Note: "support" n'est PAS un rôle système, c'est une capability
+ */
+export type AppRole = 'admin' | 'user' | 'franchiseur';
+
+/**
+ * Rôles système pour le plafonnement des permissions
+ * Utilisé dans profiles.system_role et groups.system_role_limit
+ */
+export type SystemRole = 'visiteur' | 'utilisateur' | 'support' | 'admin';
+
+/**
+ * Mapping des rôles système vers leur niveau de plafond (0-4)
+ */
+export const SYSTEM_ROLE_LEVELS: Record<SystemRole, number> = {
+  visiteur: 1,
+  utilisateur: 2,
+  support: 3,
+  admin: 4,
+};
+
+/**
+ * Calcule le plafond de permission pour un rôle système
+ */
+export function getSystemRoleCeiling(systemRole: SystemRole | string | null): number {
+  const role = (systemRole || 'utilisateur') as SystemRole;
+  return SYSTEM_ROLE_LEVELS[role] ?? 2;
+}
+
 export interface Role {
   id: string;
   slug: string;
