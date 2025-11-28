@@ -530,7 +530,7 @@ Appliqué uniformément : création ET modification.
 
 ---
 
-## Système de Permissions V2.0 (Migration en cours)
+## Système de Permissions V2.0 (Phase 4 - Guards actifs)
 
 ### Vue d'ensemble
 
@@ -538,6 +538,7 @@ Le système V2.0 simplifie la gestion des accès avec :
 - **Un rôle global unique** par utilisateur (hiérarchie N0-N6)
 - **Des modules activables** indépendamment
 - **Des sous-options** par module
+- **Guards et protection des routes** via `RoleGuard` et `useHasGlobalRole`
 
 ### Rôles globaux (hiérarchie)
 
@@ -565,19 +566,47 @@ Le système V2.0 simplifie la gestion des accès avec :
 
 ```
 src/types/
-├── globalRoles.ts     # Définition des rôles (GLOBAL_ROLES, hasMinimumRole)
+├── globalRoles.ts     # Définition des rôles (GLOBAL_ROLES, hasMinimumRole, canManageUsers)
 ├── modules.ts         # Définition des modules (MODULE_DEFINITIONS, isModuleEnabled)
 └── accessControl.ts   # Guards unifiés (hasGlobalRole, hasModule, hasModuleOption)
+
+src/hooks/
+├── useHasGlobalRole.ts # Hook V2 pour vérification niveau (remplace isAdmin)
+
+src/components/auth/
+├── RoleGuard.tsx       # Composant protection routes (minRole, redirectTo, showError)
+
+src/config/
+├── modulesByRole.ts    # Modules par défaut selon le rôle (pour création/migration)
+
+supabase/functions/
+├── migrate-user-roles-v2/ # Edge function migration batch (N5+ requis)
 ```
 
 ### Pages Admin V2
 
 | Route | Fichier | Description |
 |-------|---------|-------------|
-| `/admin/users-unified` | `AdminUsersUnified.tsx` | **Page principale** - Gestion centralisée utilisateurs & permissions V2 |
+| `/admin/users-unified` | `AdminUsersUnified.tsx` | **Page principale** - Gestion centralisée utilisateurs & permissions V2 + Migration batch |
 | `/admin/permissions-v2` | `AdminPermissionsV2.tsx` | Page avancée - Édition détaillée des modules/options |
 | `/admin/roles-v2` | `AdminRolesV2.tsx` | Audit - Comparaison DB vs suggestions legacy |
 | `/admin/users-list` | `AdminUsersList.tsx` | Legacy - Ancienne liste utilisateurs (conservée) |
+
+### Protection des routes (RoleGuard)
+
+```tsx
+import { RoleGuard } from '@/components/auth/RoleGuard';
+
+// Route admin (N5+)
+<RoleGuard minRole="platform_admin">
+  <AdminUsersUnified />
+</RoleGuard>
+
+// Route franchiseur (N3+)
+<RoleGuard minRole="franchisor_user" redirectTo="/">
+  <FranchiseurDashboard />
+</RoleGuard>
+```
 
 ### Colonnes DB (table `profiles`)
 

@@ -226,9 +226,80 @@ En mode développement, AuthContext affiche des logs détaillés :
 - `/admin/permissions-v2` - Page avancée/détaillée pour édition fine
 - `/admin/roles-v2` - Page d'audit et migration V2
 
-### Phase 4 : Migration finale (à venir)
-- Calcul des valeurs pour tous les users
+### Phase 4 : Activation des Guards V2 ✅
+- Hook `useHasGlobalRole` pour vérification de niveau
+- Composant `RoleGuard` pour protection des routes
+- Migration batch via edge function `migrate-user-roles-v2`
+- Bouton "Appliquer V2 à tous" dans `/admin/users-unified`
+- Configuration des modules par défaut selon le rôle (`src/config/modulesByRole.ts`)
+- Dépréciation de `isAdmin`/`isFranchiseur` (remplacé par `hasGlobalRole`)
+
+### Phase 5 : Nettoyage final (à venir)
 - Suppression code legacy (optionnel)
+- Migration des routes restantes vers RoleGuard
+
+## Protection des Routes avec RoleGuard
+
+### Composant RoleGuard
+
+```typescript
+import { RoleGuard } from '@/components/auth/RoleGuard';
+
+// Protection d'une route admin (N5+)
+<Route path="/admin/users-unified" element={
+  <RoleGuard minRole="platform_admin">
+    <AdminUsersUnified />
+  </RoleGuard>
+} />
+
+// Protection avec redirection personnalisée
+<RoleGuard minRole="franchisor_user" redirectTo="/">
+  <FranchiseurDashboard />
+</RoleGuard>
+
+// Affichage page d'erreur au lieu de redirection
+<RoleGuard minRole="platform_admin" showError errorMessage="Accès réservé aux administrateurs">
+  <AdminSettings />
+</RoleGuard>
+```
+
+### Hook useHasGlobalRole
+
+```typescript
+import { useHasGlobalRole } from '@/hooks/useHasGlobalRole';
+
+// Dans un composant
+const canAccessAdmin = useHasGlobalRole('platform_admin');
+const canManageNetwork = useHasGlobalRole('franchisor_user');
+```
+
+### Migration des anciennes vérifications
+
+| Ancien code | Nouveau code |
+|-------------|-------------|
+| `if (isAdmin) { ... }` | `if (hasGlobalRole('platform_admin')) { ... }` |
+| `if (isFranchiseur) { ... }` | `if (hasGlobalRole('franchisor_user')) { ... }` |
+| `if (isAdmin \|\| isFranchiseur)` | `if (hasGlobalRole('franchisor_user'))` |
+
+## Migration Batch V2
+
+### Edge Function `migrate-user-roles-v2`
+
+Accessible via le bouton "Appliquer V2 à tous" dans `/admin/users-unified` (N5+ requis).
+
+**Fonctionnement :**
+1. Récupère tous les profils sans `global_role` et `enabled_modules` définis
+2. Calcule les valeurs V2 basées sur les données legacy
+3. Met à jour les profils en batch
+4. Retourne le nombre de profils migrés/ignorés
+
+**Règles de mapping utilisées :**
+- Admin legacy → `platform_admin` (N5)
+- Franchiseur DG/Directeur → `franchisor_admin` (N4)
+- Franchiseur Animateur → `franchisor_user` (N3)
+- Dirigeant agence → `franchisee_admin` (N2)
+- Assistante/Commercial → `franchisee_user` (N1)
+- Externe/Autre → `base_user` (N0)
 
 ## Pages Admin V2
 
