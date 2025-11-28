@@ -15,7 +15,7 @@ import { getGlobalRoleFromLegacy, getEnabledModulesFromLegacy } from '@/types/ac
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
-import { logInfo } from '@/lib/logger';
+import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
 
@@ -165,13 +165,13 @@ export default function AdminRolesV2() {
       return { userId, globalRole, enabledModules };
     },
     onSuccess: ({ userId, globalRole, enabledModules }) => {
-      logInfo('AUTH', `[V2] Migration préparée pour user ${userId}: global_role=${globalRole}, enabled_modules=${JSON.stringify(enabledModules)}`);
-      toast.success('Suggestion V2 appliquée');
+      logAuth.info(`[V2] Migration appliquée pour user ${userId}: global_role=${globalRole}, enabled_modules=${JSON.stringify(enabledModules)}`);
+      toast.success('V2 appliquée avec succès');
       queryClient.invalidateQueries({ queryKey: ['admin-roles-v2-users'] });
     },
     onError: (error) => {
+      logAuth.error(`[V2] Erreur migration:`, error);
       toast.error('Erreur lors de l\'application V2');
-      console.error('[V2] Erreur migration:', error);
     },
   });
 
@@ -371,7 +371,7 @@ export default function AdminRolesV2() {
         <div>
           <h1 className="text-2xl font-bold">Audit Rôles V2.0</h1>
           <p className="text-muted-foreground">
-            Visualisation en lecture seule des données V2 (global_role + enabled_modules)
+            Audit et migration des rôles V2 (global_role + enabled_modules)
           </p>
         </div>
         <Badge variant="outline" className="text-lg px-4 py-2">
