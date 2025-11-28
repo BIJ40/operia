@@ -1,7 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useMemo, useCallback } from 'react';
 import { ScopeSlug, EffectivePermission, PERMISSION_LEVELS } from '@/types/permissions';
-import { logDeprecation, logPermissions } from '@/lib/logger';
+import { logPermissions } from '@/lib/logger';
 
 interface Block {
   id: string;
@@ -14,26 +14,20 @@ export function useFilteredBlocks<T extends Block>(blocks: T[]): T[] {
 }
 
 /**
- * @deprecated Utiliser directement getEffectivePermission(scopeSlug) ou canViewScope(scopeSlug).
- * Ce hook sera supprimé dès que tous les appels "blockId" auront été migrés vers des scopeSlugs explicites.
- * 
- * Hook pour vérifier si un block est verrouillé
+ * Legacy wrapper pour compatibilité - s'appuie sur la V2 sans logs de dépréciation
+ * Vérifie si un block/scope est verrouillé (pas d'accès en édition)
  */
 export function useIsBlockLocked() {
   const { isAdmin, getEffectivePermission } = useAuth();
 
-  return useCallback((blockId: string, _blocks: Block[] = []): boolean => {
-    logDeprecation(
-      `useIsBlockLocked("${blockId}") est déprécié, utiliser getEffectivePermission(scopeSlug) ou canViewScope(scopeSlug)`
-    );
-
+  return useCallback((scopeSlug: string, _blocks: Block[] = []): boolean => {
     if (isAdmin) return false;
 
-    const perm = getEffectivePermission(blockId);
+    const perm = getEffectivePermission(scopeSlug);
     const locked = !perm.canView;
 
     logPermissions.debug('[LEGACY] useIsBlockLocked', {
-      blockId,
+      scopeSlug,
       level: perm.level,
       locked,
       source: perm.source,

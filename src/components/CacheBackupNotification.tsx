@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Info, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { isDevMode } from '@/lib/logger';
 
 interface BackupEvent {
   type: 'backup' | 'restore' | 'error';
@@ -15,25 +16,28 @@ export function CacheBackupNotification() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Ne fonctionne qu'en mode développement
+    if (!isDevMode()) return;
+
     // Écouter les événements de backup/restauration via console.log override
     const originalLog = console.log;
     const originalWarn = console.warn;
     const originalError = console.error;
 
-    const interceptLog = (level: 'log' | 'warn' | 'error', args: any[]) => {
-      const message = args.join(' ');
+    const interceptLog = (_level: 'log' | 'warn' | 'error', args: unknown[]) => {
+      const message = args.map(arg => String(arg)).join(' ');
       
       // Détecter les événements de backup
-      if (message.includes('💾 Backup sauvegardé:')) {
-        const key = message.split('💾 Backup sauvegardé:')[1]?.split('(')[0]?.trim();
+      if (message.includes('Backup sauvegardé:')) {
+        const key = message.split('Backup sauvegardé:')[1]?.split('(')[0]?.trim();
         if (key) {
           addEvent({ type: 'backup', key, timestamp: Date.now(), message: `Backup sauvegardé: ${key}` });
         }
       }
       
       // Détecter les restaurations
-      if (message.includes('♻️ Backup restauré:') || message.includes('✅ Cache restauré et resauvegardé:')) {
-        const key = message.split(/♻️ Backup restauré:|✅ Cache restauré et resauvegardé:/)[1]?.split('(')[0]?.trim();
+      if (message.includes('Backup restauré:') || message.includes('Cache restauré et resauvegardé:')) {
+        const key = message.split(/Backup restauré:|Cache restauré et resauvegardé:/)[1]?.split('(')[0]?.trim();
         if (key) {
           addEvent({ type: 'restore', key, timestamp: Date.now(), message: `Cache restauré depuis backup: ${key}` });
           setVisible(true);
@@ -41,24 +45,24 @@ export function CacheBackupNotification() {
       }
       
       // Détecter les erreurs
-      if (message.includes('❌ Erreur backup') || message.includes('❌ Erreur restauration')) {
-        const key = message.split('❌')[1]?.split(':')[0]?.trim() || 'Unknown';
+      if (message.includes('Erreur backup') || message.includes('Erreur restauration')) {
+        const key = message.split('Erreur')[1]?.split(':')[0]?.trim() || 'Unknown';
         addEvent({ type: 'error', key, timestamp: Date.now(), message: `Erreur: ${message}` });
         setVisible(true);
       }
     };
 
-    console.log = (...args: any[]) => {
+    console.log = (...args: unknown[]) => {
       interceptLog('log', args);
       originalLog(...args);
     };
 
-    console.warn = (...args: any[]) => {
+    console.warn = (...args: unknown[]) => {
       interceptLog('warn', args);
       originalWarn(...args);
     };
 
-    console.error = (...args: any[]) => {
+    console.error = (...args: unknown[]) => {
       interceptLog('error', args);
       originalError(...args);
     };
@@ -87,7 +91,8 @@ export function CacheBackupNotification() {
     setEvents(prev => [...prev, event].slice(-5)); // Garder max 5 événements
   };
 
-  if (!visible || events.length === 0) return null;
+  // Ne rien afficher en production ou si pas d'événements
+  if (!isDevMode() || !visible || events.length === 0) return null;
 
   const latestEvent = events[events.length - 1];
 

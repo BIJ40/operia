@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { logConnection } from '@/lib/logger';
 
 export const useConnectionLogger = () => {
   const { user } = useAuth();
@@ -12,7 +13,7 @@ export const useConnectionLogger = () => {
 
     let isActive = true;
 
-    const logConnection = async () => {
+    const logUserConnection = async () => {
       if (!isActive) return;
 
       try {
@@ -29,12 +30,17 @@ export const useConnectionLogger = () => {
           .select('id')
           .single();
 
-        if (error) throw error;
+        if (error) {
+          // En cas d'erreur RLS ou autre, ne pas polluer la console en prod
+          logConnection.warn('Erreur log connexion:', error.message);
+          return;
+        }
         
         connectionLogIdRef.current = data.id;
-        console.log('📝 Connexion enregistrée:', data.id);
+        logConnection.debug('Connexion enregistrée:', data.id);
       } catch (error) {
-        console.error('Erreur log connexion:', error);
+        // Silencieux en production
+        logConnection.warn('Exception log connexion:', error);
       }
     };
 
@@ -47,7 +53,7 @@ export const useConnectionLogger = () => {
           (disconnectedAt.getTime() - connectedAtRef.current.getTime()) / 1000
         );
 
-        await supabase
+        const { error } = await supabase
           .from('user_connection_logs')
           .update({
             disconnected_at: disconnectedAt.toISOString(),
@@ -55,14 +61,21 @@ export const useConnectionLogger = () => {
           })
           .eq('id', connectionLogIdRef.current);
 
-        console.log('📝 Déconnexion enregistrée. Durée:', durationSeconds, 'secondes');
+        if (error) {
+          // Silencieux en production
+          logConnection.warn('Erreur log déconnexion:', error.message);
+          return;
+        }
+
+        logConnection.debug('Déconnexion enregistrée. Durée:', durationSeconds, 'secondes');
       } catch (error) {
-        console.error('Erreur log déconnexion:', error);
+        // Silencieux en production
+        logConnection.warn('Exception log déconnexion:', error);
       }
     };
 
     // Logger la connexion au montage
-    logConnection();
+    logUserConnection();
 
     // Logger la déconnexion à la fermeture
     const handleBeforeUnload = () => {
