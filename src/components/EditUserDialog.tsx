@@ -195,6 +195,40 @@ export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUser
         });
       }
 
+      // 2b. Synchroniser la capability 'support' dans user_capabilities
+      // Le frontend utilise user_capabilities pour déterminer isSupport
+      if (systemRoles.includes('support')) {
+        // Ajouter la capability si pas déjà présente
+        const { data: existingCap } = await supabase
+          .from('user_capabilities')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('capability', 'support')
+          .maybeSingle();
+        
+        if (!existingCap) {
+          await supabase.from('user_capabilities').insert({
+            user_id: user.id,
+            capability: 'support',
+            is_active: true
+          });
+        } else {
+          // S'assurer qu'elle est active
+          await supabase
+            .from('user_capabilities')
+            .update({ is_active: true })
+            .eq('user_id', user.id)
+            .eq('capability', 'support');
+        }
+      } else {
+        // Désactiver la capability support si le rôle est retiré
+        await supabase
+          .from('user_capabilities')
+          .update({ is_active: false })
+          .eq('user_id', user.id)
+          .eq('capability', 'support');
+      }
+
       // 3. Gérer le rôle franchiseur
       if (hasFranchiseur) {
         // Upsert franchiseur_roles
