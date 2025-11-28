@@ -15,6 +15,7 @@ export interface DashboardTile {
   group: 'help_academy' | 'pilotage' | 'support' | 'franchiseur' | 'admin';
   requiresAdmin?: boolean;
   requiresSupport?: boolean;
+  requiresFranchisor?: boolean; // N3+ (franchisor_user)
   badge?: string;
 }
 
@@ -146,7 +147,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'admin_users',
     color: 'primary',
     group: 'admin',
-    requiresAdmin: true,
+    requiresFranchisor: true, // N3+ can manage users
   },
   {
     id: 'ADMIN_ROLES',
