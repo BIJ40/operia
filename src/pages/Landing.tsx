@@ -6,7 +6,7 @@ import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashb
 import { useMemo } from 'react';
 
 export default function Landing() {
-  const { canViewScope, isFranchiseur, isAdmin } = useAuth();
+  const { canViewScope, isFranchiseur, isAdmin, isSupport } = useAuth();
 
   // Filtrer les tuiles par permissions
   const visibleTiles = useMemo(() => {
@@ -15,13 +15,17 @@ export default function Landing() {
       if (tile.requiresAdmin) {
         return isAdmin && canViewScope(tile.scopeSlug);
       }
+      // Cas spécial support : nécessite le rôle support ou admin
+      if (tile.requiresSupport) {
+        return (isSupport || isAdmin) && canViewScope(tile.scopeSlug);
+      }
       // Cas spécial franchiseur : nécessite le rôle + le scope
       if (tile.group === 'franchiseur') {
         return (isFranchiseur || isAdmin) && canViewScope(tile.scopeSlug);
       }
       return canViewScope(tile.scopeSlug);
     });
-  }, [canViewScope, isFranchiseur, isAdmin]);
+  }, [canViewScope, isFranchiseur, isAdmin, isSupport]);
 
   // Grouper les tuiles visibles par catégorie
   const tilesByGroup = useMemo(() => {

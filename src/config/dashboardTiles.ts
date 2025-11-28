@@ -14,6 +14,7 @@ export interface DashboardTile {
   color: 'primary' | 'accent';
   group: 'help_academy' | 'pilotage' | 'support' | 'franchiseur' | 'admin';
   requiresAdmin?: boolean;
+  requiresSupport?: boolean;
   badge?: string;
 }
 
@@ -91,6 +92,17 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'mes_demandes',
     color: 'primary',
     group: 'support',
+  },
+  {
+    id: 'CONSOLE_SUPPORT',
+    title: 'Console Support',
+    description: 'Gestion des tickets et demandes utilisateurs',
+    icon: MessageSquare,
+    route: '/admin/support',
+    scopeSlug: 'support_tickets',
+    color: 'accent',
+    group: 'support',
+    requiresSupport: true,
   },
   // Franchiseur
   {
