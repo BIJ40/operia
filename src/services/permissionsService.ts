@@ -333,6 +333,18 @@ export async function updateUserSystemRole(userId: string, systemRole: SystemRol
 
 // ========== EFFECTIVE PERMISSION CALCULATION ==========
 
+/**
+ * Calcule la permission effective pour un utilisateur sur un scope.
+ * 
+ * HIÉRARCHIE (par ordre de priorité) :
+ * 1. Override utilisateur : Si existe, appliqué TEL QUEL (sans plafond system_role)
+ *    - deny = true → niveau 0
+ *    - sinon → override.level (0-4) directement
+ * 2. Permission de groupe : Appliquée avec plafonds
+ *    - min(group_level, group_system_role_limit, user_system_role)
+ * 3. Défaut du scope : Appliqué avec plafond
+ *    - min(scope.default_level, user_system_role)
+ */
 export function calculateEffectivePermission(
   user: UserWithPermissions,
   scope: Scope,
@@ -340,22 +352,25 @@ export function calculateEffectivePermission(
 ): { level: number; source: 'deny' | 'override' | 'group' | 'default'; groupLevel?: number; ceiling: number } {
   const systemRoleCeiling = SYSTEM_ROLE_LEVELS[user.system_role || 'utilisateur'];
   
-  // Check user override
+  // 1. Check user override - PRIORITÉ ABSOLUE (sans plafond)
   const override = user.overrides.find(o => o.scope_id === scope.id);
   
   if (override?.deny) {
+    // DENY bloque totalement
     return { level: 0, source: 'deny', ceiling: systemRoleCeiling };
   }
   
   if (override && override.level !== null) {
+    // Override SANS plafond system_role - l'admin peut donner le niveau qu'il veut
+    const overrideLevel = Math.max(0, Math.min(4, override.level)); // Borné 0-4 uniquement
     return { 
-      level: Math.min(override.level, systemRoleCeiling), 
+      level: overrideLevel, 
       source: 'override',
       ceiling: systemRoleCeiling 
     };
   }
   
-  // Check group permission
+  // 2. Check group permission (avec plafonds)
   if (user.group_id) {
     const groupPerms = groupPermissions.get(user.group_id);
     const groupPerm = groupPerms?.find(gp => gp.scope_id === scope.id);
@@ -372,7 +387,7 @@ export function calculateEffectivePermission(
     }
   }
   
-  // Default
+  // 3. Default du scope (avec plafond)
   const defaultLevel = Math.min(scope.default_level || 0, systemRoleCeiling);
   return { level: defaultLevel, source: 'default', ceiling: systemRoleCeiling };
 }

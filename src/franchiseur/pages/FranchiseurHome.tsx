@@ -12,11 +12,25 @@ import { NetworkSAVChart } from "../components/widgets/NetworkSAVChart";
 import { useNetworkStats } from "../hooks/useNetworkStats";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
 import { useNetworkFilters } from "../contexts/NetworkFiltersContext";
+import { usePermissions } from "@/hooks/use-permissions";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 export default function FranchiseurHome() {
   const { permissions } = useFranchiseur();
   const { dateRange } = useNetworkFilters();
   const { data: stats, isLoading } = useNetworkStats();
+  const { canViewScope, isAdmin, isFranchiseur } = usePermissions();
+  const navigate = useNavigate();
+
+  // Guard: vérifier l'accès au dashboard franchiseur
+  const canView = canViewScope('franchiseur_dashboard');
+  
+  useEffect(() => {
+    if (!canView && !isAdmin && !isFranchiseur) {
+      navigate('/');
+    }
+  }, [canView, isAdmin, isFranchiseur, navigate]);
 
   if (isLoading) {
     return (
