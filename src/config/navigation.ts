@@ -200,6 +200,7 @@ export const NAV_GROUPS: NavGroup[] = [
           { title: 'Groupes', url: '/admin/permissions/groups', icon: Users, scope: 'admin_roles', description: 'Gérer les groupes et leurs permissions' },
           { title: 'Utilisateurs', url: '/admin/permissions/users', icon: User, scope: 'admin_roles', description: 'Permissions individuelles' },
           { title: 'Matrice', url: '/admin/permissions/matrix', icon: Grid3X3, scope: 'admin_roles', description: 'Vue matricielle globale' },
+          { title: 'Audit V2', url: '/admin/roles-v2', icon: Shield, scope: 'admin_roles', description: 'Audit et migration des rôles V2' },
         ]
       },
       { title: 'Agences', url: '/admin/agencies', icon: Building2, scope: 'admin_settings' },
@@ -254,6 +255,7 @@ export const PAGE_TITLES: Record<string, string> = {
   '/admin/permissions/groups': 'Groupes de permissions',
   '/admin/permissions/users': 'Permissions utilisateurs',
   '/admin/permissions/matrix': 'Matrice des permissions',
+  '/admin/roles-v2': 'Audit Rôles V2',
   '/admin/agencies': 'Gestion Agences',
   '/admin/backup': 'Sauvegardes',
   '/admin/documents': 'Documents Admin',
