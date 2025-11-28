@@ -48,14 +48,14 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
             className="text-xl text-muted-foreground mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 8 }}
+            transition={{ duration: 0.6, delay: 2.5 }}
           >
             La plateforme complète pour gérer votre franchise HelpConfort
           </motion.p>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 8.5 }}
+            transition={{ duration: 0.5, delay: 3 }}
           >
             <Button 
               onClick={onLoginClick}
