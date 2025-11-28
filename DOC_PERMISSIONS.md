@@ -240,6 +240,33 @@ En mode développement, AuthContext affiche des logs détaillés :
 
 ## Protection des Routes avec RoleGuard
 
+### Guards V2 (ACTIF)
+
+- **Tous les accès sensibles sont protégés** par `RoleGuard` dans `App.tsx`
+- L'autorisation se fait sur `GlobalRole` (N0–N6) via `useHasGlobalRole`
+- Le code legacy suivant est **DÉPRÉCIÉ** :
+  - `isAdmin` → utiliser `hasGlobalRole('platform_admin')`
+  - `isFranchiseur` → utiliser `hasGlobalRole('franchisor_user')`
+  - `system_role` côté front pour les guards
+- Les utilisateurs N3+ peuvent gérer les utilisateurs, avec plafonnement au niveau de leur propre rôle
+
+### Mapping des Routes par Niveau
+
+| Route | minRole | Niveau | Description |
+|-------|---------|--------|-------------|
+| `/`, `/profile`, `/favorites` | - | N0+ | Tous utilisateurs connectés |
+| `/apogee/*`, `/apporteurs/*`, `/helpconfort/*` | - | N0+ | HELP Academy |
+| `/documents` | - | N0+ | Base documentaire |
+| `/support`, `/mes-demandes` | - | N0+ | Support utilisateur |
+| `/mes-indicateurs/*` | `franchisee_admin` | N2+ | Pilotage agence - Indicateurs |
+| `/actions-a-mener/*` | `franchisee_admin` | N2+ | Actions à mener |
+| `/diffusion` | `franchisee_admin` | N2+ | Écran diffusion |
+| `/tete-de-reseau/*` | `franchisor_user` | N3+ | Réseau franchiseur |
+| `/admin/users-unified` | `franchisor_user` | N3+ | Gestion utilisateurs |
+| `/admin/users`, `/admin/users-list` | `franchisor_user` | N3+ | Création utilisateurs |
+| `/admin/support`, `/admin/tickets` | `franchisor_user` | N3+ | Support admin |
+| `/admin/*` (autres) | `platform_admin` | N5+ | Administration plateforme |
+
 ### Composant RoleGuard
 
 ```typescript
@@ -266,11 +293,17 @@ import { RoleGuard } from '@/components/auth/RoleGuard';
 ### Hook useHasGlobalRole
 
 ```typescript
-import { useHasGlobalRole } from '@/hooks/useHasGlobalRole';
+import { useHasGlobalRole, useHasMinLevel, useGlobalRoleLevel } from '@/hooks/useHasGlobalRole';
 
-// Dans un composant
+// Vérifier un rôle minimum
 const canAccessAdmin = useHasGlobalRole('platform_admin');
 const canManageNetwork = useHasGlobalRole('franchisor_user');
+
+// Vérifier un niveau numérique
+const canManageUsers = useHasMinLevel(3); // N3+
+
+// Obtenir le niveau actuel
+const userLevel = useGlobalRoleLevel(); // 0-6
 ```
 
 ### Migration des anciennes vérifications

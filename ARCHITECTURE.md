@@ -530,7 +530,7 @@ Appliqué uniformément : création ET modification.
 
 ---
 
-## Système de Permissions V2.0 (Phase 4 - Guards actifs)
+## Système de Permissions V2.0 (Phase 4 - Guards ACTIFS)
 
 ### Vue d'ensemble
 
@@ -557,10 +557,28 @@ Le système V2.0 simplifie la gestion des accès avec :
 | Module | Description | Rôle minimum |
 |--------|-------------|--------------|
 | `help_academy` | Guides Apogée, Apporteurs, HelpConfort | N0 |
-| `pilotage_agence` | Stats, actions, diffusion | N1 |
+| `pilotage_agence` | Stats, actions, diffusion | N2 |
 | `reseau_franchiseur` | Multi-agences franchiseur | N3 |
 | `support` | Tickets et assistance | N0 |
 | `admin_plateforme` | Administration système | N5 |
+
+### Mapping des Routes (App.tsx)
+
+**Toutes les routes sont désormais protégées par `RoleGuard` :**
+
+| Route | minRole | Niveau | Description |
+|-------|---------|--------|-------------|
+| `/`, `/profile`, `/favorites` | - | N0+ | Tous utilisateurs connectés |
+| `/apogee/*`, `/apporteurs/*`, `/helpconfort/*` | - | N0+ | HELP Academy |
+| `/documents`, `/support`, `/mes-demandes` | - | N0+ | Ressources & Support |
+| `/mes-indicateurs/*` | `franchisee_admin` | N2+ | Pilotage agence - Indicateurs |
+| `/actions-a-mener/*` | `franchisee_admin` | N2+ | Actions à mener |
+| `/diffusion` | `franchisee_admin` | N2+ | Écran diffusion |
+| `/tete-de-reseau/*` | `franchisor_user` | N3+ | Réseau franchiseur |
+| `/admin/users-unified` | `franchisor_user` | N3+ | Gestion utilisateurs (plafonnée) |
+| `/admin/users`, `/admin/users-list` | `franchisor_user` | N3+ | Création utilisateurs |
+| `/admin/support`, `/admin/tickets` | `franchisor_user` | N3+ | Support admin |
+| `/admin/*` (autres) | `platform_admin` | N5+ | Administration plateforme |
 
 ### Fichiers TypeScript
 
@@ -572,6 +590,9 @@ src/types/
 
 src/hooks/
 ├── useHasGlobalRole.ts # Hook V2 pour vérification niveau (remplace isAdmin)
+│   ├── useHasGlobalRole(minRole)  # Vérifie niveau minimum
+│   ├── useHasMinLevel(level)      # Vérifie niveau numérique
+│   └── useGlobalRoleLevel()       # Retourne niveau actuel
 
 src/components/auth/
 ├── RoleGuard.tsx       # Composant protection routes (minRole, redirectTo, showError)
@@ -606,7 +627,21 @@ import { RoleGuard } from '@/components/auth/RoleGuard';
 <RoleGuard minRole="franchisor_user" redirectTo="/">
   <FranchiseurDashboard />
 </RoleGuard>
+
+// Vérification dans un composant
+const canManage = useHasGlobalRole('franchisor_user');
+if (!canManage) return null;
 ```
+
+### Code Legacy DÉPRÉCIÉ
+
+Les patterns suivants sont obsolètes et ne doivent plus être utilisés :
+
+| Ancien | Nouveau |
+|--------|---------|
+| `isAdmin` | `hasGlobalRole('platform_admin')` ou `useHasGlobalRole('platform_admin')` |
+| `isFranchiseur` | `hasGlobalRole('franchisor_user')` ou `useHasGlobalRole('franchisor_user')` |
+| `isAdmin \|\| isFranchiseur` | `hasGlobalRole('franchisor_user')` |
 
 ### Colonnes DB (table `profiles`)
 
