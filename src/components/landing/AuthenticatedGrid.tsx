@@ -301,7 +301,7 @@ export function AuthenticatedGrid({
           </div>
         );
       } else if (currentCard.link && currentCard.link !== '#') {
-        const isDiffusion = currentCard.link?.includes('/diffusion');
+        const isDiffusion = currentCard.link?.includes('diffusion');
         
         allElements.push(
           <Link
@@ -310,7 +310,7 @@ export function AuthenticatedGrid({
             className={`${baseClassName} relative`}
           >
             {isDiffusion && (
-              <span className="absolute top-2 right-2 text-[10px] font-medium bg-orange-500 text-white px-2 py-0.5 rounded-full">
+              <span className={`absolute text-[10px] font-medium bg-orange-500 text-white px-2 py-0.5 rounded-full z-10 ${isLarge ? 'top-2 right-2' : 'top-1/2 -translate-y-1/2 right-3'}`}>
                 En cours
               </span>
             )}
