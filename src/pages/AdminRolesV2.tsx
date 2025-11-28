@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,13 +7,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, AlertTriangle, CheckCircle, XCircle, MinusCircle, Info, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Search, AlertTriangle, CheckCircle, XCircle, MinusCircle, Info, Users, Wand2, CheckCheck } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, MODULE_DEFINITIONS } from '@/types/modules';
 import { getGlobalRoleFromLegacy, getEnabledModulesFromLegacy } from '@/types/accessControl';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
+import { logInfo } from '@/lib/logger';
+import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 
 interface UserWithV2Data {
   id: string;
@@ -140,6 +144,36 @@ export default function AdminRolesV2() {
   const [search, setSearch] = useState('');
   const [filterAgence, setFilterAgence] = useState<string>('all');
   const [expandedAgencies, setExpandedAgencies] = useState<Set<string>>(new Set(['all']));
+  const queryClient = useQueryClient();
+
+  // Mutation pour appliquer les suggestions V2
+  const applyV2Mutation = useMutation({
+    mutationFn: async ({ userId, globalRole, enabledModules }: { 
+      userId: string; 
+      globalRole: GlobalRole; 
+      enabledModules: EnabledModules;
+    }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          global_role: globalRole,
+          enabled_modules: enabledModules as Json,
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+      return { userId, globalRole, enabledModules };
+    },
+    onSuccess: ({ userId, globalRole, enabledModules }) => {
+      logInfo('AUTH', `[V2] Migration préparée pour user ${userId}: global_role=${globalRole}, enabled_modules=${JSON.stringify(enabledModules)}`);
+      toast.success('Suggestion V2 appliquée');
+      queryClient.invalidateQueries({ queryKey: ['admin-roles-v2-users'] });
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de l\'application V2');
+      console.error('[V2] Erreur migration:', error);
+    },
+  });
 
   // Fetch all users with their roles
   const { data: usersData, isLoading, error } = useQuery({
@@ -432,60 +466,101 @@ export default function AdminRolesV2() {
                         <TableHead className="w-[60px] text-center">Cohér.</TableHead>
                         <TableHead>Modules (DB)</TableHead>
                         <TableHead>Modules Suggérés</TableHead>
-                        <TableHead className="w-[60px] text-center">Cohér.</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map(user => (
-                        <TableRow key={user.id}>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                {user.first_name} {user.last_name}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {user.email}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col gap-1 text-xs">
-                              <span>sys: {user.system_role || '—'}</span>
-                              <span>rôle: {user.role_agence || '—'}</span>
-                              {user.hasAdminRole && <Badge variant="destructive" className="text-xs w-fit">admin</Badge>}
-                              {user.hasSupportRole && <Badge variant="secondary" className="text-xs w-fit">support</Badge>}
-                              {user.hasFranchiseurRole && <Badge className="text-xs w-fit">{user.franchiseurRole || 'fr'}</Badge>}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <RoleBadge role={user.global_role} isDb={true} />
-                          </TableCell>
-                          <TableCell>
-                            <RoleBadge role={user.suggestedGlobalRole} isDb={false} />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <CoherenceIndicator 
-                              dbValue={user.global_role} 
-                              suggestedValue={user.suggestedGlobalRole}
-                              type="role"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <ModulesSummary modules={user.enabled_modules} isDb={true} />
-                          </TableCell>
-                          <TableCell>
-                            <ModulesSummary modules={user.suggestedEnabledModules} isDb={false} />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <CoherenceIndicator 
-                              dbValue={user.enabled_modules} 
-                              suggestedValue={user.suggestedEnabledModules}
-                              type="modules"
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
+                            <TableHead className="w-[60px] text-center">Cohér.</TableHead>
+                            <TableHead className="w-[140px] text-center">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {users.map(user => {
+                            const isRoleCoherent = user.global_role === user.suggestedGlobalRole;
+                            const isModulesCoherent = JSON.stringify(user.enabled_modules) === JSON.stringify(user.suggestedEnabledModules);
+                            const isFullyMigrated = user.global_role && user.enabled_modules && isRoleCoherent && isModulesCoherent;
+                            
+                            return (
+                              <TableRow key={user.id}>
+                                <TableCell>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">
+                                      {user.first_name} {user.last_name}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {user.email}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex flex-col gap-1 text-xs">
+                                    <span>sys: {user.system_role || '—'}</span>
+                                    <span>rôle: {user.role_agence || '—'}</span>
+                                    {user.hasAdminRole && <Badge variant="destructive" className="text-xs w-fit">admin</Badge>}
+                                    {user.hasSupportRole && <Badge variant="secondary" className="text-xs w-fit">support</Badge>}
+                                    {user.hasFranchiseurRole && <Badge className="text-xs w-fit">{user.franchiseurRole || 'fr'}</Badge>}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <RoleBadge role={user.global_role} isDb={true} />
+                                </TableCell>
+                                <TableCell>
+                                  <RoleBadge role={user.suggestedGlobalRole} isDb={false} />
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <CoherenceIndicator 
+                                    dbValue={user.global_role} 
+                                    suggestedValue={user.suggestedGlobalRole}
+                                    type="role"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <ModulesSummary modules={user.enabled_modules} isDb={true} />
+                                </TableCell>
+                                <TableCell>
+                                  <ModulesSummary modules={user.suggestedEnabledModules} isDb={false} />
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <CoherenceIndicator 
+                                    dbValue={user.enabled_modules} 
+                                    suggestedValue={user.suggestedEnabledModules}
+                                    type="modules"
+                                  />
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {isFullyMigrated ? (
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
+                                          <CheckCheck className="w-3 h-3 mr-1" />
+                                          V2 OK
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Migration V2 appliquée et cohérente</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-xs"
+                                      disabled={applyV2Mutation.isPending}
+                                      onClick={() => applyV2Mutation.mutate({
+                                        userId: user.id,
+                                        globalRole: user.suggestedGlobalRole,
+                                        enabledModules: user.suggestedEnabledModules,
+                                      })}
+                                    >
+                                      {applyV2Mutation.isPending ? (
+                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                      ) : (
+                                        <Wand2 className="w-3 h-3 mr-1" />
+                                      )}
+                                      Appliquer V2
+                                    </Button>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
                   </Table>
                 </CardContent>
               </CollapsibleContent>
