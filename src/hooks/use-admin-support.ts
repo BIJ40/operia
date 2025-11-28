@@ -3,6 +3,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import {
+  TICKET_STATUSES,
+  type TicketStatus,
+  type TicketPriority,
+  type TicketService,
+  sendTicketMessage,
+} from '@/services/supportService';
 
 export interface SupportTicket {
   id: string;
@@ -19,6 +26,8 @@ export interface SupportTicket {
   rating_comment: string | null;
   viewed_by_support_at: string | null;
   has_unread_support_response?: boolean;
+  support_level?: number;
+  category?: string | null;
 }
 
 export interface SupportMessage {
@@ -29,6 +38,7 @@ export interface SupportMessage {
   is_from_support: boolean;
   created_at: string;
   read_at: string | null;
+  is_internal_note?: boolean;
 }
 
 export const useAdminSupport = () => {
@@ -40,8 +50,15 @@ export const useAdminSupport = () => {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [filter, setFilter] = useState<'waiting' | 'in_progress' | 'resolved'>('waiting');
+  const [filter, setFilter] = useState<TicketStatus | 'all'>('all');
   const [isUserTyping, setIsUserTyping] = useState(false);
+  const [isInternalNote, setIsInternalNote] = useState(false);
+  
+  // Nouveaux filtres Phase 3
+  const [priorityFilter, setPriorityFilter] = useState<TicketPriority | 'all'>('all');
+  const [serviceFilter, setServiceFilter] = useState<TicketService | 'all'>('all');
+  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'mine' | 'unassigned'>('all');
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -143,21 +160,82 @@ export const useAdminSupport = () => {
     if (!newMessage.trim() || !selectedTicket || !user) return;
 
     try {
-      const { error } = await supabase.from('support_messages').insert({
-        ticket_id: selectedTicket.id,
-        sender_id: user.id,
-        message: newMessage,
-        is_from_support: true,
-      });
+      // Utiliser le service pour envoyer avec support des notes internes
+      const result = await sendTicketMessage(
+        selectedTicket.id,
+        user.id,
+        newMessage,
+        true, // is_from_support
+        isInternalNote
+      );
 
-      if (error) throw error;
+      if (!result.success) throw new Error(result.error);
 
       setNewMessage('');
+      setIsInternalNote(false); // Reset après envoi
       await loadMessages(selectedTicket.id);
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Erreur lors de l\'envoi du message');
     }
+  };
+
+  // Mise à jour du statut d'un ticket
+  const updateStatus = async (ticketId: string, newStatus: TicketStatus) => {
+    try {
+      const updateData: any = { status: newStatus };
+      
+      if (newStatus === TICKET_STATUSES.RESOLVED || newStatus === TICKET_STATUSES.CLOSED) {
+        updateData.resolved_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('support_tickets')
+        .update(updateData)
+        .eq('id', ticketId);
+
+      if (error) throw error;
+
+      toast.success(`Statut mis à jour: ${newStatus}`);
+      await loadTickets();
+      
+      if (selectedTicket?.id === ticketId) {
+        setSelectedTicket(prev => prev ? { ...prev, status: newStatus } : null);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Erreur lors de la mise à jour du statut');
+    }
+  };
+
+  // Mise à jour de la priorité d'un ticket
+  const updatePriority = async (ticketId: string, newPriority: TicketPriority) => {
+    try {
+      const { error } = await supabase
+        .from('support_tickets')
+        .update({ priority: newPriority })
+        .eq('id', ticketId);
+
+      if (error) throw error;
+
+      toast.success(`Priorité mise à jour: ${newPriority}`);
+      await loadTickets();
+      
+      if (selectedTicket?.id === ticketId) {
+        setSelectedTicket(prev => prev ? { ...prev, priority: newPriority } : null);
+      }
+    } catch (error) {
+      console.error('Error updating priority:', error);
+      toast.error('Erreur lors de la mise à jour de la priorité');
+    }
+  };
+
+  // Effacer tous les filtres
+  const clearFilters = () => {
+    setFilter('all');
+    setPriorityFilter('all');
+    setServiceFilter('all');
+    setAssignmentFilter('all');
   };
 
   const resolveTicket = async () => {
@@ -294,22 +372,52 @@ export const useAdminSupport = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Filtrer les tickets côté client selon les filtres actifs
+  const filteredTickets = tickets.filter(ticket => {
+    // Filtre par statut
+    if (filter !== 'all' && ticket.status !== filter) return false;
+    
+    // Filtre par priorité
+    if (priorityFilter !== 'all' && ticket.priority !== priorityFilter) return false;
+    
+    // Filtre par service
+    if (serviceFilter !== 'all' && ticket.service !== serviceFilter) return false;
+    
+    // Filtre par assignation
+    if (assignmentFilter === 'mine' && ticket.assigned_to !== user?.id) return false;
+    if (assignmentFilter === 'unassigned' && ticket.assigned_to !== null) return false;
+    
+    return true;
+  });
+
   return {
     isAdmin,
     user,
     tickets,
+    filteredTickets,
     selectedTicket,
     messages,
     newMessage,
     filter,
+    priorityFilter,
+    serviceFilter,
+    assignmentFilter,
     isUserTyping,
+    isInternalNote,
     messagesEndRef,
     setNewMessage,
     setFilter,
+    setPriorityFilter,
+    setServiceFilter,
+    setAssignmentFilter,
+    setIsInternalNote,
     loadTickets,
     selectTicket,
     sendMessage,
     resolveTicket,
     reopenTicket,
+    updateStatus,
+    updatePriority,
+    clearFilters,
   };
 };

@@ -1104,6 +1104,7 @@ export type Database = {
           created_at: string
           id: string
           is_from_support: boolean
+          is_internal_note: boolean | null
           message: string
           read_at: string | null
           sender_id: string
@@ -1113,6 +1114,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_from_support?: boolean
+          is_internal_note?: boolean | null
           message: string
           read_at?: string | null
           sender_id: string
@@ -1122,6 +1124,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_from_support?: boolean
+          is_internal_note?: boolean | null
           message?: string
           read_at?: string | null
           sender_id?: string

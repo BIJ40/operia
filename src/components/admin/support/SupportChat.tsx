@@ -2,17 +2,19 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { SupportMessage } from '@/hooks/use-admin-support';
+import { InternalNoteToggle } from './InternalNoteToggle';
+import { TicketMessageItem } from './TicketMessageItem';
 
 interface SupportChatProps {
   messages: SupportMessage[];
   newMessage: string;
   isUserTyping: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  isInternalNote?: boolean;
   onMessageChange: (value: string) => void;
   onSendMessage: () => void;
+  onInternalNoteChange?: (checked: boolean) => void;
 }
 
 export function SupportChat({
@@ -20,8 +22,10 @@ export function SupportChat({
   newMessage,
   isUserTyping,
   messagesEndRef,
+  isInternalNote = false,
   onMessageChange,
   onSendMessage,
+  onInternalNoteChange,
 }: SupportChatProps) {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -35,25 +39,13 @@ export function SupportChat({
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
           {messages.map((msg) => (
-            <div
+            <TicketMessageItem
               key={msg.id}
-              className={`flex ${
-                msg.is_from_support ? 'justify-end' : 'justify-start'
-              }`}
-            >
-              <div
-                className={`max-w-[70%] rounded-lg p-3 ${
-                  msg.is_from_support
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
-                }`}
-              >
-                <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
-                <p className="text-xs opacity-70 mt-1">
-                  {format(new Date(msg.created_at), 'HH:mm', { locale: fr })}
-                </p>
-              </div>
-            </div>
+              message={{
+                ...msg,
+                is_internal_note: (msg as any).is_internal_note,
+              }}
+            />
           ))}
           {isUserTyping && (
             <div className="flex justify-start">
@@ -67,16 +59,28 @@ export function SupportChat({
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
-      <div className="border-t p-4">
+      <div className="border-t p-4 space-y-2">
+        {/* Toggle note interne */}
+        {onInternalNoteChange && (
+          <InternalNoteToggle
+            isInternalNote={isInternalNote}
+            onToggle={onInternalNoteChange}
+          />
+        )}
         <div className="flex gap-2">
           <Input
             value={newMessage}
             onChange={(e) => onMessageChange(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Tapez votre message..."
-            className="flex-1"
+            placeholder={isInternalNote ? "Écrire une note interne..." : "Tapez votre message..."}
+            className={`flex-1 ${isInternalNote ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/30' : ''}`}
           />
-          <Button onClick={onSendMessage} disabled={!newMessage.trim()}>
+          <Button 
+            onClick={onSendMessage} 
+            disabled={!newMessage.trim()}
+            variant={isInternalNote ? 'outline' : 'default'}
+            className={isInternalNote ? 'border-amber-400 text-amber-600 hover:bg-amber-100' : ''}
+          >
             <Send className="w-4 h-4" />
           </Button>
         </div>
