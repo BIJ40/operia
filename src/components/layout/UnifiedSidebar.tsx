@@ -165,8 +165,8 @@ export function UnifiedSidebar() {
   const isActive = (url?: string) => {
     if (!url) return false;
     if (url === '/') return location.pathname === '/';
-    // For /admin, only match exact path to avoid highlighting when on /admin/users etc.
-    if (url === '/admin') return location.pathname === '/admin';
+    // For /admin and /mes-indicateurs, only match exact path to avoid highlighting parent when on sub-routes
+    if (url === '/admin' || url === '/mes-indicateurs') return location.pathname === url;
     return location.pathname === url || location.pathname.startsWith(url + '/');
   };
 
