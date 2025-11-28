@@ -370,65 +370,120 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadPermissionsData]);
 
   useEffect(() => {
-    let isInitialized = false;
+    // Flag pour éviter les doubles chargements
+    let isLoadingUserData = false;
+    let isMounted = true;
     
     console.log('🔐 AuthContext useEffect mounting...');
+    
+    /**
+     * IMPORTANT: Pattern recommandé par Supabase pour éviter le deadlock
+     * - onAuthStateChange ne doit PAS faire d'appels DB synchrones dans son callback
+     * - Utiliser setTimeout(0) pour différer les appels DB
+     * - Cela permet au callback auth de se terminer avant les requêtes DB
+     */
     
     // Fonction d'initialisation - appelée une seule fois au mount
     const init = async () => {
       console.log('🔐 init() starting...');
-      const { data: { session }, error } = await supabase.auth.getSession();
-      console.log('🔐 getSession result:', { 
-        hasSession: !!session, 
-        userEmail: session?.user?.email,
-        error: error?.message 
-      });
       
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        setIsAuthLoading(true);
-        await loadUserData(session.user.id);
-        setIsAuthLoading(false);
-        console.log('🔐 init() completed - user data loaded');
-      } else {
-        setIsAuthLoading(false);
-        console.log('🔐 init() completed - no session');
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('🔐 getSession result:', { 
+          hasSession: !!session, 
+          userEmail: session?.user?.email,
+          error: error?.message 
+        });
+        
+        if (!isMounted) return;
+        
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // DIFFÉRER le chargement des données avec setTimeout pour éviter deadlock
+          setTimeout(async () => {
+            if (!isMounted || isLoadingUserData) {
+              console.log('🔐 init() skipping loadUserData (unmounted or already loading)');
+              return;
+            }
+            isLoadingUserData = true;
+            setIsAuthLoading(true);
+            console.log('🔐 init() loading user data...');
+            await loadUserData(session.user.id);
+            if (isMounted) {
+              setIsAuthLoading(false);
+              console.log('🔐 init() completed - user data loaded');
+            }
+            isLoadingUserData = false;
+          }, 0);
+        } else {
+          setIsAuthLoading(false);
+          console.log('🔐 init() completed - no session');
+        }
+      } catch (error) {
+        console.error('🔐 init() error:', error);
+        if (isMounted) {
+          setIsAuthLoading(false);
+        }
       }
-      isInitialized = true;
     };
     
     // Initialiser d'abord
     init();
     
-    // Puis écouter les changements (mais ignorer INITIAL_SESSION car déjà géré par init)
+    // Puis écouter les changements
+    // IMPORTANT: Le callback NE DOIT PAS être async pour éviter les deadlocks
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('🔐 onAuthStateChange fired:', { 
           event, 
           userEmail: session?.user?.email, 
-          isInitialized,
           hasSession: !!session
         });
         
-        // Ignorer TOUS les INITIAL_SESSION car init() gère ça
+        // Ignorer INITIAL_SESSION car init() gère la session initiale
         if (event === 'INITIAL_SESSION') {
           console.log('🔐 Ignoring INITIAL_SESSION (handled by init)');
           return;
         }
         
-        console.log('🔐 Processing auth event:', event);
+        // Mettre à jour l'utilisateur immédiatement (synchrone, pas de deadlock)
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          console.log('🔐 Loading user data for:', session.user.email);
-          setIsAuthLoading(true);
-          await loadUserData(session.user.id);
-          setIsAuthLoading(false);
-          console.log('🔐 User data loaded successfully');
+          // DIFFÉRER les appels DB avec setTimeout(0) - pattern Supabase recommandé
+          setTimeout(async () => {
+            if (!isMounted) {
+              console.log('🔐 onAuthStateChange skipping (unmounted)');
+              return;
+            }
+            if (isLoadingUserData) {
+              console.log('🔐 onAuthStateChange skipping loadUserData (already loading)');
+              return;
+            }
+            
+            isLoadingUserData = true;
+            console.log('🔐 onAuthStateChange: Loading user data for:', session.user.email);
+            setIsAuthLoading(true);
+            
+            try {
+              await loadUserData(session.user.id);
+              if (isMounted) {
+                setIsAuthLoading(false);
+                console.log('🔐 onAuthStateChange: User data loaded successfully');
+              }
+            } catch (error) {
+              console.error('🔐 onAuthStateChange loadUserData error:', error);
+              if (isMounted) {
+                setIsAuthLoading(false);
+              }
+            }
+            
+            isLoadingUserData = false;
+          }, 0);
         } else {
           console.log('🔐 Resetting all auth state (no session)');
-          // Reset tous les états
+          // Reset synchrone - pas de risque de deadlock
           setIsAdmin(false);
           setIsSupport(false);
           setIsFranchiseur(false);
@@ -450,6 +505,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       console.log('🔐 AuthContext useEffect cleanup');
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [loadUserData]);
