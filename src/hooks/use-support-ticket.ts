@@ -51,18 +51,20 @@ export const useSupportTicket = () => {
       const lastQuestion = userMessages[userMessages.length - 1]?.content || 'Demande de support';
 
       // Créer la demande (support direct) ou le ticket
+      // Utiliser le nouveau statut 'new' au lieu de 'waiting'
       const { data: ticket, error: ticketError } = await supabase
         .from('support_tickets')
         .insert({
           user_id: user.id,
           subject: lastQuestion.substring(0, 100),
-          status: 'waiting',
+          status: 'new', // Nouveau statut initial
           priority: 'urgent',
           source: 'chat',
           is_live_chat: isLiveChat,
           escalated_from_chat: false,
           agency_slug: profile?.agence || null,
           chatbot_conversation: messages as any,
+          support_level: 1, // Niveau initial N1
         } as any)
         .select()
         .single();

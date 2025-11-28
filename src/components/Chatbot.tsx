@@ -67,11 +67,12 @@ export function Chatbot() {
     if (!user) return;
 
     const checkActiveTicket = async () => {
+      // Utiliser les nouveaux statuts : new, in_progress, waiting_user
       const { data } = await supabase
         .from('support_tickets')
         .select('*')
         .eq('user_id', user.id)
-        .in('status', ['waiting', 'in_progress'])
+        .in('status', ['new', 'in_progress', 'waiting_user'])
         .order('created_at', { ascending: false })
         .limit(1);
 

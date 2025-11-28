@@ -94,11 +94,13 @@ export const useUserTickets = () => {
 
   const loadTicketDetails = async (ticketId: string) => {
     try {
-      // Load messages
+      // Load messages - FILTRER les notes internes (is_internal_note = false)
+      // Les notes internes ne doivent JAMAIS être visibles côté utilisateur
       const { data: msgs, error: msgsError } = await supabase
         .from('support_messages')
         .select('*')
         .eq('ticket_id', ticketId)
+        .or('is_internal_note.is.null,is_internal_note.eq.false')
         .order('created_at', { ascending: true });
 
       if (msgsError) throw msgsError;
@@ -158,7 +160,7 @@ export const useUserTickets = () => {
         ? `${profile.first_name} ${profile.last_name || ''}`.trim()
         : 'Utilisateur';
 
-      // Create ticket
+      // Create ticket avec statut initial = 'new'
       const { data: ticket, error: ticketError } = await supabase
         .from('support_tickets')
         .insert({
@@ -166,11 +168,12 @@ export const useUserTickets = () => {
           subject,
           service,
           category,
-          status: 'waiting',
+          status: 'new', // Nouveau statut : 'new' au lieu de 'waiting'
           priority,
           source: 'portal',
           agency_slug: profile?.agence || null,
           has_attachments: files.length > 0,
+          support_level: 1, // Niveau initial N1
         } as any)
         .select()
         .single();
@@ -262,6 +265,21 @@ export const useUserTickets = () => {
       } as any);
 
       if (error) throw error;
+      
+      // Transition automatique : si le ticket était en 'waiting_user', le passer en 'in_progress'
+      // Car l'utilisateur vient de répondre
+      const { data: currentTicket } = await supabase
+        .from('support_tickets')
+        .select('status')
+        .eq('id', ticketId)
+        .single();
+      
+      if (currentTicket?.status === 'waiting_user') {
+        await supabase
+          .from('support_tickets')
+          .update({ status: 'in_progress' })
+          .eq('id', ticketId);
+      }
     } catch (error) {
       console.error('Error adding message:', error);
       toast({

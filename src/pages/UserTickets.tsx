@@ -91,23 +91,32 @@ export default function UserTickets() {
     setNewMessage('');
   };
 
+  // Utiliser les nouveaux statuts cohérents avec supportService.ts
   const getStatusBadge = (status: string) => {
     const config: Record<string, { label: string; className: string }> = {
-      waiting: { label: 'En attente', className: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
-      in_progress: { label: 'En cours', className: 'bg-blue-100 text-blue-800 border-blue-300' },
+      new: { label: 'Nouveau', className: 'bg-blue-100 text-blue-800 border-blue-300' },
+      in_progress: { label: 'En cours', className: 'bg-orange-100 text-orange-800 border-orange-300' },
+      waiting_user: { label: 'Attente réponse', className: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+      waiting: { label: 'En attente', className: 'bg-yellow-100 text-yellow-800 border-yellow-300' }, // Legacy
       resolved: { label: 'Résolu', className: 'bg-green-100 text-green-800 border-green-300' },
+      closed: { label: 'Fermé', className: 'bg-gray-100 text-gray-800 border-gray-300' },
     };
 
-    const { label, className } = config[status] || config.waiting;
+    const { label, className } = config[status] || config.new;
     return <Badge variant="outline" className={className}>{label}</Badge>;
   };
 
+  // Utiliser les nouvelles priorités cohérentes avec supportService.ts
   const getPriorityBadge = (priority: string) => {
     const config: Record<string, { label: string; className: string }> = {
-      low: { label: '🟢 Faible', className: 'bg-blue-100 text-blue-800 border-blue-300' },
-      normal: { label: '⚪ Normal', className: 'bg-gray-100 text-gray-800 border-gray-300' },
-      high: { label: '🟠 Élevé', className: 'bg-orange-100 text-orange-800 border-orange-300' },
+      mineur: { label: '🟢 Mineur', className: 'bg-gray-100 text-gray-800 border-gray-300' },
+      normal: { label: '⚪ Normal', className: 'bg-blue-100 text-blue-800 border-blue-300' },
+      important: { label: '🟠 Important', className: 'bg-orange-100 text-orange-800 border-orange-300' },
       urgent: { label: '🔴 Urgent', className: 'bg-red-100 text-red-800 border-red-300' },
+      bloquant: { label: '⛔ Bloquant', className: 'bg-red-200 text-red-900 border-red-400' },
+      // Legacy values mapping
+      low: { label: '🟢 Mineur', className: 'bg-gray-100 text-gray-800 border-gray-300' },
+      high: { label: '🟠 Important', className: 'bg-orange-100 text-orange-800 border-orange-300' },
     };
 
     const { label, className } = config[priority] || config.normal;
@@ -335,29 +344,31 @@ export default function UserTickets() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    {/* Catégories alignées avec supportService.ts */}
                     <SelectItem value="bug">Bug</SelectItem>
-                    <SelectItem value="improvement">Amélioration</SelectItem>
-                    <SelectItem value="blocking">Blocage</SelectItem>
+                    <SelectItem value="amelioration">Amélioration</SelectItem>
+                    <SelectItem value="blocage">Blocage</SelectItem>
                     <SelectItem value="question">Question</SelectItem>
-                    <SelectItem value="other">Autre</SelectItem>
+                    <SelectItem value="autre">Autre</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
                 <Label>Niveau d'urgence *</Label>
-                <div className="grid grid-cols-4 gap-2 mt-2">
+                {/* Utiliser les nouvelles priorités : mineur, normal, important, urgent, bloquant */}
+                <div className="grid grid-cols-5 gap-2 mt-2">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setNewTicket({ ...newTicket, priority: 'low' })}
+                    onClick={() => setNewTicket({ ...newTicket, priority: 'mineur' })}
                     className={`rounded-2xl border-l-4 transition-all ${
-                      newTicket.priority === 'low'
+                      newTicket.priority === 'mineur'
                         ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
                         : 'border-l-border hover:border-l-accent hover:shadow-md'
                     }`}
                   >
-                    🟢 Faible
+                    🟢 Mineur
                   </Button>
                   <Button
                     type="button"
@@ -374,14 +385,14 @@ export default function UserTickets() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setNewTicket({ ...newTicket, priority: 'high' })}
+                    onClick={() => setNewTicket({ ...newTicket, priority: 'important' })}
                     className={`rounded-2xl border-l-4 transition-all ${
-                      newTicket.priority === 'high'
+                      newTicket.priority === 'important'
                         ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
                         : 'border-l-border hover:border-l-accent hover:shadow-md'
                     }`}
                   >
-                    🟠 Élevé
+                    🟠 Important
                   </Button>
                   <Button
                     type="button"
@@ -394,6 +405,18 @@ export default function UserTickets() {
                     }`}
                   >
                     🔴 Urgent
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setNewTicket({ ...newTicket, priority: 'bloquant' })}
+                    className={`rounded-2xl border-l-4 transition-all ${
+                      newTicket.priority === 'bloquant'
+                        ? 'border-l-accent bg-gradient-to-r from-red-600 to-red-800 text-white shadow-lg hover:shadow-xl'
+                        : 'border-l-border hover:border-l-accent hover:shadow-md'
+                    }`}
+                  >
+                    ⛔ Bloquant
                   </Button>
                 </div>
               </div>

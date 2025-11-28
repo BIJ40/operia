@@ -28,6 +28,7 @@ export interface SupportTicket {
   has_unread_support_response?: boolean;
   support_level?: number;
   category?: string | null;
+  escalation_history?: any; // Json type from Supabase
 }
 
 export interface SupportMessage {
@@ -283,6 +284,66 @@ export const useAdminSupport = () => {
     }
   };
 
+  // Escalade d'un ticket vers le niveau supérieur
+  const escalateTicketToNextLevel = async () => {
+    if (!selectedTicket) return;
+
+    try {
+      const currentLevel = selectedTicket.support_level || 1;
+      const newLevel = Math.min(currentLevel + 1, 3);
+
+      // Récupérer l'historique d'escalade existant
+      const existingHistory = Array.isArray(selectedTicket.escalation_history) 
+        ? selectedTicket.escalation_history 
+        : [];
+      
+      const newHistoryEntry = {
+        from_level: currentLevel,
+        to_level: newLevel,
+        assigned_to: null,
+        reason: 'Escalade manuelle par le support',
+        timestamp: new Date().toISOString(),
+        escalated_by: user?.id,
+      };
+
+      const { error } = await supabase
+        .from('support_tickets')
+        .update({
+          support_level: newLevel,
+          assigned_to: null, // Désassigner pour réassignation
+          escalation_history: [...existingHistory, newHistoryEntry],
+          status: TICKET_STATUSES.IN_PROGRESS,
+        })
+        .eq('id', selectedTicket.id);
+
+      if (error) throw error;
+
+      // Ajouter un message système
+      await supabase.from('support_messages').insert({
+        ticket_id: selectedTicket.id,
+        sender_id: user!.id,
+        message: `🔺 Ticket escaladé de N${currentLevel} vers N${newLevel}`,
+        is_from_support: true,
+        is_internal_note: true,
+      });
+
+      toast.success(`Ticket escaladé vers le niveau ${newLevel}`);
+      await loadTickets();
+      
+      // Recharger le ticket sélectionné
+      if (selectedTicket) {
+        setSelectedTicket(prev => prev ? { 
+          ...prev, 
+          support_level: newLevel,
+          escalation_history: [...existingHistory, newHistoryEntry],
+        } : null);
+      }
+    } catch (error) {
+      console.error('Error escalating ticket:', error);
+      toast.error("Erreur lors de l'escalade du ticket");
+    }
+  };
+
   // Setup realtime subscriptions
   useEffect(() => {
     const channel = supabase
@@ -419,5 +480,6 @@ export const useAdminSupport = () => {
     updateStatus,
     updatePriority,
     clearFilters,
+    escalateTicketToNextLevel,
   };
 };
