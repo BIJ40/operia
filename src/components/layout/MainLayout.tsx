@@ -29,9 +29,6 @@ export function MainLayout({
   const { isImpersonating } = useImpersonation();
   const [loginOpen, setLoginOpen] = useState(false);
   
-  // Log pour debug
-  console.log('🔐 MainLayout render:', { isAuthenticated, isAuthLoading, requireAuth });
-  
   // Hooks for tracking
   useStorageQuota();
   useUserPresence();
