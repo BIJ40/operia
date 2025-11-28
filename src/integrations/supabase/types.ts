@@ -1397,7 +1397,7 @@ export type Database = {
       }
       user_permissions: {
         Row: {
-          block_id: string
+          block_id: string | null
           can_access: boolean
           can_create: boolean | null
           can_delete: boolean | null
@@ -1412,7 +1412,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          block_id: string
+          block_id?: string | null
           can_access?: boolean
           can_create?: boolean | null
           can_delete?: boolean | null
@@ -1427,7 +1427,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          block_id?: string
+          block_id?: string | null
           can_access?: boolean
           can_create?: boolean | null
           can_delete?: boolean | null
