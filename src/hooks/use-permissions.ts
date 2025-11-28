@@ -33,6 +33,7 @@ export function usePermissions() {
     canEditScope, 
     canCreateScope, 
     canDeleteScope,
+    canAdminScope,
     getEffectivePermission,
     hasCapability,
     isAdmin,
@@ -41,16 +42,17 @@ export function usePermissions() {
     scopes
   } = useAuth();
 
-  // Vérifier l'accès à un scope
-  const checkAccess = useCallback((scopeSlug: ScopeSlug | string, action: 'view' | 'edit' | 'create' | 'delete' = 'view'): boolean => {
+  // Vérifier l'accès à un scope avec une action spécifique
+  const checkAccess = useCallback((scopeSlug: ScopeSlug | string, action: 'view' | 'edit' | 'create' | 'delete' | 'admin' = 'view'): boolean => {
     switch (action) {
       case 'view': return canViewScope(scopeSlug);
       case 'edit': return canEditScope(scopeSlug);
       case 'create': return canCreateScope(scopeSlug);
       case 'delete': return canDeleteScope(scopeSlug);
+      case 'admin': return canAdminScope(scopeSlug);
       default: return canViewScope(scopeSlug);
     }
-  }, [canViewScope, canEditScope, canCreateScope, canDeleteScope]);
+  }, [canViewScope, canEditScope, canCreateScope, canDeleteScope, canAdminScope]);
 
   // Obtenir le niveau de permission effectif
   const getPermissionLevel = useCallback((scopeSlug: ScopeSlug | string): number => {
@@ -90,12 +92,18 @@ export function usePermissions() {
     isSupport,
     isFranchiseur,
     scopes,
-    PERMISSION_LEVELS
+    PERMISSION_LEVELS,
+    // Helpers directs
+    canViewScope,
+    canEditScope,
+    canCreateScope,
+    canDeleteScope,
+    canAdminScope
   };
 }
 
 // Hook simplifié pour vérifier rapidement un accès
-export function useCanAccess(scopeSlug: ScopeSlug | string, action: 'view' | 'edit' | 'create' | 'delete' = 'view'): boolean {
+export function useCanAccess(scopeSlug: ScopeSlug | string, action: 'view' | 'edit' | 'create' | 'delete' | 'admin' = 'view'): boolean {
   const { checkAccess } = usePermissions();
   return useMemo(() => checkAccess(scopeSlug, action), [checkAccess, scopeSlug, action]);
 }
@@ -104,4 +112,10 @@ export function useCanAccess(scopeSlug: ScopeSlug | string, action: 'view' | 'ed
 export function useScopePermission(scopeSlug: ScopeSlug | string): EffectivePermission {
   const { getEffectivePermission } = usePermissions();
   return useMemo(() => getEffectivePermission(scopeSlug), [getEffectivePermission, scopeSlug]);
+}
+
+// Hook pour vérifier le niveau minimum requis
+export function useRequiredLevel(scopeSlug: ScopeSlug | string, requiredLevel: number): boolean {
+  const { hasMinLevel } = usePermissions();
+  return useMemo(() => hasMinLevel(scopeSlug, requiredLevel), [hasMinLevel, scopeSlug, requiredLevel]);
 }

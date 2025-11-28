@@ -35,11 +35,12 @@ interface AuthContextType {
   userPermissions: string[];
   isLoggingOut: boolean;
   
-  // Helpers de permissions - NOUVEAU SYSTÈME
+  // Helpers de permissions - NOUVEAU SYSTÈME (5 niveaux)
   canViewScope: (scopeSlug: ScopeSlug | string) => boolean;
   canEditScope: (scopeSlug: ScopeSlug | string) => boolean;
   canCreateScope: (scopeSlug: ScopeSlug | string) => boolean;
   canDeleteScope: (scopeSlug: ScopeSlug | string) => boolean;
+  canAdminScope: (scopeSlug: ScopeSlug | string) => boolean;
   getEffectivePermission: (scopeSlug: ScopeSlug | string) => EffectivePermission;
   hasCapability: (capability: string) => boolean;
   
@@ -82,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Charger les données de permissions
   const loadPermissionsData = useCallback(async (userId: string, profileRoleAgence: string | null, profileRoleId: string | null) => {
     try {
-      // Charger tous les scopes (table nouvellement créée)
+      // Charger tous les scopes
       const { data: scopesData, error: scopesError } = await (supabase as any)
         .from('scopes')
         .select('*')
@@ -147,30 +148,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Calculer la permission effective pour un scope
+  // Calculer la permission effective pour un scope (5 niveaux)
   const getEffectivePermission = useCallback((scopeSlug: string): EffectivePermission => {
     const scope = scopes.find(s => s.slug === scopeSlug);
+    const defaultLevel = scope?.default_level || PERMISSION_LEVELS.NONE;
     
-    // Permission par défaut
-    const defaultPerm: EffectivePermission = {
-      level: scope?.default_level || PERMISSION_LEVELS.NONE,
-      canView: (scope?.default_level || 0) >= PERMISSION_LEVELS.VIEW,
-      canEdit: (scope?.default_level || 0) >= PERMISSION_LEVELS.EDIT,
-      canCreate: (scope?.default_level || 0) >= PERMISSION_LEVELS.EDIT,
-      canDelete: (scope?.default_level || 0) >= PERMISSION_LEVELS.ADMIN,
-      source: 'default'
-    };
+    // Permission par défaut basée sur le niveau
+    const buildPermission = (level: number, source: EffectivePermission['source']): EffectivePermission => ({
+      level,
+      canView: level >= PERMISSION_LEVELS.VIEW,
+      canEdit: level >= PERMISSION_LEVELS.EDIT,
+      canCreate: level >= PERMISSION_LEVELS.EDIT,
+      canDelete: level >= PERMISSION_LEVELS.MANAGE,
+      canAdmin: level >= PERMISSION_LEVELS.ADMIN,
+      source
+    });
 
-    // Admin a tous les droits
+    // Admin système a tous les droits (niveau 4 sur tout)
     if (isAdmin) {
-      return {
-        level: PERMISSION_LEVELS.ADMIN,
-        canView: true,
-        canEdit: true,
-        canCreate: true,
-        canDelete: true,
-        source: 'default'
-      };
+      return buildPermission(PERMISSION_LEVELS.ADMIN, 'default');
     }
 
     // Chercher l'override utilisateur (priorité 1)
@@ -184,25 +180,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (userOverride) {
       // Si deny = true, bloquer totalement
       if (userOverride.deny) {
-        return {
-          level: PERMISSION_LEVELS.NONE,
-          canView: false,
-          canEdit: false,
-          canCreate: false,
-          canDelete: false,
-          source: 'denied'
-        };
+        return buildPermission(PERMISSION_LEVELS.NONE, 'denied');
       }
 
-      // Appliquer l'override (les champs définis écrasent)
-      return {
-        level: userOverride.level ?? defaultPerm.level,
-        canView: userOverride.can_view ?? defaultPerm.canView,
-        canEdit: userOverride.can_edit ?? defaultPerm.canEdit,
-        canCreate: userOverride.can_create ?? defaultPerm.canCreate,
-        canDelete: userOverride.can_delete ?? defaultPerm.canDelete,
-        source: 'user_override'
-      };
+      // Appliquer l'override
+      const overrideLevel = userOverride.level ?? defaultLevel;
+      return buildPermission(overrideLevel, 'user_override');
     }
 
     // Chercher la permission du rôle (priorité 2)
@@ -214,21 +197,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (rolePerm) {
-      return {
-        level: rolePerm.level ?? PERMISSION_LEVELS.NONE,
-        canView: rolePerm.can_view ?? false,
-        canEdit: rolePerm.can_edit ?? false,
-        canCreate: rolePerm.can_create ?? false,
-        canDelete: rolePerm.can_delete ?? false,
-        source: 'role'
-      };
+      const roleLevel = rolePerm.level ?? PERMISSION_LEVELS.NONE;
+      return buildPermission(roleLevel, 'role');
     }
 
     // Retourner la permission par défaut du scope
-    return defaultPerm;
+    return buildPermission(defaultLevel, 'default');
   }, [scopes, userOverrides, rolePermissions, isAdmin]);
 
-  // Helpers de permissions
+  // Helpers de permissions - mapping générique des niveaux
+  // canViewScope   => level >= 1 (Lecture)
+  // canEditScope   => level >= 2 (Écriture)
+  // canCreateScope => level >= 2 (Écriture)
+  // canDeleteScope => level >= 3 (Gestion)
+  // canAdminScope  => level >= 4 (Admin)
+  
   const canViewScope = useCallback((scopeSlug: string): boolean => {
     if (isAdmin) return true;
     return getEffectivePermission(scopeSlug).canView;
@@ -249,6 +232,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return getEffectivePermission(scopeSlug).canDelete;
   }, [getEffectivePermission, isAdmin]);
 
+  const canAdminScope = useCallback((scopeSlug: string): boolean => {
+    if (isAdmin) return true;
+    return getEffectivePermission(scopeSlug).canAdmin;
+  }, [getEffectivePermission, isAdmin]);
+
   const hasCapability = useCallback((capability: string): boolean => {
     if (isAdmin) return true;
     return capabilities.some(c => c.capability === capability && c.is_active);
@@ -263,7 +251,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isAdmin) return true;
     if (!roleAgence) return true;
     
-    // Utiliser le nouveau système si possible
     const perm = getEffectivePermission(blockId);
     return perm.canView;
   }, [isAdmin, roleAgence, getEffectivePermission]);
@@ -289,14 +276,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsSupport(hasSupportRole);
       setIsFranchiseur(hasFranchiseur);
 
-      // Charger le profil (avec role_id nouvellement ajouté)
+      // Charger le profil
       const { data: profile } = await supabase
         .from('profiles')
         .select('must_change_password, role_agence, agence')
         .eq('id', userId)
         .single();
       
-      // Charger role_id séparément car le type n'est pas encore mis à jour
+      // Charger role_id séparément
       const { data: profileWithRoleId } = await (supabase as any)
         .from('profiles')
         .select('role_id')
@@ -435,11 +422,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       agence,
       userPermissions,
       isLoggingOut,
-      // Nouveaux helpers
+      // Nouveaux helpers (5 niveaux)
       canViewScope,
       canEditScope,
       canCreateScope,
       canDeleteScope,
+      canAdminScope,
       getEffectivePermission,
       hasCapability,
       // Compatibilité
