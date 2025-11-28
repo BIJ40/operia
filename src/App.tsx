@@ -66,6 +66,11 @@ const AdminStorageQuota = lazy(() => import("./pages/AdminStorageQuota"));
 const AdminCacheBackup = lazy(() => import("./pages/AdminCacheBackup"));
 const AdminUserActivity = lazy(() => import("./pages/AdminUserActivity"));
 
+// Lazy loaded pages - Permissions
+const PermissionsGroups = lazy(() => import("./pages/admin/permissions/PermissionsGroups"));
+const PermissionsUsers = lazy(() => import("./pages/admin/permissions/PermissionsUsers"));
+const PermissionsMatrix = lazy(() => import("./pages/admin/permissions/PermissionsMatrix"));
+
 // Lazy loaded pages - User
 const Profile = lazy(() => import("./pages/Profile"));
 const Favorites = lazy(() => import("./pages/Favorites"));
@@ -168,6 +173,11 @@ function AppContent() {
           <Route path="/admin/storage-quota" element={<MainLayout><AdminStorageQuota /></MainLayout>} />
           <Route path="/admin/cache-backup" element={<MainLayout><AdminCacheBackup /></MainLayout>} />
           <Route path="/admin/user-activity" element={<MainLayout><AdminUserActivity /></MainLayout>} />
+          
+          {/* Permissions Management */}
+          <Route path="/admin/permissions/groups" element={<MainLayout><PermissionsGroups /></MainLayout>} />
+          <Route path="/admin/permissions/users" element={<MainLayout><PermissionsUsers /></MainLayout>} />
+          <Route path="/admin/permissions/matrix" element={<MainLayout><PermissionsMatrix /></MainLayout>} />
           
           {/* User pages */}
           <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />

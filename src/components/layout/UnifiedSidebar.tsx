@@ -2,7 +2,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   Headset, MessageSquare, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Shield, Database, Activity, ChevronRight, Home
+  Coins, Settings, Users, Shield, Database, Activity, ChevronRight, Home, User, Grid3X3
 } from 'lucide-react';
 import {
   Sidebar,
@@ -128,7 +128,16 @@ export function UnifiedSidebar() {
       labelKey: 'admin',
       items: [
         { title: 'Utilisateurs', url: '/admin/users', icon: Users, scope: 'admin_users', description: 'Gérer les comptes utilisateurs' },
-        { title: 'Rôles & Permissions', url: '/admin/role-permissions', icon: Shield, scope: 'admin_roles', description: 'Configurer les droits d\'accès' },
+        { 
+          title: 'Permissions', 
+          icon: Shield, 
+          scope: 'admin_roles',
+          children: [
+            { title: 'Groupes', url: '/admin/permissions/groups', icon: Users, scope: 'admin_roles', description: 'Gérer les groupes et leurs permissions' },
+            { title: 'Utilisateurs', url: '/admin/permissions/users', icon: User, scope: 'admin_roles', description: 'Permissions individuelles' },
+            { title: 'Matrice', url: '/admin/permissions/matrix', icon: Grid3X3, scope: 'admin_roles', description: 'Vue matricielle globale' },
+          ]
+        },
         { title: 'Agences', url: '/admin/agencies', icon: Building2, scope: 'admin_settings' },
         { title: 'Sauvegardes', url: '/admin/backup', icon: Database, scope: 'admin_backup' },
         { title: 'Activité', url: '/admin/user-activity', icon: Activity, scope: 'admin_settings' },
