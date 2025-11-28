@@ -72,12 +72,12 @@ export function UserPermissionsSection({ userId, userRole }: UserPermissionsSect
       const existingOverride = overrides.find(o => o.scope_id === scope.id);
       
       if (existingOverride) {
-        // Toggle: si deny ou level=0, donner level=1 (lecture), sinon deny
+        // Toggle: si deny ou level=0, donner level=3 (gestion), sinon deny
         if (existingOverride.deny || (existingOverride.level !== null && existingOverride.level === 0)) {
-          // Donner accès lecture
+          // Donner accès gestion (level=3)
           await supabase
             .from('user_permissions')
-            .update({ level: 1, deny: false })
+            .update({ level: 3, deny: false })
             .eq('id', existingOverride.id);
         } else {
           // Bloquer
@@ -87,14 +87,14 @@ export function UserPermissionsSection({ userId, userRole }: UserPermissionsSect
             .eq('id', existingOverride.id);
         }
       } else {
-        // Créer un override qui bloque (inverse du défaut)
+        // Créer un override: bloquer si déjà accès par défaut, sinon donner level=3
         const defaultHasAccess = (scope.default_level ?? 0) > 0;
         await supabase
           .from('user_permissions')
           .insert({
             user_id: userId,
             scope_id: scope.id,
-            level: defaultHasAccess ? 0 : 1,
+            level: defaultHasAccess ? 0 : 3, // Level 3 = gestion complète
             deny: defaultHasAccess,
           });
       }
