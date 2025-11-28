@@ -60,8 +60,30 @@ export default function PermissionsUsers() {
     if (selectedUser) {
       if (level === null && !deny) {
         deleteUserPermission.mutate({ userId: selectedUser.id, scopeId });
+        // Update local state - remove override
+        setSelectedUser({
+          ...selectedUser,
+          overrides: selectedUser.overrides.filter(o => o.scope_id !== scopeId)
+        });
       } else {
         upsertUserPermission.mutate({ userId: selectedUser.id, scopeId, level, deny });
+        // Update local state - add/update override
+        const existingIndex = selectedUser.overrides.findIndex(o => o.scope_id === scopeId);
+        const existingOverride = existingIndex >= 0 ? selectedUser.overrides[existingIndex] : null;
+        const newOverride = { 
+          id: existingOverride?.id || 'temp-' + scopeId, 
+          user_id: selectedUser.id,
+          scope_id: scopeId, 
+          level: level ?? 0, 
+          deny: deny 
+        };
+        const newOverrides = existingIndex >= 0
+          ? selectedUser.overrides.map((o, i) => i === existingIndex ? newOverride : o)
+          : [...selectedUser.overrides, newOverride];
+        setSelectedUser({
+          ...selectedUser,
+          overrides: newOverrides
+        });
       }
     }
   };
