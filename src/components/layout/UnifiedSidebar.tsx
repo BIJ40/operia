@@ -107,15 +107,23 @@ export function UnifiedSidebar() {
         { title: 'Actions à Mener', url: '/actions-a-mener', icon: ListTodo, scope: 'actions_a_mener', description: 'Suivi des actions et tâches en cours' },
         { title: 'Diffusion', url: '/diffusion', icon: Tv, scope: 'diffusion', description: 'Mode affichage TV agence', badge: 'En cours' },
       ],
+      minRole: 'franchisee_admin', // N2+ pour pilotage agence
     },
     {
       label: 'Support',
       labelKey: 'support',
       items: [
         { title: 'Mes Demandes', url: '/mes-demandes', icon: MessageSquare, scope: 'mes_demandes', description: 'Créer et suivre vos demandes de support' },
+      ],
+      // Pas de minRole - accessible à tous les utilisateurs connectés (N0+)
+    },
+    {
+      label: 'Gestion Support',
+      labelKey: 'support-admin',
+      items: [
         { title: 'Gestion Tickets', url: '/admin/support', icon: Headset, scope: 'support_tickets', description: 'Traiter les demandes de support' },
       ],
-      minRole: 'franchisor_user', // N3+ pour support
+      minRole: 'franchisor_user', // N3+ pour gestion tickets
     },
     {
       label: 'Réseau Franchiseur',
