@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { setApiBaseUrl } from '@/apogee-connect/services/api';
 import { DataService } from '@/apogee-connect/services/dataService';
+import { logApogee } from '@/lib/logger';
 
 interface Agency {
   id: string;
@@ -32,20 +33,20 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Ne rien faire tant que l'authentification charge
     if (isAuthLoading) {
-      console.log('⏳ Authentification en cours - Attente avant configuration API');
+      logApogee.debug('Authentification en cours - Attente avant configuration API');
       return;
     }
 
     // Auth OK mais aucune agence
     if (!agence) {
-      console.warn('⚠️ Aucune agence définie pour l\'utilisateur - BASE_URL ne sera pas initialisée');
+      logApogee.warn('Aucune agence définie pour l\'utilisateur - BASE_URL ne sera pas initialisée');
       setApiBaseUrl("");
       return;
     }
 
     // Auth OK et agence présente
     if (currentAgency?.baseUrl) {
-      console.log(`🏢 Configuration de l'agence: ${currentAgency.id}`);
+      logApogee.info(`Configuration de l'agence: ${currentAgency.id}`);
       setApiBaseUrl(currentAgency.baseUrl);
       DataService.clearCache();
     }

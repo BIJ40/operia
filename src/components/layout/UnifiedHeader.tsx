@@ -17,49 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-
-const pageTitles: Record<string, string> = {
-  '/': 'Tableau de bord',
-  // HELP Academy
-  '/apogee': 'Guide Apogée',
-  '/apporteurs': 'Guide Apporteurs',
-  '/helpconfort': 'Base Documentaire',
-  '/documents': 'Documents',
-  // Pilotage
-  '/mes-indicateurs': 'Indicateurs généraux',
-  '/mes-indicateurs/apporteurs': 'Indicateurs Apporteurs',
-  '/mes-indicateurs/univers': 'Indicateurs Univers',
-  '/mes-indicateurs/techniciens': 'Indicateurs Techniciens',
-  '/mes-indicateurs/sav': 'Indicateurs SAV',
-  '/actions-a-mener': 'Actions à Mener',
-  '/diffusion': 'Mode Diffusion',
-  // Support
-  '/mes-demandes': 'Mes Demandes',
-  '/support': 'Support',
-  '/support-tickets': 'Mes Tickets',
-  // Franchiseur
-  '/tete-de-reseau': 'Dashboard Réseau',
-  '/tete-de-reseau/agences': 'Agences du Réseau',
-  '/tete-de-reseau/stats': 'Statistiques Réseau',
-  '/tete-de-reseau/comparatifs': 'Comparatifs',
-  '/tete-de-reseau/redevances': 'Redevances',
-  '/tete-de-reseau/parametres': 'Paramètres Réseau',
-  // Admin
-  '/admin': 'Administration',
-  '/admin/support': 'Gestion Tickets',
-  '/admin/users': 'Gestion Utilisateurs',
-  '/admin/users-list': 'Liste Utilisateurs',
-  '/admin/role-permissions': 'Rôles & Permissions',
-  '/admin/agencies': 'Gestion Agences',
-  '/admin/backup': 'Sauvegardes',
-  '/admin/documents': 'Documents Admin',
-  '/admin/user-activity': 'Activité Utilisateurs',
-  '/admin/storage-quota': 'Quota Stockage',
-  '/admin/cache-backup': 'Cache & Backup',
-  // User
-  '/profile': 'Mon Profil',
-  '/favorites': 'Mes Favoris',
-};
+import { getPageTitle } from '@/config/navigation';
 
 export function UnifiedHeader() {
   const location = useLocation();
@@ -68,20 +26,8 @@ export function UnifiedHeader() {
   const { toggleSidebar } = useSidebar();
   const { hasNewTickets, newTicketsCount } = useSupportNotifications();
 
-  // Get dynamic page title
-  const getPageTitle = () => {
-    // Check exact match first
-    if (pageTitles[location.pathname]) {
-      return pageTitles[location.pathname];
-    }
-    // Check for prefix matches
-    for (const [path, title] of Object.entries(pageTitles)) {
-      if (location.pathname.startsWith(path) && path !== '/') {
-        return title;
-      }
-    }
-    return 'HC Services';
-  };
+  // Get dynamic page title from centralized config
+  const currentPageTitle = getPageTitle(location.pathname);
 
   // Check if current page is editable (guides)
   const isEditablePage = location.pathname.startsWith('/apogee') || 
@@ -131,7 +77,7 @@ export function UnifiedHeader() {
           {/* Page title - centered */}
           <div className="flex-1 flex justify-center">
             <h1 className="text-lg font-semibold text-foreground truncate">
-              {getPageTitle()}
+              {currentPageTitle}
             </h1>
           </div>
 

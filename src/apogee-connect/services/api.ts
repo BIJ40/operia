@@ -1,9 +1,10 @@
 import { APOGEE_ENDPOINTS } from '@/apogee-connect/types/endpoints';
+import { logApogee } from '@/lib/logger';
 
 const API_KEY = import.meta.env.VITE_APOGEE_API_KEY;
 
 if (!API_KEY) {
-  console.warn("⚠️ VITE_APOGEE_API_KEY non définie - les appels à l'API Apogée risquent d'échouer.");
+  logApogee.warn('VITE_APOGEE_API_KEY non définie - les appels à l\'API Apogée risquent d\'échouer.');
 }
 
 // BASE_URL sera définie dynamiquement par AgencyContext via setApiBaseUrl
@@ -13,9 +14,9 @@ let BASE_URL = "";
 export function setApiBaseUrl(url: string) {
   BASE_URL = url;
   if (url) {
-    console.log('✅ BASE_URL configurée:', url);
+    logApogee.debug('BASE_URL configurée:', url);
   } else {
-    console.log('⚠️ BASE_URL réinitialisée (vide)');
+    logApogee.debug('BASE_URL réinitialisée (vide)');
   }
 }
 
@@ -37,7 +38,7 @@ interface ApiResponse<T> {
 async function apiCall<T>(endpoint: string, additionalData?: Record<string, any>): Promise<T> {
   // GUARD: Ne jamais appeler l'API si BASE_URL n'est pas définie
   if (!BASE_URL) {
-    console.warn(`⚠️ BASE_URL non définie - appel API annulé pour ${endpoint}`);
+    logApogee.warn(`BASE_URL non définie - appel API annulé pour ${endpoint}`);
     throw new Error("BASE_URL non définie - veuillez vous connecter avec une agence valide");
   }
 
@@ -56,7 +57,7 @@ async function apiCall<T>(endpoint: string, additionalData?: Record<string, any>
     });
 
     if (!response.ok) {
-      console.error(`❌ API Apogée erreur ${endpoint}`, {
+      logApogee.error(`Erreur ${endpoint}`, {
         url,
         status: response.status,
         statusText: response.statusText,
@@ -67,7 +68,7 @@ async function apiCall<T>(endpoint: string, additionalData?: Record<string, any>
     const result = await response.json();
     return result;
   } catch (error) {
-    console.error(`❌ API Apogée exception ${endpoint}:`, {
+    logApogee.error(`Exception ${endpoint}:`, {
       url,
       error: error instanceof Error ? error.message : error,
     });
@@ -109,7 +110,7 @@ export const api = {
    */
   getInterventionsCreneaux: async (filters?: Record<string, any>) => {
     if (!BASE_URL) {
-      console.warn(`⚠️ BASE_URL non définie - impossible d'appeler ${APOGEE_ENDPOINTS.CRENEAUX}`);
+      logApogee.warn(`BASE_URL non définie - impossible d'appeler ${APOGEE_ENDPOINTS.CRENEAUX}`);
       return [];
     }
     
@@ -117,7 +118,7 @@ export const api = {
       return await apiCall(APOGEE_ENDPOINTS.CRENEAUX, filters);
     } catch (error) {
       // Ce endpoint peut échouer en CORS sur certaines configurations
-      console.warn(`⚠️ ${APOGEE_ENDPOINTS.CRENEAUX} non disponible (possible CORS):`, error);
+      logApogee.warn(`${APOGEE_ENDPOINTS.CRENEAUX} non disponible (possible CORS):`, error);
       return [];
     }
   },
