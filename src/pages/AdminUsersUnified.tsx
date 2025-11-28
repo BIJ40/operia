@@ -16,7 +16,7 @@ import {
   MODULE_DEFINITIONS, 
   EnabledModules,
   ModuleOptionsState,
-  ModuleKey 
+  ModuleKey
 } from '@/types/modules';
 import { 
   getGlobalRoleFromLegacy, 
@@ -30,6 +30,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
   Select, 
@@ -54,6 +55,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Users, 
@@ -73,7 +82,8 @@ import {
   UserCog,
   Zap,
   Eye,
-  Wand2
+  Wand2,
+  UserPlus
 } from 'lucide-react';
 import {
   Tooltip,
@@ -140,6 +150,18 @@ export default function AdminUsersUnified() {
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(0);
+  
+  // Create user dialog
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    agence: '',
+    globalRole: 'franchisee_user' as GlobalRole,
+    sendEmail: true,
+  });
   
   // Track modified rows
   const [modifiedUsers, setModifiedUsers] = useState<Record<string, {
@@ -360,6 +382,35 @@ export default function AdminUsersUnified() {
     },
   });
 
+  // Create user mutation
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: typeof newUserData) => {
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: userData,
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Utilisateur créé avec succès');
+      setShowCreateDialog(false);
+      setNewUserData({
+        email: '',
+        password: '',
+        firstName: '',
+        lastName: '',
+        agence: '',
+        globalRole: 'franchisee_user',
+        sendEmail: true,
+      });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+
   // Apply V2 suggestion
   const applyV2 = (user: typeof usersWithSuggestions[0]) => {
     if (!user.suggestedGlobalRole) return;
@@ -540,6 +591,12 @@ export default function AdminUsersUnified() {
           <Badge variant="outline" className="text-lg px-4 py-2">
             {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
           </Badge>
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Nouvel utilisateur
+          </Button>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -929,6 +986,128 @@ export default function AdminUsersUnified() {
             </Button>
           </div>
         )}
+
+        {/* Create User Dialog */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5" />
+                Nouvel utilisateur
+              </DialogTitle>
+              <DialogDescription>
+                Créer un nouveau compte utilisateur avec le système V2
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">Prénom *</Label>
+                  <Input
+                    id="firstName"
+                    value={newUserData.firstName}
+                    onChange={(e) => setNewUserData(prev => ({ ...prev, firstName: e.target.value }))}
+                    placeholder="Jean"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Nom *</Label>
+                  <Input
+                    id="lastName"
+                    value={newUserData.lastName}
+                    onChange={(e) => setNewUserData(prev => ({ ...prev, lastName: e.target.value }))}
+                    placeholder="Dupont"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newUserData.email}
+                  onChange={(e) => setNewUserData(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="jean.dupont@agence.fr"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Mot de passe temporaire *</Label>
+                <Input
+                  id="password"
+                  type="text"
+                  value={newUserData.password}
+                  onChange={(e) => setNewUserData(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="Min 8 car. avec Maj, min, chiffre, symbole"
+                />
+                <p className="text-xs text-muted-foreground">
+                  L'utilisateur devra le changer à la première connexion
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="agence">Agence</Label>
+                <Input
+                  id="agence"
+                  value={newUserData.agence}
+                  onChange={(e) => setNewUserData(prev => ({ ...prev, agence: e.target.value }))}
+                  placeholder="Nom de l'agence"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="globalRole">Rôle global V2</Label>
+                <Select
+                  value={newUserData.globalRole}
+                  onValueChange={(v) => setNewUserData(prev => ({ ...prev, globalRole: v as GlobalRole }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un rôle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {assignableRoles.map(role => (
+                      <SelectItem key={role} value={role}>
+                        N{GLOBAL_ROLES[role]} – {GLOBAL_ROLE_LABELS[role]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="sendEmail"
+                  checked={newUserData.sendEmail}
+                  onCheckedChange={(checked) => setNewUserData(prev => ({ ...prev, sendEmail: checked }))}
+                />
+                <Label htmlFor="sendEmail">Envoyer l'email avec les identifiants</Label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                Annuler
+              </Button>
+              <Button
+                onClick={() => createUserMutation.mutate(newUserData)}
+                disabled={
+                  createUserMutation.isPending ||
+                  !newUserData.email ||
+                  !newUserData.password ||
+                  !newUserData.firstName ||
+                  !newUserData.lastName
+                }
+              >
+                {createUserMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <UserPlus className="w-4 h-4 mr-2" />
+                )}
+                Créer l'utilisateur
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
   );

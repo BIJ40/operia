@@ -143,7 +143,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     title: 'Utilisateurs',
     description: 'Gestion des comptes utilisateurs',
     icon: Users,
-    route: '/admin/users',  // Hub page
+    route: '/admin/users',  // V2 unified page
     scopeSlug: 'admin_users',
     color: 'primary',
     group: 'admin',
