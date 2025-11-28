@@ -22,7 +22,7 @@ const AVAILABLE_PERMISSIONS = [
   { scope: 'apogee', label: 'Guide Apogée', description: 'Accès au guide Apogée' },
   { scope: 'apporteurs', label: 'Guide Apporteurs', description: 'Accès au guide Apporteurs' },
   { scope: 'helpconfort', label: 'Guide HelpConfort', description: 'Accès au guide HelpConfort' },
-  { scope: 'mes_indicateurs', label: 'Mes Indicateurs', description: 'Accès aux KPIs et statistiques' },
+  { scope: 'mes_indicateurs', label: 'Indicateurs généraux', description: 'Accès aux KPIs et statistiques' },
 ];
 
 export function UserPermissionsSection({ userId, userRole }: UserPermissionsSectionProps) {

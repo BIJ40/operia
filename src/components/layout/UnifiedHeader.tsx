@@ -26,7 +26,7 @@ const pageTitles: Record<string, string> = {
   '/helpconfort': 'Base Documentaire',
   '/documents': 'Documents',
   // Pilotage
-  '/mes-indicateurs': 'Mes Indicateurs',
+  '/mes-indicateurs': 'Indicateurs généraux',
   '/mes-indicateurs/apporteurs': 'Indicateurs Apporteurs',
   '/mes-indicateurs/univers': 'Indicateurs Univers',
   '/mes-indicateurs/techniciens': 'Indicateurs Techniciens',

@@ -25,7 +25,7 @@ const MAIN_CATEGORIES = [
   { id: 'apogee', name: 'Guide Apogée', description: 'Documentation Apogée' },
   { id: 'apporteurs', name: 'Guide Apporteurs', description: 'Documentation Apporteurs' },
   { id: 'helpconfort', name: 'Base HelpConfort', description: 'Documentation HelpConfort' },
-  { id: 'mes_indicateurs', name: 'Mes indicateurs', description: 'KPIs et statistiques agence' },
+  { id: 'mes_indicateurs', name: 'Indicateurs généraux', description: 'KPIs et statistiques agence' },
   { id: 'actions_a_mener', name: 'Actions à mener', description: 'Suivi des dossiers à traiter' },
   { id: 'mes_demandes', name: 'Mes demandes de support', description: 'Tickets et historique support' },
 ];
