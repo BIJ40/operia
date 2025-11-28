@@ -42,11 +42,12 @@ export function useSupportNotifications() {
 
     // Charger le nombre de tickets en attente et assignés
     const loadTickets = async () => {
-      // Tickets en attente NON ENCORE VUS par le support OU non pris en charge (assigned_to null)
+      // Tickets nouveaux (new) ou en attente utilisateur (waiting_user, waiting legacy)
+      // NON ENCORE VUS par le support OU non pris en charge (assigned_to null)
       const { count: waitingCount, error: waitingError } = await supabase
         .from('support_tickets')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'waiting')
+        .in('status', ['new', 'waiting', 'waiting_user'])
         .or('viewed_by_support_at.is.null,assigned_to.is.null');
 
       // Tickets assignés à moi (en cours)

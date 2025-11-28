@@ -332,14 +332,25 @@ export default function AdminSupportTickets() {
               </CardContent>
             </Card>
             <Card 
-              className={getCardClassName('waiting')}
-              onClick={() => setFilters({ ...filters, status: 'waiting' })}
+              className={getCardClassName('new')}
+              onClick={() => setFilters({ ...filters, status: 'new' })}
             >
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">En attente</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Nouveaux</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{stats.waiting}</div>
+                <div className="text-2xl font-bold text-blue-600">{stats.newTickets}</div>
+              </CardContent>
+            </Card>
+            <Card 
+              className={getCardClassName('waiting_user')}
+              onClick={() => setFilters({ ...filters, status: 'waiting_user' })}
+            >
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Attente utilisateur</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{stats.waitingUser}</div>
               </CardContent>
             </Card>
             <Card 
@@ -350,7 +361,7 @@ export default function AdminSupportTickets() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">En cours</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
+                <div className="text-2xl font-bold text-yellow-600">{stats.inProgress}</div>
               </CardContent>
             </Card>
             <Card 
@@ -365,14 +376,14 @@ export default function AdminSupportTickets() {
               </CardContent>
             </Card>
             <Card 
-              className={getCardClassName('unresolved')}
-              onClick={() => setFilters({ ...filters, status: 'unresolved' })}
+              className={getCardClassName('closed')}
+              onClick={() => setFilters({ ...filters, status: 'closed' })}
             >
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Non résolus</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Fermés</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{stats.unresolved}</div>
+                <div className="text-2xl font-bold text-gray-600">{stats.closed}</div>
               </CardContent>
             </Card>
           </div>
