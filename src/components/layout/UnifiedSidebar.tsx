@@ -48,9 +48,9 @@ export function UnifiedSidebar() {
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['help-academy', 'pilotage']));
   
   // V2 role checks
-  const canAccessFranchiseur = useHasGlobalRole('franchisor_user');
-  const canAccessAdmin = useHasGlobalRole('platform_admin');
-  const canAccessSupport = useHasGlobalRole('franchisor_user'); // N3+ peut voir support
+  const canAccessFranchiseeAdmin = useHasGlobalRole('franchisee_admin'); // N2+
+  const canAccessFranchiseur = useHasGlobalRole('franchisor_user'); // N3+
+  const canAccessAdmin = useHasGlobalRole('platform_admin'); // N5+
 
   // Check if currently in edit mode (admin legacy pour édition)
   const isInEditMode = searchParams.get('edit') === 'true' && isAdmin;
@@ -157,8 +157,8 @@ export function UnifiedSidebar() {
   const filteredGroups = navGroups.filter(group => {
     if (!group.minRole) return true;
     if (group.minRole === 'platform_admin') return canAccessAdmin;
-    if (group.minRole === 'franchisor_user') return canAccessFranchiseur || canAccessSupport;
-    if (group.minRole === 'franchisee_admin') return true; // N2+ handled by scope filtering
+    if (group.minRole === 'franchisor_user') return canAccessFranchiseur;
+    if (group.minRole === 'franchisee_admin') return canAccessFranchiseeAdmin;
     return true;
   });
 
