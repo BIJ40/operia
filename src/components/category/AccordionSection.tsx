@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { GripVertical, Plus, Lightbulb, Edit2, Copy, FolderInput, Trash2, ChevronDown, Info, Clock, Sparkles, Ban } from 'lucide-react';
+import { GripVertical, Plus, Lightbulb, Edit2, Copy, FolderInput, Trash2, ChevronDown, Info, Clock, Sparkles, Ban, RefreshCw } from 'lucide-react';
 import { createSanitizedHtml } from '@/lib/sanitize';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import {
@@ -28,6 +28,14 @@ const isSectionNew = (completedAt?: string) => {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   return new Date(completedAt) > sevenDaysAgo;
+};
+
+// Helper to check if section was recently updated (within 7 days)
+const isSectionUpdated = (contentUpdatedAt?: string | null) => {
+  if (!contentUpdatedAt) return false;
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  return new Date(contentUpdatedAt) > sevenDaysAgo;
 };
 
 interface AccordionSectionProps {
@@ -64,6 +72,7 @@ export function AccordionSection({
   onAddTips,
 }: AccordionSectionProps) {
   const isNew = isSectionNew(section.completedAt);
+  const isUpdated = isSectionUpdated(section.contentUpdatedAt);
   const isEmptySection = section.isEmpty === true;
   
   return (
@@ -121,6 +130,12 @@ export function AccordionSection({
               <span className="bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 New
+              </span>
+            )}
+            {!isEmptySection && isUpdated && !isNew && !section.isInProgress && (
+              <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-1">
+                <RefreshCw className="w-3 h-3" />
+                M.A.J
               </span>
             )}
             {!isEditMode && !isAdmin && !isEmptySection && (
