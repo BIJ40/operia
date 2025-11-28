@@ -359,44 +359,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadPermissionsData]);
 
   useEffect(() => {
-    let hasHandledInitial = false;
-
-    const init = async () => {
-      console.log('[AuthContext] init() démarré');
-      const { data: { session }, error } = await supabase.auth.getSession();
-      console.log('[AuthContext] getSession résultat:', { hasSession: !!session, userId: session?.user?.id, error });
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        setIsAuthLoading(true);
-        console.log('[AuthContext] Chargement des données utilisateur pour:', session.user.id);
-        await loadUserData(session.user.id);
-        console.log('[AuthContext] loadUserData terminé');
-        setIsAuthLoading(false);
-      } else {
-        console.log('[AuthContext] Pas de session, isAuthLoading = false');
-        setIsAuthLoading(false);
-      }
-      hasHandledInitial = true;
-    };
-
-    init();
-
+    let isInitialized = false;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // Laisser init() gérer TOUS les INITIAL_SESSION
-        if (event === 'INITIAL_SESSION') {
+        // Ignorer INITIAL_SESSION si déjà initialisé par getSession
+        if (event === 'INITIAL_SESSION' && isInitialized) {
           return;
         }
-
+        
         setUser(session?.user ?? null);
-
+        
         if (session?.user) {
-          setIsAuthLoading(true);
-          await loadUserData(session.user.id);
-          setIsAuthLoading(false);
+          // Ne pas recharger si c'est juste INITIAL_SESSION après getSession
+          if (event !== 'INITIAL_SESSION') {
+            setIsAuthLoading(true);
+            await loadUserData(session.user.id);
+            setIsAuthLoading(false);
+          }
         } else {
-          // Reset complet des états
+          // Reset tous les états
           setIsAdmin(false);
           setIsSupport(false);
           setIsFranchiseur(false);
@@ -415,6 +397,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     );
+
+    // Vérifier la session existante
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        setIsAuthLoading(true);
+        await loadUserData(session.user.id);
+        setIsAuthLoading(false);
+      } else {
+        setIsAuthLoading(false);
+      }
+      isInitialized = true;
+    });
 
     return () => subscription.unsubscribe();
   }, [loadUserData]);
@@ -455,7 +451,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       localStorage.removeItem('editMode');
       
-      // Reset TOUS les états (incluant groupPermissions et systemRole)
+      // Reset tous les états
       setIsAdmin(false);
       setIsSupport(false);
       setIsFranchiseur(false);
@@ -467,14 +463,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCapabilities([]);
       setScopes([]);
       setRolePermissions([]);
-      setGroupPermissions([]);
       setUserOverrides([]);
-      setSystemRole(null);
       setUser(null);
+
+      window.location.href = '/';
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
-    } finally {
-      setIsLoggingOut(false);
       window.location.href = '/';
     }
   };
