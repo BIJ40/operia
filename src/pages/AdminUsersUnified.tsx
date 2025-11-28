@@ -1,12 +1,16 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   GLOBAL_ROLES, 
   GLOBAL_ROLE_LABELS, 
   GLOBAL_ROLE_COLORS,
   GlobalRole,
-  getAllRolesSorted 
+  getAllRolesSorted,
+  getAssignableRoles,
+  canManageUsers 
 } from '@/types/globalRoles';
 import { 
   MODULE_DEFINITIONS, 
@@ -121,6 +125,11 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
 
 export default function AdminUsersUnified() {
   const queryClient = useQueryClient();
+  const { globalRole: currentUserRole, isAdmin } = useAuth();
+  
+  // Vérifier que l'utilisateur peut gérer des utilisateurs (N3+ ou admin legacy)
+  const userCanManage = canManageUsers(currentUserRole) || isAdmin;
+  const assignableRoles = useMemo(() => getAssignableRoles(currentUserRole), [currentUserRole]);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -479,6 +488,11 @@ export default function AdminUsersUnified() {
     return 'Sans nom';
   };
 
+  // Rediriger si l'utilisateur n'a pas le droit de gérer des utilisateurs
+  if (!userCanManage) {
+    return <Navigate to="/" replace />;
+  }
+
   if (usersLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -694,13 +708,18 @@ export default function AdminUsersUnified() {
                                 <SelectValue placeholder="Sélectionner un rôle" />
                               </SelectTrigger>
                               <SelectContent>
-                                {getAllRolesSorted().map(role => (
+                                {assignableRoles.map(role => (
                                   <SelectItem key={role} value={role}>
                                     N{GLOBAL_ROLES[role]} – {GLOBAL_ROLE_LABELS[role]}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
+                            {assignableRoles.length < 7 && (
+                              <p className="text-xs text-amber-600">
+                                Vous pouvez assigner des rôles jusqu'à N{currentUserRole ? GLOBAL_ROLES[currentUserRole] : 0}
+                              </p>
+                            )}
                             {user.suggestedGlobalRole && (
                               <p className="text-xs text-muted-foreground">
                                 Suggéré: N{GLOBAL_ROLES[user.suggestedGlobalRole]} – {GLOBAL_ROLE_LABELS[user.suggestedGlobalRole]}

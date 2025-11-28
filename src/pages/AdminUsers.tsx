@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,8 +10,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { z } from 'zod';
 import { Navigate } from 'react-router-dom';
+import { 
+  GLOBAL_ROLES, 
+  GLOBAL_ROLE_LABELS, 
+  GlobalRole,
+  getAssignableRoles,
+  canManageUsers 
+} from '@/types/globalRoles';
 
 interface UserProfile {
   id: string;
@@ -65,11 +73,15 @@ const getRoleLabel = (roleValue: string | null): string => {
 };
 
 export default function AdminUsers() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, globalRole: currentUserRole } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Vérifier que l'utilisateur peut gérer des utilisateurs (N3+ ou admin legacy)
+  const userCanManage = canManageUsers(currentUserRole) || isAdmin;
+  const assignableRoles = useMemo(() => getAssignableRoles(currentUserRole), [currentUserRole]);
   
   // Form fields
   const [email, setEmail] = useState('');
@@ -77,6 +89,7 @@ export default function AdminUsers() {
   const [lastName, setLastName] = useState('');
   const [agence, setAgence] = useState('');
   const [roleAgence, setRoleAgence] = useState('');
+  const [selectedGlobalRole, setSelectedGlobalRole] = useState<GlobalRole | ''>('');
   const [tempPassword, setTempPassword] = useState('');
   const [sendEmail, setSendEmail] = useState(true);
 
@@ -164,6 +177,7 @@ export default function AdminUsers() {
           lastName: lastName.trim(),
           agence: agence.trim() || null,
           roleAgence: roleAgence.trim() || null,
+          globalRole: selectedGlobalRole || null,
           sendEmail
         }
       });
@@ -192,6 +206,7 @@ export default function AdminUsers() {
       setLastName('');
       setAgence('');
       setRoleAgence('');
+      setSelectedGlobalRole('');
       setTempPassword('');
       setSendEmail(true);
       setErrors({});
@@ -207,7 +222,8 @@ export default function AdminUsers() {
     }
   };
 
-  if (!isAdmin) {
+  // Rediriger si l'utilisateur n'a pas le droit de créer des utilisateurs
+  if (!userCanManage) {
     return <Navigate to="/" replace />;
   }
 
@@ -327,6 +343,28 @@ export default function AdminUsers() {
                   </div>
                 </RadioGroup>
                 {errors.roleAgence && <p className="text-xs text-destructive">{errors.roleAgence}</p>}
+              </div>
+
+              {/* Global Role V2 */}
+              <div className="space-y-2 col-span-2">
+                <Label>Rôle global (V2)</Label>
+                <Select value={selectedGlobalRole} onValueChange={(v) => setSelectedGlobalRole(v as GlobalRole)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un rôle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {assignableRoles.map(role => (
+                      <SelectItem key={role} value={role}>
+                        N{GLOBAL_ROLES[role]} – {GLOBAL_ROLE_LABELS[role]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {assignableRoles.length < 7 && (
+                  <p className="text-xs text-amber-600">
+                    Vous pouvez assigner des rôles jusqu'à N{currentUserRole ? GLOBAL_ROLES[currentUserRole] : 0}
+                  </p>
+                )}
               </div>
             </div>
 

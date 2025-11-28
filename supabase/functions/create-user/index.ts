@@ -9,6 +9,19 @@ const corsHeaders = {
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
+// Hiérarchie des rôles V2 (doit correspondre à globalRoles.ts)
+const GLOBAL_ROLES: Record<string, number> = {
+  base_user: 0,
+  franchisee_user: 1,
+  franchisee_admin: 2,
+  franchisor_user: 3,
+  franchisor_admin: 4,
+  platform_admin: 5,
+  superadmin: 6,
+}
+
+const MIN_ROLE_TO_MANAGE_USERS = 3 // N3 (franchisor_user)
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -26,7 +39,7 @@ serve(async (req) => {
       }
     )
 
-    // Vérifier que l'utilisateur qui fait la requête est admin
+    // Vérifier que l'utilisateur qui fait la requête est authentifié
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       throw new Error('Non autorisé')
@@ -45,7 +58,14 @@ serve(async (req) => {
       throw new Error('Non authentifié')
     }
 
-    // Vérifier le rôle admin
+    // Récupérer le profil de l'appelant (global_role V2)
+    const { data: callerProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('global_role')
+      .eq('id', user.id)
+      .single()
+
+    // Vérifier le rôle admin (legacy) OU le global_role V2
     const { data: roleData } = await supabaseAdmin
       .from('user_roles')
       .select('role')
@@ -53,15 +73,36 @@ serve(async (req) => {
       .eq('role', 'admin')
       .single()
 
-    if (!roleData) {
-      throw new Error('Accès refusé - Réservé aux administrateurs')
+    const callerGlobalRoleLevel = callerProfile?.global_role 
+      ? GLOBAL_ROLES[callerProfile.global_role] ?? 0 
+      : 0
+
+    const isLegacyAdmin = !!roleData
+    const canManageUsers = callerGlobalRoleLevel >= MIN_ROLE_TO_MANAGE_USERS || isLegacyAdmin
+
+    if (!canManageUsers) {
+      console.log(`[create-user] Accès refusé pour user ${user.id}: global_role=${callerProfile?.global_role}, isLegacyAdmin=${isLegacyAdmin}`)
+      throw new Error('Accès refusé - Vous devez être N3+ pour gérer des utilisateurs')
     }
 
     // Récupérer les données de la requête
-    const { email, password, firstName, lastName, agence, roleAgence, sendEmail } = await req.json()
+    const { email, password, firstName, lastName, agence, roleAgence, globalRole, sendEmail } = await req.json()
 
     if (!email || !password || !firstName || !lastName) {
       throw new Error('Email, mot de passe, prénom et nom sont requis')
+    }
+
+    // Validation du rôle global demandé (plafonnement)
+    if (globalRole) {
+      const requestedRoleLevel = GLOBAL_ROLES[globalRole] ?? 0
+      
+      // Un utilisateur ne peut assigner un rôle supérieur au sien (sauf legacy admin qui peut tout)
+      if (!isLegacyAdmin && requestedRoleLevel > callerGlobalRoleLevel) {
+        console.log(`[create-user] ESCALADE DE PRIVILÈGES BLOQUÉE: user ${user.id} (N${callerGlobalRoleLevel}) a tenté d'assigner ${globalRole} (N${requestedRoleLevel})`)
+        throw new Error(`Vous ne pouvez pas assigner un rôle supérieur à votre niveau (N${callerGlobalRoleLevel})`)
+      }
+      
+      console.log(`[create-user] Rôle global validé: ${globalRole} (N${requestedRoleLevel}) par user N${callerGlobalRoleLevel}`)
     }
 
     // Validation de l'email
@@ -75,7 +116,6 @@ serve(async (req) => {
     if (!passwordRegex.test(password)) {
       throw new Error('Le mot de passe doit contenir au moins 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole (!@#$%^&*(),.?":{}|<>_-+=[]\\\/)')
     }
-
 
     // Vérifier si l'email existe déjà
     const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers()
@@ -103,14 +143,22 @@ serve(async (req) => {
       throw new Error('Utilisateur non créé')
     }
 
-    // Mettre à jour le profil avec le flag de changement de mot de passe
+    // Mettre à jour le profil avec le flag de changement de mot de passe ET le global_role V2
+    const profileUpdate: Record<string, any> = { 
+      agence: agence || null,
+      role_agence: roleAgence || null,
+      must_change_password: true 
+    }
+    
+    // Ajouter le global_role V2 si fourni
+    if (globalRole) {
+      profileUpdate.global_role = globalRole
+      console.log(`[create-user] Attribution du global_role V2: ${globalRole} à user ${newUser.user.id}`)
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
-      .update({ 
-        agence: agence || null,
-        role_agence: roleAgence || null,
-        must_change_password: true 
-      })
+      .update(profileUpdate)
       .eq('id', newUser.user.id)
 
     if (updateError) {
@@ -221,7 +269,7 @@ serve(async (req) => {
       console.log('Envoi d\'email désactivé par l\'administrateur')
     }
 
-    console.log('Utilisateur créé avec succès:', email)
+    console.log('Utilisateur créé avec succès:', email, globalRole ? `avec rôle ${globalRole}` : '')
 
     return new Response(
       JSON.stringify({ 
