@@ -9,18 +9,65 @@ const corsHeaders = {
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
-// Hiérarchie des rôles V2 (doit correspondre à globalRoles.ts)
+// ============================================================================
+// SYSTÈME DE PERMISSIONS V2.0 - Helpers centralisés
+// ============================================================================
+
 const GLOBAL_ROLES: Record<string, number> = {
-  base_user: 0,
-  franchisee_user: 1,
-  franchisee_admin: 2,
-  franchisor_user: 3,
-  franchisor_admin: 4,
-  platform_admin: 5,
-  superadmin: 6,
+  base_user: 0,        // N0
+  franchisee_user: 1,  // N1
+  franchisee_admin: 2, // N2
+  franchisor_user: 3,  // N3
+  franchisor_admin: 4, // N4
+  platform_admin: 5,   // N5
+  superadmin: 6,       // N6
 }
 
-const MIN_ROLE_TO_MANAGE_USERS = 3 // N3 (franchisor_user)
+const getRoleLevel = (role: string | null): number => {
+  if (!role) return 0
+  return GLOBAL_ROLES[role] ?? 0
+}
+
+// N2+ peut accéder à la gestion utilisateurs
+const canAccessUsersPage = (roleLevel: number): boolean => {
+  return roleLevel >= GLOBAL_ROLES.franchisee_admin // N2+
+}
+
+// N3+ peut gérer des utilisateurs (créer/modifier)
+const canManageUsers = (roleLevel: number): boolean => {
+  return roleLevel >= GLOBAL_ROLES.franchisor_user // N3+
+}
+
+// Vérifier si l'appelant peut créer/modifier un utilisateur cible
+const canEditTarget = (
+  callerLevel: number, 
+  targetLevel: number, 
+  callerAgency: string | null, 
+  targetAgency: string | null
+): { allowed: boolean; reason?: string } => {
+  // N0-N1: ne peuvent pas modifier d'autres utilisateurs
+  if (callerLevel < GLOBAL_ROLES.franchisee_admin) {
+    return { allowed: false, reason: 'Niveau insuffisant pour gérer des utilisateurs' }
+  }
+  
+  // N2 (franchisee_admin): uniquement même agence, max N2
+  if (callerLevel === GLOBAL_ROLES.franchisee_admin) {
+    if (callerAgency !== targetAgency) {
+      return { allowed: false, reason: 'Vous ne pouvez gérer que les utilisateurs de votre agence' }
+    }
+    if (targetLevel > GLOBAL_ROLES.franchisee_admin) {
+      return { allowed: false, reason: 'Vous ne pouvez pas attribuer un rôle supérieur à N2 (Admin agence)' }
+    }
+    return { allowed: true }
+  }
+  
+  // N3+ : accès global, mais plafonnement au niveau de l'appelant
+  if (targetLevel > callerLevel) {
+    return { allowed: false, reason: `Vous ne pouvez pas attribuer un rôle supérieur à N${callerLevel}` }
+  }
+  
+  return { allowed: true }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -39,7 +86,7 @@ serve(async (req) => {
       }
     )
 
-    // Vérifier que l'utilisateur qui fait la requête est authentifié
+    // Vérifier l'authentification
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       throw new Error('Non autorisé')
@@ -58,52 +105,50 @@ serve(async (req) => {
       throw new Error('Non authentifié')
     }
 
-    // Récupérer le profil de l'appelant (global_role V2)
+    // Récupérer le profil de l'appelant
     const { data: callerProfile } = await supabaseAdmin
       .from('profiles')
-      .select('global_role')
+      .select('global_role, agence')
       .eq('id', user.id)
       .single()
 
-    // Vérifier le rôle admin (legacy) OU le global_role V2
-    const { data: roleData } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .single()
+    const callerLevel = getRoleLevel(callerProfile?.global_role)
+    const callerAgency = callerProfile?.agence || null
 
-    const callerGlobalRoleLevel = callerProfile?.global_role 
-      ? GLOBAL_ROLES[callerProfile.global_role] ?? 0 
-      : 0
+    console.log(`[create-user] Appelant: ${user.id}, N${callerLevel}, agence: ${callerAgency}`)
 
-    const isLegacyAdmin = !!roleData
-    const canManageUsers = callerGlobalRoleLevel >= MIN_ROLE_TO_MANAGE_USERS || isLegacyAdmin
-
-    if (!canManageUsers) {
-      console.log(`[create-user] Accès refusé pour user ${user.id}: global_role=${callerProfile?.global_role}, isLegacyAdmin=${isLegacyAdmin}`)
-      throw new Error('Accès refusé - Vous devez être N3+ pour gérer des utilisateurs')
+    // Vérifier les droits de gestion (N3+ requis pour créer, N2 uniquement sa propre agence)
+    if (!canAccessUsersPage(callerLevel)) {
+      console.log(`[create-user] Accès refusé: N${callerLevel} < N2`)
+      throw new Error('Accès refusé - Niveau N2 minimum requis')
     }
 
     // Récupérer les données de la requête
-    const { email, password, firstName, lastName, agence, roleAgence, globalRole, sendEmail } = await req.json()
+    const { email, password, firstName, lastName, agence, globalRole, sendEmail } = await req.json()
 
     if (!email || !password || !firstName || !lastName) {
       throw new Error('Email, mot de passe, prénom et nom sont requis')
     }
 
-    // Validation du rôle global demandé (plafonnement)
-    if (globalRole) {
-      const requestedRoleLevel = GLOBAL_ROLES[globalRole] ?? 0
-      
-      // Un utilisateur ne peut assigner un rôle supérieur au sien (sauf legacy admin qui peut tout)
-      if (!isLegacyAdmin && requestedRoleLevel > callerGlobalRoleLevel) {
-        console.log(`[create-user] ESCALADE DE PRIVILÈGES BLOQUÉE: user ${user.id} (N${callerGlobalRoleLevel}) a tenté d'assigner ${globalRole} (N${requestedRoleLevel})`)
-        throw new Error(`Vous ne pouvez pas assigner un rôle supérieur à votre niveau (N${callerGlobalRoleLevel})`)
+    const targetAgency = agence || null
+    const targetRoleLevel = getRoleLevel(globalRole)
+
+    // N2 ne peut créer que dans sa propre agence
+    if (callerLevel === GLOBAL_ROLES.franchisee_admin) {
+      if (targetAgency !== callerAgency) {
+        console.log(`[create-user] N2 tente de créer hors agence: ${targetAgency} != ${callerAgency}`)
+        throw new Error('Vous ne pouvez créer des utilisateurs que dans votre propre agence')
       }
-      
-      console.log(`[create-user] Rôle global validé: ${globalRole} (N${requestedRoleLevel}) par user N${callerGlobalRoleLevel}`)
     }
+
+    // Validation du rôle cible
+    const editCheck = canEditTarget(callerLevel, targetRoleLevel, callerAgency, targetAgency)
+    if (!editCheck.allowed) {
+      console.log(`[create-user] ESCALADE BLOQUÉE: ${editCheck.reason}`)
+      throw new Error(editCheck.reason || 'Action non autorisée')
+    }
+
+    console.log(`[create-user] Création autorisée: ${globalRole} (N${targetRoleLevel}) par N${callerLevel}`)
 
     // Validation de l'email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -114,7 +159,7 @@ serve(async (req) => {
     // Validation du mot de passe
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/])[A-Za-z\d!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]{8,100}$/;
     if (!passwordRegex.test(password)) {
-      throw new Error('Le mot de passe doit contenir au moins 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole (!@#$%^&*(),.?":{}|<>_-+=[]\\\/)')
+      throw new Error('Le mot de passe doit contenir au moins 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole')
     }
 
     // Vérifier si l'email existe déjà
@@ -123,7 +168,7 @@ serve(async (req) => {
       throw new Error('Cet email est déjà utilisé')
     }
 
-    // Créer l'utilisateur avec le service role
+    // Créer l'utilisateur
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password,
@@ -135,7 +180,7 @@ serve(async (req) => {
     })
 
     if (createError) {
-      console.error('Erreur création utilisateur:', createError)
+      console.error('[create-user] Erreur création:', createError)
       throw createError
     }
 
@@ -143,17 +188,11 @@ serve(async (req) => {
       throw new Error('Utilisateur non créé')
     }
 
-    // Mettre à jour le profil avec le flag de changement de mot de passe ET le global_role V2
+    // Mettre à jour le profil
     const profileUpdate: Record<string, any> = { 
-      agence: agence || null,
-      role_agence: roleAgence || null,
-      must_change_password: true 
-    }
-    
-    // Ajouter le global_role V2 si fourni
-    if (globalRole) {
-      profileUpdate.global_role = globalRole
-      console.log(`[create-user] Attribution du global_role V2: ${globalRole} à user ${newUser.user.id}`)
+      agence: targetAgency,
+      must_change_password: true,
+      global_role: globalRole || 'franchisee_user'
     }
 
     const { error: updateError } = await supabaseAdmin
@@ -162,38 +201,32 @@ serve(async (req) => {
       .eq('id', newUser.user.id)
 
     if (updateError) {
-      console.error('Erreur mise à jour profil:', updateError)
+      console.error('[create-user] Erreur mise à jour profil:', updateError)
       throw new Error('Erreur lors de la mise à jour du profil')
     }
 
-    // Auto-créer l'agence si elle n'existe pas déjà
-    if (agence) {
+    // Auto-créer l'agence si elle n'existe pas
+    if (targetAgency) {
       const { data: existingAgency } = await supabaseAdmin
         .from('apogee_agencies')
         .select('id')
-        .eq('slug', agence.toLowerCase().replace(/[^a-z0-9]/g, '-'))
+        .eq('slug', targetAgency.toLowerCase().replace(/[^a-z0-9]/g, '-'))
         .maybeSingle()
 
       if (!existingAgency) {
-        const agencySlug = agence.toLowerCase().replace(/[^a-z0-9]/g, '-')
-        const { error: agencyError } = await supabaseAdmin
+        const agencySlug = targetAgency.toLowerCase().replace(/[^a-z0-9]/g, '-')
+        await supabaseAdmin
           .from('apogee_agencies')
           .insert({
             slug: agencySlug,
-            label: agence,
+            label: targetAgency,
             is_active: true
           })
-
-        if (agencyError) {
-          console.error('Erreur création agence:', agencyError)
-          // On continue même si la création d'agence échoue
-        } else {
-          console.log('Agence créée automatiquement:', agencySlug)
-        }
+        console.log('[create-user] Agence créée:', agencySlug)
       }
     }
 
-    // Envoyer l'email avec le mot de passe temporaire seulement si demandé
+    // Envoyer l'email
     if (sendEmail !== false) {
       try {
         const emailHtml = `
@@ -220,32 +253,25 @@ serve(async (req) => {
                 </div>
                 <div class="content">
                   <p>Bonjour <strong>${firstName} ${lastName}</strong>,</p>
-                  
                   <p>Votre compte a été créé avec succès. Voici vos identifiants de connexion :</p>
-                  
                   <div class="credentials">
                     <div class="credential-item">
                       <div class="credential-label">📧 Email de connexion :</div>
                       <div class="credential-value">${email}</div>
                     </div>
-                    
                     <div class="credential-item">
                       <div class="credential-label">🔑 Mot de passe temporaire :</div>
                       <div class="credential-value">${password}</div>
                     </div>
                   </div>
-                  
-                  <p><strong>⚠️ Important :</strong> Ce mot de passe est temporaire. Vous devrez le modifier lors de votre première connexion pour des raisons de sécurité.</p>
-                  
+                  <p><strong>⚠️ Important :</strong> Ce mot de passe est temporaire. Vous devrez le modifier lors de votre première connexion.</p>
                   <div style="text-align: center;">
                     <a href="${Deno.env.get('APP_URL') || 'https://www.helpconfort.services'}" class="button">
-                      Se connecter à HelpConfort Services
+                      Se connecter
                     </a>
                   </div>
-                  
                   <div class="footer">
-                    <p>Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet email.</p>
-                    <p>© ${new Date().getFullYear()} HelpConfort Services - Tous droits réservés</p>
+                    <p>© ${new Date().getFullYear()} HelpConfort Services</p>
                   </div>
                 </div>
               </div>
@@ -256,40 +282,30 @@ serve(async (req) => {
         await resend.emails.send({
           from: 'HelpConfort Services <support@helpconfort.services>',
           to: [email],
-          subject: '🎉 Bienvenue sur HelpConfort Services - Vos identifiants de connexion',
+          subject: '🎉 Bienvenue sur HelpConfort Services',
           html: emailHtml,
         })
-
-        console.log('Email envoyé avec succès à:', email)
+        console.log('[create-user] Email envoyé:', email)
       } catch (emailError) {
-        console.error('Erreur envoi email:', emailError)
-        // On continue même si l'email échoue
+        console.error('[create-user] Erreur email:', emailError)
       }
-    } else {
-      console.log('Envoi d\'email désactivé par l\'administrateur')
     }
 
-    console.log('Utilisateur créé avec succès:', email, globalRole ? `avec rôle ${globalRole}` : '')
+    console.log(`[create-user] Succès: ${email} avec rôle ${globalRole || 'franchisee_user'}`)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        user: { 
-          id: newUser.user.id, 
-          email: email 
-        } 
+        user: { id: newUser.user.id, email: email } 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Erreur:', error)
+    console.error('[create-user] Erreur:', error)
     const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })

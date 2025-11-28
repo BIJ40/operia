@@ -139,8 +139,44 @@ export default function AdminUsersUnified() {
   const queryClient = useQueryClient();
   const { globalRole: currentUserRole, isAdmin, user, agence: currentUserAgency } = useAuth();
   
-  // Vérifier que l'utilisateur peut gérer des utilisateurs (N3+ ou admin legacy)
-  const userCanManage = canManageUsers(currentUserRole) || isAdmin;
+  // ============================================================================
+  // PERMISSIONS V2 - Helpers locaux
+  // ============================================================================
+  const currentUserLevel = getRoleLevel(currentUserRole);
+  
+  // N2+ peut accéder à la page
+  const canAccessPage = currentUserLevel >= GLOBAL_ROLES.franchisee_admin || isAdmin;
+  
+  // N3+ peut créer des utilisateurs, N2 uniquement dans sa propre agence
+  const canCreateUsers = currentUserLevel >= GLOBAL_ROLES.franchisee_admin;
+  
+  // N5+ peut supprimer des utilisateurs
+  const canDeleteUsers = currentUserLevel >= GLOBAL_ROLES.platform_admin;
+  
+  // Vérifier si on peut modifier un utilisateur donné
+  const canEditUser = (targetRole: GlobalRole | null, targetAgency: string | null): boolean => {
+    if (currentUserLevel < GLOBAL_ROLES.franchisee_admin) return false;
+    
+    const targetLevel = getRoleLevel(targetRole);
+    
+    // N2: uniquement même agence et max N2
+    if (currentUserLevel === GLOBAL_ROLES.franchisee_admin) {
+      if (currentUserAgency !== targetAgency) return false;
+      if (targetLevel > GLOBAL_ROLES.franchisee_admin) return false;
+      return true;
+    }
+    
+    // N3+: peut modifier si niveau cible <= niveau appelant
+    return targetLevel <= currentUserLevel;
+  };
+  
+  // Vérifier si on peut supprimer un utilisateur donné  
+  const canDeleteUser = (targetRole: GlobalRole | null): boolean => {
+    if (!canDeleteUsers) return false;
+    const targetLevel = getRoleLevel(targetRole);
+    return targetLevel <= currentUserLevel;
+  };
+  
   const assignableRoles = useMemo(() => getAssignableRoles(currentUserRole), [currentUserRole]);
   
   // Filters
@@ -227,9 +263,6 @@ export default function AdminUsersUnified() {
     },
   });
 
-  // Get current user's role level and agency for filtering
-  const currentUserLevel = getRoleLevel(currentUserRole);
-  
   // Calculate suggestions for each user
   const usersWithSuggestions = useMemo(() => {
     if (!users) return [];
@@ -590,8 +623,8 @@ export default function AdminUsersUnified() {
     return 'Sans nom';
   };
 
-  // Rediriger si l'utilisateur n'a pas le droit de gérer des utilisateurs
-  if (!userCanManage) {
+  // Rediriger si l'utilisateur n'a pas le droit d'accéder à la page
+  if (!canAccessPage) {
     return <Navigate to="/" replace />;
   }
 
@@ -626,27 +659,29 @@ export default function AdminUsersUnified() {
             <UserPlus className="w-4 h-4 mr-2" />
             Nouvel utilisateur
           </Button>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => batchMigrateMutation.mutate()}
-                disabled={batchMigrateMutation.isPending}
-              >
-                {batchMigrateMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Wand2 className="w-4 h-4 mr-2" />
-                )}
-                Appliquer V2 à tous
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Migrer tous les utilisateurs vers le système V2.0</p>
-              <p className="text-xs text-muted-foreground">Basé sur leurs rôles legacy</p>
-            </TooltipContent>
-          </Tooltip>
+          {currentUserLevel >= GLOBAL_ROLES.platform_admin && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => batchMigrateMutation.mutate()}
+                  disabled={batchMigrateMutation.isPending}
+                >
+                  {batchMigrateMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-4 h-4 mr-2" />
+                  )}
+                  Appliquer V2 à tous
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Migrer tous les utilisateurs vers le système V2.0</p>
+                <p className="text-xs text-muted-foreground">Basé sur leurs rôles legacy</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
 
         {/* Filters Bar */}
@@ -726,6 +761,8 @@ export default function AdminUsersUnified() {
                 const isModified = !!modifiedUsers[user.id];
                 const status = getStatusIndicator(user);
                 const StatusIcon = status.icon;
+                const userCanBeEdited = canEditUser(user.global_role, user.agence);
+                const userCanBeDeleted = canDeleteUser(user.global_role);
 
                 return (
                   <AccordionItem key={user.id} value={user.id} className="border-0">
@@ -785,30 +822,45 @@ export default function AdminUsersUnified() {
 
                         {/* Actions */}
                         <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => saveChanges(user.id)}
-                            disabled={!isModified || saveMutation.isPending}
-                          >
-                            <Save className="w-4 h-4 mr-1" />
-                            Sauver
-                          </Button>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
+                          {userCanBeEdited ? (
+                            <>
                               <Button
                                 size="sm"
-                                variant="secondary"
-                                onClick={() => applyV2(user)}
-                                disabled={isModified || !user.suggestedGlobalRole || status.status === 'ok' || saveMutation.isPending}
+                                variant="outline"
+                                onClick={() => saveChanges(user.id)}
+                                disabled={!isModified || saveMutation.isPending}
                               >
-                                V2
+                                <Save className="w-4 h-4 mr-1" />
+                                Sauver
                               </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              Appliquer les valeurs V2 suggérées
-                            </TooltipContent>
-                          </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => applyV2(user)}
+                                    disabled={isModified || !user.suggestedGlobalRole || status.status === 'ok' || saveMutation.isPending}
+                                  >
+                                    V2
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Appliquer les valeurs V2 suggérées
+                                </TooltipContent>
+                              </Tooltip>
+                            </>
+                          ) : (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="text-muted-foreground">
+                                  Lecture seule
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Vous ne pouvez pas modifier cet utilisateur (niveau supérieur ou autre agence)
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
                         </div>
                       </div>
                     </AccordionTrigger>
@@ -820,6 +872,9 @@ export default function AdminUsersUnified() {
                           <h4 className="font-medium flex items-center gap-2">
                             <Shield className="w-4 h-4" />
                             Configuration V2
+                            {!userCanBeEdited && (
+                              <Badge variant="outline" className="ml-2 text-muted-foreground">Lecture seule</Badge>
+                            )}
                           </h4>
                           
                           {/* Global Role Selector */}
@@ -828,6 +883,7 @@ export default function AdminUsersUnified() {
                             <Select
                               value={effectiveRole || ''}
                               onValueChange={(v) => handleRoleChange(user.id, v as GlobalRole)}
+                              disabled={!userCanBeEdited}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Sélectionner un rôle" />
@@ -840,7 +896,7 @@ export default function AdminUsersUnified() {
                                 ))}
                               </SelectContent>
                             </Select>
-                            {assignableRoles.length < 7 && (
+                            {userCanBeEdited && assignableRoles.length < 7 && (
                               <p className="text-xs text-amber-600">
                                 Vous pouvez assigner des rôles jusqu'à N{currentUserRole ? GLOBAL_ROLES[currentUserRole] : 0}
                               </p>
@@ -864,9 +920,10 @@ export default function AdminUsersUnified() {
                                   <div key={moduleDef.key} className="border rounded-lg p-3">
                                     <div className="flex items-center justify-between">
                                       <div className="flex items-center gap-2">
-                                        <Switch
+                                <Switch
                                           checked={isEnabled}
                                           onCheckedChange={(checked) => handleModuleToggle(user.id, moduleDef.key, checked)}
+                                          disabled={!userCanBeEdited}
                                         />
                                         <span className="text-sm font-medium">{moduleDef.label}</span>
                                         {moduleDef.options.length > 0 && (
@@ -1079,10 +1136,16 @@ export default function AdminUsersUnified() {
                 <Label htmlFor="agence">Agence</Label>
                 <Input
                   id="agence"
-                  value={newUserData.agence}
+                  value={currentUserLevel === GLOBAL_ROLES.franchisee_admin ? (currentUserAgency || '') : newUserData.agence}
                   onChange={(e) => setNewUserData(prev => ({ ...prev, agence: e.target.value }))}
                   placeholder="Nom de l'agence"
+                  disabled={currentUserLevel === GLOBAL_ROLES.franchisee_admin}
                 />
+                {currentUserLevel === GLOBAL_ROLES.franchisee_admin && (
+                  <p className="text-xs text-amber-600">
+                    En tant que N2, vous ne pouvez créer que dans votre agence
+                  </p>
+                )}
               </div>
               
               <div className="space-y-2">

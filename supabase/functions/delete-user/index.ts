@@ -6,6 +6,50 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// ============================================================================
+// SYSTÈME DE PERMISSIONS V2.0 - Helpers centralisés
+// ============================================================================
+
+const GLOBAL_ROLES: Record<string, number> = {
+  base_user: 0,        // N0
+  franchisee_user: 1,  // N1
+  franchisee_admin: 2, // N2
+  franchisor_user: 3,  // N3
+  franchisor_admin: 4, // N4
+  platform_admin: 5,   // N5
+  superadmin: 6,       // N6
+}
+
+const getRoleLevel = (role: string | null): number => {
+  if (!role) return 0
+  return GLOBAL_ROLES[role] ?? 0
+}
+
+// N5+ (platform_admin) peut supprimer des utilisateurs
+const canDeleteUsers = (roleLevel: number): boolean => {
+  return roleLevel >= GLOBAL_ROLES.platform_admin // N5+
+}
+
+// Vérifier si l'appelant peut supprimer un utilisateur cible
+const canDeleteTarget = (
+  callerLevel: number, 
+  targetLevel: number, 
+  callerAgency: string | null, 
+  targetAgency: string | null
+): { allowed: boolean; reason?: string } => {
+  // Seuls N5+ peuvent supprimer
+  if (!canDeleteUsers(callerLevel)) {
+    return { allowed: false, reason: 'Niveau N5 minimum requis pour supprimer des utilisateurs' }
+  }
+  
+  // Ne peut pas supprimer quelqu'un de niveau supérieur
+  if (targetLevel > callerLevel) {
+    return { allowed: false, reason: 'Vous ne pouvez pas supprimer un utilisateur de niveau supérieur' }
+  }
+  
+  return { allowed: true }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -23,7 +67,7 @@ serve(async (req) => {
       }
     )
 
-    // Vérifier que l'utilisateur qui fait la requête est admin
+    // Vérifier l'authentification
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       throw new Error('Non autorisé')
@@ -42,17 +86,17 @@ serve(async (req) => {
       throw new Error('Non authentifié')
     }
 
-    // Vérifier le rôle admin
-    const { data: roleData } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
+    // Récupérer le profil de l'appelant
+    const { data: callerProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('global_role, agence')
+      .eq('id', user.id)
       .single()
 
-    if (!roleData) {
-      throw new Error('Accès refusé - Réservé aux administrateurs')
-    }
+    const callerLevel = getRoleLevel(callerProfile?.global_role)
+    const callerAgency = callerProfile?.agence || null
+
+    console.log(`[delete-user] Appelant: ${user.id}, N${callerLevel}`)
 
     // Récupérer l'ID de l'utilisateur à supprimer
     const { userId } = await req.json()
@@ -66,29 +110,45 @@ serve(async (req) => {
       throw new Error('Impossible de supprimer votre propre compte')
     }
 
+    // Récupérer le profil de la cible
+    const { data: targetProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('global_role, agence, email')
+      .eq('id', userId)
+      .single()
+
+    const targetLevel = getRoleLevel(targetProfile?.global_role)
+    const targetAgency = targetProfile?.agence || null
+
+    console.log(`[delete-user] Cible: ${userId}, N${targetLevel}, agence: ${targetAgency}`)
+
+    // Vérifier les droits de suppression
+    const deleteCheck = canDeleteTarget(callerLevel, targetLevel, callerAgency, targetAgency)
+    if (!deleteCheck.allowed) {
+      console.log(`[delete-user] SUPPRESSION BLOQUÉE: ${deleteCheck.reason}`)
+      throw new Error(deleteCheck.reason || 'Action non autorisée')
+    }
+
     // Supprimer l'utilisateur
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
     if (deleteError) {
-      console.error('Erreur suppression utilisateur:', deleteError)
+      console.error('[delete-user] Erreur suppression:', deleteError)
       throw deleteError
     }
 
-    console.log('Utilisateur supprimé avec succès:', userId)
+    console.log(`[delete-user] Succès: ${userId} supprimé par N${callerLevel}`)
 
     return new Response(
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Erreur:', error)
+    console.error('[delete-user] Erreur:', error)
     const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })

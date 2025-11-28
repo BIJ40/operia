@@ -6,6 +6,56 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// ============================================================================
+// SYSTÈME DE PERMISSIONS V2.0 - Helpers centralisés
+// ============================================================================
+
+const GLOBAL_ROLES: Record<string, number> = {
+  base_user: 0,        // N0
+  franchisee_user: 1,  // N1
+  franchisee_admin: 2, // N2
+  franchisor_user: 3,  // N3
+  franchisor_admin: 4, // N4
+  platform_admin: 5,   // N5
+  superadmin: 6,       // N6
+}
+
+const getRoleLevel = (role: string | null): number => {
+  if (!role) return 0
+  return GLOBAL_ROLES[role] ?? 0
+}
+
+// Vérifier si l'appelant peut modifier l'email d'un utilisateur
+const canUpdateEmail = (
+  callerLevel: number, 
+  targetLevel: number, 
+  callerAgency: string | null, 
+  targetAgency: string | null
+): { allowed: boolean; reason?: string } => {
+  // N0-N1: ne peuvent pas modifier
+  if (callerLevel < GLOBAL_ROLES.franchisee_admin) {
+    return { allowed: false, reason: 'Niveau insuffisant pour modifier des utilisateurs' }
+  }
+  
+  // N2 (franchisee_admin): uniquement même agence
+  if (callerLevel === GLOBAL_ROLES.franchisee_admin) {
+    if (callerAgency !== targetAgency) {
+      return { allowed: false, reason: 'Vous ne pouvez modifier que les utilisateurs de votre agence' }
+    }
+    if (targetLevel > GLOBAL_ROLES.franchisee_admin) {
+      return { allowed: false, reason: 'Vous ne pouvez pas modifier un utilisateur de niveau supérieur' }
+    }
+    return { allowed: true }
+  }
+  
+  // N3+ : peut modifier mais pas un niveau supérieur
+  if (targetLevel > callerLevel) {
+    return { allowed: false, reason: 'Vous ne pouvez pas modifier un utilisateur de niveau supérieur' }
+  }
+  
+  return { allowed: true }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -36,22 +86,17 @@ serve(async (req) => {
       throw new Error('Token invalide')
     }
 
-    console.log('Authenticated user from JWT:', userId)
-
-    // Vérifier le rôle admin
-    const { data: roleData } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
+    // Récupérer le profil de l'appelant
+    const { data: callerProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('global_role, agence')
+      .eq('id', userId)
       .single()
 
-    if (!roleData) {
-      console.error('User is not admin:', userId)
-      throw new Error('Accès refusé - Réservé aux administrateurs')
-    }
+    const callerLevel = getRoleLevel(callerProfile?.global_role)
+    const callerAgency = callerProfile?.agence || null
 
-    console.log('Admin verified:', userId)
+    console.log(`[update-user-email] Appelant: ${userId}, N${callerLevel}`)
 
     const { userId: targetUserId, newEmail } = await req.json()
 
@@ -59,7 +104,24 @@ serve(async (req) => {
       throw new Error('userId et newEmail sont requis')
     }
 
-    console.log('Updating email for user:', targetUserId, 'to:', newEmail)
+    // Récupérer le profil de la cible
+    const { data: targetProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('global_role, agence')
+      .eq('id', targetUserId)
+      .single()
+
+    const targetLevel = getRoleLevel(targetProfile?.global_role)
+    const targetAgency = targetProfile?.agence || null
+
+    console.log(`[update-user-email] Cible: ${targetUserId}, N${targetLevel}, agence: ${targetAgency}`)
+
+    // Vérifier les droits
+    const updateCheck = canUpdateEmail(callerLevel, targetLevel, callerAgency, targetAgency)
+    if (!updateCheck.allowed) {
+      console.log(`[update-user-email] MODIFICATION BLOQUÉE: ${updateCheck.reason}`)
+      throw new Error(updateCheck.reason || 'Action non autorisée')
+    }
 
     // Mettre à jour l'email dans auth.users
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -68,11 +130,9 @@ serve(async (req) => {
     )
 
     if (authError) {
-      console.error('Error updating auth email:', authError)
+      console.error('[update-user-email] Erreur auth:', authError)
       throw authError
     }
-
-    console.log('Auth email updated successfully')
 
     // Mettre à jour l'email dans profiles
     const { error: profileError } = await supabaseAdmin
@@ -81,27 +141,21 @@ serve(async (req) => {
       .eq('id', targetUserId)
 
     if (profileError) {
-      console.error('Error updating profile email:', profileError)
+      console.error('[update-user-email] Erreur profile:', profileError)
       throw profileError
     }
 
-    console.log('Profile email updated successfully')
+    console.log(`[update-user-email] Succès: ${targetUserId} -> ${newEmail}`)
 
     return new Response(
       JSON.stringify({ success: true }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   } catch (error: any) {
-    console.error('Error in update-user-email:', error)
+    console.error('[update-user-email] Erreur:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
     )
   }
 })
