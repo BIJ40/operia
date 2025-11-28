@@ -12,6 +12,7 @@ import {
   ScopeSlug,
   getSystemRoleCeiling as getSystemRoleCeilingFn
 } from '@/types/permissions';
+import { logAuth, logPermissions, logDeprecation } from '@/lib/logger';
 
 interface AuthContextType {
   // État utilisateur
@@ -211,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       // LEGACY: block_id – à supprimer quand toutes les permissions auront un scope_id
       if (p.block_id && !scope) {
-        console.warn('[LEGACY] user_permissions.block_id encore utilisé pour', scopeSlug);
+        logPermissions.warn('user_permissions.block_id encore utilisé pour', scopeSlug);
         return p.block_id === scopeSlug;
       }
       return false;
@@ -245,7 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       // LEGACY: block_id – à supprimer quand toutes les permissions auront un scope_id
       if (p.block_id && !scope) {
-        console.warn('[LEGACY] role_permissions.block_id encore utilisé pour', scopeSlug);
+        logPermissions.warn('role_permissions.block_id encore utilisé pour', scopeSlug);
         return p.block_id === scopeSlug;
       }
       return false;
@@ -310,7 +311,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * @deprecated Utiliser canViewScope(scopeSlug) à la place
    */
   const hasAccessToBlock = useCallback((blockId: string): boolean => {
-    console.warn('[DEPRECATED] hasAccessToBlock est déprécié, utiliser canViewScope(scopeSlug) à la place');
+    logDeprecation('hasAccessToBlock est déprécié, utiliser canViewScope(scopeSlug) à la place');
     if (isAdmin) return true;
     if (!roleAgence) return true;
     

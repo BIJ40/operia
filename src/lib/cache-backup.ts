@@ -3,6 +3,8 @@
  * Utilise IndexedDB pour un stockage fiable et une capacité plus grande que localStorage
  */
 
+import { logCache } from '@/lib/logger';
+
 interface BackupEntry {
   key: string;
   value: any;
@@ -36,13 +38,13 @@ export class CacheBackup {
       const request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
 
       request.onerror = () => {
-        console.error('❌ Erreur ouverture IndexedDB:', request.error);
+        logCache.error('Erreur ouverture IndexedDB:', request.error);
         reject(request.error);
       };
 
       request.onsuccess = () => {
         this.db = request.result;
-        console.log('✅ IndexedDB backup initialisé');
+        logCache.info('IndexedDB backup initialisé');
         resolve();
       };
 
@@ -61,7 +63,7 @@ export class CacheBackup {
           db.createObjectStore(this.METADATA_STORE, { keyPath: 'id' });
         }
 
-        console.log('🔧 IndexedDB stores créés');
+        logCache.debug('IndexedDB stores créés');
       };
     });
   }
@@ -108,10 +110,10 @@ export class CacheBackup {
       // Mettre à jour les métadonnées
       await this.updateMetadata();
 
-      console.log(`💾 Backup sauvegardé: ${key} (version ${newVersion})`);
+      logCache.debug(`Backup sauvegardé: ${key} (version ${newVersion})`);
       return true;
     } catch (error) {
-      console.error(`❌ Erreur backup ${key}:`, error);
+      logCache.error(`Erreur backup ${key}:`, error);
       return false;
     }
   }
@@ -131,7 +133,7 @@ export class CacheBackup {
       if (specificVersion !== undefined) {
         const entry = versions.find(v => v.version === specificVersion);
         if (entry) {
-          console.log(`♻️ Backup restauré: ${key} (version ${specificVersion})`);
+          logCache.debug(`Backup restauré: ${key} (version ${specificVersion})`);
           return entry.value;
         }
         return null;
@@ -142,10 +144,10 @@ export class CacheBackup {
         current.version > latest.version ? current : latest
       );
 
-      console.log(`♻️ Backup restauré: ${key} (version ${latest.version})`);
+      logCache.debug(`Backup restauré: ${key} (version ${latest.version})`);
       return latest.value;
     } catch (error) {
-      console.error(`❌ Erreur restauration ${key}:`, error);
+      logCache.error(`Erreur restauration ${key}:`, error);
       return null;
     }
   }
@@ -189,7 +191,7 @@ export class CacheBackup {
         request.onsuccess = () => {
           deletedCount++;
           if (deletedCount === toDelete.length) {
-            console.log(`🗑️ ${deletedCount} anciennes versions supprimées pour ${key}`);
+            logCache.debug(`${deletedCount} anciennes versions supprimées pour ${key}`);
             resolve();
           }
         };
@@ -225,7 +227,7 @@ export class CacheBackup {
         countRequest.onerror = () => reject(countRequest.error);
       });
     } catch (error) {
-      console.warn('Erreur mise à jour métadonnées:', error);
+      logCache.warn('Erreur mise à jour métadonnées:', error);
     }
   }
 
@@ -254,7 +256,7 @@ export class CacheBackup {
             cursor.continue();
           } else {
             if (deletedCount > 0) {
-              console.log(`🗑️ ${deletedCount} backups expirés supprimés`);
+              logCache.info(`${deletedCount} backups expirés supprimés`);
             }
             resolve(deletedCount);
           }
@@ -263,7 +265,7 @@ export class CacheBackup {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Erreur nettoyage backups expirés:', error);
+      logCache.error('Erreur nettoyage backups expirés:', error);
       return 0;
     }
   }
@@ -306,7 +308,7 @@ export class CacheBackup {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Erreur liste backups:', error);
+      logCache.error('Erreur liste backups:', error);
       return [];
     }
   }
@@ -325,14 +327,14 @@ export class CacheBackup {
         const request = store.clear();
 
         request.onsuccess = () => {
-          console.log('🗑️ Tous les backups ont été supprimés');
+          logCache.info('Tous les backups ont été supprimés');
           resolve();
         };
 
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Erreur suppression backups:', error);
+      logCache.error('Erreur suppression backups:', error);
     }
   }
 
@@ -353,7 +355,7 @@ export class CacheBackup {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Erreur lecture métadonnées:', error);
+      logCache.error('Erreur lecture métadonnées:', error);
       return null;
     }
   }
@@ -365,15 +367,15 @@ export class CacheBackup {
     const metadata = await this.getMetadata();
     const backups = await this.listBackups();
 
-    console.log('📊 Rapport Backups:');
+    logCache.info('Rapport Backups:');
     if (metadata) {
       const age = Date.now() - metadata.lastBackup;
-      console.log(`   Dernier backup: il y a ${Math.round(age / 1000)}s`);
-      console.log(`   Nombre de backups: ${metadata.backupCount}`);
+      logCache.info(`   Dernier backup: il y a ${Math.round(age / 1000)}s`);
+      logCache.info(`   Nombre de backups: ${metadata.backupCount}`);
     }
-    console.log(`   Clés sauvegardées: ${backups.length}`);
+    logCache.info(`   Clés sauvegardées: ${backups.length}`);
     backups.forEach(backup => {
-      console.log(`     - ${backup.key}: ${backup.versions} version(s)`);
+      logCache.debug(`     - ${backup.key}: ${backup.versions} version(s)`);
     });
   }
 }
@@ -382,5 +384,5 @@ export class CacheBackup {
 CacheBackup.init().then(() => {
   CacheBackup.cleanExpiredBackups();
 }).catch(err => {
-  console.warn('⚠️ Impossible d\'initialiser le système de backup:', err);
+  logCache.warn('Impossible d\'initialiser le système de backup:', err);
 });
