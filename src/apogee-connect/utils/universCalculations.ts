@@ -42,6 +42,20 @@ export const calculateUniversStats = (
 ): UniversStats[] => {
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
+  // DEBUG: Vérifier la structure des projets
+  if (projects.length > 0) {
+    const sampleProject = projects[0];
+    console.log('🔍 [DEBUG] Structure projet exemple:', {
+      id: sampleProject.id,
+      hasUniverses: !!sampleProject.universes,
+      hasDataUniverses: !!sampleProject.data?.universes,
+      universes: sampleProject.universes,
+      dataUniverses: sampleProject.data?.universes,
+      allKeys: Object.keys(sampleProject),
+      dataKeys: sampleProject.data ? Object.keys(sampleProject.data) : []
+    });
+  }
+  
   // Map pour agréger les stats par univers
   const statsParUnivers = new Map<string, {
     caHT: number;
