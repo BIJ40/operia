@@ -87,12 +87,18 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
     loadUserData();
   }, [user?.id]);
 
+  // Normaliser le service pour comparaison insensible à la casse
+  const normalizedService = ticket.service?.toLowerCase();
+  const isApogeeService = normalizedService === 'apogee' || normalizedService === 'apogée';
+  const isHelpConfortService = normalizedService === 'helpconfort';
+  const isAutreService = normalizedService === 'autre' || !ticket.service;
+
   // Déterminer si l'escalade est possible selon le service
   const canEscalate = () => {
     const currentLevel = ticket.support_level || 1;
     
-    // Pour Apogée : système N1/N2/N3
-    if (ticket.service === 'Apogée') {
+    // Pour Apogée ou Autre : système N1/N2/N3
+    if (isApogeeService || isAutreService) {
       if (userLevel === 1 && currentLevel === 1) return true;
       if (userLevel === 2 && currentLevel <= 2) return true;
       if (userLevel === 3 && currentLevel <= 3) return true;
@@ -100,7 +106,7 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
     }
     
     // Pour HelpConfort : système Animateur -> Directeur -> DG
-    if (ticket.service === 'HelpConfort') {
+    if (isHelpConfortService) {
       return !!userFranchiseurRole;
     }
     
@@ -124,11 +130,11 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
     return [];
   };
 
-  // Déterminer les niveaux d'escalade disponibles (pour Apogée)
+  // Déterminer les niveaux d'escalade disponibles (pour Apogée ou Autre)
   const getAvailableLevels = () => {
     const currentLevel = ticket.support_level || 1;
     
-    if (ticket.service === 'Apogée') {
+    if (isApogeeService || isAutreService) {
       if (userLevel === 1 && currentLevel === 1) return [2];
       if (userLevel === 2 && currentLevel === 2) return [3];
       if (userLevel === 3 && currentLevel === 3) return [3];
@@ -147,7 +153,7 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
   const availableUsers = supportUsers.filter(u => {
     const currentLevel = ticket.support_level || 1;
     
-    if (ticket.service === 'Apogée') {
+    if (isApogeeService || isAutreService) {
       const correctLevel = u.support_level === targetLevel;
       if (!correctLevel) return false;
       
@@ -160,7 +166,7 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
       return hasApogeeCompetency;
     }
     
-    if (ticket.service === 'HelpConfort') {
+    if (isHelpConfortService) {
       // Use franchiseur_role instead of service_competencies.helpconfort
       if (targetRole && u.franchiseur_role !== targetRole) return false;
       
@@ -175,7 +181,7 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
   const handleEscalate = () => {
     if (!selectedUserId || !reason.trim()) return;
     
-    if (ticket.service === 'HelpConfort') {
+    if (isHelpConfortService) {
       onEscalate(0, selectedUserId, reason);
     } else {
       onEscalate(targetLevel, selectedUserId, reason);
@@ -212,7 +218,7 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {ticket.service === 'Apogée' && availableLevels.length > 1 && (
+          {(isApogeeService || isAutreService) && availableLevels.length > 1 && (
             <div className="space-y-2">
               <Label>Niveau cible</Label>
               <RadioGroup value={targetLevel.toString()} onValueChange={(v) => setTargetLevel(parseInt(v))}>
@@ -228,7 +234,7 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
             </div>
           )}
           
-          {ticket.service === 'HelpConfort' && availableHelpConfortRoles.length > 0 && (
+          {isHelpConfortService && availableHelpConfortRoles.length > 0 && (
             <div className="space-y-2">
               <Label>Rôle cible</Label>
               <RadioGroup value={targetRole} onValueChange={setTargetRole}>
@@ -249,9 +255,9 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
             <RadioGroup value={selectedUserId} onValueChange={setSelectedUserId}>
               {availableUsers.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  {ticket.service === 'HelpConfort' && !targetRole
+                  {isHelpConfortService && !targetRole
                     ? 'Veuillez d\'abord sélectionner un rôle cible'
-                    : `Aucun support compétent disponible pour ${ticket.service}`
+                    : `Aucun support compétent disponible pour ${ticket.service || 'ce service'}`
                   }
                 </p>
               ) : (
@@ -288,7 +294,7 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
             disabled={!selectedUserId || !reason.trim()}
             className="bg-gradient-to-r from-primary to-helpconfort-blue-dark"
           >
-            {ticket.service === 'HelpConfort' 
+            {isHelpConfortService 
               ? `Escalader vers ${availableHelpConfortRoles.find(r => r.value === targetRole)?.label || 'le rôle sélectionné'}`
               : `Escalader au niveau ${targetLevel}`
             }
