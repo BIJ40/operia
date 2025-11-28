@@ -25,14 +25,26 @@ export function MainLayout({
   showSidebar = true,
   showHeader = true 
 }: MainLayoutProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAuthLoading } = useAuth();
   const { isImpersonating } = useImpersonation();
   const [loginOpen, setLoginOpen] = useState(false);
+  
+  // Log pour debug
+  console.log('🔐 MainLayout render:', { isAuthenticated, isAuthLoading, requireAuth });
   
   // Hooks for tracking
   useStorageQuota();
   useUserPresence();
   useConnectionLogger();
+
+  // Show loading state while auth is initializing
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   // Show public landing for unauthenticated users when auth is required
   if (requireAuth && !isAuthenticated) {

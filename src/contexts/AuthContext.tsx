@@ -372,10 +372,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isInitialized = false;
     
-    // Fonction d'initialisation
+    console.log('🔐 AuthContext useEffect mounting...');
+    
+    // Fonction d'initialisation - appelée une seule fois au mount
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('🔐 getSession result:', session?.user?.email);
+      console.log('🔐 init() starting...');
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log('🔐 getSession result:', { 
+        hasSession: !!session, 
+        userEmail: session?.user?.email,
+        error: error?.message 
+      });
       
       setUser(session?.user ?? null);
       
@@ -383,8 +390,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsAuthLoading(true);
         await loadUserData(session.user.id);
         setIsAuthLoading(false);
+        console.log('🔐 init() completed - user data loaded');
       } else {
         setIsAuthLoading(false);
+        console.log('🔐 init() completed - no session');
       }
       isInitialized = true;
     };
@@ -395,20 +404,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Puis écouter les changements (mais ignorer INITIAL_SESSION car déjà géré par init)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔐 onAuthStateChange:', event, session?.user?.email, 'isInitialized:', isInitialized);
+        console.log('🔐 onAuthStateChange fired:', { 
+          event, 
+          userEmail: session?.user?.email, 
+          isInitialized,
+          hasSession: !!session
+        });
         
         // Ignorer TOUS les INITIAL_SESSION car init() gère ça
         if (event === 'INITIAL_SESSION') {
+          console.log('🔐 Ignoring INITIAL_SESSION (handled by init)');
           return;
         }
         
+        console.log('🔐 Processing auth event:', event);
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          console.log('🔐 Loading user data for:', session.user.email);
           setIsAuthLoading(true);
           await loadUserData(session.user.id);
           setIsAuthLoading(false);
+          console.log('🔐 User data loaded successfully');
         } else {
+          console.log('🔐 Resetting all auth state (no session)');
           // Reset tous les états
           setIsAdmin(false);
           setIsSupport(false);
@@ -429,15 +448,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('🔐 AuthContext useEffect cleanup');
+      subscription.unsubscribe();
+    };
   }, [loadUserData]);
 
   const login = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('🔐 AuthContext.login() called for:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('🔐 signInWithPassword result:', { user: data?.user?.email, error: error?.message });
       if (error) return { success: false, error: error.message };
       return { success: true };
-    } catch {
+    } catch (err) {
+      console.error('🔐 login exception:', err);
       return { success: false, error: 'Une erreur est survenue' };
     }
   };
