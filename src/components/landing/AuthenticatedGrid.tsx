@@ -301,12 +301,19 @@ export function AuthenticatedGrid({
           </div>
         );
       } else if (currentCard.link && currentCard.link !== '#') {
+        const isDiffusion = currentCard.link?.includes('/diffusion');
+        
         allElements.push(
           <Link
             key={currentCard.id}
             to={currentCard.link}
-            className={baseClassName}
+            className={`${baseClassName} relative`}
           >
+            {isDiffusion && (
+              <span className="absolute top-2 right-2 text-[10px] font-medium bg-orange-500 text-white px-2 py-0.5 rounded-full">
+                En cours
+              </span>
+            )}
             <Icon className={isLarge ? "w-12 h-12 text-primary mb-4" : "w-12 h-12 text-primary flex-shrink-0 group-hover:scale-110 transition-transform duration-300"} />
             <div className={isLarge ? "" : "flex-1 min-w-0"}>
               <h2 className={isLarge ? "text-xl font-bold text-foreground mb-2" : "text-lg font-bold text-foreground truncate"}>{currentCard.title}</h2>
