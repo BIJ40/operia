@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, Plus, Search, Users, Calendar, Phone, Mail, MapPin } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { useAgencies } from "../hooks/useAgencies";
 import { AgencyProfileDialog } from "../components/AgencyProfileDialog";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
+import { usePermissions } from "@/hooks/use-permissions";
+import { ConditionalRender } from "@/components/PermissionGuard";
+import { PERMISSION_LEVELS } from "@/types/permissions";
 
 export default function FranchiseurAgencies() {
   const navigate = useNavigate();
@@ -17,8 +20,17 @@ export default function FranchiseurAgencies() {
   
   const { data: agencies, isLoading } = useAgencies();
   const { franchiseurRole } = useFranchiseur();
+  const { canViewScope, canEditScope, canAdminScope, isAdmin, isFranchiseur } = usePermissions();
   
-  const canManageAgencies = franchiseurRole === 'directeur' || franchiseurRole === 'dg';
+  // Permissions scopes
+  const canView = canViewScope('franchiseur_agencies');
+  const canManageAgencies = canAdminScope('franchiseur_agencies') || franchiseurRole === 'directeur' || franchiseurRole === 'dg';
+
+  useEffect(() => {
+    if (!canView && !isAdmin && !isFranchiseur) {
+      navigate('/');
+    }
+  }, [canView, isAdmin, isFranchiseur, navigate]);
 
   const filteredAgencies = agencies?.filter(agency => {
     const matchesSearch = 

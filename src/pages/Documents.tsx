@@ -10,6 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { FileText, Search, Trash2, Edit, Save, X } from 'lucide-react';
+import { usePermissions } from '@/hooks/use-permissions';
+import { PERMISSION_LEVELS } from '@/types/permissions';
 
 interface Document {
   id: string;
@@ -24,6 +26,7 @@ export default function Documents() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin } = useAuth();
+  const { canViewScope, canEditScope, canDeleteScope, canAdminScope } = usePermissions();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -32,12 +35,17 @@ export default function Documents() {
   const [editForm, setEditForm] = useState({ title: '', category: '', content: '' });
   const [isLoading, setIsLoading] = useState(false);
 
-  // Protection : rediriger si non admin
-  if (!isAdmin) {
+  // Permissions basées sur scope 'documents'
+  const canView = canViewScope('documents');
+  const canEdit = canEditScope('documents');
+  const canDelete = canDeleteScope('documents');
+
+  // Protection : rediriger si pas d'accès
+  if (!canView && !isAdmin) {
     navigate('/');
     toast({
       title: 'Accès refusé',
-      description: 'Seuls les administrateurs peuvent accéder à cette page',
+      description: 'Vous n\'avez pas accès à cette page',
       variant: 'destructive'
     });
     return null;

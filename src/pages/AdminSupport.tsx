@@ -13,6 +13,8 @@ import { SupportChat } from '@/components/admin/support/SupportChat';
 import { SatisfactionChart } from '@/components/SatisfactionChart';
 import { KanbanView } from '@/components/admin/support/KanbanView';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { usePermissions } from '@/hooks/use-permissions';
+import { PERMISSION_LEVELS } from '@/types/permissions';
 
 export default function AdminSupport() {
   const {
@@ -35,9 +37,14 @@ export default function AdminSupport() {
   } = useAdminSupport();
 
   const navigate = useNavigate();
+  const { canViewScope, canEditScope, canDeleteScope, canAdminScope } = usePermissions();
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [darkMode, setDarkMode] = useState(false);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
+
+  // Permissions pour support_tickets
+  const canView = canViewScope('support_tickets');
+  const canManage = canDeleteScope('support_tickets'); // Niveau 3 = Gestion
 
   useEffect(() => {
     const loadEmailPreference = async () => {
@@ -82,12 +89,12 @@ export default function AdminSupport() {
   };
 
   useEffect(() => {
-    if (!isAdmin && !user) {
+    if (!canView && !isAdmin && !user) {
       navigate('/');
       return;
     }
     loadTickets();
-  }, [isAdmin, user, navigate]);
+  }, [canView, isAdmin, user, navigate]);
 
   const filteredTickets = tickets.filter((t) => t.status === filter);
   const waitingCount = tickets.filter((t) => t.status === 'waiting').length;

@@ -11,6 +11,9 @@ import { EditUserDialog } from '@/components/EditUserDialog';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, UserX } from 'lucide-react';
 import { ColumnFilter } from '@/components/admin/user/ColumnFilter';
+import { usePermissions } from '@/hooks/use-permissions';
+import { ConditionalRender } from '@/components/PermissionGuard';
+import { PERMISSION_LEVELS } from '@/types/permissions';
 
 interface UserProfile {
   id: string;
@@ -69,6 +72,7 @@ const COMPETENCE_OPTIONS = [
 
 export default function AdminUsersList() {
   const { isAdmin } = useAuth();
+  const { canViewScope, canEditScope, canDeleteScope, canAdminScope, getPermissionLevel } = usePermissions();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -82,13 +86,19 @@ export default function AdminUsersList() {
   const [systemRoleFilters, setSystemRoleFilters] = useState<string[]>([]);
   const [competenceFilters, setCompetenceFilters] = useState<string[]>([]);
 
+  // Permissions pour admin_users
+  const canView = canViewScope('admin_users');
+  const canEdit = canEditScope('admin_users');
+  const canDelete = canDeleteScope('admin_users');
+  const canAdmin = canAdminScope('admin_users');
+
   useEffect(() => {
-    if (!isAdmin) {
+    if (!canView && !isAdmin) {
       navigate('/');
       return;
     }
     loadUsers();
-  }, [isAdmin, navigate]);
+  }, [canView, isAdmin, navigate]);
 
   const loadUsers = async () => {
     try {
@@ -259,13 +269,15 @@ export default function AdminUsersList() {
             Liste des utilisateurs
           </h1>
         </div>
-        <Button
-          onClick={() => navigate('/admin/users')}
-          className="flex items-center gap-2"
-        >
-          <Users className="w-4 h-4" />
-          Créer un utilisateur
-        </Button>
+        <ConditionalRender scope="admin_users" requiredLevel={PERMISSION_LEVELS.ADMIN}>
+          <Button
+            onClick={() => navigate('/admin/users')}
+            className="flex items-center gap-2"
+          >
+            <Users className="w-4 h-4" />
+            Créer un utilisateur
+          </Button>
+        </ConditionalRender>
       </div>
 
       <Card>
@@ -435,14 +447,16 @@ export default function AdminUsersList() {
                   <TableCell>{new Date(user.created_at).toLocaleDateString('fr-FR')}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteUser(user.id)}
-                        title="Supprimer"
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
+                      <ConditionalRender scope="admin_users" requiredLevel={PERMISSION_LEVELS.ADMIN}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteUser(user.id)}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </ConditionalRender>
                     </div>
                   </TableCell>
                 </TableRow>

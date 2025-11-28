@@ -5,12 +5,21 @@ import { ArrowLeft } from 'lucide-react';
 import { StatsOverview } from '@/components/admin/overview/StatsOverview';
 import { QuickActions } from '@/components/admin/overview/QuickActions';
 import { NavigationCards } from '@/components/admin/overview/NavigationCards';
+import { usePermissions } from '@/hooks/use-permissions';
 
 export default function AdminIndex() {
   const { isAdmin } = useAuth();
+  const { canViewScope } = usePermissions();
   const navigate = useNavigate();
 
-  if (!isAdmin) {
+  // Accès si admin OU si au moins un scope admin est accessible
+  const hasAnyAdminAccess = isAdmin || 
+    canViewScope('admin_users') || 
+    canViewScope('admin_roles') || 
+    canViewScope('admin_backup') || 
+    canViewScope('admin_settings');
+
+  if (!hasAnyAdminAccess) {
     return <Navigate to="/" replace />;
   }
 

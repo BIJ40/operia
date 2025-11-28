@@ -148,7 +148,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Calculer la permission effective pour un scope (5 niveaux)
+  /**
+   * Calcule la permission effective pour un scope (5 niveaux)
+   * 
+   * HIÉRARCHIE (par ordre de priorité) :
+   * 1. Override utilisateur : Si existe, appliqué TEL QUEL (sans plafond system_role)
+   *    - deny = true → niveau 0
+   *    - sinon → override.level (0-4) directement
+   * 2. Permission du rôle : Appliquée telle quelle (plafond géré côté DB/service)
+   * 3. Défaut du scope
+   */
   const getEffectivePermission = useCallback((scopeSlug: string): EffectivePermission => {
     const scope = scopes.find(s => s.slug === scopeSlug);
     const defaultLevel = scope?.default_level || PERMISSION_LEVELS.NONE;
@@ -169,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return buildPermission(PERMISSION_LEVELS.ADMIN, 'default');
     }
 
-    // Chercher l'override utilisateur (priorité 1)
+    // 1. Chercher l'override utilisateur - PRIORITÉ ABSOLUE (sans plafond)
     const userOverride = userOverrides.find(p => {
       if (p.scope_id && scope) {
         return p.scope_id === scope.id;
@@ -183,12 +192,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return buildPermission(PERMISSION_LEVELS.NONE, 'denied');
       }
 
-      // Appliquer l'override
-      const overrideLevel = userOverride.level ?? defaultLevel;
+      // Appliquer l'override SANS plafond - l'admin peut donner le niveau qu'il veut
+      const overrideLevel = Math.max(0, Math.min(4, userOverride.level ?? defaultLevel));
       return buildPermission(overrideLevel, 'user_override');
     }
 
-    // Chercher la permission du rôle (priorité 2)
+    // 2. Chercher la permission du rôle
     const rolePerm = rolePermissions.find(p => {
       if (p.scope_id && scope) {
         return p.scope_id === scope.id;
@@ -201,7 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return buildPermission(roleLevel, 'role');
     }
 
-    // Retourner la permission par défaut du scope
+    // 3. Retourner la permission par défaut du scope
     return buildPermission(defaultLevel, 'default');
   }, [scopes, userOverrides, rolePermissions, isAdmin]);
 

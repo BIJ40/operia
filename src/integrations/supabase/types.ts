@@ -1550,10 +1550,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_effective_permission_level: {
-        Args: { _scope_slug: string; _user_id: string }
-        Returns: number
-      }
+      get_effective_permission_level:
+        | { Args: { _scope_slug: string; _user_id: string }; Returns: number }
+        | { Args: { _scope_slug: string; _user_id: string }; Returns: number }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
       has_franchiseur_role: {
         Args: {

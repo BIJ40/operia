@@ -34,6 +34,9 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { usePermissions } from '@/hooks/use-permissions';
+import { ConditionalRender } from '@/components/PermissionGuard';
+import { PERMISSION_LEVELS } from '@/types/permissions';
 
 interface Agency {
   id: string;
@@ -59,6 +62,7 @@ interface UserProfile {
 
 export default function AdminAgencies() {
   const { isAdmin } = useAuth();
+  const { canViewScope, canEditScope, canAdminScope } = usePermissions();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [agencies, setAgencies] = useState<Agency[]>([]);
@@ -73,11 +77,21 @@ export default function AdminAgencies() {
     is_active: true,
   });
 
+  // Permissions basées sur scope
+  const canView = canViewScope('franchiseur_agencies') || isAdmin;
+  const canEdit = canEditScope('franchiseur_agencies') || isAdmin;
+  const canAdmin = canAdminScope('franchiseur_agencies') || isAdmin;
+
+  // Redirection si pas d'accès
+  if (!canView) {
+    return <Navigate to="/" replace />;
+  }
+
   useEffect(() => {
-    if (isAdmin) {
+    if (canView) {
       loadData();
     }
-  }, [isAdmin]);
+  }, [canView]);
 
   const loadData = async () => {
     setIsLoading(true);
