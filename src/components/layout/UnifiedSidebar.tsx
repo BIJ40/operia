@@ -290,8 +290,8 @@ export function UnifiedSidebar() {
                                   </SidebarMenuButton>
                                 </CollapsibleTrigger>
                               </SidebarMenuItem>
-                              <CollapsibleContent>
-                                <div className="ml-4 border-l border-border/50 pl-2">
+                              <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                                <div className="ml-4 border-l border-border/50 pl-2 py-1">
                                   {item.children.map((child) => {
                                     const ChildIcon = child.icon;
                                     const childActive = isActive(child.url);
