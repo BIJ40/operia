@@ -613,6 +613,84 @@ export type Database = {
         }
         Relationships: []
       }
+      group_permissions: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          level: number
+          scope_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          level?: number
+          scope_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          level?: number
+          scope_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_permissions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_permissions_scope_id_fkey"
+            columns: ["scope_id"]
+            isOneToOne: false
+            referencedRelation: "scopes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          label: string
+          system_role_limit: Database["public"]["Enums"]["system_role"]
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label: string
+          system_role_limit?: Database["public"]["Enums"]["system_role"]
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label?: string
+          system_role_limit?: Database["public"]["Enums"]["system_role"]
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       guide_chunks: {
         Row: {
           block_id: string
@@ -735,6 +813,7 @@ export type Database = {
           email: string | null
           email_notifications_enabled: boolean | null
           first_name: string | null
+          group_id: string | null
           id: string
           last_name: string | null
           must_change_password: boolean | null
@@ -742,6 +821,7 @@ export type Database = {
           role_id: string | null
           service_competencies: Json | null
           support_level: number | null
+          system_role: Database["public"]["Enums"]["system_role"] | null
           updated_at: string
         }
         Insert: {
@@ -751,6 +831,7 @@ export type Database = {
           email?: string | null
           email_notifications_enabled?: boolean | null
           first_name?: string | null
+          group_id?: string | null
           id: string
           last_name?: string | null
           must_change_password?: boolean | null
@@ -758,6 +839,7 @@ export type Database = {
           role_id?: string | null
           service_competencies?: Json | null
           support_level?: number | null
+          system_role?: Database["public"]["Enums"]["system_role"] | null
           updated_at?: string
         }
         Update: {
@@ -767,6 +849,7 @@ export type Database = {
           email?: string | null
           email_notifications_enabled?: boolean | null
           first_name?: string | null
+          group_id?: string | null
           id?: string
           last_name?: string | null
           must_change_password?: boolean | null
@@ -774,9 +857,18 @@ export type Database = {
           role_id?: string | null
           service_competencies?: Json | null
           support_level?: number | null
+          system_role?: Database["public"]["Enums"]["system_role"] | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_permissions: {
         Row: {
@@ -1458,6 +1550,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_effective_permission_level: {
+        Args: { _scope_slug: string; _user_id: string }
+        Returns: number
+      }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
       has_franchiseur_role: {
         Args: {
@@ -1477,6 +1573,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user" | "support" | "franchiseur"
       franchiseur_role: "animateur" | "directeur" | "dg"
+      system_role: "visiteur" | "utilisateur" | "support" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1606,6 +1703,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user", "support", "franchiseur"],
       franchiseur_role: ["animateur", "directeur", "dg"],
+      system_role: ["visiteur", "utilisateur", "support", "admin"],
     },
   },
 } as const
