@@ -33,13 +33,11 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import {
   Popover,
   PopoverContent,
@@ -505,65 +503,50 @@ export default function AdminPermissionsV2() {
         </div>
       ) : (
         <TooltipProvider>
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="w-[220px]">Utilisateur</TableHead>
-                <TableHead className="w-[120px]">Agence</TableHead>
-                <TableHead className="w-[200px]">Rôle global</TableHead>
-                <TableHead className="w-[160px]">
-                  <div className="flex items-center gap-1">
-                    Suggestion
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[250px]">
-                        <p>Rôle suggéré calculé automatiquement à partir des permissions V1 (legacy). Utilisez "V2" pour appliquer cette suggestion.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </TableHead>
-                <TableHead className="min-w-[300px]">Modules</TableHead>
-                <TableHead className="w-[100px]">
-                  <div className="flex items-center gap-1">
-                    Statut
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[250px]">
-                        <p><strong>V2 OK</strong> : Configuration V2 alignée avec les suggestions.<br/>
-                        <strong>À appliquer</strong> : Valeurs V2 vides, suggestion disponible.<br/>
-                        <strong>Différent</strong> : Configuration V2 différente de la suggestion.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </TableHead>
-                <TableHead className="w-[140px] text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedUsers.map((user, idx) => {
-                const effectiveRole = getEffectiveRole(user);
-                const effectiveModules = getEffectiveModules(user);
-                const isModified = !!modifiedUsers[user.id];
-                const statusInfo = getStatusIndicator(user);
-                
-                return (
-                  <TableRow 
-                    key={user.id} 
-                    className={`${idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'} ${isModified ? 'ring-2 ring-primary/20' : ''}`}
-                  >
-                    {/* User */}
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
+        <div className="border rounded-lg overflow-hidden bg-card">
+          {/* Header row */}
+          <div className="flex items-center px-4 py-3 bg-muted/50 border-b text-sm font-medium text-muted-foreground gap-4">
+            <div className="w-[280px]">Utilisateur</div>
+            <div className="w-[100px]">Agence</div>
+            <div className="w-[140px]">Rôle global</div>
+            <div className="w-[80px] flex items-center gap-1">
+              Statut
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[250px]">
+                  <p><strong>V2 OK</strong> : Aligné.<br/>
+                  <strong>À appliquer</strong> : Vide.<br/>
+                  <strong>Différent</strong> : Divergent.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <div className="flex-1 text-right">Actions</div>
+          </div>
+          
+          <Accordion type="multiple" className="divide-y">
+            {paginatedUsers.map((user, idx) => {
+              const effectiveRole = getEffectiveRole(user);
+              const effectiveModules = getEffectiveModules(user);
+              const isModified = !!modifiedUsers[user.id];
+              const statusInfo = getStatusIndicator(user);
+              
+              return (
+                <AccordionItem 
+                  key={user.id} 
+                  value={user.id}
+                  className={`${idx % 2 === 0 ? 'bg-background' : 'bg-muted/10'} ${isModified ? 'ring-2 ring-primary/20 ring-inset' : ''} border-0`}
+                >
+                  <AccordionTrigger className="hover:no-underline px-4 py-3 [&>svg]:ml-auto">
+                    <div className="flex items-center gap-4 flex-1 text-left">
+                      {/* User */}
+                      <div className="w-[280px] flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary flex-shrink-0">
                           {getInitials(user)}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-medium truncate">
+                          <div className="font-medium text-sm truncate">
                             {user.first_name || user.last_name 
                               ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
                               : 'Sans nom'}
@@ -576,131 +559,37 @@ export default function AdminPermissionsV2() {
                           <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" title="Modifié" />
                         )}
                       </div>
-                    </TableCell>
-                    
-                    {/* Agency */}
-                    <TableCell>
-                      <Badge variant="secondary" className="font-normal">
-                        {user.agence || 'Sans agence'}
-                      </Badge>
-                    </TableCell>
-                    
-                    {/* Global Role */}
-                    <TableCell>
-                      <Select 
-                        value={effectiveRole || ''} 
-                        onValueChange={(v) => handleRoleChange(user.id, v as GlobalRole)}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Non défini">
-                            {effectiveRole && (
-                              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium ${GLOBAL_ROLE_COLORS[effectiveRole]}`}>
-                                N{GLOBAL_ROLES[effectiveRole]} – {GLOBAL_ROLE_LABELS[effectiveRole]}
-                              </span>
-                            )}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getAllRolesSorted().map(role => (
-                            <SelectItem key={role} value={role}>
-                              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium ${GLOBAL_ROLE_COLORS[role]}`}>
-                                N{GLOBAL_ROLES[role]} – {GLOBAL_ROLE_LABELS[role]}
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    
-                    {/* Suggested Role */}
-                    <TableCell>
-                      {user.suggestedGlobalRole ? (
-                        <Badge 
-                          variant="outline" 
-                          className={effectiveRole === user.suggestedGlobalRole 
-                            ? 'bg-green-50 text-green-700 border-green-200' 
-                            : 'bg-muted text-muted-foreground'
-                          }
-                        >
-                          {effectiveRole === user.suggestedGlobalRole && <CheckCircle2 className="w-3 h-3 mr-1" />}
-                          N{GLOBAL_ROLES[user.suggestedGlobalRole]}
+                      
+                      {/* Agency */}
+                      <div className="w-[100px]">
+                        <Badge variant="secondary" className="font-normal text-xs">
+                          {user.agence || 'Sans'}
                         </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-muted text-muted-foreground">
-                          <MinusCircle className="w-3 h-3 mr-1" />
-                          Aucun
-                        </Badge>
-                      )}
-                    </TableCell>
-                    
-                    {/* Modules */}
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1.5">
-                        {MODULE_DEFINITIONS.map(moduleDef => {
-                          const isEnabled = isModuleEnabledForUser(effectiveModules, moduleDef.key);
-                          const options = getModuleOptions(effectiveModules, moduleDef.key);
-                          
-                          return (
-                            <Popover key={moduleDef.key}>
-                              <PopoverTrigger asChild>
-                                <button
-                                  className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium border transition-colors ${
-                                    isEnabled 
-                                      ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20' 
-                                      : 'bg-muted text-muted-foreground border-transparent hover:bg-muted/80'
-                                  }`}
-                                >
-                                  <Switch
-                                    checked={isEnabled}
-                                    onCheckedChange={(checked) => handleModuleToggle(user.id, moduleDef.key, checked)}
-                                    className="scale-75"
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                  <span className="truncate max-w-[80px]">{moduleDef.label}</span>
-                                  <ChevronDown className="w-3 h-3 flex-shrink-0" />
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-64 p-3" align="start">
-                                <div className="space-y-3">
-                                  <div className="font-medium text-sm">{moduleDef.label}</div>
-                                  <p className="text-xs text-muted-foreground">{moduleDef.description}</p>
-                                  <div className="border-t pt-2 space-y-2">
-                                    {moduleDef.options.map(opt => (
-                                      <label key={opt.key} className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <Checkbox
-                                          checked={options[opt.key] ?? opt.defaultEnabled}
-                                          onCheckedChange={(checked) => 
-                                            handleOptionToggle(user.id, moduleDef.key, opt.key, !!checked)
-                                          }
-                                          disabled={!isEnabled}
-                                        />
-                                        <span className={!isEnabled ? 'text-muted-foreground' : ''}>
-                                          {opt.label}
-                                        </span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          );
-                        })}
                       </div>
-                    </TableCell>
-                    
-                    {/* Status */}
-                    <TableCell>
-                      <Badge className={statusInfo.color}>
-                        {statusInfo.status === 'ok' && <CheckCircle2 className="w-3 h-3 mr-1" />}
-                        {statusInfo.status === 'pending' && <AlertCircle className="w-3 h-3 mr-1" />}
-                        {statusInfo.status === 'different' && <AlertCircle className="w-3 h-3 mr-1" />}
-                        {statusInfo.label}
-                      </Badge>
-                    </TableCell>
-                    
-                    {/* Actions */}
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      
+                      {/* Role pill */}
+                      <div className="w-[140px]">
+                        {effectiveRole ? (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${GLOBAL_ROLE_COLORS[effectiveRole]}`}>
+                            N{GLOBAL_ROLES[effectiveRole]}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Non défini</span>
+                        )}
+                      </div>
+                      
+                      {/* Status */}
+                      <div className="w-[80px]">
+                        <Badge className={`${statusInfo.color} text-xs`}>
+                          {statusInfo.status === 'ok' && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                          {statusInfo.status === 'pending' && <AlertCircle className="w-3 h-3 mr-1" />}
+                          {statusInfo.status === 'different' && <AlertCircle className="w-3 h-3 mr-1" />}
+                          {statusInfo.label}
+                        </Badge>
+                      </div>
+                      
+                      {/* Actions in header */}
+                      <div className="flex-1 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                         {isModified && (
                           <Button 
                             size="sm" 
@@ -708,7 +597,7 @@ export default function AdminPermissionsV2() {
                             onClick={() => saveChanges(user.id)}
                             disabled={saveMutation.isPending}
                           >
-                            <Save className="w-4 h-4 mr-1" />
+                            <Save className="w-3 h-3 mr-1" />
                             Sauver
                           </Button>
                         )}
@@ -719,17 +608,140 @@ export default function AdminPermissionsV2() {
                             onClick={() => applyV2(user)}
                             disabled={saveMutation.isPending}
                           >
-                            <Check className="w-4 h-4 mr-1" />
+                            <Check className="w-3 h-3 mr-1" />
                             V2
                           </Button>
                         )}
                       </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                    </div>
+                  </AccordionTrigger>
+                  
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t">
+                      {/* Left: Role management */}
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-2 block">Rôle global V2</label>
+                          <Select 
+                            value={effectiveRole || ''} 
+                            onValueChange={(v) => handleRoleChange(user.id, v as GlobalRole)}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Non défini">
+                                {effectiveRole && (
+                                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium ${GLOBAL_ROLE_COLORS[effectiveRole]}`}>
+                                    N{GLOBAL_ROLES[effectiveRole]} – {GLOBAL_ROLE_LABELS[effectiveRole]}
+                                  </span>
+                                )}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getAllRolesSorted().map(role => (
+                                <SelectItem key={role} value={role}>
+                                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium ${GLOBAL_ROLE_COLORS[role]}`}>
+                                    N{GLOBAL_ROLES[role]} – {GLOBAL_ROLE_LABELS[role]}
+                                  </span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                            Suggestion (legacy)
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[200px]">
+                                <p>Calculé depuis les permissions V1</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </label>
+                          {user.suggestedGlobalRole ? (
+                            <Badge 
+                              variant="outline" 
+                              className={effectiveRole === user.suggestedGlobalRole 
+                                ? 'bg-green-50 text-green-700 border-green-200' 
+                                : 'bg-muted text-muted-foreground'
+                              }
+                            >
+                              {effectiveRole === user.suggestedGlobalRole && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                              N{GLOBAL_ROLES[user.suggestedGlobalRole]} – {GLOBAL_ROLE_LABELS[user.suggestedGlobalRole]}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-muted text-muted-foreground">
+                              <MinusCircle className="w-3 h-3 mr-1" />
+                              Aucune suggestion
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Right: Modules */}
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-2 block">Modules activés</label>
+                        <div className="space-y-2">
+                          {MODULE_DEFINITIONS.map(moduleDef => {
+                            const isEnabled = isModuleEnabledForUser(effectiveModules, moduleDef.key);
+                            const options = getModuleOptions(effectiveModules, moduleDef.key);
+                            
+                            return (
+                              <Popover key={moduleDef.key}>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm border transition-colors ${
+                                      isEnabled 
+                                        ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20' 
+                                        : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Switch
+                                        checked={isEnabled}
+                                        onCheckedChange={(checked) => handleModuleToggle(user.id, moduleDef.key, checked)}
+                                        className="scale-75"
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
+                                      <span>{moduleDef.label}</span>
+                                    </div>
+                                    <ChevronDown className="w-4 h-4 flex-shrink-0" />
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-64 p-3" align="start">
+                                  <div className="space-y-3">
+                                    <div className="font-medium text-sm">{moduleDef.label}</div>
+                                    <p className="text-xs text-muted-foreground">{moduleDef.description}</p>
+                                    <div className="border-t pt-2 space-y-2">
+                                      {moduleDef.options.map(opt => (
+                                        <label key={opt.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                                          <Checkbox
+                                            checked={options[opt.key] ?? opt.defaultEnabled}
+                                            onCheckedChange={(checked) => 
+                                              handleOptionToggle(user.id, moduleDef.key, opt.key, !!checked)
+                                            }
+                                            disabled={!isEnabled}
+                                          />
+                                          <span className={!isEnabled ? 'text-muted-foreground' : ''}>
+                                            {opt.label}
+                                          </span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
         </div>
         </TooltipProvider>
       )}
