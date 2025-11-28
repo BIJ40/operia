@@ -463,12 +463,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCapabilities([]);
       setScopes([]);
       setRolePermissions([]);
+      setGroupPermissions([]);
       setUserOverrides([]);
+      setSystemRole(null);
       setUser(null);
-
-      window.location.href = '/';
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
+    } finally {
       window.location.href = '/';
     }
   };
