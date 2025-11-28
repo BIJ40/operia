@@ -530,6 +530,63 @@ Appliqué uniformément : création ET modification.
 
 ---
 
+## Système de Permissions V2.0 (Migration en cours)
+
+### Vue d'ensemble
+
+Le système V2.0 simplifie la gestion des accès avec :
+- **Un rôle global unique** par utilisateur (hiérarchie N0-N6)
+- **Des modules activables** indépendamment
+- **Des sous-options** par module
+
+### Rôles globaux (hiérarchie)
+
+| Niveau | Rôle | Description |
+|--------|------|-------------|
+| N0 | `base_user` | Visiteur, accès minimal |
+| N1 | `franchisee_user` | Utilisateur agence |
+| N2 | `franchisee_admin` | Dirigeant agence |
+| N3 | `franchisor_user` | Animateur réseau |
+| N4 | `franchisor_admin` | Directeur/DG réseau |
+| N5 | `platform_admin` | Admin plateforme |
+| N6 | `superadmin` | Super administrateur |
+
+### Modules
+
+| Module | Description | Rôle minimum |
+|--------|-------------|--------------|
+| `help_academy` | Guides Apogée, Apporteurs, HelpConfort | N0 |
+| `pilotage_agence` | Stats, actions, diffusion | N1 |
+| `reseau_franchiseur` | Multi-agences franchiseur | N3 |
+| `support` | Tickets et assistance | N0 |
+| `admin_plateforme` | Administration système | N5 |
+
+### Fichiers TypeScript
+
+```
+src/types/
+├── globalRoles.ts     # Définition des rôles (GLOBAL_ROLES, hasMinimumRole)
+├── modules.ts         # Définition des modules (MODULE_DEFINITIONS, isModuleEnabled)
+└── accessControl.ts   # Guards unifiés (hasGlobalRole, hasModule, hasModuleOption)
+```
+
+### Colonnes DB (table `profiles`)
+
+```sql
+global_role     global_role  -- Enum nullable (N0-N6)
+enabled_modules jsonb        -- Structure modules/options activés
+```
+
+### Cohabitation Legacy
+
+Pendant la migration, les deux systèmes coexistent via `createAccessContext()` :
+- Si `global_role` défini → utilise V2.0
+- Sinon → calcule depuis legacy (user_roles, franchiseur_roles, etc.)
+
+Voir `DOC_PERMISSIONS.md` et `DOC_MIGRATION.md` pour les détails.
+
+---
+
 ## Points d'attention développeurs
 
 ### Fichiers NE PAS MODIFIER
@@ -583,4 +640,4 @@ const channel = supabase
 ---
 
 **Auteur** : Projet généré et maintenu via Lovable AI.  
-**Dernière mise à jour** : 2025-11-27
+**Dernière mise à jour** : 2025-11-28

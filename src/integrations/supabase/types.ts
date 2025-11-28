@@ -812,7 +812,9 @@ export type Database = {
           created_at: string
           email: string | null
           email_notifications_enabled: boolean | null
+          enabled_modules: Json | null
           first_name: string | null
+          global_role: Database["public"]["Enums"]["global_role"] | null
           group_id: string | null
           id: string
           last_name: string | null
@@ -830,7 +832,9 @@ export type Database = {
           created_at?: string
           email?: string | null
           email_notifications_enabled?: boolean | null
+          enabled_modules?: Json | null
           first_name?: string | null
+          global_role?: Database["public"]["Enums"]["global_role"] | null
           group_id?: string | null
           id: string
           last_name?: string | null
@@ -848,7 +852,9 @@ export type Database = {
           created_at?: string
           email?: string | null
           email_notifications_enabled?: boolean | null
+          enabled_modules?: Json | null
           first_name?: string | null
+          global_role?: Database["public"]["Enums"]["global_role"] | null
           group_id?: string | null
           id?: string
           last_name?: string | null
@@ -1575,6 +1581,14 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user" | "support" | "franchiseur"
       franchiseur_role: "animateur" | "directeur" | "dg"
+      global_role:
+        | "base_user"
+        | "franchisee_user"
+        | "franchisee_admin"
+        | "franchisor_user"
+        | "franchisor_admin"
+        | "platform_admin"
+        | "superadmin"
       system_role: "visiteur" | "utilisateur" | "support" | "admin"
     }
     CompositeTypes: {
@@ -1705,6 +1719,15 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user", "support", "franchiseur"],
       franchiseur_role: ["animateur", "directeur", "dg"],
+      global_role: [
+        "base_user",
+        "franchisee_user",
+        "franchisee_admin",
+        "franchisor_user",
+        "franchisor_admin",
+        "platform_admin",
+        "superadmin",
+      ],
       system_role: ["visiteur", "utilisateur", "support", "admin"],
     },
   },
