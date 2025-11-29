@@ -224,6 +224,7 @@ export default function ApogeeTicketsIncomplete() {
                         onValueChange={(v) => handleHeatPriorityChange(v[0])}
                         className="w-full"
                         trackClassName="bg-gradient-to-r from-blue-400 via-yellow-400 to-red-500"
+                        rangeClassName="bg-transparent"
                       />
                     </div>
                     <button

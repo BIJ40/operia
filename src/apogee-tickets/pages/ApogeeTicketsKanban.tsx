@@ -62,6 +62,10 @@ export default function ApogeeTicketsKanban() {
 
   const handleTicketUpdate = (updates: Partial<ApogeeTicket> & { id: string }) => {
     updateTicket.mutate(updates);
+    // Mettre à jour l'état local du ticket sélectionné pour refléter les changements immédiatement
+    if (selectedTicket && selectedTicket.id === updates.id) {
+      setSelectedTicket({ ...selectedTicket, ...updates });
+    }
   };
 
   return (
