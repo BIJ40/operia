@@ -145,7 +145,7 @@ export function UnifiedSidebar() {
   // Navigation groups avec indexUrl pour chaque section
   const navGroups: NavGroup[] = [
     {
-      label: <><span>Help</span><span className="text-helpconfort-orange animate-pulse">!</span><span> Academy</span></>,
+      label: <>Help<span className="text-helpconfort-orange">!</span> Academy</>,
       labelKey: 'help-academy',
       indexUrl: ROUTES.academy.index,
       items: [
