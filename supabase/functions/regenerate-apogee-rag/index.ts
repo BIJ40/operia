@@ -7,6 +7,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Strip HTML tags and decode entities for cleaner text
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 // Split text into chunks
 function splitIntoChunks(text: string, maxLength = 800): string[] {
   const chunks: string[] = [];
@@ -108,48 +122,77 @@ serve(async (req) => {
       throw new Error('Admin access required (N5+)');
     }
 
-    console.log('[RAG] Starting regeneration of apogee_guides chunks...');
+    console.log('[RAG] Starting regeneration from blocks table...');
 
-    // Step 1: Delete existing chunks from apogee source
+    // Step 1: Delete existing apogee_guide chunks
     const { error: deleteError } = await supabase
       .from('guide_chunks')
       .delete()
-      .eq('metadata->>source', 'apogee');
+      .eq('block_type', 'apogee_guide');
 
     if (deleteError) {
       console.error('[RAG] Error deleting old chunks:', deleteError);
     } else {
-      console.log('[RAG] Deleted existing apogee chunks');
+      console.log('[RAG] Deleted existing apogee_guide chunks');
     }
 
-    // Step 2: Fetch all apogee_guides
-    const { data: guides, error: guidesError } = await supabase
-      .from('apogee_guides')
-      .select('*');
+    // Step 2: Fetch all Apogée blocks (sections with content)
+    // Apogée blocks have parent slugs that don't start with 'helpconfort-' or 'apporteur-'
+    const { data: sections, error: sectionsError } = await supabase
+      .from('blocks')
+      .select(`
+        id,
+        title,
+        slug,
+        content,
+        type,
+        parent_id
+      `)
+      .eq('type', 'section')
+      .not('slug', 'like', 'helpconfort-%')
+      .not('slug', 'like', 'apporteur-%');
 
-    if (guidesError) {
-      throw new Error(`Failed to fetch apogee_guides: ${guidesError.message}`);
+    if (sectionsError) {
+      throw new Error(`Failed to fetch blocks: ${sectionsError.message}`);
     }
 
-    console.log(`[RAG] Found ${guides?.length || 0} guides to process`);
+    // Get parent categories for context
+    const parentIds = [...new Set(sections?.map(s => s.parent_id).filter(Boolean))];
+    const { data: categories } = await supabase
+      .from('blocks')
+      .select('id, title, slug')
+      .in('id', parentIds);
+
+    const categoryMap = new Map(categories?.map(c => [c.id, c]) || []);
+
+    console.log(`[RAG] Found ${sections?.length || 0} Apogée sections to process`);
 
     let totalChunks = 0;
-    let processedGuides = 0;
+    let processedSections = 0;
+    let skippedSections = 0;
     const errors: string[] = [];
 
-    for (const guide of guides || []) {
+    for (const section of sections || []) {
       try {
-        // Create concatenated text for chunking
-        const fullText = `${guide.titre}\n${guide.categorie}\n${guide.section}\n${guide.texte}`;
+        // Strip HTML and get clean text
+        const cleanContent = stripHtml(section.content || '');
         
-        if (fullText.trim().length < 50) {
-          console.log(`[RAG] Skipping guide ${guide.id} - insufficient content`);
+        // Skip sections with insufficient content
+        if (cleanContent.length < 100) {
+          console.log(`[RAG] Skipping section ${section.id} "${section.title}" - insufficient content (${cleanContent.length} chars)`);
+          skippedSections++;
           continue;
         }
 
+        const parent = categoryMap.get(section.parent_id);
+        const categoryTitle = parent?.title || 'Apogée';
+        
+        // Create contextual text for better embeddings
+        const fullText = `${section.title}\n${categoryTitle}\n${cleanContent}`;
+
         // Split into chunks
         const chunks = splitIntoChunks(fullText, 800);
-        console.log(`[RAG] Guide ${guide.id} split into ${chunks.length} chunks`);
+        console.log(`[RAG] Section "${section.title}" (${categoryTitle}) -> ${chunks.length} chunks`);
 
         // Generate embeddings and store chunks
         for (let i = 0; i < chunks.length; i++) {
@@ -161,55 +204,55 @@ serve(async (req) => {
             const { error: insertError } = await supabase
               .from('guide_chunks')
               .insert({
-                block_id: guide.id,
+                block_id: section.id,
                 block_type: 'apogee_guide',
-                block_title: guide.titre,
-                block_slug: `apogee-${guide.categorie}-${guide.section}`.toLowerCase().replace(/\s+/g, '-'),
+                block_title: section.title,
+                block_slug: section.slug,
                 chunk_text: chunkText,
                 chunk_index: i,
                 embedding: embedding,
                 metadata: {
                   source: 'apogee',
-                  guide_id: guide.id,
-                  categorie: guide.categorie,
-                  section: guide.section,
-                  titre: guide.titre,
-                  version: guide.version,
-                  tags: guide.tags,
+                  section_id: section.id,
+                  section_title: section.title,
+                  categorie: categoryTitle,
+                  parent_id: section.parent_id,
+                  parent_slug: parent?.slug || '',
                 }
               });
 
             if (insertError) {
-              console.error(`[RAG] Error inserting chunk ${i} for guide ${guide.id}:`, insertError);
-              errors.push(`Chunk ${i} of ${guide.titre}: ${insertError.message}`);
+              console.error(`[RAG] Error inserting chunk ${i} for section ${section.id}:`, insertError);
+              errors.push(`Chunk ${i} of ${section.title}: ${insertError.message}`);
             } else {
               totalChunks++;
             }
           } catch (embeddingError) {
-            console.error(`[RAG] Error generating embedding for chunk ${i} of guide ${guide.id}:`, embeddingError);
-            errors.push(`Embedding for ${guide.titre} chunk ${i}: ${embeddingError}`);
+            console.error(`[RAG] Error generating embedding for chunk ${i} of section ${section.id}:`, embeddingError);
+            errors.push(`Embedding for ${section.title} chunk ${i}: ${embeddingError}`);
           }
         }
         
-        processedGuides++;
-      } catch (guideError) {
-        console.error(`[RAG] Error processing guide ${guide.id}:`, guideError);
-        errors.push(`Guide ${guide.titre}: ${guideError}`);
+        processedSections++;
+      } catch (sectionError) {
+        console.error(`[RAG] Error processing section ${section.id}:`, sectionError);
+        errors.push(`Section ${section.title}: ${sectionError}`);
       }
     }
 
-    console.log(`[RAG] Regeneration complete: ${processedGuides} guides, ${totalChunks} chunks`);
+    console.log(`[RAG] Regeneration complete: ${processedSections} sections processed, ${skippedSections} skipped, ${totalChunks} chunks created`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        guides_processed: processedGuides,
+        sections_processed: processedSections,
+        sections_skipped: skippedSections,
         chunks_created: totalChunks,
-        total_guides: guides?.length || 0,
+        total_sections: sections?.length || 0,
         errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
         message: errors.length > 0 
           ? `Terminé avec ${errors.length} erreur(s)` 
-          : 'Index RAG régénéré avec succès'
+          : 'Index RAG régénéré avec succès depuis les blocs Apogée'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
