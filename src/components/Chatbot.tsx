@@ -1,6 +1,7 @@
 import { useEffect, useState, createContext, useContext } from 'react';
-import { X, Headphones } from 'lucide-react';
+import { X, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatbot } from '@/hooks/use-chatbot';
@@ -84,6 +85,7 @@ export function Chatbot() {
     playNotificationSound,
     dragOffset,
     setMessages,
+    resetConversation,
   } = useChatbot();
 
   // Check for active ticket
@@ -378,19 +380,37 @@ export function Chatbot() {
               <MessageCircle className="h-6 w-6 text-primary" />
               <h3 className="font-semibold text-sm">Helpbox!</h3>
             </div>
-            <Button
-              onClick={() => {
-                if (activeTicket) {
-                  setShowCloseConfirm(true);
-                } else {
-                  setIsOpen(false);
-                }
-              }}
-              variant="ghost"
-              size="icon"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              {/* Reset conversation button - only show when there are messages and no active ticket */}
+              {messages.length > 0 && !activeTicket && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={resetConversation}
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Nouvelle conversation</TooltipContent>
+                </Tooltip>
+              )}
+              <Button
+                onClick={() => {
+                  if (activeTicket) {
+                    setShowCloseConfirm(true);
+                  } else {
+                    setIsOpen(false);
+                  }
+                }}
+                variant="ghost"
+                size="icon"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Messages */}
