@@ -18,6 +18,7 @@ import {
   calculateMultiUniversRate,
   calculateProjectsOnPeriod,
 } from '../utils/networkCalculations';
+import { logNetwork } from '@/lib/logger';
 
 interface NetworkStats {
   totalCAYear: number;
@@ -49,7 +50,7 @@ export function useNetworkStats() {
   return useQuery<NetworkStats>({
     queryKey: ['network-stats', dateRange],
     queryFn: async () => {
-      console.log('🔄 Loading network data from agencies...');
+      logNetwork.info('Chargement des données réseau...');
 
       // Get all active agencies
       const { data: agencies, error: agenciesError } = await supabase
@@ -62,12 +63,12 @@ export function useNetworkStats() {
         throw new Error('No active agencies found');
       }
 
-      console.log(`📊 Loading ${agencies.length} agencies...`);
+      logNetwork.debug(`Chargement de ${agencies.length} agences...`);
 
       // Load all agencies data SEQUENTIALLY (to avoid BASE_URL race condition)
       const agencyData = [];
       for (const agency of agencies) {
-        console.log(`🔄 Loading ${agency.slug}...`);
+        logNetwork.debug(`Chargement ${agency.slug}...`);
         const data = await NetworkDataService.loadAgencyData(agency.slug);
         if (data) {
           agencyData.push({
@@ -75,11 +76,11 @@ export function useNetworkStats() {
             agencyLabel: agency.label,
             data,
           });
-          console.log(`✅ ${agency.slug}: loaded`);
+          logNetwork.debug(`${agency.slug}: chargé`);
         }
       }
 
-      console.log(`✅ Loaded ${agencyData.length}/${agencies.length} agencies`);
+      logNetwork.info(`${agencyData.length}/${agencies.length} agences chargées`);
 
       // Calculate all KPIs using the same calculation functions
       const now = new Date();

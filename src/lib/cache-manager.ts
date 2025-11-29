@@ -350,15 +350,15 @@ export class CacheManager {
     const metrics = this.getCacheMetrics();
     const usagePercent = (metrics.totalSize / this.MAX_CACHE_SIZE) * 100;
     
-    console.log('📊 Rapport Cache localStorage:');
-    console.log(`   Taille totale: ${(metrics.totalSize / 1024).toFixed(2)} KB / ${(this.MAX_CACHE_SIZE / 1024).toFixed(2)} KB (${usagePercent.toFixed(1)}%)`);
-    console.log(`   Nombre d'entrées: ${metrics.entryCount}`);
+    logCache.info('Rapport Cache localStorage:');
+    logCache.info(`   Taille totale: ${(metrics.totalSize / 1024).toFixed(2)} KB / ${(this.MAX_CACHE_SIZE / 1024).toFixed(2)} KB (${usagePercent.toFixed(1)}%)`);
+    logCache.info(`   Nombre d'entrées: ${metrics.entryCount}`);
     if (metrics.oldestEntry) {
       const age = Date.now() - metrics.oldestEntry;
-      console.log(`   Entrée la plus ancienne: ${Math.round(age / 1000)}s`);
+      logCache.info(`   Entrée la plus ancienne: ${Math.round(age / 1000)}s`);
     }
     
-    console.log('');
+    logCache.info('');
     await CacheBackup.printReport();
   }
 }

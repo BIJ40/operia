@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { logConnection } from '@/lib/logger';
 
 interface ConnectionLog {
   id: string;
@@ -16,7 +17,7 @@ export const useAdminConnectionNotifications = () => {
   useEffect(() => {
     if (!isAdmin) return;
 
-    console.log('🔔 Admin: écoute des notifications de connexion');
+    logConnection.info('Admin: écoute des notifications de connexion');
 
     const channel = supabase
       .channel('connection_notifications')
@@ -51,10 +52,10 @@ export const useAdminConnectionNotifications = () => {
                 duration: 5000,
               });
 
-              console.log('🔔 Notification connexion:', userName);
+              logConnection.debug('Notification connexion:', userName);
             }
           } catch (error) {
-            console.error('Erreur notification connexion:', error);
+            logConnection.error('Erreur notification connexion:', error);
           }
         }
       )

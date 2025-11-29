@@ -2,6 +2,7 @@ import { DataService } from '@/apogee-connect/services/dataService';
 import { setApiBaseUrl } from '@/apogee-connect/services/api';
 import { DateRange } from '../contexts/NetworkFiltersContext';
 import { parseISO, parse, isWithinInterval } from 'date-fns';
+import { logNetwork } from '@/lib/logger';
 
 interface CacheEntry {
   data: any;
@@ -36,7 +37,7 @@ export class NetworkDataService {
         devis: loadedData.quotes || loadedData.devis || [],
       };
     } catch (error) {
-      console.error(`❌ Error loading ${agencySlug}:`, error);
+      logNetwork.error(`Erreur chargement ${agencySlug}:`, error);
       return null;
     }
   }
@@ -47,7 +48,7 @@ export class NetworkDataService {
   static async loadMultiAgencyData(agencySlugs: string[], dateRange?: DateRange) {
     const results = [];
     
-    console.log(`🔄 Chargement de ${agencySlugs.length} agences...`);
+    logNetwork.info(`Chargement de ${agencySlugs.length} agences...`);
     
     // Load agencies sequentially to avoid BASE_URL conflicts
     for (const agencySlug of agencySlugs) {
@@ -56,7 +57,7 @@ export class NetworkDataService {
       // Check cache
       const cached = dataCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-        console.log(`✅ ${agencySlug}: données en cache`);
+        logNetwork.debug(`${agencySlug}: données en cache`);
         results.push({ agencyId: agencySlug, data: cached.data });
         continue;
       }
@@ -65,7 +66,7 @@ export class NetworkDataService {
       try {
         // Configure BASE_URL for this agency
         const apiUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
-        console.log(`🔄 ${agencySlug}: configuration BASE_URL...`);
+        logNetwork.debug(`${agencySlug}: configuration BASE_URL...`);
         setApiBaseUrl(apiUrl);
         
         // Clear DataService cache to force fresh load
@@ -83,19 +84,19 @@ export class NetworkDataService {
           devis: loadedData.quotes || loadedData.devis || [],
         };
 
-        console.log(`✅ ${agencySlug}: ${data.factures.length} factures, ${data.projects.length} projets, ${data.interventions.length} interventions`);
+        logNetwork.debug(`${agencySlug}: ${data.factures.length} factures, ${data.projects.length} projets, ${data.interventions.length} interventions`);
 
         // Cache the data
         dataCache.set(cacheKey, { data, timestamp: Date.now() });
         
         results.push({ agencyId: agencySlug, data });
       } catch (error) {
-        console.error(`❌ ${agencySlug}: échec chargement`, error);
+        logNetwork.error(`${agencySlug}: échec chargement`, error);
         results.push({ agencyId: agencySlug, data: null, error });
       }
     }
 
-    console.log(`✅ Chargement terminé: ${results.filter(r => r.data).length}/${agencySlugs.length} agences OK`);
+    logNetwork.info(`Chargement terminé: ${results.filter(r => r.data).length}/${agencySlugs.length} agences OK`);
     return results.filter(r => r.data);
   }
 
