@@ -2,7 +2,7 @@
  * Page de complétion des tickets incomplets
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,14 +21,9 @@ export default function ApogeeTicketsIncomplete() {
   const { modules, updateTicket } = useApogeeTickets();
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Formulaire local pour le ticket courant
-  const [formValues, setFormValues] = useState<{
-    module: string | null;
-    heat_priority: number | null;
-  }>({
-    module: null,
-    heat_priority: null,
-  });
+  // Liste stable de tickets pour la session (ne change pas quand on complète un ticket)
+  const [stableTickets, setStableTickets] = useState<ApogeeTicket[]>([]);
+  const isInitialized = useRef(false);
 
   // Déterminer les champs manquants
   const getMissingFields = (ticket: ApogeeTicket) => {
@@ -38,8 +33,26 @@ export default function ApogeeTicketsIncomplete() {
     return missing;
   };
 
-  // Filtrer côté client pour n'afficher que ceux avec vraiment des champs manquants
-  const incompleteTickets = rawIncompleteTickets.filter(t => getMissingFields(t).length > 0);
+  // Initialiser la liste stable une seule fois au chargement
+  useEffect(() => {
+    if (!isInitialized.current && rawIncompleteTickets.length > 0) {
+      const filtered = rawIncompleteTickets.filter(t => getMissingFields(t).length > 0);
+      setStableTickets(filtered);
+      isInitialized.current = true;
+    }
+  }, [rawIncompleteTickets]);
+
+  // Utiliser la liste stable pour la navigation
+  const incompleteTickets = stableTickets;
+
+  // Formulaire local pour le ticket courant
+  const [formValues, setFormValues] = useState<{
+    module: string | null;
+    heat_priority: number | null;
+  }>({
+    module: null,
+    heat_priority: null,
+  });
 
   const currentTicket = incompleteTickets[currentIndex];
   const totalTickets = incompleteTickets.length;
