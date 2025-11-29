@@ -1,7 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useMemo, useCallback } from 'react';
 import { ScopeSlug, EffectivePermission, PERMISSION_LEVELS } from '@/types/permissions';
-import { logPermissions } from '@/lib/logger';
 
 interface Block {
   id: string;
@@ -14,26 +13,30 @@ export function useFilteredBlocks<T extends Block>(blocks: T[]): T[] {
 }
 
 /**
- * Legacy wrapper pour compatibilité - s'appuie sur la V2 sans logs de dépréciation
- * Vérifie si un block/scope est verrouillé (pas d'accès en édition)
+ * Legacy wrapper pour compatibilité - NEUTRALISÉ
+ * Les IDs de blocks legacy (block-* ou UUID) retournent toujours false (pas locked)
+ * Seuls les vrais scopes V2 ('apogee', 'apporteurs', etc.) sont vérifiés
  */
 export function useIsBlockLocked() {
   const { isAdmin, getEffectivePermission } = useAuth();
 
   return useCallback((scopeSlug: string, _blocks: Block[] = []): boolean => {
+    // Admin = jamais locked
     if (isAdmin) return false;
 
+    // Détection des IDs de blocks legacy (format block-* ou UUID)
+    const isLegacyBlockId = scopeSlug.startsWith('block-') || 
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(scopeSlug);
+
+    // Les blocks legacy ne sont plus verrouillés par ce système
+    // La V2 (RoleGuard / hasGlobalRole) contrôle l'accès aux pages
+    if (isLegacyBlockId) {
+      return false;
+    }
+
+    // Pour les vrais scopes V2, utiliser le système normal
     const perm = getEffectivePermission(scopeSlug);
-    const locked = !perm.canView;
-
-    logPermissions.debug('[LEGACY] useIsBlockLocked', {
-      scopeSlug,
-      level: perm.level,
-      locked,
-      source: perm.source,
-    });
-
-    return locked;
+    return !perm.canView;
   }, [isAdmin, getEffectivePermission]);
 }
 
