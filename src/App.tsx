@@ -80,6 +80,7 @@ const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
 // Lazy loaded pages - Apogée Tickets
 const ApogeeTicketsKanban = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsKanban"));
 const ApogeeTicketsImport = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImport"));
+const ApogeeTicketsImportBugs = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportBugs"));
 const ApogeeTicketsIncomplete = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsIncomplete"));
 
 // Lazy loaded pages - User
@@ -236,6 +237,7 @@ function AppContent() {
           <Route path="/admin/chatbot-rag" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminChatbotRag /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-tickets" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsKanban /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-tickets/import" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImport /></RoleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/import-bugs" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImportBugs /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-tickets/incomplets" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsIncomplete /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}

@@ -59,10 +59,16 @@ export default function ApogeeTicketsKanban() {
             <Plus className="h-4 w-4 mr-2" />
             Nouveau ticket
           </Button>
+          <Link to="/admin/apogee-tickets/import-bugs">
+            <Button variant="default" className="bg-orange-600 hover:bg-orange-700">
+              <Upload className="h-4 w-4 mr-2" />
+              Import BUGS
+            </Button>
+          </Link>
           <Link to={ROUTES.admin.apogeeTicketsImport}>
             <Button variant="outline">
               <Upload className="h-4 w-4 mr-2" />
-              Importer XLSX
+              Import général
             </Button>
           </Link>
         </div>
