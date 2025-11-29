@@ -846,6 +846,8 @@ export type Database = {
           agence: string | null
           avatar_url: string | null
           created_at: string
+          deactivated_at: string | null
+          deactivated_by: string | null
           email: string | null
           email_notifications_enabled: boolean | null
           enabled_modules: Json | null
@@ -853,6 +855,7 @@ export type Database = {
           global_role: Database["public"]["Enums"]["global_role"] | null
           group_id: string | null
           id: string
+          is_active: boolean | null
           last_name: string | null
           must_change_password: boolean | null
           role_agence: string | null
@@ -866,6 +869,8 @@ export type Database = {
           agence?: string | null
           avatar_url?: string | null
           created_at?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
           enabled_modules?: Json | null
@@ -873,6 +878,7 @@ export type Database = {
           global_role?: Database["public"]["Enums"]["global_role"] | null
           group_id?: string | null
           id: string
+          is_active?: boolean | null
           last_name?: string | null
           must_change_password?: boolean | null
           role_agence?: string | null
@@ -886,6 +892,8 @@ export type Database = {
           agence?: string | null
           avatar_url?: string | null
           created_at?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
           enabled_modules?: Json | null
@@ -893,6 +901,7 @@ export type Database = {
           global_role?: Database["public"]["Enums"]["global_role"] | null
           group_id?: string | null
           id?: string
+          is_active?: boolean | null
           last_name?: string | null
           must_change_password?: boolean | null
           role_agence?: string | null

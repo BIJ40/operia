@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { logAuth } from '@/lib/logger';
+import { toast } from 'sonner';
 
 // ============================================================================
 // SYSTÈME V2.0 - Imports des types et fonctions
@@ -36,6 +37,7 @@ interface AuthContextType {
   agence: string | null;
   roleAgence: string | null;
   mustChangePassword: boolean;
+  isActive: boolean;
   
   // ============================================================================
   // SYSTÈME V2.0 - Source de vérité unique
@@ -84,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [agence, setAgence] = useState<string | null>(null);
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [isActive, setIsActive] = useState(true);
   
   // ============================================================================
   // SYSTÈME V2.0 - États principaux
@@ -152,13 +155,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 1. Charger le profil avec les champs V2
       const { data: profile } = await supabase
         .from('profiles')
-        .select('agence, role_agence, must_change_password, global_role, enabled_modules, system_role, support_level')
+        .select('agence, role_agence, must_change_password, global_role, enabled_modules, system_role, support_level, is_active')
         .eq('id', userId)
         .single();
       
       setAgence(profile?.agence || null);
       setRoleAgence(profile?.role_agence || null);
       setMustChangePassword(profile?.must_change_password || false);
+      
+      // Vérifier si le compte est actif
+      const accountActive = profile?.is_active !== false; // true par défaut
+      setIsActive(accountActive);
+      
+      // Si le compte est désactivé, forcer la déconnexion
+      if (!accountActive) {
+        logAuth.warn('[AUTH] Compte désactivé, déconnexion forcée');
+        await supabase.auth.signOut();
+        toast.error('Votre compte a été désactivé. Contactez votre responsable ou le support.', {
+          duration: 8000,
+        });
+        return;
+      }
 
       // 2. Charger les rôles système pour le mapping legacy
       const { data: roles } = await supabase
@@ -319,6 +336,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setAgence(null);
           setRoleAgence(null);
           setMustChangePassword(false);
+          setIsActive(true);
           setGlobalRole(null);
           setEnabledModules(null);
           setHasSupportCapability(false);
@@ -377,6 +395,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAgence(null);
       setRoleAgence(null);
       setMustChangePassword(false);
+      setIsActive(true);
       setGlobalRole(null);
       setEnabledModules(null);
       setHasSupportCapability(false);
@@ -400,6 +419,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       agence,
       roleAgence,
       mustChangePassword,
+      isActive,
       globalRole,
       enabledModules,
       accessContext,
