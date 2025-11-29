@@ -18,6 +18,13 @@ import {
 } from '@/types/accessControl';
 import { getRoleCapabilities } from '@/config/roleMatrix';
 
+// Types pour le module Support
+interface SupportModuleOptions {
+  user?: boolean;   // Portail Mes Demandes
+  agent?: boolean;  // Accès console support
+  admin?: boolean;  // Admin support
+}
+
 interface AuthContextType {
   // État utilisateur
   isAuthenticated: boolean;
@@ -46,16 +53,23 @@ interface AuthContextType {
   isAdmin: boolean;
   isSupport: boolean;
   isFranchiseur: boolean;
-  canAccessSupportConsole: boolean; // Combinaison ROLE_MATRIX + enabled_modules
+  
+  // ============================================================================
+  // MODULE SUPPORT - Flags granulaires
+  // ============================================================================
+  canAccessSupportUser: boolean;    // Portail Mes Demandes (toujours true)
+  isSupportAgent: boolean;          // Accès console support
+  isSupportAdmin: boolean;          // Admin support
+  canAccessSupportConsole: boolean; // Alias de isSupportAgent pour compatibilité
+  canManageTickets: boolean;        // Alias de isSupportAgent
   
   // Auth actions
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   
-  // Compatibilité minimale (retournent des valeurs non-bloquantes)
+  // Compatibilité minimale
   hasAccessToScope: (scope: string) => boolean;
-  canManageTickets: () => boolean;
   suggestedGlobalRole: GlobalRole;
 }
 
@@ -86,13 +100,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isFranchiseur = globalRoleLevel >= GLOBAL_ROLES.franchisor_user; // N3+
   const isSupport = hasSupportCapability || checkModuleEnabled(enabledModules, 'support');
 
-  // Console Support = ROLE_MATRIX permet l'accès + module support activé avec option agent
-  const caps = getRoleCapabilities(globalRole);
-  const supportModule = enabledModules?.support;
-  const canAccessSupportConsole = caps.canAccessSupportConsole && (
-    isAdmin || // Les admins ont toujours accès
-    (typeof supportModule === 'object' && supportModule !== null && (supportModule as any).agent === true)
-  );
+  // ============================================================================
+  // MODULE SUPPORT - Logique granulaire
+  // ============================================================================
+  const isSuperAdmin = globalRole === 'superadmin';
+  
+  // Parser le module support depuis enabled_modules
+  const supportModule: SupportModuleOptions = 
+    (typeof enabledModules?.support === 'object' && enabledModules?.support !== null)
+      ? (enabledModules.support as SupportModuleOptions)
+      : {};
+  
+  // Flags support - superadmin a toujours tous les accès
+  const canAccessSupportUser = true; // Tous les utilisateurs peuvent accéder au portail
+  const isSupportAgent = isSuperAdmin || supportModule.agent === true;
+  const isSupportAdmin = isSuperAdmin || supportModule.admin === true;
+  
+  // Aliases pour compatibilité
+  const canAccessSupportConsole = isSupportAgent;
+  const canManageTickets = isSupportAgent;
 
   // Contexte d'accès V2.0
   const accessContext: AccessControlContext = {
@@ -364,9 +390,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Wrappers minimaux de compatibilité
   const hasAccessToScope = useCallback((_scope: string): boolean => true, []);
-  const canManageTickets = useCallback((): boolean => {
-    return isAdmin || isSupport || isFranchiseur;
-  }, [isAdmin, isSupport, isFranchiseur]);
 
   return (
     <AuthContext.Provider value={{ 
@@ -386,12 +409,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin,
       isSupport,
       isFranchiseur,
+      // Support module flags
+      canAccessSupportUser,
+      isSupportAgent,
+      isSupportAdmin,
       canAccessSupportConsole,
+      canManageTickets,
+      // Auth actions
       login, 
       logout,
       signup,
       hasAccessToScope,
-      canManageTickets,
       suggestedGlobalRole: globalRole ?? 'base_user',
     }}>
       {children}

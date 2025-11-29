@@ -32,7 +32,7 @@ export const useAdminTickets = () => {
   });
 
   const loadTickets = async () => {
-    if (!canManageTickets()) return;
+    if (!canManageTickets) return;
 
     setIsLoading(true);
     try {

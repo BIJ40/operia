@@ -143,7 +143,7 @@ export default function AdminSupportTickets() {
   };
 
   useEffect(() => {
-    if (!canManageTickets()) {
+    if (!canManageTickets) {
       navigate('/');
     }
   }, [canManageTickets, navigate]);
@@ -216,7 +216,7 @@ export default function AdminSupportTickets() {
     );
   };
 
-  if (!canManageTickets()) {
+  if (!canManageTickets) {
     return null;
   }
 
