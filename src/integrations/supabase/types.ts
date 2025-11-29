@@ -803,6 +803,8 @@ export type Database = {
           header_icon_color: string | null
           header_icon_size: string | null
           header_subtitle: string | null
+          header_subtitle_bg_color: string | null
+          header_subtitle_text_size: string | null
           header_title: string | null
           header_title_size: string | null
           id: string
@@ -815,6 +817,8 @@ export type Database = {
           header_icon_color?: string | null
           header_icon_size?: string | null
           header_subtitle?: string | null
+          header_subtitle_bg_color?: string | null
+          header_subtitle_text_size?: string | null
           header_title?: string | null
           header_title_size?: string | null
           id?: string
@@ -827,6 +831,8 @@ export type Database = {
           header_icon_color?: string | null
           header_icon_size?: string | null
           header_subtitle?: string | null
+          header_subtitle_bg_color?: string | null
+          header_subtitle_text_size?: string | null
           header_title?: string | null
           header_title_size?: string | null
           id?: string

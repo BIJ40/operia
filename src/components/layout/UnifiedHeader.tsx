@@ -97,6 +97,8 @@ export function UnifiedHeader() {
   const [editTitleSize, setEditTitleSize] = useState('lg');
   const [editIconSize, setEditIconSize] = useState('md');
   const [editIconColor, setEditIconColor] = useState('');
+  const [editSubtitleBgColor, setEditSubtitleBgColor] = useState('');
+  const [editSubtitleTextSize, setEditSubtitleTextSize] = useState('xs');
 
   // Size mappings
   const TITLE_SIZES: Record<string, string> = {
@@ -116,10 +118,17 @@ export function UnifiedHeader() {
     '2xl': 'w-8 h-8',
     '3xl': 'w-10 h-10',
   };
+  const SUBTITLE_TEXT_SIZES: Record<string, string> = {
+    'xs': 'text-xs',
+    'sm': 'text-sm',
+    'base': 'text-base',
+  };
   
   const titleSizeClass = TITLE_SIZES[metadata?.header_title_size || 'lg'] || 'text-lg';
   const iconSizeClass = ICON_SIZES[metadata?.header_icon_size || 'md'] || 'w-5 h-5';
   const iconColorStyle = metadata?.header_icon_color ? { color: metadata.header_icon_color } : undefined;
+  const subtitleTextSizeClass = SUBTITLE_TEXT_SIZES[metadata?.header_subtitle_text_size || 'xs'] || 'text-xs';
+  const subtitleBgStyle = metadata?.header_subtitle_bg_color ? { backgroundColor: metadata.header_subtitle_bg_color } : undefined;
 
   const canEdit = canEditPageMetadata(globalRole) && pageKey;
 
@@ -130,6 +139,8 @@ export function UnifiedHeader() {
     setEditTitleSize(metadata?.header_title_size || 'lg');
     setEditIconSize(metadata?.header_icon_size || 'md');
     setEditIconColor(metadata?.header_icon_color || '');
+    setEditSubtitleBgColor(metadata?.header_subtitle_bg_color || '');
+    setEditSubtitleTextSize(metadata?.header_subtitle_text_size || 'xs');
     setIsMetadataDialogOpen(true);
   };
 
@@ -144,6 +155,8 @@ export function UnifiedHeader() {
         header_title_size: editTitleSize || 'lg',
         header_icon_size: editIconSize || 'md',
         header_icon_color: editIconColor || null,
+        header_subtitle_bg_color: editSubtitleBgColor || null,
+        header_subtitle_text_size: editSubtitleTextSize || 'xs',
       });
       toast.success('Métadonnées de page mises à jour');
       setIsMetadataDialogOpen(false);
@@ -321,8 +334,11 @@ export function UnifiedHeader() {
         
         {/* Subtitle bar - below main header */}
         {displaySubtitle && (
-          <div className="px-4 py-1 bg-muted/30 border-t border-border/50">
-            <p className="text-xs text-muted-foreground text-center truncate">
+          <div 
+            className={`px-4 py-1 border-t border-border/50 ${!subtitleBgStyle ? 'bg-muted/30' : ''}`}
+            style={subtitleBgStyle}
+          >
+            <p className={`${subtitleTextSizeClass} text-muted-foreground text-center truncate`}>
               {displaySubtitle}
             </p>
           </div>
@@ -440,6 +456,48 @@ export function UnifiedHeader() {
               <p className="text-xs text-muted-foreground">
                 Laissez vide pour utiliser la couleur primaire par défaut
               </p>
+            </div>
+
+            {/* Subtitle bar customization */}
+            <div className="pt-4 border-t">
+              <Label className="text-sm font-medium">Style de la barre de description</Label>
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div className="space-y-2">
+                  <Label htmlFor="meta-subtitle-text-size">Taille du texte</Label>
+                  <select
+                    id="meta-subtitle-text-size"
+                    value={editSubtitleTextSize}
+                    onChange={(e) => setEditSubtitleTextSize(e.target.value)}
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                  >
+                    <option value="xs">Petit (xs)</option>
+                    <option value="sm">Normal (sm)</option>
+                    <option value="base">Grand (base)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="meta-subtitle-bg">Couleur de fond</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="meta-subtitle-bg"
+                      type="color"
+                      value={editSubtitleBgColor || '#f3f4f6'}
+                      onChange={(e) => setEditSubtitleBgColor(e.target.value)}
+                      className="w-12 h-10 p-1 cursor-pointer"
+                    />
+                    {editSubtitleBgColor && (
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setEditSubtitleBgColor('')}
+                      >
+                        Reset
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
