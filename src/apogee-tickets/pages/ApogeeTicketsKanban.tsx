@@ -113,17 +113,6 @@ export default function ApogeeTicketsKanban() {
               Revue en masse
             </Button>
           </Link>
-          {unqualifiedCount > 0 && (
-            <Button 
-              variant="outline" 
-              className="text-purple-600 border-purple-300 hover:bg-purple-50"
-              onClick={qualifyAllUnqualified}
-              disabled={isQualifying}
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              {isQualifying ? 'Qualification...' : `Qualifier ${unqualifiedCount} ticket(s)`}
-            </Button>
-          )}
           <Button
             variant="outline"
             onClick={() => recalculateAll()}
@@ -132,14 +121,28 @@ export default function ApogeeTicketsKanban() {
             <Flame className="h-4 w-4 mr-2" />
             {isRecalculating ? 'Recalcul...' : 'Recalculer priorités'}
           </Button>
-          {incompleteCount > 0 && (
-            <Link to={ROUTES.admin.apogeeTicketsIncomplete}>
-              <Button variant="outline" className="text-orange-600 border-orange-300 hover:bg-orange-50">
-                <AlertCircle className="h-4 w-4 mr-2" />
-                {incompleteCount} à compléter
-              </Button>
-            </Link>
-          )}
+          {/* Bouton complétion - toujours visible avec juste le chiffre */}
+          <Link to={ROUTES.admin.apogeeTicketsIncomplete}>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className={incompleteCount > 0 ? "text-orange-600 border-orange-300 hover:bg-orange-50" : ""}
+            >
+              <AlertCircle className="h-4 w-4 mr-1" />
+              {incompleteCount}
+            </Button>
+          </Link>
+          {/* Bouton qualification IA - toujours visible */}
+          <Button 
+            variant="outline" 
+            size="sm"
+            className={unqualifiedCount > 0 ? "text-purple-600 border-purple-300 hover:bg-purple-50" : ""}
+            onClick={qualifyAllUnqualified}
+            disabled={isQualifying || unqualifiedCount === 0}
+          >
+            <Sparkles className="h-4 w-4 mr-1" />
+            IA {unqualifiedCount > 0 && `(${unqualifiedCount})`}
+          </Button>
           {isAdmin && (
             <Button variant="ghost" size="icon" onClick={() => setShowConfigDialog(true)}>
               <Settings className="h-4 w-4" />
