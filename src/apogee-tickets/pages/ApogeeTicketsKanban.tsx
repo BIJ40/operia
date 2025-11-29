@@ -65,6 +65,12 @@ export default function ApogeeTicketsKanban() {
               Import BUGS
             </Button>
           </Link>
+          <Link to="/admin/apogee-tickets/import-v1">
+            <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
+              <Upload className="h-4 w-4 mr-2" />
+              Import V1
+            </Button>
+          </Link>
           <Link to={ROUTES.admin.apogeeTicketsImport}>
             <Button variant="outline">
               <Upload className="h-4 w-4 mr-2" />
