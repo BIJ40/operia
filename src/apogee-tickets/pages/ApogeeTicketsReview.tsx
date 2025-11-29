@@ -25,7 +25,7 @@ import {
 import { Link } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { HeatPriorityBadge, HEAT_PRIORITY_OPTIONS } from '../components/HeatPriorityBadge';
-import type { ApogeeTicket, OwnerSide, TicketFilters } from '../types';
+import type { ApogeeTicket, TicketFilters } from '../types';
 import { ROUTES } from '@/config/routes';
 
 export default function ApogeeTicketsReview() {
@@ -49,7 +49,6 @@ export default function ApogeeTicketsReview() {
         description: currentTicket.description,
         module: currentTicket.module,
         priority: currentTicket.priority,
-        owner_side: currentTicket.owner_side,
         kanban_status: currentTicket.kanban_status,
         h_min: currentTicket.h_min,
         h_max: currentTicket.h_max,
@@ -165,20 +164,6 @@ export default function ApogeeTicketsReview() {
             </Select>
 
             <Select
-              value={filters.owner_side || ''}
-              onValueChange={(v) => updateFilter('owner_side', v as OwnerSide)}
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Propriétaire" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="HC">Help Confort</SelectItem>
-                <SelectItem value="APOGEE">Apogée</SelectItem>
-                <SelectItem value="PARTAGE">Partagé</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
               value={filters.is_qualified === true ? 'true' : filters.is_qualified === false ? 'false' : ''}
               onValueChange={(v) => updateFilter('is_qualified', v === '' ? undefined : v === 'true')}
             >
@@ -188,6 +173,19 @@ export default function ApogeeTicketsReview() {
               <SelectContent>
                 <SelectItem value="true">✓ Qualifiés IA</SelectItem>
                 <SelectItem value="false">À qualifier</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filters.needs_completion === true ? 'true' : filters.needs_completion === false ? 'false' : ''}
+              onValueChange={(v) => updateFilter('needs_completion', v === '' ? undefined : v === 'true')}
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Complétude" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="true">Incomplets</SelectItem>
+                <SelectItem value="false">Complets</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -232,7 +230,7 @@ export default function ApogeeTicketsReview() {
           <CardHeader>
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   {currentTicket.apogee_modules?.label && (
                     <Badge className="bg-blue-500 text-white">
                       {currentTicket.apogee_modules.label}
@@ -242,6 +240,27 @@ export default function ApogeeTicketsReview() {
                     <Badge className="bg-green-600 text-white">
                       <CheckCircle2 className="h-3 w-3 mr-1" />
                       Qualifié IA
+                    </Badge>
+                  )}
+                  {/* Champs manquants */}
+                  {!currentTicket.module && (
+                    <Badge variant="outline" className="text-red-500 border-red-300 line-through">
+                      Module
+                    </Badge>
+                  )}
+                  {(currentTicket.heat_priority === null || currentTicket.heat_priority === undefined) && (
+                    <Badge variant="outline" className="text-red-500 border-red-300 line-through">
+                      Heures
+                    </Badge>
+                  )}
+                  {!currentTicket.severity && (
+                    <Badge variant="outline" className="text-orange-500 border-orange-300 line-through">
+                      Sévérité
+                    </Badge>
+                  )}
+                  {!currentTicket.description && (
+                    <Badge variant="outline" className="text-orange-500 border-orange-300 line-through">
+                      Description
                     </Badge>
                   )}
                 </div>
@@ -336,18 +355,18 @@ export default function ApogeeTicketsReview() {
               </div>
 
               <div>
-                <label className="text-xs text-muted-foreground">Propriétaire</label>
+                <label className="text-xs text-muted-foreground">Priorité</label>
                 <Select
-                  value={formValues.owner_side || ''}
-                  onValueChange={(v) => updateField('owner_side', (v || null) as OwnerSide)}
+                  value={formValues.priority || ''}
+                  onValueChange={(v) => updateField('priority', v || null)}
                 >
                   <SelectTrigger className="h-9 mt-1">
                     <SelectValue placeholder="—" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="HC">Help Confort</SelectItem>
-                    <SelectItem value="APOGEE">Apogée</SelectItem>
-                    <SelectItem value="PARTAGE">Partagé</SelectItem>
+                    {priorities.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
