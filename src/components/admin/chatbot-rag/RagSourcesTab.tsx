@@ -27,6 +27,7 @@ export function RagSourcesTab() {
     setLoading(true);
     try {
       // Get blocks count by type
+      // Apogée blocks (exclude helpconfort and apporteur)
       const { data: apogeeBlocks } = await supabase
         .from('blocks')
         .select('id', { count: 'exact' })
@@ -34,6 +35,14 @@ export function RagSourcesTab() {
         .not('slug', 'like', 'helpconfort-%')
         .not('slug', 'like', 'apporteur-%');
 
+      // HelpConfort blocks
+      const { data: helpconfortBlocks } = await supabase
+        .from('blocks')
+        .select('id', { count: 'exact' })
+        .eq('type', 'section')
+        .like('slug', 'helpconfort-%');
+
+      // Apporteurs blocks
       const { data: apporteurBlocks } = await supabase
         .from('apporteur_blocks')
         .select('id', { count: 'exact' })
@@ -46,15 +55,20 @@ export function RagSourcesTab() {
 
       // Aggregate stats
       const apogeeChunks = chunks?.filter(c => c.block_type === 'apogee_guide') || [];
+      const helpconfortChunks = chunks?.filter(c => 
+        c.block_type === 'helpconfort_guide' || 
+        (c.metadata as any)?.family === 'helpconfort'
+      ) || [];
       const apporteursChunks = chunks?.filter(c => 
         c.block_type === 'apporteurs_guide' || 
-        (c.metadata as any)?.source === 'apporteurs'
+        (c.metadata as any)?.family === 'apporteurs'
       ) || [];
       const documentChunks = chunks?.filter(c => c.block_type === 'document') || [];
 
-      const lastApogeeIndexed = apogeeChunks.length > 0 
-        ? apogeeChunks.reduce((max, c) => c.created_at > max ? c.created_at : max, apogeeChunks[0].created_at)
-        : null;
+      const getLastIndexed = (chunkList: typeof chunks) => {
+        if (!chunkList || chunkList.length === 0) return null;
+        return chunkList.reduce((max, c) => c.created_at > max ? c.created_at : max, chunkList[0].created_at);
+      };
 
       setSources([
         {
@@ -62,23 +76,28 @@ export function RagSourcesTab() {
           sourceType: 'blocks',
           blockCount: apogeeBlocks?.length || 0,
           chunkCount: apogeeChunks.length,
-          lastIndexed: lastApogeeIndexed,
+          lastIndexed: getLastIndexed(apogeeChunks),
+        },
+        {
+          family: 'HelpConfort',
+          sourceType: 'blocks',
+          blockCount: helpconfortBlocks?.length || 0,
+          chunkCount: helpconfortChunks.length,
+          lastIndexed: getLastIndexed(helpconfortChunks),
         },
         {
           family: 'Apporteurs',
           sourceType: 'apporteur_blocks',
           blockCount: apporteurBlocks?.length || 0,
           chunkCount: apporteursChunks.length,
-          lastIndexed: null,
+          lastIndexed: getLastIndexed(apporteursChunks),
         },
         {
           family: 'Documents',
           sourceType: 'documents',
           blockCount: 0,
           chunkCount: documentChunks.length,
-          lastIndexed: documentChunks.length > 0 
-            ? documentChunks.reduce((max, c) => c.created_at > max ? c.created_at : max, documentChunks[0].created_at)
-            : null,
+          lastIndexed: getLastIndexed(documentChunks),
         },
       ]);
     } catch (error) {
@@ -102,6 +121,13 @@ export function RagSourcesTab() {
     try {
       if (family === 'Apogée') {
         const { data, error } = await supabase.functions.invoke('regenerate-apogee-rag');
+        if (error) throw error;
+        toast({
+          title: 'Indexation terminée',
+          description: `${data.sections_processed} sections traitées, ${data.chunks_created} chunks créés`,
+        });
+      } else if (family === 'HelpConfort') {
+        const { data, error } = await supabase.functions.invoke('regenerate-helpconfort-rag');
         if (error) throw error;
         toast({
           title: 'Indexation terminée',

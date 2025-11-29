@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.regenerate-apogee-rag]
 verify_jwt = true
+
+[functions.regenerate-helpconfort-rag]
+verify_jwt = true
