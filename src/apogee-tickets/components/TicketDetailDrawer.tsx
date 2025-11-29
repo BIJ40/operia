@@ -3,7 +3,7 @@
  * Une seule page principale + onglet Documents joints
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -82,6 +82,22 @@ export function TicketDetailDrawer({
   const [newComment, setNewComment] = useState('');
   const [commentType, setCommentType] = useState<AuthorType>('HC');
   const [showAllComments, setShowAllComments] = useState(false);
+
+  // États locaux pour les champs éditables (évite les re-render à chaque frappe)
+  const [localTitle, setLocalTitle] = useState(ticket?.element_concerne || '');
+  const [localDescription, setLocalDescription] = useState(ticket?.description || '');
+  const [localHMin, setLocalHMin] = useState(ticket?.h_min?.toString() || '');
+  const [localHMax, setLocalHMax] = useState(ticket?.h_max?.toString() || '');
+
+  // Synchroniser les états locaux quand le ticket change
+  useEffect(() => {
+    if (ticket) {
+      setLocalTitle(ticket.element_concerne || '');
+      setLocalDescription(ticket.description || '');
+      setLocalHMin(ticket.h_min?.toString() || '');
+      setLocalHMax(ticket.h_max?.toString() || '');
+    }
+  }, [ticket?.id]);
 
   // Trier les commentaires du plus récent au plus ancien
   const sortedComments = useMemo(() => {
@@ -240,8 +256,13 @@ export function TicketDetailDrawer({
                     Titre / Élément concerné
                   </label>
                   <Textarea
-                    value={ticket.element_concerne}
-                    onChange={(e) => handleFieldUpdate('element_concerne', e.target.value)}
+                    value={localTitle}
+                    onChange={(e) => setLocalTitle(e.target.value)}
+                    onBlur={() => {
+                      if (localTitle !== ticket.element_concerne) {
+                        handleFieldUpdate('element_concerne', localTitle);
+                      }
+                    }}
                     rows={2}
                     className="mt-1 text-lg font-semibold resize-none"
                   />
@@ -253,8 +274,13 @@ export function TicketDetailDrawer({
                     Description
                   </label>
                   <Textarea
-                    value={ticket.description || ''}
-                    onChange={(e) => handleFieldUpdate('description', e.target.value || null)}
+                    value={localDescription}
+                    onChange={(e) => setLocalDescription(e.target.value)}
+                    onBlur={() => {
+                      if (localDescription !== (ticket.description || '')) {
+                        handleFieldUpdate('description', localDescription || null);
+                      }
+                    }}
                     rows={6}
                     placeholder="Décrivez le ticket en détail..."
                     className="mt-1 resize-none"
@@ -301,16 +327,32 @@ export function TicketDetailDrawer({
                       <Input
                         type="number"
                         placeholder="Min"
-                        value={ticket.h_min ?? ''}
-                        onChange={(e) => handleFieldUpdate('h_min', e.target.value ? Number(e.target.value) : null)}
+                        value={localHMin}
+                        onChange={(e) => setLocalHMin(e.target.value)}
+                        onBlur={() => {
+                          const newValue = localHMin ? parseFloat(localHMin) : null;
+                          if (newValue !== ticket.h_min) {
+                            handleFieldUpdate('h_min', newValue);
+                          }
+                        }}
                         className="h-9"
+                        min={0}
+                        step={0.5}
                       />
                       <Input
                         type="number"
                         placeholder="Max"
-                        value={ticket.h_max ?? ''}
-                        onChange={(e) => handleFieldUpdate('h_max', e.target.value ? Number(e.target.value) : null)}
+                        value={localHMax}
+                        onChange={(e) => setLocalHMax(e.target.value)}
+                        onBlur={() => {
+                          const newValue = localHMax ? parseFloat(localHMax) : null;
+                          if (newValue !== ticket.h_max) {
+                            handleFieldUpdate('h_max', newValue);
+                          }
+                        }}
                         className="h-9"
+                        min={0}
+                        step={0.5}
                       />
                     </div>
                   </div>
