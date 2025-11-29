@@ -63,12 +63,14 @@ export function UnifiedSidebar() {
     return active ? new Set([active]) : new Set();
   });
   
-  // Fermer les autres groupes et ouvrir uniquement celui de la route active
+  // Fermer les autres groupes et sous-menus, ouvrir uniquement celui de la route active
   useEffect(() => {
     const activeGroup = getActiveGroup();
     if (activeGroup) {
       setOpenGroups(new Set([activeGroup]));
     }
+    // Fermer tous les sous-menus lors du changement de route
+    setOpenSubmenus(new Set());
   }, [location.pathname]);
 
   const caps = getRoleCapabilities(globalRole);
