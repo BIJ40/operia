@@ -66,149 +66,24 @@ interface TileProps {
   badge?: string;
 }
 
-// VERSION 1: Icône circulaire outline + barre orange bas + élévation
+// VERSION 1: Gradient bas-droite + icône circulaire outline
 function TileVersion1({ title, description, icon: Icon, href, badge }: TileProps) {
   return (
     <Link to={href}>
-      <div className="group h-full bg-white rounded-xl border border-border overflow-hidden
+      <div className="group h-full rounded-xl border border-helpconfort-blue/20 p-5
+        bg-gradient-to-br from-white to-helpconfort-blue/5
         shadow-sm transition-all duration-300
-        hover:shadow-lg hover:-translate-y-1">
-        <div className="p-5">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
-              group-hover:border-helpconfort-blue group-hover:bg-helpconfort-blue/5 transition-all">
-              <Icon className="w-5 h-5 text-helpconfort-blue" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-foreground">{title}</h3>
-                {badge && (
-                  <Badge className="text-xs bg-helpconfort-orange/10 text-helpconfort-orange border border-helpconfort-orange/30">
-                    {badge}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
+        hover:to-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
+        <div className="flex items-center gap-4">
+          <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
+            group-hover:border-helpconfort-blue group-hover:bg-white/50 transition-all">
+            <Icon className="w-5 h-5 text-helpconfort-blue" />
           </div>
-        </div>
-        <div className="h-1 bg-helpconfort-orange/20 group-hover:bg-helpconfort-orange transition-colors" />
-      </div>
-    </Link>
-  );
-}
-
-// VERSION 2: Icône carrée bordée + gradient hover + barre accent
-function TileVersion2({ title, description, icon: Icon, href, badge }: TileProps) {
-  return (
-    <Link to={href}>
-      <div className="group h-full bg-white rounded-xl border border-helpconfort-blue/20 overflow-hidden
-        shadow-sm transition-all duration-300
-        hover:shadow-lg hover:bg-gradient-to-br hover:from-white hover:to-helpconfort-blue/5 hover:-translate-y-1">
-        <div className="p-5">
-          <div className="flex items-start gap-4">
-            <div className="w-11 h-11 rounded-lg border-2 border-helpconfort-blue/20 bg-white flex items-center justify-center
-              group-hover:border-helpconfort-blue/40 group-hover:bg-helpconfort-blue/5 transition-all">
-              <Icon className="w-5 h-5 text-helpconfort-blue" />
-            </div>
-            <div className="flex-1 pt-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-foreground">{title}</h3>
-                {badge && (
-                  <Badge className="text-xs bg-helpconfort-orange/10 text-helpconfort-orange border border-helpconfort-orange/30">
-                    {badge}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-          </div>
-        </div>
-        <div className="h-1 bg-helpconfort-blue/10 group-hover:bg-helpconfort-blue transition-colors" />
-      </div>
-    </Link>
-  );
-}
-
-// VERSION 3: Compact + icône circulaire + élévation douce
-function TileVersion3({ title, description, icon: Icon, href, badge }: TileProps) {
-  return (
-    <Link to={href}>
-      <div className="group h-full bg-white rounded-lg border border-border p-4
-        shadow-sm transition-all duration-300
-        hover:shadow-md hover:border-helpconfort-blue/40 hover:-translate-y-0.5">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/20 flex items-center justify-center
-            group-hover:border-helpconfort-blue group-hover:bg-helpconfort-blue/5 transition-all">
-            <Icon className="w-4 h-4 text-helpconfort-blue" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-foreground text-sm">{title}</h3>
-              {badge && (
-                <Badge className="text-[10px] bg-helpconfort-orange/10 text-helpconfort-orange border border-helpconfort-orange/30 px-1.5 py-0">
-                  {badge}
-                </Badge>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground truncate">{description}</p>
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-// VERSION 4: Icône ronde pleine + barre bas + gradient
-function TileVersion4({ title, description, icon: Icon, href, badge }: TileProps) {
-  return (
-    <Link to={href}>
-      <div className="group h-full bg-white rounded-xl border border-border overflow-hidden
-        transition-all duration-300
-        hover:shadow-lg hover:bg-gradient-to-br hover:from-white hover:to-helpconfort-orange/5 hover:-translate-y-1">
-        <div className="p-5">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-helpconfort-blue/10 flex items-center justify-center
-              group-hover:bg-helpconfort-blue group-hover:text-white transition-all">
-              <Icon className="w-5 h-5 text-helpconfort-blue group-hover:text-white transition-colors" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-foreground">{title}</h3>
-                {badge && (
-                  <Badge className="text-xs bg-helpconfort-orange text-white border-0">
-                    {badge}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-          </div>
-        </div>
-        <div className="h-1 bg-helpconfort-orange/20 group-hover:bg-helpconfort-orange transition-colors" />
-      </div>
-    </Link>
-  );
-}
-
-// VERSION 5: Double bordure + icône carrée + élévation forte
-function TileVersion5({ title, description, icon: Icon, href, badge }: TileProps) {
-  return (
-    <Link to={href}>
-      <div className="group h-full bg-white rounded-xl p-5
-        border-2 border-helpconfort-blue/15
-        shadow-sm transition-all duration-300
-        hover:border-helpconfort-blue/40 hover:shadow-xl hover:-translate-y-1">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-lg border-2 border-helpconfort-blue/20 flex items-center justify-center
-            group-hover:border-helpconfort-blue group-hover:bg-helpconfort-blue/5 transition-all">
-            <Icon className="w-6 h-6 text-helpconfort-blue" />
-          </div>
-          <div className="flex-1 pt-1">
+          <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-foreground">{title}</h3>
               {badge && (
-                <Badge className="text-xs bg-helpconfort-orange/10 text-helpconfort-orange border border-helpconfort-orange/30">
+                <Badge className="text-xs bg-helpconfort-blue/10 text-helpconfort-blue border border-helpconfort-blue/30">
                   {badge}
                 </Badge>
               )}
@@ -221,53 +96,177 @@ function TileVersion5({ title, description, icon: Icon, href, badge }: TileProps
   );
 }
 
-// VERSION 6: Ultra compact + barre colorée + icône outline
-function TileVersion6({ title, description, icon: Icon, href, badge }: TileProps) {
+// VERSION 2: Gradient haut-bas + icône carrée bordée
+function TileVersion2({ title, description, icon: Icon, href, badge }: TileProps) {
   return (
     <Link to={href}>
-      <div className="group h-full bg-white rounded-lg border border-border overflow-hidden
-        transition-all duration-200
-        hover:shadow-md hover:border-helpconfort-blue/30">
-        <div className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full border-2 border-helpconfort-blue/25 flex items-center justify-center
-              group-hover:border-helpconfort-blue transition-colors">
-              <Icon className="w-4 h-4 text-helpconfort-blue" />
+      <div className="group h-full rounded-xl border border-helpconfort-blue/15 p-5
+        bg-gradient-to-b from-helpconfort-blue/5 to-white
+        shadow-sm transition-all duration-300
+        hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
+        <div className="flex items-center gap-4">
+          <div className="w-11 h-11 rounded-lg border-2 border-helpconfort-blue/25 flex items-center justify-center
+            group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+            <Icon className="w-5 h-5 text-helpconfort-blue" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-foreground">{title}</h3>
+              {badge && (
+                <Badge className="text-xs bg-helpconfort-blue/10 text-helpconfort-blue border border-helpconfort-blue/30">
+                  {badge}
+                </Badge>
+              )}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium text-foreground text-sm">{title}</h3>
-                {badge && (
-                  <Badge className="text-[10px] bg-helpconfort-orange text-white border-0 px-1.5 py-0">
-                    {badge}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground truncate">{description}</p>
-            </div>
+            <p className="text-sm text-muted-foreground">{description}</p>
           </div>
         </div>
-        <div className="h-0.5 bg-helpconfort-blue/10 group-hover:bg-helpconfort-blue transition-colors" />
       </div>
     </Link>
   );
 }
 
-// VERSION 7: Icône en haut + gradient subtil + élévation
+// VERSION 3: Gradient radial centre + icône ronde pleine au hover
+function TileVersion3({ title, description, icon: Icon, href, badge }: TileProps) {
+  return (
+    <Link to={href}>
+      <div className="group h-full rounded-xl border border-helpconfort-blue/20 p-5
+        bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-helpconfort-blue/8 via-white to-white
+        shadow-sm transition-all duration-300
+        hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-1">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-helpconfort-blue/10 flex items-center justify-center
+            group-hover:bg-helpconfort-blue transition-all">
+            <Icon className="w-5 h-5 text-helpconfort-blue group-hover:text-white transition-colors" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-foreground">{title}</h3>
+              {badge && (
+                <Badge className="text-xs bg-helpconfort-blue/10 text-helpconfort-blue border border-helpconfort-blue/30">
+                  {badge}
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// VERSION 4: Gradient gauche-droite + bordure gauche accent
+function TileVersion4({ title, description, icon: Icon, href, badge }: TileProps) {
+  return (
+    <Link to={href}>
+      <div className="group h-full rounded-xl border border-helpconfort-blue/15 p-5
+        border-l-4 border-l-helpconfort-blue/40
+        bg-gradient-to-r from-helpconfort-blue/5 to-white
+        shadow-sm transition-all duration-300
+        hover:from-helpconfort-blue/15 hover:border-l-helpconfort-blue hover:shadow-lg hover:-translate-y-1">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
+            group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+            <Icon className="w-5 h-5 text-helpconfort-blue" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-foreground">{title}</h3>
+              {badge && (
+                <Badge className="text-xs bg-helpconfort-blue/10 text-helpconfort-blue border border-helpconfort-blue/30">
+                  {badge}
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// VERSION 5: Gradient diagonal inverse + double bordure
+function TileVersion5({ title, description, icon: Icon, href, badge }: TileProps) {
+  return (
+    <Link to={href}>
+      <div className="group h-full rounded-xl p-5
+        border-2 border-helpconfort-blue/20
+        bg-gradient-to-tl from-helpconfort-blue/8 to-white
+        shadow-sm transition-all duration-300
+        hover:from-helpconfort-blue/18 hover:border-helpconfort-blue/40 hover:shadow-xl hover:-translate-y-1">
+        <div className="flex items-center gap-4">
+          <div className="w-11 h-11 rounded-lg border-2 border-helpconfort-blue/25 flex items-center justify-center
+            group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+            <Icon className="w-5 h-5 text-helpconfort-blue" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-foreground">{title}</h3>
+              {badge && (
+                <Badge className="text-xs bg-helpconfort-blue/10 text-helpconfort-blue border border-helpconfort-blue/30">
+                  {badge}
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// VERSION 6: Gradient bas + barre bleue bas
+function TileVersion6({ title, description, icon: Icon, href, badge }: TileProps) {
+  return (
+    <Link to={href}>
+      <div className="group h-full rounded-xl border border-helpconfort-blue/15 overflow-hidden
+        bg-gradient-to-b from-white to-helpconfort-blue/5
+        shadow-sm transition-all duration-300
+        hover:to-helpconfort-blue/12 hover:shadow-lg hover:-translate-y-1">
+        <div className="p-5">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
+              group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+              <Icon className="w-5 h-5 text-helpconfort-blue" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-foreground">{title}</h3>
+                {badge && (
+                  <Badge className="text-xs bg-helpconfort-blue/10 text-helpconfort-blue border border-helpconfort-blue/30">
+                    {badge}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">{description}</p>
+            </div>
+          </div>
+        </div>
+        <div className="h-1 bg-helpconfort-blue/20 group-hover:bg-helpconfort-blue transition-colors" />
+      </div>
+    </Link>
+  );
+}
+
+// VERSION 7: Gradient coin haut-gauche + icône en haut
 function TileVersion7({ title, description, icon: Icon, href, badge }: TileProps) {
   return (
     <Link to={href}>
-      <div className="group h-full bg-white rounded-xl border border-border p-5
+      <div className="group h-full rounded-xl border border-helpconfort-blue/15 p-5
+        bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
         shadow-sm transition-all duration-300
-        hover:shadow-lg hover:bg-gradient-to-b hover:from-white hover:to-helpconfort-blue/5 hover:-translate-y-1">
+        hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-1">
         <div className="flex flex-col">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
-              group-hover:border-helpconfort-blue group-hover:bg-helpconfort-blue/10 transition-all">
+              group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
               <Icon className="w-5 h-5 text-helpconfort-blue" />
             </div>
             {badge && (
-              <Badge className="text-xs bg-helpconfort-orange/10 text-helpconfort-orange border border-helpconfort-orange/30">
+              <Badge className="text-xs bg-helpconfort-blue/10 text-helpconfort-blue border border-helpconfort-blue/30">
                 {badge}
               </Badge>
             )}
@@ -280,24 +279,24 @@ function TileVersion7({ title, description, icon: Icon, href, badge }: TileProps
   );
 }
 
-// VERSION 8: Bordure bleue gauche + icône outline + élévation
+// VERSION 8: Gradient subtil uniforme + icône carrée fond bleu
 function TileVersion8({ title, description, icon: Icon, href, badge }: TileProps) {
   return (
     <Link to={href}>
-      <div className="group h-full bg-white rounded-xl border border-border p-5
-        border-l-4 border-l-helpconfort-blue/50
+      <div className="group h-full rounded-xl border border-helpconfort-blue/20 p-5
+        bg-gradient-to-br from-white via-white to-helpconfort-blue/8
         shadow-sm transition-all duration-300
-        hover:shadow-lg hover:border-l-helpconfort-blue hover:-translate-y-1">
+        hover:to-helpconfort-blue/18 hover:shadow-lg hover:-translate-y-1">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/25 flex items-center justify-center
-            group-hover:border-helpconfort-blue group-hover:bg-helpconfort-blue/5 transition-all">
-            <Icon className="w-5 h-5 text-helpconfort-blue" />
+          <div className="w-11 h-11 rounded-lg bg-helpconfort-blue/10 flex items-center justify-center
+            group-hover:bg-helpconfort-blue transition-all">
+            <Icon className="w-5 h-5 text-helpconfort-blue group-hover:text-white transition-colors" />
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-foreground">{title}</h3>
               {badge && (
-                <Badge className="text-xs bg-helpconfort-orange/10 text-helpconfort-orange border border-helpconfort-orange/30">
+                <Badge className="text-xs bg-helpconfort-blue/10 text-helpconfort-blue border border-helpconfort-blue/30">
                   {badge}
                 </Badge>
               )}
@@ -310,56 +309,56 @@ function TileVersion8({ title, description, icon: Icon, href, badge }: TileProps
   );
 }
 
-// VERSION 9: Icône carrée fond bleu + barre bas orange + hover gradient
+// VERSION 9: Gradient doux haut + ombre colorée bleue
 function TileVersion9({ title, description, icon: Icon, href, badge }: TileProps) {
   return (
     <Link to={href}>
-      <div className="group h-full bg-white rounded-xl border border-helpconfort-blue/15 overflow-hidden
-        shadow-sm transition-all duration-300
-        hover:shadow-xl hover:bg-gradient-to-br hover:from-white hover:to-helpconfort-blue/5 hover:-translate-y-1">
-        <div className="p-5">
-          <div className="flex items-start gap-4">
-            <div className="w-11 h-11 rounded-lg bg-helpconfort-blue/10 flex items-center justify-center
-              group-hover:bg-helpconfort-blue transition-all">
-              <Icon className="w-5 h-5 text-helpconfort-blue group-hover:text-white transition-colors" />
-            </div>
-            <div className="flex-1 pt-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-foreground">{title}</h3>
-                {badge && (
-                  <Badge className="text-xs bg-helpconfort-orange text-white border-0">
-                    {badge}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-          </div>
-        </div>
-        <div className="h-1 bg-helpconfort-orange/15 group-hover:bg-helpconfort-orange transition-colors" />
-      </div>
-    </Link>
-  );
-}
-
-// VERSION 10: Minimaliste + bordure double hover + icône circle
-function TileVersion10({ title, description, icon: Icon, href, badge }: TileProps) {
-  return (
-    <Link to={href}>
-      <div className="group h-full bg-white rounded-xl p-5
-        border border-border
+      <div className="group h-full rounded-xl border border-helpconfort-blue/15 p-5
+        bg-gradient-to-b from-helpconfort-blue/8 via-white to-white
+        shadow-[0_4px_20px_-4px_rgba(0,122,204,0.1)]
         transition-all duration-300
-        hover:border-2 hover:border-helpconfort-blue/40 hover:shadow-lg hover:-translate-y-1">
+        hover:from-helpconfort-blue/18 hover:shadow-[0_8px_30px_-4px_rgba(0,122,204,0.2)] hover:-translate-y-1">
         <div className="flex items-center gap-4">
-          <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/20 flex items-center justify-center
-            group-hover:border-helpconfort-blue group-hover:bg-helpconfort-blue/10 transition-all">
+          <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
+            group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
             <Icon className="w-5 h-5 text-helpconfort-blue" />
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-foreground">{title}</h3>
               {badge && (
-                <Badge className="text-xs bg-helpconfort-orange/10 text-helpconfort-orange border border-helpconfort-orange/30">
+                <Badge className="text-xs bg-helpconfort-blue/10 text-helpconfort-blue border border-helpconfort-blue/30">
+                  {badge}
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// VERSION 10: Gradient coins opposés + bordure progressive
+function TileVersion10({ title, description, icon: Icon, href, badge }: TileProps) {
+  return (
+    <Link to={href}>
+      <div className="group h-full rounded-xl p-5
+        border border-helpconfort-blue/20
+        bg-[conic-gradient(from_225deg_at_0%_0%,_var(--tw-gradient-stops))] from-helpconfort-blue/8 via-white to-white
+        shadow-sm transition-all duration-300
+        hover:from-helpconfort-blue/18 hover:border-helpconfort-blue/40 hover:shadow-lg hover:-translate-y-1">
+        <div className="flex items-center gap-4">
+          <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/25 flex items-center justify-center
+            group-hover:border-helpconfort-blue group-hover:bg-white/80 transition-all">
+            <Icon className="w-5 h-5 text-helpconfort-blue" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-foreground">{title}</h3>
+              {badge && (
+                <Badge className="text-xs bg-helpconfort-blue/10 text-helpconfort-blue border border-helpconfort-blue/30">
                   {badge}
                 </Badge>
               )}
