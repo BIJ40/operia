@@ -24,12 +24,15 @@ import {
   X,
   FileText,
   Download,
-  Trash2
+  Trash2,
+  Sparkles,
+  CheckCircle2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useApogeeTicket } from '../hooks/useApogeeTickets';
 import { useTicketAttachments } from '../hooks/useTicketAttachments';
+import { useTicketQualification } from '../hooks/useTicketQualification';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType } from '../types';
 
 interface TicketDetailDrawerProps {
@@ -62,6 +65,7 @@ export function TicketDetailDrawer({
 }: TicketDetailDrawerProps) {
   const { comments, addComment } = useApogeeTicket(ticket?.id || null);
   const { attachments, uploadAttachment, deleteAttachment, isUploading } = useTicketAttachments(ticket?.id || null);
+  const { qualifyOne, isQualifying } = useTicketQualification();
   const [newComment, setNewComment] = useState('');
   const [commentType, setCommentType] = useState<AuthorType>('HC');
   const [showAllComments, setShowAllComments] = useState(false);
@@ -147,6 +151,50 @@ export function TicketDetailDrawer({
                   <Badge variant="outline" className="text-orange-600 border-orange-300">
                     À compléter
                   </Badge>
+                )}
+              </div>
+              
+              {/* Qualification IA */}
+              <div className="flex flex-wrap items-center gap-2">
+                {ticket.is_qualified ? (
+                  <>
+                    <Badge className="bg-green-600 text-white flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Qualifié
+                    </Badge>
+                    {ticket.priority_normalized && (
+                      <Badge className={`text-white ${
+                        ticket.priority_normalized === 'P0' ? 'bg-red-700' :
+                        ticket.priority_normalized === 'P1' ? 'bg-red-500' :
+                        ticket.priority_normalized === 'P2' ? 'bg-orange-500' :
+                        ticket.priority_normalized === 'P3' ? 'bg-yellow-500' :
+                        'bg-gray-400'
+                      }`}>
+                        {ticket.priority_normalized}
+                      </Badge>
+                    )}
+                    {ticket.ticket_type && (
+                      <Badge variant="outline" className="capitalize">
+                        {ticket.ticket_type}
+                      </Badge>
+                    )}
+                    {ticket.theme && (
+                      <Badge variant="secondary" className="text-xs">
+                        {ticket.theme}
+                      </Badge>
+                    )}
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-purple-600 border-purple-300 hover:bg-purple-50"
+                    onClick={() => qualifyOne(ticket.id)}
+                    disabled={isQualifying}
+                  >
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    {isQualifying ? 'Qualification...' : 'Qualifier avec IA'}
+                  </Button>
                 )}
               </div>
             </div>
@@ -263,6 +311,41 @@ export function TicketDetailDrawer({
                     </div>
                   </div>
                 </div>
+
+                {/* QUALIFICATION IA */}
+                {ticket.is_qualified && (
+                  <>
+                    <Separator />
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Qualification IA
+                      </label>
+                      <div className="mt-2 space-y-3">
+                        {/* Impact tags */}
+                        {ticket.impact_tags && ticket.impact_tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {ticket.impact_tags.map((tag) => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                {tag.replace('impact_', '').replace('_', ' ')}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {/* Notes internes */}
+                        {ticket.notes_internes && (
+                          <div className="bg-muted/30 rounded-lg p-3">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Notes internes</p>
+                            <p className="text-sm whitespace-pre-wrap">{ticket.notes_internes}</p>
+                          </div>
+                        )}
+                        {/* Infos qualification */}
+                        <p className="text-xs text-muted-foreground">
+                          Qualifié le {ticket.qualified_at && format(new Date(ticket.qualified_at), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <Separator />
 

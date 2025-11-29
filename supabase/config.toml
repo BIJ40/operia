@@ -50,3 +50,6 @@ verify_jwt = true
 
 [functions.regenerate-helpconfort-rag]
 verify_jwt = true
+
+[functions.qualify-ticket]
+verify_jwt = true
