@@ -12,13 +12,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { HeatPriorityBadge } from '../components/HeatPriorityBadge';
-import type { ApogeeTicket } from '../types';
+import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from '../components/OwnerSideSlider';
+import type { ApogeeTicket, OwnerSide } from '../types';
 import { ROUTES } from '@/config/routes';
 
 export default function ApogeeTicketsClassify() {
   const navigate = useNavigate();
   const { tickets: allTickets, statuses, updateTicket, isLoading } = useApogeeTickets();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [ownerSliderValue, setOwnerSliderValue] = useState<number>(50);
 
   // Liste stable de tickets "À spécifier" pour la session
   const [stableTickets, setStableTickets] = useState<ApogeeTicket[]>([]);
@@ -36,6 +38,13 @@ export default function ApogeeTicketsClassify() {
   const ticketsToClassify = stableTickets;
   const currentTicket = ticketsToClassify[currentIndex];
   const totalTickets = ticketsToClassify.length;
+
+  // Réinitialiser le slider quand on change de ticket
+  useEffect(() => {
+    if (currentTicket) {
+      setOwnerSliderValue(ownerSideToSliderValue(currentTicket.owner_side));
+    }
+  }, [currentTicket?.id]);
   const progressPercent = totalTickets > 0 ? Math.round((currentIndex / totalTickets) * 100) : 0;
 
   // Statuts disponibles pour la classification (exclure "À spécifier" et "Clôturé")
@@ -49,6 +58,7 @@ export default function ApogeeTicketsClassify() {
     await updateTicket.mutateAsync({
       id: currentTicket.id,
       kanban_status: newStatus,
+      owner_side: sliderValueToOwnerSide(ownerSliderValue),
     });
 
     // Si c'est le dernier ticket, rediriger vers le Kanban
@@ -179,6 +189,18 @@ export default function ApogeeTicketsClassify() {
                   <span className="font-medium">{currentTicket.reported_by}</span>
                 </div>
               )}
+            </div>
+
+            {/* Porteur du projet - Slider Apogée ↔ HC */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">
+                Porteur du projet
+              </p>
+              <OwnerSideSlider
+                value={ownerSliderValue}
+                onChange={setOwnerSliderValue}
+                disabled={updateTicket.isPending}
+              />
             </div>
 
             {/* Boutons de classification */}
