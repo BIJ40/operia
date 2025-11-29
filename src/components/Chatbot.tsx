@@ -13,10 +13,10 @@ import chatIcon from '@/assets/logo_chat.png';
 import { MessageCircle } from 'lucide-react';
 
 export function Chatbot() {
-  const { isAdmin, isSupport } = useAuth();
+  const { isAdmin, canAccessSupportConsole } = useAuth();
 
-  // Hide chatbot for admins and support
-  if (isAdmin || isSupport) return null;
+  // Hide chatbot for admins and support agents (those who handle tickets)
+  if (isAdmin || canAccessSupportConsole) return null;
 
   const {
     user,
