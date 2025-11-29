@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/config/routes';
 import {
   Dialog,
   DialogContent,
@@ -335,7 +336,7 @@ export default function AdminAgencies() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/tete-de-reseau/agences/${agency.id}`)}
+                            onClick={() => navigate(ROUTES.reseau.agenceProfile(agency.id))}
                             title="Voir le profil complet"
                           >
                             <Eye className="h-4 w-4" />

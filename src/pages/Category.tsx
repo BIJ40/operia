@@ -1,6 +1,7 @@
 import { useParams, Navigate, Link, useSearchParams } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { ROUTES } from '@/config/routes';
 import { Button } from '@/components/ui/button';
 import { Plus, ChevronsDownUp, ChevronsUpDown, Lightbulb, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
@@ -46,7 +47,7 @@ export default function Category() {
   const [searchParams] = useSearchParams();
 
   if (slug === 'faq-globale') {
-    return <Navigate to="/apogee" replace />;
+    return <Navigate to={ROUTES.academy.apogee} replace />;
   }
 
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
@@ -56,11 +57,11 @@ export default function Category() {
   const getEditUrl = (url: string) => isEditMode ? `${url}?edit=true` : url;
   
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={ROUTES.home} replace />;
   }
   
   if (!hasAccessToScope('apogee')) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={ROUTES.home} replace />;
   }
   
   const category = blocks.find(b => b.type === 'category' && b.slug === slug) as CategoryBlock | undefined;
@@ -185,7 +186,7 @@ export default function Category() {
         <div className="flex items-center justify-between gap-2">
           {/* Left zone: Retour + left arrow */}
           <div className="flex items-center gap-2 shrink-0">
-            <Link to={getEditUrl("/apogee")}>
+            <Link to={getEditUrl(ROUTES.academy.apogee)}>
               <Button variant="ghost" size="sm" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Retour
@@ -196,7 +197,7 @@ export default function Category() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>
-                    <Link to={prevCategory ? getEditUrl(`/apogee/category/${prevCategory.slug}`) : '#'}>
+                    <Link to={prevCategory ? getEditUrl(ROUTES.academy.apogeeCategory(prevCategory.slug)) : '#'}>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -237,7 +238,7 @@ export default function Category() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>
-                    <Link to={nextCategory ? getEditUrl(`/apogee/category/${nextCategory.slug}`) : '#'}>
+                    <Link to={nextCategory ? getEditUrl(ROUTES.academy.apogeeCategory(nextCategory.slug)) : '#'}>
                       <Button 
                         variant="ghost" 
                         size="icon" 

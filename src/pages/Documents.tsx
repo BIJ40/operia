@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/config/routes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -224,7 +225,7 @@ export default function Documents() {
   return (
     <div className="container mx-auto px-4 py-8">
         <div className="mb-6 flex items-center justify-between mt-6">
-          <Button variant="ghost" onClick={() => navigate('/admin')}>
+          <Button variant="ghost" onClick={() => navigate(ROUTES.admin.index)}>
             ← Retour à l'import
           </Button>
           <div className="flex items-center gap-4">

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAgencies } from "../hooks/useAgencies";
 import { AgencyProfileDialog } from "../components/AgencyProfileDialog";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
+import { ROUTES } from "@/config/routes";
 
 // Note: Cette page est protégée par RoleGuard minRole="franchisor_user" dans App.tsx
 
@@ -97,7 +98,7 @@ export default function FranchiseurAgencies() {
               <Card
                 key={agency.id}
                 className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] rounded-2xl border-l-4 border-l-primary"
-                onClick={() => navigate(`/tete-de-reseau/agences/${agency.id}`)}
+                onClick={() => navigate(ROUTES.reseau.agenceProfile(agency.id))}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">

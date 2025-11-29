@@ -136,16 +136,6 @@ function AppContent() {
           <Route path="/academy/documents" element={<MainLayout><RoleGuard minRole="franchisee_user"><HelpConfort /></RoleGuard></MainLayout>} />
           <Route path="/academy/documents/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryHelpConfort /></RoleGuard></MainLayout>} />
           
-          {/* Legacy routes - redirects for backward compatibility */}
-          <Route path="/apogee" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApogeeGuide /></RoleGuard></MainLayout>} />
-          <Route path="/apogee/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><Category /></RoleGuard></MainLayout>} />
-          <Route path="/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApporteurGuide /></RoleGuard></MainLayout>} />
-          <Route path="/apporteurs/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApporteurSubcategories /></RoleGuard></MainLayout>} />
-          <Route path="/apporteurs/category/:slug/sub/:subslug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryApporteur /></RoleGuard></MainLayout>} />
-          <Route path="/helpconfort" element={<MainLayout><RoleGuard minRole="franchisee_user"><HelpConfort /></RoleGuard></MainLayout>} />
-          <Route path="/helpconfort/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryHelpConfort /></RoleGuard></MainLayout>} />
-          <Route path="/documents" element={<MainLayout><RoleGuard minRole="franchisee_user"><Documents /></RoleGuard></MainLayout>} />
-          
           {/* ============================================ */}
           {/* PILOTAGE AGENCE - Section Index + Sous-pages */}
           {/* ============================================ */}
@@ -170,28 +160,12 @@ function AppContent() {
           {/* RH Tech */}
           <Route path="/pilotage/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PlanningHebdo /></RoleGuard></MainLayout>} />
           
-          {/* Legacy routes - backward compatibility */}
-          <Route path="/mes-indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><IndicateursLayout /></RoleGuard></MainLayout>}>
-            <Route index element={<IndicateursAccueil />} />
-            <Route path="apporteurs" element={<IndicateursApporteurs />} />
-            <Route path="univers" element={<IndicateursUnivers />} />
-            <Route path="techniciens" element={<IndicateursTechniciens />} />
-            <Route path="sav" element={<IndicateursSAV />} />
-          </Route>
-          <Route path="/actions-a-mener" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ActionsAMener /></RoleGuard></MainLayout>} />
-          <Route path="/actions-a-mener/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_admin"><CategoryActionsAMener /></RoleGuard></MainLayout>} />
-          <Route path="/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><DiffusionDashboard /></RoleGuard></MainLayout>} />
-          <Route path="/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PlanningHebdo /></RoleGuard></MainLayout>} />
-          
           {/* ============================================ */}
           {/* SUPPORT - Section Index + Sous-pages */}
           {/* ============================================ */}
           <Route path="/support" element={<MainLayout><RoleGuard><SupportIndex /></RoleGuard></MainLayout>} />
           <Route path="/support/mes-demandes" element={<MainLayout><RoleGuard><UserDemands /></RoleGuard></MainLayout>} />
           <Route path="/support/console" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
-          
-          {/* Legacy routes */}
-          <Route path="/mes-demandes" element={<MainLayout><RoleGuard><UserDemands /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* RÉSEAU FRANCHISEUR - Section Index + Sous-pages */}
@@ -219,18 +193,6 @@ function AppContent() {
           </Route>
           <Route path="/reseau/parametres" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurSettings />} />
-          </Route>
-          
-          {/* Legacy routes - backward compatibility */}
-          <Route path="/tete-de-reseau" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
-            <Route index element={<FranchiseurHome />} />
-            <Route path="agences" element={<FranchiseurAgencies />} />
-            <Route path="agences/:agencyId" element={<FranchiseurAgencyProfile />} />
-            <Route path="stats" element={<FranchiseurStats />} />
-            <Route path="comparatifs" element={<FranchiseurComparison />} />
-            <Route path="redevances" element={<RoleGuard minRole="franchisor_admin"><FranchiseurRoyalties /></RoleGuard>} />
-            <Route path="animateurs" element={<RoleGuard minRole="franchisor_admin"><FranchiseurAnimateurs /></RoleGuard>} />
-            <Route path="parametres" element={<FranchiseurSettings />} />
           </Route>
           
           {/* ============================================ */}

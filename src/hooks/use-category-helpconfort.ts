@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Block } from '@/types/block';
+import { ROUTES } from '@/config/routes';
 
 export interface Section extends Block {}
 
@@ -42,7 +43,7 @@ export const useCategoryHelpConfort = () => {
 
   useEffect(() => {
     if (!category && slug) {
-      navigate('/helpconfort');
+      navigate(ROUTES.academy.documents);
     }
   }, [category, slug, navigate]);
 

@@ -7,6 +7,7 @@ import { calculateDashboardStats } from "@/apogee-connect/utils/dashboardCalcula
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
+import { ROUTES } from "@/config/routes";
 
 export function MesIndicateursCard() {
   const { agence } = useAuth();
@@ -76,7 +77,7 @@ export function MesIndicateursCard() {
 
   return (
     <Link
-      to="/mes-indicateurs"
+      to={ROUTES.pilotage.indicateurs}
       className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl p-4 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex flex-col gap-3"
     >
       {/* En-tête avec icône et titre */}
