@@ -899,6 +899,61 @@ const channel = supabase
 
 ---
 
+## Gestion des Routes
+
+### Architecture centralisée
+
+Toutes les routes applicatives V2 sont centralisées dans un fichier unique :
+
+```
+src/config/routes.ts
+```
+
+**Règle absolue** : Aucune route ne doit être hardcodée (string literal comme `'/admin/users'`) dans le code. Toute navigation doit utiliser les constantes de `ROUTES`.
+
+### Structure des routes
+
+```typescript
+import { ROUTES } from '@/config/routes';
+
+// Exemples d'utilisation
+<Link to={ROUTES.academy.apogee}>Guide Apogée</Link>
+navigate(ROUTES.support.userTickets);
+
+// Routes dynamiques avec paramètres
+<Link to={ROUTES.academy.apogeeCategory('ma-categorie')}>...</Link>
+<Link to={ROUTES.reseau.agenceProfile('agency-uuid')}>...</Link>
+```
+
+### Sections de routes
+
+| Section | Préfixe | Exemples |
+|---------|---------|----------|
+| Help Academy | `/academy` | `/academy/apogee`, `/academy/apporteurs` |
+| Pilotage | `/pilotage` | `/pilotage/indicateurs`, `/pilotage/actions` |
+| Support | `/support` | `/support/mes-demandes`, `/support/console` |
+| Réseau | `/reseau` | `/reseau/dashboard`, `/reseau/agences` |
+| Admin | `/admin` | `/admin/users`, `/admin/backup` |
+| User | `/profile`, `/favorites` | Pages utilisateur |
+
+### Routes legacy (backward compatibility)
+
+Les anciennes routes sont maintenues pour rétrocompatibilité mais NE DOIVENT PAS être utilisées dans le nouveau code :
+
+- `/apogee` → `/academy/apogee`
+- `/mes-indicateurs` → `/pilotage/indicateurs`
+- `/mes-demandes` → `/support/mes-demandes`
+- `/tete-de-reseau` → `/reseau/dashboard`
+
+### Ajouter une nouvelle route
+
+1. Définir la route dans `src/config/routes.ts`
+2. Ajouter la route dans `App.tsx` avec `<Route path={ROUTES.xxx.yyy} ... />`
+3. Ajouter l'entrée de navigation dans `UnifiedSidebar.tsx` si nécessaire
+4. Ajouter le titre de page dans `navigation.ts` `PAGE_TITLES`
+
+---
+
 ## Liens utiles
 
 - **Documentation Supabase** : https://supabase.com/docs
@@ -912,4 +967,4 @@ const channel = supabase
 ---
 
 **Auteur** : Projet généré et maintenu via Lovable AI.  
-**Dernière mise à jour** : 2025-11-28
+**Dernière mise à jour** : 2025-11-29

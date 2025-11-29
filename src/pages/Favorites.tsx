@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { createSanitizedHtml } from '@/lib/sanitize';
+import { ROUTES } from '@/config/routes';
 import {
   Accordion,
   AccordionContent,
@@ -52,7 +53,7 @@ export default function Favorites() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/');
+      navigate(ROUTES.home);
       return;
     }
     
@@ -217,7 +218,7 @@ export default function Favorites() {
         </h1>
         <Button 
           variant="outline" 
-          onClick={() => navigate('/')}
+          onClick={() => navigate(ROUTES.home)}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -238,7 +239,7 @@ export default function Favorites() {
           <p className="text-sm text-muted-foreground mb-6">
             Ajoutez des sections en favoris pour les retrouver facilement ici
           </p>
-          <Button onClick={() => navigate('/apogee')} variant="outline">
+          <Button onClick={() => navigate(ROUTES.academy.apogee)} variant="outline">
             Parcourir le guide
           </Button>
         </div>

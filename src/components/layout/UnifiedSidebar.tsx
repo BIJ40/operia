@@ -19,6 +19,7 @@ import {
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
 import { getRoleCapabilities } from '@/config/roleMatrix';
+import { ROUTES } from '@/config/routes';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { useState, useEffect, ReactNode } from 'react';
 
@@ -100,70 +101,70 @@ export function UnifiedSidebar() {
     {
       label: <><span>Help</span><span className="text-helpconfort-orange animate-pulse">!</span><span> Academy</span></>,
       labelKey: 'help-academy',
-      indexUrl: '/academy',
+      indexUrl: ROUTES.academy.index,
       items: [
-        { title: 'Guide Apogée', url: '/academy/apogee', icon: BookOpen, description: 'Guide complet pour maîtriser le logiciel Apogée' },
-        { title: 'Guide Apporteurs', url: '/academy/apporteurs', icon: FileText, description: 'Ressources pour les apporteurs d\'affaires' },
-        { title: 'Base Documentaire', url: '/academy/documents', icon: FolderOpen, description: 'Documents et ressources HelpConfort' },
+        { title: 'Guide Apogée', url: ROUTES.academy.apogee, icon: BookOpen, description: 'Guide complet pour maîtriser le logiciel Apogée' },
+        { title: 'Guide Apporteurs', url: ROUTES.academy.apporteurs, icon: FileText, description: 'Ressources pour les apporteurs d\'affaires' },
+        { title: 'Base Documentaire', url: ROUTES.academy.documents, icon: FolderOpen, description: 'Documents et ressources HelpConfort' },
       ],
       accessKey: 'canAccessHelpAcademy',
     },
     {
       label: 'Pilotage Agence',
       labelKey: 'pilotage',
-      indexUrl: '/pilotage',
+      indexUrl: ROUTES.pilotage.index,
       items: [
         { 
           title: 'Statistiques', 
           icon: PieChart, 
           children: [
-            { title: 'Indicateurs généraux', url: '/pilotage/indicateurs', icon: BarChart3, description: 'Tableau de bord et KPI de votre agence' },
-            { title: 'Indicateurs Apporteurs', url: '/pilotage/indicateurs/apporteurs', icon: BarChart3, description: 'Statistiques apporteurs' },
-            { title: 'Indicateurs Univers', url: '/pilotage/indicateurs/univers', icon: BarChart3, description: 'Statistiques par univers' },
-            { title: 'Indicateurs Techniciens', url: '/pilotage/indicateurs/techniciens', icon: BarChart3, description: 'Statistiques techniciens' },
-            { title: 'Indicateurs SAV', url: '/pilotage/indicateurs/sav', icon: BarChart3, description: 'Statistiques SAV' },
+            { title: 'Indicateurs généraux', url: ROUTES.pilotage.indicateurs, icon: BarChart3, description: 'Tableau de bord et KPI de votre agence' },
+            { title: 'Indicateurs Apporteurs', url: ROUTES.pilotage.indicateursApporteurs, icon: BarChart3, description: 'Statistiques apporteurs' },
+            { title: 'Indicateurs Univers', url: ROUTES.pilotage.indicateursUnivers, icon: BarChart3, description: 'Statistiques par univers' },
+            { title: 'Indicateurs Techniciens', url: ROUTES.pilotage.indicateursTechniciens, icon: BarChart3, description: 'Statistiques techniciens' },
+            { title: 'Indicateurs SAV', url: ROUTES.pilotage.indicateursSav, icon: BarChart3, description: 'Statistiques SAV' },
           ]
         },
-        { title: 'Actions à Mener', url: '/pilotage/actions', icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
-        { title: 'Diffusion', url: '/pilotage/diffusion', icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
-        { title: 'RH Tech', url: '/pilotage/rh-tech', icon: Calendar, description: 'Planning hebdomadaire techniciens' },
+        { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
+        { title: 'Diffusion', url: ROUTES.pilotage.diffusion, icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
+        { title: 'RH Tech', url: ROUTES.pilotage.rhTech, icon: Calendar, description: 'Planning hebdomadaire techniciens' },
       ],
       accessKey: 'canAccessPilotageAgence',
     },
     {
       label: 'Support',
       labelKey: 'support',
-      indexUrl: '/support',
+      indexUrl: ROUTES.support.index,
       items: [
-        { title: 'Mes Demandes', url: '/support/mes-demandes', icon: LifeBuoy, description: 'Créer et suivre vos demandes de support' },
-        { title: 'Console Support', url: '/support/console', icon: Headset, description: 'Traiter les demandes de support', requiresSupportConsole: true },
+        { title: 'Mes Demandes', url: ROUTES.support.userTickets, icon: LifeBuoy, description: 'Créer et suivre vos demandes de support' },
+        { title: 'Console Support', url: ROUTES.support.console, icon: Headset, description: 'Traiter les demandes de support', requiresSupportConsole: true },
       ],
       accessKey: 'canAccessSupport',
     },
     {
       label: 'Réseau Franchiseur',
       labelKey: 'franchiseur',
-      indexUrl: '/reseau',
+      indexUrl: ROUTES.reseau.index,
       items: [
-        { title: 'Dashboard Réseau', url: '/reseau/dashboard', icon: Network },
-        { title: 'Agences', url: '/reseau/agences', icon: Building2 },
-        { title: 'Animateurs', url: '/reseau/animateurs', icon: Users, minRole: 'franchisor_admin' },
-        { title: 'Statistiques', url: '/reseau/stats', icon: PieChart },
-        { title: 'Comparatifs', url: '/reseau/comparatifs', icon: GitCompare },
-        { title: 'Redevances', url: '/reseau/redevances', icon: Coins, minRole: 'franchisor_admin' },
+        { title: 'Dashboard Réseau', url: ROUTES.reseau.dashboard, icon: Network },
+        { title: 'Agences', url: ROUTES.reseau.agences, icon: Building2 },
+        { title: 'Animateurs', url: ROUTES.reseau.animateurs, icon: Users, minRole: 'franchisor_admin' },
+        { title: 'Statistiques', url: ROUTES.reseau.stats, icon: PieChart },
+        { title: 'Comparatifs', url: ROUTES.reseau.comparatifs, icon: GitCompare },
+        { title: 'Redevances', url: ROUTES.reseau.redevances, icon: Coins, minRole: 'franchisor_admin' },
       ],
       accessKey: 'canAccessFranchiseur',
     },
     {
       label: 'Administration',
       labelKey: 'admin',
-      indexUrl: '/admin',
+      indexUrl: ROUTES.admin.index,
       items: [
-        { title: 'Utilisateurs', url: '/admin/users', icon: Users, description: 'Gérer les comptes utilisateurs' },
-        { title: 'Agences', url: '/admin/agencies', icon: Building2 },
-        { title: 'Sauvegardes', url: '/admin/backup', icon: Database },
-        { title: 'Activité', url: '/admin/user-activity', icon: Activity },
-        { title: 'Paramètres', url: '/admin', icon: Settings, description: 'Configuration du système' },
+        { title: 'Utilisateurs', url: ROUTES.admin.users, icon: Users, description: 'Gérer les comptes utilisateurs' },
+        { title: 'Agences', url: ROUTES.admin.agencies, icon: Building2 },
+        { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database },
+        { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity },
+        { title: 'Paramètres', url: ROUTES.admin.index, icon: Settings, description: 'Configuration du système' },
       ],
       accessKey: 'canAccessAdmin',
     },

@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
-import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, Moon, Sun, Bell, BellOff, Shield } from 'lucide-react';
+import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, Moon, Sun, Bell, BellOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 
 import { EscalateTicketDialog } from '@/components/admin/support/EscalateTicketDialog';
 import { SupportLevelBadge } from '@/components/SupportLevelBadge';
+import { ROUTES } from '@/config/routes';
 
 export default function AdminSupportTickets() {
   const { canManageTickets, user } = useAuth();
@@ -234,16 +235,7 @@ export default function AdminSupportTickets() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/admin/support-levels')}
-                className="gap-2 bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white"
-              >
-                <Shield className="w-4 h-4" />
-                Gérer les niveaux
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/admin/escalation-history')}
+                onClick={() => navigate(ROUTES.admin.escalationHistory)}
                 className="gap-2"
               >
                 📊 Historique escalades
