@@ -1,28 +1,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { GLOBAL_ROLES, getRoleLevel } from '../_shared/roles.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-// ============================================================================
-// SYSTÈME DE PERMISSIONS V2.0 - Helpers centralisés
-// ============================================================================
-
-const GLOBAL_ROLES: Record<string, number> = {
-  base_user: 0,        // N0
-  franchisee_user: 1,  // N1
-  franchisee_admin: 2, // N2
-  franchisor_user: 3,  // N3
-  franchisor_admin: 4, // N4
-  platform_admin: 5,   // N5
-  superadmin: 6,       // N6
-}
-
-const getRoleLevel = (role: string | null): number => {
-  if (!role) return 0
-  return GLOBAL_ROLES[role] ?? 0
 }
 
 // N5+ (platform_admin) peut supprimer des utilisateurs
@@ -33,9 +15,7 @@ const canDeleteUsers = (roleLevel: number): boolean => {
 // Vérifier si l'appelant peut supprimer un utilisateur cible
 const canDeleteTarget = (
   callerLevel: number, 
-  targetLevel: number, 
-  callerAgency: string | null, 
-  targetAgency: string | null
+  targetLevel: number
 ): { allowed: boolean; reason?: string } => {
   // Seuls N5+ peuvent supprimer
   if (!canDeleteUsers(callerLevel)) {
@@ -118,12 +98,11 @@ serve(async (req) => {
       .single()
 
     const targetLevel = getRoleLevel(targetProfile?.global_role)
-    const targetAgency = targetProfile?.agence || null
 
-    console.log(`[delete-user] Cible: ${userId}, N${targetLevel}, agence: ${targetAgency}`)
+    console.log(`[delete-user] Cible: ${userId}, N${targetLevel}`)
 
     // Vérifier les droits de suppression
-    const deleteCheck = canDeleteTarget(callerLevel, targetLevel, callerAgency, targetAgency)
+    const deleteCheck = canDeleteTarget(callerLevel, targetLevel)
     if (!deleteCheck.allowed) {
       console.log(`[delete-user] SUPPRESSION BLOQUÉE: ${deleteCheck.reason}`)
       throw new Error(deleteCheck.reason || 'Action non autorisée')
