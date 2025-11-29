@@ -132,6 +132,7 @@ export function UnifiedSidebar() {
       items: [
         { title: 'Dashboard Réseau', url: '/tete-de-reseau', icon: Network, scope: 'franchiseur_dashboard' },
         { title: 'Agences', url: '/tete-de-reseau/agences', icon: Building2, scope: 'franchiseur_agencies' },
+        { title: 'Animateurs', url: '/tete-de-reseau/animateurs', icon: Users, scope: 'franchiseur_agencies' },
         { title: 'Statistiques', url: '/tete-de-reseau/stats', icon: PieChart, scope: 'franchiseur_kpi' },
         { title: 'Comparatifs', url: '/tete-de-reseau/comparatifs', icon: GitCompare, scope: 'franchiseur_kpi' },
         { title: 'Redevances', url: '/tete-de-reseau/redevances', icon: Coins, scope: 'franchiseur_royalties' },

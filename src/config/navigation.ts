@@ -175,6 +175,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { title: 'Dashboard Réseau', url: '/tete-de-reseau', icon: Network, scope: 'franchiseur_dashboard' },
       { title: 'Agences', url: '/tete-de-reseau/agences', icon: Building2, scope: 'franchiseur_agencies' },
+      { title: 'Animateurs', url: '/tete-de-reseau/animateurs', icon: Users, scope: 'franchiseur_agencies' },
       { title: 'Statistiques', url: '/tete-de-reseau/stats', icon: PieChart, scope: 'franchiseur_kpi' },
       { title: 'Comparatifs', url: '/tete-de-reseau/comparatifs', icon: GitCompare, scope: 'franchiseur_kpi' },
       { title: 'Redevances', url: '/tete-de-reseau/redevances', icon: Coins, scope: 'franchiseur_royalties' },
@@ -243,6 +244,7 @@ export const PAGE_TITLES: Record<string, string> = {
   // Franchiseur
   '/tete-de-reseau': 'Dashboard Réseau',
   '/tete-de-reseau/agences': 'Agences du Réseau',
+  '/tete-de-reseau/animateurs': 'Gestion Animateurs',
   '/tete-de-reseau/stats': 'Statistiques Réseau',
   '/tete-de-reseau/comparatifs': 'Comparatifs',
   '/tete-de-reseau/redevances': 'Redevances',
