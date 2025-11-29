@@ -14,6 +14,7 @@ export const MODULES = {
   reseau_franchiseur: 'reseau_franchiseur',
   support: 'support',
   admin_plateforme: 'admin_plateforme',
+  apogee_tickets: 'apogee_tickets',
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
@@ -51,6 +52,11 @@ export const MODULE_OPTIONS = {
     permissions: 'admin_plateforme.permissions',
     backup: 'admin_plateforme.backup',
     logs: 'admin_plateforme.logs',
+  },
+  apogee_tickets: {
+    kanban: 'apogee_tickets.kanban',
+    import: 'apogee_tickets.import',
+    manage: 'apogee_tickets.manage',
   },
 } as const;
 
@@ -149,6 +155,19 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'logs', path: 'admin_plateforme.logs', label: 'Logs', description: 'Journaux d\'activité', defaultEnabled: false },
     ],
   },
+  {
+    key: 'apogee_tickets',
+    label: 'Suivi Dev',
+    description: 'Suivi du développement Apogée (tickets, Kanban)',
+    icon: 'Kanban',
+    defaultForRoles: ['platform_admin', 'superadmin'],
+    minRole: 'franchisee_admin',
+    options: [
+      { key: 'kanban', path: 'apogee_tickets.kanban', label: 'Kanban', description: 'Tableau Kanban des tickets', defaultEnabled: true },
+      { key: 'import', path: 'apogee_tickets.import', label: 'Import', description: 'Import depuis fichiers Excel', defaultEnabled: true },
+      { key: 'manage', path: 'apogee_tickets.manage', label: 'Gestion', description: 'Créer et gérer les tickets', defaultEnabled: true },
+    ],
+  },
 ];
 
 // Structure de stockage des modules activés (JSONB dans profiles)
@@ -158,6 +177,7 @@ export interface EnabledModules {
   reseau_franchiseur?: boolean | ModuleOptionsState;
   support?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
+  apogee_tickets?: boolean | ModuleOptionsState;
 }
 
 export interface ModuleOptionsState {
