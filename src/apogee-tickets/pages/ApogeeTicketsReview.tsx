@@ -165,20 +165,6 @@ export default function ApogeeTicketsReview() {
             </Select>
 
             <Select
-              value={filters.priority || ''}
-              onValueChange={(v) => updateFilter('priority', v)}
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Priorité" />
-              </SelectTrigger>
-              <SelectContent>
-                {priorities.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
               value={filters.owner_side || ''}
               onValueChange={(v) => updateFilter('owner_side', v as OwnerSide)}
             >
@@ -344,23 +330,6 @@ export default function ApogeeTicketsReview() {
                   <SelectContent>
                     {modules.map((m) => (
                       <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-xs text-muted-foreground">Priorité</label>
-                <Select
-                  value={formValues.priority || ''}
-                  onValueChange={(v) => updateField('priority', v || null)}
-                >
-                  <SelectTrigger className="h-9 mt-1">
-                    <SelectValue placeholder="—" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priorities.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
