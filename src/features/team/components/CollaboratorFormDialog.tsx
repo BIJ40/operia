@@ -24,11 +24,32 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   AgencyCollaborator,
   CollaboratorRole,
-  COLLABORATOR_ROLES,
   COLLABORATOR_ROLE_LABELS,
   CreateCollaboratorPayload,
   UpdateCollaboratorPayload,
 } from "../types";
+import { useAuth } from "@/contexts/AuthContext";
+
+// Rôles disponibles pour N2 (franchisé)
+const N2_ALLOWED_ROLES: CollaboratorRole[] = [
+  'assistant',
+  'technicien',
+  'commercial',
+  'associe',
+  'autre',
+];
+
+// Rôles supplémentaires pour N3+ (franchiseur/admin)
+const N3_PLUS_ROLES: CollaboratorRole[] = [
+  'dirigeant',
+  'assistant',
+  'technicien',
+  'commercial',
+  'associe',
+  'tete_de_reseau',
+  'externe',
+  'autre',
+];
 
 interface CollaboratorFormDialogProps {
   open: boolean;
@@ -45,6 +66,11 @@ export function CollaboratorFormDialog({
   onSubmit,
   isLoading,
 }: CollaboratorFormDialogProps) {
+  const { hasGlobalRole } = useAuth();
+  
+  // Déterminer les rôles disponibles selon le niveau de l'utilisateur
+  const availableRoles = hasGlobalRole("franchisor_user") ? N3_PLUS_ROLES : N2_ALLOWED_ROLES;
+  
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -145,7 +171,7 @@ export function CollaboratorFormDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {COLLABORATOR_ROLES.map((role) => (
+                {availableRoles.map((role) => (
                   <SelectItem key={role} value={role}>
                     {COLLABORATOR_ROLE_LABELS[role]}
                   </SelectItem>
