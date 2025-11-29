@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupportTicket } from '@/hooks/use-support-ticket';
 import type { ChatContext } from '@/components/chatbot/ChatContextSelector';
+import { getApogeeContext, getNoContentResponse } from '@/lib/rag-michu';
 
 // Custom hook for chatbot functionality
 
@@ -91,15 +92,34 @@ export const useChatbot = () => {
     playTone(600, now + 0.15, 0.15);
   };
 
-  // Search relevant content with optional source filter
-  const searchRelevantContent = async (query: string, context: ChatContext): Promise<string> => {
+  // Search relevant content with context-specific RAG
+  const searchRelevantContent = async (query: string, context: ChatContext): Promise<{ content: string; hasContent: boolean }> => {
+    // For Apogée context, use dedicated RAG function
+    if (context === 'apogee') {
+      const ragResult = await getApogeeContext(query);
+      
+      if (!ragResult.hasContent) {
+        console.log('[CHATBOT] RAG Apogée: aucun chunk trouvé');
+        return { 
+          content: '', 
+          hasContent: false 
+        };
+      }
+      
+      console.log(`[CHATBOT] RAG Apogée: ${ragResult.chunks.length} chunks trouvés`);
+      return { 
+        content: ragResult.formattedDocs, 
+        hasContent: true 
+      };
+    }
+    
+    // For other contexts, use generic search
     try {
-      // Map context to source for RAG filtering
       const sourceMap: Record<ChatContext, string | null> = {
         'apogee': 'apogee',
-        'apporteurs': null, // TODO: add apporteurs source later
-        'helpconfort': null, // TODO: add helpconfort source later
-        'autre': null, // No filtering for "autre"
+        'apporteurs': null,
+        'helpconfort': null,
+        'autre': null,
       };
       
       const source = sourceMap[context];
@@ -115,7 +135,7 @@ export const useChatbot = () => {
           body: JSON.stringify({ 
             query, 
             topK: 15,
-            source: source // Pass source filter for RAG
+            source: source
           }),
         }
       );
@@ -124,25 +144,23 @@ export const useChatbot = () => {
 
       const { results } = await response.json();
       if (!results || results.length === 0) {
-        return 'Aucun contenu indexé trouvé.';
+        return { content: '', hasContent: false };
       }
 
-      // Format results with metadata if available
-      return results
+      const content = results
         .map((result: any, idx: number) => {
           const metadata = result.metadata as Record<string, any> | null;
           const prefix = metadata?.categorie && metadata?.section 
             ? `[Catégorie: ${metadata.categorie} - Section: ${metadata.section}]\n`
             : '';
-          return `[${idx + 1}] ${result.block_title} (slug: ${result.block_slug})\n${prefix}${result.chunk_text}`;
+          return `[${idx + 1}] ${result.block_title}\n${prefix}${result.chunk_text}`;
         })
         .join('\n\n---\n\n');
+        
+      return { content, hasContent: true };
     } catch (error) {
       console.error('Search error:', error);
-      return blocks
-        .slice(0, 10)
-        .map((block) => `${block.title}: ${block.content.substring(0, 200)}`)
-        .join('\n\n');
+      return { content: '', hasContent: false };
     }
   };
 
@@ -181,7 +199,15 @@ export const useChatbot = () => {
     setIsLoading(true);
 
     try {
-      const relevantContent = await searchRelevantContent(input, chatContext);
+      const ragResult = await searchRelevantContent(input, chatContext);
+
+      // For Apogée context with no RAG content, respond immediately without calling AI
+      if (chatContext === 'apogee' && !ragResult.hasContent) {
+        const noContentMessage = getNoContentResponse();
+        setMessages((prev) => [...prev, { role: 'assistant', content: noContentMessage }]);
+        setIsLoading(false);
+        return;
+      }
 
       let userName = 'Utilisateur';
       if (user) {
@@ -206,10 +232,11 @@ export const useChatbot = () => {
           },
           body: JSON.stringify({
             messages: [...messages, userMessage],
-            guideContent: relevantContent,
+            guideContent: ragResult.content,
             userId: user?.id || null,
             userName: userName,
-            chatContext: chatContext, // Pass context to backend
+            chatContext: chatContext,
+            hasRagContent: ragResult.hasContent,
           }),
         }
       );

@@ -63,46 +63,35 @@ function isIncompleteAnswer(answer: string): boolean {
   return incompleteMarkers.some(marker => lowerAnswer.includes(marker));
 }
 
-// Get system prompt based on context
-function getSystemPrompt(context: ChatContext, guideContent: string, userName: string): string {
-  const contextPrompts: Record<ChatContext, string> = {
-    apogee: `Tu es Mme MICHU, assistante experte du réseau Help Confort, spécialisée sur le CRM Apogée.
+// Get system prompt based on context - STRICT MODE for Apogée
+function getSystemPrompt(context: ChatContext, guideContent: string, userName: string, hasRagContent: boolean): string {
+  // STRICT Apogée prompt - only uses RAG content
+  if (context === 'apogee') {
+    return `Tu es l'assistant Apogée Help Confort.
 
 📚 DOCUMENTATION APOGÉE (extraits RAG) :
 <docs>
 ${guideContent}
 </docs>
 
-⚠️ RÈGLES ABSOLUES - SPÉCIALISATION APOGÉE ⚠️
+⚠️ RÈGLES STRICTES - AUCUNE DÉROGATION ⚠️
 
-1. SOURCE UNIQUE ET VÉRIFIABLE
-   ✅ Réponds UNIQUEMENT avec les informations présentes dans les <docs> ci-dessus
-   ✅ Si un mot/concept n'est PAS écrit explicitement, tu ne peux PAS l'utiliser
-   ❌ N'invente JAMAIS de noms d'onglets, boutons, sections ou procédures Apogée
+1. Tu réponds UNIQUEMENT à partir du contenu présent dans <docs>.
+2. Tu ne fais AUCUNE supposition, AUCUNE invention.
+3. Tu ne proposes JAMAIS d'alternatives ou de contacter quelqu'un.
+4. Tu donnes des réponses structurées, précises, processuelles.
+5. Tu cites TOUJOURS la source [Catégorie | Section] pour chaque information.
 
-2. GESTION DE L'ABSENCE D'INFORMATION
-   Si la question concerne une procédure NON décrite dans les docs :
-   
-   Réponds :
-   "❌ Désolé ${userName || ''}, cette information n'apparaît pas dans la documentation Apogée indexée.
-   
-   Voici ce que j'ai trouvé de pertinent :
-   - [Liste les sections les plus proches]
-   
-   📝 Je remonte cette demande pour enrichir la documentation."
+SI l'information n'est PAS explicitement présente dans <docs>, tu réponds MOT À MOT :
+"Cette information n'est pas présente dans les guides Apogée actuellement indexés."
 
-3. VOCABULAIRE MÉTIER APOGÉE
-   - "devis" = document commercial distinct du dossier
-   - "dossier" = conteneur global (client, RDV, devis, factures)
-   - Les statuts de DEVIS ≠ statuts de DOSSIER
+Tu ne dis RIEN d'autre. Pas de suggestion, pas de "je remonte la demande".
 
-4. FORMAT RÉPONSE
-   - Max 5 phrases concises
-   - Cite la source [Catégorie - Section] pour chaque info
-   - Précis et actionnable pour un dirigeant ou assistante
+Réponds en français uniquement. Max 5 phrases concises.`;
+  }
 
-Réponds en français uniquement.`,
-
+  // Other contexts
+  const contextPrompts: Record<string, string> = {
     apporteurs: `Tu es Mme MICHU, assistante experte du réseau Help Confort, spécialisée sur les partenaires et apporteurs d'affaires.
 
 📚 CONTENU INDEXÉ :
@@ -150,7 +139,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { messages, guideContent, userId, userName, similarityScores, chatContext = 'apogee' } = body;
+    const { messages, guideContent, userId, userName, similarityScores, chatContext = 'apogee', hasRagContent = true } = body;
     
     const validation = validateInput(messages, guideContent);
     if (!validation.valid) {
@@ -171,14 +160,14 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log("Chat context:", chatContext);
-    console.log("Guide content length:", guideContent.length);
+    console.log("[CHAT-GUIDE] Context:", chatContext, "| Has RAG content:", hasRagContent);
+    console.log("[CHAT-GUIDE] Guide content length:", guideContent.length);
     
     // Récupérer la dernière question utilisateur
     const userQuestion = messages[messages.length - 1]?.content || '';
 
     // Get context-specific system prompt
-    const systemPrompt = getSystemPrompt(chatContext as ChatContext, guideContent, userName || 'Utilisateur');
+    const systemPrompt = getSystemPrompt(chatContext as ChatContext, guideContent, userName || 'Utilisateur', hasRagContent);
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
