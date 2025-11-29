@@ -11,6 +11,7 @@ import {
   BarChart3,
   FolderOpen,
   Settings,
+  BookOpen,
   LucideIcon
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -134,6 +135,7 @@ export function NavigationCards() {
         { to: ROUTES.support.console, icon: Headset, title: 'Console Support', description: 'Gérer les tickets' },
         { to: ROUTES.admin.escalationHistory, icon: FileStack, title: 'Historique Escalades', description: 'Voir toutes les escalades' },
         { to: ROUTES.admin.documents, icon: FolderOpen, title: 'Documents RAG', description: 'Base documentaire Mme MICHU' },
+        { to: ROUTES.admin.apogeeGuides, icon: BookOpen, title: 'Apogée Guides (RAG)', description: 'Gérer les guides Apogée' },
       ],
     },
     {
