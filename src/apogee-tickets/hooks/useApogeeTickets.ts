@@ -95,6 +95,9 @@ export function useApogeeTickets(filters?: TicketFilters) {
       if (filters?.search) {
         query = query.or(`element_concerne.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
+      if (filters?.is_qualified !== undefined) {
+        query = query.eq('is_qualified', filters.is_qualified);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
