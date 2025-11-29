@@ -69,7 +69,15 @@ export function OwnerSideSlider({ value, onChange, disabled }: OwnerSideSliderPr
       </div>
       
       {/* Slider */}
-      <div className="relative pt-1">
+      <div 
+        className="relative pt-1"
+        onClick={(e) => {
+          // Si indéterminé et clic sur le slider, forcer la valeur à 50
+          if (isUndetermined && !disabled) {
+            onChange(50);
+          }
+        }}
+      >
         <Slider
           value={[currentValue]}
           onValueChange={([v]) => handleSliderChange(v)}
