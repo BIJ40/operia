@@ -209,6 +209,11 @@ export function buildPlanningByTech({
       }
 
       const startDate = new Date(visite.date);
+      // Skip invalid dates
+      if (isNaN(startDate.getTime())) {
+        return;
+      }
+      
       const durationMinutes = visite.duree || 60; // default 1h si pas de durée
       const endDate = addMinutes(startDate, durationMinutes);
       
