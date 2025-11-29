@@ -683,84 +683,6 @@ export type Database = {
         }
         Relationships: []
       }
-      group_permissions: {
-        Row: {
-          created_at: string
-          group_id: string
-          id: string
-          level: number
-          scope_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          group_id: string
-          id?: string
-          level?: number
-          scope_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          group_id?: string
-          id?: string
-          level?: number
-          scope_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_permissions_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "group_permissions_scope_id_fkey"
-            columns: ["scope_id"]
-            isOneToOne: false
-            referencedRelation: "scopes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      groups: {
-        Row: {
-          created_at: string
-          description: string | null
-          display_order: number
-          id: string
-          is_active: boolean
-          label: string
-          system_role_limit: Database["public"]["Enums"]["system_role"]
-          type: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          display_order?: number
-          id?: string
-          is_active?: boolean
-          label: string
-          system_role_limit?: Database["public"]["Enums"]["system_role"]
-          type?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          display_order?: number
-          id?: string
-          is_active?: boolean
-          label?: string
-          system_role_limit?: Database["public"]["Enums"]["system_role"]
-          type?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       guide_chunks: {
         Row: {
           block_id: string
@@ -992,131 +914,7 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "profiles_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "groups"
-            referencedColumns: ["id"]
-          },
         ]
-      }
-      role_permissions: {
-        Row: {
-          block_id: string
-          can_access: boolean
-          can_create: boolean | null
-          can_delete: boolean | null
-          can_edit: boolean | null
-          can_view: boolean | null
-          created_at: string | null
-          id: string
-          level: number | null
-          role_agence: string
-          scope_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          block_id: string
-          can_access?: boolean
-          can_create?: boolean | null
-          can_delete?: boolean | null
-          can_edit?: boolean | null
-          can_view?: boolean | null
-          created_at?: string | null
-          id?: string
-          level?: number | null
-          role_agence: string
-          scope_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          block_id?: string
-          can_access?: boolean
-          can_create?: boolean | null
-          can_delete?: boolean | null
-          can_edit?: boolean | null
-          can_view?: boolean | null
-          created_at?: string | null
-          id?: string
-          level?: number | null
-          role_agence?: string
-          scope_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      roles: {
-        Row: {
-          category: string
-          created_at: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          label: string
-          slug: string
-          updated_at: string | null
-        }
-        Insert: {
-          category: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          label: string
-          slug: string
-          updated_at?: string | null
-        }
-        Update: {
-          category?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          label?: string
-          slug?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      scopes: {
-        Row: {
-          area: string
-          created_at: string | null
-          default_level: number | null
-          description: string | null
-          display_order: number | null
-          id: string
-          is_active: boolean | null
-          label: string
-          slug: string
-          updated_at: string | null
-        }
-        Insert: {
-          area: string
-          created_at?: string | null
-          default_level?: number | null
-          description?: string | null
-          display_order?: number | null
-          id?: string
-          is_active?: boolean | null
-          label: string
-          slug: string
-          updated_at?: string | null
-        }
-        Update: {
-          area?: string
-          created_at?: string | null
-          default_level?: number | null
-          description?: string | null
-          display_order?: number | null
-          id?: string
-          is_active?: boolean | null
-          label?: string
-          slug?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       sections: {
         Row: {
@@ -1436,36 +1234,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_capabilities: {
-        Row: {
-          capability: string
-          granted_at: string | null
-          granted_by: string | null
-          id: string
-          is_active: boolean | null
-          metadata: Json | null
-          user_id: string
-        }
-        Insert: {
-          capability: string
-          granted_at?: string | null
-          granted_by?: string | null
-          id?: string
-          is_active?: boolean | null
-          metadata?: Json | null
-          user_id: string
-        }
-        Update: {
-          capability?: string
-          granted_at?: string | null
-          granted_by?: string | null
-          id?: string
-          is_active?: boolean | null
-          metadata?: Json | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_connection_logs: {
         Row: {
           connected_at: string
@@ -1526,54 +1294,6 @@ export type Database = {
           scope?: string
           user_id?: string
           visited_at?: string | null
-        }
-        Relationships: []
-      }
-      user_permissions: {
-        Row: {
-          block_id: string | null
-          can_access: boolean
-          can_create: boolean | null
-          can_delete: boolean | null
-          can_edit: boolean | null
-          can_view: boolean | null
-          created_at: string | null
-          deny: boolean | null
-          id: string
-          level: number | null
-          scope_id: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          block_id?: string | null
-          can_access?: boolean
-          can_create?: boolean | null
-          can_delete?: boolean | null
-          can_edit?: boolean | null
-          can_view?: boolean | null
-          created_at?: string | null
-          deny?: boolean | null
-          id?: string
-          level?: number | null
-          scope_id?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          block_id?: string | null
-          can_access?: boolean
-          can_create?: boolean | null
-          can_delete?: boolean | null
-          can_edit?: boolean | null
-          can_view?: boolean | null
-          created_at?: string | null
-          deny?: boolean | null
-          id?: string
-          level?: number | null
-          scope_id?: string | null
-          updated_at?: string | null
-          user_id?: string
         }
         Relationships: []
       }
@@ -1663,9 +1383,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_effective_permission_level:
-        | { Args: { _scope_slug: string; _user_id: string }; Returns: number }
-        | { Args: { _scope_slug: string; _user_id: string }; Returns: number }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
       get_user_global_role_level: {
         Args: { _user_id: string }
