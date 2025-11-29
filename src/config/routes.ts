@@ -90,9 +90,13 @@ export const ROUTES = {
     agencyProfile: (agencyId: string) => `/admin/agencies/${agencyId}`,
     collaborateurs: '/admin/collaborateurs',
     backup: '/admin/backup',
+    cacheBackup: '/admin/cache-backup',
+    helpconfortBackup: '/admin/helpconfort-backup',
     userActivity: '/admin/user-activity',
-    support: '/admin/support',
+    supportStats: '/admin/support-stats',
     escalationHistory: '/admin/escalation-history',
+    documents: '/admin/documents',
+    storageQuota: '/admin/storage-quota',
     pageMetadata: '/admin/page-metadata',
   },
 
@@ -157,7 +161,7 @@ type StaticRoutes =
   | typeof ROUTES['admin']['agencies']
   | typeof ROUTES['admin']['backup']
   | typeof ROUTES['admin']['userActivity']
-  | typeof ROUTES['admin']['support']
+  | typeof ROUTES['admin']['supportStats']
   | typeof ROUTES['admin']['escalationHistory'];
 
 export type RoutePath = StaticRoutes | string;
