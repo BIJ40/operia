@@ -82,7 +82,11 @@ import {
   MoreHorizontal,
   UserX,
   UserCheck,
-  Trash2
+  Trash2,
+  KeyRound,
+  AlertCircle,
+  Pencil,
+  Mail,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -126,6 +130,8 @@ interface UserProfile {
   is_active: boolean | null;
   deactivated_at: string | null;
   deactivated_by: string | null;
+  // Password status
+  must_change_password: boolean | null;
 }
 
 const PAGE_SIZE = 20;
@@ -193,6 +199,16 @@ export default function AdminUsersUnified() {
   // Create user dialog
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   
+  // Edit user dialog
+  const [editDialog, setEditDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
+  const [editUserData, setEditUserData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    agence: '',
+    roleAgence: '',
+  });
+  
   // Deactivation/Delete dialogs
   const [deactivateDialog, setDeactivateDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   const [reactivateDialog, setReactivateDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
@@ -222,7 +238,7 @@ export default function AdminUsersUnified() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, agence, global_role, enabled_modules, system_role, role_agence, service_competencies, support_level, created_at, is_active, deactivated_at, deactivated_by')
+        .select('id, email, first_name, last_name, agence, global_role, enabled_modules, system_role, role_agence, service_competencies, support_level, created_at, is_active, deactivated_at, deactivated_by, must_change_password')
         .order('email');
       
       if (error) throw error;
@@ -446,6 +462,81 @@ export default function AdminUsersUnified() {
       toast.error(`Erreur suppression: ${error.message}`);
     },
   });
+
+  // Update user info mutation
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ userId, data }: { 
+      userId: string; 
+      data: { first_name?: string; last_name?: string; agence?: string; role_agence?: string };
+    }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update(data)
+        .eq('id', userId);
+      
+      if (error) throw error;
+      return userId;
+    },
+    onSuccess: () => {
+      toast.success('Informations mises à jour');
+      setEditDialog({ open: false, user: null });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+
+  // Update email mutation (via edge function)
+  const updateEmailMutation = useMutation({
+    mutationFn: async ({ userId, newEmail }: { userId: string; newEmail: string }) => {
+      const { data, error } = await supabase.functions.invoke('update-user-email', {
+        body: { targetUserId: userId, newEmail },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Email mis à jour');
+      setEditDialog({ open: false, user: null });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
+      const { data, error } = await supabase.functions.invoke('reset-user-password', {
+        body: { targetUserId: userId, newPassword },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Mot de passe réinitialisé');
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+
+  // Open edit dialog
+  const openEditDialog = (userItem: UserProfile) => {
+    setEditUserData({
+      firstName: userItem.first_name || '',
+      lastName: userItem.last_name || '',
+      email: userItem.email || '',
+      agence: userItem.agence || '',
+      roleAgence: userItem.role_agence || '',
+    });
+    setEditDialog({ open: true, user: userItem });
+  };
 
   // Check if user is superadmin (N6)
   const isSuperAdmin = effectiveUserRole === 'superadmin';
@@ -749,6 +840,21 @@ export default function AdminUsersUnified() {
                           </Badge>
                         )}
 
+                        {/* Must change password indicator */}
+                        {userItem.must_change_password && userItem.is_active !== false && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="outline" className="shrink-0 border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-950/30">
+                                <AlertCircle className="w-3 h-3 mr-1" />
+                                À activer
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              L'utilisateur n'a pas encore changé son mot de passe provisoire
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+
                         {/* Actions */}
                         <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                           {userCanBeEdited ? (
@@ -774,8 +880,8 @@ export default function AdminUsersUnified() {
                             </Tooltip>
                           )}
 
-                          {/* Action menu for superadmin */}
-                          {isSuperAdmin && (
+                          {/* Action menu */}
+                          {userCanBeEdited && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -783,6 +889,11 @@ export default function AdminUsersUnified() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openEditDialog(userItem)}>
+                                  <Pencil className="w-4 h-4 mr-2" />
+                                  Modifier les informations
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 {userItem.is_active !== false ? (
                                   <DropdownMenuItem
                                     onClick={() => setDeactivateDialog({ open: true, user: userItem })}
@@ -800,14 +911,18 @@ export default function AdminUsersUnified() {
                                     Réactiver l'utilisateur
                                   </DropdownMenuItem>
                                 )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => setDeleteDialog({ open: true, user: userItem })}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Supprimer définitivement
-                                </DropdownMenuItem>
+                                {isSuperAdmin && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => setDeleteDialog({ open: true, user: userItem })}
+                                      className="text-destructive"
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Supprimer définitivement
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           )}
@@ -1109,6 +1224,182 @@ export default function AdminUsersUnified() {
                   <UserPlus className="w-4 h-4 mr-2" />
                 )}
                 Créer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit User Dialog */}
+        <Dialog open={editDialog.open} onOpenChange={(open) => setEditDialog({ open, user: open ? editDialog.user : null })}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Pencil className="w-5 h-5" />
+                Modifier l'utilisateur
+              </DialogTitle>
+              <DialogDescription>
+                Modifier les informations de {editDialog.user?.email}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {/* Status badges */}
+              <div className="flex gap-2 flex-wrap">
+                {editDialog.user?.must_change_password && (
+                  <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-950/30">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    Mot de passe provisoire non changé
+                  </Badge>
+                )}
+                {editDialog.user?.is_active === false && (
+                  <Badge variant="destructive">
+                    <UserX className="w-3 h-3 mr-1" />
+                    Compte désactivé
+                  </Badge>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editFirstName">Prénom</Label>
+                  <Input
+                    id="editFirstName"
+                    value={editUserData.firstName}
+                    onChange={(e) => setEditUserData(prev => ({ ...prev, firstName: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editLastName">Nom</Label>
+                  <Input
+                    id="editLastName"
+                    value={editUserData.lastName}
+                    onChange={(e) => setEditUserData(prev => ({ ...prev, lastName: e.target.value }))}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="editEmail">Email</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="editEmail"
+                    type="email"
+                    value={editUserData.email}
+                    onChange={(e) => setEditUserData(prev => ({ ...prev, email: e.target.value }))}
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (editDialog.user && editUserData.email !== editDialog.user.email) {
+                        updateEmailMutation.mutate({
+                          userId: editDialog.user.id,
+                          newEmail: editUserData.email,
+                        });
+                      }
+                    }}
+                    disabled={!editDialog.user || editUserData.email === editDialog.user.email || updateEmailMutation.isPending}
+                  >
+                    <Mail className="w-4 h-4 mr-1" />
+                    Modifier email
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  La modification d'email met à jour l'authentification
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="editAgence">Agence</Label>
+                <Input
+                  id="editAgence"
+                  value={editUserData.agence}
+                  onChange={(e) => setEditUserData(prev => ({ ...prev, agence: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editRoleAgence">Poste occupé</Label>
+                <Select
+                  value={editUserData.roleAgence}
+                  onValueChange={(v) => setEditUserData(prev => ({ ...prev, roleAgence: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un poste" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ROLE_AGENCE_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Reset password section */}
+              <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
+                <Label className="flex items-center gap-2">
+                  <KeyRound className="w-4 h-4" />
+                  Réinitialiser le mot de passe
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Nouveau mot de passe (min 8 car.)"
+                    id="newPassword"
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const input = document.getElementById('newPassword') as HTMLInputElement;
+                      if (editDialog.user && input.value) {
+                        resetPasswordMutation.mutate({
+                          userId: editDialog.user.id,
+                          newPassword: input.value,
+                        });
+                        input.value = '';
+                      }
+                    }}
+                    disabled={resetPasswordMutation.isPending}
+                  >
+                    {resetPasswordMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <KeyRound className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  L'utilisateur devra changer ce mot de passe à sa prochaine connexion
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditDialog({ open: false, user: null })}>
+                Annuler
+              </Button>
+              <Button
+                onClick={() => {
+                  if (editDialog.user) {
+                    updateUserMutation.mutate({
+                      userId: editDialog.user.id,
+                      data: {
+                        first_name: editUserData.firstName,
+                        last_name: editUserData.lastName,
+                        agence: editUserData.agence,
+                        role_agence: editUserData.roleAgence,
+                      },
+                    });
+                  }
+                }}
+                disabled={updateUserMutation.isPending}
+              >
+                {updateUserMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Enregistrer
               </Button>
             </DialogFooter>
           </DialogContent>
