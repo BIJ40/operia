@@ -44,6 +44,7 @@ export default function AdminApogeeGuides() {
   const [editingGuide, setEditingGuide] = useState<ApogeeGuide | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRegeneratingRAG, setIsRegeneratingRAG] = useState(false);
+  const [isSavingWithRAG, setIsSavingWithRAG] = useState(false);
   const [formData, setFormData] = useState<ApogeeGuideInsert>({
     titre: '',
     categorie: '',
@@ -52,6 +53,40 @@ export default function AdminApogeeGuides() {
     version: '2025-11-29',
     tags: '',
   });
+
+  // Helper to regenerate RAG index
+  const regenerateRAGIndex = async (): Promise<boolean> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Session expirée');
+        return false;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/regenerate-apogee-rag`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({}),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de la régénération');
+      }
+
+      return true;
+    } catch (err) {
+      console.error('[RAG] Error:', err);
+      return false;
+    }
+  };
 
   // Fetch all guides
   const { data: guides = [], isLoading } = useQuery({
@@ -62,31 +97,66 @@ export default function AdminApogeeGuides() {
   // Insert mutation
   const insertMutation = useMutation({
     mutationFn: insertApogeeGuide,
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['apogee-guides'] });
       toast.success('Guide créé avec succès');
+      
+      // Auto-regenerate RAG
+      toast.info('Mise à jour de l\'index RAG...');
+      const ragSuccess = await regenerateRAGIndex();
+      if (ragSuccess) {
+        toast.success('Index RAG actualisé');
+      } else {
+        toast.warning('Guide créé mais index RAG non actualisé');
+      }
+      
+      setIsSavingWithRAG(false);
       closeDialog();
     },
-    onError: (err) => toast.error(`Erreur: ${err.message}`),
+    onError: (err) => {
+      toast.error(`Erreur: ${err.message}`);
+      setIsSavingWithRAG(false);
+    },
   });
 
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: ApogeeGuideUpdate }) => updateApogeeGuide(id, data),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['apogee-guides'] });
       toast.success('Guide mis à jour');
+      
+      // Auto-regenerate RAG
+      toast.info('Mise à jour de l\'index RAG...');
+      const ragSuccess = await regenerateRAGIndex();
+      if (ragSuccess) {
+        toast.success('Index RAG actualisé');
+      } else {
+        toast.warning('Guide mis à jour mais index RAG non actualisé');
+      }
+      
+      setIsSavingWithRAG(false);
       closeDialog();
     },
-    onError: (err) => toast.error(`Erreur: ${err.message}`),
+    onError: (err) => {
+      toast.error(`Erreur: ${err.message}`);
+      setIsSavingWithRAG(false);
+    },
   });
 
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: deleteApogeeGuide,
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['apogee-guides'] });
       toast.success('Guide supprimé');
+      
+      // Auto-regenerate RAG after delete
+      toast.info('Mise à jour de l\'index RAG...');
+      const ragSuccess = await regenerateRAGIndex();
+      if (ragSuccess) {
+        toast.success('Index RAG actualisé');
+      }
     },
     onError: (err) => toast.error(`Erreur: ${err.message}`),
   });
@@ -127,6 +197,7 @@ export default function AdminApogeeGuides() {
       return;
     }
 
+    setIsSavingWithRAG(true);
     if (editingGuide) {
       updateMutation.mutate({ id: editingGuide.id, data: formData });
     } else {
@@ -396,11 +467,18 @@ export default function AdminApogeeGuides() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeDialog}>
+            <Button variant="outline" onClick={closeDialog} disabled={isSavingWithRAG}>
               Annuler
             </Button>
-            <Button onClick={handleSubmit} disabled={insertMutation.isPending || updateMutation.isPending}>
-              {editingGuide ? 'Mettre à jour' : 'Créer'}
+            <Button onClick={handleSubmit} disabled={isSavingWithRAG}>
+              {isSavingWithRAG ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                  {insertMutation.isPending || updateMutation.isPending ? 'Enregistrement...' : 'Indexation RAG...'}
+                </>
+              ) : (
+                editingGuide ? 'Mettre à jour' : 'Créer'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
