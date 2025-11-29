@@ -139,10 +139,10 @@ const SortableCategory = ({
           </div>
         </div>
       )}
-      {/* Badge En cours - arrondi accentué orange */}
+      {/* Badge En cours - arrondi accentué bleu */}
       {hasInProgress && !isEmpty && !isEditMode && (
         <div className="absolute -top-2 -right-2 z-20">
-          <div className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
+          <div className="bg-helpconfort-blue text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
             <Clock className="w-3 h-3" />
             En cours
           </div>
@@ -311,7 +311,7 @@ export default function HelpConfort() {
     if (isEmpty) {
       return "bg-muted/50 border-muted-foreground/30 border-l-muted-foreground/50 opacity-60";
     }
-    return "bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 border-helpconfort-orange/40 border-l-primary hover:border-helpconfort-orange/60 hover:border-l-accent hover:shadow-xl";
+    return "bg-helpconfort-blue/8 border-helpconfort-blue/20 border-l-helpconfort-blue hover:bg-helpconfort-blue/12 hover:border-helpconfort-blue/30 hover:shadow-lg";
   };
 
   const IconComponent = (iconName: string) => {
