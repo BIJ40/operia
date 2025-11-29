@@ -98,6 +98,7 @@ export const ROUTES = {
     documents: '/admin/documents',
     storageQuota: '/admin/storage-quota',
     pageMetadata: '/admin/page-metadata',
+    apogeeGuides: '/admin/apogee-guides',
   },
 
   // ============================================

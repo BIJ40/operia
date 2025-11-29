@@ -217,6 +217,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database, scope: 'admin_backup' },
       { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity, scope: 'admin_settings' },
       { title: 'Métadonnées pages', url: ROUTES.admin.pageMetadata, icon: FileText, scope: 'admin_settings' },
+      { title: 'Apogée Guides (RAG)', url: ROUTES.admin.apogeeGuides, icon: BookOpen, scope: 'admin_settings' },
       { 
         title: 'Paramètres', 
         url: ROUTES.admin.index, 
@@ -280,6 +281,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.admin.documents]: 'Documents RAG',
   [ROUTES.admin.storageQuota]: 'Stockage',
   [ROUTES.admin.cacheBackup]: 'Cache Backup',
+  [ROUTES.admin.apogeeGuides]: 'Apogée Guides (RAG)',
   
   // User
   [ROUTES.profile]: 'Mon Profil',

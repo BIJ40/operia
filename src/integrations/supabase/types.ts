@@ -262,6 +262,42 @@ export type Database = {
         }
         Relationships: []
       }
+      apogee_guides: {
+        Row: {
+          categorie: string
+          created_at: string | null
+          id: string
+          section: string
+          tags: string | null
+          texte: string
+          titre: string
+          updated_at: string | null
+          version: string | null
+        }
+        Insert: {
+          categorie: string
+          created_at?: string | null
+          id?: string
+          section: string
+          tags?: string | null
+          texte: string
+          titre: string
+          updated_at?: string | null
+          version?: string | null
+        }
+        Update: {
+          categorie?: string
+          created_at?: string | null
+          id?: string
+          section?: string
+          tags?: string | null
+          texte?: string
+          titre?: string
+          updated_at?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
       apporteur_blocks: {
         Row: {
           attachments: Json | null
