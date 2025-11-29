@@ -96,6 +96,7 @@ export interface ApogeeTicketInsert {
   external_key?: string | null;
   apogee_status_raw?: string | null;
   hc_status_raw?: string | null;
+  module_area?: string | null;
   created_from?: CreatedFrom;
 }
 
