@@ -94,7 +94,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous modules</SelectItem>
-            {modules.map((m) => (
+            {modules.filter(m => m.id).map((m) => (
               <SelectItem key={m.id} value={m.id}>
                 {m.label}
               </SelectItem>
@@ -112,7 +112,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous tags</SelectItem>
-            {impactTags.map((tag) => (
+            {impactTags.filter(tag => tag.id).map((tag) => (
               <SelectItem key={tag.id} value={tag.id}>
                 {tag.label}
               </SelectItem>
