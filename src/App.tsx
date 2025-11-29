@@ -172,6 +172,7 @@ function AppContent() {
           <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminBackup /></RoleGuard></MainLayout>} />
           <Route path="/admin/helpconfort-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminHelpConfortBackup /></RoleGuard></MainLayout>} />
           {/* User Management - N2+ can access, but filtering is done inside the page */}
+          <Route path="/admin/users" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminUsersUnified /></RoleGuard></MainLayout>} />
           <Route path="/admin/users-unified" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminUsersUnified /></RoleGuard></MainLayout>} />
           <Route path="/admin/users-list" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminUsersUnified /></RoleGuard></MainLayout>} />
           <Route path="/admin/role-permissions" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminRolePermissions /></RoleGuard></MainLayout>} />
