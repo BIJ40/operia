@@ -39,9 +39,18 @@ function parseCSVLine(line: string): string[] {
 // Colonnes attendues dans le CSV
 const EXPECTED_COLUMNS = ['titre', 'categorie', 'section', 'texte', 'version', 'tags'];
 
+// Normalise les headers (supprime accents, lowercase)
+function normalizeHeader(header: string): string {
+  return header
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // Supprime les accents
+}
+
 /**
  * Parse un fichier CSV et retourne les guides à importer
- * Format attendu: titre,categorie,section,texte,version,tags
+ * Format attendu: Titre,Catégorie,Section,Texte,Version,Tags
  * Première ligne = headers
  */
 export function parseApogeeGuidesCSV(csvContent: string): { guides: ApogeeGuideInsert[]; errors: string[] } {
@@ -54,8 +63,8 @@ export function parseApogeeGuidesCSV(csvContent: string): { guides: ApogeeGuideI
     return { guides, errors };
   }
 
-  // Parse headers
-  const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
+  // Parse headers avec normalisation (accents, casse)
+  const headers = parseCSVLine(lines[0]).map(normalizeHeader);
   
   // Vérifier les colonnes requises
   const requiredColumns = ['titre', 'categorie', 'section', 'texte'];
