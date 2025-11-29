@@ -1,5 +1,6 @@
 /**
  * Hook pour l'import XLSX des tickets Apogée
+ * Version améliorée avec détection flexible des colonnes
  */
 
 import { useState } from 'react';
@@ -10,21 +11,22 @@ import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import type { ImportedRow, ImportResult, ApogeeTicketInsert, ApogeeTicketCommentInsert } from '../types';
 
-// Mapping des colonnes Excel vers les champs de la base
-const COLUMN_MAPPING: Record<string, keyof ApogeeTicketInsert | 'comments'> = {
-  'ELEMENTS CONCERNES': 'element_concerne',
-  'PRIO': 'priority',
-  'ACTION': 'action_type',
-  'Temps mini': 'h_min',
-  'H Min': 'h_min',
-  'Temps maxi': 'h_max',
-  'H Max': 'h_max',
-  'PRISE EN CHARGE': 'owner_side',
-  'HCA': 'hca_code',
-  'CODE HCA': 'hca_code',
-  'DESCRIPTIF': 'description',
-  'APOGEE': 'apogee_status_raw',
-  'HC': 'hc_status_raw',
+// Mapping flexible des colonnes - cherche parmi ces variations
+const COLUMN_VARIANTS: Record<string, string[]> = {
+  element_concerne: ['ELEMENTS CONCERNES', 'ELEMENT CONCERNE', 'ÉLÉMENT CONCERNÉ', 'ÉLÉMENTS CONCERNÉS', 'Élément concerné'],
+  description: ['DESCRIPTIF', 'Descriptif', 'DESCRIPTION', 'Description'],
+  priority: ['PRIO', 'Prio', 'PRIORITE', 'PRIORITÉ', 'Priorité'],
+  action_type: ['ACTION', 'Action', 'TYPE ACTION'],
+  h_min: ['Temps mini', 'TEMPS MINI', 'H Min', 'H MIN', 'H_MIN', 'Min'],
+  h_max: ['Temps maxi', 'TEMPS MAXI', 'H Max', 'H MAX', 'H_MAX', 'Max'],
+  owner_side: ['PRISE EN CHARGE', 'Prise en charge', 'PEC', 'OWNER'],
+  hca_code: ['HCA', 'CODE HCA', 'Code HCA'],
+  apogee_status: ['APOGEE', 'Apogee', 'APOGÉE', 'Apogée', 'STATUT APOGEE', 'STATUT APOGÉE'],
+  hc_status: ['HC', 'STATUT HC', 'Statut HC'],
+  module: ['MODULE', 'Module', 'RUBRIQUE'],
+  comment_apogee: ['COMMENTAIRE APOGÉE', 'COMMENTAIRE APOGEE', 'Commentaire Apogée', 'Commentaire Apogee'],
+  comment_florian: ['COMMENTAIRE florian', 'COMMENTAIRE Florian', 'COMMENTAIRE FLORIAN', 'Florian'],
+  comment_jerome: ['COMMENTAIRE Jérome', 'COMMENTAIRE Jérôme', 'COMMENTAIRE Jerome', 'COMMENTAIRE JEROME', 'Jérôme'],
 };
 
 // Mapping des priorités Excel vers les IDs en base
@@ -34,6 +36,7 @@ const PRIORITY_MAPPING: Record<string, string> = {
   'V1': 'V1',
   'PLUS TARD': 'PLUS_TARD',
   'Plus tard': 'PLUS_TARD',
+  'C': 'C',
 };
 
 // Mapping des owner_side
@@ -43,13 +46,25 @@ const OWNER_MAPPING: Record<string, 'HC' | 'APOGEE' | 'PARTAGE'> = {
   'APOGÉE': 'APOGEE',
   '%': 'PARTAGE',
   'PARTAGE': 'PARTAGE',
+  'DYNOCO': 'PARTAGE',
 };
 
+// Trouve la valeur d'une colonne en utilisant les variantes
+function findColumnValue(data: Record<string, any>, columnKey: string): any {
+  const variants = COLUMN_VARIANTS[columnKey] || [columnKey];
+  for (const variant of variants) {
+    if (data[variant] !== undefined && data[variant] !== null && data[variant] !== '') {
+      return data[variant];
+    }
+  }
+  return null;
+}
+
 // Déterminer le statut Kanban initial
-function determineInitialStatus(row: Record<string, any>): string {
-  const action = String(row['ACTION'] || '').toUpperCase();
-  const apogee = String(row['APOGEE'] || '').toUpperCase();
-  const hc = String(row['HC'] || '').toUpperCase();
+function determineInitialStatus(data: Record<string, any>): string {
+  const action = String(findColumnValue(data, 'action_type') || '').toUpperCase();
+  const apogee = String(findColumnValue(data, 'apogee_status') || '').toUpperCase();
+  const hc = String(findColumnValue(data, 'hc_status') || '').toUpperCase();
 
   if (action.includes('ATT MAJ')) return 'EN_DEV_APOGEE';
   if (apogee.includes('ATT MAJ') || apogee.includes('QUESTION')) return 'SPEC_A_FAIRE';
@@ -60,8 +75,8 @@ function determineInitialStatus(row: Record<string, any>): string {
   return 'BACKLOG';
 }
 
-// Parser le fichier XLSX
-export function parseXlsxFile(file: File): Promise<ImportedRow[]> {
+// Parser le fichier XLSX avec debug des colonnes
+export function parseXlsxFile(file: File): Promise<{ rows: ImportedRow[], debug: SheetDebugInfo[] }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -70,25 +85,30 @@ export function parseXlsxFile(file: File): Promise<ImportedRow[]> {
         const workbook = XLSX.read(data, { type: 'array' });
         
         const rows: ImportedRow[] = [];
-        const sheetsToProcess = ['LISTE V1', 'LISTE EVALUEE A PRIORISER', 'RESTE A EVALUER EN H'];
+        const debug: SheetDebugInfo[] = [];
         
         workbook.SheetNames.forEach((sheetName) => {
-          // Filtrer les feuilles pertinentes
-          const matchedSheet = sheetsToProcess.find(s => 
-            sheetName.toUpperCase().includes(s.toUpperCase()) ||
-            s.toUpperCase().includes(sheetName.toUpperCase())
-          );
-          
-          if (!matchedSheet && !sheetsToProcess.some(s => sheetName.includes(s))) {
-            // Traiter quand même si pas de filtre strict
-          }
-          
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
           
           if (jsonData.length < 2) return;
           
-          const headers = jsonData[0] as string[];
+          const headers = (jsonData[0] as string[]).filter(h => h);
+          
+          // Debug: colonnes détectées par feuille
+          const detectedColumns: Record<string, string | null> = {};
+          Object.keys(COLUMN_VARIANTS).forEach(key => {
+            const variants = COLUMN_VARIANTS[key];
+            const found = variants.find(v => headers.includes(v));
+            detectedColumns[key] = found || null;
+          });
+          
+          debug.push({
+            sheetName,
+            totalRows: jsonData.length - 1,
+            headers,
+            detectedColumns,
+          });
           
           for (let i = 1; i < jsonData.length; i++) {
             const rowData = jsonData[i];
@@ -101,18 +121,21 @@ export function parseXlsxFile(file: File): Promise<ImportedRow[]> {
               }
             });
             
-            // Ignorer les lignes sans DESCRIPTIF ou ELEMENTS CONCERNES
-            if (!record['DESCRIPTIF'] && !record['ELEMENTS CONCERNES']) continue;
+            // Check si on a au moins un descriptif ou element
+            const hasDescription = findColumnValue(record, 'description');
+            const hasElement = findColumnValue(record, 'element_concerne');
+            
+            if (!hasDescription && !hasElement) continue;
             
             rows.push({
               sheetName,
-              rowIndex: i + 1, // +1 car Excel commence à 1
+              rowIndex: i + 1,
               data: record,
             });
           }
         });
         
-        resolve(rows);
+        resolve({ rows, debug });
       } catch (error) {
         reject(error);
       }
@@ -122,13 +145,31 @@ export function parseXlsxFile(file: File): Promise<ImportedRow[]> {
   });
 }
 
-// Transformer une ligne en ticket
+export interface SheetDebugInfo {
+  sheetName: string;
+  totalRows: number;
+  headers: string[];
+  detectedColumns: Record<string, string | null>;
+}
+
+// Transformer une ligne en ticket (version flexible)
 function rowToTicket(row: ImportedRow): ApogeeTicketInsert {
   const data = row.data;
   
+  // Récupérer les valeurs avec la détection flexible
+  const elementConcerne = findColumnValue(data, 'element_concerne');
+  const description = findColumnValue(data, 'description');
+  const prioRaw = String(findColumnValue(data, 'priority') || '').toUpperCase().trim();
+  const actionType = findColumnValue(data, 'action_type');
+  const hMin = findColumnValue(data, 'h_min');
+  const hMax = findColumnValue(data, 'h_max');
+  const hcaCode = findColumnValue(data, 'hca_code');
+  const apogeeStatus = findColumnValue(data, 'apogee_status');
+  const hcStatus = findColumnValue(data, 'hc_status');
+  
   // Déterminer owner_side
   let ownerSide: 'HC' | 'APOGEE' | 'PARTAGE' | null = null;
-  const priseEnCharge = String(data['PRISE EN CHARGE'] || '').toUpperCase();
+  const priseEnCharge = String(findColumnValue(data, 'owner_side') || '').toUpperCase();
   if (OWNER_MAPPING[priseEnCharge]) {
     ownerSide = OWNER_MAPPING[priseEnCharge];
   } else if (priseEnCharge.includes('DYNOCO') || priseEnCharge.includes('%')) {
@@ -136,21 +177,27 @@ function rowToTicket(row: ImportedRow): ApogeeTicketInsert {
   }
 
   // Déterminer priorité
-  const prioRaw = String(data['PRIO'] || '').toUpperCase().trim();
   const priority = PRIORITY_MAPPING[prioRaw] || null;
 
+  // Construire le titre: prendre element_concerne ou description tronqué
+  const title = elementConcerne 
+    ? String(elementConcerne).substring(0, 255)
+    : description 
+      ? String(description).substring(0, 255)
+      : 'Sans titre';
+
   return {
-    element_concerne: String(data['ELEMENTS CONCERNES'] || data['DESCRIPTIF'] || 'Sans titre').substring(0, 255),
-    description: data['DESCRIPTIF'] ? String(data['DESCRIPTIF']) : null,
+    element_concerne: title,
+    description: description ? String(description) : null,
     priority,
-    action_type: data['ACTION'] ? String(data['ACTION']) : null,
+    action_type: actionType ? String(actionType) : null,
     kanban_status: determineInitialStatus(data),
     owner_side: ownerSide,
-    h_min: data['Temps mini'] || data['H Min'] ? Number(data['Temps mini'] || data['H Min']) : null,
-    h_max: data['Temps maxi'] || data['H Max'] ? Number(data['Temps maxi'] || data['H Max']) : null,
-    hca_code: data['HCA'] || data['CODE HCA'] ? String(data['HCA'] || data['CODE HCA']) : null,
-    apogee_status_raw: data['APOGEE'] ? String(data['APOGEE']) : null,
-    hc_status_raw: data['HC'] ? String(data['HC']) : null,
+    h_min: hMin ? Number(hMin) : null,
+    h_max: hMax ? Number(hMax) : null,
+    hca_code: hcaCode ? String(hcaCode) : null,
+    apogee_status_raw: apogeeStatus ? String(apogeeStatus) : null,
+    hc_status_raw: hcStatus ? String(hcStatus) : null,
     source_sheet: row.sheetName,
     source_row_index: row.rowIndex,
     external_key: `${row.sheetName}#${row.rowIndex}`,
@@ -164,35 +211,38 @@ function extractComments(row: ImportedRow, ticketId: string): ApogeeTicketCommen
   const data = row.data;
 
   // Commentaire Apogée
-  if (data['COMMENTAIRE APOGÉE'] || data['COMMENTAIRE APOGEE']) {
+  const commentApogee = findColumnValue(data, 'comment_apogee');
+  if (commentApogee) {
     comments.push({
       ticket_id: ticketId,
       author_type: 'APOGEE',
       author_name: 'Apogée',
       source_field: 'COMMENTAIRE_APOGEE',
-      body: String(data['COMMENTAIRE APOGÉE'] || data['COMMENTAIRE APOGEE']),
+      body: String(commentApogee),
     });
   }
 
   // Commentaire Florian
-  if (data['COMMENTAIRE florian'] || data['COMMENTAIRE Florian'] || data['COMMENTAIRE FLORIAN']) {
+  const commentFlorian = findColumnValue(data, 'comment_florian');
+  if (commentFlorian) {
     comments.push({
       ticket_id: ticketId,
       author_type: 'HC',
       author_name: 'Florian',
       source_field: 'COMMENTAIRE_FLORIAN',
-      body: String(data['COMMENTAIRE florian'] || data['COMMENTAIRE Florian'] || data['COMMENTAIRE FLORIAN']),
+      body: String(commentFlorian),
     });
   }
 
   // Commentaire Jérôme
-  if (data['COMMENTAIRE Jérome'] || data['COMMENTAIRE Jérôme'] || data['COMMENTAIRE JEROME']) {
+  const commentJerome = findColumnValue(data, 'comment_jerome');
+  if (commentJerome) {
     comments.push({
       ticket_id: ticketId,
       author_type: 'HC',
       author_name: 'Jérôme',
       source_field: 'COMMENTAIRE_JEROME',
-      body: String(data['COMMENTAIRE Jérome'] || data['COMMENTAIRE Jérôme'] || data['COMMENTAIRE JEROME']),
+      body: String(commentJerome),
     });
   }
 

@@ -4,21 +4,25 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, AlertCircle } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
 import { TicketFilters } from '../components/TicketFilters';
 import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
 import { CreateTicketDialog } from '../components/CreateTicketDialog';
+import { ActionsConfigDialog } from '../components/ActionsConfigDialog';
 import type { ApogeeTicket, TicketFilters as Filters } from '../types';
 import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ApogeeTicketsKanban() {
+  const { isAdmin } = useAuth();
   const [filters, setFilters] = useState<Filters>({});
   const [selectedTicket, setSelectedTicket] = useState<ApogeeTicket | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
 
   const {
     tickets,
@@ -63,14 +67,21 @@ export default function ApogeeTicketsKanban() {
           </Link>
         </div>
 
-        {incompleteCount > 0 && (
-          <Link to={ROUTES.admin.apogeeTicketsIncomplete}>
-            <Button variant="outline" className="text-orange-600 border-orange-300 hover:bg-orange-50">
-              <AlertCircle className="h-4 w-4 mr-2" />
-              {incompleteCount} ticket{incompleteCount > 1 ? 's' : ''} à compléter
+        <div className="flex items-center gap-2">
+          {incompleteCount > 0 && (
+            <Link to={ROUTES.admin.apogeeTicketsIncomplete}>
+              <Button variant="outline" className="text-orange-600 border-orange-300 hover:bg-orange-50">
+                <AlertCircle className="h-4 w-4 mr-2" />
+                {incompleteCount} ticket{incompleteCount > 1 ? 's' : ''} à compléter
+              </Button>
+            </Link>
+          )}
+          {isAdmin && (
+            <Button variant="ghost" size="icon" onClick={() => setShowConfigDialog(true)}>
+              <Settings className="h-4 w-4" />
             </Button>
-          </Link>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Filtres */}
@@ -130,6 +141,15 @@ export default function ApogeeTicketsKanban() {
         priorities={priorities}
         onCreate={(ticket) => createTicket.mutate(ticket)}
         isCreating={createTicket.isPending}
+      />
+
+      {/* Dialog configuration (admin only) */}
+      <ActionsConfigDialog
+        open={showConfigDialog}
+        onClose={() => setShowConfigDialog(false)}
+        statuses={statuses}
+        modules={modules}
+        priorities={priorities}
       />
     </div>
   );

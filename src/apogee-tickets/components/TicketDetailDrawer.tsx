@@ -1,10 +1,11 @@
 /**
- * Drawer de détail d'un ticket Apogée
+ * Drawer de détail d'un ticket Apogée - Version éditable
  */
 
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,9 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Clock, 
-  User, 
   FileText, 
-  MessageSquare, 
   Send, 
   ExternalLink,
   Calendar,
@@ -56,7 +55,6 @@ export function TicketDetailDrawer({
   const { comments, addComment } = useApogeeTicket(ticket?.id || null);
   const [newComment, setNewComment] = useState('');
   const [commentType, setCommentType] = useState<AuthorType>('HC');
-  const [isInternal, setIsInternal] = useState(false);
 
   if (!ticket) return null;
 
@@ -67,7 +65,7 @@ export function TicketDetailDrawer({
       ticket_id: ticket.id,
       author_type: commentType,
       body: newComment.trim(),
-      is_internal: isInternal,
+      is_internal: false,
     });
     
     setNewComment('');
@@ -82,7 +80,7 @@ export function TicketDetailDrawer({
       <SheetContent className="w-full sm:max-w-xl overflow-hidden flex flex-col">
         <SheetHeader>
           <SheetTitle className="text-left flex items-start gap-2">
-            <span className="flex-1">{ticket.element_concerne}</span>
+            <span className="flex-1 text-base">{ticket.element_concerne?.substring(0, 60)}...</span>
           </SheetTitle>
           <div className="flex flex-wrap gap-2 mt-2">
             {ticket.module && (
@@ -113,6 +111,40 @@ export function TicketDetailDrawer({
           <ScrollArea className="flex-1 mt-4">
             {/* Onglet Détails */}
             <TabsContent value="details" className="space-y-4 m-0">
+              {/* Titre éditable */}
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm">Élément concerné</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    value={ticket.element_concerne}
+                    onChange={(e) => handleFieldUpdate('element_concerne', e.target.value)}
+                    rows={2}
+                    className="text-sm"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Description éditable */}
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Description / Descriptif
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    value={ticket.description || ''}
+                    onChange={(e) => handleFieldUpdate('description', e.target.value || null)}
+                    rows={6}
+                    placeholder="Décrivez le ticket..."
+                    className="text-sm"
+                  />
+                </CardContent>
+              </Card>
+
               {/* Champs éditables */}
               <Card>
                 <CardHeader className="py-3">
@@ -188,48 +220,51 @@ export function TicketDetailDrawer({
                 </CardContent>
               </Card>
 
-              {/* Description */}
-              {ticket.description && (
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Description
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm whitespace-pre-wrap">{ticket.description}</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Estimations */}
-              {(ticket.h_min || ticket.h_max) && (
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Estimation
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm">
-                      {ticket.h_min || '?'} - {ticket.h_max || '?'} heures
-                    </p>
-                    {ticket.hca_code && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Code HCA: {ticket.hca_code}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+              {/* Estimations éditables */}
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Estimation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="text-xs text-muted-foreground">H Min</label>
+                      <Input
+                        type="number"
+                        value={ticket.h_min ?? ''}
+                        onChange={(e) => handleFieldUpdate('h_min', e.target.value ? Number(e.target.value) : null)}
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">H Max</label>
+                      <Input
+                        type="number"
+                        value={ticket.h_max ?? ''}
+                        onChange={(e) => handleFieldUpdate('h_max', e.target.value ? Number(e.target.value) : null)}
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Code HCA</label>
+                      <Input
+                        value={ticket.hca_code ?? ''}
+                        onChange={(e) => handleFieldUpdate('hca_code', e.target.value || null)}
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Statuts bruts */}
               {(ticket.apogee_status_raw || ticket.hc_status_raw) && (
                 <Card>
                   <CardHeader className="py-3">
-                    <CardTitle className="text-sm">Tracking</CardTitle>
+                    <CardTitle className="text-sm">Tracking (brut Excel)</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     {ticket.apogee_status_raw && (
