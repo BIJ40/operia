@@ -67,7 +67,11 @@ export default function Category() {
   
   const availableCategories = useMemo(() =>
     blocks
-      .filter(b => b.type === 'category' && !b.title.toLowerCase().includes('faq'))
+      .filter(b => 
+        b.type === 'category' && 
+        !b.title.toLowerCase().includes('faq') &&
+        !b.slug.startsWith('helpconfort-') // Exclure les catégories HelpConfort
+      )
       .sort((a, b) => a.order - b.order),
     [blocks]
   );
