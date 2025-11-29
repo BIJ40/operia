@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom';
 import { BarChart3, Users, Building2, Calendar, LifeBuoy, Settings2, Euro, Clock, FileText, TrendingUp, Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { DataService } from '@/apogee-connect/services/dataService';
-import { useFilters } from '@/apogee-connect/contexts/FiltersContext';
-import { useApiToggle } from '@/apogee-connect/contexts/ApiToggleContext';
-import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
+import { FiltersProvider, useFilters } from '@/apogee-connect/contexts/FiltersContext';
+import { ApiToggleProvider, useApiToggle } from '@/apogee-connect/contexts/ApiToggleContext';
+import { AgencyProvider, useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { calculateDashboardStats, calculateDelaiMoyenDossierFacture, calculatePanierMoyen, calculateDelaiMoyenDossierPremierDevis, calculateTauxTransformationDevis } from '@/apogee-connect/utils/dashboardCalculations';
 import { calculateTauxSAVGlobal } from '@/apogee-connect/utils/apporteursCalculations';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
@@ -77,6 +77,18 @@ const colorClasses: Record<string, string> = {
 };
 
 export default function PilotageStatsHub() {
+  return (
+    <ApiToggleProvider>
+      <AgencyProvider>
+        <FiltersProvider>
+          <PilotageStatsHubContent />
+        </FiltersProvider>
+      </AgencyProvider>
+    </ApiToggleProvider>
+  );
+}
+
+function PilotageStatsHubContent() {
   const { filters } = useFilters();
   const { isApiEnabled } = useApiToggle();
   const { agencyChangeCounter, currentAgency, isAgencyReady } = useAgency();
