@@ -51,6 +51,8 @@ export const ROUTES = {
     diffusion: '/pilotage/diffusion',
     // RH Tech
     rhTech: '/pilotage/rh-tech',
+    // Équipe
+    equipe: '/pilotage/equipe',
   },
 
   // ============================================
@@ -83,6 +85,7 @@ export const ROUTES = {
     index: '/admin',
     users: '/admin/users',
     agencies: '/admin/agencies',
+    collaborateurs: '/admin/collaborateurs',
     backup: '/admin/backup',
     userActivity: '/admin/user-activity',
     support: '/admin/support',
