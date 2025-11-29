@@ -234,7 +234,7 @@ export function useApogeeTickets(filters?: TicketFilters) {
           .from('apogee_tickets')
           .select('module, heat_priority')
           .eq('id', id)
-          .single();
+          .maybeSingle();
         
         if (current) {
           const finalModule = 'module' in updates ? updates.module : current.module;
