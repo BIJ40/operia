@@ -86,9 +86,6 @@ export function Chatbot() {
     setMessages,
   } = useChatbot();
 
-  // Hide chatbot for admins and support agents unless in test mode
-  if ((isAdmin || canAccessSupportConsole) && !isTestMode) return null;
-
   // Check for active ticket
   useEffect(() => {
     if (!user) return;
@@ -276,6 +273,9 @@ export function Chatbot() {
       document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDragging, dragOffset, buttonPosition]);
+
+  // Hide chatbot for admins and support agents unless in test mode
+  if ((isAdmin || canAccessSupportConsole) && !isTestMode) return null;
 
   const renderMessageWithLinks = (content: string) => {
     const parts = content.split(/(\[[^\]]+\]\([^)]+\))/g);
