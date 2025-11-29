@@ -15,7 +15,7 @@ import type { ApogeeTicket, OwnerSide } from '../types';
 import { ROUTES } from '@/config/routes';
 
 export default function ApogeeTicketsIncomplete() {
-  const { tickets: incompleteTickets, isLoading } = useIncompleteTickets();
+  const { tickets: rawIncompleteTickets, isLoading } = useIncompleteTickets();
   const { modules, priorities, updateTicket } = useApogeeTickets();
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -30,10 +30,6 @@ export default function ApogeeTicketsIncomplete() {
     owner_side: null,
   });
 
-  const currentTicket = incompleteTickets[currentIndex];
-  const totalTickets = incompleteTickets.length;
-  const progressPercent = totalTickets > 0 ? Math.round(((currentIndex) / totalTickets) * 100) : 0;
-
   // Déterminer les champs manquants
   const getMissingFields = (ticket: ApogeeTicket) => {
     const missing: string[] = [];
@@ -42,6 +38,13 @@ export default function ApogeeTicketsIncomplete() {
     if (!ticket.owner_side) missing.push('owner_side');
     return missing;
   };
+
+  // Filtrer côté client pour n'afficher que ceux avec vraiment des champs manquants
+  const incompleteTickets = rawIncompleteTickets.filter(t => getMissingFields(t).length > 0);
+
+  const currentTicket = incompleteTickets[currentIndex];
+  const totalTickets = incompleteTickets.length;
+  const progressPercent = totalTickets > 0 ? Math.round(((currentIndex) / totalTickets) * 100) : 0;
 
   const handleSaveAndNext = async () => {
     if (!currentTicket) return;
