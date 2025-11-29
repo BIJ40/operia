@@ -5,7 +5,7 @@ import { UnifiedHeader } from './UnifiedHeader';
 import { PublicLanding } from './PublicLanding';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
-import { Chatbot } from '@/components/Chatbot';
+import { Chatbot, ChatbotTestProvider } from '@/components/Chatbot';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
@@ -54,22 +54,24 @@ export function MainLayout({
   }
 
   return (
-    <SidebarProvider>
-      <div className={`min-h-screen w-full flex bg-background ${isImpersonating ? 'pt-10' : ''}`}>
-        {showSidebar && <UnifiedSidebar />}
-        
-        <div className="flex-1 flex flex-col min-h-screen min-w-0">
-          {showHeader && <UnifiedHeader />}
+    <ChatbotTestProvider>
+      <SidebarProvider>
+        <div className={`min-h-screen w-full flex bg-background ${isImpersonating ? 'pt-10' : ''}`}>
+          {showSidebar && <UnifiedSidebar />}
           
-          <main className="flex-1 overflow-auto p-6">
-            {children}
-          </main>
+          <div className="flex-1 flex flex-col min-h-screen min-w-0">
+            {showHeader && <UnifiedHeader />}
+            
+            <main className="flex-1 overflow-auto p-6">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
 
-      <ImageModal />
-      <Chatbot />
-      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-    </SidebarProvider>
+        <ImageModal />
+        <Chatbot />
+        <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+      </SidebarProvider>
+    </ChatbotTestProvider>
   );
 }
