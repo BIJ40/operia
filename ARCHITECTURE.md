@@ -416,6 +416,88 @@ Titre du poste (indépendant du niveau d'accès) :
 
 ---
 
+## Module Support (Tickets) - V2
+
+### Architecture
+
+Le module Support sépare clairement deux fonctionnalités :
+
+1. **Création de demandes** (tous utilisateurs connectés) :
+   - Route : `/mes-demandes`
+   - Accès : **NATIF** pour tout utilisateur authentifié (N0-N6)
+   - Aucune condition sur `enabled_modules.support` pour cette fonctionnalité
+
+2. **Console Support** (agents qui traitent les tickets) :
+   - Route : `/admin/support`
+   - Accès : contrôlé par `enabled_modules.support.options`
+
+### Structure `enabled_modules.support`
+
+```json
+{
+  "support": {
+    "enabled": true,
+    "options": {
+      "agent_support": true,    // Peut traiter les tickets
+      "admin_support": false,   // Droits admin support (vision globale)
+      "level": 1,               // Niveau escalade (L1/L2/L3)
+      "skills": ["apogee", "apporteurs"]  // Compétences pour routage
+    }
+  }
+}
+```
+
+### Règles d'accès
+
+| Fonctionnalité | Condition |
+|----------------|-----------|
+| Créer un ticket | Authentifié (N0-N6) |
+| Voir "Mes Demandes" | Authentifié (N0-N6) |
+| Accès console support | `support.enabled` ET (`agent_support` OU `admin_support`) |
+| Être assignable | `support.enabled` ET (`agent_support` OU `admin_support`) |
+| Superadmin fallback | N6 a toujours accès à la console |
+
+### Helpers AuthContext V2
+
+```typescript
+// Exposés par AuthContext
+const {
+  canAccessSupportUser,     // Toujours true pour authentifiés
+  isSupportAgent,           // support.enabled && options.agent_support
+  isSupportAdmin,           // support.enabled && options.admin_support
+  canAccessSupportConsole,  // isSupportAgent || isSupportAdmin || superadmin
+} = useAuth();
+```
+
+### Hook `useSupportAgents`
+
+Liste les agents support assignables basée sur V2 :
+
+```typescript
+import { useSupportAgents, getAgentDisplayName } from '@/hooks/use-support-agents';
+
+const { agents, isLoading } = useSupportAgents();
+// Filtre automatiquement : is_active=true + support.enabled + (agent_support || admin_support)
+```
+
+### Éléments LEGACY (ne plus utiliser)
+
+| Élément | Status |
+|---------|--------|
+| `profiles.support_level` | DEPRECATED - utiliser `enabled_modules.support.options.level` |
+| `/admin/support-levels` | SUPPRIMÉ - configuration via `/admin/users` |
+| `profiles.service_competencies` | DEPRECATED - utiliser `enabled_modules.support.options.skills` |
+
+### Configuration agents support
+
+La configuration des agents s'effectue dans `/admin/users` > fiche utilisateur :
+- Section "Modules activés" > bloc "Support"
+- Toggle Agent / Admin support
+- Niveau escalade (optionnel)
+- Compétences (tags)
+
+---
+
 ## Module "Mes indicateurs" (Apogee-Connect)
 
 ### Architecture

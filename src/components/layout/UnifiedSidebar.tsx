@@ -139,7 +139,6 @@ export function UnifiedSidebar() {
       items: [
         { title: 'Utilisateurs', url: '/admin/users', icon: Users, description: 'Gérer les comptes utilisateurs' },
         { title: 'Agences', url: '/admin/agencies', icon: Building2 },
-        { title: 'Niveaux Support', url: '/admin/support-levels', icon: Headset, description: 'Configuration des niveaux de support' },
         { title: 'Sauvegardes', url: '/admin/backup', icon: Database },
         { title: 'Activité', url: '/admin/user-activity', icon: Activity },
         { title: 'Paramètres', url: '/admin', icon: Settings, description: 'Configuration du système' },
