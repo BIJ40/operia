@@ -2,7 +2,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   Headset, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Shield, Database, Activity, ChevronRight, Home, User, Grid3X3, Calendar, LifeBuoy
+  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import {
@@ -143,16 +143,7 @@ export function UnifiedSidebar() {
       label: 'Administration',
       labelKey: 'admin',
       items: [
-        { title: 'Utilisateurs', url: '/admin/users-list', icon: Users, description: 'Gérer les comptes utilisateurs' },
-        { 
-          title: 'Permissions', 
-          icon: Shield, 
-          children: [
-            { title: 'Groupes', url: '/admin/permissions/groups', icon: Users, description: 'Gérer les groupes et leurs permissions' },
-            { title: 'Utilisateurs', url: '/admin/permissions/users', icon: User, description: 'Permissions individuelles' },
-            { title: 'Matrice', url: '/admin/permissions/matrix', icon: Grid3X3, description: 'Vue matricielle globale' },
-          ]
-        },
+        { title: 'Utilisateurs', url: '/admin/users', icon: Users, description: 'Gérer les comptes utilisateurs' },
         { title: 'Agences', url: '/admin/agencies', icon: Building2 },
         { title: 'Sauvegardes', url: '/admin/backup', icon: Database },
         { title: 'Activité', url: '/admin/user-activity', icon: Activity },

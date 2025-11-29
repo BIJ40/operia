@@ -1,6 +1,6 @@
 import { 
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
-  MessageSquare, Network, Users, Shield, Database, Settings, LucideIcon,
+  MessageSquare, Network, Users, Database, Settings, LucideIcon,
   PieChart, Coins, LifeBuoy, Headphones, GraduationCap
 } from 'lucide-react';
 
@@ -143,22 +143,11 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     title: 'Utilisateurs',
     description: 'Gestion des comptes utilisateurs',
     icon: Users,
-    route: '/admin/users',  // V2 unified page
+    route: '/admin/users',
     scopeSlug: 'admin_users',
     color: 'primary',
     group: 'admin',
     requiresFranchisor: true, // N3+ can manage users
-  },
-  {
-    id: 'ADMIN_ROLES',
-    title: 'Rôles & Permissions',
-    description: 'Configuration des droits d\'accès',
-    icon: Shield,
-    route: '/admin/roles',
-    scopeSlug: 'admin_roles',
-    color: 'primary',
-    group: 'admin',
-    requiresAdmin: true,
   },
   {
     id: 'ADMIN_BACKUP',

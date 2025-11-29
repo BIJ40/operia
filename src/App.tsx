@@ -61,19 +61,11 @@ const AdminSupportLevels = lazy(() => import("./pages/AdminSupportLevels"));
 const AdminEscalationHistory = lazy(() => import("./pages/AdminEscalationHistory"));
 const AdminBackup = lazy(() => import("./pages/AdminBackup"));
 const AdminHelpConfortBackup = lazy(() => import("./pages/AdminHelpConfortBackup"));
-const AdminRolePermissions = lazy(() => import("./pages/AdminRolePermissions"));
 const AdminAgencies = lazy(() => import("./pages/AdminAgencies"));
 const AdminStorageQuota = lazy(() => import("./pages/AdminStorageQuota"));
 const AdminCacheBackup = lazy(() => import("./pages/AdminCacheBackup"));
 const AdminUserActivity = lazy(() => import("./pages/AdminUserActivity"));
-const AdminRolesV2 = lazy(() => import("./pages/AdminRolesV2"));
-const AdminPermissionsV2 = lazy(() => import("./pages/AdminPermissionsV2"));
 const AdminUsersUnified = lazy(() => import("./pages/AdminUsersUnified"));
-
-// Lazy loaded pages - Permissions
-const PermissionsGroups = lazy(() => import("./pages/admin/permissions/PermissionsGroups"));
-const PermissionsUsers = lazy(() => import("./pages/admin/permissions/PermissionsUsers"));
-const PermissionsMatrix = lazy(() => import("./pages/admin/permissions/PermissionsMatrix"));
 
 // Lazy loaded pages - User
 const Profile = lazy(() => import("./pages/Profile"));
@@ -124,14 +116,15 @@ function AppContent() {
           <Route path="/" element={<MainLayout><Landing /></MainLayout>} />
           
           {/* HELP Academy - Accessible à tous les utilisateurs connectés (N0+) */}
-          <Route path="/apogee" element={<MainLayout><RoleGuard><ApogeeGuide /></RoleGuard></MainLayout>} />
-          <Route path="/apogee/category/:slug" element={<MainLayout><RoleGuard><Category /></RoleGuard></MainLayout>} />
-          <Route path="/apporteurs" element={<MainLayout><RoleGuard><ApporteurGuide /></RoleGuard></MainLayout>} />
-          <Route path="/apporteurs/category/:slug" element={<MainLayout><RoleGuard><ApporteurSubcategories /></RoleGuard></MainLayout>} />
-          <Route path="/apporteurs/category/:slug/sub/:subslug" element={<MainLayout><RoleGuard><CategoryApporteur /></RoleGuard></MainLayout>} />
-          <Route path="/helpconfort" element={<MainLayout><RoleGuard><HelpConfort /></RoleGuard></MainLayout>} />
-          <Route path="/helpconfort/category/:slug" element={<MainLayout><RoleGuard><CategoryHelpConfort /></RoleGuard></MainLayout>} />
-          <Route path="/documents" element={<MainLayout><RoleGuard><Documents /></RoleGuard></MainLayout>} />
+          {/* HELP Academy - N1+ (franchisee_user) - N0 n'a pas accès */}
+          <Route path="/apogee" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApogeeGuide /></RoleGuard></MainLayout>} />
+          <Route path="/apogee/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><Category /></RoleGuard></MainLayout>} />
+          <Route path="/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApporteurGuide /></RoleGuard></MainLayout>} />
+          <Route path="/apporteurs/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApporteurSubcategories /></RoleGuard></MainLayout>} />
+          <Route path="/apporteurs/category/:slug/sub/:subslug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryApporteur /></RoleGuard></MainLayout>} />
+          <Route path="/helpconfort" element={<MainLayout><RoleGuard minRole="franchisee_user"><HelpConfort /></RoleGuard></MainLayout>} />
+          <Route path="/helpconfort/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryHelpConfort /></RoleGuard></MainLayout>} />
+          <Route path="/documents" element={<MainLayout><RoleGuard minRole="franchisee_user"><Documents /></RoleGuard></MainLayout>} />
           
           {/* Pilotage Agence - N2+ (franchisee_admin) */}
           <Route path="/mes-indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><IndicateursLayout /></RoleGuard></MainLayout>}>
@@ -171,22 +164,12 @@ function AppContent() {
           <Route path="/admin/escalation-history" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminEscalationHistory /></RoleGuard></MainLayout>} />
           <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminBackup /></RoleGuard></MainLayout>} />
           <Route path="/admin/helpconfort-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminHelpConfortBackup /></RoleGuard></MainLayout>} />
-          {/* User Management - N2+ can access, but filtering is done inside the page */}
-          <Route path="/admin/users" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminUsersUnified /></RoleGuard></MainLayout>} />
-          <Route path="/admin/users-unified" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminUsersUnified /></RoleGuard></MainLayout>} />
-          <Route path="/admin/users-list" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminUsersUnified /></RoleGuard></MainLayout>} />
-          <Route path="/admin/role-permissions" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminRolePermissions /></RoleGuard></MainLayout>} />
+          {/* User Management - N3+ (franchisor_user) can manage users */}
+          <Route path="/admin/users" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminUsersUnified /></RoleGuard></MainLayout>} />
           <Route path="/admin/agencies" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminAgencies /></RoleGuard></MainLayout>} />
           <Route path="/admin/storage-quota" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminStorageQuota /></RoleGuard></MainLayout>} />
           <Route path="/admin/cache-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminCacheBackup /></RoleGuard></MainLayout>} />
           <Route path="/admin/user-activity" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminUserActivity /></RoleGuard></MainLayout>} />
-          <Route path="/admin/roles-v2" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminRolesV2 /></RoleGuard></MainLayout>} />
-          <Route path="/admin/permissions-v2" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminPermissionsV2 /></RoleGuard></MainLayout>} />
-          
-          {/* Permissions Management - N5+ */}
-          <Route path="/admin/permissions/groups" element={<MainLayout><RoleGuard minRole="platform_admin"><PermissionsGroups /></RoleGuard></MainLayout>} />
-          <Route path="/admin/permissions/users" element={<MainLayout><RoleGuard minRole="platform_admin"><PermissionsUsers /></RoleGuard></MainLayout>} />
-          <Route path="/admin/permissions/matrix" element={<MainLayout><RoleGuard minRole="platform_admin"><PermissionsMatrix /></RoleGuard></MainLayout>} />
           
           {/* User pages - Accessible à tous les utilisateurs connectés */}
           <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
