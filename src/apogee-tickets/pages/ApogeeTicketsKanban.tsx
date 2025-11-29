@@ -10,7 +10,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
@@ -32,6 +33,7 @@ export default function ApogeeTicketsKanban() {
   const [selectedTicket, setSelectedTicket] = useState<ApogeeTicket | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [columnWidth, setColumnWidth] = useState(288); // 288px = w-72
 
   const {
     tickets,
@@ -173,23 +175,39 @@ export default function ApogeeTicketsKanban() {
         impactTags={impactTags}
       />
 
-      {/* Stats rapides */}
-      <div className="flex flex-wrap gap-2">
-        <Badge variant="secondary">
-          {tickets.length} ticket{tickets.length > 1 ? 's' : ''}
-        </Badge>
-        <Badge variant="outline" className={unqualifiedCount > 0 ? 'text-purple-600 border-purple-300' : 'text-green-600 border-green-300'}>
-          {unqualifiedCount > 0 ? `${unqualifiedCount} non qualifiés` : '✓ Tous qualifiés'}
-        </Badge>
-        {statuses.map((status) => {
-          const count = tickets.filter(t => t.kanban_status === status.id).length;
-          if (count === 0) return null;
-          return (
-            <Badge key={status.id} variant="outline" className="text-xs">
-              {status.label}: {count}
-            </Badge>
-          );
-        })}
+      {/* Stats rapides + Largeur colonnes */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary">
+            {tickets.length} ticket{tickets.length > 1 ? 's' : ''}
+          </Badge>
+          <Badge variant="outline" className={unqualifiedCount > 0 ? 'text-purple-600 border-purple-300' : 'text-green-600 border-green-300'}>
+            {unqualifiedCount > 0 ? `${unqualifiedCount} non qualifiés` : '✓ Tous qualifiés'}
+          </Badge>
+          {statuses.map((status) => {
+            const count = tickets.filter(t => t.kanban_status === status.id).length;
+            if (count === 0) return null;
+            return (
+              <Badge key={status.id} variant="outline" className="text-xs">
+                {status.label}: {count}
+              </Badge>
+            );
+          })}
+        </div>
+        
+        {/* Contrôle largeur colonnes */}
+        <div className="flex items-center gap-2 ml-auto">
+          <Columns className="h-4 w-4 text-muted-foreground" />
+          <Slider
+            value={[columnWidth]}
+            onValueChange={([v]) => setColumnWidth(v)}
+            min={200}
+            max={450}
+            step={10}
+            className="w-28"
+          />
+          <span className="text-xs text-muted-foreground w-12">{columnWidth}px</span>
+        </div>
       </div>
 
       {/* Kanban */}
@@ -205,6 +223,7 @@ export default function ApogeeTicketsKanban() {
           ownerSides={ownerSides}
           onStatusChange={handleStatusChange}
           onTicketClick={handleTicketClick}
+          columnWidth={columnWidth}
         />
       )}
 

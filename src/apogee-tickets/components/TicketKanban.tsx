@@ -31,6 +31,8 @@ interface TicketKanbanProps {
   ownerSides?: ApogeeOwnerSide[];
   onStatusChange: (ticketId: string, newStatus: string) => void;
   onTicketClick: (ticket: ApogeeTicket) => void;
+  columnWidth?: number;
+  onColumnWidthChange?: (width: number) => void;
 }
 
 // Palette de couleurs Tailwind
@@ -209,20 +211,22 @@ function DroppableColumn({
   onTicketClick,
   modules,
   ownerSides,
+  columnWidth = 288,
 }: {
   status: ApogeeTicketStatus;
   tickets: ApogeeTicket[];
   onTicketClick: (ticket: ApogeeTicket) => void;
   modules?: ApogeeModule[];
   ownerSides?: ApogeeOwnerSide[];
+  columnWidth?: number;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status.id });
 
   return (
     <div
       ref={setNodeRef}
-      style={getColumnStyle(status.color)}
-      className={`flex flex-col w-72 min-w-72 rounded-lg border-2 ${isOver ? 'ring-2 ring-primary ring-offset-2' : ''} transition-all`}
+      style={{ ...getColumnStyle(status.color), width: columnWidth, minWidth: columnWidth }}
+      className={`flex flex-col rounded-lg border-2 ${isOver ? 'ring-2 ring-primary ring-offset-2' : ''} transition-all`}
     >
       <div className="p-3 border-b">
         <div className="flex items-center justify-between">
@@ -253,7 +257,7 @@ function DroppableColumn({
   );
 }
 
-export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusChange, onTicketClick }: TicketKanbanProps) {
+export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusChange, onTicketClick, columnWidth = 288, onColumnWidthChange }: TicketKanbanProps) {
   const [activeTicket, setActiveTicket] = useState<ApogeeTicket | null>(null);
 
   const sensors = useSensors(
@@ -309,6 +313,7 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
             onTicketClick={onTicketClick}
             modules={modules}
             ownerSides={ownerSides}
+            columnWidth={columnWidth}
           />
         ))}
       </div>
