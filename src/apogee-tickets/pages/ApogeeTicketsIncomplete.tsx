@@ -7,14 +7,79 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, SkipForward, Snowflake, Flame } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, SkipForward, Snowflake, Flame, ChevronsUpDown, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useIncompleteTickets, useApogeeTickets } from '../hooks/useApogeeTickets';
 import { HeatPriorityBadge } from '../components/HeatPriorityBadge';
 import type { ApogeeTicket } from '../types';
 import { ROUTES } from '@/config/routes';
+
+// Combobox pour sélection de module (plus fiable que Select pour longues listes)
+function ModuleCombobox({ 
+  modules, 
+  value, 
+  onChange 
+}: { 
+  modules: { id: string; label: string }[]; 
+  value: string; 
+  onChange: (value: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedModule = modules.find(m => m.id === value);
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium">
+        Quel module Apogée est concerné ?
+      </label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between"
+          >
+            {selectedModule?.label || "Sélectionner un module..."}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Rechercher un module..." />
+            <CommandList>
+              <CommandEmpty>Aucun module trouvé.</CommandEmpty>
+              <CommandGroup>
+                {modules.map((m) => (
+                  <CommandItem
+                    key={m.id}
+                    value={m.label}
+                    onSelect={() => {
+                      onChange(m.id);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === m.id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {m.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
 
 export default function ApogeeTicketsIncomplete() {
   const { tickets: rawIncompleteTickets, isLoading } = useIncompleteTickets();
@@ -189,28 +254,11 @@ export default function ApogeeTicketsIncomplete() {
             {/* Questions pour les champs manquants */}
             <div className="space-y-4">
               {missingFields.includes('module') && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Quel module Apogée est concerné ?
-                  </label>
-                  <Select
-                    value={formValues.module || currentTicket.module || ''}
-                    onValueChange={(v) => setFormValues({ ...formValues, module: v || null })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un module" />
-                    </SelectTrigger>
-                    <SelectContent 
-                      className="max-h-[400px] overflow-y-auto z-[100]"
-                      position="popper"
-                      sideOffset={4}
-                    >
-                      {modules.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <ModuleCombobox
+                  modules={modules}
+                  value={formValues.module || currentTicket.module || ''}
+                  onChange={(v) => setFormValues({ ...formValues, module: v || null })}
+                />
               )}
 
               {missingFields.includes('heat_priority') && (
