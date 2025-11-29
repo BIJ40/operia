@@ -589,7 +589,7 @@ export function ActionsConfigDialog({
                 >
                   <div className="space-y-3">
                     {editedStatuses.map((status, idx) => (
-                      <SortableItem key={status.id} id={status.id}>
+                      <SortableItem key={`status-${idx}`} id={status.id}>
                         <span className="text-xs text-muted-foreground w-6">{idx + 1}</span>
                         
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -699,7 +699,7 @@ export function ActionsConfigDialog({
                 >
                   <div className="space-y-3">
                     {editedModules.map((mod, idx) => (
-                      <SortableItem key={mod.id} id={mod.id}>
+                      <SortableItem key={`mod-${idx}`} id={mod.id}>
                         <span className="text-xs text-muted-foreground w-6">{idx + 1}</span>
                         
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -864,7 +864,7 @@ export function ActionsConfigDialog({
                 >
                   <div className="space-y-3">
                     {editedTags.map((tag, idx) => (
-                      <SortableItem key={tag.id} id={tag.id}>
+                      <SortableItem key={`tag-${idx}`} id={tag.id}>
                         <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
                         
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -961,7 +961,7 @@ export function ActionsConfigDialog({
                 >
                   <div className="space-y-3">
                     {editedOwnerSides.map((owner, idx) => (
-                      <SortableItem key={owner.id} id={owner.id}>
+                      <SortableItem key={`owner-${idx}`} id={owner.id}>
                         <Users className="h-4 w-4 text-muted-foreground shrink-0" />
                         
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
