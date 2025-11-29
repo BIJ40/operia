@@ -29,13 +29,257 @@ export interface RoleCapabilities {
 }
 
 // ============================================================================
+// GESTION UTILISATEURS - Matrice par rôle
+// ============================================================================
+
+export type UserViewScope = 'none' | 'self' | 'ownAgency' | 'assignedAgencies' | 'allAgencies';
+export type UserManageScope = 'none' | 'ownAgency' | 'assignedAgencies' | 'allAgencies';
+
+export interface UserManagementCapabilities {
+  viewScope: UserViewScope;
+  manageScope: UserManageScope;
+  canCreateRoles: GlobalRole[];
+  canEditRoles: GlobalRole[];
+  canDeactivateRoles: GlobalRole[];
+  canDeleteUsers: boolean; // Hard delete (N5+ only)
+}
+
+/**
+ * Obtient les capacités de gestion utilisateurs pour un rôle donné
+ */
+export function getUserManagementCapabilities(role: GlobalRole | null): UserManagementCapabilities {
+  if (!role) {
+    return {
+      viewScope: 'none',
+      manageScope: 'none',
+      canCreateRoles: [],
+      canEditRoles: [],
+      canDeactivateRoles: [],
+      canDeleteUsers: false,
+    };
+  }
+
+  switch (role) {
+    case 'base_user': // N0
+      return {
+        viewScope: 'self',
+        manageScope: 'none',
+        canCreateRoles: [],
+        canEditRoles: [],
+        canDeactivateRoles: [],
+        canDeleteUsers: false,
+      };
+
+    case 'franchisee_user': // N1
+      return {
+        viewScope: 'ownAgency',
+        manageScope: 'none',
+        canCreateRoles: [],
+        canEditRoles: [],
+        canDeactivateRoles: [],
+        canDeleteUsers: false,
+      };
+
+    case 'franchisee_admin': // N2 - Dirigeant agence
+      return {
+        viewScope: 'ownAgency',
+        manageScope: 'ownAgency',
+        canCreateRoles: ['base_user', 'franchisee_user'],
+        canEditRoles: ['base_user', 'franchisee_user'],
+        canDeactivateRoles: ['base_user', 'franchisee_user'],
+        canDeleteUsers: false,
+      };
+
+    case 'franchisor_user': // N3 - Animateur réseau
+      return {
+        viewScope: 'allAgencies',
+        manageScope: 'assignedAgencies',
+        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],
+        canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],
+        canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],
+        canDeleteUsers: false,
+      };
+
+    case 'franchisor_admin': // N4 - Directeur/DG réseau
+      return {
+        viewScope: 'allAgencies',
+        manageScope: 'allAgencies',
+        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user'],
+        canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user'],
+        canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user'],
+        canDeleteUsers: false,
+      };
+
+    case 'platform_admin': // N5
+      return {
+        viewScope: 'allAgencies',
+        manageScope: 'allAgencies',
+        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin'],
+        canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin'],
+        canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin'],
+        canDeleteUsers: true,
+      };
+
+    case 'superadmin': // N6
+      return {
+        viewScope: 'allAgencies',
+        manageScope: 'allAgencies',
+        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+        canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+        canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+        canDeleteUsers: true,
+      };
+
+    default:
+      return {
+        viewScope: 'none',
+        manageScope: 'none',
+        canCreateRoles: [],
+        canEditRoles: [],
+        canDeactivateRoles: [],
+        canDeleteUsers: false,
+      };
+  }
+}
+
+/**
+ * Vérifie si un utilisateur peut voir un autre utilisateur donné
+ */
+export function canViewUser(
+  callerRole: GlobalRole | null,
+  callerAgency: string | null,
+  targetAgency: string | null,
+  assignedAgencies?: string[]
+): boolean {
+  const caps = getUserManagementCapabilities(callerRole);
+  
+  switch (caps.viewScope) {
+    case 'none':
+      return false;
+    case 'self':
+      return false; // self = on ne voit pas les autres
+    case 'ownAgency':
+      return callerAgency !== null && callerAgency === targetAgency;
+    case 'assignedAgencies':
+      if (!targetAgency) return false;
+      if (assignedAgencies && assignedAgencies.length > 0) {
+        return assignedAgencies.includes(targetAgency);
+      }
+      return true; // Si pas d'assignation, voit tout
+    case 'allAgencies':
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Vérifie si un utilisateur peut gérer (créer/éditer/désactiver) un autre utilisateur
+ */
+export function canManageUser(
+  callerRole: GlobalRole | null,
+  callerAgency: string | null,
+  targetRole: GlobalRole | null,
+  targetAgency: string | null,
+  assignedAgencies?: string[]
+): boolean {
+  const caps = getUserManagementCapabilities(callerRole);
+  
+  // Vérifier le scope d'agence
+  let agencyAllowed = false;
+  switch (caps.manageScope) {
+    case 'none':
+      return false;
+    case 'ownAgency':
+      agencyAllowed = callerAgency !== null && callerAgency === targetAgency;
+      break;
+    case 'assignedAgencies':
+      if (!targetAgency) {
+        agencyAllowed = true; // Utilisateur sans agence = gérable
+      } else if (assignedAgencies && assignedAgencies.length > 0) {
+        agencyAllowed = assignedAgencies.includes(targetAgency);
+      } else {
+        agencyAllowed = true; // Pas d'assignation = tout
+      }
+      break;
+    case 'allAgencies':
+      agencyAllowed = true;
+      break;
+  }
+  
+  if (!agencyAllowed) return false;
+  
+  // Vérifier le rôle cible
+  if (!targetRole) return true; // Utilisateur sans rôle = éditable
+  return caps.canEditRoles.includes(targetRole);
+}
+
+/**
+ * Vérifie si un utilisateur peut assigner un rôle donné
+ */
+export function canAssignRoleV2(callerRole: GlobalRole | null, targetRole: GlobalRole): boolean {
+  const caps = getUserManagementCapabilities(callerRole);
+  return caps.canCreateRoles.includes(targetRole);
+}
+
+/**
+ * Vérifie si un utilisateur peut désactiver un autre utilisateur
+ */
+export function canDeactivateUser(
+  callerRole: GlobalRole | null,
+  targetRole: GlobalRole | null
+): boolean {
+  const caps = getUserManagementCapabilities(callerRole);
+  if (!targetRole) return caps.canDeactivateRoles.length > 0;
+  return caps.canDeactivateRoles.includes(targetRole);
+}
+
+// ============================================================================
+// CHAMPS UTILISATEUR vs PROFIL
+// ============================================================================
+
+/**
+ * Champs "USER" (compte métier) - gérés par admins/managers
+ */
+export const USER_FIELDS = [
+  'email',
+  'first_name',
+  'last_name',
+  'agence',
+  'global_role',
+  'enabled_modules',
+  'role_agence', // Poste occupé
+  'is_active',
+  'deactivated_at',
+  'deactivated_by',
+] as const;
+
+/**
+ * Champs "PROFIL" (self-service) - éditables par l'utilisateur lui-même
+ */
+export const PROFILE_FIELDS = [
+  'avatar_url',
+  // Futurs champs: phone_mobile, phone_fix, preferences_notifications, etc.
+] as const;
+
+/**
+ * Champs LEGACY - ne plus utiliser pour les permissions
+ */
+export const LEGACY_FIELDS = [
+  'system_role',
+  'support_level',
+  'service_competencies',
+  // Tables legacy: user_roles, user_capabilities, group_permissions, scopes
+] as const;
+
+// ============================================================================
 // MATRICE DE RÔLES - Source de vérité unique
 // ============================================================================
 
 export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
   // N0 - Utilisateur de base (visiteur)
   base_user: {
-    canAccessHelpAcademy: false,      // ❌ Pas d'accès Help Academy par défaut
+    canAccessHelpAcademy: false,
     canAccessPilotageAgence: false,
     canAccessSupport: true,
     canAccessSupportConsole: false,
@@ -67,35 +311,35 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
     canAccessSupportConsole: false,
     canAccessFranchiseur: false,
     canAccessAdmin: false,
-    canManageUsers: false,
-    canAssignRolesUpTo: null,
-    requiresAgencyForPilotage: true,  // ✅ Agence OBLIGATOIRE
+    canManageUsers: true,
+    canAssignRolesUpTo: 'franchisee_user',
+    requiresAgencyForPilotage: true,
   },
 
   // N3 - Utilisateur franchiseur (animateur réseau)
   franchisor_user: {
     canAccessHelpAcademy: true,
-    canAccessPilotageAgence: true,        // ✅ Accès SI agence attribuée
+    canAccessPilotageAgence: true,
     canAccessSupport: true,
     canAccessSupportConsole: false,
     canAccessFranchiseur: true,
     canAccessAdmin: false,
     canManageUsers: true,
-    canAssignRolesUpTo: 'franchisor_user', // ✅ Jusqu'à son niveau (N3)
-    requiresAgencyForPilotage: true,       // ✅ Pas obligatoire mais conditionne l'accès
+    canAssignRolesUpTo: 'franchisee_admin',
+    requiresAgencyForPilotage: true,
   },
 
   // N4 - Admin franchiseur (directeur réseau, DG)
   franchisor_admin: {
     canAccessHelpAcademy: true,
-    canAccessPilotageAgence: true,         // ✅ Accès SI agence attribuée
+    canAccessPilotageAgence: true,
     canAccessSupport: true,
-    canAccessSupportConsole: false,        // ❌ Pas de console par défaut
+    canAccessSupportConsole: false,
     canAccessFranchiseur: true,
     canAccessAdmin: true,
     canManageUsers: true,
-    canAssignRolesUpTo: 'franchisor_admin', // ✅ Jusqu'à son niveau (N4)
-    requiresAgencyForPilotage: true,        // ✅ Pas obligatoire mais conditionne l'accès
+    canAssignRolesUpTo: 'franchisor_user',
+    requiresAgencyForPilotage: true,
   },
 
   // N5 - Admin plateforme (support niveau 3)
@@ -107,7 +351,7 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
     canAccessFranchiseur: true,
     canAccessAdmin: true,
     canManageUsers: true,
-    canAssignRolesUpTo: 'platform_admin',  // ✅ Jusqu'à son niveau (N5)
+    canAssignRolesUpTo: 'platform_admin',
     requiresAgencyForPilotage: false,
   },
 
@@ -120,7 +364,7 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
     canAccessFranchiseur: true,
     canAccessAdmin: true,
     canManageUsers: true,
-    canAssignRolesUpTo: 'superadmin',      // ✅ Jusqu'à son niveau (N6)
+    canAssignRolesUpTo: 'superadmin',
     requiresAgencyForPilotage: false,
   },
 };
@@ -158,7 +402,7 @@ export function canAccessSection(
 }
 
 /**
- * Vérifie si un utilisateur peut assigner un rôle donné
+ * Vérifie si un utilisateur peut assigner un rôle donné (legacy helper)
  */
 export function canAssignRole(assignerRole: GlobalRole | null, targetRole: GlobalRole): boolean {
   const caps = getRoleCapabilities(assignerRole);
