@@ -45,7 +45,7 @@ export function UnifiedSidebar() {
   const { canViewScope, isAdmin } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
-  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['help-academy', 'pilotage']));
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
 
   // V2 role checks
   const canAccessFranchiseeAdmin = useHasGlobalRole('franchisee_admin'); // N2+
@@ -201,7 +201,7 @@ export function UnifiedSidebar() {
   };
 
   // State for open submenus
-  const [openSubmenus, setOpenSubmenus] = useState<Set<string>>(new Set(['statistiques']));
+  const [openSubmenus, setOpenSubmenus] = useState<Set<string>>(new Set());
 
   const toggleSubmenu = (key: string) => {
     setOpenSubmenus(prev => {
