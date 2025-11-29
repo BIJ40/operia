@@ -8,14 +8,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useHasGlobalRole } from '@/hooks/useHasGlobalRole';
 
 export default function Landing() {
-  const { canViewScope, agence } = useAuth();
+  const { agence } = useAuth();
   const [pendingTicketsCount, setPendingTicketsCount] = useState<number>(0);
 
-  // V2 role checks
+  // V2 role checks - Source de vérité unique
   const canAccessPilotage = useHasGlobalRole('franchisee_admin'); // N2+
   const canAccessFranchiseur = useHasGlobalRole('franchisor_user'); // N3+
   const canAccessAdmin = useHasGlobalRole('platform_admin'); // N5+
-  const canAccessSupport = useHasGlobalRole('franchisee_admin'); // N2+ for support console
+  const canAccessSupport = useHasGlobalRole('franchisor_user'); // N3+ for support console
 
   // Fetch pending tickets count for support users
   useEffect(() => {
@@ -34,7 +34,6 @@ export default function Landing() {
 
     fetchPendingCount();
 
-    // Subscribe to realtime changes
     const channel = supabase
       .channel('pending-tickets-count')
       .on(
@@ -49,22 +48,22 @@ export default function Landing() {
     };
   }, [canAccessSupport]);
 
-  // Filtrer les tuiles par permissions V2
+  // V2: Filtrer les tuiles basé uniquement sur les rôles globaux
   const visibleTiles = useMemo(() => {
     return DASHBOARD_TILES.filter(tile => {
       // N5+ voit tout (admin)
       if (canAccessAdmin) return true;
       
-      // Cas spécial admin strict : nécessite N5+
+      // Admin strict : nécessite N5+
       if (tile.requiresAdmin) return false;
       
-      // Cas spécial franchiseur (N3+) pour gestion users
+      // Franchiseur (N3+) pour gestion users
       if (tile.requiresFranchisor) return canAccessFranchiseur;
       
-      // Cas spécial support console : nécessite N2+
+      // Console support : nécessite N3+
       if (tile.requiresSupport) return canAccessSupport;
       
-      // Cas spécial franchiseur section : nécessite N3+
+      // Section franchiseur : nécessite N3+
       if (tile.group === 'franchiseur') return canAccessFranchiseur;
       
       // Pilotage agence : nécessite N2+ ET une agence

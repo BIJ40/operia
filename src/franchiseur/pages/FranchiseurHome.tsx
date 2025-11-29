@@ -13,9 +13,6 @@ import { NetworkSAVChart } from "../components/widgets/NetworkSAVChart";
 import { useNetworkStats } from "../hooks/useNetworkStats";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
 import { useNetworkFilters } from "../contexts/NetworkFiltersContext";
-import { usePermissions } from "@/hooks/use-permissions";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 
 function SkeletonKpiTile() {
   return (
@@ -49,17 +46,9 @@ export default function FranchiseurHome() {
   const { permissions } = useFranchiseur();
   const { dateRange } = useNetworkFilters();
   const { data: stats, isLoading } = useNetworkStats();
-  const { canViewScope, isAdmin, isFranchiseur } = usePermissions();
-  const navigate = useNavigate();
 
-  // Guard: vérifier l'accès au dashboard franchiseur
-  const canView = canViewScope('franchiseur_dashboard');
-  
-  useEffect(() => {
-    if (!canView && !isAdmin && !isFranchiseur) {
-      navigate('/');
-    }
-  }, [canView, isAdmin, isFranchiseur, navigate]);
+  // Note: L'accès à cette page est déjà contrôlé par RoleGuard dans App.tsx
+  // Pas besoin de vérification supplémentaire ici
 
   if (isLoading) {
     return (
