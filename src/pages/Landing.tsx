@@ -5,9 +5,10 @@ import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashb
 import { useMemo, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getRoleCapabilities, canAccessTileGroup, canAccessTile, TileGroup } from '@/config/roleMatrix';
+import { isModuleEnabled } from '@/types/modules';
 
 export default function Landing() {
-  const { agence, globalRole, canAccessSupportConsole } = useAuth();
+  const { agence, globalRole, canAccessSupportConsole, enabledModules } = useAuth();
   const [pendingTicketsCount, setPendingTicketsCount] = useState<number>(0);
 
   // V2: Capacités basées sur ROLE_MATRIX
@@ -51,10 +52,15 @@ export default function Landing() {
       const groupAccess = canAccessTileGroup(globalRole, tile.group as TileGroup, { agence });
       if (!groupAccess) return false;
       
-      // 2. Vérifier l'accès à la tuile spécifique (passer canAccessSupportConsole pour CONSOLE_SUPPORT)
+      // 2. Vérifier si la tuile nécessite un module spécifique
+      if (tile.requiresModule && !isModuleEnabled(enabledModules, tile.requiresModule)) {
+        return false;
+      }
+      
+      // 3. Vérifier l'accès à la tuile spécifique (passer canAccessSupportConsole pour CONSOLE_SUPPORT)
       return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsole });
     });
-  }, [globalRole, agence, canAccessSupportConsole]);
+  }, [globalRole, agence, canAccessSupportConsole, enabledModules]);
 
   // Grouper les tuiles visibles par catégorie
   const tilesByGroup = useMemo(() => {

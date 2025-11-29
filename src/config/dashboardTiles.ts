@@ -1,9 +1,10 @@
 import { 
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
-  PieChart, Coins, LifeBuoy, Headphones, GraduationCap
+  PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban
 } from 'lucide-react';
 import { ROUTES } from './routes';
+import { ModuleKey } from '@/types/modules';
 
 export interface DashboardTile {
   id: string;
@@ -17,6 +18,7 @@ export interface DashboardTile {
   requiresAdmin?: boolean;
   requiresSupport?: boolean;
   requiresFranchisor?: boolean; // N3+ (franchisor_user)
+  requiresModule?: ModuleKey; // Requires specific module to be enabled
   badge?: string;
 }
 
@@ -105,6 +107,17 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'accent',
     group: 'support',
     requiresSupport: true,
+  },
+  {
+    id: 'SUIVI_DEV',
+    title: 'Suivi Dev',
+    description: 'Suivi du développement Apogée (Kanban)',
+    icon: Kanban,
+    route: ROUTES.admin.apogeeTickets,
+    scopeSlug: 'apogee_tickets',
+    color: 'accent',
+    group: 'support',
+    requiresModule: 'apogee_tickets',
   },
   // Franchiseur
   {
