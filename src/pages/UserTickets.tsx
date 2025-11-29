@@ -17,6 +17,7 @@ import { Plus, Send, Download, ArrowLeft, Home } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/config/routes';
 
 // Route protégée par RoleGuard dans App.tsx
 export default function UserTickets() {
@@ -231,7 +232,7 @@ export default function UserTickets() {
         ) : (
           <Button
             variant="ghost"
-            onClick={() => navigate('/')}
+            onClick={() => navigate(ROUTES.home)}
             className="mb-4"
           >
             <Home className="w-4 h-4 mr-2" />

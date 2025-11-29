@@ -96,9 +96,9 @@ export const ROUTES = {
   favorites: '/favorites',
 
   // ============================================
-  // LEGACY ROUTES (backward compatibility)
-  // Ces routes sont maintenues pour la rétrocompatibilité mais 
-  // ne doivent PAS être utilisées dans le nouveau code.
+  // LEGACY ROUTES (SUPPRIMÉES)
+  // Ces routes ne sont plus actives dans App.tsx.
+  // Elles sont documentées ici pour référence historique uniquement.
   // ============================================
   legacy: {
     apogee: '/apogee',

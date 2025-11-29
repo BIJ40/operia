@@ -3,6 +3,7 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import { ROUTES } from '@/config/routes';
 import * as Icons from 'lucide-react';
 import { Clock, Sparkles, RefreshCw, Ban } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -228,7 +229,7 @@ const SortableCategory = ({
           </div>
         </div>
       ) : (
-        <Link to={`/apogee/category/${category.slug}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
+        <Link to={`${ROUTES.academy.apogeeCategory(category.slug)}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
           {(isCustomImage && category.icon) || editImageUrl ? (
             <img 
               src={editImageUrl || category.icon} 
@@ -279,7 +280,7 @@ export default function ApogeeGuide() {
   );
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={ROUTES.home} replace />;
   }
   
   // Bloquer l'édition si pas admin
@@ -432,7 +433,7 @@ export default function ApogeeGuide() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-6xl mx-auto px-4 py-8">
-        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
+        <Link to={ROUTES.home} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
           <Icons.ArrowLeft className="w-4 h-4" />
           <span>Retour accueil</span>
         </Link>
@@ -546,7 +547,7 @@ export default function ApogeeGuide() {
               return (
                 <Link
                   key={category.id}
-                  to={`/apogee/category/${category.slug}`}
+                  to={ROUTES.academy.apogeeCategory(category.slug)}
                   className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 overflow-visible ${tileClass}`}
                 >
                   {/* Badge New en écharpe diagonale verte - décalé aux 3/4 */}

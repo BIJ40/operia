@@ -3,6 +3,7 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import { ROUTES } from '@/config/routes';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -245,7 +246,7 @@ const SortableCategory = ({
           </div>
         </div>
       ) : (
-        <Link to={`/helpconfort/category/${category.slug}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
+        <Link to={`${ROUTES.academy.documentsCategory(category.slug)}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
           {(isCustomImage && category.icon) || editImageUrl ? (
             <img 
               src={editImageUrl || category.icon} 
@@ -282,12 +283,12 @@ export default function HelpConfort() {
   const [searchTerm, setSearchTerm] = useState('');
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={ROUTES.home} replace />;
   }
 
   // Vérifier les permissions pour accéder à cette page
   if (!hasAccessToScope('helpconfort')) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={ROUTES.home} replace />;
   }
 
   const helpconfortCategories = (blocks as any[])
@@ -429,7 +430,7 @@ export default function HelpConfort() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-6xl mx-auto px-4 py-8">
-        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
+        <Link to={ROUTES.home} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
           <Icons.ArrowLeft className="w-4 h-4" />
           <span>Retour accueil</span>
         </Link>
