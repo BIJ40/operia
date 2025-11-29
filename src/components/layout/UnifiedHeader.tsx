@@ -105,12 +105,16 @@ export function UnifiedHeader() {
     'lg': 'text-lg',
     'xl': 'text-xl',
     '2xl': 'text-2xl',
+    '3xl': 'text-3xl',
+    '4xl': 'text-4xl',
   };
   const ICON_SIZES: Record<string, string> = {
     'sm': 'w-4 h-4',
     'md': 'w-5 h-5',
     'lg': 'w-6 h-6',
     'xl': 'w-7 h-7',
+    '2xl': 'w-8 h-8',
+    '3xl': 'w-10 h-10',
   };
   
   const titleSizeClass = TITLE_SIZES[metadata?.header_title_size || 'lg'] || 'text-lg';
@@ -380,6 +384,8 @@ export function UnifiedHeader() {
                   <option value="lg">Grand (lg)</option>
                   <option value="xl">Très grand (xl)</option>
                   <option value="2xl">Extra grand (2xl)</option>
+                  <option value="3xl">Énorme (3xl)</option>
+                  <option value="4xl">Maximum (4xl)</option>
                 </select>
               </div>
               <div className="space-y-2">
@@ -394,6 +400,8 @@ export function UnifiedHeader() {
                   <option value="md">Moyen (md)</option>
                   <option value="lg">Grand (lg)</option>
                   <option value="xl">Très grand (xl)</option>
+                  <option value="2xl">Extra grand (2xl)</option>
+                  <option value="3xl">Maximum (3xl)</option>
                 </select>
               </div>
             </div>
