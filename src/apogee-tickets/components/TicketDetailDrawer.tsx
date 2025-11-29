@@ -37,7 +37,7 @@ import { useTicketQualification } from '../hooks/useTicketQualification';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/contexts/AuthContext';
-import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType } from '../types';
+import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType, ReportedBy } from '../types';
 
 interface TicketDetailDrawerProps {
   ticket: ApogeeTicket | null;
@@ -54,8 +54,8 @@ const AUTHOR_COLORS: Record<AuthorType, string> = {
   APOGEE: 'bg-purple-600 text-white',
 };
 
-// Options pour le champ Origine
-const ORIGINE_OPTIONS = [
+// Options pour le champ Origine (ReportedBy)
+const ORIGINE_OPTIONS: { value: ReportedBy; label: string }[] = [
   { value: 'JEROME', label: 'Jérôme' },
   { value: 'FLORIAN', label: 'Florian' },
   { value: 'ERIC', label: 'Éric' },
@@ -281,8 +281,8 @@ export function TicketDetailDrawer({
                   <div>
                     <label className="text-xs text-muted-foreground">Origine</label>
                     <Select
-                      value={ticket.owner_side || ''}
-                      onValueChange={(v) => handleFieldUpdate('owner_side', v || null)}
+                      value={ticket.reported_by || ''}
+                      onValueChange={(v) => handleFieldUpdate('reported_by', v || null)}
                     >
                       <SelectTrigger className="h-9 mt-1">
                         <SelectValue placeholder="—" />
