@@ -14,6 +14,7 @@ import { useState, useEffect } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 // Définition des KPI disponibles
 const AVAILABLE_KPIS = [
@@ -202,12 +203,11 @@ function PilotageStatsHubContent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Statistiques</h1>
-        <p className="text-sm text-muted-foreground">
-          Accédez à l'ensemble des indicateurs de votre agence : vue globale, apporteurs, univers, techniciens et SAV.
-        </p>
-      </div>
+      <PageHeader
+        pageKey="pilotage_statistiques"
+        backTo={ROUTES.pilotage.index}
+        backLabel="Retour Pilotage Agence"
+      />
 
       {/* KPI Favoris */}
       {isAgencyReady && isApiEnabled && (
