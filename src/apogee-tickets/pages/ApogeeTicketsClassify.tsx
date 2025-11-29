@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ArrowLeft, ArrowRight, CheckCircle2, FolderOpen, SkipForward, Eye } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -21,7 +23,9 @@ export default function ApogeeTicketsClassify() {
   const navigate = useNavigate();
   const { tickets: allTickets, modules, priorities, statuses, updateTicket, isLoading } = useApogeeTickets();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [ownerSliderValue, setOwnerSliderValue] = useState<number>(50);
+  const [ownerSliderValue, setOwnerSliderValue] = useState<number | null>(null);
+  const [hMin, setHMin] = useState<string>('');
+  const [hMax, setHMax] = useState<string>('');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Liste stable de tickets "À spécifier" pour la session
@@ -41,10 +45,12 @@ export default function ApogeeTicketsClassify() {
   const currentTicket = ticketsToClassify[currentIndex];
   const totalTickets = ticketsToClassify.length;
 
-  // Réinitialiser le slider quand on change de ticket
+  // Réinitialiser les valeurs quand on change de ticket
   useEffect(() => {
     if (currentTicket) {
       setOwnerSliderValue(ownerSideToSliderValue(currentTicket.owner_side));
+      setHMin(currentTicket.h_min?.toString() || '');
+      setHMax(currentTicket.h_max?.toString() || '');
     }
   }, [currentTicket?.id]);
   const progressPercent = totalTickets > 0 ? Math.round((currentIndex / totalTickets) * 100) : 0;
@@ -57,10 +63,15 @@ export default function ApogeeTicketsClassify() {
   const handleClassify = async (newStatus: string) => {
     if (!currentTicket) return;
 
+    const hMinValue = hMin ? parseFloat(hMin) : null;
+    const hMaxValue = hMax ? parseFloat(hMax) : null;
+
     await updateTicket.mutateAsync({
       id: currentTicket.id,
       kanban_status: newStatus,
       owner_side: sliderValueToOwnerSide(ownerSliderValue),
+      h_min: hMinValue,
+      h_max: hMaxValue,
     });
 
     // Si c'est le dernier ticket, rediriger vers le Kanban
@@ -200,6 +211,40 @@ export default function ApogeeTicketsClassify() {
                   <span className="font-medium">{currentTicket.reported_by}</span>
                 </div>
               )}
+            </div>
+
+            {/* Estimation heures */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-muted-foreground">
+                Estimation (heures)
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  placeholder="Min"
+                  value={hMin}
+                  onChange={(e) => setHMin(e.target.value)}
+                  className="w-24"
+                  min={0}
+                  step={0.5}
+                />
+                <span className="text-muted-foreground">à</span>
+                <Input
+                  type="number"
+                  placeholder="Max"
+                  value={hMax}
+                  onChange={(e) => setHMax(e.target.value)}
+                  className="w-24"
+                  min={0}
+                  step={0.5}
+                />
+                <span className="text-muted-foreground text-sm">h</span>
+                {(!hMin && !hMax) && (
+                  <Badge variant="outline" className="text-destructive border-destructive/30 text-xs line-through">
+                    Temps
+                  </Badge>
+                )}
+              </div>
             </div>
 
             {/* Porteur du projet - Slider Apogée ↔ HC */}
