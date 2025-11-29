@@ -12,6 +12,7 @@ import type {
   ApogeeTicketStatus,
   ApogeeModule,
   ApogeePriority,
+  ApogeeImpactTag,
   ApogeeTicketInsert,
   ApogeeTicketComment,
   ApogeeTicketCommentInsert,
@@ -61,6 +62,19 @@ export function useApogeeTickets(filters?: TicketFilters) {
     },
   });
 
+  // Fetch impact tags
+  const { data: impactTags = [] } = useQuery({
+    queryKey: ['apogee-impact-tags'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('apogee_impact_tags')
+        .select('*')
+        .order('display_order');
+      if (error) throw error;
+      return data as ApogeeImpactTag[];
+    },
+  });
+
   // Fetch tickets with filters
   const {
     data: tickets = [],
@@ -97,6 +111,15 @@ export function useApogeeTickets(filters?: TicketFilters) {
       }
       if (filters?.is_qualified !== undefined) {
         query = query.eq('is_qualified', filters.is_qualified);
+      }
+      if (filters?.impact_tag) {
+        query = query.contains('impact_tags', [filters.impact_tag]);
+      }
+      if (filters?.heat_priority_min !== undefined) {
+        query = query.gte('heat_priority', filters.heat_priority_min);
+      }
+      if (filters?.heat_priority_max !== undefined) {
+        query = query.lte('heat_priority', filters.heat_priority_max);
       }
 
       const { data, error } = await query;
@@ -204,6 +227,7 @@ export function useApogeeTickets(filters?: TicketFilters) {
     statuses,
     modules,
     priorities,
+    impactTags,
     isLoading,
     refetch,
     createTicket,

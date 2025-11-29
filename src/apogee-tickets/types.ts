@@ -176,4 +176,7 @@ export interface TicketFilters {
   search?: string;
   needs_completion?: boolean;
   is_qualified?: boolean;
+  impact_tag?: string;
+  heat_priority_min?: number;
+  heat_priority_max?: number;
 }
