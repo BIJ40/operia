@@ -57,7 +57,8 @@ const FranchiseurAnimateurs = lazy(() => import("./franchiseur/pages/Franchiseur
 const AdminIndex = lazy(() => import("./pages/AdminIndex"));
 const AdminDocuments = lazy(() => import("./pages/AdminDocuments"));
 const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
-const AdminSupportLevels = lazy(() => import("./pages/AdminSupportLevels"));
+// DEPRECATED V2: AdminSupportLevels - utiliser enabled_modules.support.options à la place
+// const AdminSupportLevels = lazy(() => import("./pages/AdminSupportLevels"));
 const AdminEscalationHistory = lazy(() => import("./pages/AdminEscalationHistory"));
 const AdminBackup = lazy(() => import("./pages/AdminBackup"));
 const AdminHelpConfortBackup = lazy(() => import("./pages/AdminHelpConfortBackup"));
@@ -160,7 +161,7 @@ function AppContent() {
           <Route path="/admin" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminIndex /></RoleGuard></MainLayout>} />
           <Route path="/admin/documents" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminDocuments /></RoleGuard></MainLayout>} />
           <Route path="/admin/support" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
-          <Route path="/admin/support-levels" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminSupportLevels /></RoleGuard></MainLayout>} />
+          {/* DEPRECATED V2: Route /admin/support-levels supprimée - géré via enabled_modules.support.options */}
           <Route path="/admin/escalation-history" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminEscalationHistory /></RoleGuard></MainLayout>} />
           <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminBackup /></RoleGuard></MainLayout>} />
           <Route path="/admin/helpconfort-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminHelpConfortBackup /></RoleGuard></MainLayout>} />

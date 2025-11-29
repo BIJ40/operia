@@ -15,8 +15,19 @@ export interface RoleCapabilities {
   // Accès aux sections principales
   canAccessHelpAcademy: boolean;
   canAccessPilotageAgence: boolean;
-  canAccessSupport: boolean;        // Créer ses propres tickets
-  canAccessSupportConsole: boolean; // Gérer les tickets des autres
+  /**
+   * canAccessSupport: Capacité NATIVE de tout utilisateur connecté
+   * Permet d'accéder à "Mes Demandes" (/mes-demandes) et créer des tickets.
+   * Doit être TRUE pour tous les rôles N0-N6.
+   */
+  canAccessSupport: boolean;
+  /**
+   * canAccessSupportConsole: Accès au back-office support (/admin/support)
+   * Contrôlé par enabled_modules.support.options.agent_support OU admin_support
+   * ROLE_MATRIX définit le baseline, mais l'accès réel dépend de AuthContext.canAccessSupportConsole
+   * qui combine ROLE_MATRIX + enabled_modules.support.options
+   */
+  canAccessSupportConsole: boolean;
   canAccessFranchiseur: boolean;
   canAccessAdmin: boolean;
   
