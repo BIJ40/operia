@@ -45,7 +45,8 @@ export function UnifiedSidebar() {
   const { canViewScope, isAdmin } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
-  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  // All menu sections collapsed by default on first load
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
 
   // V2 role checks
   const canAccessFranchiseeAdmin = useHasGlobalRole('franchisee_admin'); // N2+
@@ -200,8 +201,8 @@ export function UnifiedSidebar() {
     return false;
   };
 
-  // State for open submenus
-  const [openSubmenus, setOpenSubmenus] = useState<Set<string>>(new Set());
+  // State for open submenus - all closed by default
+  const [openSubmenus, setOpenSubmenus] = useState<Set<string>>(() => new Set());
 
   const toggleSubmenu = (key: string) => {
     setOpenSubmenus(prev => {
