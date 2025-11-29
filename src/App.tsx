@@ -141,7 +141,7 @@ function AppContent() {
           </Route>
           <Route path="/actions-a-mener" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ActionsAMener /></RoleGuard></MainLayout>} />
           <Route path="/actions-a-mener/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_admin"><CategoryActionsAMener /></RoleGuard></MainLayout>} />
-          <Route path="/diffusion" element={<RoleGuard minRole="franchisee_admin"><DiffusionDashboard /></RoleGuard>} />
+          <Route path="/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><DiffusionDashboard /></RoleGuard></MainLayout>} />
           
           {/* Support - Accessible à tous les utilisateurs connectés */}
           <Route path="/support" element={<MainLayout><RoleGuard><Support /></RoleGuard></MainLayout>} />
@@ -165,11 +165,9 @@ function AppContent() {
           <Route path="/admin/support" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
           <Route path="/admin/support-levels" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminSupportLevels /></RoleGuard></MainLayout>} />
           <Route path="/admin/escalation-history" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminEscalationHistory /></RoleGuard></MainLayout>} />
-          <Route path="/admin/tickets" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
           <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminBackup /></RoleGuard></MainLayout>} />
           <Route path="/admin/helpconfort-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminHelpConfortBackup /></RoleGuard></MainLayout>} />
           {/* User Management - N2+ can access, but filtering is done inside the page */}
-          <Route path="/admin/users" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminUsersUnified /></RoleGuard></MainLayout>} />
           <Route path="/admin/users-unified" element={<MainLayout><RoleGuard minRole="franchisee_admin"><AdminUsersUnified /></RoleGuard></MainLayout>} />
           <Route path="/admin/role-permissions" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminRolePermissions /></RoleGuard></MainLayout>} />
           <Route path="/admin/agencies" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminAgencies /></RoleGuard></MainLayout>} />
