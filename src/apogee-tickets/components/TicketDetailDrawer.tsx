@@ -62,16 +62,6 @@ const ORIGINE_OPTIONS = [
   { value: 'AUTRE', label: 'Autre' },
 ];
 
-// Couleurs pour le slider de priorité
-const getSliderColor = (value: number): string => {
-  if (value >= 10) return 'bg-red-600';
-  if (value >= 8) return 'bg-orange-500';
-  if (value >= 6) return 'bg-amber-400';
-  if (value >= 4) return 'bg-yellow-300';
-  if (value >= 2) return 'bg-blue-300';
-  return 'bg-blue-100';
-};
-
 const MAX_VISIBLE_COMMENTS = 3;
 
 export function TicketDetailDrawer({
@@ -332,11 +322,7 @@ export function TicketDetailDrawer({
                   </label>
                   <div className="mt-2 flex items-center gap-4">
                     <HeatPriorityBadge priority={ticket.heat_priority} size="default" showLabel />
-                    <div className="flex-1 relative">
-                      <div 
-                        className={`absolute inset-0 h-2 rounded-full ${getSliderColor(ticket.heat_priority ?? 3)} opacity-30`}
-                        style={{ top: '50%', transform: 'translateY(-50%)' }}
-                      />
+                    <div className="flex-1">
                       <Slider
                         value={[ticket.heat_priority ?? 3]}
                         min={0}
@@ -344,6 +330,7 @@ export function TicketDetailDrawer({
                         step={1}
                         onValueChange={(v) => handleFieldUpdate('heat_priority', v[0])}
                         className="w-full"
+                        trackClassName="bg-gradient-to-r from-blue-400 via-yellow-400 to-red-500"
                       />
                     </div>
                   </div>
