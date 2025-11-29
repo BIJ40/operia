@@ -343,19 +343,19 @@ export function UnifiedSidebar() {
               onOpenChange={() => {}}
             >
               <SidebarGroup className="py-0.5">
-                <div className="flex items-center">
+                <div className="flex items-center group/nav">
                   {/* Label cliquable → navigation vers la page index */}
                   <Link
                     to={group.indexUrl}
                     className={`
-                      flex-1 cursor-pointer rounded-l-md transition-colors flex items-center px-2 py-1.5 mx-1
+                      flex-1 cursor-pointer rounded-l-md transition-all duration-200 flex items-center px-2 py-1.5 mx-1
                       ${groupIsActive 
                         ? 'bg-primary/15 text-primary border-l-2 border-primary' 
-                        : 'hover:bg-muted/50'
+                        : 'hover:bg-primary/10'
                       }
                     `}
                   >
-                  <span className={`text-xs font-semibold tracking-wide uppercase ${groupIsActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <span className={`text-xs font-semibold tracking-wide uppercase transition-colors duration-200 ${groupIsActive ? 'text-primary' : 'text-muted-foreground group-hover/nav:text-primary'}`}>
                       {!collapsed ? getGroupLabel(group) : group.labelKey.charAt(0).toUpperCase()}
                     </span>
                   </Link>
