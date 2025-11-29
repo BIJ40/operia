@@ -1,12 +1,10 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronRight } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight, ChevronRight, LucideIcon } from 'lucide-react';
 import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashboardTiles';
 import { useMemo, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getRoleCapabilities, canAccessTileGroup, canAccessTile, TileGroup } from '@/config/roleMatrix';
-import { LucideIcon } from 'lucide-react';
 
 export default function Landing() {
   const { agence, globalRole, canAccessSupportConsole } = useAuth();
@@ -181,38 +179,35 @@ export default function Landing() {
 
 function DashboardTileCard({ tile, dynamicBadge }: { tile: DashboardTile; dynamicBadge?: number }) {
   const Icon = tile.icon;
-  const colorClasses = {
-    primary: 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground',
-    accent: 'bg-accent/10 text-accent group-hover:bg-accent group-hover:text-accent-foreground',
-  };
-
   const badgeContent = dynamicBadge ?? tile.badge;
 
   return (
     <Link to={tile.route}>
-      <Card className="group hover:shadow-lg hover:border-primary/30 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer relative">
+      <div className="group relative rounded-xl border border-helpconfort-blue/15 p-4
+        bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+        shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-helpconfort-blue
+        hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
         {badgeContent && (
           <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full z-10 ${
             typeof badgeContent === 'number' 
               ? 'bg-red-500 text-white animate-pulse min-w-[20px] text-center' 
-              : 'bg-orange-500 text-white text-[10px]'
+              : 'bg-helpconfort-blue text-white text-[10px]'
           }`}>
             {badgeContent}
           </span>
         )}
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center transition-colors ${colorClasses[tile.color]}`}>
-              <Icon className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <CardTitle className="text-base font-medium truncate">{tile.title}</CardTitle>
-              <CardDescription className="text-xs truncate">{tile.description}</CardDescription>
-            </div>
-            <ArrowRight className="w-4 h-4 flex-shrink-0 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex-shrink-0 flex items-center justify-center bg-helpconfort-blue/10
+            group-hover:border-helpconfort-blue transition-all">
+            <Icon className="w-5 h-5 text-helpconfort-blue" />
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-semibold text-foreground truncate">{tile.title}</p>
+            <p className="text-xs text-muted-foreground truncate">{tile.description}</p>
+          </div>
+          <ArrowRight className="w-4 h-4 flex-shrink-0 text-muted-foreground group-hover:text-helpconfort-blue group-hover:translate-x-0.5 transition-all" />
+        </div>
+      </div>
     </Link>
   );
 }
