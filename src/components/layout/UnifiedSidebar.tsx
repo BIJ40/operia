@@ -26,9 +26,17 @@ import { useState, useEffect, ReactNode } from 'react';
 
 // Mapping route → pageKey pour récupérer le menu_label
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
+  // Index pages (sections)
+  [ROUTES.academy.index]: 'academy_index',
+  [ROUTES.pilotage.index]: 'pilotage_index',
+  [ROUTES.support.index]: 'support_index',
+  [ROUTES.reseau.index]: 'reseau_index',
+  [ROUTES.admin.index]: 'admin_index',
+  // Academy
   [ROUTES.academy.apogee]: 'academy_apogee',
   [ROUTES.academy.apporteurs]: 'academy_apporteurs',
   [ROUTES.academy.documents]: 'academy_documents',
+  // Pilotage
   [ROUTES.pilotage.statsHub]: 'pilotage_statistiques',
   [ROUTES.pilotage.indicateurs]: 'pilotage_indicateurs',
   [ROUTES.pilotage.indicateursApporteurs]: 'pilotage_indicateurs_apporteurs',
@@ -39,14 +47,17 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.pilotage.diffusion]: 'pilotage_diffusion',
   [ROUTES.pilotage.rhTech]: 'pilotage_rh_tech',
   [ROUTES.pilotage.equipe]: 'pilotage_equipe',
+  // Support
   [ROUTES.support.userTickets]: 'support_mes_demandes',
   [ROUTES.support.console]: 'support_console',
+  // Réseau
   [ROUTES.reseau.dashboard]: 'reseau_dashboard',
   [ROUTES.reseau.agences]: 'reseau_agences',
   [ROUTES.reseau.animateurs]: 'reseau_animateurs',
   [ROUTES.reseau.stats]: 'reseau_stats',
   [ROUTES.reseau.comparatifs]: 'reseau_comparatifs',
   [ROUTES.reseau.redevances]: 'reseau_redevances',
+  // Admin
   [ROUTES.admin.users]: 'admin_users',
   [ROUTES.admin.agencies]: 'admin_agencies',
   [ROUTES.admin.backup]: 'admin_backup',
@@ -89,6 +100,15 @@ export function UnifiedSidebar() {
       }
     }
     return item.title;
+  };
+  
+  // Helper pour obtenir le label d'un groupe (menu_label personnalisé ou label par défaut)
+  const getGroupLabel = (group: NavGroup): ReactNode => {
+    const pageKey = ROUTE_TO_PAGE_KEY[group.indexUrl];
+    if (pageKey && menuLabels.has(pageKey)) {
+      return menuLabels.get(pageKey)!;
+    }
+    return group.label;
   };
   
   // Auto-open groups based on current route
@@ -335,8 +355,8 @@ export function UnifiedSidebar() {
                       }
                     `}
                   >
-                    <span className={`text-xs font-semibold tracking-wide uppercase ${groupIsActive ? 'text-primary' : 'text-muted-foreground'}`}>
-                      {!collapsed ? group.label : group.labelKey.charAt(0).toUpperCase()}
+                  <span className={`text-xs font-semibold tracking-wide uppercase ${groupIsActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {!collapsed ? getGroupLabel(group) : group.labelKey.charAt(0).toUpperCase()}
                     </span>
                   </Link>
                   
