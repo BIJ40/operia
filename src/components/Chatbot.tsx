@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, createContext, useContext } from 'react';
 import { X, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,11 +12,35 @@ import { TimeoutModal } from '@/components/chatbot/TimeoutModal';
 import chatIcon from '@/assets/logo_chat.png';
 import { MessageCircle } from 'lucide-react';
 
+// Context for admin test mode
+interface ChatbotTestContextType {
+  isTestMode: boolean;
+  setTestMode: (value: boolean) => void;
+}
+
+const ChatbotTestContext = createContext<ChatbotTestContextType>({
+  isTestMode: false,
+  setTestMode: () => {},
+});
+
+export const useChatbotTest = () => useContext(ChatbotTestContext);
+
+// Provider component
+export function ChatbotTestProvider({ children }: { children: React.ReactNode }) {
+  const [isTestMode, setTestMode] = useState(false);
+  return (
+    <ChatbotTestContext.Provider value={{ isTestMode, setTestMode }}>
+      {children}
+    </ChatbotTestContext.Provider>
+  );
+}
+
 export function Chatbot() {
   const { isAdmin, canAccessSupportConsole } = useAuth();
+  const { isTestMode } = useChatbotTest();
 
-  // Hide chatbot for admins and support agents (those who handle tickets)
-  if (isAdmin || canAccessSupportConsole) return null;
+  // Hide chatbot for admins and support agents unless in test mode
+  if ((isAdmin || canAccessSupportConsole) && !isTestMode) return null;
 
   const {
     user,
