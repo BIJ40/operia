@@ -4,8 +4,14 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
 import { TicketFilters } from '../components/TicketFilters';
@@ -21,6 +27,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function ApogeeTicketsKanban() {
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<Filters>({});
   const [selectedTicket, setSelectedTicket] = useState<ApogeeTicket | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -65,24 +72,29 @@ export default function ApogeeTicketsKanban() {
             <Plus className="h-4 w-4 mr-2" />
             Nouveau ticket
           </Button>
-          <Link to="/admin/apogee-tickets/import-bugs">
-            <Button variant="default" className="bg-orange-600 hover:bg-orange-700">
-              <Upload className="h-4 w-4 mr-2" />
-              Import BUGS
-            </Button>
-          </Link>
-          <Link to="/admin/apogee-tickets/import-v1">
-            <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
-              <Upload className="h-4 w-4 mr-2" />
-              Import V1
-            </Button>
-          </Link>
-          <Link to={ROUTES.admin.apogeeTicketsImport}>
-            <Button variant="outline">
-              <Upload className="h-4 w-4 mr-2" />
-              Import général
-            </Button>
-          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Upload className="h-4 w-4 mr-2" />
+                Importer
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-background border shadow-lg z-50">
+              <DropdownMenuItem onClick={() => navigate('/admin/apogee-tickets/import-bugs')}>
+                <Bug className="h-4 w-4 mr-2 text-orange-600" />
+                Import BUGS
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/admin/apogee-tickets/import-v1')}>
+                <FileSpreadsheet className="h-4 w-4 mr-2 text-blue-600" />
+                Import V1
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(ROUTES.admin.apogeeTicketsImport)}>
+                <Files className="h-4 w-4 mr-2" />
+                Import général
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="flex items-center gap-2">
