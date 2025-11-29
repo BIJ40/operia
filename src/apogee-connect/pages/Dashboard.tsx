@@ -614,7 +614,7 @@ export default function Dashboard() {
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Sans devis</p>
                 <p className="text-xl font-bold text-rose-600">{(data?.tauxDossiersSansDevis || 0).toFixed(1)}%</p>
-              </Card>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Pourcentage de factures émises sans devis associé dans Apogée.
               </div>
@@ -622,15 +622,19 @@ export default function Dashboard() {
 
             {/* KPI 14: Multi-techniciens */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-emerald-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/15 p-3
+                bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-emerald-500
+                hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-1.5 rounded-lg">
-                    <UserCheck className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-full border-2 border-emerald-400/50 flex items-center justify-center bg-emerald-500/10
+                    group-hover:border-emerald-500 transition-all">
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Multi-techniciens</p>
-                <p className="text-xl font-bold">{(data?.tauxDossiersMultiTechniciens || 0).toFixed(1)}%</p>
-              </Card>
+                <p className="text-xl font-bold text-emerald-600">{(data?.tauxDossiersMultiTechniciens || 0).toFixed(1)}%</p>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Pourcentage de dossiers sur lesquels au moins deux techniciens différents sont intervenus.
               </div>
@@ -638,15 +642,19 @@ export default function Dashboard() {
 
             {/* KPI 15: Polyvalence techniciens */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-sky-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/15 p-3
+                bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-sky-500
+                hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-sky-500 to-sky-600 p-1.5 rounded-lg">
-                    <Award className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-full border-2 border-sky-400/50 flex items-center justify-center bg-sky-500/10
+                    group-hover:border-sky-500 transition-all">
+                    <Award className="w-3.5 h-3.5 text-sky-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Polyvalence tech</p>
-                <p className="text-xl font-bold">{(data?.polyvalenceTechniciens || 0).toFixed(1)}</p>
-              </Card>
+                <p className="text-xl font-bold text-sky-600">{(data?.polyvalenceTechniciens || 0).toFixed(1)}</p>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Nombre moyen d&apos;univers différents couverts par technicien.
               </div>
@@ -654,15 +662,19 @@ export default function Dashboard() {
 
             {/* KPI 16: Placeholder - À définir */}
             <div className="relative group">
-              <Card className="p-3 border-2 border-dashed border-muted-foreground/20 bg-muted/10">
+              <div className="rounded-xl border border-helpconfort-blue/15 p-3
+                bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/5 via-white to-white
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-muted-foreground/30 border-dashed
+                hover:from-helpconfort-blue/10 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-muted p-1.5 rounded-lg">
+                  <div className="w-7 h-7 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center bg-muted/20
+                    group-hover:border-muted-foreground/50 transition-all">
                     <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">KPI à définir</p>
                 <p className="text-xl font-bold text-muted-foreground">-</p>
-              </Card>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Indicateur réservé pour un futur KPI (non encore calculé).
               </div>
