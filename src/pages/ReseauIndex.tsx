@@ -5,9 +5,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { hasMinimumRole } from '@/types/globalRoles';
 import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
+import { useMenuLabels } from '@/hooks/use-page-metadata';
+
+// Page keys correspondant aux routes
+const ROUTE_TO_PAGE_KEY: Record<string, string> = {
+  [ROUTES.reseau.dashboard]: 'reseau_dashboard',
+  [ROUTES.reseau.agences]: 'reseau_agences',
+  [ROUTES.reseau.animateurs]: 'reseau_animateurs',
+  [ROUTES.reseau.stats]: 'reseau_stats',
+  [ROUTES.reseau.comparatifs]: 'reseau_comparatifs',
+  [ROUTES.reseau.redevances]: 'reseau_redevances',
+};
 
 export default function ReseauIndex() {
   const { globalRole } = useAuth();
+  const menuLabels = useMenuLabels();
   const isFranchisorAdmin = hasMinimumRole(globalRole, 'franchisor_admin');
 
   const reseauModules = [
@@ -68,6 +80,14 @@ export default function ReseauIndex() {
     },
   ];
 
+  const getModuleTitle = (module: typeof reseauModules[0]): string => {
+    const pageKey = ROUTE_TO_PAGE_KEY[module.href];
+    if (pageKey && menuLabels.has(pageKey)) {
+      return menuLabels.get(pageKey)!;
+    }
+    return module.title;
+  };
+
   const visibleModules = reseauModules.filter(m => m.visible);
 
   return (
@@ -84,9 +104,9 @@ export default function ReseauIndex() {
                     <Icon className={`w-6 h-6 ${module.color}`} />
                   </div>
                   <div className="flex items-center gap-2">
-                    <CardTitle>{module.title}</CardTitle>
+                    <CardTitle>{getModuleTitle(module)}</CardTitle>
                     {module.badge && (
-                      <Badge variant="secondary" className="text-xs bg-orange-500 text-white">
+                      <Badge variant="secondary" className="text-xs bg-helpconfort-orange text-white">
                         {module.badge}
                       </Badge>
                     )}

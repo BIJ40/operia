@@ -2,6 +2,14 @@ import { Link } from 'react-router-dom';
 import { BookOpen, FileText, FolderOpen } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ROUTES } from '@/config/routes';
+import { useMenuLabels } from '@/hooks/use-page-metadata';
+
+// Page keys correspondant aux routes
+const ROUTE_TO_PAGE_KEY: Record<string, string> = {
+  [ROUTES.academy.apogee]: 'academy_apogee',
+  [ROUTES.academy.apporteurs]: 'academy_apporteurs',
+  [ROUTES.academy.documents]: 'academy_documents',
+};
 
 const academyModules = [
   {
@@ -31,6 +39,16 @@ const academyModules = [
 ];
 
 export default function AcademyIndex() {
+  const menuLabels = useMenuLabels();
+
+  const getModuleTitle = (module: typeof academyModules[0]): string => {
+    const pageKey = ROUTE_TO_PAGE_KEY[module.href];
+    if (pageKey && menuLabels.has(pageKey)) {
+      return menuLabels.get(pageKey)!;
+    }
+    return module.title;
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
 
@@ -44,7 +62,7 @@ export default function AcademyIndex() {
                   <div className={`w-12 h-12 rounded-lg ${module.bgColor} flex items-center justify-center mb-4`}>
                     <Icon className={`w-6 h-6 ${module.color}`} />
                   </div>
-                  <CardTitle>{module.title}</CardTitle>
+                  <CardTitle>{getModuleTitle(module)}</CardTitle>
                   <CardDescription>{module.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
