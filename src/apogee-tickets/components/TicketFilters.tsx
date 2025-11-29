@@ -38,13 +38,13 @@ const getHeatColor = (priority: number): string => {
   }
 };
 
-// Options pour Origine (ReportedBy)
+// Options pour Origine (ReportedBy) - triées alphabétiquement
 const ORIGINE_OPTIONS: { value: ReportedBy; label: string }[] = [
-  { value: 'JEROME', label: 'Jérôme' },
-  { value: 'FLORIAN', label: 'Florian' },
-  { value: 'ERIC', label: 'Éric' },
   { value: 'APOGEE', label: 'Apogée' },
   { value: 'AUTRE', label: 'Autre' },
+  { value: 'ERIC', label: 'Éric' },
+  { value: 'FLORIAN', label: 'Florian' },
+  { value: 'JEROME', label: 'Jérôme' },
 ];
 
 export function TicketFilters({ filters, onFiltersChange, modules, priorities, impactTags }: TicketFiltersProps) {
@@ -128,7 +128,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous modules</SelectItem>
-            {modules.filter(m => m.id).map((m) => (
+            {[...modules].filter(m => m.id).sort((a, b) => a.label.localeCompare(b.label, 'fr')).map((m) => (
               <SelectItem key={m.id} value={m.id}>
                 {m.label}
               </SelectItem>
@@ -146,7 +146,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous tags</SelectItem>
-            {impactTags.filter(tag => tag.id).map((tag) => (
+            {[...impactTags].filter(tag => tag.id).sort((a, b) => a.label.localeCompare(b.label, 'fr')).map((tag) => (
               <SelectItem key={tag.id} value={tag.id}>
                 {tag.label}
               </SelectItem>
