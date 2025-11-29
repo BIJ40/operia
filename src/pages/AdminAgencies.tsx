@@ -336,7 +336,7 @@ export default function AdminAgencies() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(ROUTES.reseau.agenceProfile(agency.id))}
+                            onClick={() => navigate(ROUTES.admin.agencyProfile(agency.id))}
                             title="Voir le profil complet"
                           >
                             <Eye className="h-4 w-4" />

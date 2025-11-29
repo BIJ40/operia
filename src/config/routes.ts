@@ -85,6 +85,7 @@ export const ROUTES = {
     index: '/admin',
     users: '/admin/users',
     agencies: '/admin/agencies',
+    agencyProfile: (agencyId: string) => `/admin/agencies/${agencyId}`,
     collaborateurs: '/admin/collaborateurs',
     backup: '/admin/backup',
     userActivity: '/admin/user-activity',
