@@ -24,7 +24,18 @@ export const useChatbot = () => {
   const { createSupportTicket, isCreating } = useSupportTicket();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    // Load persisted messages from localStorage
+    const saved = localStorage.getItem('chatbot-messages');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
@@ -37,7 +48,28 @@ export const useChatbot = () => {
   const [showChoiceMode, setShowChoiceMode] = useState(true);
   const [showTicketCreation, setShowTicketCreation] = useState(false);
   const [supportTimeout, setSupportTimeout] = useState<NodeJS.Timeout | null>(null);
-  const [chatContext, setChatContext] = useState<ChatContext>('apogee');
+  const [chatContext, setChatContext] = useState<ChatContext>(() => {
+    const saved = localStorage.getItem('chatbot-context');
+    return (saved as ChatContext) || 'apogee';
+  });
+
+  // Persist messages to localStorage
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('chatbot-messages', JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  // Persist context to localStorage
+  useEffect(() => {
+    localStorage.setItem('chatbot-context', chatContext);
+  }, [chatContext]);
+
+  // Reset conversation function
+  const resetConversation = () => {
+    setMessages([]);
+    localStorage.removeItem('chatbot-messages');
+  };
   const [buttonPosition, setButtonPosition] = useState(() => {
     const saved = localStorage.getItem('chatbot-position');
     return saved ? JSON.parse(saved) : { bottom: 24, right: 24 };
@@ -573,5 +605,6 @@ export const useChatbot = () => {
     playNotificationSound,
     dragOffset,
     setMessages,
+    resetConversation,
   };
 };
