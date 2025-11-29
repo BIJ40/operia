@@ -80,7 +80,7 @@ export default function Landing() {
       {/* Welcome section */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">
-          Bienvenue sur <span className="text-primary">Help<span className="text-orange-400">!</span> Confort Services</span>
+          Bienvenue sur <span className="text-primary">Help<span className="text-helpconfort-orange">!</span> Confort Services</span>
         </h1>
         <p className="text-muted-foreground">
           Votre espace centralisé pour piloter votre agence HelpConfort
