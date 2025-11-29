@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { Building2, TrendingUp, Euro, Calendar, Phone, Mail, MapPin, Users, Edit, UserCircle, Plus, Loader2 } from "lucide-react";
+import { Building2, TrendingUp, Euro, Calendar, Phone, Mail, MapPin, Users, Edit, Plus, Loader2, UserPlus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,21 @@ import {
   useUpdateAgencyCollaborator,
   useDeleteAgencyCollaborator,
 } from "@/features/team/hooks";
-import { AgencyCollaborator, CreateCollaboratorPayload, UpdateCollaboratorPayload } from "@/features/team/types";
-import { CollaboratorFormDialog, CollaboratorsTable, CreateUserFromCollaboratorDialog } from "@/features/team/components";
+import { AgencyCollaborator, CreateCollaboratorPayload, UpdateCollaboratorPayload, COLLABORATOR_ROLE_LABELS } from "@/features/team/types";
+import { CollaboratorFormDialog, CreateUserFromCollaboratorDialog } from "@/features/team/components";
+
+// Type unifié pour la liste équipe
+interface TeamMember {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email?: string | null;
+  role: string;
+  hasAccount: boolean;
+  isActive?: boolean;
+  globalRole?: string | null;
+  collaborator?: AgencyCollaborator;
+}
 
 export default function FranchiseurAgencyProfile() {
   const { agencyId } = useParams<{ agencyId: string }>();
@@ -33,7 +46,7 @@ export default function FranchiseurAgencyProfile() {
 
   // Collaborators state
   const { data: collaborators = [], isLoading: collaboratorsLoading } = useAgencyCollaborators(agencyId || null);
-  const createCollaborator = useCreateAgencyCollaborator(agencyId || "");
+  const createCollaborator = useCreateAgencyCollaborator(agencyId || null);
   const updateCollaborator = useUpdateAgencyCollaborator(agencyId || "");
   const deleteCollaborator = useDeleteAgencyCollaborator(agencyId || "");
   const [isCollaboratorFormOpen, setIsCollaboratorFormOpen] = useState(false);
@@ -41,7 +54,45 @@ export default function FranchiseurAgencyProfile() {
   const [createUserTarget, setCreateUserTarget] = useState<AgencyCollaborator | null>(null);
 
   const canManage = franchiseurRole === "directeur" || franchiseurRole === "dg";
-  const unregisteredCollaborators = collaborators.filter((c) => !c.is_registered_user);
+
+  // Fusionner users inscrits + collaborateurs en une seule liste
+  const teamMembers = useMemo((): TeamMember[] => {
+    const members: TeamMember[] = [];
+
+    // Ajouter les utilisateurs inscrits
+    (agencyUsers || []).forEach((user) => {
+      members.push({
+        id: `user-${user.id}`,
+        first_name: user.first_name || "",
+        last_name: user.last_name || "",
+        email: user.email,
+        role: user.role_agence || "Utilisateur",
+        hasAccount: true,
+        isActive: user.is_active !== false,
+        globalRole: user.global_role,
+      });
+    });
+
+    // Ajouter les collaborateurs NON inscrits
+    collaborators
+      .filter((c) => !c.is_registered_user)
+      .forEach((collab) => {
+        members.push({
+          id: `collab-${collab.id}`,
+          first_name: collab.first_name,
+          last_name: collab.last_name,
+          email: collab.email,
+          role: COLLABORATOR_ROLE_LABELS[collab.role] || collab.role,
+          hasAccount: false,
+          collaborator: collab,
+        });
+      });
+
+    // Trier par nom
+    return members.sort((a, b) => 
+      `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
+    );
+  }, [agencyUsers, collaborators]);
 
   const handleCollaboratorSubmit = (data: CreateCollaboratorPayload | UpdateCollaboratorPayload) => {
     if ("id" in data) {
@@ -212,116 +263,120 @@ export default function FranchiseurAgencyProfile() {
         </TabsContent>
 
         <TabsContent value="team" className="space-y-4 mt-4">
-          {/* Utilisateurs inscrits */}
           <Card className="rounded-2xl border-l-4 border-l-accent">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserCircle className="h-5 w-5" />
-                Utilisateurs inscrits
-                <Badge variant="secondary" className="ml-2">{agencyUsers?.length || 0}</Badge>
-              </CardTitle>
-              <CardDescription>
-                Utilisateurs ayant un compte sur la plateforme
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {usersLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : agencyUsers && agencyUsers.length > 0 ? (
-                <div className="space-y-2">
-                  {agencyUsers.map((user) => (
-                    <div 
-                      key={user.id} 
-                      className={`flex items-center gap-4 p-3 rounded-lg border ${
-                        user.is_active === false ? 'opacity-50 bg-muted/30' : 'bg-card hover:bg-muted/30'
-                      } transition-colors`}
-                    >
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {user.first_name?.[0] || ''}{user.last_name?.[0] || ''}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {user.first_name} {user.last_name}
-                          {user.is_active === false && (
-                            <span className="text-muted-foreground ml-2 text-xs">(inactif)</span>
-                          )}
-                        </p>
-                        <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {user.role_agence && (
-                          <Badge variant="outline" className="text-xs">
-                            {user.role_agence}
-                          </Badge>
-                        )}
-                        {user.global_role && (
-                          <Badge 
-                            variant={
-                              user.global_role === 'franchisee_admin' ? 'default' : 
-                              user.global_role === 'franchisee_user' ? 'secondary' : 
-                              'outline'
-                            }
-                            className="text-xs"
-                          >
-                            {GLOBAL_ROLE_LABELS[user.global_role as keyof typeof GLOBAL_ROLE_LABELS] || user.global_role}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <UserCircle className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                  <p>Aucun utilisateur inscrit</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Collaborateurs non inscrits */}
-          <Card className="rounded-2xl border-l-4 border-l-primary">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Collaborateurs non inscrits
-                  {unregisteredCollaborators.length > 0 && (
-                    <Badge variant="destructive" className="ml-2">{unregisteredCollaborators.length}</Badge>
-                  )}
+                  Équipe ({teamMembers.length})
                 </CardTitle>
                 <CardDescription>
-                  Membres de l'équipe sans compte utilisateur
+                  Membres de l'agence
                 </CardDescription>
               </div>
               {canManage && (
                 <Button onClick={() => setIsCollaboratorFormOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Ajouter
+                  Ajouter un membre
                 </Button>
               )}
             </CardHeader>
             <CardContent>
-              {collaboratorsLoading ? (
+              {(usersLoading || collaboratorsLoading) ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
+              ) : teamMembers.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                  <p>Aucun membre dans l'équipe</p>
+                </div>
               ) : (
-                <CollaboratorsTable
-                  collaborators={unregisteredCollaborators}
-                  onEdit={(c) => {
-                    setEditingCollaborator(c);
-                    setIsCollaboratorFormOpen(true);
-                  }}
-                  onDelete={(c) => deleteCollaborator.mutate(c.id)}
-                  onCreateUser={(c) => setCreateUserTarget(c)}
-                  canDelete={canManage}
-                  canCreateUser={canManage}
-                />
+                <div className="space-y-2">
+                  {teamMembers.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className={member.hasAccount ? "bg-primary/10" : "bg-muted"}>
+                            {member.first_name?.[0]}
+                            {member.last_name?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">
+                            {member.first_name} {member.last_name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {member.email || "Pas d'email"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {/* Poste */}
+                        <Badge variant="outline">{member.role}</Badge>
+
+                        {/* Statut compte */}
+                        {member.hasAccount ? (
+                          <>
+                            <Badge variant="default" className="bg-green-600">
+                              Compte actif
+                            </Badge>
+                            {member.globalRole && (
+                              <Badge variant="secondary">
+                                {GLOBAL_ROLE_LABELS[member.globalRole as keyof typeof GLOBAL_ROLE_LABELS] || member.globalRole}
+                              </Badge>
+                            )}
+                            {member.isActive === false && (
+                              <Badge variant="destructive">Inactif</Badge>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <Badge variant="secondary">Sans compte</Badge>
+                            {canManage && member.collaborator && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setCreateUserTarget(member.collaborator!)}
+                              >
+                                <UserPlus className="h-4 w-4 mr-1" />
+                                Créer compte
+                              </Button>
+                            )}
+                          </>
+                        )}
+
+                        {/* Actions pour collaborateurs non inscrits */}
+                        {!member.hasAccount && member.collaborator && canManage && (
+                          <div className="flex items-center gap-1 ml-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingCollaborator(member.collaborator!);
+                                setIsCollaboratorFormOpen(true);
+                              }}
+                            >
+                              Modifier
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => deleteCollaborator.mutate(member.collaborator!.id)}
+                            >
+                              Supprimer
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
