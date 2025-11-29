@@ -179,25 +179,30 @@ export const DASHBOARD_GROUPS = {
     title: 'Help! Academy',
     icon: GraduationCap,
     colorClass: 'text-primary',
+    indexUrl: ROUTES.academy.index,
   },
   pilotage: {
     title: 'Pilotage Agence',
     icon: BarChart3,
     colorClass: 'text-accent',
+    indexUrl: ROUTES.pilotage.index,
   },
   support: {
     title: 'Support',
     icon: MessageSquare,
     colorClass: 'text-primary',
+    indexUrl: ROUTES.support.index,
   },
   franchiseur: {
     title: 'Réseau',
     icon: Network,
     colorClass: 'text-accent',
+    indexUrl: ROUTES.reseau.index,
   },
   admin: {
     title: 'Administration',
     icon: Settings,
     colorClass: 'text-destructive',
+    indexUrl: ROUTES.admin.index,
   },
 } as const;

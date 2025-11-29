@@ -1,11 +1,12 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashboardTiles';
 import { useMemo, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getRoleCapabilities, canAccessTileGroup, canAccessTile, TileGroup } from '@/config/roleMatrix';
+import { LucideIcon } from 'lucide-react';
 
 export default function Landing() {
   const { agence, globalRole, canAccessSupportConsole } = useAuth();
@@ -89,10 +90,12 @@ export default function Landing() {
       {/* HELP Academy Section */}
       {tilesByGroup.help_academy.length > 0 && (
         <section>
-          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <DASHBOARD_GROUPS.help_academy.icon className={`w-5 h-5 ${DASHBOARD_GROUPS.help_academy.colorClass}`} />
-            <span>Help</span><span className="text-helpconfort-orange animate-pulse">!</span><span> Academy</span>
-          </h2>
+          <SectionHeader 
+            title={<><span>Help</span><span className="text-helpconfort-orange animate-pulse">!</span><span> Academy</span></>}
+            icon={DASHBOARD_GROUPS.help_academy.icon}
+            colorClass={DASHBOARD_GROUPS.help_academy.colorClass}
+            indexUrl={DASHBOARD_GROUPS.help_academy.indexUrl}
+          />
           <div className="grid md:grid-cols-3 gap-4">
             {tilesByGroup.help_academy.map(tile => (
               <DashboardTileCard key={tile.id} tile={tile} />
@@ -104,10 +107,12 @@ export default function Landing() {
       {/* Pilotage Section */}
       {tilesByGroup.pilotage.length > 0 && (
         <section>
-          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <DASHBOARD_GROUPS.pilotage.icon className={`w-5 h-5 ${DASHBOARD_GROUPS.pilotage.colorClass}`} />
-            {DASHBOARD_GROUPS.pilotage.title}
-          </h2>
+          <SectionHeader 
+            title={DASHBOARD_GROUPS.pilotage.title}
+            icon={DASHBOARD_GROUPS.pilotage.icon}
+            colorClass={DASHBOARD_GROUPS.pilotage.colorClass}
+            indexUrl={DASHBOARD_GROUPS.pilotage.indexUrl}
+          />
           <div className="grid md:grid-cols-3 gap-4">
             {tilesByGroup.pilotage.map(tile => (
               <DashboardTileCard key={tile.id} tile={tile} />
@@ -119,10 +124,12 @@ export default function Landing() {
       {/* Support Section */}
       {tilesByGroup.support.length > 0 && (
         <section>
-          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <DASHBOARD_GROUPS.support.icon className={`w-5 h-5 ${DASHBOARD_GROUPS.support.colorClass}`} />
-            {DASHBOARD_GROUPS.support.title}
-          </h2>
+          <SectionHeader 
+            title={DASHBOARD_GROUPS.support.title}
+            icon={DASHBOARD_GROUPS.support.icon}
+            colorClass={DASHBOARD_GROUPS.support.colorClass}
+            indexUrl={DASHBOARD_GROUPS.support.indexUrl}
+          />
           <div className="grid md:grid-cols-3 gap-4">
             {tilesByGroup.support.map(tile => (
               <DashboardTileCard 
@@ -138,10 +145,12 @@ export default function Landing() {
       {/* Franchiseur Section */}
       {tilesByGroup.franchiseur.length > 0 && (
         <section>
-          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <DASHBOARD_GROUPS.franchiseur.icon className={`w-5 h-5 ${DASHBOARD_GROUPS.franchiseur.colorClass}`} />
-            {DASHBOARD_GROUPS.franchiseur.title}
-          </h2>
+          <SectionHeader 
+            title={DASHBOARD_GROUPS.franchiseur.title}
+            icon={DASHBOARD_GROUPS.franchiseur.icon}
+            colorClass={DASHBOARD_GROUPS.franchiseur.colorClass}
+            indexUrl={DASHBOARD_GROUPS.franchiseur.indexUrl}
+          />
           <div className="grid md:grid-cols-3 gap-4">
             {tilesByGroup.franchiseur.map(tile => (
               <DashboardTileCard key={tile.id} tile={tile} />
@@ -153,10 +162,12 @@ export default function Landing() {
       {/* Admin Section */}
       {tilesByGroup.admin.length > 0 && (
         <section>
-          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <DASHBOARD_GROUPS.admin.icon className={`w-5 h-5 ${DASHBOARD_GROUPS.admin.colorClass}`} />
-            {DASHBOARD_GROUPS.admin.title}
-          </h2>
+          <SectionHeader 
+            title={DASHBOARD_GROUPS.admin.title}
+            icon={DASHBOARD_GROUPS.admin.icon}
+            colorClass={DASHBOARD_GROUPS.admin.colorClass}
+            indexUrl={DASHBOARD_GROUPS.admin.indexUrl}
+          />
           <div className="grid md:grid-cols-4 gap-4">
             {tilesByGroup.admin.map(tile => (
               <DashboardTileCard key={tile.id} tile={tile} />
@@ -202,6 +213,31 @@ function DashboardTileCard({ tile, dynamicBadge }: { tile: DashboardTile; dynami
           <CardDescription className="text-sm">{tile.description}</CardDescription>
         </CardContent>
       </Card>
+    </Link>
+  );
+}
+
+interface SectionHeaderProps {
+  title: React.ReactNode;
+  icon: LucideIcon;
+  colorClass: string;
+  indexUrl: string;
+}
+
+function SectionHeader({ title, icon: Icon, colorClass, indexUrl }: SectionHeaderProps) {
+  return (
+    <Link 
+      to={indexUrl}
+      className="group flex items-center justify-between mb-4 p-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+    >
+      <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+        <Icon className={`w-5 h-5 ${colorClass}`} />
+        {title}
+      </h2>
+      <div className="flex items-center gap-1 text-sm text-muted-foreground group-hover:text-primary transition-colors">
+        <span className="hidden sm:inline">Voir tout</span>
+        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+      </div>
     </Link>
   );
 }
