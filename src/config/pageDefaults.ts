@@ -91,6 +91,7 @@ export interface PageHeaderConfig {
   pageKey: string;
   defaultTitle: string;
   defaultSubtitle?: string;
+  icon?: string; // Nom de l'icône Lucide
 }
 
 /**
@@ -99,42 +100,42 @@ export interface PageHeaderConfig {
  */
 export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   // Pilotage - Indicateurs (sous-routes d'abord)
-  { match: (path) => path === '/hc-agency/indicateurs' || path.startsWith('/hc-agency/indicateurs/'), pageKey: 'pilotage_indicateurs', defaultTitle: 'Indicateurs généraux', defaultSubtitle: 'Suivez vos principaux KPI agence' },
-  { match: (path) => path === '/hc-agency/actions', pageKey: 'pilotage_actions', defaultTitle: 'Actions à Mener', defaultSubtitle: 'Suivi des actions et tâches en cours' },
-  { match: (path) => path === '/hc-agency/diffusion', pageKey: 'pilotage_diffusion', defaultTitle: 'Mode Diffusion', defaultSubtitle: 'Affichage TV pour l\'agence' },
-  { match: (path) => path === '/hc-agency/rh-tech', pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens' },
-  { match: (path) => path === '/hc-agency/equipe', pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Gestion des collaborateurs de l\'agence' },
-  { match: (path) => path === '/hc-agency', pageKey: 'pilotage_index', defaultTitle: 'Pilotage Agence', defaultSubtitle: 'Gérez votre activité au quotidien' },
+  { match: (path) => path === '/hc-agency/indicateurs' || path.startsWith('/hc-agency/indicateurs/'), pageKey: 'pilotage_indicateurs', defaultTitle: 'Indicateurs généraux', defaultSubtitle: 'Suivez vos principaux KPI agence', icon: 'BarChart3' },
+  { match: (path) => path === '/hc-agency/actions', pageKey: 'pilotage_actions', defaultTitle: 'Actions à Mener', defaultSubtitle: 'Suivi des actions et tâches en cours', icon: 'CheckSquare' },
+  { match: (path) => path === '/hc-agency/diffusion', pageKey: 'pilotage_diffusion', defaultTitle: 'Mode Diffusion', defaultSubtitle: 'Affichage TV pour l\'agence', icon: 'Tv' },
+  { match: (path) => path === '/hc-agency/rh-tech', pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens', icon: 'CalendarDays' },
+  { match: (path) => path === '/hc-agency/equipe', pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Gestion des collaborateurs de l\'agence', icon: 'Users' },
+  { match: (path) => path === '/hc-agency', pageKey: 'pilotage_index', defaultTitle: 'Pilotage Agence', defaultSubtitle: 'Gérez votre activité au quotidien', icon: 'Gauge' },
   
   // Help Academy
-  { match: (path) => path.startsWith('/academy/apogee'), pageKey: 'academy_apogee', defaultTitle: 'Guide Apogée', defaultSubtitle: 'Tout ce que vous devez savoir sur l\'utilisation d\'Apogée' },
-  { match: (path) => path.startsWith('/academy/apporteurs'), pageKey: 'academy_apporteurs', defaultTitle: 'Guide Apporteurs', defaultSubtitle: 'Ressources pour les apporteurs d\'affaires' },
-  { match: (path) => path.startsWith('/academy/hc-base'), pageKey: 'academy_documents', defaultTitle: 'Base Documentaire', defaultSubtitle: 'Documents et ressources HelpConfort' },
-  { match: (path) => path === '/academy', pageKey: 'academy_index', defaultTitle: 'Help! Academy', defaultSubtitle: 'Accédez à tous les guides et ressources' },
+  { match: (path) => path.startsWith('/academy/apogee'), pageKey: 'academy_apogee', defaultTitle: 'Guide Apogée', defaultSubtitle: 'Tout ce que vous devez savoir sur l\'utilisation d\'Apogée', icon: 'BookOpen' },
+  { match: (path) => path.startsWith('/academy/apporteurs'), pageKey: 'academy_apporteurs', defaultTitle: 'Guide Apporteurs', defaultSubtitle: 'Ressources pour les apporteurs d\'affaires', icon: 'Handshake' },
+  { match: (path) => path.startsWith('/academy/hc-base'), pageKey: 'academy_documents', defaultTitle: 'Base Documentaire', defaultSubtitle: 'Documents et ressources HelpConfort', icon: 'FolderOpen' },
+  { match: (path) => path === '/academy', pageKey: 'academy_index', defaultTitle: 'Help! Academy', defaultSubtitle: 'Accédez à tous les guides et ressources', icon: 'GraduationCap' },
   
   // Support
-  { match: (path) => path === '/support/mes-demandes', pageKey: 'support_mes_demandes', defaultTitle: 'Mes Demandes', defaultSubtitle: 'Créer et suivre vos demandes de support' },
-  { match: (path) => path === '/support/console', pageKey: 'support_console', defaultTitle: 'Console Support', defaultSubtitle: 'Traiter les demandes de support' },
-  { match: (path) => path === '/support', pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Assistance et demandes' },
+  { match: (path) => path === '/support/mes-demandes', pageKey: 'support_mes_demandes', defaultTitle: 'Mes Demandes', defaultSubtitle: 'Créer et suivre vos demandes de support', icon: 'MessageSquare' },
+  { match: (path) => path === '/support/console', pageKey: 'support_console', defaultTitle: 'Console Support', defaultSubtitle: 'Traiter les demandes de support', icon: 'Headset' },
+  { match: (path) => path === '/support', pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Assistance et demandes', icon: 'LifeBuoy' },
   
   // Réseau Franchiseur
-  { match: (path) => path === '/hc-reseau/dashboard', pageKey: 'reseau_dashboard', defaultTitle: 'Dashboard Réseau', defaultSubtitle: 'Vue d\'ensemble du réseau' },
-  { match: (path) => path === '/hc-reseau/agences', pageKey: 'reseau_agences', defaultTitle: 'Agences du Réseau', defaultSubtitle: 'Gestion des agences franchisées' },
-  { match: (path) => path === '/hc-reseau/animateurs', pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs', defaultSubtitle: 'Équipe d\'animation réseau' },
-  { match: (path) => path === '/hc-reseau/stats', pageKey: 'reseau_stats', defaultTitle: 'Statistiques Réseau', defaultSubtitle: 'KPI consolidés du réseau' },
-  { match: (path) => path === '/hc-reseau/comparatifs', pageKey: 'reseau_comparatifs', defaultTitle: 'Comparatifs', defaultSubtitle: 'Comparaison entre agences' },
-  { match: (path) => path === '/hc-reseau/redevances', pageKey: 'reseau_redevances', defaultTitle: 'Redevances', defaultSubtitle: 'Calcul et suivi des redevances' },
-  { match: (path) => path === '/hc-reseau', pageKey: 'reseau_index', defaultTitle: 'Réseau Franchiseur', defaultSubtitle: 'Pilotage du réseau HelpConfort' },
+  { match: (path) => path === '/hc-reseau/dashboard', pageKey: 'reseau_dashboard', defaultTitle: 'Dashboard Réseau', defaultSubtitle: 'Vue d\'ensemble du réseau', icon: 'LayoutDashboard' },
+  { match: (path) => path === '/hc-reseau/agences', pageKey: 'reseau_agences', defaultTitle: 'Agences du Réseau', defaultSubtitle: 'Gestion des agences franchisées', icon: 'Building2' },
+  { match: (path) => path === '/hc-reseau/animateurs', pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs', defaultSubtitle: 'Équipe d\'animation réseau', icon: 'UserCog' },
+  { match: (path) => path === '/hc-reseau/stats', pageKey: 'reseau_stats', defaultTitle: 'Statistiques Réseau', defaultSubtitle: 'KPI consolidés du réseau', icon: 'PieChart' },
+  { match: (path) => path === '/hc-reseau/comparatifs', pageKey: 'reseau_comparatifs', defaultTitle: 'Comparatifs', defaultSubtitle: 'Comparaison entre agences', icon: 'GitCompare' },
+  { match: (path) => path === '/hc-reseau/redevances', pageKey: 'reseau_redevances', defaultTitle: 'Redevances', defaultSubtitle: 'Calcul et suivi des redevances', icon: 'Calculator' },
+  { match: (path) => path === '/hc-reseau', pageKey: 'reseau_index', defaultTitle: 'Réseau Franchiseur', defaultSubtitle: 'Pilotage du réseau HelpConfort', icon: 'Network' },
   
   // Admin
-  { match: (path) => path === '/admin/users', pageKey: 'admin_users', defaultTitle: 'Gestion Utilisateurs', defaultSubtitle: 'Comptes et permissions' },
-  { match: (path) => path === '/admin/agencies', pageKey: 'admin_agencies', defaultTitle: 'Gestion Agences', defaultSubtitle: 'Configuration des agences' },
-  { match: (path) => path === '/admin/backup', pageKey: 'admin_backup', defaultTitle: 'Sauvegardes', defaultSubtitle: 'Export et import des données' },
-  { match: (path) => path === '/admin/page-metadata', pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu de toutes les pages' },
-  { match: (path) => path === '/admin', pageKey: 'admin_index', defaultTitle: 'Administration', defaultSubtitle: 'Configuration du système' },
+  { match: (path) => path === '/admin/users', pageKey: 'admin_users', defaultTitle: 'Gestion Utilisateurs', defaultSubtitle: 'Comptes et permissions', icon: 'Users' },
+  { match: (path) => path === '/admin/agencies', pageKey: 'admin_agencies', defaultTitle: 'Gestion Agences', defaultSubtitle: 'Configuration des agences', icon: 'Building' },
+  { match: (path) => path === '/admin/backup', pageKey: 'admin_backup', defaultTitle: 'Sauvegarde & Restauration', defaultSubtitle: 'Export et import des données', icon: 'Database' },
+  { match: (path) => path === '/admin/page-metadata', pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu de toutes les pages', icon: 'FileText' },
+  { match: (path) => path === '/admin', pageKey: 'admin_index', defaultTitle: 'Administration', defaultSubtitle: 'Configuration du système', icon: 'Settings' },
   
   // Home
-  { match: (path) => path === '/', pageKey: 'home', defaultTitle: 'Tableau de bord' },
+  { match: (path) => path === '/', pageKey: 'home', defaultTitle: 'Tableau de bord', icon: 'Home' },
 ];
 
 /**
