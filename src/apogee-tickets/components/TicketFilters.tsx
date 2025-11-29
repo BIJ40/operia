@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Search, X, Snowflake, Flame } from 'lucide-react';
-import type { ApogeeModule, ApogeePriority, ApogeeImpactTag, TicketFilters as Filters, ReportedBy } from '../types';
+import type { ApogeeModule, ApogeePriority, ApogeeImpactTag, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
 import { cn } from '@/lib/utils';
 
 interface TicketFiltersProps {
@@ -184,6 +184,25 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
             <SelectItem value="all">Tous</SelectItem>
             <SelectItem value="qualified">✓ Qualifiés IA</SelectItem>
             <SelectItem value="unqualified">À qualifier</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Complétude - champs manquants */}
+        <Select
+          value={filters.missing_field || 'all'}
+          onValueChange={(v) => updateFilter('missing_field', v === 'all' ? undefined : v as MissingFieldFilter)}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Complétude" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous (complets/incomplets)</SelectItem>
+            <SelectItem value="complete">✓ Complets</SelectItem>
+            <SelectItem value="incomplete">⚠ Incomplets (tous)</SelectItem>
+            <SelectItem value="no_module">Module manquant</SelectItem>
+            <SelectItem value="no_heat">Priorité manquante</SelectItem>
+            <SelectItem value="no_hours">Heures manquantes</SelectItem>
+            <SelectItem value="no_description">Description manquante</SelectItem>
           </SelectContent>
         </Select>
 

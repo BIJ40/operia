@@ -150,12 +150,48 @@ export function useApogeeTickets(filters?: TicketFilters) {
       if (error) throw error;
       
       // Map comment count to _count field
-      return (data || []).map((ticket: any) => ({
+      let result = (data || []).map((ticket: any) => ({
         ...ticket,
         _count: {
           comments: ticket.apogee_ticket_comments?.[0]?.count || 0
         }
       })) as ApogeeTicket[];
+
+      // Filtrage client-side pour missing_field (logique complexe avec null)
+      if (filters?.missing_field) {
+        switch (filters.missing_field) {
+          case 'complete':
+            result = result.filter(t => 
+              t.module && 
+              t.heat_priority !== null && t.heat_priority !== undefined &&
+              (t.h_min !== null || t.h_max !== null) &&
+              t.description
+            );
+            break;
+          case 'incomplete':
+            result = result.filter(t => 
+              !t.module || 
+              t.heat_priority === null || t.heat_priority === undefined ||
+              (t.h_min === null && t.h_max === null) ||
+              !t.description
+            );
+            break;
+          case 'no_module':
+            result = result.filter(t => !t.module);
+            break;
+          case 'no_heat':
+            result = result.filter(t => t.heat_priority === null || t.heat_priority === undefined);
+            break;
+          case 'no_hours':
+            result = result.filter(t => t.h_min === null && t.h_max === null);
+            break;
+          case 'no_description':
+            result = result.filter(t => !t.description);
+            break;
+        }
+      }
+
+      return result;
     },
   });
 
