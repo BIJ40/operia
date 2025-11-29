@@ -32,6 +32,24 @@ export type Severity = 'CRITIQUE' | 'MAJEUR' | 'CONFORT';
 export type CreatedFrom = 'IMPORT' | 'MANUAL';
 export type AuthorType = 'HC' | 'APOGEE' | 'DYN' | 'AUTRE';
 
+// Types pour la qualification IA
+export type TicketTheme = 
+  | 'Dossiers & Projets'
+  | 'Devis & Barèmes'
+  | 'Facturation & Règlements / Compta'
+  | 'Planning & Interventions'
+  | 'Commandes & Fournisseurs'
+  | 'Application Technicien & Mobile'
+  | 'Notifications & Communication'
+  | 'Statistiques & BI'
+  | 'Workflow & Règles métier'
+  | 'Paramétrage / Infra / Divers';
+
+export type TicketType = 'bug' | 'evolution' | 'ergonomie' | 'data' | 'process';
+export type PriorityNormalized = 'P0' | 'P1' | 'P2' | 'P3' | 'P4';
+export type QualifStatus = 'a_qualifier' | 'reproduit' | 'spec_ok' | 'pret_dev' | 'en_dev' | 'en_test' | 'deploye' | 'obsolete';
+export type ImpactTag = 'impact_facturation' | 'impact_terrain' | 'impact_rel_client' | 'impact_pilotage' | 'impact_process';
+
 export interface ApogeeTicket {
   id: string;
   source_sheet: string | null;
@@ -56,6 +74,16 @@ export interface ApogeeTicket {
   created_from: CreatedFrom;
   created_at: string;
   updated_at: string;
+  // Champs qualification IA
+  theme: TicketTheme | null;
+  ticket_type: TicketType | null;
+  impact_tags: ImpactTag[] | null;
+  priority_normalized: PriorityNormalized | null;
+  qualif_status: QualifStatus | null;
+  notes_internes: string | null;
+  is_qualified: boolean;
+  qualified_at: string | null;
+  qualified_by: string | null;
   // Relations
   apogee_modules?: ApogeeModule;
   apogee_priorities?: ApogeePriority;

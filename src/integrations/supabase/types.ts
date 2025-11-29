@@ -480,15 +480,24 @@ export type Database = {
           hc_status_raw: string | null
           hca_code: string | null
           id: string
+          impact_tags: string[] | null
+          is_qualified: boolean | null
           kanban_status: string
           module: string | null
           module_area: string | null
           needs_completion: boolean | null
+          notes_internes: string | null
           owner_side: string | null
           priority: string | null
+          priority_normalized: string | null
+          qualif_status: string | null
+          qualified_at: string | null
+          qualified_by: string | null
           severity: string | null
           source_row_index: number | null
           source_sheet: string | null
+          theme: string | null
+          ticket_type: string | null
           updated_at: string
         }
         Insert: {
@@ -505,15 +514,24 @@ export type Database = {
           hc_status_raw?: string | null
           hca_code?: string | null
           id?: string
+          impact_tags?: string[] | null
+          is_qualified?: boolean | null
           kanban_status?: string
           module?: string | null
           module_area?: string | null
           needs_completion?: boolean | null
+          notes_internes?: string | null
           owner_side?: string | null
           priority?: string | null
+          priority_normalized?: string | null
+          qualif_status?: string | null
+          qualified_at?: string | null
+          qualified_by?: string | null
           severity?: string | null
           source_row_index?: number | null
           source_sheet?: string | null
+          theme?: string | null
+          ticket_type?: string | null
           updated_at?: string
         }
         Update: {
@@ -530,15 +548,24 @@ export type Database = {
           hc_status_raw?: string | null
           hca_code?: string | null
           id?: string
+          impact_tags?: string[] | null
+          is_qualified?: boolean | null
           kanban_status?: string
           module?: string | null
           module_area?: string | null
           needs_completion?: boolean | null
+          notes_internes?: string | null
           owner_side?: string | null
           priority?: string | null
+          priority_normalized?: string | null
+          qualif_status?: string | null
+          qualified_at?: string | null
+          qualified_by?: string | null
           severity?: string | null
           source_row_index?: number | null
           source_sheet?: string | null
+          theme?: string | null
+          ticket_type?: string | null
           updated_at?: string
         }
         Relationships: [

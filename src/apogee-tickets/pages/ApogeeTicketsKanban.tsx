@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, AlertCircle, Settings } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
@@ -12,6 +12,7 @@ import { TicketFilters } from '../components/TicketFilters';
 import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
 import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { ActionsConfigDialog } from '../components/ActionsConfigDialog';
+import { useTicketQualification } from '../hooks/useTicketQualification';
 import type { ApogeeTicket, TicketFilters as Filters } from '../types';
 import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
@@ -35,8 +36,11 @@ export default function ApogeeTicketsKanban() {
     updateKanbanStatus,
   } = useApogeeTickets(filters);
 
-  // Compteur de tickets incomplets
+  const { qualifyAllUnqualified, isQualifying } = useTicketQualification();
+
+  // Compteurs
   const incompleteCount = tickets.filter(t => t.needs_completion).length;
+  const unqualifiedCount = tickets.filter(t => !t.is_qualified).length;
 
   const handleStatusChange = (ticketId: string, newStatus: string) => {
     updateKanbanStatus.mutate({ ticketId, newStatus });
@@ -80,11 +84,22 @@ export default function ApogeeTicketsKanban() {
         </div>
 
         <div className="flex items-center gap-2">
+          {unqualifiedCount > 0 && (
+            <Button 
+              variant="outline" 
+              className="text-purple-600 border-purple-300 hover:bg-purple-50"
+              onClick={qualifyAllUnqualified}
+              disabled={isQualifying}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              {isQualifying ? 'Qualification...' : `Qualifier ${unqualifiedCount} ticket(s)`}
+            </Button>
+          )}
           {incompleteCount > 0 && (
             <Link to={ROUTES.admin.apogeeTicketsIncomplete}>
               <Button variant="outline" className="text-orange-600 border-orange-300 hover:bg-orange-50">
                 <AlertCircle className="h-4 w-4 mr-2" />
-                {incompleteCount} ticket{incompleteCount > 1 ? 's' : ''} à compléter
+                {incompleteCount} à compléter
               </Button>
             </Link>
           )}
@@ -105,9 +120,12 @@ export default function ApogeeTicketsKanban() {
       />
 
       {/* Stats rapides */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Badge variant="secondary">
           {tickets.length} ticket{tickets.length > 1 ? 's' : ''}
+        </Badge>
+        <Badge variant="outline" className={unqualifiedCount > 0 ? 'text-purple-600 border-purple-300' : 'text-green-600 border-green-300'}>
+          {unqualifiedCount > 0 ? `${unqualifiedCount} non qualifiés` : '✓ Tous qualifiés'}
         </Badge>
         {statuses.map((status) => {
           const count = tickets.filter(t => t.kanban_status === status.id).length;
