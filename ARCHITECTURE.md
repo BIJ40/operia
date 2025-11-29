@@ -258,15 +258,20 @@ Historique des calculs de redevances.
 
 ### Tables Permissions (Legacy - non utilisées)
 
-Les tables suivantes existent en base mais ne sont plus utilisées par le code V2 :
+Les tables suivantes existent en base mais ne sont plus utilisées par le système actuel :
 - `role_permissions` - Anciennes permissions par rôle_agence
 - `user_permissions` - Anciennes permissions individuelles  
 - `group_permissions` - Anciennes permissions par groupe
 - `scopes` - Anciens scopes de permissions
 
+> **Note :** Ces tables sont conservées pour référence historique uniquement. Elles ne sont plus consultées par le code.
+
 ---
 
-## Système de Permissions V2 (ROLE_MATRIX)
+## Système de Permissions (ROLE_MATRIX)
+
+> **Important :** La migration V2 est terminée. Le système de permissions actuel est le système **définitif**.
+> Tous les outils et interfaces de migration ont été retirés (boutons "Appliquer V2", badges "Différent", edge function `migrate-user-roles-v2`, pages `/admin/roles-v2` et `/admin/permissions-v2`).
 
 ### Architecture
 
