@@ -34,31 +34,43 @@ export function useAgencyCollaborators(agencyId: string | null) {
 
 /**
  * Récupère tous les collaborateurs non inscrits (pour admin)
+ * Version simplifiée sans jointure problématique
  */
-export function useUnregisteredCollaborators(agencyId?: string | null) {
+export function useUnregisteredCollaborators(agencyIdFilter?: string | null) {
   return useQuery({
-    queryKey: ["unregisteredCollaborators", agencyId],
+    queryKey: ["unregisteredCollaborators", agencyIdFilter ?? "all"],
     queryFn: async (): Promise<(AgencyCollaborator & { agency_label?: string })[]> => {
+      // Requête simple sur agency_collaborators
       let query = supabase
         .from("agency_collaborators")
-        .select(`
-          *,
-          apogee_agencies!inner(label)
-        `)
+        .select("*")
         .eq("is_registered_user", false)
         .order("created_at", { ascending: false });
 
-      if (agencyId) {
-        query = query.eq("agency_id", agencyId);
+      if (agencyIdFilter) {
+        query = query.eq("agency_id", agencyIdFilter);
       }
 
-      const { data, error } = await query;
-
+      const { data: collaborators, error } = await query;
       if (error) throw error;
-      
-      return (data || []).map((item: any) => ({
-        ...item,
-        agency_label: item.apogee_agencies?.label,
+
+      if (!collaborators || collaborators.length === 0) {
+        return [];
+      }
+
+      // Récupérer les agences correspondantes pour afficher les labels
+      const agencyIds = [...new Set(collaborators.map(c => c.agency_id))];
+      const { data: agencies } = await supabase
+        .from("apogee_agencies")
+        .select("id, label")
+        .in("id", agencyIds);
+
+      // Créer un map agence_id -> label
+      const agencyMap = new Map(agencies?.map(a => [a.id, a.label]) || []);
+
+      return collaborators.map((collab: any) => ({
+        ...collab,
+        agency_label: agencyMap.get(collab.agency_id) || "Agence inconnue",
       })) as (AgencyCollaborator & { agency_label?: string })[];
     },
   });

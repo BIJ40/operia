@@ -5,7 +5,6 @@
 
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,16 +23,11 @@ import { GLOBAL_ROLE_LABELS } from "@/types/globalRoles";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function TeamPage() {
-  const { user, agence, hasGlobalRole, globalRole } = useAuth();
-  const { currentAgency } = useAgency();
-  
-  // Récupérer l'agency_id depuis le contexte ou le profil
-  const agencyId = currentAgency?.id || null;
-  const agencySlug = agence || null;
+  const { user, agence, agencyId, hasGlobalRole } = useAuth();
 
-  // Hooks data
+  // Hooks data - agencyId (UUID) pour collaborateurs, agence (slug) pour users
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useAgencyCollaborators(agencyId);
-  const { data: registeredUsers = [], isLoading: isLoadingUsers } = useAgencyUsers(agencySlug);
+  const { data: registeredUsers = [], isLoading: isLoadingUsers } = useAgencyUsers(agence);
 
   // Mutations
   const createCollaborator = useCreateAgencyCollaborator(agencyId || "");
@@ -82,7 +76,7 @@ export default function TeamPage() {
     setCreateUserTarget(collaborator);
   };
 
-  if (!agencyId && !agencySlug) {
+  if (!agencyId && !agence) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
@@ -147,37 +141,37 @@ export default function TeamPage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {registeredUsers.map((user) => (
+                  {registeredUsers.map((registeredUser) => (
                     <div
-                      key={user.id}
+                      key={registeredUser.id}
                       className="flex items-center justify-between p-3 rounded-lg border bg-card"
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
                           <AvatarFallback>
-                            {user.first_name?.[0]}
-                            {user.last_name?.[0]}
+                            {registeredUser.first_name?.[0]}
+                            {registeredUser.last_name?.[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-medium">
-                            {user.first_name} {user.last_name}
+                            {registeredUser.first_name} {registeredUser.last_name}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {user.email}
+                            {registeredUser.email}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {user.role_agence && (
-                          <Badge variant="outline">{user.role_agence}</Badge>
+                        {registeredUser.role_agence && (
+                          <Badge variant="outline">{registeredUser.role_agence}</Badge>
                         )}
-                        {user.global_role && (
+                        {registeredUser.global_role && (
                           <Badge variant="secondary">
-                            {GLOBAL_ROLE_LABELS[user.global_role as keyof typeof GLOBAL_ROLE_LABELS] || user.global_role}
+                            {GLOBAL_ROLE_LABELS[registeredUser.global_role as keyof typeof GLOBAL_ROLE_LABELS] || registeredUser.global_role}
                           </Badge>
                         )}
-                        {user.is_active === false && (
+                        {registeredUser.is_active === false && (
                           <Badge variant="destructive">Inactif</Badge>
                         )}
                       </div>
@@ -241,7 +235,11 @@ export default function TeamPage() {
         open={!!createUserTarget}
         onOpenChange={(open) => !open && setCreateUserTarget(null)}
         collaborator={createUserTarget}
-        agencyLabel={currentAgency?.name}
+        agencyLabel={agence || undefined}
+        onSuccess={() => {
+          // Refetch après création
+          setCreateUserTarget(null);
+        }}
       />
     </div>
   );

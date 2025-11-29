@@ -128,6 +128,7 @@ export function UnifiedSidebar() {
         { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
         { title: 'Diffusion', url: ROUTES.pilotage.diffusion, icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
         { title: 'RH Tech', url: ROUTES.pilotage.rhTech, icon: Calendar, description: 'Planning hebdomadaire techniciens' },
+        { title: 'Mon équipe', url: ROUTES.pilotage.equipe, icon: Users, description: 'Gestion des collaborateurs de l\'agence' },
       ],
       accessKey: 'canAccessPilotageAgence',
     },
