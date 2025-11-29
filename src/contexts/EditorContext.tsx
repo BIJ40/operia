@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import apogeeData from '@/data/apogee-data.json';
 import { CacheManager } from '@/lib/cache-manager';
+import { logEditor } from '@/lib/logger';
 
 interface EditorContextType {
   blocks: Block[];
@@ -50,7 +51,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      console.log('🔄 Chargement depuis Supabase pour l\'utilisateur', user.id);
+      logEditor.info('Chargement depuis Supabase pour l\'utilisateur', user.id);
 
       // Vérifier le cache d'abord avec CacheManager
       const cached = CacheManager.getItem<Block[]>(CACHE_KEY);
@@ -118,13 +119,13 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           // Sauvegarder dans le cache avec CacheManager
           CacheManager.setItem(CACHE_KEY, transformedBlocks, CACHE_TTL);
           
-          console.log(`✅ ${transformedBlocks.length} blocks chargés depuis Supabase`);
+          logEditor.info(`${transformedBlocks.length} blocks chargés depuis Supabase`);
         } else {
           setBlocks([]);
-          console.log('⚠️ Aucun block retourné par Supabase');
+          logEditor.warn('Aucun block retourné par Supabase');
         }
       } catch (error) {
-        console.error('Erreur chargement Supabase:', error);
+        logEditor.error('Erreur chargement Supabase:', error);
         toast({
           title: 'Erreur',
           description: 'Impossible de charger les données',
@@ -251,9 +252,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         prev.map((block) => (block.id === id ? { ...block, ...updates } : block))
       );
       
-      console.log('✅ Bloc mis à jour avec succès:', id);
+      logEditor.debug('Bloc mis à jour avec succès:', id);
     } catch (error) {
-      console.error('Erreur mise à jour:', error);
+      logEditor.error('Erreur mise à jour:', error);
       toast({ title: 'Erreur', description: 'Impossible de sauvegarder les modifications', variant: 'destructive' });
     }
   }, [isAdmin, toast, blocks]);
@@ -322,9 +323,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           .eq('id', block.id);
       }
       
-      console.log('✅ Ordre sauvegardé dans Supabase');
+      logEditor.debug('Ordre sauvegardé dans Supabase');
     } catch (error) {
-      console.error('Erreur sauvegarde ordre:', error);
+      logEditor.error('Erreur sauvegarde ordre:', error);
       toast({ title: 'Erreur', description: 'Impossible de sauvegarder l\'ordre', variant: 'destructive' });
     }
   }, [isAdmin, toast]);
@@ -407,10 +408,10 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         // Mettre à jour le cache avec CacheManager
         CacheManager.setItem(CACHE_KEY, transformedBlocks, CACHE_TTL);
         
-        console.log(`🔄 ${transformedBlocks.length} blocks rechargés`);
+        logEditor.info(`${transformedBlocks.length} blocks rechargés`);
       }
     } catch (error) {
-      console.error('Erreur rechargement:', error);
+      logEditor.error('Erreur rechargement:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de recharger les données',

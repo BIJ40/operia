@@ -108,6 +108,26 @@ export const logConnection = {
 };
 
 /**
+ * Log Network/Franchiseur - catégorisé pour les opérations multi-agences
+ */
+export const logNetwork = {
+  debug: (...args: unknown[]) => logDebug('[NETWORK]', ...args),
+  info: (...args: unknown[]) => logInfo('[NETWORK]', ...args),
+  warn: (...args: unknown[]) => logWarn('[NETWORK]', ...args),
+  error: (...args: unknown[]) => logError('[NETWORK]', ...args),
+};
+
+/**
+ * Log Editor - catégorisé pour les opérations d'édition de contenu
+ */
+export const logEditor = {
+  debug: (...args: unknown[]) => logDebug('[EDITOR]', ...args),
+  info: (...args: unknown[]) => logInfo('[EDITOR]', ...args),
+  warn: (...args: unknown[]) => logWarn('[EDITOR]', ...args),
+  error: (...args: unknown[]) => logError('[EDITOR]', ...args),
+};
+
+/**
  * Vérifie si on est en mode développement
  */
 export const isDevMode = (): boolean => canDebug;

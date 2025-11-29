@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CacheManager } from '@/lib/cache-manager';
+import { logCache } from '@/lib/logger';
 
 const QUOTA_WARNING_THRESHOLD = 80; // Alerte à 80% d'utilisation
 const CHECK_INTERVAL = 5 * 60 * 1000; // Vérifier toutes les 5 minutes
@@ -40,12 +41,12 @@ export const useStorageQuota = () => {
         const quotaLimit = 5 * 1024 * 1024; // 5 MB
         const percentageUsed = (totalSize / quotaLimit) * 100;
 
-        console.log(`📊 LocalStorage: ${(totalSize / 1024).toFixed(2)} KB utilisés (${percentageUsed.toFixed(1)}%)`);
-        console.log(`📊 Cache géré: ${(metrics.totalSize / 1024).toFixed(2)} KB dans ${metrics.entryCount} entrées`);
+        logCache.debug(`LocalStorage: ${(totalSize / 1024).toFixed(2)} KB utilisés (${percentageUsed.toFixed(1)}%)`);
+        logCache.debug(`Cache géré: ${(metrics.totalSize / 1024).toFixed(2)} KB dans ${metrics.entryCount} entrées`);
 
         // Si on dépasse le seuil, créer une alerte
         if (percentageUsed >= QUOTA_WARNING_THRESHOLD) {
-          console.warn(`⚠️ Quota localStorage élevé: ${percentageUsed.toFixed(1)}%`);
+          logCache.warn(`Quota localStorage élevé: ${percentageUsed.toFixed(1)}%`);
           
           await supabase.from('storage_quota_alerts').insert({
             user_id: user.id,
@@ -59,7 +60,7 @@ export const useStorageQuota = () => {
 
           // Si on dépasse 90%, utiliser CacheManager pour nettoyer intelligemment
           if (percentageUsed >= 90) {
-            console.warn('🧹 Nettoyage automatique du localStorage (quota > 90%)');
+            logCache.warn('Nettoyage automatique du localStorage (quota > 90%)');
             await CacheManager.printReport();
             
             // CacheManager gère automatiquement le nettoyage intelligent
@@ -70,12 +71,12 @@ export const useStorageQuota = () => {
               const oldMetrics = CacheManager.getCacheMetrics();
               CacheManager.clearAll();
               const newMetrics = CacheManager.getCacheMetrics();
-              console.log(`✅ Nettoyage: ${oldMetrics.entryCount - newMetrics.entryCount} entrées supprimées`);
+              logCache.info(`Nettoyage: ${oldMetrics.entryCount - newMetrics.entryCount} entrées supprimées`);
             }
           }
         }
       } catch (error) {
-        console.error('Erreur lors de la vérification du quota:', error);
+        logCache.error('Erreur lors de la vérification du quota:', error);
       }
     };
 
