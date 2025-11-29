@@ -1,21 +1,25 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Building2, TrendingUp, Euro, Calendar, Phone, Mail, MapPin, Users, Edit } from "lucide-react";
+import { Building2, TrendingUp, Euro, Calendar, Phone, Mail, MapPin, Users, Edit, UserCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAgency } from "../hooks/useAgencies";
 import { useRoyaltyHistory } from "../hooks/useRoyaltyConfig";
+import { useAgencyUsers } from "../hooks/useAgencyUsers";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { Separator } from "@/components/ui/separator";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
 import { AgencyProfileDialog } from "../components/AgencyProfileDialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { GLOBAL_ROLE_LABELS } from "@/types/globalRoles";
 
 export default function FranchiseurAgencyProfile() {
   const { agencyId } = useParams<{ agencyId: string }>();
   const { data: agency, isLoading: agencyLoading } = useAgency(agencyId || null);
   const { data: royaltyHistory } = useRoyaltyHistory(agencyId || null);
+  const { data: agencyUsers, isLoading: usersLoading } = useAgencyUsers(agency?.slug || null);
   const { franchiseurRole } = useFranchiseur();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -83,8 +87,9 @@ export default function FranchiseurAgencyProfile() {
       </div>
 
       <Tabs defaultValue="info" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="info">Informations</TabsTrigger>
+          <TabsTrigger value="team">Équipe</TabsTrigger>
           <TabsTrigger value="stats">Statistiques</TabsTrigger>
           <TabsTrigger value="royalties">Redevances</TabsTrigger>
         </TabsList>
@@ -169,6 +174,85 @@ export default function FranchiseurAgencyProfile() {
                   )}
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="team" className="space-y-4 mt-4">
+          <Card className="rounded-2xl border-l-4 border-l-accent">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Équipe de l'agence
+              </CardTitle>
+              <CardDescription>
+                Utilisateurs rattachés à cette agence
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {usersLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse flex items-center gap-4 p-3 rounded-lg bg-muted/50">
+                      <div className="h-10 w-10 rounded-full bg-muted"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-1/3 bg-muted rounded"></div>
+                        <div className="h-3 w-1/4 bg-muted rounded"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : agencyUsers && agencyUsers.length > 0 ? (
+                <div className="space-y-2">
+                  {agencyUsers.map((user) => (
+                    <div 
+                      key={user.id} 
+                      className={`flex items-center gap-4 p-3 rounded-lg border ${
+                        user.is_active === false ? 'opacity-50 bg-muted/30' : 'bg-card hover:bg-muted/30'
+                      } transition-colors`}
+                    >
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {user.first_name?.[0] || ''}{user.last_name?.[0] || ''}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">
+                          {user.first_name} {user.last_name}
+                          {user.is_active === false && (
+                            <span className="text-muted-foreground ml-2 text-xs">(inactif)</span>
+                          )}
+                        </p>
+                        <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {user.role_agence && (
+                          <Badge variant="outline" className="text-xs">
+                            {user.role_agence}
+                          </Badge>
+                        )}
+                        {user.global_role && (
+                          <Badge 
+                            variant={
+                              user.global_role === 'franchisee_admin' ? 'default' : 
+                              user.global_role === 'franchisee_user' ? 'secondary' : 
+                              'outline'
+                            }
+                            className="text-xs"
+                          >
+                            {GLOBAL_ROLE_LABELS[user.global_role as keyof typeof GLOBAL_ROLE_LABELS] || user.global_role}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <UserCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Aucun utilisateur dans cette agence</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
