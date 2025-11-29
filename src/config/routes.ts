@@ -99,6 +99,7 @@ export const ROUTES = {
     storageQuota: '/admin/storage-quota',
     pageMetadata: '/admin/page-metadata',
     apogeeGuides: '/admin/apogee-guides',
+    chatbotRag: '/admin/chatbot-rag',
   },
 
   // ============================================
