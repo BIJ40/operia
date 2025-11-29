@@ -110,14 +110,27 @@ export default function ApogeeTicketsIncomplete() {
   // Utiliser la liste stable pour la navigation
   const incompleteTickets = stableTickets;
 
-  // Formulaire local pour le ticket courant
-  const [formValues, setFormValues] = useState<{
+  // Formulaire par ticket (conserve les valeurs lors de la navigation)
+  const [formValuesByTicket, setFormValuesByTicket] = useState<Record<string, {
     module: string | null;
     heat_priority: number | null;
-  }>({
+  }>>({});
+
+  // Valeurs du formulaire pour le ticket courant
+  const currentTicketId = incompleteTickets[currentIndex]?.id;
+  const formValues = currentTicketId ? (formValuesByTicket[currentTicketId] || {
     module: null,
     heat_priority: null,
-  });
+  }) : { module: null, heat_priority: null };
+
+  const setFormValues = (values: { module: string | null; heat_priority: number | null }) => {
+    if (currentTicketId) {
+      setFormValuesByTicket(prev => ({
+        ...prev,
+        [currentTicketId]: values
+      }));
+    }
+  };
 
   const currentTicket = incompleteTickets[currentIndex];
   const totalTickets = incompleteTickets.length;
@@ -136,15 +149,13 @@ export default function ApogeeTicketsIncomplete() {
 
     await updateTicket.mutateAsync(updates);
     
-    // Reset form et passer au suivant
-    setFormValues({ module: null, heat_priority: null });
+    // Passer au suivant (on garde les valeurs en mémoire au cas où on revient)
     if (currentIndex < totalTickets - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
 
   const handleSkip = () => {
-    setFormValues({ module: null, heat_priority: null });
     if (currentIndex < totalTickets - 1) {
       setCurrentIndex(currentIndex + 1);
     }
@@ -153,7 +164,6 @@ export default function ApogeeTicketsIncomplete() {
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
-      setFormValues({ module: null, heat_priority: null });
     }
   };
 
