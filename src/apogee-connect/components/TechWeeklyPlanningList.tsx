@@ -1,0 +1,241 @@
+import React from "react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, XCircle } from "lucide-react";
+import { useWeeklyTechPlanning } from "@/apogee-connect/hooks/useWeeklyTechPlanning";
+import { usePlanningSignature } from "@/apogee-connect/hooks/usePlanningSignature";
+import { formatMinutesToHours, WeeklyTechPlanning } from "@/apogee-connect/utils/planning";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+
+interface TechWeeklyPlanningListProps {
+  techFilterId?: number;
+}
+
+// Sub-component for tech signature
+function TechSignatureSection({ 
+  techId, 
+  weekDate 
+}: { 
+  techId: number; 
+  weekDate: Date;
+}) {
+  const { signature, isSigned, signPlanning, unsignPlanning, isSigning, isUnsigning, isLoading } = 
+    usePlanningSignature({ techId, weekDate });
+
+  if (isLoading) {
+    return <Skeleton className="h-8 w-48" />;
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      {isSigned && signature?.signed_at ? (
+        <>
+          <Badge variant="default" className="bg-emerald-600 text-white">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Validé le {format(new Date(signature.signed_at), "dd/MM/yyyy HH:mm", { locale: fr })}
+          </Badge>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => unsignPlanning()}
+            disabled={isUnsigning}
+            className="text-xs text-muted-foreground hover:text-destructive"
+          >
+            <XCircle className="w-3 h-3 mr-1" />
+            Annuler
+          </Button>
+        </>
+      ) : (
+        <Button
+          onClick={() => signPlanning()}
+          disabled={isSigning}
+          size="sm"
+          className="bg-emerald-600 hover:bg-emerald-500"
+        >
+          <CheckCircle className="w-4 h-4 mr-2" />
+          {isSigning ? "Validation..." : "Valider mon planning"}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
+  techFilterId,
+}) => {
+  const {
+    data,
+    isLoading,
+    error,
+    weekDate,
+    goToPrevWeek,
+    goToNextWeek,
+    goToCurrentWeek,
+  } = useWeeklyTechPlanning(techFilterId);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-destructive">
+        <CardContent className="pt-6">
+          <p className="text-destructive">Erreur lors du chargement du planning.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-muted-foreground">Aucun planning trouvé pour cette semaine.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const weekLabel = `Semaine du ${format(weekDate, "dd MMMM yyyy", { locale: fr })}`;
+
+  return (
+    <div className="space-y-6">
+      {/* Week Navigation */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary" />
+            {weekLabel}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {data.length} technicien{data.length > 1 ? "s" : ""} avec planning
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={goToPrevWeek}>
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Précédente
+          </Button>
+          <Button variant="outline" size="sm" onClick={goToCurrentWeek}>
+            Aujourd'hui
+          </Button>
+          <Button variant="outline" size="sm" onClick={goToNextWeek}>
+            Suivante
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Tech Planning Cards */}
+      {data.map((techWeek: WeeklyTechPlanning) => (
+        <Card key={techWeek.techId} className="overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {techWeek.color && (
+                  <div 
+                    className="w-4 h-4 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: techWeek.color }}
+                  />
+                )}
+                <CardTitle className="text-lg">{techWeek.techName}</CardTitle>
+                <Badge variant="secondary" className="font-mono">
+                  <Clock className="w-3 h-3 mr-1" />
+                  {formatMinutesToHours(techWeek.weeklyTotalMinutes)}
+                </Badge>
+              </div>
+              <TechSignatureSection techId={techWeek.techId} weekDate={weekDate} />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+              {techWeek.days.map((day) => (
+                <div
+                  key={day.date}
+                  className="rounded-lg border bg-card p-3 space-y-2"
+                >
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <span className="font-medium text-sm capitalize">{day.label}</span>
+                    <Badge variant="outline" className="text-xs font-mono">
+                      {formatMinutesToHours(day.totalMinutes)}
+                    </Badge>
+                  </div>
+
+                  {day.slots.length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-2">Aucun RDV</p>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {day.slots.map((slot, idx) => {
+                        const start = format(new Date(slot.start), "HH:mm");
+                        const end = format(new Date(slot.end), "HH:mm");
+                        const isBreak = slot.isBreak === true;
+
+                        return (
+                          <li
+                            key={`${slot.slotId}-${idx}`}
+                            className={cn(
+                              "rounded px-2 py-1.5 text-xs border",
+                              isBreak
+                                ? "border-amber-500/40 bg-amber-500/10"
+                                : "border-border bg-muted/30"
+                            )}
+                          >
+                            <div className="flex justify-between items-center">
+                              <span className="font-semibold text-foreground">
+                                {start} - {end}
+                              </span>
+                              {slot.state && (
+                                <Badge 
+                                  variant="secondary" 
+                                  className="text-[10px] px-1.5 py-0 h-4"
+                                >
+                                  {slot.state}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="mt-1 text-muted-foreground">
+                              {isBreak ? (
+                                <span className="font-medium text-amber-600">Pause</span>
+                              ) : (
+                                <>
+                                  {slot.clientName && (
+                                    <span className="font-medium text-foreground">
+                                      {slot.clientName}
+                                    </span>
+                                  )}
+                                  {slot.projectRef && (
+                                    <span className="ml-1 text-muted-foreground">
+                                      ({slot.projectRef})
+                                    </span>
+                                  )}
+                                  {slot.type && !slot.clientName && (
+                                    <span className="text-muted-foreground">{slot.type}</span>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+};

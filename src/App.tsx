@@ -35,6 +35,7 @@ const IndicateursApporteurs = lazy(() => import("./apogee-connect/pages/Indicate
 const IndicateursUnivers = lazy(() => import("./apogee-connect/pages/IndicateursUnivers"));
 const IndicateursTechniciens = lazy(() => import("./apogee-connect/pages/IndicateursTechniciens"));
 const IndicateursSAV = lazy(() => import("./apogee-connect/pages/IndicateursSAV"));
+const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
 
 // Lazy loaded pages - Support
 const Support = lazy(() => import("./pages/Support"));
@@ -143,6 +144,7 @@ function AppContent() {
           <Route path="/actions-a-mener" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ActionsAMener /></RoleGuard></MainLayout>} />
           <Route path="/actions-a-mener/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_admin"><CategoryActionsAMener /></RoleGuard></MainLayout>} />
           <Route path="/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><DiffusionDashboard /></RoleGuard></MainLayout>} />
+          <Route path="/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PlanningHebdo /></RoleGuard></MainLayout>} />
           
           {/* Support - Accessible à tous les utilisateurs connectés */}
           <Route path="/support" element={<MainLayout><RoleGuard><Support /></RoleGuard></MainLayout>} />

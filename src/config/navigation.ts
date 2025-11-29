@@ -6,7 +6,7 @@
  */
 
 import {
-  BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
+  BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv, Calendar,
   Headset, MessageSquare, Network, Building2, PieChart, GitCompare,
   Coins, Settings, Users, Shield, Database, Activity, Home, User, Grid3X3
 } from 'lucide-react';
@@ -145,6 +145,13 @@ export const NAV_GROUPS: NavGroup[] = [
         scope: 'diffusion', 
         description: 'Mode affichage TV agence' 
       },
+      { 
+        title: 'RH Tech', 
+        url: '/rh-tech', 
+        icon: Calendar, 
+        scope: 'mes_indicateurs', 
+        description: 'Planning hebdomadaire techniciens' 
+      },
     ],
   },
   {
@@ -237,6 +244,7 @@ export const PAGE_TITLES: Record<string, string> = {
   '/mes-indicateurs/sav': 'Indicateurs SAV',
   '/actions-a-mener': 'Actions à Mener',
   '/diffusion': 'Mode Diffusion',
+  '/rh-tech': 'RH Tech - Planning',
   // Support
   '/mes-demandes': 'Mes Demandes',
   '/support': 'Support',
