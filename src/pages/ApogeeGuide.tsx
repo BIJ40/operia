@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Lock, Clock, Sparkles, RefreshCw, Ban } from 'lucide-react';
-import { useIsBlockLocked, usePermissions } from '@/hooks/use-permissions';
+import { usePermissions } from '@/hooks/use-permissions';
 import { SCOPE_SLUGS, PERMISSION_LEVELS } from '@/types/permissions';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -255,7 +255,6 @@ export default function ApogeeGuide() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useEditor();
   const { isAdmin, isAuthenticated, canViewScope, canEditScope, canDeleteScope } = useAuth();
   const { getPermissionLevel } = usePermissions();
-  const isBlockLocked = useIsBlockLocked();
   
   // Vérifier les permissions pour le scope Apogée
   const canView = canViewScope(SCOPE_SLUGS.APOGEE);
@@ -520,7 +519,6 @@ export default function ApogeeGuide() {
             {filteredCategories.map(category => {
               const Icon = IconComponent(category.icon || 'BookOpen');
               const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
-              const isLocked = isBlockLocked(category.id, blocks);
               const badges = getCategoryBadges(category.id, category);
               
               // Catégorie vide - non cliquable, grisée
@@ -548,69 +546,6 @@ export default function ApogeeGuide() {
                     )}
                     {(category.showTitleOnCard !== false) && (
                       <span className="text-base font-medium text-muted-foreground truncate">
-                        {category.title}
-                      </span>
-                    )}
-                  </div>
-                );
-              }
-              
-              if (isLocked) {
-                return (
-                  <div
-                    key={category.id}
-                    onClick={() => {
-                      toast({
-                        title: 'Accès restreint',
-                        description: 'Vous n\'avez pas les permissions pour accéder à cette section',
-                        variant: 'destructive',
-                      });
-                    }}
-                    className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 cursor-pointer opacity-60 overflow-visible ${tileClass}`}
-                  >
-                    {/* Badge New en écharpe diagonale verte - décalé aux 3/4 */}
-                    {badges.hasNew && (
-                      <div className="absolute -top-2 left-3/4 -translate-x-1/2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
-                        <div className="absolute top-3 -left-5 w-20 bg-green-500 text-white text-[10px] font-bold py-0.5 text-center transform -rotate-45 shadow-md">
-                          NEW
-                        </div>
-                      </div>
-                    )}
-                    {/* Badge En cours - arrondi accentué orange */}
-                    {badges.hasInProgress && (
-                      <div className="absolute -top-2 -right-2 z-20">
-                        <div className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          En cours
-                        </div>
-                      </div>
-                    )}
-                    {/* Badge M.A.J - panneau avec pied */}
-                    {badges.hasUpdate && !badges.hasInProgress && (
-                      <div className="absolute -top-3 -right-1 z-20 flex flex-col items-center">
-                        <div className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 shadow-md border border-primary-foreground/20">
-                          <RefreshCw className="w-2.5 h-2.5" />
-                          M.A.J
-                        </div>
-                        <div className="w-0.5 h-2 bg-primary/80 rounded-b" />
-                      </div>
-                    )}
-                    {/* Cadenas en overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <Lock className="w-8 h-8 text-destructive drop-shadow-lg" />
-                    </div>
-                    
-                    {isCustomImage ? (
-                      <img 
-                        src={category.icon} 
-                        alt={category.title} 
-                        className="w-6 h-6 object-contain flex-shrink-0 opacity-50" 
-                      />
-                    ) : (
-                      <Icon className="w-6 h-6 text-primary flex-shrink-0 opacity-50" />
-                    )}
-                    {(category.showTitleOnCard !== false) && (
-                      <span className="text-base font-medium text-foreground truncate">
                         {category.title}
                       </span>
                     )}
