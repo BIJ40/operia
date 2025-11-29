@@ -75,7 +75,8 @@ export function useApogeeTickets(filters?: TicketFilters) {
           *,
           apogee_modules(*),
           apogee_priorities(*),
-          apogee_ticket_statuses(*)
+          apogee_ticket_statuses(*),
+          apogee_ticket_comments(count)
         `)
         .order('created_at', { ascending: false });
 
@@ -97,7 +98,14 @@ export function useApogeeTickets(filters?: TicketFilters) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as ApogeeTicket[];
+      
+      // Map comment count to _count field
+      return (data || []).map((ticket: any) => ({
+        ...ticket,
+        _count: {
+          comments: ticket.apogee_ticket_comments?.[0]?.count || 0
+        }
+      })) as ApogeeTicket[];
     },
   });
 

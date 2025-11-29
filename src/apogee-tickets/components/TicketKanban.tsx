@@ -136,6 +136,12 @@ function DraggableTicketCard({
               {ticket.h_min || '?'} - {ticket.h_max || '?'}h
             </span>
           )}
+          {ticket._count?.comments !== undefined && ticket._count.comments > 0 && (
+            <span className="flex items-center gap-1">
+              <MessageSquare className="h-3 w-3" />
+              {ticket._count.comments}
+            </span>
+          )}
           {ticket.needs_completion && (
             <Badge variant="outline" className="text-xs text-orange-600 border-orange-300">
               Incomplet
