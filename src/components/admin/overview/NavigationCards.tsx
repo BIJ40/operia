@@ -9,8 +9,10 @@ import {
   UserCog,
   FileStack,
   TrendingUp,
-  HardDrive
+  HardDrive,
+  UsersRound
 } from 'lucide-react';
+import { ROUTES } from '@/config/routes';
 
 export function NavigationCards() {
   const sections = [
@@ -18,25 +20,19 @@ export function NavigationCards() {
       title: 'Gestion des utilisateurs',
       cards: [
         {
-          to: '/admin/users',
+          to: ROUTES.admin.users,
           icon: Users,
           title: 'Utilisateurs',
           description: 'Créer et gérer les comptes',
         },
         {
-          to: '/admin/users-list',
-          icon: UserCog,
-          title: 'Liste des utilisateurs',
-          description: 'Voir tous les utilisateurs',
+          to: ROUTES.admin.collaborateurs,
+          icon: UsersRound,
+          title: 'Collaborateurs',
+          description: 'Collaborateurs non inscrits',
         },
         {
-          to: '/admin/role-permissions',
-          icon: Shield,
-          title: 'Permissions',
-          description: 'Gérer les accès par rôle',
-        },
-        {
-          to: '/admin/agencies',
+          to: ROUTES.admin.agencies,
           icon: Building2,
           title: 'Agences',
           description: 'Configurer les agences',
@@ -47,13 +43,13 @@ export function NavigationCards() {
       title: 'Support & Communication',
       cards: [
         {
-          to: '/admin/support',
+          to: ROUTES.admin.support,
           icon: Headset,
           title: 'Support',
           description: 'Gérer les tickets',
         },
         {
-          to: '/admin/escalation-history',
+          to: ROUTES.admin.escalationHistory,
           icon: FileStack,
           title: 'Historique des escalades',
           description: 'Voir toutes les escalades',
@@ -74,6 +70,18 @@ export function NavigationCards() {
           icon: HardDrive,
           title: 'Stockage',
           description: 'Surveiller les quotas',
+        },
+        {
+          to: ROUTES.admin.backup,
+          icon: FileStack,
+          title: 'Sauvegardes',
+          description: 'Gérer les backups',
+        },
+        {
+          to: ROUTES.admin.userActivity,
+          icon: TrendingUp,
+          title: 'Activité',
+          description: 'Suivi des connexions',
         },
       ],
     },
