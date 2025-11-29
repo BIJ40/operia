@@ -72,12 +72,6 @@ export default function ReseauIndex() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Réseau Franchiseur</h1>
-        <p className="text-muted-foreground">
-          Pilotage et gestion du réseau d'agences HelpConfort.
-        </p>
-      </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {visibleModules.map((module) => {
