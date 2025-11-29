@@ -35,7 +35,7 @@ export interface RoleCapabilities {
 export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
   // N0 - Utilisateur de base (visiteur)
   base_user: {
-    canAccessHelpAcademy: true,
+    canAccessHelpAcademy: false,      // ❌ Pas d'accès Help Academy par défaut
     canAccessPilotageAgence: false,
     canAccessSupport: true,
     canAccessSupportConsole: false,
@@ -49,7 +49,7 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
   // N1 - Utilisateur franchisé (technicien, assistant)
   franchisee_user: {
     canAccessHelpAcademy: true,
-    canAccessPilotageAgence: false, // Pas d'accès au pilotage
+    canAccessPilotageAgence: false,
     canAccessSupport: true,
     canAccessSupportConsole: false,
     canAccessFranchiseur: false,
@@ -62,31 +62,44 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
   // N2 - Admin franchisé (dirigeant agence)
   franchisee_admin: {
     canAccessHelpAcademy: true,
-    canAccessPilotageAgence: true,   // Accès pilotage SI agence
+    canAccessPilotageAgence: true,
     canAccessSupport: true,
-    canAccessSupportConsole: false,  // Pas de console support
-    canAccessFranchiseur: false,     // Pas de vue réseau
-    canAccessAdmin: false,           // Pas d'admin plateforme
-    canManageUsers: false,           // Ne crée pas d'utilisateurs
+    canAccessSupportConsole: false,
+    canAccessFranchiseur: false,
+    canAccessAdmin: false,
+    canManageUsers: false,
     canAssignRolesUpTo: null,
-    requiresAgencyForPilotage: true, // Doit avoir une agence
+    requiresAgencyForPilotage: true,  // ✅ Agence OBLIGATOIRE
   },
 
   // N3 - Utilisateur franchiseur (animateur réseau)
   franchisor_user: {
     canAccessHelpAcademy: true,
-    canAccessPilotageAgence: false,       // Pas de pilotage agence direct
+    canAccessPilotageAgence: true,        // ✅ Accès SI agence attribuée
     canAccessSupport: true,
-    canAccessSupportConsole: false,       // Pas console par défaut (module activable)
-    canAccessFranchiseur: true,           // Accès Réseau Franchiseur
-    canAccessAdmin: false,                // Pas d'admin globale
-    canManageUsers: true,                 // Peut créer/modifier des users
-    canAssignRolesUpTo: 'franchisor_user',// Jusqu'à N3 (son propre niveau)
-    requiresAgencyForPilotage: false,
+    canAccessSupportConsole: false,
+    canAccessFranchiseur: true,
+    canAccessAdmin: false,
+    canManageUsers: true,
+    canAssignRolesUpTo: 'franchisor_user', // ✅ Jusqu'à son niveau (N3)
+    requiresAgencyForPilotage: true,       // ✅ Pas obligatoire mais conditionne l'accès
   },
 
   // N4 - Admin franchiseur (directeur réseau, DG)
   franchisor_admin: {
+    canAccessHelpAcademy: true,
+    canAccessPilotageAgence: true,         // ✅ Accès SI agence attribuée
+    canAccessSupport: true,
+    canAccessSupportConsole: false,        // ❌ Pas de console par défaut
+    canAccessFranchiseur: true,
+    canAccessAdmin: true,
+    canManageUsers: true,
+    canAssignRolesUpTo: 'franchisor_admin', // ✅ Jusqu'à son niveau (N4)
+    requiresAgencyForPilotage: true,        // ✅ Pas obligatoire mais conditionne l'accès
+  },
+
+  // N5 - Admin plateforme (support niveau 3)
+  platform_admin: {
     canAccessHelpAcademy: true,
     canAccessPilotageAgence: true,
     canAccessSupport: true,
@@ -94,21 +107,8 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
     canAccessFranchiseur: true,
     canAccessAdmin: true,
     canManageUsers: true,
-    canAssignRolesUpTo: 'franchisor_user', // Peut assigner jusqu'à N3
+    canAssignRolesUpTo: 'platform_admin',  // ✅ Jusqu'à son niveau (N5)
     requiresAgencyForPilotage: false,
-  },
-
-  // N5 - Admin plateforme (support niveau 3)
-  platform_admin: {
-    canAccessHelpAcademy: true,
-    canAccessPilotageAgence: true, // Peut voir tout pour debug
-    canAccessSupport: true,
-    canAccessSupportConsole: true,
-    canAccessFranchiseur: true,
-    canAccessAdmin: true,
-    canManageUsers: true,
-    canAssignRolesUpTo: 'franchisor_admin', // Peut assigner jusqu'à N4
-    requiresAgencyForPilotage: false, // Pas de restriction agence
   },
 
   // N6 - Super administrateur
@@ -120,7 +120,7 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
     canAccessFranchiseur: true,
     canAccessAdmin: true,
     canManageUsers: true,
-    canAssignRolesUpTo: 'superadmin', // Peut tout assigner
+    canAssignRolesUpTo: 'superadmin',      // ✅ Jusqu'à son niveau (N6)
     requiresAgencyForPilotage: false,
   },
 };
