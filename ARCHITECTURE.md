@@ -842,15 +842,17 @@ const canManage = useHasGlobalRole('franchisor_user');
 if (!canManage) return null;
 ```
 
-### Code Legacy DÉPRÉCIÉ
+### Helpers de commodité (V2)
 
-Les patterns suivants sont obsolètes et ne doivent plus être utilisés :
+Les helpers suivants sont exposés par `AuthContext` et utilisent le système V2 en interne :
 
-| Ancien | Nouveau |
-|--------|---------|
-| `isAdmin` | `hasGlobalRole('platform_admin')` ou `useHasGlobalRole('platform_admin')` |
-| `isFranchiseur` | `hasGlobalRole('franchisor_user')` ou `useHasGlobalRole('franchisor_user')` |
-| `isAdmin \|\| isFranchiseur` | `hasGlobalRole('franchisor_user')` |
+| Helper | Implémentation V2 | Usage recommandé |
+|--------|-------------------|------------------|
+| `isAdmin` | `globalRoleLevel >= GLOBAL_ROLES.platform_admin` (N5+) | Vérification rapide admin |
+| `isFranchiseur` | `globalRoleLevel >= GLOBAL_ROLES.franchisor_user` (N3+) | Vérification rapide franchiseur |
+| `isSupport` | `isModuleEnabled(enabledModules, 'support')` | Vérification module support |
+
+Ces helpers sont des **wrappers V2 valides**, pas du code legacy. Pour des vérifications plus précises, utiliser directement `hasGlobalRole()` ou `useHasGlobalRole()`.
 
 ### Colonnes DB (table `profiles`)
 
