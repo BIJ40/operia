@@ -8,25 +8,27 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, SkipForward } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, SkipForward, Snowflake, Flame } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useIncompleteTickets, useApogeeTickets } from '../hooks/useApogeeTickets';
+import { HeatPriorityBadge } from '../components/HeatPriorityBadge';
 import type { ApogeeTicket, OwnerSide } from '../types';
 import { ROUTES } from '@/config/routes';
 
 export default function ApogeeTicketsIncomplete() {
   const { tickets: rawIncompleteTickets, isLoading } = useIncompleteTickets();
-  const { modules, priorities, updateTicket } = useApogeeTickets();
+  const { modules, updateTicket } = useApogeeTickets();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Formulaire local pour le ticket courant
   const [formValues, setFormValues] = useState<{
     module: string | null;
-    priority: string | null;
+    heat_priority: number | null;
     owner_side: OwnerSide | null;
   }>({
     module: null,
-    priority: null,
+    heat_priority: null,
     owner_side: null,
   });
 
@@ -34,7 +36,7 @@ export default function ApogeeTicketsIncomplete() {
   const getMissingFields = (ticket: ApogeeTicket) => {
     const missing: string[] = [];
     if (!ticket.module) missing.push('module');
-    if (!ticket.priority) missing.push('priority');
+    if (ticket.heat_priority === null || ticket.heat_priority === undefined) missing.push('heat_priority');
     if (!ticket.owner_side) missing.push('owner_side');
     return missing;
   };
@@ -46,26 +48,29 @@ export default function ApogeeTicketsIncomplete() {
   const totalTickets = incompleteTickets.length;
   const progressPercent = totalTickets > 0 ? Math.round(((currentIndex) / totalTickets) * 100) : 0;
 
+  // Valeur effective de heat_priority (form > ticket > default)
+  const effectiveHeatPriority = formValues.heat_priority ?? currentTicket?.heat_priority ?? 3;
+
   const handleSaveAndNext = async () => {
     if (!currentTicket) return;
 
     const updates: Partial<ApogeeTicket> & { id: string } = { id: currentTicket.id };
     
     if (formValues.module) updates.module = formValues.module;
-    if (formValues.priority) updates.priority = formValues.priority;
+    if (formValues.heat_priority !== null) updates.heat_priority = formValues.heat_priority;
     if (formValues.owner_side) updates.owner_side = formValues.owner_side;
 
     await updateTicket.mutateAsync(updates);
     
     // Reset form et passer au suivant
-    setFormValues({ module: null, priority: null, owner_side: null });
+    setFormValues({ module: null, heat_priority: null, owner_side: null });
     if (currentIndex < totalTickets - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
 
   const handleSkip = () => {
-    setFormValues({ module: null, priority: null, owner_side: null });
+    setFormValues({ module: null, heat_priority: null, owner_side: null });
     if (currentIndex < totalTickets - 1) {
       setCurrentIndex(currentIndex + 1);
     }
@@ -74,8 +79,12 @@ export default function ApogeeTicketsIncomplete() {
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
-      setFormValues({ module: null, priority: null, owner_side: null });
+      setFormValues({ module: null, heat_priority: null, owner_side: null });
     }
+  };
+
+  const handleHeatPriorityChange = (value: number) => {
+    setFormValues({ ...formValues, heat_priority: value });
   };
 
   if (isLoading) {
@@ -191,24 +200,41 @@ export default function ApogeeTicketsIncomplete() {
                 </div>
               )}
 
-              {missingFields.includes('priority') && (
+              {missingFields.includes('heat_priority') && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">
                     Quelle est la priorité de ce ticket ?
                   </label>
-                  <Select
-                    value={formValues.priority || currentTicket.priority || ''}
-                    onValueChange={(v) => setFormValues({ ...formValues, priority: v || null })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner une priorité" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {priorities.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-3 mt-2">
+                    <HeatPriorityBadge priority={effectiveHeatPriority} size="default" showLabel />
+                    <button
+                      type="button"
+                      onClick={() => handleHeatPriorityChange(Math.max(0, effectiveHeatPriority - 1))}
+                      className="p-1.5 hover:bg-blue-100 rounded transition-colors"
+                      title="Diminuer la priorité"
+                    >
+                      <Snowflake className="h-5 w-5 text-blue-400" />
+                    </button>
+                    <div className="flex-1">
+                      <Slider
+                        value={[effectiveHeatPriority]}
+                        min={0}
+                        max={12}
+                        step={1}
+                        onValueChange={(v) => handleHeatPriorityChange(v[0])}
+                        className="w-full"
+                        trackClassName="bg-gradient-to-r from-blue-400 via-yellow-400 to-red-500"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleHeatPriorityChange(Math.min(12, effectiveHeatPriority + 1))}
+                      className="p-1.5 hover:bg-red-100 rounded transition-colors"
+                      title="Augmenter la priorité"
+                    >
+                      <Flame className="h-5 w-5 text-red-500" />
+                    </button>
+                  </div>
                 </div>
               )}
 
