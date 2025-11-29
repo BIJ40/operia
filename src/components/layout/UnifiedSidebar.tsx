@@ -4,6 +4,7 @@ import {
   Headset, Network, Building2, PieChart, GitCompare,
   Coins, Settings, Users, Shield, Database, Activity, ChevronRight, Home, User, Grid3X3, Calendar, LifeBuoy
 } from 'lucide-react';
+import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import {
   Sidebar,
   SidebarContent,
@@ -29,6 +30,7 @@ interface NavItem {
   description?: string;
   children?: NavItem[];
   badge?: string;
+  minRole?: GlobalRole; // Rôle minimum pour voir cet item
 }
 
 interface NavGroup {
@@ -130,10 +132,10 @@ export function UnifiedSidebar() {
       items: [
         { title: 'Dashboard Réseau', url: '/tete-de-reseau', icon: Network },
         { title: 'Agences', url: '/tete-de-reseau/agences', icon: Building2 },
-        { title: 'Animateurs', url: '/tete-de-reseau/animateurs', icon: Users },
+        { title: 'Animateurs', url: '/tete-de-reseau/animateurs', icon: Users, minRole: 'franchisor_admin' },
         { title: 'Statistiques', url: '/tete-de-reseau/stats', icon: PieChart },
         { title: 'Comparatifs', url: '/tete-de-reseau/comparatifs', icon: GitCompare },
-        { title: 'Redevances', url: '/tete-de-reseau/redevances', icon: Coins },
+        { title: 'Redevances', url: '/tete-de-reseau/redevances', icon: Coins, minRole: 'franchisor_admin' },
       ],
       accessKey: 'canAccessFranchiseur',
     },
@@ -177,9 +179,14 @@ export function UnifiedSidebar() {
     return caps[group.accessKey];
   });
 
-  // V2: Pas de filtrage par scope, tous les items sont visibles si le groupe est visible
+  // V2: Filtrage par minRole si défini
   const getFilteredItems = (items: NavItem[]): NavItem[] => {
-    return items;
+    return items.filter(item => {
+      if (!item.minRole) return true;
+      const userLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
+      const requiredLevel = GLOBAL_ROLES[item.minRole];
+      return userLevel >= requiredLevel;
+    });
   };
 
   const isActive = (url?: string) => {
