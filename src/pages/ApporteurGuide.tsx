@@ -7,8 +7,7 @@ import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical, Upload, X, Edit2, Lock, Ban, Clock } from 'lucide-react';
-import { useIsBlockLocked } from '@/hooks/use-permissions';
+import { Plus, Trash2, Search, GripVertical, Upload, X, Edit2, Ban, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { IconPicker } from '@/components/IconPicker';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,7 +50,6 @@ interface SortableCategoryProps {
   editIsEmpty: boolean;
   isEditMode: boolean;
   isEmpty: boolean;
-  isBlockLocked: (blockId: string, blocks: any[]) => boolean;
   onEditTitleChange: (value: string) => void;
   onEditIconChange: (value: string) => void;
   onEditColorChange: (value: ColorPreset) => void;
@@ -80,7 +78,6 @@ const SortableCategory = ({
   editIsEmpty,
   isEditMode,
   isEmpty,
-  isBlockLocked,
   onEditTitleChange,
   onEditIconChange,
   onEditColorChange,
@@ -288,23 +285,6 @@ const SortableCategory = ({
             </Button>
           </div>
         </div>
-      ) : isBlockLocked(category.id, [category]) ? (
-        <div 
-          onClick={() => {
-            toast.error("Accès restreint - Vous n'avez pas les permissions pour accéder à cette section");
-          }}
-          className="flex items-center gap-3 flex-1 min-w-0 opacity-60 cursor-pointer relative"
-        >
-          {isCustomImage ? (
-            <img src={category.icon} alt={category.title} className="w-6 h-6 object-contain flex-shrink-0 opacity-50" />
-          ) : (
-            <Icon className="w-6 h-6 text-primary flex-shrink-0 opacity-50" />
-          )}
-          {category.showTitleOnCard !== false && (
-            <span className="text-base font-medium text-foreground truncate">{category.title}</span>
-          )}
-          <Lock className="w-4 h-4 text-destructive drop-shadow-lg ml-auto" />
-        </div>
       ) : (
         <Link to={`/apporteurs/category/${category.slug}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
           {isCustomImage ? (
@@ -324,7 +304,6 @@ const SortableCategory = ({
 export default function ApporteurGuide() {
   const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, reorderBlocks } = useApporteurEditor();
   const { isAdmin, isAuthenticated, hasAccessToScope } = useAuth();
-  const isBlockLocked = useIsBlockLocked();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
@@ -575,7 +554,6 @@ export default function ApporteurGuide() {
                     editIsEmpty={editIsEmpty}
                     isEditMode={isEditMode}
                     isEmpty={isEmpty}
-                    isBlockLocked={isBlockLocked}
                     onEditTitleChange={setEditTitle}
                     onEditIconChange={setEditIcon}
                     onEditColorChange={setEditColor}

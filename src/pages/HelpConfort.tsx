@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColorPreset } from '@/types/block';
-import { Plus, Trash2, Search, GripVertical, Lock, Clock, Sparkles, RefreshCw, Ban } from 'lucide-react';
-import { useIsBlockLocked } from '@/hooks/use-permissions';
+import { Plus, Trash2, Search, GripVertical, Clock, Sparkles, RefreshCw, Ban } from 'lucide-react';
 import { toast } from 'sonner';
 import { IconPicker } from '@/components/IconPicker';
 import { ColorPicker } from '@/components/ColorPicker';
@@ -57,7 +56,6 @@ interface SortableCategoryProps {
   hasNew: boolean;
   hasUpdate: boolean;
   isEmpty: boolean;
-  isBlockLocked: (blockId: string, blocks: any[]) => boolean;
   onEditTitleChange: (value: string) => void;
   onEditIconChange: (value: string) => void;
   onEditColorChange: (value: ColorPreset) => void;
@@ -86,7 +84,6 @@ const SortableCategory = ({
   hasNew,
   hasUpdate,
   isEmpty,
-  isBlockLocked,
   onEditTitleChange,
   onEditIconChange,
   onEditColorChange,
@@ -247,29 +244,6 @@ const SortableCategory = ({
             </Button>
           </div>
         </div>
-      ) : isBlockLocked(category.id, [category]) ? (
-        <div 
-          onClick={() => {
-            toast.error("Accès restreint - Vous n'avez pas les permissions pour accéder à cette section");
-          }}
-          className="flex items-center gap-3 flex-1 min-w-0 opacity-60 cursor-pointer relative"
-        >
-          {(isCustomImage && category.icon) || editImageUrl ? (
-            <img 
-              src={editImageUrl || category.icon} 
-              alt={category.title} 
-              className="w-6 h-6 object-contain flex-shrink-0 opacity-50" 
-            />
-          ) : (
-            <Icon className="w-6 h-6 text-primary flex-shrink-0 opacity-50" />
-          )}
-          {(category.showTitleOnCard !== false) && (
-            <span className="text-base font-medium text-foreground truncate">
-              {category.title}
-            </span>
-          )}
-          <Lock className="w-4 h-4 text-destructive drop-shadow-lg ml-auto" />
-        </div>
       ) : (
         <Link to={`/helpconfort/category/${category.slug}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
           {(isCustomImage && category.icon) || editImageUrl ? (
@@ -296,7 +270,6 @@ export default function HelpConfort() {
   const { blocks, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isEditMode } = useEditor();
   const { isAdmin, isAuthenticated, roleAgence, hasAccessToScope } = useAuth();
-  const isBlockLocked = useIsBlockLocked();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');
@@ -536,7 +509,6 @@ export default function HelpConfort() {
                         hasNew={hasNew}
                         hasUpdate={hasUpdate}
                         isEmpty={isEmpty}
-                        isBlockLocked={isBlockLocked}
                         onEditTitleChange={setEditTitle}
                         onEditIconChange={setEditIcon}
                         onEditColorChange={setEditColor}
@@ -561,7 +533,6 @@ export default function HelpConfort() {
             {filteredCategories.map(category => {
               const Icon = IconComponent(category.icon || 'BookOpen');
               const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
-              const locked = isBlockLocked(category.id, [category]);
               const { hasInProgress, hasNew, hasUpdate, isEmpty } = getCategoryStatus(category.id, category);
               
               // Catégorie vide - non cliquable, grisée
@@ -592,34 +563,6 @@ export default function HelpConfort() {
                         {category.title}
                       </span>
                     )}
-                  </div>
-                );
-              }
-              
-              if (locked) {
-                return (
-                  <div
-                    key={category.id}
-                    onClick={() => {
-                      toast.error("Accès restreint - Vous n'avez pas les permissions pour accéder à cette section");
-                    }}
-                    className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 opacity-60 cursor-pointer overflow-visible ${getColorClass(category.colorPreset)}`}
-                  >
-                    {isCustomImage ? (
-                      <img 
-                        src={category.icon} 
-                        alt={category.title} 
-                        className="w-6 h-6 object-contain flex-shrink-0 opacity-50" 
-                      />
-                    ) : (
-                      <Icon className="w-6 h-6 text-primary flex-shrink-0 opacity-50" />
-                    )}
-                    {(category.showTitleOnCard !== false) && (
-                      <span className="text-base font-medium text-foreground truncate">
-                        {category.title}
-                      </span>
-                    )}
-                    <Lock className="w-4 h-4 text-destructive drop-shadow-lg ml-auto" />
                   </div>
                 );
               }
