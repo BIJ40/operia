@@ -94,6 +94,26 @@ export function UnifiedHeader() {
   const [editTitle, setEditTitle] = useState('');
   const [editSubtitle, setEditSubtitle] = useState('');
   const [editMenuLabel, setEditMenuLabel] = useState('');
+  const [editTitleSize, setEditTitleSize] = useState('lg');
+  const [editIconSize, setEditIconSize] = useState('md');
+
+  // Size mappings
+  const TITLE_SIZES: Record<string, string> = {
+    'sm': 'text-sm',
+    'base': 'text-base',
+    'lg': 'text-lg',
+    'xl': 'text-xl',
+    '2xl': 'text-2xl',
+  };
+  const ICON_SIZES: Record<string, string> = {
+    'sm': 'w-4 h-4',
+    'md': 'w-5 h-5',
+    'lg': 'w-6 h-6',
+    'xl': 'w-7 h-7',
+  };
+  
+  const titleSizeClass = TITLE_SIZES[metadata?.header_title_size || 'lg'] || 'text-lg';
+  const iconSizeClass = ICON_SIZES[metadata?.header_icon_size || 'md'] || 'w-5 h-5';
 
   const canEdit = canEditPageMetadata(globalRole) && pageKey;
 
@@ -101,6 +121,8 @@ export function UnifiedHeader() {
     setEditTitle(metadata?.header_title || defaultTitle);
     setEditSubtitle(metadata?.header_subtitle || defaultSubtitle);
     setEditMenuLabel(metadata?.menu_label || '');
+    setEditTitleSize(metadata?.header_title_size || 'lg');
+    setEditIconSize(metadata?.header_icon_size || 'md');
     setIsMetadataDialogOpen(true);
   };
 
@@ -112,6 +134,8 @@ export function UnifiedHeader() {
         header_title: editTitle || null,
         header_subtitle: editSubtitle || null,
         menu_label: editMenuLabel || null,
+        header_title_size: editTitleSize || 'lg',
+        header_icon_size: editIconSize || 'md',
       });
       toast.success('Métadonnées de page mises à jour');
       setIsMetadataDialogOpen(false);
@@ -179,8 +203,8 @@ export function UnifiedHeader() {
           {/* Center: Title with icon + subtitle */}
           <div className="flex-1 flex flex-col items-center justify-center min-w-0">
             <div className="flex items-center gap-2">
-              {PageIcon && <PageIcon className="w-5 h-5 text-primary shrink-0" />}
-              <h1 className="text-lg font-semibold text-foreground truncate">
+              {PageIcon && <PageIcon className={`${iconSizeClass} text-primary shrink-0`} />}
+              <h1 className={`${titleSizeClass} font-semibold text-foreground truncate`}>
                 {displayTitle}
               </h1>
             </div>
@@ -331,6 +355,38 @@ export function UnifiedHeader() {
                 onChange={(e) => setEditMenuLabel(e.target.value)}
                 placeholder="Texte dans la navigation"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="meta-title-size">Taille du titre</Label>
+                <select
+                  id="meta-title-size"
+                  value={editTitleSize}
+                  onChange={(e) => setEditTitleSize(e.target.value)}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                >
+                  <option value="sm">Petit (sm)</option>
+                  <option value="base">Normal (base)</option>
+                  <option value="lg">Grand (lg)</option>
+                  <option value="xl">Très grand (xl)</option>
+                  <option value="2xl">Extra grand (2xl)</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="meta-icon-size">Taille de l'icône</Label>
+                <select
+                  id="meta-icon-size"
+                  value={editIconSize}
+                  onChange={(e) => setEditIconSize(e.target.value)}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                >
+                  <option value="sm">Petit (sm)</option>
+                  <option value="md">Moyen (md)</option>
+                  <option value="lg">Grand (lg)</option>
+                  <option value="xl">Très grand (xl)</option>
+                </select>
+              </div>
             </div>
           </div>
 
