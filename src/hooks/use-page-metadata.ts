@@ -60,60 +60,29 @@ export function useUpsertPageMetadata() {
 
   return useMutation({
     mutationFn: async (params: UpsertPageMetadataParams) => {
-      const { page_key, header_title, header_subtitle, menu_label } = params;
-
-      // Vérifier si la page existe déjà
-      const { data: existing } = await supabase
+      const { data, error } = await supabase
         .from('page_metadata')
-        .select('id')
-        .eq('page_key', page_key)
-        .maybeSingle();
+        .upsert({
+          page_key: params.page_key,
+          header_title: params.header_title,
+          header_subtitle: params.header_subtitle,
+          menu_label: params.menu_label,
+          header_title_size: params.header_title_size,
+          header_icon_size: params.header_icon_size,
+          header_icon_color: params.header_icon_color,
+          header_subtitle_bg_color: params.header_subtitle_bg_color,
+          header_subtitle_text_size: params.header_subtitle_text_size,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'page_key' })
+        .select()
+        .single();
 
-      if (existing) {
-        // Update
-        const { data, error } = await supabase
-          .from('page_metadata')
-          .update({
-            header_title: params.header_title,
-            header_subtitle: params.header_subtitle,
-            menu_label: params.menu_label,
-            header_title_size: params.header_title_size,
-            header_icon_size: params.header_icon_size,
-            header_icon_color: params.header_icon_color,
-            header_subtitle_bg_color: params.header_subtitle_bg_color,
-            header_subtitle_text_size: params.header_subtitle_text_size,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('page_key', page_key)
-          .select()
-          .single();
-
-        if (error) throw error;
-        return data;
-      } else {
-        // Insert
-        const { data, error } = await supabase
-          .from('page_metadata')
-          .insert({
-            page_key,
-            header_title: params.header_title,
-            header_subtitle: params.header_subtitle,
-            menu_label: params.menu_label,
-            header_title_size: params.header_title_size,
-            header_icon_size: params.header_icon_size,
-            header_icon_color: params.header_icon_color,
-            header_subtitle_bg_color: params.header_subtitle_bg_color,
-            header_subtitle_text_size: params.header_subtitle_text_size,
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-        return data;
-      }
+      if (error) throw error;
+      return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['pageMetadata', variables.page_key] });
+      queryClient.invalidateQueries({ queryKey: ['allPageMetadata'] });
     },
   });
 }
