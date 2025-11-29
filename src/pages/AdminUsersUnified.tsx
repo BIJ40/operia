@@ -120,11 +120,7 @@ interface UserProfile {
   agence: string | null;
   global_role: GlobalRole | null;
   enabled_modules: EnabledModules | null;
-  // Legacy fields (lecture seule)
-  system_role: string | null;
   role_agence: string | null;
-  service_competencies: any;
-  support_level: number | null;
   created_at: string;
   // Deactivation fields
   is_active: boolean | null;
@@ -238,7 +234,7 @@ export default function AdminUsersUnified() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, agence, global_role, enabled_modules, system_role, role_agence, service_competencies, support_level, created_at, is_active, deactivated_at, deactivated_by, must_change_password')
+        .select('id, email, first_name, last_name, agence, global_role, enabled_modules, role_agence, created_at, is_active, deactivated_at, deactivated_by, must_change_password')
         .order('email');
       
       if (error) throw error;
@@ -1037,28 +1033,7 @@ export default function AdminUsersUnified() {
                                   <span className="text-muted-foreground">Poste occupé:</span>
                                   <p>{ROLE_AGENCE_LABELS[userItem.role_agence || ''] || userItem.role_agence || '-'}</p>
                                 </div>
-                                {userItem.system_role && (
-                                  <div>
-                                    <span className="text-muted-foreground">System role (legacy):</span>
-                                    <p>{userItem.system_role}</p>
-                                  </div>
-                                )}
-                                {userItem.support_level !== null && userItem.support_level > 0 && (
-                                  <div>
-                                    <span className="text-muted-foreground">Support level:</span>
-                                    <p>{userItem.support_level}</p>
-                                  </div>
-                                )}
                               </div>
-                              
-                              {userItem.service_competencies && Object.keys(userItem.service_competencies).length > 0 && (
-                                <div>
-                                  <span className="text-muted-foreground text-sm">Compétences service:</span>
-                                  <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-auto">
-                                    {JSON.stringify(userItem.service_competencies, null, 2)}
-                                  </pre>
-                                </div>
-                              )}
                             </CollapsibleContent>
                           </Collapsible>
                         </div>

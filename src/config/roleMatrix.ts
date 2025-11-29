@@ -274,13 +274,15 @@ export const PROFILE_FIELDS = [
 ] as const;
 
 /**
- * Champs LEGACY - ne plus utiliser pour les permissions
+ * Champs LEGACY - supprimés de la DB (2025-11-29)
+ * Conservé pour documentation uniquement
  */
-export const LEGACY_FIELDS = [
-  'system_role',
-  'support_level',
-  'service_competencies',
-  // Tables legacy: user_roles, user_capabilities, group_permissions, scopes
+export const LEGACY_FIELDS_REMOVED = [
+  'system_role',      // Supprimé de profiles
+  'group_id',         // Supprimé de profiles  
+  'role_id',          // Supprimé de profiles
+  'support_level',    // À supprimer
+  'service_competencies', // À supprimer
 ] as const;
 
 // ============================================================================

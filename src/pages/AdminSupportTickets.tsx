@@ -55,14 +55,19 @@ export default function AdminSupportTickets() {
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
 
   // Transformer supportUsers pour le format attendu par les composants
-  const formattedSupportUsers = supportUsers.map(u => ({
-    id: u.id,
-    name: `${u.first_name} ${u.last_name}`,
-    first_name: u.first_name,
-    last_name: u.last_name,
-    support_level: u.support_level,
-    service_competencies: u.service_competencies,
-  }));
+  const formattedSupportUsers = supportUsers.map(u => {
+    const modules = u.enabled_modules as any;
+    const options = modules?.support?.options || {};
+    return {
+      id: u.id,
+      name: `${u.first_name} ${u.last_name}`,
+      first_name: u.first_name,
+      last_name: u.last_name,
+      support_level: options.level || 1,
+      service_competencies: options.skills ? 
+        options.skills.reduce((acc: any, skill: string) => ({ ...acc, [skill]: true }), {}) : {},
+    };
+  });
 
   const getCardClassName = (status: string) => {
     const isActive = filters.status === status;

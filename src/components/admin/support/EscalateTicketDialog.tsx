@@ -64,14 +64,16 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
     const loadUserData = async () => {
       if (!user?.id) return;
       
-      // Load support level
+      // Load support level from enabled_modules V2
       const { data: profile } = await supabase
         .from('profiles')
-        .select('support_level')
+        .select('enabled_modules')
         .eq('id', user.id)
         .single();
       if (profile) {
-        setUserLevel(profile.support_level || 1);
+        const modules = profile.enabled_modules as any;
+        const options = modules?.support?.options || {};
+        setUserLevel(options.level || 1);
       }
       
       // Load franchiseur role

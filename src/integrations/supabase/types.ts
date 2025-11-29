@@ -846,16 +846,11 @@ export type Database = {
           enabled_modules: Json | null
           first_name: string | null
           global_role: Database["public"]["Enums"]["global_role"] | null
-          group_id: string | null
           id: string
           is_active: boolean | null
           last_name: string | null
           must_change_password: boolean | null
           role_agence: string | null
-          role_id: string | null
-          service_competencies: Json | null
-          support_level: number | null
-          system_role: Database["public"]["Enums"]["system_role"] | null
           updated_at: string
         }
         Insert: {
@@ -870,16 +865,11 @@ export type Database = {
           enabled_modules?: Json | null
           first_name?: string | null
           global_role?: Database["public"]["Enums"]["global_role"] | null
-          group_id?: string | null
           id: string
           is_active?: boolean | null
           last_name?: string | null
           must_change_password?: boolean | null
           role_agence?: string | null
-          role_id?: string | null
-          service_competencies?: Json | null
-          support_level?: number | null
-          system_role?: Database["public"]["Enums"]["system_role"] | null
           updated_at?: string
         }
         Update: {
@@ -894,16 +884,11 @@ export type Database = {
           enabled_modules?: Json | null
           first_name?: string | null
           global_role?: Database["public"]["Enums"]["global_role"] | null
-          group_id?: string | null
           id?: string
           is_active?: boolean | null
           last_name?: string | null
           must_change_password?: boolean | null
           role_agence?: string | null
-          role_id?: string | null
-          service_competencies?: Json | null
-          support_level?: number | null
-          system_role?: Database["public"]["Enums"]["system_role"] | null
           updated_at?: string
         }
         Relationships: [
