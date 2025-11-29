@@ -75,35 +75,21 @@ serve(async (req) => {
     const queryEmbedding = await generateEmbedding(query);
     console.log('Query embedding generated');
 
-    // Fetch chunks - optionally filter by source
+    // Fetch chunks - filter by block_type for apogee source
     let chunksQuery = supabase.from('guide_chunks').select('*');
     
-    // If source is specified, filter by metadata.source
-    // Note: We'll do client-side filtering for JSON metadata
-    const { data: allChunks, error: chunksError } = await chunksQuery;
+    // If source is 'apogee', filter by block_type = 'apogee_guide'
+    if (source === 'apogee') {
+      chunksQuery = chunksQuery.eq('block_type', 'apogee_guide');
+    }
+    
+    const { data: chunks, error: chunksError } = await chunksQuery;
 
     if (chunksError) {
       throw chunksError;
     }
 
-    // Filter by source if specified
-    let chunks = allChunks;
-    if (source && allChunks) {
-      chunks = allChunks.filter(chunk => {
-        // Handle metadata as string (needs parsing) or object
-        let metadata = chunk.metadata;
-        if (typeof metadata === 'string') {
-          try {
-            metadata = JSON.parse(metadata);
-          } catch {
-            return false;
-          }
-        }
-        const metaObj = metadata as Record<string, any> | null;
-        return metaObj?.source === source;
-      });
-      console.log(`Filtered to ${chunks.length} chunks with source="${source}" (from ${allChunks.length} total)`);
-    }
+    console.log(`Found ${chunks?.length || 0} chunks${source === 'apogee' ? ' with block_type=apogee_guide' : ''}`);
 
     if (!chunks || chunks.length === 0) {
       return new Response(
