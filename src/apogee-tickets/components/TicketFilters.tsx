@@ -177,11 +177,11 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
           value={filters.is_qualified === undefined ? 'all' : filters.is_qualified ? 'qualified' : 'unqualified'}
           onValueChange={(v) => updateFilter('is_qualified', v === 'all' ? undefined : v === 'qualified')}
         >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Qualification" />
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Qualification IA" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
+            <SelectItem value="all">Toutes qualifications</SelectItem>
             <SelectItem value="qualified">✓ Qualifiés IA</SelectItem>
             <SelectItem value="unqualified">À qualifier</SelectItem>
           </SelectContent>
@@ -196,7 +196,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
             <SelectValue placeholder="Complétude" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tous (complets/incomplets)</SelectItem>
+            <SelectItem value="all">Toute complétude</SelectItem>
             <SelectItem value="complete">✓ Complets</SelectItem>
             <SelectItem value="incomplete">⚠ Incomplets (tous)</SelectItem>
             <SelectItem value="no_module">Module manquant</SelectItem>
