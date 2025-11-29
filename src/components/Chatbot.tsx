@@ -7,6 +7,7 @@ import { useChatbot } from '@/hooks/use-chatbot';
 import { ChatHistory } from '@/components/chatbot/ChatHistory';
 import { ChatInput } from '@/components/chatbot/ChatInput';
 import { ChatModeSelector } from '@/components/chatbot/ChatModeSelector';
+import { ChatContextSelector } from '@/components/chatbot/ChatContextSelector';
 import { SupportTicketDialog } from '@/components/chatbot/SupportTicketDialog';
 import { TimeoutModal } from '@/components/chatbot/TimeoutModal';
 import chatIcon from '@/assets/logo_chat.png';
@@ -39,9 +40,6 @@ export function Chatbot() {
   const { isAdmin, canAccessSupportConsole } = useAuth();
   const { isTestMode } = useChatbotTest();
 
-  // Hide chatbot for admins and support agents unless in test mode
-  if ((isAdmin || canAccessSupportConsole) && !isTestMode) return null;
-
   const {
     user,
     isOpen,
@@ -65,6 +63,8 @@ export function Chatbot() {
     createTicketFromChat,
     isCreating,
     handleWaitTimeout,
+    chatContext,
+    setChatContext,
     setIsOpen,
     setInput,
     setShowCloseConfirm,
@@ -85,6 +85,9 @@ export function Chatbot() {
     dragOffset,
     setMessages,
   } = useChatbot();
+
+  // Hide chatbot for admins and support agents unless in test mode
+  if ((isAdmin || canAccessSupportConsole) && !isTestMode) return null;
 
   // Check for active ticket
   useEffect(() => {
@@ -406,6 +409,14 @@ export function Chatbot() {
             />
           ) : (
             <>
+              {/* Context selector - only show when not in support ticket mode */}
+              {!activeTicket && (
+                <ChatContextSelector
+                  selectedContext={chatContext}
+                  onSelectContext={setChatContext}
+                />
+              )}
+              
               <ChatHistory
                 messages={messages}
                 supportMessages={supportMessages}
