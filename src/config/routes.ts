@@ -101,6 +101,7 @@ export const ROUTES = {
     // Apogée Tickets
     apogeeTickets: '/admin/apogee-tickets',
     apogeeTicketsImport: '/admin/apogee-tickets/import',
+    apogeeTicketsImportPriorities: '/admin/apogee-tickets/import-priorities',
     apogeeTicketsIncomplete: '/admin/apogee-tickets/incomplets',
     apogeeTicketsReview: '/admin/apogee-tickets/review',
     apogeeGuides: '/admin/apogee-guides',
