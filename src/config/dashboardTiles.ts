@@ -1,7 +1,7 @@
 import { 
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   MessageSquare, Network, Users, Shield, Database, Settings, LucideIcon,
-  PieChart, Coins, LifeBuoy, Headphones
+  PieChart, Coins, LifeBuoy, Headphones, GraduationCap
 } from 'lucide-react';
 
 export interface DashboardTile {
@@ -187,7 +187,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
 export const DASHBOARD_GROUPS = {
   help_academy: {
     title: 'Help! Academy',
-    icon: BookOpen,
+    icon: GraduationCap,
     colorClass: 'text-primary',
   },
   pilotage: {
