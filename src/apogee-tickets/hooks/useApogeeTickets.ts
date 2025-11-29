@@ -103,6 +103,9 @@ export function useApogeeTickets(filters?: TicketFilters) {
       if (filters?.owner_side) {
         query = query.eq('owner_side', filters.owner_side);
       }
+      if (filters?.reported_by) {
+        query = query.eq('reported_by', filters.reported_by);
+      }
       if (filters?.needs_completion) {
         query = query.eq('needs_completion', true);
       }

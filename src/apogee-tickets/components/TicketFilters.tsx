@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Search, X, Snowflake, Flame } from 'lucide-react';
-import type { ApogeeModule, ApogeePriority, ApogeeImpactTag, TicketFilters as Filters, OwnerSide } from '../types';
+import type { ApogeeModule, ApogeePriority, ApogeeImpactTag, TicketFilters as Filters, ReportedBy } from '../types';
 import { cn } from '@/lib/utils';
 
 interface TicketFiltersProps {
@@ -38,8 +38,8 @@ const getHeatColor = (priority: number): string => {
   }
 };
 
-// Options pour Origine
-const ORIGINE_OPTIONS: { value: OwnerSide; label: string }[] = [
+// Options pour Origine (ReportedBy)
+const ORIGINE_OPTIONS: { value: ReportedBy; label: string }[] = [
   { value: 'JEROME', label: 'Jérôme' },
   { value: 'FLORIAN', label: 'Florian' },
   { value: 'ERIC', label: 'Éric' },
@@ -156,8 +156,8 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
 
         {/* Origine */}
         <Select
-          value={filters.owner_side || 'all'}
-          onValueChange={(v) => updateFilter('owner_side', v === 'all' ? undefined : v as OwnerSide)}
+          value={filters.reported_by || 'all'}
+          onValueChange={(v) => updateFilter('reported_by', v === 'all' ? undefined : v as ReportedBy)}
         >
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Origine" />

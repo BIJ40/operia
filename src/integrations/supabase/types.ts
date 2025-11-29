@@ -520,6 +520,7 @@ export type Database = {
           qualif_status: string | null
           qualified_at: string | null
           qualified_by: string | null
+          reported_by: string | null
           severity: string | null
           source_row_index: number | null
           source_sheet: string | null
@@ -557,6 +558,7 @@ export type Database = {
           qualif_status?: string | null
           qualified_at?: string | null
           qualified_by?: string | null
+          reported_by?: string | null
           severity?: string | null
           source_row_index?: number | null
           source_sheet?: string | null
@@ -594,6 +596,7 @@ export type Database = {
           qualif_status?: string | null
           qualified_at?: string | null
           qualified_by?: string | null
+          reported_by?: string | null
           severity?: string | null
           source_row_index?: number | null
           source_sheet?: string | null

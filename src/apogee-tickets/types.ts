@@ -35,8 +35,10 @@ export interface ApogeeImpactTag {
   created_at: string;
 }
 
-// Origine du ticket (qui a remonté) - garde compatibilité avec anciennes valeurs
-export type OwnerSide = 'HC' | 'APOGEE' | 'PARTAGE' | 'JEROME' | 'FLORIAN' | 'ERIC' | 'AUTRE';
+// Qui porte le sujet (contrainte DB: HC, APOGEE, PARTAGE uniquement)
+export type OwnerSide = 'HC' | 'APOGEE' | 'PARTAGE';
+// Qui a rapporté/identifié le ticket
+export type ReportedBy = 'JEROME' | 'FLORIAN' | 'ERIC' | 'APOGEE' | 'AUTRE';
 export type Severity = 'CRITIQUE' | 'MAJEUR' | 'CONFORT';
 export type CreatedFrom = 'IMPORT' | 'MANUAL';
 // Types d'auteurs pour les commentaires (HC ou Apogée uniquement)
@@ -99,6 +101,8 @@ export interface ApogeeTicket {
   // Historique qualification (textes originaux avant IA)
   original_title: string | null;
   original_description: string | null;
+  // Qui a rapporté le ticket
+  reported_by: ReportedBy | null;
   // Relations
   apogee_modules?: ApogeeModule;
   apogee_priorities?: ApogeePriority;
@@ -179,6 +183,7 @@ export interface TicketFilters {
   module?: string;
   priority?: string;
   owner_side?: OwnerSide;
+  reported_by?: ReportedBy;
   search?: string;
   needs_completion?: boolean;
   is_qualified?: boolean;
