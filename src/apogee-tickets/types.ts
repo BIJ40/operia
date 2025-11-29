@@ -98,6 +98,7 @@ export interface ApogeeTicketInsert {
   hc_status_raw?: string | null;
   module_area?: string | null;
   created_from?: CreatedFrom;
+  needs_completion?: boolean;
 }
 
 export interface ApogeeTicketCommentInsert {
