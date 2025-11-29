@@ -13,6 +13,7 @@ import type {
   ApogeeModule,
   ApogeePriority,
   ApogeeImpactTag,
+  ApogeeOwnerSide,
   ApogeeTicketInsert,
   ApogeeTicketComment,
   ApogeeTicketCommentInsert,
@@ -72,6 +73,19 @@ export function useApogeeTickets(filters?: TicketFilters) {
         .order('display_order');
       if (error) throw error;
       return data as ApogeeImpactTag[];
+    },
+  });
+
+  // Fetch owner sides (Porté par)
+  const { data: ownerSides = [] } = useQuery({
+    queryKey: ['apogee-owner-sides'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('apogee_owner_sides')
+        .select('*')
+        .order('display_order');
+      if (error) throw error;
+      return data as ApogeeOwnerSide[];
     },
   });
 
@@ -257,6 +271,7 @@ export function useApogeeTickets(filters?: TicketFilters) {
     modules,
     priorities,
     impactTags,
+    ownerSides,
     isLoading,
     refetch,
     createTicket,

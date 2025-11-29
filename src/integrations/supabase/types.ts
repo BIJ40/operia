@@ -346,6 +346,30 @@ export type Database = {
         }
         Relationships: []
       }
+      apogee_owner_sides: {
+        Row: {
+          color: string | null
+          created_at: string
+          display_order: number
+          id: string
+          label: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id: string
+          label: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          label?: string
+        }
+        Relationships: []
+      }
       apogee_priorities: {
         Row: {
           color: string | null

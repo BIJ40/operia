@@ -39,6 +39,7 @@ export default function ApogeeTicketsKanban() {
     modules,
     priorities,
     impactTags,
+    ownerSides,
     isLoading,
     createTicket,
     updateTicket,
@@ -188,6 +189,8 @@ export default function ApogeeTicketsKanban() {
         <TicketKanban
           tickets={tickets}
           statuses={statuses}
+          modules={modules}
+          ownerSides={ownerSides}
           onStatusChange={handleStatusChange}
           onTicketClick={handleTicketClick}
         />
