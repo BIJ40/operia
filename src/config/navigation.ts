@@ -94,16 +94,11 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { 
         title: 'Statistiques', 
+        url: ROUTES.pilotage.indicateurs,
         icon: PieChart, 
         scope: 'mes_indicateurs',
+        description: 'Tableau de bord et KPI de votre agence',
         children: [
-          { 
-            title: 'Indicateurs généraux', 
-            url: ROUTES.pilotage.indicateurs, 
-            icon: BarChart3, 
-            scope: 'mes_indicateurs', 
-            description: 'Tableau de bord et KPI de votre agence' 
-          },
           { 
             title: 'Indicateurs Apporteurs', 
             url: ROUTES.pilotage.indicateursApporteurs, 
