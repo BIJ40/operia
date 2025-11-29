@@ -96,6 +96,7 @@ export function UnifiedHeader() {
   const [editMenuLabel, setEditMenuLabel] = useState('');
   const [editTitleSize, setEditTitleSize] = useState('lg');
   const [editIconSize, setEditIconSize] = useState('md');
+  const [editIconColor, setEditIconColor] = useState('');
 
   // Size mappings
   const TITLE_SIZES: Record<string, string> = {
@@ -114,6 +115,7 @@ export function UnifiedHeader() {
   
   const titleSizeClass = TITLE_SIZES[metadata?.header_title_size || 'lg'] || 'text-lg';
   const iconSizeClass = ICON_SIZES[metadata?.header_icon_size || 'md'] || 'w-5 h-5';
+  const iconColorStyle = metadata?.header_icon_color ? { color: metadata.header_icon_color } : undefined;
 
   const canEdit = canEditPageMetadata(globalRole) && pageKey;
 
@@ -123,6 +125,7 @@ export function UnifiedHeader() {
     setEditMenuLabel(metadata?.menu_label || '');
     setEditTitleSize(metadata?.header_title_size || 'lg');
     setEditIconSize(metadata?.header_icon_size || 'md');
+    setEditIconColor(metadata?.header_icon_color || '');
     setIsMetadataDialogOpen(true);
   };
 
@@ -136,6 +139,7 @@ export function UnifiedHeader() {
         menu_label: editMenuLabel || null,
         header_title_size: editTitleSize || 'lg',
         header_icon_size: editIconSize || 'md',
+        header_icon_color: editIconColor || null,
       });
       toast.success('Métadonnées de page mises à jour');
       setIsMetadataDialogOpen(false);
@@ -203,7 +207,12 @@ export function UnifiedHeader() {
           {/* Center: Title with icon + subtitle */}
           <div className="flex-1 flex flex-col items-center justify-center min-w-0">
             <div className="flex items-center gap-2">
-              {PageIcon && <PageIcon className={`${iconSizeClass} text-primary shrink-0`} />}
+              {PageIcon && (
+                <PageIcon 
+                  className={`${iconSizeClass} shrink-0 ${!iconColorStyle ? 'text-primary' : ''}`} 
+                  style={iconColorStyle}
+                />
+              )}
               <h1 className={`${titleSizeClass} font-semibold text-foreground truncate`}>
                 {displayTitle}
               </h1>
@@ -387,6 +396,38 @@ export function UnifiedHeader() {
                   <option value="xl">Très grand (xl)</option>
                 </select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="meta-icon-color">Couleur de l'icône</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="meta-icon-color"
+                  type="color"
+                  value={editIconColor || '#3b82f6'}
+                  onChange={(e) => setEditIconColor(e.target.value)}
+                  className="w-12 h-10 p-1 cursor-pointer"
+                />
+                <Input
+                  value={editIconColor}
+                  onChange={(e) => setEditIconColor(e.target.value)}
+                  placeholder="#3b82f6 ou vide pour défaut"
+                  className="flex-1"
+                />
+                {editIconColor && (
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setEditIconColor('')}
+                  >
+                    Reset
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Laissez vide pour utiliser la couleur primaire par défaut
+              </p>
             </div>
           </div>
 
