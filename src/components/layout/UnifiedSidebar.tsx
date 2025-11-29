@@ -29,6 +29,7 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.academy.apogee]: 'academy_apogee',
   [ROUTES.academy.apporteurs]: 'academy_apporteurs',
   [ROUTES.academy.documents]: 'academy_documents',
+  [ROUTES.pilotage.statsHub]: 'pilotage_statistiques',
   [ROUTES.pilotage.indicateurs]: 'pilotage_indicateurs',
   [ROUTES.pilotage.indicateursApporteurs]: 'pilotage_indicateurs_apporteurs',
   [ROUTES.pilotage.indicateursUnivers]: 'pilotage_indicateurs_univers',
