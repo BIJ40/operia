@@ -8,14 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -24,13 +16,78 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Pencil, Loader2, FileText, Check } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Pencil, Loader2, FileText, Check, Search, Filter, BookOpen, BarChart3, HeadphonesIcon, Building2, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+
+// Définition des sections pour regrouper les pages
+const PAGE_SECTIONS = [
+  { 
+    id: 'academy', 
+    label: 'Help Academy', 
+    icon: BookOpen,
+    prefixes: ['academy_', 'apogee_', 'apporteur_', 'helpconfort_'],
+    color: 'text-blue-600'
+  },
+  { 
+    id: 'pilotage', 
+    label: 'Pilotage Agence', 
+    icon: BarChart3,
+    prefixes: ['pilotage_'],
+    color: 'text-emerald-600'
+  },
+  { 
+    id: 'support', 
+    label: 'Support', 
+    icon: HeadphonesIcon,
+    prefixes: ['support_', 'mes_demandes'],
+    color: 'text-orange-600'
+  },
+  { 
+    id: 'reseau', 
+    label: 'Réseau Franchiseur', 
+    icon: Building2,
+    prefixes: ['franchiseur_', 'reseau_'],
+    color: 'text-purple-600'
+  },
+  { 
+    id: 'admin', 
+    label: 'Administration', 
+    icon: Settings,
+    prefixes: ['admin_'],
+    color: 'text-red-600'
+  },
+  { 
+    id: 'other', 
+    label: 'Autres pages', 
+    icon: FileText,
+    prefixes: [],
+    color: 'text-muted-foreground'
+  },
+];
+
+function getSectionForPage(pageKey: string): string {
+  for (const section of PAGE_SECTIONS) {
+    if (section.prefixes.some(prefix => pageKey.startsWith(prefix))) {
+      return section.id;
+    }
+  }
+  return 'other';
+}
 
 export default function AdminPageMetadata() {
   const { data: allMetadata, isLoading } = useAllPageMetadata();
   const upsertMutation = useUpsertPageMetadata();
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'custom' | 'default'>('all');
   
   // Fusionner les pages connues avec les métadonnées existantes
   const mergedPages = useMemo(() => {
@@ -40,8 +97,40 @@ export default function AdminPageMetadata() {
       ...page,
       metadata: metadataMap.get(page.pageKey) || null,
       hasCustomMetadata: metadataMap.has(page.pageKey),
+      section: getSectionForPage(page.pageKey),
     }));
   }, [allMetadata]);
+  
+  // Filtrer les pages
+  const filteredPages = useMemo(() => {
+    return mergedPages.filter(page => {
+      // Filtre de recherche
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+          page.pageKey.toLowerCase().includes(query) ||
+          page.defaultTitle.toLowerCase().includes(query) ||
+          page.metadata?.header_title?.toLowerCase().includes(query) ||
+          page.defaultSubtitle?.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+      
+      // Filtre de statut
+      if (filterStatus === 'custom' && !page.hasCustomMetadata) return false;
+      if (filterStatus === 'default' && page.hasCustomMetadata) return false;
+      
+      return true;
+    });
+  }, [mergedPages, searchQuery, filterStatus]);
+  
+  // Grouper par section
+  const pagesBySection = useMemo(() => {
+    const grouped: Record<string, typeof filteredPages> = {};
+    for (const section of PAGE_SECTIONS) {
+      grouped[section.id] = filteredPages.filter(p => p.section === section.id);
+    }
+    return grouped;
+  }, [filteredPages]);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<typeof mergedPages[0] | null>(null);
@@ -80,6 +169,9 @@ export default function AdminPageMetadata() {
   };
   
   const customizedCount = mergedPages.filter(p => p.hasCustomMetadata).length;
+  
+  // Sections avec des pages (après filtrage)
+  const activeSections = PAGE_SECTIONS.filter(s => pagesBySection[s.id]?.length > 0);
 
   return (
     <div className="container max-w-6xl mx-auto p-6 space-y-6">
@@ -89,75 +181,153 @@ export default function AdminPageMetadata() {
         backLabel="Retour Administration"
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Pages du système
-          </CardTitle>
-          <CardDescription>
-            {customizedCount} / {mergedPages.length} pages personnalisées
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      {/* Stats et filtres */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <Card className="flex-1">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <div className="text-2xl font-bold">{customizedCount}</div>
+                <div className="text-sm text-muted-foreground">pages personnalisées</div>
+              </div>
+              <div className="flex-1">
+                <div className="text-2xl font-bold">{mergedPages.length - customizedCount}</div>
+                <div className="text-sm text-muted-foreground">pages par défaut</div>
+              </div>
+              <div className="flex-1">
+                <div className="text-2xl font-bold">{mergedPages.length}</div>
+                <div className="text-sm text-muted-foreground">pages total</div>
+              </div>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[200px]">Clé de page</TableHead>
-                  <TableHead>Titre affiché</TableHead>
-                  <TableHead>Sous-titre</TableHead>
-                  <TableHead className="w-[100px]">Statut</TableHead>
-                  <TableHead className="w-[80px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mergedPages.map((page) => (
-                  <TableRow key={page.pageKey}>
-                    <TableCell className="font-mono text-sm text-muted-foreground">
-                      {page.pageKey}
-                    </TableCell>
-                    <TableCell>
-                      {page.metadata?.header_title || page.defaultTitle}
-                      {page.hasCustomMetadata && page.metadata?.header_title && (
-                        <span className="text-xs text-muted-foreground ml-2">
-                          (défaut: {page.defaultTitle})
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {page.metadata?.header_subtitle || page.defaultSubtitle || '—'}
-                    </TableCell>
-                    <TableCell>
-                      {page.hasCustomMetadata ? (
-                        <Badge variant="default" className="gap-1">
-                          <Check className="w-3 h-3" />
-                          Personnalisé
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Par défaut</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(page)}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Barre de recherche et filtres */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher une page..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant={filterStatus === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterStatus('all')}
+          >
+            Toutes
+          </Button>
+          <Button
+            variant={filterStatus === 'custom' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterStatus('custom')}
+            className="gap-1"
+          >
+            <Check className="w-3 h-3" />
+            Personnalisées
+          </Button>
+          <Button
+            variant={filterStatus === 'default' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterStatus('default')}
+          >
+            Par défaut
+          </Button>
+        </div>
+      </div>
+
+      {/* Liste des pages par section */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : activeSections.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            Aucune page ne correspond à votre recherche
+          </CardContent>
+        </Card>
+      ) : (
+        <Accordion type="multiple" defaultValue={activeSections.map(s => s.id)} className="space-y-3">
+          {activeSections.map((section) => {
+            const pages = pagesBySection[section.id];
+            const customCount = pages.filter(p => p.hasCustomMetadata).length;
+            const Icon = section.icon;
+            
+            return (
+              <AccordionItem 
+                key={section.id} 
+                value={section.id}
+                className="border rounded-lg bg-card"
+              >
+                <AccordionTrigger className="px-4 hover:no-underline">
+                  <div className="flex items-center gap-3 flex-1">
+                    <Icon className={cn("w-5 h-5", section.color)} />
+                    <span className="font-medium">{section.label}</span>
+                    <Badge variant="secondary" className="ml-auto mr-2">
+                      {pages.length} page{pages.length > 1 ? 's' : ''}
+                    </Badge>
+                    {customCount > 0 && (
+                      <Badge variant="default" className="gap-1">
+                        <Check className="w-3 h-3" />
+                        {customCount}
+                      </Badge>
+                    )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <div className="space-y-2">
+                    {pages.map((page) => (
+                      <div
+                        key={page.pageKey}
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-lg border transition-colors",
+                          page.hasCustomMetadata 
+                            ? "bg-primary/5 border-primary/20" 
+                            : "bg-muted/30 border-transparent hover:border-border"
+                        )}
                       >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium truncate">
+                              {page.metadata?.header_title || page.defaultTitle}
+                            </span>
+                            {page.hasCustomMetadata && (
+                              <Badge variant="default" className="text-xs shrink-0">
+                                Personnalisé
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground truncate">
+                            {page.metadata?.header_subtitle || page.defaultSubtitle || '—'}
+                          </div>
+                          <div className="text-xs font-mono text-muted-foreground/70 mt-1">
+                            {page.pageKey}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(page)}
+                          className="shrink-0"
+                        >
+                          <Pencil className="w-4 h-4 mr-1" />
+                          Modifier
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      )}
 
       {/* Dialog d'édition */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
