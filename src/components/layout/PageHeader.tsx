@@ -1,8 +1,3 @@
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Loader2 } from 'lucide-react';
-import { usePageMetadata } from '@/hooks/use-page-metadata';
-import { getPageDefaultByKey } from '@/config/pageDefaults';
-
 interface PageHeaderProps {
   pageKey: string;
   backTo?: string;
@@ -10,56 +5,11 @@ interface PageHeaderProps {
 }
 
 /**
- * Composant simplifié pour afficher :
- * - Un lien retour (optionnel)
- * - Une description/sous-titre (depuis page_metadata ou centralisé)
- * 
- * Le titre principal et le crayon d'édition sont dans UnifiedHeader.
+ * Composant déprécié - tout est maintenant dans UnifiedHeader
+ * Conservé pour compatibilité avec les pages existantes.
+ * @deprecated Utiliser UnifiedHeader à la place
  */
-export function PageHeader({
-  pageKey,
-  backTo,
-  backLabel,
-}: PageHeaderProps) {
-  const { data: metadata, isLoading } = usePageMetadata(pageKey);
-  
-  // Récupérer la valeur par défaut centralisée
-  const pageDefault = getPageDefaultByKey(pageKey);
-  
-  // Description affichée (métadonnées ou défaut centralisé)
-  const subtitle = metadata?.header_subtitle || pageDefault?.defaultSubtitle || '';
-
-  // Ne rien afficher si pas de lien retour ni de description
-  if (!backTo && !subtitle && !isLoading) {
-    return null;
-  }
-
-  return (
-    <div className="mb-6">
-      {/* Lien retour */}
-      {backTo && (
-        <Link
-          to={backTo}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-3"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {backLabel || 'Retour'}
-        </Link>
-      )}
-
-      {/* Description / sous-titre */}
-      {(subtitle || isLoading) && (
-        <p className="text-muted-foreground">
-          {isLoading ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Chargement...
-            </span>
-          ) : (
-            subtitle
-          )}
-        </p>
-      )}
-    </div>
-  );
+export function PageHeader(_props: PageHeaderProps) {
+  // Le titre, sous-titre, et bouton retour sont désormais dans UnifiedHeader
+  return null;
 }

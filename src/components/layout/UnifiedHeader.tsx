@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  LogOut, User, Settings, Headset, Loader2, Menu, Pencil, FileEdit,
+  LogOut, User, Settings, Headset, Loader2, Menu, Pencil, FileEdit, ArrowLeft,
   BarChart3, CheckSquare, Tv, CalendarDays, Users, Gauge,
   BookOpen, Handshake, FolderOpen, GraduationCap,
   MessageSquare, LifeBuoy,
@@ -70,17 +70,24 @@ export function UnifiedHeader() {
   const pageConfig = getPageConfigByPath(location.pathname);
   const pageKey = pageConfig?.pageKey || '';
   const defaultTitle = pageConfig?.defaultTitle || PAGE_TITLES[location.pathname] || 'HC Services';
+  const defaultSubtitle = pageConfig?.defaultSubtitle || '';
   
   // Charger les métadonnées de la page
   const { data: metadata } = usePageMetadata(pageKey);
   const upsertMutation = useUpsertPageMetadata();
   
-  // Titre affiché (métadonnées ou défaut)
+  // Titre et sous-titre affichés (métadonnées ou défaut)
   const displayTitle = metadata?.header_title || defaultTitle;
+  const displaySubtitle = metadata?.header_subtitle || defaultSubtitle;
   
   // Icône de la page (depuis config)
   const iconName = pageConfig?.icon;
   const PageIcon = iconName ? ICON_MAP[iconName] : null;
+  
+  // Navigation parente (retour)
+  const parentRoute = pageConfig?.parentRoute;
+  const parentLabel = pageConfig?.parentLabel;
+  const showBackButton = !!parentRoute && location.pathname !== '/';
   
   // État du dialog d'édition des métadonnées
   const [isMetadataDialogOpen, setIsMetadataDialogOpen] = useState(false);
@@ -92,7 +99,7 @@ export function UnifiedHeader() {
 
   const handleOpenMetadataDialog = () => {
     setEditTitle(metadata?.header_title || defaultTitle);
-    setEditSubtitle(metadata?.header_subtitle || '');
+    setEditSubtitle(metadata?.header_subtitle || defaultSubtitle);
     setEditMenuLabel(metadata?.menu_label || '');
     setIsMetadataDialogOpen(true);
   };
@@ -147,24 +154,41 @@ export function UnifiedHeader() {
         </div>
       )}
 
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 h-14">
-        <div className="h-full px-4 flex items-center gap-4">
-          {/* Sidebar toggle */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleSidebar}
-            className="shrink-0"
-          >
-            <Menu className="w-5 h-5" />
-          </Button>
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
+        <div className="h-16 px-4 flex items-center gap-3">
+          {/* Left: Sidebar toggle + Back button */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleSidebar}
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+            
+            {showBackButton && (
+              <Link to={parentRoute!}>
+                <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground hover:text-foreground">
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">{parentLabel}</span>
+                </Button>
+              </Link>
+            )}
+          </div>
 
-          {/* Zone centrale avec titre et icône */}
-          <div className="flex-1 flex items-center justify-center min-w-0 gap-2">
-            {PageIcon && <PageIcon className="w-5 h-5 text-primary shrink-0" />}
-            <h1 className="text-lg font-semibold text-foreground truncate">
-              {displayTitle}
-            </h1>
+          {/* Center: Title with icon + subtitle */}
+          <div className="flex-1 flex flex-col items-center justify-center min-w-0">
+            <div className="flex items-center gap-2">
+              {PageIcon && <PageIcon className="w-5 h-5 text-primary shrink-0" />}
+              <h1 className="text-lg font-semibold text-foreground truncate">
+                {displayTitle}
+              </h1>
+            </div>
+            {displaySubtitle && (
+              <p className="text-xs text-muted-foreground truncate max-w-md">
+                {displaySubtitle}
+              </p>
+            )}
           </div>
 
           {/* Right side actions */}

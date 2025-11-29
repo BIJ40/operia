@@ -20,8 +20,37 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
 import { getRoleCapabilities } from '@/config/roleMatrix';
 import { ROUTES } from '@/config/routes';
+import { useMenuLabels } from '@/hooks/use-page-metadata';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { useState, useEffect, ReactNode } from 'react';
+
+// Mapping route → pageKey pour récupérer le menu_label
+const ROUTE_TO_PAGE_KEY: Record<string, string> = {
+  [ROUTES.academy.apogee]: 'academy_apogee',
+  [ROUTES.academy.apporteurs]: 'academy_apporteurs',
+  [ROUTES.academy.documents]: 'academy_documents',
+  [ROUTES.pilotage.indicateurs]: 'pilotage_indicateurs',
+  [ROUTES.pilotage.indicateursApporteurs]: 'pilotage_indicateurs_apporteurs',
+  [ROUTES.pilotage.indicateursUnivers]: 'pilotage_indicateurs_univers',
+  [ROUTES.pilotage.indicateursTechniciens]: 'pilotage_indicateurs_techniciens',
+  [ROUTES.pilotage.indicateursSav]: 'pilotage_indicateurs_sav',
+  [ROUTES.pilotage.actions]: 'pilotage_actions',
+  [ROUTES.pilotage.diffusion]: 'pilotage_diffusion',
+  [ROUTES.pilotage.rhTech]: 'pilotage_rh_tech',
+  [ROUTES.pilotage.equipe]: 'pilotage_equipe',
+  [ROUTES.support.userTickets]: 'support_mes_demandes',
+  [ROUTES.support.console]: 'support_console',
+  [ROUTES.reseau.dashboard]: 'reseau_dashboard',
+  [ROUTES.reseau.agences]: 'reseau_agences',
+  [ROUTES.reseau.animateurs]: 'reseau_animateurs',
+  [ROUTES.reseau.stats]: 'reseau_stats',
+  [ROUTES.reseau.comparatifs]: 'reseau_comparatifs',
+  [ROUTES.reseau.redevances]: 'reseau_redevances',
+  [ROUTES.admin.users]: 'admin_users',
+  [ROUTES.admin.agencies]: 'admin_agencies',
+  [ROUTES.admin.backup]: 'admin_backup',
+  [ROUTES.admin.pageMetadata]: 'admin_page_metadata',
+};
 
 interface NavItem {
   title: string;
@@ -48,6 +77,19 @@ export function UnifiedSidebar() {
   const { globalRole, agence, canAccessSupportConsole } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
+  const menuLabels = useMenuLabels();
+  
+  // Helper pour obtenir le label d'un item (menu_label personnalisé ou titre par défaut)
+  const getItemLabel = (item: NavItem): string => {
+    if (item.url) {
+      const pageKey = ROUTE_TO_PAGE_KEY[item.url];
+      if (pageKey && menuLabels.has(pageKey)) {
+        return menuLabels.get(pageKey)!;
+      }
+    }
+    return item.title;
+  };
+  
   // Auto-open groups based on current route
   const getActiveGroup = (): string | null => {
     if (location.pathname.startsWith('/academy')) return 'help-academy';
@@ -335,7 +377,7 @@ export function UnifiedSidebar() {
                                     <Icon className="w-4 h-4 shrink-0" />
                                     {!collapsed && (
                                       <>
-                                        <span className="truncate flex-1 text-sm">{item.title}</span>
+                                        <span className="truncate flex-1 text-sm">{getItemLabel(item)}</span>
                                         <ChevronRight 
                                           className={`w-3.5 h-3.5 transition-transform ${hasActiveChild ? 'text-primary' : 'text-muted-foreground'} ${isSubmenuOpen ? 'rotate-90' : ''}`}
                                         />
@@ -365,7 +407,7 @@ export function UnifiedSidebar() {
                                         >
                                           <Link to={getUrlWithEditMode(child.url!)} className="flex items-center gap-2">
                                             <ChildIcon className="w-3.5 h-3.5 shrink-0" />
-                                            {!collapsed && <span className="truncate">{child.title}</span>}
+                                            {!collapsed && <span className="truncate">{getItemLabel(child)}</span>}
                                           </Link>
                                         </SidebarMenuButton>
                                       </SidebarMenuItem>
@@ -396,7 +438,7 @@ export function UnifiedSidebar() {
                                 <Icon className="w-4 h-4 shrink-0" />
                                 {!collapsed && (
                                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <span className="truncate text-sm">{item.title}</span>
+                                    <span className="truncate text-sm">{getItemLabel(item)}</span>
                                     {item.badge && (
                                       <span className="text-[10px] bg-orange-500 text-white px-1.5 py-0.5 rounded-full font-medium shrink-0">
                                         {item.badge}
