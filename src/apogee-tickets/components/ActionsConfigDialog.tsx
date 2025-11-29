@@ -25,7 +25,8 @@ import {
   LayoutGrid,
   Layers,
   Thermometer,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -35,9 +36,6 @@ import type { ApogeeTicketStatus, ApogeeModule, ApogeePriority, ApogeeImpactTag 
 interface ActionsConfigDialogProps {
   open: boolean;
   onClose: () => void;
-  statuses: ApogeeTicketStatus[];
-  modules: ApogeeModule[];
-  priorities: ApogeePriority[];
 }
 
 // Palette de couleurs prédéfinies
@@ -116,16 +114,55 @@ function BadgePreview({ label, color }: { label: string; color: string }) {
 export function ActionsConfigDialog({
   open,
   onClose,
-  statuses,
-  modules,
-  priorities,
 }: ActionsConfigDialogProps) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('statuses');
 
+  // Fetch statuses directly
+  const { data: statuses = [], isLoading: loadingStatuses } = useQuery({
+    queryKey: ['apogee-ticket-statuses-config'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('apogee_ticket_statuses')
+        .select('*')
+        .order('display_order');
+      if (error) throw error;
+      return data as ApogeeTicketStatus[];
+    },
+    enabled: open,
+  });
+
+  // Fetch modules directly
+  const { data: modules = [], isLoading: loadingModules } = useQuery({
+    queryKey: ['apogee-modules-config'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('apogee_modules')
+        .select('*')
+        .order('display_order');
+      if (error) throw error;
+      return data as ApogeeModule[];
+    },
+    enabled: open,
+  });
+
+  // Fetch priorities directly
+  const { data: priorities = [], isLoading: loadingPriorities } = useQuery({
+    queryKey: ['apogee-priorities-config'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('apogee_priorities')
+        .select('*')
+        .order('display_order');
+      if (error) throw error;
+      return data as ApogeePriority[];
+    },
+    enabled: open,
+  });
+
   // Fetch tags
-  const { data: tags = [] } = useQuery({
-    queryKey: ['apogee-impact-tags'],
+  const { data: tags = [], isLoading: loadingTags } = useQuery({
+    queryKey: ['apogee-impact-tags-config'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('apogee_impact_tags')
@@ -134,6 +171,7 @@ export function ActionsConfigDialog({
       if (error) throw error;
       return data as ApogeeImpactTag[];
     },
+    enabled: open,
   });
 
   // Local state for editing
@@ -142,23 +180,24 @@ export function ActionsConfigDialog({
   const [editedPriorities, setEditedPriorities] = useState<ApogeePriority[]>([]);
   const [editedTags, setEditedTags] = useState<ApogeeImpactTag[]>([]);
 
-  // Initialize on open
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen) {
-      setEditedStatuses([...statuses]);
-      setEditedModules([...modules]);
-      setEditedPriorities([...priorities]);
-      setEditedTags([...tags]);
-    }
-    if (!isOpen) onClose();
-  };
-
-  // Update tags when fetched
+  // Sync when data is loaded
   useEffect(() => {
-    if (open && tags.length > 0) {
-      setEditedTags([...tags]);
-    }
-  }, [tags, open]);
+    if (statuses.length > 0) setEditedStatuses([...statuses]);
+  }, [statuses]);
+
+  useEffect(() => {
+    if (modules.length > 0) setEditedModules([...modules]);
+  }, [modules]);
+
+  useEffect(() => {
+    if (priorities.length > 0) setEditedPriorities([...priorities]);
+  }, [priorities]);
+
+  useEffect(() => {
+    if (tags.length > 0) setEditedTags([...tags]);
+  }, [tags]);
+
+  const isLoading = loadingStatuses || loadingModules || loadingPriorities || loadingTags;
 
   // Save handlers
   const saveStatuses = async () => {
@@ -317,7 +356,7 @@ export function ActionsConfigDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="max-w-3xl max-h-[85vh] p-0">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
@@ -326,24 +365,29 @@ export function ActionsConfigDialog({
           </DialogTitle>
         </DialogHeader>
 
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
           <TabsList className="mx-6 grid w-auto grid-cols-4">
             <TabsTrigger value="statuses" className="flex items-center gap-1.5">
               <LayoutGrid className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Statuts Kanban</span>
+              <span className="hidden sm:inline">Statuts ({editedStatuses.length})</span>
               <span className="sm:hidden">Statuts</span>
             </TabsTrigger>
             <TabsTrigger value="modules" className="flex items-center gap-1.5">
               <Layers className="h-3.5 w-3.5" />
-              Modules
+              Modules ({editedModules.length})
             </TabsTrigger>
             <TabsTrigger value="priorities" className="flex items-center gap-1.5">
               <Thermometer className="h-3.5 w-3.5" />
-              Priorités
+              Priorités ({editedPriorities.length})
             </TabsTrigger>
             <TabsTrigger value="tags" className="flex items-center gap-1.5">
               <Tag className="h-3.5 w-3.5" />
-              Tags
+              Tags ({editedTags.length})
             </TabsTrigger>
           </TabsList>
 
@@ -697,6 +741,7 @@ export function ActionsConfigDialog({
             </TabsContent>
           </ScrollArea>
         </Tabs>
+        )}
       </DialogContent>
     </Dialog>
   );

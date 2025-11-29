@@ -211,9 +211,6 @@ export default function ApogeeTicketsKanban() {
       <ActionsConfigDialog
         open={showConfigDialog}
         onClose={() => setShowConfigDialog(false)}
-        statuses={statuses}
-        modules={modules}
-        priorities={priorities}
       />
     </div>
   );
