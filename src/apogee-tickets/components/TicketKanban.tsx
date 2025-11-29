@@ -179,9 +179,15 @@ function DraggableTicketCard({
               {ticket._count.comments}
             </span>
           )}
-          {ticket.needs_completion && (
-            <Badge variant="outline" className="text-xs text-orange-600 border-orange-300">
-              Incomplet
+          {/* Badges barrés pour champs manquants */}
+          {!ticket.module && (
+            <Badge variant="outline" className="text-xs text-orange-600 border-orange-300 line-through">
+              Module
+            </Badge>
+          )}
+          {(ticket.heat_priority === null || ticket.heat_priority === undefined) && (
+            <Badge variant="outline" className="text-xs text-orange-600 border-orange-300 line-through">
+              Heures
             </Badge>
           )}
         </div>

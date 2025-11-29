@@ -167,7 +167,7 @@ export function useApogeeTickets(filters?: TicketFilters) {
         .insert({
           ...ticket,
           created_by_user_id: user?.id,
-          needs_completion: !ticket.module || ticket.heat_priority === null || ticket.heat_priority === undefined || !ticket.owner_side,
+          needs_completion: !ticket.module || ticket.heat_priority === null || ticket.heat_priority === undefined,
         })
         .select()
         .single();
@@ -196,17 +196,16 @@ export function useApogeeTickets(filters?: TicketFilters) {
         // Fetch current values to check completion
         const { data: current } = await supabase
           .from('apogee_tickets')
-          .select('module, heat_priority, owner_side')
+          .select('module, heat_priority')
           .eq('id', id)
           .single();
         
         if (current) {
           const finalModule = 'module' in updates ? updates.module : current.module;
           const finalHeatPriority = 'heat_priority' in updates ? updates.heat_priority : current.heat_priority;
-          const finalOwnerSide = 'owner_side' in updates ? updates.owner_side : current.owner_side;
           
-          // needs_completion = false only if all 3 fields are filled
-          updatePayload.needs_completion = !finalModule || finalHeatPriority === null || finalHeatPriority === undefined || !finalOwnerSide;
+          // needs_completion = false only if module and heat_priority are filled
+          updatePayload.needs_completion = !finalModule || finalHeatPriority === null || finalHeatPriority === undefined;
         }
       }
 
