@@ -59,7 +59,7 @@ serve(async (req) => {
   }
 
   try {
-    const { query, topK = 8 } = await req.json();
+    const { query, topK = 8, source } = await req.json();
 
     if (!query || typeof query !== 'string') {
       throw new Error('Query is required');
@@ -75,20 +75,34 @@ serve(async (req) => {
     const queryEmbedding = await generateEmbedding(query);
     console.log('Query embedding generated');
 
-    // Fetch all chunks
-    const { data: chunks, error: chunksError } = await supabase
-      .from('guide_chunks')
-      .select('*');
+    // Fetch chunks - optionally filter by source
+    let chunksQuery = supabase.from('guide_chunks').select('*');
+    
+    // If source is specified, filter by metadata.source
+    // Note: We'll do client-side filtering for JSON metadata
+    const { data: allChunks, error: chunksError } = await chunksQuery;
 
     if (chunksError) {
       throw chunksError;
+    }
+
+    // Filter by source if specified
+    let chunks = allChunks;
+    if (source && allChunks) {
+      chunks = allChunks.filter(chunk => {
+        const metadata = chunk.metadata as Record<string, any> | null;
+        return metadata?.source === source;
+      });
+      console.log(`Filtered to ${chunks.length} chunks with source="${source}"`);
     }
 
     if (!chunks || chunks.length === 0) {
       return new Response(
         JSON.stringify({ 
           results: [],
-          message: 'No indexed content found. Please index your content first.'
+          message: source 
+            ? `Aucun contenu indexé trouvé pour la source "${source}".`
+            : 'No indexed content found. Please index your content first.'
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
