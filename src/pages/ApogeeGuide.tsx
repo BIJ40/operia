@@ -112,7 +112,7 @@ const SortableCategory = ({
   // Style unifié aux couleurs du site - grisé si vide
   const tileClass = isEmpty 
     ? "bg-muted/50 border-muted-foreground/30 border-l-muted-foreground/50 opacity-60"
-    : "bg-helpconfort-blue/8 border-helpconfort-blue/20 border-l-helpconfort-blue hover:bg-helpconfort-blue/12 hover:border-helpconfort-blue/30 hover:shadow-lg";
+    : "bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border-helpconfort-blue/20 border-l-helpconfort-blue hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg";
 
   return (
     <div
@@ -317,7 +317,7 @@ export default function ApogeeGuide() {
   // Les dates de création/mise à jour ne sont plus nécessaires pour cette page
 
   // Style unifié aux couleurs du site
-  const tileClass = "bg-helpconfort-blue/8 border-helpconfort-blue/20 border-l-helpconfort-blue hover:bg-helpconfort-blue/12 hover:border-helpconfort-blue/30 hover:shadow-lg";
+  const tileClass = "bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border-helpconfort-blue/20 border-l-helpconfort-blue hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg";
 
   const IconComponent = (iconName: string) => {
     const Icon = (Icons as any)[iconName] || Icons.BookOpen;
