@@ -263,30 +263,32 @@ Collaborateurs d'agence (inscrits ou non).
 
 ### Tables et Fichiers Legacy (SUPPRIMÉS)
 
-**Tables et fonctions DB supprimées (migration V2 complète) :**
-- `user_roles` - Table des rôles applicatifs (admin, user, support, franchiseur) - **SUPPRIMÉE**
+**Tables et fonctions DB supprimées (migration V2 complète - 2025-11-29) :**
+- `user_roles` - Table des rôles applicatifs - **SUPPRIMÉE**
+- `user_permissions` - Permissions individuelles - **SUPPRIMÉE**
+- `group_permissions` - Permissions par groupe - **SUPPRIMÉE**
+- `role_permissions` - Permissions par rôle_agence - **SUPPRIMÉE**
+- `user_capabilities` - Capabilities utilisateurs - **SUPPRIMÉE**
+- `scopes` - Scopes de permissions - **SUPPRIMÉE**
+- `groups` - Groupes de permissions - **SUPPRIMÉE**
+- `roles` - Définitions de rôles - **SUPPRIMÉE**
 - `has_role()` - Fonction de vérification de rôle - **SUPPRIMÉE**
+- `get_effective_permission_level()` - Fonction de calcul permissions - **SUPPRIMÉE**
 - `app_role` - Enum des rôles applicatifs - **SUPPRIMÉ**
 
-**Tables DB conservées pour référence historique (non consultées par le code) :**
-- `role_permissions` - Anciennes permissions par rôle_agence
-- `user_permissions` - Anciennes permissions individuelles  
-- `group_permissions` - Anciennes permissions par groupe
-- `scopes` - Anciens scopes de permissions
-- `user_capabilities` - Anciennes capabilities
-- `groups` - Anciens groupes de permissions
+**Colonnes conservées dans `profiles` (référence historique, non utilisées) :**
+- `group_id` - Ancien lien vers groups
+- `role_id` - Ancien lien vers roles
+- `system_role` - Ancien rôle système V1
 
-**Fichiers supprimés lors du nettoyage legacy (2025-01-29) :**
-- `src/types/permissions.ts` - Types V1 (SystemRole, AppRole, ScopeSlug, PERMISSION_LEVELS)
-- `src/services/permissionsService.ts` - Service V1 complet (groups, scopes, user_permissions)
+**Fichiers supprimés lors du nettoyage legacy :**
+- `src/types/permissions.ts` - Types V1 (SystemRole, AppRole, ScopeSlug)
+- `src/services/permissionsService.ts` - Service V1 complet
 - `src/config/permissionsHelpTexts.ts` - Textes d'aide V1
 - `src/hooks/use-permissions-admin.ts` - Hooks admin V1
+- `supabase/functions/migrate-user-roles-v2/` - Edge function de migration
 
-**Fichiers nettoyés :**
-- `src/types/accessControl.ts` - Suppression des fonctions legacy mapping (`getGlobalRoleFromLegacy`, `getEnabledModulesFromLegacy`, `createAccessContext`)
-- `src/contexts/AuthContext.tsx` - Simplification pour V2 only (plus de fallback legacy)
-
-> **Note :** Le système V2 est maintenant la seule source de vérité. Toutes les policies RLS utilisent `has_min_global_role()`, `has_support_access()`, `has_franchiseur_access()` au lieu de `has_role()`.
+> **Note :** Le système V2 est la seule source de vérité. Toutes les policies RLS utilisent `has_min_global_role()`, `has_support_access()`, `has_franchiseur_access()`.
 
 
 ---
