@@ -38,6 +38,35 @@ const STATUS_MAPPING: Record<string, string> = {
   'ABANDONNÉ': 'ABANDONNE',
 };
 
+// Mapping MODULE Excel → module ID DB
+const MODULE_MAPPING: Record<string, string> = {
+  'RDV': 'RDV',
+  'DEVIS': 'DEVIS',
+  'FACTURES': 'FACTURES',
+  'FACTURE': 'FACTURES',
+  'PLANNING': 'PLANNING',
+  'DOSSIERS': 'DOSSIERS',
+  'DOSSIER': 'DOSSIERS',
+  'CLIENTS': 'CLIENTS',
+  'CLIENT': 'CLIENTS',
+  'APPORTEURS': 'APPORTEURS',
+  'APPORTEUR': 'APPORTEURS',
+  'STATS': 'STATS',
+  'STATISTIQUES': 'STATS',
+  'AUTRE': 'AUTRE',
+  'FOURNISSEURS': 'AUTRE',
+  'PRODUITS': 'AUTRE',
+  'INTERVENANTS': 'AUTRE',
+  'COMPTABILITE': 'AUTRE',
+  'GENERAL': 'AUTRE',
+};
+
+function normalizeModule(module: string | null): string | null {
+  if (!module) return null;
+  const upper = module.toUpperCase().trim();
+  return MODULE_MAPPING[upper] || null; // NULL si pas trouvé (pas de FK violation)
+}
+
 function normalizeStatus(statut: string | null): string {
   if (!statut) return 'BACKLOG';
   const upper = statut.toUpperCase().trim();
@@ -124,12 +153,13 @@ export function parseBugsSheet(file: File): Promise<{ rows: BugsRow[], headers: 
 function rowToTicket(row: BugsRow): ApogeeTicketInsert {
   // Titre = description (première ligne si multiline)
   const firstLine = row.description.split('\n')[0].split('<br>')[0].substring(0, 255);
+  const normalizedModule = normalizeModule(row.module);
   
   return {
     element_concerne: firstLine,
     description: row.description,
-    module: row.module || null,
-    module_area: row.module || null,
+    module: normalizedModule,
+    module_area: row.module || null, // Garder la valeur brute pour référence
     priority: null, // Pas de priorité dans BUGS
     action_type: row.statut || null,
     kanban_status: normalizeStatus(row.statut),
