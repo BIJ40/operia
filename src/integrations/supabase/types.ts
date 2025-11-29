@@ -805,6 +805,42 @@ export type Database = {
         }
         Relationships: []
       }
+      planning_signatures: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          signed_at: string | null
+          signed_by_user_id: string | null
+          tech_id: number
+          updated_at: string
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          signed_at?: string | null
+          signed_by_user_id?: string | null
+          tech_id: number
+          updated_at?: string
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          signed_at?: string | null
+          signed_by_user_id?: string | null
+          tech_id?: number
+          updated_at?: string
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           agence: string | null
