@@ -191,7 +191,11 @@ export default function ApogeeTicketsIncomplete() {
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner un module" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent 
+                      className="max-h-[400px] overflow-y-auto z-[100]"
+                      position="popper"
+                      sideOffset={4}
+                    >
                       {modules.map((m) => (
                         <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
                       ))}
