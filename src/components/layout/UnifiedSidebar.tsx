@@ -10,14 +10,13 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarHeader,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
 import { getRoleCapabilities } from '@/config/roleMatrix';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
@@ -30,15 +29,15 @@ interface NavItem {
   description?: string;
   children?: NavItem[];
   badge?: string;
-  minRole?: GlobalRole; // Rôle minimum pour voir cet item
-  requiresSupportConsole?: boolean; // Visible seulement si console support activée
+  minRole?: GlobalRole;
+  requiresSupportConsole?: boolean;
 }
 
 interface NavGroup {
   label: ReactNode;
   labelKey: string;
+  indexUrl: string; // URL de la page index de la section
   items: NavItem[];
-  // Condition d'accès basée sur ROLE_MATRIX
   accessKey?: 'canAccessHelpAcademy' | 'canAccessPilotageAgence' | 'canAccessSupport' | 'canAccessFranchiseur' | 'canAccessAdmin';
 }
 
@@ -50,15 +49,12 @@ export function UnifiedSidebar() {
   const collapsed = state === 'collapsed';
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
 
-  // V2: Capacités basées sur ROLE_MATRIX
   const caps = getRoleCapabilities(globalRole);
 
-  // Check if currently in edit mode
   const isInEditMode = searchParams.get('edit') === 'true' && caps.canAccessAdmin;
 
-  // Helper to preserve edit mode for guide URLs
   const getUrlWithEditMode = (url: string) => {
-    const editablePrefix = ['/apogee', '/apporteurs', '/helpconfort'];
+    const editablePrefix = ['/academy/apogee', '/academy/apporteurs', '/academy/documents', '/apogee', '/apporteurs', '/helpconfort'];
     const isEditableUrl = editablePrefix.some(prefix => url.startsWith(prefix));
     if (isInEditMode && isEditableUrl) {
       return `${url}?edit=true`;
@@ -66,7 +62,9 @@ export function UnifiedSidebar() {
     return url;
   };
 
-  const toggleGroup = (label: string) => {
+  const toggleGroup = (label: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setOpenGroups(prev => {
       const newSet = new Set(prev);
       if (newSet.has(label)) {
@@ -78,64 +76,69 @@ export function UnifiedSidebar() {
     });
   };
 
-  // Navigation groups - Filtrage basé sur ROLE_MATRIX (accessKey)
+  // Navigation groups avec indexUrl pour chaque section
   const navGroups: NavGroup[] = [
     {
       label: <><span>Help</span><span className="text-helpconfort-orange animate-pulse">!</span><span> Academy</span></>,
       labelKey: 'help-academy',
+      indexUrl: '/academy',
       items: [
-        { title: 'Guide Apogée', url: '/apogee', icon: BookOpen, description: 'Guide complet pour maîtriser le logiciel Apogée' },
-        { title: 'Guide Apporteurs', url: '/apporteurs', icon: FileText, description: 'Ressources pour les apporteurs d\'affaires' },
-        { title: 'Base Documentaire', url: '/helpconfort', icon: FolderOpen, description: 'Documents et ressources HelpConfort' },
+        { title: 'Guide Apogée', url: '/academy/apogee', icon: BookOpen, description: 'Guide complet pour maîtriser le logiciel Apogée' },
+        { title: 'Guide Apporteurs', url: '/academy/apporteurs', icon: FileText, description: 'Ressources pour les apporteurs d\'affaires' },
+        { title: 'Base Documentaire', url: '/academy/documents', icon: FolderOpen, description: 'Documents et ressources HelpConfort' },
       ],
       accessKey: 'canAccessHelpAcademy',
     },
     {
       label: 'Pilotage Agence',
       labelKey: 'pilotage',
+      indexUrl: '/pilotage',
       items: [
         { 
           title: 'Statistiques', 
           icon: PieChart, 
           children: [
-            { title: 'Indicateurs généraux', url: '/mes-indicateurs', icon: BarChart3, description: 'Tableau de bord et KPI de votre agence' },
-            { title: 'Indicateurs Apporteurs', url: '/mes-indicateurs/apporteurs', icon: BarChart3, description: 'Statistiques apporteurs' },
-            { title: 'Indicateurs Univers', url: '/mes-indicateurs/univers', icon: BarChart3, description: 'Statistiques par univers' },
-            { title: 'Indicateurs Techniciens', url: '/mes-indicateurs/techniciens', icon: BarChart3, description: 'Statistiques techniciens' },
-            { title: 'Indicateurs SAV', url: '/mes-indicateurs/sav', icon: BarChart3, description: 'Statistiques SAV' },
+            { title: 'Indicateurs généraux', url: '/pilotage/indicateurs', icon: BarChart3, description: 'Tableau de bord et KPI de votre agence' },
+            { title: 'Indicateurs Apporteurs', url: '/pilotage/indicateurs/apporteurs', icon: BarChart3, description: 'Statistiques apporteurs' },
+            { title: 'Indicateurs Univers', url: '/pilotage/indicateurs/univers', icon: BarChart3, description: 'Statistiques par univers' },
+            { title: 'Indicateurs Techniciens', url: '/pilotage/indicateurs/techniciens', icon: BarChart3, description: 'Statistiques techniciens' },
+            { title: 'Indicateurs SAV', url: '/pilotage/indicateurs/sav', icon: BarChart3, description: 'Statistiques SAV' },
           ]
         },
-        { title: 'Actions à Mener', url: '/actions-a-mener', icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
-        { title: 'Diffusion', url: '/diffusion', icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
-        { title: 'RH Tech', url: '/rh-tech', icon: Calendar, description: 'Planning hebdomadaire techniciens' },
+        { title: 'Actions à Mener', url: '/pilotage/actions', icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
+        { title: 'Diffusion', url: '/pilotage/diffusion', icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
+        { title: 'RH Tech', url: '/pilotage/rh-tech', icon: Calendar, description: 'Planning hebdomadaire techniciens' },
       ],
       accessKey: 'canAccessPilotageAgence',
     },
     {
       label: 'Support',
       labelKey: 'support',
+      indexUrl: '/support',
       items: [
-        { title: 'Mes Demandes', url: '/mes-demandes', icon: LifeBuoy, description: 'Créer et suivre vos demandes de support' },
-        { title: 'Gestion Tickets', url: '/admin/support', icon: Headset, description: 'Traiter les demandes de support', requiresSupportConsole: true },
+        { title: 'Mes Demandes', url: '/support/mes-demandes', icon: LifeBuoy, description: 'Créer et suivre vos demandes de support' },
+        { title: 'Console Support', url: '/support/console', icon: Headset, description: 'Traiter les demandes de support', requiresSupportConsole: true },
       ],
       accessKey: 'canAccessSupport',
     },
     {
       label: 'Réseau Franchiseur',
       labelKey: 'franchiseur',
+      indexUrl: '/reseau',
       items: [
-        { title: 'Dashboard Réseau', url: '/tete-de-reseau', icon: Network },
-        { title: 'Agences', url: '/tete-de-reseau/agences', icon: Building2 },
-        { title: 'Animateurs', url: '/tete-de-reseau/animateurs', icon: Users, minRole: 'franchisor_admin' },
-        { title: 'Statistiques', url: '/tete-de-reseau/stats', icon: PieChart },
-        { title: 'Comparatifs', url: '/tete-de-reseau/comparatifs', icon: GitCompare },
-        { title: 'Redevances', url: '/tete-de-reseau/redevances', icon: Coins, minRole: 'franchisor_admin' },
+        { title: 'Dashboard Réseau', url: '/reseau/dashboard', icon: Network },
+        { title: 'Agences', url: '/reseau/agences', icon: Building2 },
+        { title: 'Animateurs', url: '/reseau/animateurs', icon: Users, minRole: 'franchisor_admin' },
+        { title: 'Statistiques', url: '/reseau/stats', icon: PieChart },
+        { title: 'Comparatifs', url: '/reseau/comparatifs', icon: GitCompare },
+        { title: 'Redevances', url: '/reseau/redevances', icon: Coins, minRole: 'franchisor_admin' },
       ],
       accessKey: 'canAccessFranchiseur',
     },
     {
       label: 'Administration',
       labelKey: 'admin',
+      indexUrl: '/admin',
       items: [
         { title: 'Utilisateurs', url: '/admin/users', icon: Users, description: 'Gérer les comptes utilisateurs' },
         { title: 'Agences', url: '/admin/agencies', icon: Building2 },
@@ -147,24 +150,17 @@ export function UnifiedSidebar() {
     },
   ];
 
-  // V2: Filtrage des groupes basé sur ROLE_MATRIX
   const filteredGroups = navGroups.filter(group => {
     if (!group.accessKey) return true;
-    
-    // Cas spécial pilotage : nécessite agence si requiresAgencyForPilotage
     if (group.accessKey === 'canAccessPilotageAgence') {
       if (caps.requiresAgencyForPilotage && !agence) return false;
     }
-    
     return caps[group.accessKey];
   });
 
-  // V2: Filtrage par minRole et requiresSupportConsole
   const getFilteredItems = (items: NavItem[]): NavItem[] => {
     return items.filter(item => {
-      // Check requiresSupportConsole
       if (item.requiresSupportConsole && !canAccessSupportConsole) return false;
-      // Check minRole
       if (!item.minRole) return true;
       const userLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
       const requiredLevel = GLOBAL_ROLES[item.minRole];
@@ -175,7 +171,7 @@ export function UnifiedSidebar() {
   const isActive = (url?: string) => {
     if (!url) return false;
     if (url === '/') return location.pathname === '/';
-    if (url === '/admin' || url === '/mes-indicateurs') return location.pathname === url;
+    if (url === '/admin' || url === '/pilotage/indicateurs') return location.pathname === url;
     return location.pathname === url || location.pathname.startsWith(url + '/');
   };
 
@@ -183,6 +179,10 @@ export function UnifiedSidebar() {
     if (item.url && isActive(item.url)) return true;
     if (item.children) return item.children.some(child => isActive(child.url));
     return false;
+  };
+
+  const isGroupActive = (group: NavGroup): boolean => {
+    return location.pathname.startsWith(group.indexUrl);
   };
 
   const [openSubmenus, setOpenSubmenus] = useState<Set<string>>(() => new Set());
@@ -234,42 +234,54 @@ export function UnifiedSidebar() {
           if (items.length === 0) return null;
 
           const isGroupOpen = openGroups.has(group.labelKey);
-          const hasActiveItem = items.some(item => isChildActive(item));
+          const groupIsActive = isGroupActive(group);
 
           return (
             <Collapsible 
               key={group.labelKey} 
               open={isGroupOpen}
-              onOpenChange={() => toggleGroup(group.labelKey)}
+              onOpenChange={() => {}}
             >
               <SidebarGroup className="py-0.5">
-                <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel 
+                <div className="flex items-center">
+                  {/* Label cliquable → navigation vers la page index */}
+                  <Link
+                    to={group.indexUrl}
                     className={`
-                      cursor-pointer rounded-md transition-colors flex items-center justify-between px-2 py-1.5 mx-1
-                      ${hasActiveItem && !isGroupOpen 
+                      flex-1 cursor-pointer rounded-l-md transition-colors flex items-center px-2 py-1.5 mx-1
+                      ${groupIsActive 
                         ? 'bg-primary/15 text-primary border-l-2 border-primary' 
                         : 'hover:bg-muted/50'
                       }
                     `}
                   >
-                    <span className={`text-xs font-semibold tracking-wide uppercase ${hasActiveItem ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <span className={`text-xs font-semibold tracking-wide uppercase ${groupIsActive ? 'text-primary' : 'text-muted-foreground'}`}>
                       {!collapsed ? group.label : group.labelKey.charAt(0).toUpperCase()}
                     </span>
-                    {!collapsed && (
+                  </Link>
+                  
+                  {/* Chevron cliquable → expand/collapse */}
+                  {!collapsed && (
+                    <button
+                      onClick={(e) => toggleGroup(group.labelKey, e)}
+                      className={`
+                        p-1.5 mr-1 rounded-r-md transition-colors
+                        ${groupIsActive ? 'text-primary hover:bg-primary/20' : 'text-muted-foreground hover:bg-muted/50'}
+                      `}
+                    >
                       <ChevronRight 
-                        className={`w-3.5 h-3.5 transition-transform ${hasActiveItem ? 'text-primary' : 'text-muted-foreground'} ${isGroupOpen ? 'rotate-90' : ''}`}
+                        className={`w-3.5 h-3.5 transition-transform ${isGroupOpen ? 'rotate-90' : ''}`}
                       />
-                    )}
-                  </SidebarGroupLabel>
-                </CollapsibleTrigger>
+                    </button>
+                  )}
+                </div>
+                
                 <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                   <SidebarGroupContent className="pt-0.5">
                     <SidebarMenu className="space-y-0.5">
                       {items.map((item) => {
                         const Icon = item.icon;
                         
-                        // Item with children (submenu)
                         if (item.children) {
                           const submenuKey = item.title.toLowerCase().replace(/\s+/g, '-');
                           const isSubmenuOpen = openSubmenus.has(submenuKey);
@@ -282,31 +294,30 @@ export function UnifiedSidebar() {
                               onOpenChange={() => toggleSubmenu(submenuKey)}
                             >
                               <SidebarMenuItem>
-                                <CollapsibleTrigger asChild>
-                                  <SidebarMenuButton 
-                                    className={`
-                                      cursor-pointer transition-all duration-200 py-1.5
-                                      ${hasActiveChild 
-                                        ? isSubmenuOpen 
-                                          ? 'bg-primary/10 text-primary' 
-                                          : 'bg-primary/15 text-primary border-l-2 border-primary'
-                                        : 'hover:bg-muted hover:translate-x-0.5'
-                                      }
-                                    `}
-                                  >
-                                    <div className="flex items-center gap-2 w-full">
-                                      <Icon className="w-4 h-4 shrink-0" />
-                                      {!collapsed && (
-                                        <>
-                                          <span className="truncate flex-1 text-sm">{item.title}</span>
-                                          <ChevronRight 
-                                            className={`w-3.5 h-3.5 transition-transform ${hasActiveChild ? 'text-primary' : 'text-muted-foreground'} ${isSubmenuOpen ? 'rotate-90' : ''}`}
-                                          />
-                                        </>
-                                      )}
-                                    </div>
-                                  </SidebarMenuButton>
-                                </CollapsibleTrigger>
+                                <SidebarMenuButton 
+                                  onClick={() => toggleSubmenu(submenuKey)}
+                                  className={`
+                                    cursor-pointer transition-all duration-200 py-1.5
+                                    ${hasActiveChild 
+                                      ? isSubmenuOpen 
+                                        ? 'bg-primary/10 text-primary' 
+                                        : 'bg-primary/15 text-primary border-l-2 border-primary'
+                                      : 'hover:bg-muted hover:translate-x-0.5'
+                                    }
+                                  `}
+                                >
+                                  <div className="flex items-center gap-2 w-full">
+                                    <Icon className="w-4 h-4 shrink-0" />
+                                    {!collapsed && (
+                                      <>
+                                        <span className="truncate flex-1 text-sm">{item.title}</span>
+                                        <ChevronRight 
+                                          className={`w-3.5 h-3.5 transition-transform ${hasActiveChild ? 'text-primary' : 'text-muted-foreground'} ${isSubmenuOpen ? 'rotate-90' : ''}`}
+                                        />
+                                      </>
+                                    )}
+                                  </div>
+                                </SidebarMenuButton>
                               </SidebarMenuItem>
                               <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                                 <div className="ml-3 border-l border-border/50 pl-2 py-0.5 space-y-0.5">
@@ -341,7 +352,6 @@ export function UnifiedSidebar() {
                           );
                         }
                         
-                        // Regular item (no children)
                         const active = isActive(item.url);
                         
                         return (
