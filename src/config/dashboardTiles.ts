@@ -1,7 +1,7 @@
 import { 
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   MessageSquare, Network, Users, Shield, Database, Settings, LucideIcon,
-  PieChart, Coins
+  PieChart, Coins, Ticket, Headphones
 } from 'lucide-react';
 
 export interface DashboardTile {
@@ -88,7 +88,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     id: 'MES_DEMANDES',
     title: 'Mes Demandes',
     description: 'Créer et suivre vos demandes de support',
-    icon: MessageSquare,
+    icon: Ticket,
     route: '/mes-demandes',
     scopeSlug: 'mes_demandes',
     color: 'primary',
@@ -98,7 +98,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     id: 'CONSOLE_SUPPORT',
     title: 'Console Support',
     description: 'Gestion des tickets et demandes utilisateurs',
-    icon: MessageSquare,
+    icon: Headphones,
     route: '/admin/support',
     scopeSlug: 'support_tickets',
     color: 'accent',
