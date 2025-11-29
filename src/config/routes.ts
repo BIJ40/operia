@@ -103,6 +103,7 @@ export const ROUTES = {
     apogeeTicketsImport: '/admin/apogee-tickets/import',
     apogeeTicketsImportPriorities: '/admin/apogee-tickets/import-priorities',
     apogeeTicketsIncomplete: '/admin/apogee-tickets/incomplets',
+    apogeeTicketsClassify: '/admin/apogee-tickets/classifier',
     apogeeTicketsReview: '/admin/apogee-tickets/review',
     apogeeGuides: '/admin/apogee-guides',
     chatbotRag: '/admin/chatbot-rag',
