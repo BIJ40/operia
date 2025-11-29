@@ -125,15 +125,26 @@ export default function TeamPage() {
     setCreateUserTarget(collaborator);
   };
 
+  // Pour les N3+, rediriger vers l'interface franchiseur
+  const isN3Plus = hasGlobalRole("franchisor_user");
+  
   if (!agencyId && !agence) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
           <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold mb-2">Aucune agence associée</h2>
-          <p className="text-muted-foreground">
-            Vous devez être rattaché à une agence pour accéder à cette page.
+          <p className="text-muted-foreground mb-4">
+            {isN3Plus 
+              ? "En tant que membre du réseau, accédez aux équipes via la gestion des agences."
+              : "Vous devez être rattaché à une agence pour accéder à cette page."
+            }
           </p>
+          {isN3Plus && (
+            <Button asChild>
+              <a href="/reseau/agences">Voir les agences</a>
+            </Button>
+          )}
         </div>
       </div>
     );
