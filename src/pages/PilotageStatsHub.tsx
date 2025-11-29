@@ -4,23 +4,24 @@ import { Link } from 'react-router-dom';
 import { BarChart3, Users, Building2, Calendar, LifeBuoy, Settings2, Euro, Clock, FileText, TrendingUp, Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { DataService } from '@/apogee-connect/services/dataService';
-import { FiltersProvider, useFilters } from '@/apogee-connect/contexts/FiltersContext';
+import { FiltersProvider } from '@/apogee-connect/contexts/FiltersContext';
 import { ApiToggleProvider, useApiToggle } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider, useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { calculateDashboardStats, calculateDelaiMoyenDossierFacture, calculatePanierMoyen, calculateDelaiMoyenDossierPremierDevis, calculateTauxTransformationDevis } from '@/apogee-connect/utils/dashboardCalculations';
 import { calculateTauxSAVGlobal } from '@/apogee-connect/utils/apporteursCalculations';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { startOfMonth, endOfMonth } from 'date-fns';
 
 // Définition des KPI disponibles
 const AVAILABLE_KPIS = [
-  { id: 'ca_mois', label: 'CA en cours (mois)', icon: Euro, color: 'orange' },
+  { id: 'ca_mois', label: 'CA mois en cours', icon: Euro, color: 'orange' },
   { id: 'delai_dossier_facture', label: 'Délai moyen dossier', icon: Clock, color: 'blue' },
-  { id: 'taux_sav', label: 'Taux de SAV', icon: LifeBuoy, color: 'red' },
+  { id: 'taux_sav', label: 'Taux de SAV global', icon: LifeBuoy, color: 'red' },
   { id: 'delai_devis', label: 'Délai 1er devis', icon: FileText, color: 'purple' },
   { id: 'panier_moyen', label: 'Panier moyen', icon: Euro, color: 'pink' },
   { id: 'taux_transfo', label: 'Taux transfo devis', icon: TrendingUp, color: 'cyan' },
@@ -90,7 +91,6 @@ export default function PilotageStatsHub() {
 }
 
 function PilotageStatsHubContent() {
-  const { filters } = useFilters();
   const { isApiEnabled } = useApiToggle();
   const { agencyChangeCounter, currentAgency, isAgencyReady } = useAgency();
   const userAgency = currentAgency?.id || '';
@@ -111,22 +111,29 @@ function PilotageStatsHubContent() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedKpis));
   }, [selectedKpis]);
 
+  // Date range du mois en cours pour le CA
+  const currentMonthRange = useMemo(() => ({
+    start: startOfMonth(new Date()),
+    end: endOfMonth(new Date())
+  }), []);
+
   const { data, isLoading } = useQuery({
-    queryKey: ['stats-hub-kpis', filters, isApiEnabled, agencyChangeCounter],
+    queryKey: ['stats-hub-kpis', isApiEnabled, agencyChangeCounter],
     enabled: isAgencyReady && isApiEnabled,
     queryFn: async () => {
       if (!currentAgency?.id) return null;
       
       const apiData = await DataService.loadAllData(isApiEnabled);
       
-      const stats = calculateDashboardStats({
+      // Stats du mois en cours pour le CA
+      const statsMonth = calculateDashboardStats({
         projects: apiData.projects || [],
         interventions: apiData.interventions || [],
         factures: apiData.factures || [],
         devis: apiData.devis || [],
         clients: apiData.clients || [],
         users: apiData.users || [],
-      }, filters.dateRange, userAgency);
+      }, currentMonthRange, userAgency);
       
       const delaiDossierFacture = calculateDelaiMoyenDossierFacture(
         apiData.factures || [],
@@ -136,12 +143,12 @@ function PilotageStatsHubContent() {
       
       const panierMoyen = calculatePanierMoyen(
         apiData.factures || [],
-        filters.dateRange
+        currentMonthRange
       );
       
       const tauxTransformationDevis = calculateTauxTransformationDevis(
         apiData.devis || [],
-        filters.dateRange
+        currentMonthRange
       );
       
       const delaiDossierPremierDevis = calculateDelaiMoyenDossierPremierDevis(
@@ -154,11 +161,11 @@ function PilotageStatsHubContent() {
         apiData.factures || [],
         apiData.projects || [],
         apiData.clients || [],
-        filters.dateRange
+        undefined // Global, sans filtre de période
       );
       
       return {
-        ...stats,
+        ...statsMonth,
         delaiDossierFacture,
         panierMoyen,
         tauxTransformationDevis,
@@ -209,12 +216,14 @@ function PilotageStatsHubContent() {
         backLabel="Retour Pilotage Agence"
       />
 
-      {/* KPI Favoris */}
+      {/* Widgets favoris */}
       {isAgencyReady && isApiEnabled && (
         <Card className="p-4 border-2 border-primary/20 bg-gradient-to-br from-background to-muted/20">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Mes KPIs favoris</h2>
-            <span className="text-xs text-muted-foreground">Cliquez sur ⚙️ pour personnaliser</span>
+            <h2 className="text-lg font-semibold">Widgets favoris</h2>
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              Cliquez sur <Settings2 className="h-3.5 w-3.5 inline" /> pour personnaliser
+            </span>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
