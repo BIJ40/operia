@@ -33,56 +33,7 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { PAGE_TITLES } from '@/config/navigation';
-
-// Configuration des pages avec leurs métadonnées
-const PAGE_HEADER_CONFIG: {
-  match: (path: string) => boolean;
-  pageKey: string;
-  defaultTitle: string;
-}[] = [
-  // Pilotage - Indicateurs
-  { match: (path) => path === '/hc-agency/indicateurs' || path.startsWith('/hc-agency/indicateurs/'), pageKey: 'pilotage_indicateurs', defaultTitle: 'Indicateurs généraux' },
-  { match: (path) => path === '/hc-agency/actions', pageKey: 'pilotage_actions', defaultTitle: 'Actions à Mener' },
-  { match: (path) => path === '/hc-agency/diffusion', pageKey: 'pilotage_diffusion', defaultTitle: 'Mode Diffusion' },
-  { match: (path) => path === '/hc-agency/rh-tech', pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech' },
-  { match: (path) => path === '/hc-agency/equipe', pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe' },
-  { match: (path) => path === '/hc-agency', pageKey: 'pilotage_index', defaultTitle: 'Pilotage Agence' },
-  
-  // Help Academy
-  { match: (path) => path.startsWith('/academy/apogee'), pageKey: 'academy_apogee', defaultTitle: 'Guide Apogée' },
-  { match: (path) => path.startsWith('/academy/apporteurs'), pageKey: 'academy_apporteurs', defaultTitle: 'Guide Apporteurs' },
-  { match: (path) => path.startsWith('/academy/hc-base'), pageKey: 'academy_documents', defaultTitle: 'Base Documentaire' },
-  { match: (path) => path === '/academy', pageKey: 'academy_index', defaultTitle: 'Help! Academy' },
-  
-  // Support
-  { match: (path) => path === '/support/mes-demandes', pageKey: 'support_mes_demandes', defaultTitle: 'Mes Demandes' },
-  { match: (path) => path === '/support/console', pageKey: 'support_console', defaultTitle: 'Console Support' },
-  { match: (path) => path === '/support', pageKey: 'support_index', defaultTitle: 'Support' },
-  
-  // Réseau Franchiseur
-  { match: (path) => path === '/hc-reseau/dashboard', pageKey: 'reseau_dashboard', defaultTitle: 'Dashboard Réseau' },
-  { match: (path) => path === '/hc-reseau/agences', pageKey: 'reseau_agences', defaultTitle: 'Agences du Réseau' },
-  { match: (path) => path === '/hc-reseau/animateurs', pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs' },
-  { match: (path) => path === '/hc-reseau/stats', pageKey: 'reseau_stats', defaultTitle: 'Statistiques Réseau' },
-  { match: (path) => path === '/hc-reseau/comparatifs', pageKey: 'reseau_comparatifs', defaultTitle: 'Comparatifs' },
-  { match: (path) => path === '/hc-reseau/redevances', pageKey: 'reseau_redevances', defaultTitle: 'Redevances' },
-  { match: (path) => path === '/hc-reseau', pageKey: 'reseau_index', defaultTitle: 'Réseau Franchiseur' },
-  
-  // Admin
-  { match: (path) => path === '/admin/users', pageKey: 'admin_users', defaultTitle: 'Gestion Utilisateurs' },
-  { match: (path) => path === '/admin/agencies', pageKey: 'admin_agencies', defaultTitle: 'Gestion Agences' },
-  { match: (path) => path === '/admin/backup', pageKey: 'admin_backup', defaultTitle: 'Sauvegardes' },
-  { match: (path) => path === '/admin/page-metadata', pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages' },
-  { match: (path) => path === '/admin', pageKey: 'admin_index', defaultTitle: 'Administration' },
-  
-  // Home
-  { match: (path) => path === '/', pageKey: 'home', defaultTitle: 'Tableau de bord' },
-];
-
-// Obtenir la config de page pour un chemin donné
-function getPageConfig(pathname: string) {
-  return PAGE_HEADER_CONFIG.find(config => config.match(pathname)) || null;
-}
+import { getPageConfigByPath, getPageDefaultByKey } from '@/config/pageDefaults';
 
 // Vérifier si l'utilisateur peut éditer les métadonnées (N5/N6)
 function canEditPageMetadata(globalRole: GlobalRole | null): boolean {
@@ -99,7 +50,7 @@ export function UnifiedHeader() {
   const { hasNewTickets, newTicketsCount } = useSupportNotifications();
 
   // Obtenir la configuration de la page actuelle
-  const pageConfig = getPageConfig(location.pathname);
+  const pageConfig = getPageConfigByPath(location.pathname);
   const pageKey = pageConfig?.pageKey || '';
   const defaultTitle = pageConfig?.defaultTitle || PAGE_TITLES[location.pathname] || 'HC Services';
   
