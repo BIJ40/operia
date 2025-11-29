@@ -5,8 +5,10 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { ROUTES } from "@/config/routes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -162,7 +164,7 @@ export default function TeamPage() {
           </p>
           {isN3Plus && (
             <Button asChild>
-              <a href="/reseau/agences">Voir les agences</a>
+              <Link to={ROUTES.reseau.agences}>Voir les agences</Link>
             </Button>
           )}
         </div>

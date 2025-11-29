@@ -2,13 +2,14 @@ import { Link } from 'react-router-dom';
 import { BarChart3, ListTodo, Tv, Calendar } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ROUTES } from '@/config/routes';
 
 const pilotageModules = [
   {
     title: 'Statistiques',
     description: 'Tableau de bord et KPI de votre agence',
     icon: BarChart3,
-    href: '/pilotage/indicateurs',
+    href: ROUTES.pilotage.indicateurs,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
   },
@@ -16,7 +17,7 @@ const pilotageModules = [
     title: 'Actions à Mener',
     description: 'Suivi des actions et tâches en cours',
     icon: ListTodo,
-    href: '/pilotage/actions',
+    href: ROUTES.pilotage.actions,
     color: 'text-purple-500',
     bgColor: 'bg-purple-500/10',
   },
@@ -24,7 +25,7 @@ const pilotageModules = [
     title: 'Diffusion',
     description: 'Mode affichage TV agence',
     icon: Tv,
-    href: '/pilotage/diffusion',
+    href: ROUTES.pilotage.diffusion,
     color: 'text-orange-500',
     bgColor: 'bg-orange-500/10',
     badge: 'En cours',
@@ -33,7 +34,7 @@ const pilotageModules = [
     title: 'RH Tech',
     description: 'Planning hebdomadaire techniciens',
     icon: Calendar,
-    href: '/pilotage/rh-tech',
+    href: ROUTES.pilotage.rhTech,
     color: 'text-green-500',
     bgColor: 'bg-green-500/10',
   },

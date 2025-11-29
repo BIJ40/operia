@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom';
 import { BookOpen, FileText, FolderOpen } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ROUTES } from '@/config/routes';
 
 const academyModules = [
   {
     title: 'Guide Apogée',
     description: 'Guide complet pour maîtriser le logiciel Apogée',
     icon: BookOpen,
-    href: '/academy/apogee',
+    href: ROUTES.academy.apogee,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
   },
@@ -15,7 +16,7 @@ const academyModules = [
     title: 'Guide Apporteurs',
     description: 'Ressources pour les apporteurs d\'affaires',
     icon: FileText,
-    href: '/academy/apporteurs',
+    href: ROUTES.academy.apporteurs,
     color: 'text-green-500',
     bgColor: 'bg-green-500/10',
   },
@@ -23,7 +24,7 @@ const academyModules = [
     title: 'Base Documentaire',
     description: 'Documents et ressources HelpConfort',
     icon: FolderOpen,
-    href: '/academy/documents',
+    href: ROUTES.academy.documents,
     color: 'text-orange-500',
     bgColor: 'bg-orange-500/10',
   },

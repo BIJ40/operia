@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Network, Building2, Users, PieChart, GitCompare, Coins, Settings } from 'lucide-react';
+import { Network, Building2, Users, PieChart, GitCompare, Coins } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasMinimumRole } from '@/types/globalRoles';
 import { Badge } from '@/components/ui/badge';
+import { ROUTES } from '@/config/routes';
 
 export default function ReseauIndex() {
   const { globalRole } = useAuth();
@@ -14,7 +15,7 @@ export default function ReseauIndex() {
       title: 'Dashboard Réseau',
       description: 'Vue d\'ensemble du réseau',
       icon: Network,
-      href: '/reseau/dashboard',
+      href: ROUTES.reseau.dashboard,
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
       visible: true,
@@ -23,7 +24,7 @@ export default function ReseauIndex() {
       title: 'Agences',
       description: 'Gestion des agences du réseau',
       icon: Building2,
-      href: '/reseau/agences',
+      href: ROUTES.reseau.agences,
       color: 'text-green-500',
       bgColor: 'bg-green-500/10',
       visible: true,
@@ -32,7 +33,7 @@ export default function ReseauIndex() {
       title: 'Animateurs',
       description: 'Gestion des animateurs réseau',
       icon: Users,
-      href: '/reseau/animateurs',
+      href: ROUTES.reseau.animateurs,
       color: 'text-purple-500',
       bgColor: 'bg-purple-500/10',
       visible: isFranchisorAdmin,
@@ -41,7 +42,7 @@ export default function ReseauIndex() {
       title: 'Statistiques',
       description: 'Statistiques consolidées du réseau',
       icon: PieChart,
-      href: '/reseau/stats',
+      href: ROUTES.reseau.stats,
       color: 'text-orange-500',
       bgColor: 'bg-orange-500/10',
       visible: true,
@@ -50,7 +51,7 @@ export default function ReseauIndex() {
       title: 'Comparatifs',
       description: 'Comparer les performances',
       icon: GitCompare,
-      href: '/reseau/comparatifs',
+      href: ROUTES.reseau.comparatifs,
       color: 'text-cyan-500',
       bgColor: 'bg-cyan-500/10',
       visible: true,
@@ -59,7 +60,7 @@ export default function ReseauIndex() {
       title: 'Redevances',
       description: 'Gestion des redevances',
       icon: Coins,
-      href: '/reseau/redevances',
+      href: ROUTES.reseau.redevances,
       color: 'text-yellow-500',
       bgColor: 'bg-yellow-500/10',
       visible: isFranchisorAdmin,
