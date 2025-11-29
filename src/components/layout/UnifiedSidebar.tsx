@@ -162,6 +162,7 @@ export function UnifiedSidebar() {
       items: [
         { 
           title: 'Statistiques', 
+          url: ROUTES.pilotage.statsHub,
           icon: PieChart, 
           children: [
             { title: 'Indicateurs généraux', url: ROUTES.pilotage.indicateurs, icon: BarChart3, description: 'Tableau de bord et KPI de votre agence' },
@@ -358,33 +359,52 @@ export function UnifiedSidebar() {
                             <Collapsible
                               key={submenuKey}
                               open={isSubmenuOpen}
-                              onOpenChange={() => toggleSubmenu(submenuKey)}
+                              onOpenChange={() => {}}
                             >
                               <SidebarMenuItem>
-                                <SidebarMenuButton 
-                                  onClick={() => toggleSubmenu(submenuKey)}
-                                  className={`
-                                    cursor-pointer transition-all duration-200 py-1.5
-                                    ${hasActiveChild 
-                                      ? isSubmenuOpen 
-                                        ? 'bg-primary/10 text-primary' 
-                                        : 'bg-primary/15 text-primary border-l-2 border-primary'
-                                      : 'hover:bg-muted hover:translate-x-0.5'
-                                    }
-                                  `}
-                                >
-                                  <div className="flex items-center gap-2 w-full">
-                                    <Icon className="w-4 h-4 shrink-0" />
-                                    {!collapsed && (
-                                      <>
-                                        <span className="truncate flex-1 text-sm">{getItemLabel(item)}</span>
-                                        <ChevronRight 
-                                          className={`w-3.5 h-3.5 transition-transform ${hasActiveChild ? 'text-primary' : 'text-muted-foreground'} ${isSubmenuOpen ? 'rotate-90' : ''}`}
-                                        />
-                                      </>
-                                    )}
-                                  </div>
-                                </SidebarMenuButton>
+                                <div className={`
+                                  flex items-center w-full rounded-md transition-all duration-200
+                                  ${hasActiveChild || isActive(item.url)
+                                    ? isSubmenuOpen 
+                                      ? 'bg-primary/10 text-primary' 
+                                      : 'bg-primary/15 text-primary border-l-2 border-primary'
+                                    : 'hover:bg-muted'
+                                  }
+                                `}>
+                                  {/* Partie cliquable pour navigation */}
+                                  {item.url ? (
+                                    <Link
+                                      to={getUrlWithEditMode(item.url)}
+                                      className="flex items-center gap-2 flex-1 py-1.5 px-2 hover:translate-x-0.5 transition-transform"
+                                    >
+                                      <Icon className="w-4 h-4 shrink-0" />
+                                      {!collapsed && <span className="truncate text-sm">{getItemLabel(item)}</span>}
+                                    </Link>
+                                  ) : (
+                                    <button
+                                      onClick={() => toggleSubmenu(submenuKey)}
+                                      className="flex items-center gap-2 flex-1 py-1.5 px-2"
+                                    >
+                                      <Icon className="w-4 h-4 shrink-0" />
+                                      {!collapsed && <span className="truncate text-sm">{getItemLabel(item)}</span>}
+                                    </button>
+                                  )}
+                                  {/* Chevron pour expand/collapse */}
+                                  {!collapsed && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        toggleSubmenu(submenuKey);
+                                      }}
+                                      className="p-1.5 hover:bg-muted rounded-r-md"
+                                    >
+                                      <ChevronRight 
+                                        className={`w-3.5 h-3.5 transition-transform ${hasActiveChild || isActive(item.url) ? 'text-primary' : 'text-muted-foreground'} ${isSubmenuOpen ? 'rotate-90' : ''}`}
+                                      />
+                                    </button>
+                                  )}
+                                </div>
                               </SidebarMenuItem>
                               <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-out data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                                 <div className="ml-3 border-l border-border/50 pl-2 py-0.5 space-y-0.5 animate-fade-in">
