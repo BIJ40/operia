@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Users, UserCheck } from "lucide-react";
 import { AppLayout } from "@/apogee-connect/components/layout/AppLayout";
 import { TechWeeklyPlanningList } from "@/apogee-connect/components/TechWeeklyPlanningList";
-import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
+import { AgencyProvider, useAgency } from "@/apogee-connect/contexts/AgencyContext";
+import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useTechniciens } from "@/apogee-connect/hooks/useTechniciens";
 import { api } from "@/apogee-connect/services/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,7 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function PlanningHebdo() {
+function PlanningHebdoContent() {
   const { isAgencyReady } = useAgency();
   const [selectedTechId, setSelectedTechId] = useState<number | undefined>(undefined);
 
@@ -114,5 +115,15 @@ export default function PlanningHebdo() {
         <TechWeeklyPlanningList techFilterId={selectedTechId} />
       </div>
     </AppLayout>
+  );
+}
+
+export default function PlanningHebdo() {
+  return (
+    <ApiToggleProvider>
+      <AgencyProvider>
+        <PlanningHebdoContent />
+      </AgencyProvider>
+    </ApiToggleProvider>
   );
 }
