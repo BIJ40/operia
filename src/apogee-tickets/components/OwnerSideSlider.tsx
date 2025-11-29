@@ -1,15 +1,17 @@
 /**
  * Slider pour la prise en charge Apogée ↔ HC
- * Valeurs: 0 (Apogée), 25 (75/25), 50 (50/50), 75 (25/75), 100 (HC)
+ * Valeurs: null (non déterminé), 0 (Apogée), 25 (75/25), 50 (50/50), 75 (25/75), 100 (HC)
  */
 
-import { useState } from 'react';
 import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface OwnerSideSliderProps {
-  value: number | null; // 0-100
-  onChange: (value: number) => void;
+  value: number | null; // null = non déterminé, 0-100 = valeur
+  onChange: (value: number | null) => void;
   disabled?: boolean;
 }
 
@@ -22,28 +24,60 @@ const STEPS = [
 ];
 
 export function OwnerSideSlider({ value, onChange, disabled }: OwnerSideSliderProps) {
-  const currentValue = value ?? 50;
-  const currentStep = STEPS.reduce((prev, curr) => 
+  const isUndetermined = value === null;
+  const currentValue = value ?? 50; // Position visuelle par défaut au milieu
+  const currentStep = isUndetermined ? null : STEPS.reduce((prev, curr) => 
     Math.abs(curr.value - currentValue) < Math.abs(prev.value - currentValue) ? curr : prev
   );
 
+  const handleSliderChange = (v: number) => {
+    onChange(v);
+  };
+
+  const handleReset = () => {
+    onChange(null);
+  };
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between text-sm font-medium">
-        <span className="text-blue-600">Apogée</span>
-        <span className="text-orange-600">HC</span>
+      {/* Header avec état et bouton reset */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-blue-600">Apogée</span>
+          {isUndetermined && (
+            <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">
+              P.E.C à définir
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {!isUndetermined && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              disabled={disabled}
+              className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Réinitialiser
+            </Button>
+          )}
+          <span className="text-sm font-medium text-orange-600">HC</span>
+        </div>
       </div>
       
       {/* Slider */}
       <div className="relative pt-1">
         <Slider
           value={[currentValue]}
-          onValueChange={([v]) => onChange(v)}
+          onValueChange={([v]) => handleSliderChange(v)}
           min={0}
           max={100}
           step={25}
           disabled={disabled}
-          className="cursor-pointer"
+          className={cn("cursor-pointer", isUndetermined && "opacity-50")}
           trackClassName="h-3 bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500"
           rangeClassName="bg-transparent"
         />
@@ -55,7 +89,7 @@ export function OwnerSideSlider({ value, onChange, disabled }: OwnerSideSliderPr
               key={step.value}
               className={cn(
                 "w-3 h-3 rounded-full border-2 transition-all",
-                currentValue === step.value
+                !isUndetermined && currentValue === step.value
                   ? "bg-white border-primary scale-125"
                   : "bg-white/50 border-white/70"
               )}
@@ -70,11 +104,11 @@ export function OwnerSideSlider({ value, onChange, disabled }: OwnerSideSliderPr
           <button
             key={step.value}
             type="button"
-            onClick={() => !disabled && onChange(step.value)}
+            onClick={() => !disabled && handleSliderChange(step.value)}
             disabled={disabled}
             className={cn(
               "px-1.5 py-0.5 rounded transition-colors",
-              currentValue === step.value
+              !isUndetermined && currentValue === step.value
                 ? "bg-primary/10 text-primary font-medium"
                 : "hover:bg-muted"
             )}
@@ -86,41 +120,56 @@ export function OwnerSideSlider({ value, onChange, disabled }: OwnerSideSliderPr
 
       {/* Current selection display */}
       <div className="flex items-center justify-center gap-3 text-sm">
-        <span className={cn(
-          "px-2 py-1 rounded",
-          currentStep.apogee > 0 ? "bg-blue-100 text-blue-700" : "bg-muted text-muted-foreground"
-        )}>
-          Apogée: {currentStep.apogee}%
-        </span>
-        <span className={cn(
-          "px-2 py-1 rounded",
-          currentStep.hc > 0 ? "bg-orange-100 text-orange-700" : "bg-muted text-muted-foreground"
-        )}>
-          HC: {currentStep.hc}%
-        </span>
+        {isUndetermined ? (
+          <span className="px-2 py-1 rounded bg-amber-100 text-amber-700">
+            Non déterminé
+          </span>
+        ) : (
+          <>
+            <span className={cn(
+              "px-2 py-1 rounded",
+              currentStep && currentStep.apogee > 0 ? "bg-blue-100 text-blue-700" : "bg-muted text-muted-foreground"
+            )}>
+              Apogée: {currentStep?.apogee ?? 0}%
+            </span>
+            <span className={cn(
+              "px-2 py-1 rounded",
+              currentStep && currentStep.hc > 0 ? "bg-orange-100 text-orange-700" : "bg-muted text-muted-foreground"
+            )}>
+              HC: {currentStep?.hc ?? 0}%
+            </span>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
 // Helpers pour convertir owner_side DB ↔ slider value
-export function ownerSideToSliderValue(ownerSide: string | null): number {
+export function ownerSideToSliderValue(ownerSide: string | null): number | null {
   switch (ownerSide) {
     case 'APOGEE': return 0;
     case 'PARTAGE': return 50;
     case 'HC': return 100;
-    default: return 50;
+    default: return null; // Non déterminé
   }
 }
 
-export function sliderValueToOwnerSide(value: number): 'APOGEE' | 'HC' | 'PARTAGE' {
+export function sliderValueToOwnerSide(value: number | null): 'APOGEE' | 'HC' | 'PARTAGE' | null {
+  if (value === null) return null;
   if (value <= 12) return 'APOGEE';
   if (value >= 88) return 'HC';
   return 'PARTAGE';
 }
 
+// Vérifie si la P.E.C est incomplète
+export function isOwnerSideIncomplete(ownerSide: string | null): boolean {
+  return ownerSide === null || ownerSide === undefined || ownerSide === '';
+}
+
 // Stocke aussi le ratio exact pour affichage
-export function sliderValueToRatio(value: number): { apogee: number; hc: number } {
+export function sliderValueToRatio(value: number | null): { apogee: number; hc: number } | null {
+  if (value === null) return null;
   const step = STEPS.reduce((prev, curr) => 
     Math.abs(curr.value - value) < Math.abs(prev.value - value) ? curr : prev
   );
