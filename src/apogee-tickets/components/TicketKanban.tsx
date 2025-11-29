@@ -55,14 +55,15 @@ const TAILWIND_COLORS: Record<string, string> = {
   rose: '#f43f5e',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  BACKLOG: 'bg-gray-100 border-gray-300',
-  SPEC_A_FAIRE: 'bg-blue-50 border-blue-300',
-  EN_DEV_APOGEE: 'bg-purple-50 border-purple-300',
-  EN_TEST_HC: 'bg-orange-50 border-orange-300',
-  EN_PROD: 'bg-green-50 border-green-300',
-  CLOTURE: 'bg-gray-50 border-gray-200',
-};
+// Helper pour générer un fond léger à partir d'une couleur hex
+function getColumnStyle(color: string | null): React.CSSProperties {
+  if (!color) return { backgroundColor: '#f3f4f6', borderColor: '#d1d5db' };
+  // Utiliser la couleur configurée avec opacité pour le fond
+  return {
+    backgroundColor: `${color}15`,  // 15 = ~8% opacité
+    borderColor: `${color}50`,      // 50 = ~30% opacité
+  };
+}
 
 // Composant carte de ticket draggable - utilise useDraggable au lieu de useSortable
 function DraggableTicketCard({
@@ -220,7 +221,8 @@ function DroppableColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col w-72 min-w-72 rounded-lg border-2 ${STATUS_COLORS[status.id] || 'bg-gray-50 border-gray-200'} ${isOver ? 'ring-2 ring-primary ring-offset-2' : ''} transition-all`}
+      style={getColumnStyle(status.color)}
+      className={`flex flex-col w-72 min-w-72 rounded-lg border-2 ${isOver ? 'ring-2 ring-primary ring-offset-2' : ''} transition-all`}
     >
       <div className="p-3 border-b">
         <div className="flex items-center justify-between">
