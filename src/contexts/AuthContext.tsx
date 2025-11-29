@@ -42,51 +42,19 @@ interface AuthContextType {
   hasModuleOption: (moduleKey: ModuleKey, optionKey: string) => boolean;
   
   // Helpers de niveau V2
-  isAdmin: boolean;        // globalRole >= platform_admin (N5)
-  isSupport: boolean;      // hasModule('support') ou capability support
-  isFranchiseur: boolean;  // globalRole >= franchisor_user (N3)
+  isAdmin: boolean;
+  isSupport: boolean;
+  isFranchiseur: boolean;
   
   // Auth actions
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   
-  // ============================================================================
-  // COMPATIBILITÉ TEMPORAIRE - À SUPPRIMER PROGRESSIVEMENT
-  // Ces méthodes retournent toujours true pour ne pas bloquer les fonctionnalités
-  // ============================================================================
-  /** @deprecated Utiliser hasGlobalRole() ou hasModule() */
-  canViewScope: (scopeSlug: string) => boolean;
-  /** @deprecated Utiliser hasGlobalRole('franchisee_admin') */
-  canEditScope: (scopeSlug: string) => boolean;
-  /** @deprecated Utiliser hasGlobalRole('franchisee_admin') */
-  canCreateScope: (scopeSlug: string) => boolean;
-  /** @deprecated Utiliser hasGlobalRole('franchisor_user') */
-  canDeleteScope: (scopeSlug: string) => boolean;
-  /** @deprecated Utiliser hasGlobalRole('platform_admin') */
-  canAdminScope: (scopeSlug: string) => boolean;
-  /** @deprecated Ne plus utiliser */
-  getEffectivePermission: (scopeSlug: string) => { level: number; canView: boolean; canEdit: boolean; canCreate: boolean; canDelete: boolean; canAdmin: boolean; source: string };
-  /** @deprecated Ne plus utiliser */
-  hasCapability: (capability: string) => boolean;
-  /** @deprecated Ne plus utiliser */
-  hasAccessToBlock: (blockId: string) => boolean;
-  /** @deprecated Ne plus utiliser */
+  // Compatibilité minimale (retournent des valeurs non-bloquantes)
   hasAccessToScope: (scope: string) => boolean;
-  /** @deprecated Utiliser hasModule('support') */
   canManageTickets: () => boolean;
-  /** @deprecated Ne plus utiliser */
-  scopes: any[];
-  /** @deprecated Ne plus utiliser */
-  capabilities: any[];
-  /** @deprecated Ne plus utiliser */
-  role: any;
-  /** @deprecated Ne plus utiliser */
-  userPermissions: string[];
-  /** @deprecated Ne plus utiliser - utiliser globalRole */
   suggestedGlobalRole: GlobalRole;
-  /** @deprecated Ne plus utiliser - utiliser enabledModules */
-  suggestedEnabledModules: EnabledModules;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -384,72 +352,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // ============================================================================
-  // WRAPPERS DE COMPATIBILITÉ - Retournent des valeurs par défaut non-bloquantes
-  // À terme, les composants doivent migrer vers hasGlobalRole/hasModule
-  // ============================================================================
-  const canViewScope = useCallback((scopeSlug: string): boolean => {
-    // V2: Vérifier via le système de modules
-    if (isAdmin) return true;
-    
-    // Mapping scope -> module
-    if (['apogee', 'apporteurs', 'helpconfort', 'documents'].includes(scopeSlug)) {
-      return checkModuleEnabled(enabledModules, 'help_academy');
-    }
-    if (['mes_indicateurs', 'actions_a_mener', 'diffusion'].includes(scopeSlug)) {
-      return checkModuleEnabled(enabledModules, 'pilotage_agence');
-    }
-    if (['support_tickets', 'mes_demandes', 'support'].includes(scopeSlug)) {
-      return checkModuleEnabled(enabledModules, 'support');
-    }
-    if (scopeSlug.startsWith('franchiseur_')) {
-      return checkModuleEnabled(enabledModules, 'reseau_franchiseur');
-    }
-    if (scopeSlug.startsWith('admin_')) {
-      return checkModuleEnabled(enabledModules, 'admin_plateforme');
-    }
-    
-    // Par défaut, autoriser (ne pas bloquer)
-    return true;
-  }, [isAdmin, enabledModules]);
-
-  const canEditScope = useCallback((_scopeSlug: string): boolean => {
-    return globalRoleLevel >= GLOBAL_ROLES.franchisee_admin;
-  }, [globalRoleLevel]);
-
-  const canCreateScope = useCallback((_scopeSlug: string): boolean => {
-    return globalRoleLevel >= GLOBAL_ROLES.franchisee_admin;
-  }, [globalRoleLevel]);
-
-  const canDeleteScope = useCallback((_scopeSlug: string): boolean => {
-    return globalRoleLevel >= GLOBAL_ROLES.franchisor_user;
-  }, [globalRoleLevel]);
-
-  const canAdminScope = useCallback((_scopeSlug: string): boolean => {
-    return globalRoleLevel >= GLOBAL_ROLES.platform_admin;
-  }, [globalRoleLevel]);
-
-  const getEffectivePermission = useCallback((_scopeSlug: string) => {
-    // Wrapper de compatibilité - retourne permissions basées sur globalRole
-    const level = isAdmin ? 4 : isFranchiseur ? 3 : globalRoleLevel >= 2 ? 2 : 1;
-    return {
-      level,
-      canView: level >= 1,
-      canEdit: level >= 2,
-      canCreate: level >= 2,
-      canDelete: level >= 3,
-      canAdmin: level >= 4,
-      source: 'v2_compat',
-    };
-  }, [isAdmin, isFranchiseur, globalRoleLevel]);
-
-  const hasCapability = useCallback((capability: string): boolean => {
-    if (isAdmin) return true;
-    if (capability === 'support') return hasSupportCapability;
-    return false;
-  }, [isAdmin, hasSupportCapability]);
-
-  const hasAccessToBlock = useCallback((_blockId: string): boolean => true, []);
+  // Wrappers minimaux de compatibilité
   const hasAccessToScope = useCallback((_scope: string): boolean => true, []);
   const canManageTickets = useCallback((): boolean => {
     return isAdmin || isSupport || isFranchiseur;
@@ -461,49 +364,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthLoading,
       user,
       isLoggingOut,
-      
-      // Profil
       agence,
       roleAgence,
       mustChangePassword,
-      
-      // ========================================================================
-      // V2.0 - Source de vérité
-      // ========================================================================
       globalRole,
       enabledModules,
       accessContext,
       hasGlobalRole: hasGlobalRoleGuard,
       hasModule: hasModuleGuard,
       hasModuleOption: hasModuleOptionGuard,
-      
-      // Helpers dérivés V2
       isAdmin,
       isSupport,
       isFranchiseur,
-      
-      // Auth
       login, 
       logout,
       signup,
-      
-      // Compatibilité (deprecated)
-      canViewScope,
-      canEditScope,
-      canCreateScope,
-      canDeleteScope,
-      canAdminScope,
-      getEffectivePermission,
-      hasCapability,
-      hasAccessToBlock,
       hasAccessToScope,
       canManageTickets,
-      scopes: [],
-      capabilities: [],
-      role: null,
-      userPermissions: [],
       suggestedGlobalRole: globalRole ?? 'base_user',
-      suggestedEnabledModules: enabledModules ?? {},
     }}>
       {children}
     </AuthContext.Provider>

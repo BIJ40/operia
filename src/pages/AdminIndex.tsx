@@ -1,27 +1,13 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { StatsOverview } from '@/components/admin/overview/StatsOverview';
 import { QuickActions } from '@/components/admin/overview/QuickActions';
 import { NavigationCards } from '@/components/admin/overview/NavigationCards';
-import { usePermissions } from '@/hooks/use-permissions';
 
+// Route protégée par RoleGuard (N5+) dans App.tsx
 export default function AdminIndex() {
-  const { isAdmin } = useAuth();
-  const { canViewScope } = usePermissions();
   const navigate = useNavigate();
-
-  // Accès si admin OU si au moins un scope admin est accessible
-  const hasAnyAdminAccess = isAdmin || 
-    canViewScope('admin_users') || 
-    canViewScope('admin_roles') || 
-    canViewScope('admin_backup') || 
-    canViewScope('admin_settings');
-
-  if (!hasAnyAdminAccess) {
-    return <Navigate to="/" replace />;
-  }
 
   return (
     <div className="container max-w-7xl mx-auto p-8 space-y-12">

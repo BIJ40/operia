@@ -1,12 +1,11 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { usePermissions } from '@/hooks/use-permissions';
-import { ScopeSlug, PERMISSION_LEVELS, PERMISSION_LEVEL_LABELS } from '@/types/permissions';
+import { useAuth } from '@/contexts/AuthContext';
+import { GlobalRole, hasMinimumRole, GLOBAL_ROLE_LABELS } from '@/types/globalRoles';
 import { Shield, Lock } from 'lucide-react';
 
 interface PermissionGuardProps {
-  scope: ScopeSlug | string;
-  requiredLevel?: number;
+  minRole?: GlobalRole;
   children: ReactNode;
   fallback?: ReactNode;
   redirectTo?: string;
@@ -14,43 +13,31 @@ interface PermissionGuardProps {
 }
 
 /**
- * Guard de permission pour protéger les pages/composants
- * 
- * @param scope - Le slug du scope à vérifier
- * @param requiredLevel - Le niveau minimum requis (défaut: VIEW = 1)
- * @param children - Le contenu à afficher si autorisé
- * @param fallback - Contenu alternatif si non autorisé (optionnel)
- * @param redirectTo - URL de redirection si non autorisé (optionnel)
- * @param showAccessDenied - Afficher un message d'accès refusé (défaut: true)
+ * Guard de permission V2 basé sur global_role
  */
 export function PermissionGuard({
-  scope,
-  requiredLevel = PERMISSION_LEVELS.VIEW,
+  minRole,
   children,
   fallback,
   redirectTo,
   showAccessDenied = true
 }: PermissionGuardProps) {
-  const { getPermissionLevel, isAdmin } = usePermissions();
+  const { globalRole, isAdmin } = useAuth();
   
-  const userLevel = isAdmin ? PERMISSION_LEVELS.ADMIN : getPermissionLevel(scope);
-  const hasAccess = userLevel >= requiredLevel;
+  const hasAccess = isAdmin || !minRole || hasMinimumRole(globalRole, minRole);
 
   if (hasAccess) {
     return <>{children}</>;
   }
 
-  // Redirection si spécifiée
   if (redirectTo) {
     return <Navigate to={redirectTo} replace />;
   }
 
-  // Fallback personnalisé
   if (fallback) {
     return <>{fallback}</>;
   }
 
-  // Message d'accès refusé par défaut
   if (showAccessDenied) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
@@ -61,9 +48,11 @@ export function PermissionGuard({
         <p className="text-muted-foreground text-center max-w-md">
           Vous n'avez pas les permissions nécessaires pour accéder à cette section.
         </p>
-        <p className="text-sm text-muted-foreground mt-2">
-          Niveau requis : <span className="font-medium">{PERMISSION_LEVEL_LABELS[requiredLevel]}</span>
-        </p>
+        {minRole && (
+          <p className="text-sm text-muted-foreground mt-2">
+            Niveau requis : <span className="font-medium">{GLOBAL_ROLE_LABELS[minRole]}</span>
+          </p>
+        )}
       </div>
     );
   }
@@ -72,65 +61,42 @@ export function PermissionGuard({
 }
 
 interface ConditionalRenderProps {
-  scope: ScopeSlug | string;
-  requiredLevel?: number;
+  minRole?: GlobalRole;
   children: ReactNode;
   fallback?: ReactNode;
 }
 
 /**
- * Rendu conditionnel basé sur les permissions (sans redirection)
- * Utile pour masquer/afficher des boutons, sections, etc.
+ * Rendu conditionnel basé sur global_role V2
  */
 export function ConditionalRender({
-  scope,
-  requiredLevel = PERMISSION_LEVELS.VIEW,
+  minRole,
   children,
   fallback = null
 }: ConditionalRenderProps) {
-  const { getPermissionLevel, isAdmin } = usePermissions();
+  const { globalRole, isAdmin } = useAuth();
   
-  const userLevel = isAdmin ? PERMISSION_LEVELS.ADMIN : getPermissionLevel(scope);
-  const hasAccess = userLevel >= requiredLevel;
+  const hasAccess = isAdmin || !minRole || hasMinimumRole(globalRole, minRole);
 
   return hasAccess ? <>{children}</> : <>{fallback}</>;
 }
 
 /**
- * Hook pour obtenir les props de bouton selon le niveau
- * Retourne les props à appliquer sur un bouton (disabled, title, etc.)
+ * Hook pour vérifier l'accès basé sur le rôle
  */
-export function useButtonPermission(scope: ScopeSlug | string, requiredLevel: number) {
-  const { getPermissionLevel, isAdmin } = usePermissions();
-  
-  const userLevel = isAdmin ? PERMISSION_LEVELS.ADMIN : getPermissionLevel(scope);
-  const hasAccess = userLevel >= requiredLevel;
-
-  return {
-    disabled: !hasAccess,
-    title: hasAccess 
-      ? undefined 
-      : `Niveau "${PERMISSION_LEVEL_LABELS[requiredLevel]}" requis`,
-    className: hasAccess ? '' : 'opacity-50 cursor-not-allowed'
-  };
+export function useRoleAccess(minRole?: GlobalRole): boolean {
+  const { globalRole, isAdmin } = useAuth();
+  return isAdmin || !minRole || hasMinimumRole(globalRole, minRole);
 }
 
 /**
- * Badge indicateur de niveau de permission
+ * Badge indicateur de rôle
  */
-export function PermissionLevelBadge({ level }: { level: number }) {
-  const colors: Record<number, string> = {
-    0: 'bg-muted text-muted-foreground',
-    1: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-    2: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-    3: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
-    4: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-  };
-
+export function RoleBadge({ role }: { role: GlobalRole }) {
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${colors[level] || colors[0]}`}>
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
       <Shield className="w-3 h-3" />
-      {PERMISSION_LEVEL_LABELS[level] || 'Inconnu'}
+      {GLOBAL_ROLE_LABELS[role] || role}
     </span>
   );
 }

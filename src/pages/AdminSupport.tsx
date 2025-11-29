@@ -14,8 +14,6 @@ import { SatisfactionChart } from '@/components/SatisfactionChart';
 import { KanbanView } from '@/components/admin/support/KanbanView';
 import { TicketFilters } from '@/components/admin/support/TicketFilters';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { usePermissions } from '@/hooks/use-permissions';
-import { PERMISSION_LEVELS } from '@/types/permissions';
 import { TICKET_STATUS_LABELS, type TicketStatus, type TicketPriority, type TicketService } from '@/services/supportService';
 
 export default function AdminSupport() {
@@ -52,14 +50,9 @@ export default function AdminSupport() {
   } = useAdminSupport();
 
   const navigate = useNavigate();
-  const { canViewScope, canEditScope, canDeleteScope, canAdminScope } = usePermissions();
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [darkMode, setDarkMode] = useState(false);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
-
-  // Permissions pour support_tickets
-  const canView = canViewScope('support_tickets');
-  const canManage = canDeleteScope('support_tickets'); // Niveau 3 = Gestion
 
   useEffect(() => {
     const loadEmailPreference = async () => {
@@ -108,13 +101,10 @@ export default function AdminSupport() {
     setFilter('new');
   }, [setFilter]);
 
+  // Route protégée par RoleGuard dans App.tsx
   useEffect(() => {
-    if (!canView && !isAdmin && !user) {
-      navigate('/');
-      return;
-    }
     loadTickets();
-  }, [canView, isAdmin, user, navigate, loadTickets]);
+  }, [loadTickets]);
 
   // Compteurs pour les onglets - utiliser les nouveaux statuts
   const newCount = tickets.filter((t) => t.status === 'new').length;

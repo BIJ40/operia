@@ -13,20 +13,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketSourceBadge } from '@/components/tickets/TicketSourceBadge';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
-import { Plus, Send, Download, ArrowLeft, Home, Lock } from 'lucide-react';
+import { Plus, Send, Download, ArrowLeft, Home } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useNavigate, Navigate } from 'react-router-dom';
-import { SCOPE_SLUGS, PERMISSION_LEVELS } from '@/types/permissions';
+import { useNavigate } from 'react-router-dom';
 
+// Route protégée par RoleGuard dans App.tsx
 export default function UserTickets() {
   const navigate = useNavigate();
-  const { user, isAdmin, isSupport, canManageTickets, canViewScope, canEditScope, canCreateScope } = useAuth();
-  
-  // Vérifications de permissions pour "Mes Demandes"
-  const canView = canViewScope(SCOPE_SLUGS.MES_DEMANDES);
-  const canCreate = canCreateScope(SCOPE_SLUGS.MES_DEMANDES);
-  const canEdit = canEditScope(SCOPE_SLUGS.MES_DEMANDES);
+  const { user } = useAuth();
   const {
     tickets,
     selectedTicket,
@@ -50,11 +45,6 @@ export default function UserTickets() {
   });
   const [files, setFiles] = useState<File[]>([]);
   const [newMessage, setNewMessage] = useState('');
-
-  // Rediriger si pas d'accès en lecture
-  if (!canView) {
-    return <Navigate to="/" replace />;
-  }
 
   const handleCreateTicket = async () => {
     const trimmedSubject = newTicket.subject.trim();
@@ -251,12 +241,10 @@ export default function UserTickets() {
         
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Support / Tickets</h1>
-          {canCreate && (
-            <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nouveau ticket
-            </Button>
-          )}
+          <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouveau ticket
+          </Button>
         </div>
 
         {showCreateForm && (

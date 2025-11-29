@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,8 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { FileText, Search, Trash2, Edit, Save, X } from 'lucide-react';
-import { usePermissions } from '@/hooks/use-permissions';
-import { PERMISSION_LEVELS } from '@/types/permissions';
 
 interface Document {
   id: string;
@@ -22,11 +19,10 @@ interface Document {
   metadata?: any;
 }
 
+// Route protégée par RoleGuard dans App.tsx
 export default function Documents() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAdmin } = useAuth();
-  const { canViewScope, canEditScope, canDeleteScope, canAdminScope } = usePermissions();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -34,22 +30,6 @@ export default function Documents() {
   const [editingDoc, setEditingDoc] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ title: '', category: '', content: '' });
   const [isLoading, setIsLoading] = useState(false);
-
-  // Permissions basées sur scope 'documents'
-  const canView = canViewScope('documents');
-  const canEdit = canEditScope('documents');
-  const canDelete = canDeleteScope('documents');
-
-  // Protection : rediriger si pas d'accès
-  if (!canView && !isAdmin) {
-    navigate('/');
-    toast({
-      title: 'Accès refusé',
-      description: 'Vous n\'avez pas accès à cette page',
-      variant: 'destructive'
-    });
-    return null;
-  }
 
   useEffect(() => {
     loadDocuments();

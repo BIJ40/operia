@@ -8,9 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { useAgencies } from "../hooks/useAgencies";
 import { AgencyProfileDialog } from "../components/AgencyProfileDialog";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
-import { usePermissions } from "@/hooks/use-permissions";
-import { ConditionalRender } from "@/components/PermissionGuard";
-import { PERMISSION_LEVELS } from "@/types/permissions";
 
 // Note: Cette page est protégée par RoleGuard minRole="franchisor_user" dans App.tsx
 
@@ -22,10 +19,9 @@ export default function FranchiseurAgencies() {
   
   const { data: agencies, isLoading } = useAgencies();
   const { franchiseurRole } = useFranchiseur();
-  const { canAdminScope } = usePermissions();
   
-  // Permissions scopes
-  const canManageAgencies = canAdminScope('franchiseur_agencies') || franchiseurRole === 'directeur' || franchiseurRole === 'dg';
+  // Permissions basées sur le rôle franchiseur
+  const canManageAgencies = franchiseurRole === 'directeur' || franchiseurRole === 'dg';
 
   const filteredAgencies = agencies?.filter(agency => {
     const matchesSearch = 

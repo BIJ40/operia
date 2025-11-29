@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Navigate } from 'react-router-dom';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,8 +16,8 @@ import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { ActionType } from '@/apogee-connect/types/actions';
 import { toast } from '@/hooks/use-toast';
-import { SCOPE_SLUGS, PERMISSION_LEVELS } from '@/types/permissions';
 import { ConditionalRender } from '@/components/PermissionGuard';
+import { useAuth } from '@/contexts/AuthContext';
 
 function ActionsAMenerContent() {
   const { isAgencyReady, currentAgency } = useAgency();
@@ -143,8 +142,8 @@ function ActionsAMenerContent() {
                 Dossiers nécessitant une action de votre part
               </p>
             </div>
-            {/* Configuration visible uniquement si niveau >= 3 (Gestion) */}
-            <ConditionalRender scope={SCOPE_SLUGS.ACTIONS_A_MENER} requiredLevel={PERMISSION_LEVELS.MANAGE}>
+            {/* Configuration visible uniquement pour les admins */}
+            <ConditionalRender minRole="franchisee_admin">
               <ActionsConfigDialog />
             </ConditionalRender>
           </div>
