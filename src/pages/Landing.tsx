@@ -91,7 +91,7 @@ export default function Landing() {
       {tilesByGroup.help_academy.length > 0 && (
         <section>
           <SectionHeader 
-            title={<><span>Help</span><span className="text-helpconfort-orange animate-pulse">!</span><span> Academy</span></>}
+            title={<>Help<span className="text-helpconfort-orange">!</span> Academy</>}
             icon={DASHBOARD_GROUPS.help_academy.icon}
             colorClass={DASHBOARD_GROUPS.help_academy.colorClass}
             indexUrl={DASHBOARD_GROUPS.help_academy.indexUrl}
