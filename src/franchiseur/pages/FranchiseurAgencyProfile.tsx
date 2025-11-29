@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Building2, TrendingUp, Euro, Calendar, Phone, Mail, MapPin, Users, Edit, UserCircle } from "lucide-react";
+import { Building2, TrendingUp, Euro, Calendar, Phone, Mail, MapPin, Users, Edit, UserCircle, Plus, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,14 @@ import { useFranchiseur } from "../contexts/FranchiseurContext";
 import { AgencyProfileDialog } from "../components/AgencyProfileDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { GLOBAL_ROLE_LABELS } from "@/types/globalRoles";
+import {
+  useAgencyCollaborators,
+  useCreateAgencyCollaborator,
+  useUpdateAgencyCollaborator,
+  useDeleteAgencyCollaborator,
+} from "@/features/team/hooks";
+import { AgencyCollaborator, CreateCollaboratorPayload, UpdateCollaboratorPayload } from "@/features/team/types";
+import { CollaboratorFormDialog, CollaboratorsTable, CreateUserFromCollaboratorDialog } from "@/features/team/components";
 
 export default function FranchiseurAgencyProfile() {
   const { agencyId } = useParams<{ agencyId: string }>();
@@ -23,7 +31,32 @@ export default function FranchiseurAgencyProfile() {
   const { franchiseurRole } = useFranchiseur();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  // Collaborators state
+  const { data: collaborators = [], isLoading: collaboratorsLoading } = useAgencyCollaborators(agencyId || null);
+  const createCollaborator = useCreateAgencyCollaborator(agencyId || "");
+  const updateCollaborator = useUpdateAgencyCollaborator(agencyId || "");
+  const deleteCollaborator = useDeleteAgencyCollaborator(agencyId || "");
+  const [isCollaboratorFormOpen, setIsCollaboratorFormOpen] = useState(false);
+  const [editingCollaborator, setEditingCollaborator] = useState<AgencyCollaborator | null>(null);
+  const [createUserTarget, setCreateUserTarget] = useState<AgencyCollaborator | null>(null);
+
   const canManage = franchiseurRole === "directeur" || franchiseurRole === "dg";
+  const unregisteredCollaborators = collaborators.filter((c) => !c.is_registered_user);
+
+  const handleCollaboratorSubmit = (data: CreateCollaboratorPayload | UpdateCollaboratorPayload) => {
+    if ("id" in data) {
+      updateCollaborator.mutate(data, {
+        onSuccess: () => {
+          setIsCollaboratorFormOpen(false);
+          setEditingCollaborator(null);
+        },
+      });
+    } else {
+      createCollaborator.mutate(data, {
+        onSuccess: () => setIsCollaboratorFormOpen(false),
+      });
+    }
+  };
 
   if (agencyLoading) {
     return (
@@ -179,28 +212,22 @@ export default function FranchiseurAgencyProfile() {
         </TabsContent>
 
         <TabsContent value="team" className="space-y-4 mt-4">
+          {/* Utilisateurs inscrits */}
           <Card className="rounded-2xl border-l-4 border-l-accent">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Équipe de l'agence
+                <UserCircle className="h-5 w-5" />
+                Utilisateurs inscrits
+                <Badge variant="secondary" className="ml-2">{agencyUsers?.length || 0}</Badge>
               </CardTitle>
               <CardDescription>
-                Utilisateurs rattachés à cette agence
+                Utilisateurs ayant un compte sur la plateforme
               </CardDescription>
             </CardHeader>
             <CardContent>
               {usersLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="animate-pulse flex items-center gap-4 p-3 rounded-lg bg-muted/50">
-                      <div className="h-10 w-10 rounded-full bg-muted"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-1/3 bg-muted rounded"></div>
-                        <div className="h-3 w-1/4 bg-muted rounded"></div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : agencyUsers && agencyUsers.length > 0 ? (
                 <div className="space-y-2">
@@ -248,10 +275,53 @@ export default function FranchiseurAgencyProfile() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <UserCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucun utilisateur dans cette agence</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <UserCircle className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                  <p>Aucun utilisateur inscrit</p>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Collaborateurs non inscrits */}
+          <Card className="rounded-2xl border-l-4 border-l-primary">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Collaborateurs non inscrits
+                  {unregisteredCollaborators.length > 0 && (
+                    <Badge variant="destructive" className="ml-2">{unregisteredCollaborators.length}</Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  Membres de l'équipe sans compte utilisateur
+                </CardDescription>
+              </div>
+              {canManage && (
+                <Button onClick={() => setIsCollaboratorFormOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              {collaboratorsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <CollaboratorsTable
+                  collaborators={unregisteredCollaborators}
+                  onEdit={(c) => {
+                    setEditingCollaborator(c);
+                    setIsCollaboratorFormOpen(true);
+                  }}
+                  onDelete={(c) => deleteCollaborator.mutate(c.id)}
+                  onCreateUser={(c) => setCreateUserTarget(c)}
+                  canDelete={canManage}
+                  canCreateUser={canManage}
+                />
               )}
             </CardContent>
           </Card>
@@ -333,6 +403,24 @@ export default function FranchiseurAgencyProfile() {
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         canManage={canManage}
+      />
+
+      <CollaboratorFormDialog
+        open={isCollaboratorFormOpen}
+        onOpenChange={(open) => {
+          setIsCollaboratorFormOpen(open);
+          if (!open) setEditingCollaborator(null);
+        }}
+        collaborator={editingCollaborator}
+        onSubmit={handleCollaboratorSubmit}
+        isLoading={createCollaborator.isPending || updateCollaborator.isPending}
+      />
+
+      <CreateUserFromCollaboratorDialog
+        open={!!createUserTarget}
+        onOpenChange={(open) => !open && setCreateUserTarget(null)}
+        collaborator={createUserTarget}
+        agencyLabel={agency?.label}
       />
     </div>
   );

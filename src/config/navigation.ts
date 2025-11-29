@@ -155,6 +155,13 @@ export const NAV_GROUPS: NavGroup[] = [
         scope: 'mes_indicateurs', 
         description: 'Planning hebdomadaire techniciens' 
       },
+      { 
+        title: 'Mon équipe', 
+        url: ROUTES.pilotage.equipe, 
+        icon: Users, 
+        scope: 'mes_indicateurs', 
+        description: 'Gestion des collaborateurs de l\'agence' 
+      },
     ],
   },
   {
@@ -204,6 +211,7 @@ export const NAV_GROUPS: NavGroup[] = [
         description: 'Gestion des comptes utilisateurs' 
       },
       { title: 'Agences', url: ROUTES.admin.agencies, icon: Building2, scope: 'admin_settings' },
+      { title: 'Collaborateurs', url: ROUTES.admin.collaborateurs, icon: Users, scope: 'admin_users' },
       { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database, scope: 'admin_backup' },
       { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity, scope: 'admin_settings' },
       { 
@@ -240,6 +248,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.pilotage.actions]: 'Actions à Mener',
   [ROUTES.pilotage.diffusion]: 'Mode Diffusion',
   [ROUTES.pilotage.rhTech]: 'RH Tech - Planning',
+  [ROUTES.pilotage.equipe]: 'Mon équipe',
   
   // Support (V2 routes)
   [ROUTES.support.index]: 'Support',
@@ -261,6 +270,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.admin.users]: 'Gestion Utilisateurs',
   [ROUTES.admin.agencies]: 'Gestion Agences',
   [ROUTES.admin.backup]: 'Sauvegardes',
+  [ROUTES.admin.collaborateurs]: 'Collaborateurs non inscrits',
   [ROUTES.admin.userActivity]: 'Activité Utilisateurs',
   [ROUTES.admin.escalationHistory]: 'Historique Escalades',
   

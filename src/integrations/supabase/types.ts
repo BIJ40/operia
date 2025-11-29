@@ -14,6 +14,76 @@ export type Database = {
   }
   public: {
     Tables: {
+      agency_collaborators: {
+        Row: {
+          agency_id: string
+          created_at: string
+          created_by: string | null
+          email: string | null
+          first_name: string
+          id: string
+          is_registered_user: boolean
+          last_name: string
+          notes: string | null
+          phone: string | null
+          role: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          first_name: string
+          id?: string
+          is_registered_user?: boolean
+          last_name: string
+          notes?: string | null
+          phone?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          is_registered_user?: boolean
+          last_name?: string
+          notes?: string | null
+          phone?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_collaborators_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_collaborators_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_collaborators_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_royalty_calculations: {
         Row: {
           agency_id: string
@@ -844,6 +914,7 @@ export type Database = {
       profiles: {
         Row: {
           agence: string | null
+          agency_id: string | null
           avatar_url: string | null
           created_at: string
           deactivated_at: string | null
@@ -867,6 +938,7 @@ export type Database = {
         }
         Insert: {
           agence?: string | null
+          agency_id?: string | null
           avatar_url?: string | null
           created_at?: string
           deactivated_at?: string | null
@@ -890,6 +962,7 @@ export type Database = {
         }
         Update: {
           agence?: string | null
+          agency_id?: string | null
           avatar_url?: string | null
           created_at?: string
           deactivated_at?: string | null
@@ -912,6 +985,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_group_id_fkey"
             columns: ["group_id"]
@@ -1607,6 +1687,15 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      collaborator_role:
+        | "dirigeant"
+        | "assistant"
+        | "technicien"
+        | "commercial"
+        | "associe"
+        | "tete_de_reseau"
+        | "externe"
+        | "autre"
       franchiseur_role: "animateur" | "directeur" | "dg"
       global_role:
         | "base_user"
@@ -1744,6 +1833,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      collaborator_role: [
+        "dirigeant",
+        "assistant",
+        "technicien",
+        "commercial",
+        "associe",
+        "tete_de_reseau",
+        "externe",
+        "autre",
+      ],
       franchiseur_role: ["animateur", "directeur", "dg"],
       global_role: [
         "base_user",

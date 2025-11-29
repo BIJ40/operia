@@ -42,6 +42,7 @@ const IndicateursUnivers = lazy(() => import("./apogee-connect/pages/Indicateurs
 const IndicateursTechniciens = lazy(() => import("./apogee-connect/pages/IndicateursTechniciens"));
 const IndicateursSAV = lazy(() => import("./apogee-connect/pages/IndicateursSAV"));
 const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
+const TeamPage = lazy(() => import("./pages/TeamPage"));
 
 // Lazy loaded pages - Support
 const UserDemands = lazy(() => import("./pages/UserDemands"));
@@ -69,6 +70,7 @@ const AdminStorageQuota = lazy(() => import("./pages/AdminStorageQuota"));
 const AdminCacheBackup = lazy(() => import("./pages/AdminCacheBackup"));
 const AdminUserActivity = lazy(() => import("./pages/AdminUserActivity"));
 const AdminUsersUnified = lazy(() => import("./pages/AdminUsersUnified"));
+const AdminCollaborators = lazy(() => import("./pages/AdminCollaborators"));
 
 // Lazy loaded pages - User
 const Profile = lazy(() => import("./pages/Profile"));
@@ -160,6 +162,9 @@ function AppContent() {
           {/* RH Tech */}
           <Route path="/pilotage/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PlanningHebdo /></RoleGuard></MainLayout>} />
           
+          {/* Équipe */}
+          <Route path="/pilotage/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><TeamPage /></RoleGuard></MainLayout>} />
+          
           {/* ============================================ */}
           {/* SUPPORT - Section Index + Sous-pages */}
           {/* ============================================ */}
@@ -209,6 +214,7 @@ function AppContent() {
           <Route path="/admin/storage-quota" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminStorageQuota /></RoleGuard></MainLayout>} />
           <Route path="/admin/cache-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminCacheBackup /></RoleGuard></MainLayout>} />
           <Route path="/admin/user-activity" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminUserActivity /></RoleGuard></MainLayout>} />
+          <Route path="/admin/collaborateurs" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminCollaborators /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* USER PAGES - Accessible à tous les connectés */}
