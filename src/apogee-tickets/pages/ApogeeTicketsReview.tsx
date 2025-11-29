@@ -2,7 +2,7 @@
  * Page de revue/édition en masse des tickets avec filtres
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,13 +30,36 @@ import { ROUTES } from '@/config/routes';
 
 export default function ApogeeTicketsReview() {
   const [filters, setFilters] = useState<TicketFilters>({});
-  const { tickets, modules, priorities, statuses, updateTicket, isLoading } = useApogeeTickets(filters);
+  const { tickets: liveTickets, modules, priorities, statuses, updateTicket, isLoading } = useApogeeTickets(filters);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasChanges, setHasChanges] = useState(false);
+
+  // Liste stable de tickets pour la session de revue (ne change pas quand on complète un ticket)
+  const [stableTickets, setStableTickets] = useState<ApogeeTicket[]>([]);
+  const filtersRef = useRef<string>('');
+
+  // Mettre à jour la liste stable uniquement quand les filtres changent (pas quand les données changent)
+  useEffect(() => {
+    const currentFiltersKey = JSON.stringify(filters);
+    if (currentFiltersKey !== filtersRef.current && liveTickets.length > 0) {
+      filtersRef.current = currentFiltersKey;
+      setStableTickets(liveTickets);
+    }
+  }, [filters, liveTickets]);
+
+  // Initialiser avec les premiers tickets chargés
+  useEffect(() => {
+    if (stableTickets.length === 0 && liveTickets.length > 0) {
+      setStableTickets(liveTickets);
+      filtersRef.current = JSON.stringify(filters);
+    }
+  }, [liveTickets]);
 
   // Formulaire local pour le ticket courant
   const [formValues, setFormValues] = useState<Partial<ApogeeTicket>>({});
 
+  // Utiliser la liste stable pour la navigation
+  const tickets = stableTickets;
   const currentTicket = tickets[currentIndex];
   const totalTickets = tickets.length;
   const progressPercent = totalTickets > 0 ? Math.round(((currentIndex + 1) / totalTickets) * 100) : 0;
@@ -95,13 +118,17 @@ export default function ApogeeTicketsReview() {
   };
 
   const updateFilter = (key: keyof TicketFilters, value: any) => {
-    setFilters(prev => ({ ...prev, [key]: value || undefined }));
+    const newFilters = { ...filters, [key]: value || undefined };
+    setFilters(newFilters);
     setCurrentIndex(0); // Reset to first ticket when filters change
+    // Force refresh de la liste stable au prochain chargement
+    filtersRef.current = '';
   };
 
   const clearFilters = () => {
     setFilters({});
     setCurrentIndex(0);
+    filtersRef.current = '';
   };
 
   const hasActiveFilters = Object.values(filters).some(v => v !== undefined && v !== '');
