@@ -164,9 +164,11 @@ export function UnifiedSidebar() {
     },
   ];
 
-  // Filter groups based on V2 roles
+  // Filter groups based on V2 roles (with legacy admin fallback)
   const filteredGroups = navGroups.filter(group => {
     if (!group.minRole) return true;
+    // Legacy admin bypass - admins see all sections
+    if (isAdmin) return true;
     if (group.minRole === 'platform_admin') return canAccessAdmin;
     if (group.minRole === 'franchisor_user') return canAccessFranchiseur;
     if (group.minRole === 'franchisee_admin') return canAccessFranchiseeAdmin;
