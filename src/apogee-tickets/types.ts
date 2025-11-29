@@ -186,7 +186,9 @@ export interface KanbanColumn {
   tickets: ApogeeTicket[];
 }
 
-// Filters
+// Filters - missing_field permet de filtrer sur les champs manquants
+export type MissingFieldFilter = 'complete' | 'incomplete' | 'no_module' | 'no_heat' | 'no_hours' | 'no_description';
+
 export interface TicketFilters {
   module?: string;
   priority?: string;
@@ -199,4 +201,5 @@ export interface TicketFilters {
   heat_priority_min?: number;
   heat_priority_max?: number;
   heat_priority_exact?: number; // For clicking on a specific dot
+  missing_field?: MissingFieldFilter; // Filtre sur complétude des champs
 }
