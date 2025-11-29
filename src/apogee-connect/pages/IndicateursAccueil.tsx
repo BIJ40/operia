@@ -164,7 +164,6 @@ export default function IndicateursAccueil() {
     <div className="space-y-6">
       <PageHeader
         pageKey="pilotage_indicateurs"
-        defaultSubtitle="Suivez vos principaux KPI agence."
         backTo={ROUTES.pilotage.index}
         backLabel="Retour Pilotage Agence"
       />

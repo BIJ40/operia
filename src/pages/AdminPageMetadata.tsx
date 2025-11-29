@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
-import { useAllPageMetadata, useUpsertPageMetadata, PageMetadata } from '@/hooks/use-page-metadata';
+import { useAllPageMetadata, useUpsertPageMetadata } from '@/hooks/use-page-metadata';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ROUTES } from '@/config/routes';
+import { PAGE_DEFAULTS } from '@/config/pageDefaults';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,51 +28,6 @@ import { Pencil, Loader2, FileText, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 
-// Liste des pages connues du système avec leurs valeurs par défaut
-const KNOWN_PAGES: Array<{ pageKey: string; defaultTitle: string; defaultSubtitle?: string; route: string }> = [
-  // Home
-  { pageKey: 'home', defaultTitle: 'Tableau de bord', route: ROUTES.home },
-  
-  // Help Academy
-  { pageKey: 'academy_index', defaultTitle: 'Help! Academy', defaultSubtitle: 'Accédez à tous les guides et ressources', route: ROUTES.academy.index },
-  { pageKey: 'academy_apogee', defaultTitle: 'Guide Apogée', defaultSubtitle: 'Tout ce que vous devez savoir sur l\'utilisation d\'Apogée', route: ROUTES.academy.apogee },
-  { pageKey: 'academy_apporteurs', defaultTitle: 'Guide Apporteurs', defaultSubtitle: 'Ressources pour les apporteurs d\'affaires', route: ROUTES.academy.apporteurs },
-  { pageKey: 'academy_documents', defaultTitle: 'Base Documentaire', defaultSubtitle: 'Documents et ressources HelpConfort', route: ROUTES.academy.documents },
-  
-  // Pilotage Agence
-  { pageKey: 'pilotage_index', defaultTitle: 'Pilotage Agence', defaultSubtitle: 'Gérez votre activité au quotidien', route: ROUTES.pilotage.index },
-  { pageKey: 'pilotage_indicateurs', defaultTitle: 'Indicateurs généraux', defaultSubtitle: 'Suivez vos principaux KPI agence', route: ROUTES.pilotage.indicateurs },
-  { pageKey: 'pilotage_indicateurs_apporteurs', defaultTitle: 'Indicateurs Apporteurs', defaultSubtitle: 'Performance de vos apporteurs d\'affaires', route: ROUTES.pilotage.indicateursApporteurs },
-  { pageKey: 'pilotage_indicateurs_univers', defaultTitle: 'Indicateurs Univers', defaultSubtitle: 'Répartition par univers de métier', route: ROUTES.pilotage.indicateursUnivers },
-  { pageKey: 'pilotage_indicateurs_techniciens', defaultTitle: 'Indicateurs Techniciens', defaultSubtitle: 'Performance de vos techniciens', route: ROUTES.pilotage.indicateursTechniciens },
-  { pageKey: 'pilotage_indicateurs_sav', defaultTitle: 'Indicateurs SAV', defaultSubtitle: 'Suivi du service après-vente', route: ROUTES.pilotage.indicateursSav },
-  { pageKey: 'pilotage_actions', defaultTitle: 'Actions à Mener', defaultSubtitle: 'Suivi des actions et tâches en cours', route: ROUTES.pilotage.actions },
-  { pageKey: 'pilotage_diffusion', defaultTitle: 'Mode Diffusion', defaultSubtitle: 'Affichage TV pour l\'agence', route: ROUTES.pilotage.diffusion },
-  { pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens', route: ROUTES.pilotage.rhTech },
-  { pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Gestion des collaborateurs de l\'agence', route: ROUTES.pilotage.equipe },
-  
-  // Support
-  { pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Assistance et demandes', route: ROUTES.support.index },
-  { pageKey: 'support_mes_demandes', defaultTitle: 'Mes Demandes', defaultSubtitle: 'Créer et suivre vos demandes de support', route: ROUTES.support.userTickets },
-  { pageKey: 'support_console', defaultTitle: 'Console Support', defaultSubtitle: 'Traiter les demandes de support', route: ROUTES.support.console },
-  
-  // Réseau Franchiseur
-  { pageKey: 'reseau_index', defaultTitle: 'Réseau Franchiseur', defaultSubtitle: 'Pilotage du réseau HelpConfort', route: ROUTES.reseau.index },
-  { pageKey: 'reseau_dashboard', defaultTitle: 'Dashboard Réseau', defaultSubtitle: 'Vue d\'ensemble du réseau', route: ROUTES.reseau.dashboard },
-  { pageKey: 'reseau_agences', defaultTitle: 'Agences du Réseau', defaultSubtitle: 'Gestion des agences franchisées', route: ROUTES.reseau.agences },
-  { pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs', defaultSubtitle: 'Équipe d\'animation réseau', route: ROUTES.reseau.animateurs },
-  { pageKey: 'reseau_stats', defaultTitle: 'Statistiques Réseau', defaultSubtitle: 'KPI consolidés du réseau', route: ROUTES.reseau.stats },
-  { pageKey: 'reseau_comparatifs', defaultTitle: 'Comparatifs', defaultSubtitle: 'Comparaison entre agences', route: ROUTES.reseau.comparatifs },
-  { pageKey: 'reseau_redevances', defaultTitle: 'Redevances', defaultSubtitle: 'Calcul et suivi des redevances', route: ROUTES.reseau.redevances },
-  
-  // Administration
-  { pageKey: 'admin_index', defaultTitle: 'Administration', defaultSubtitle: 'Configuration du système', route: ROUTES.admin.index },
-  { pageKey: 'admin_users', defaultTitle: 'Gestion Utilisateurs', defaultSubtitle: 'Comptes et permissions', route: ROUTES.admin.users },
-  { pageKey: 'admin_agencies', defaultTitle: 'Gestion Agences', defaultSubtitle: 'Configuration des agences', route: ROUTES.admin.agencies },
-  { pageKey: 'admin_backup', defaultTitle: 'Sauvegardes', defaultSubtitle: 'Export et import des données', route: ROUTES.admin.backup },
-  { pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Titres et descriptions des pages', route: ROUTES.admin.pageMetadata },
-];
-
 export default function AdminPageMetadata() {
   const { data: allMetadata, isLoading } = useAllPageMetadata();
   const upsertMutation = useUpsertPageMetadata();
@@ -80,7 +36,7 @@ export default function AdminPageMetadata() {
   const mergedPages = useMemo(() => {
     const metadataMap = new Map(allMetadata?.map(m => [m.page_key, m]) || []);
     
-    return KNOWN_PAGES.map(page => ({
+    return PAGE_DEFAULTS.map(page => ({
       ...page,
       metadata: metadataMap.get(page.pageKey) || null,
       hasCustomMetadata: metadataMap.has(page.pageKey),
@@ -129,7 +85,6 @@ export default function AdminPageMetadata() {
     <div className="container max-w-6xl mx-auto p-6 space-y-6">
       <PageHeader
         pageKey="admin_page_metadata"
-        defaultSubtitle="Gérez les titres, descriptions et labels de menu de toutes les pages"
         backTo={ROUTES.admin.index}
         backLabel="Retour Administration"
       />

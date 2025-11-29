@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { usePageMetadata } from '@/hooks/use-page-metadata';
+import { getPageDefaultByKey } from '@/config/pageDefaults';
 
 interface PageHeaderProps {
   pageKey: string;
-  defaultSubtitle?: string;
   backTo?: string;
   backLabel?: string;
 }
@@ -12,20 +12,22 @@ interface PageHeaderProps {
 /**
  * Composant simplifié pour afficher :
  * - Un lien retour (optionnel)
- * - Une description/sous-titre (depuis page_metadata ou défaut)
+ * - Une description/sous-titre (depuis page_metadata ou centralisé)
  * 
- * Le titre principal et le crayon d'édition sont maintenant dans UnifiedHeader.
+ * Le titre principal et le crayon d'édition sont dans UnifiedHeader.
  */
 export function PageHeader({
   pageKey,
-  defaultSubtitle,
   backTo,
   backLabel,
 }: PageHeaderProps) {
   const { data: metadata, isLoading } = usePageMetadata(pageKey);
   
-  // Description affichée (métadonnées ou défaut)
-  const subtitle = metadata?.header_subtitle || defaultSubtitle || '';
+  // Récupérer la valeur par défaut centralisée
+  const pageDefault = getPageDefaultByKey(pageKey);
+  
+  // Description affichée (métadonnées ou défaut centralisé)
+  const subtitle = metadata?.header_subtitle || pageDefault?.defaultSubtitle || '';
 
   // Ne rien afficher si pas de lien retour ni de description
   if (!backTo && !subtitle && !isLoading) {
