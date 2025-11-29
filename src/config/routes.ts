@@ -38,7 +38,9 @@ export const ROUTES = {
   // ============================================
   pilotage: {
     index: '/hc-agency',
-    // Indicateurs
+    // Hub Statistiques (nouvelle page centrale)
+    statsHub: '/hc-agency/statistiques',
+    // Indicateurs (pages détaillées)
     indicateurs: '/hc-agency/indicateurs',
     indicateursApporteurs: '/hc-agency/indicateurs/apporteurs',
     indicateursUnivers: '/hc-agency/indicateurs/univers',
@@ -131,6 +133,7 @@ type StaticRoutes =
   | typeof ROUTES['academy']['apporteurs']
   | typeof ROUTES['academy']['documents']
   | typeof ROUTES['pilotage']['index']
+  | typeof ROUTES['pilotage']['statsHub']
   | typeof ROUTES['pilotage']['indicateurs']
   | typeof ROUTES['pilotage']['indicateursApporteurs']
   | typeof ROUTES['pilotage']['indicateursUnivers']
