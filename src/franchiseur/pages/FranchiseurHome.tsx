@@ -1,6 +1,7 @@
 import { TrendingUp, FileText, Wrench, AlertCircle, Euro, Clock, Zap, Timer, Calendar, Network } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { NetworkPeriodSelector } from "../components/filters/NetworkPeriodSelector";
 import { AgencySelector } from "../components/filters/AgencySelector";
 import { NetworkKpiTile } from "../components/widgets/NetworkKpiTile";
@@ -15,6 +16,34 @@ import { useNetworkFilters } from "../contexts/NetworkFiltersContext";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+
+function SkeletonKpiTile() {
+  return (
+    <Card className="rounded-2xl">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-4 rounded-full" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-8 w-32 mb-2" />
+        <Skeleton className="h-3 w-20" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function SkeletonChart() {
+  return (
+    <Card className="rounded-2xl">
+      <CardHeader>
+        <Skeleton className="h-5 w-32" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-[200px] w-full" />
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function FranchiseurHome() {
   const { permissions } = useFranchiseur();
@@ -34,8 +63,25 @@ export default function FranchiseurHome() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-muted-foreground">Chargement des données...</p>
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-9 w-64 mb-2" />
+          <Skeleton className="h-5 w-80" />
+        </div>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-10 w-48" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => <SkeletonKpiTile key={i} />)}
+        </div>
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+          {[...Array(6)].map((_, i) => <SkeletonKpiTile key={i} />)}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <SkeletonChart />
+          <SkeletonChart />
+        </div>
       </div>
     );
   }
