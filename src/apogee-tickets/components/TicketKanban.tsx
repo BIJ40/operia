@@ -22,32 +22,37 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Clock, GripVertical } from 'lucide-react';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
-import type { ApogeeTicket, ApogeeTicketStatus } from '../types';
+import type { ApogeeTicket, ApogeeTicketStatus, ApogeeModule, ApogeeOwnerSide } from '../types';
 
 interface TicketKanbanProps {
   tickets: ApogeeTicket[];
   statuses: ApogeeTicketStatus[];
+  modules?: ApogeeModule[];
+  ownerSides?: ApogeeOwnerSide[];
   onStatusChange: (ticketId: string, newStatus: string) => void;
   onTicketClick: (ticket: ApogeeTicket) => void;
 }
 
-// Couleurs des badges
-const MODULE_COLORS: Record<string, string> = {
-  RDV: 'bg-blue-500',
-  DEVIS: 'bg-green-500',
-  FACTURES: 'bg-purple-500',
-  PLANNING: 'bg-orange-500',
-  DOSSIERS: 'bg-cyan-500',
-  CLIENTS: 'bg-pink-500',
-  APPORTEURS: 'bg-yellow-500',
-  STATS: 'bg-red-500',
-  AUTRE: 'bg-gray-500',
-};
-
-const OWNER_COLORS: Record<string, string> = {
-  HC: 'bg-helpconfort-blue',
-  APOGEE: 'bg-purple-600',
-  PARTAGE: 'bg-amber-500',
+// Palette de couleurs Tailwind
+const TAILWIND_COLORS: Record<string, string> = {
+  gray: '#6b7280',
+  red: '#ef4444',
+  orange: '#f97316',
+  amber: '#f59e0b',
+  yellow: '#eab308',
+  lime: '#84cc16',
+  green: '#22c55e',
+  emerald: '#10b981',
+  teal: '#14b8a6',
+  cyan: '#06b6d4',
+  sky: '#0ea5e9',
+  blue: '#3b82f6',
+  indigo: '#6366f1',
+  violet: '#8b5cf6',
+  purple: '#a855f7',
+  fuchsia: '#d946ef',
+  pink: '#ec4899',
+  rose: '#f43f5e',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -63,9 +68,13 @@ const STATUS_COLORS: Record<string, string> = {
 function DraggableTicketCard({
   ticket,
   onClick,
+  modules = [],
+  ownerSides = [],
 }: {
   ticket: ApogeeTicket;
   onClick: () => void;
+  modules?: ApogeeModule[];
+  ownerSides?: ApogeeOwnerSide[];
 }) {
   const {
     attributes,
@@ -90,6 +99,27 @@ function DraggableTicketCard({
     onClick();
   }, [onClick]);
 
+  // Get module color from database
+  const moduleColor = useMemo(() => {
+    if (!ticket.module) return null;
+    const mod = modules.find(m => m.id === ticket.module);
+    return mod?.color ? TAILWIND_COLORS[mod.color] || TAILWIND_COLORS.gray : TAILWIND_COLORS.gray;
+  }, [ticket.module, modules]);
+
+  // Get owner side color from database
+  const ownerColor = useMemo(() => {
+    if (!ticket.owner_side) return null;
+    const owner = ownerSides.find(o => o.id === ticket.owner_side);
+    return owner?.color ? TAILWIND_COLORS[owner.color] || TAILWIND_COLORS.gray : TAILWIND_COLORS.gray;
+  }, [ticket.owner_side, ownerSides]);
+
+  // Get owner side label from database
+  const ownerLabel = useMemo(() => {
+    if (!ticket.owner_side) return null;
+    const owner = ownerSides.find(o => o.id === ticket.owner_side);
+    return owner?.label || ticket.owner_side;
+  }, [ticket.owner_side, ownerSides]);
+
   return (
     <Card
       ref={setNodeRef}
@@ -109,15 +139,15 @@ function DraggableTicketCard({
             <GripVertical className="h-4 w-4" />
           </div>
           <div className="flex-1 flex flex-wrap gap-1">
-            {ticket.module && (
-              <Badge className={`${MODULE_COLORS[ticket.module] || 'bg-gray-500'} text-white text-xs`}>
+            {ticket.module && moduleColor && (
+              <Badge style={{ backgroundColor: moduleColor }} className="text-white text-xs">
                 {ticket.apogee_modules?.label || ticket.module}
               </Badge>
             )}
             <HeatPriorityBadge priority={ticket.heat_priority} size="sm" showLabel={false} />
-            {ticket.owner_side && (
-              <Badge className={`${OWNER_COLORS[ticket.owner_side]} text-white text-xs`}>
-                {ticket.owner_side}
+            {ticket.owner_side && ownerColor && (
+              <Badge style={{ backgroundColor: ownerColor }} className="text-white text-xs">
+                {ownerLabel}
               </Badge>
             )}
           </div>
@@ -165,10 +195,14 @@ function DroppableColumn({
   status,
   tickets,
   onTicketClick,
+  modules,
+  ownerSides,
 }: {
   status: ApogeeTicketStatus;
   tickets: ApogeeTicket[];
   onTicketClick: (ticket: ApogeeTicket) => void;
+  modules?: ApogeeModule[];
+  ownerSides?: ApogeeOwnerSide[];
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status.id });
 
@@ -192,6 +226,8 @@ function DroppableColumn({
             key={ticket.id}
             ticket={ticket}
             onClick={() => onTicketClick(ticket)}
+            modules={modules}
+            ownerSides={ownerSides}
           />
         ))}
         {tickets.length === 0 && (
@@ -204,7 +240,7 @@ function DroppableColumn({
   );
 }
 
-export function TicketKanban({ tickets, statuses, onStatusChange, onTicketClick }: TicketKanbanProps) {
+export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusChange, onTicketClick }: TicketKanbanProps) {
   const [activeTicket, setActiveTicket] = useState<ApogeeTicket | null>(null);
 
   const sensors = useSensors(
@@ -258,6 +294,8 @@ export function TicketKanban({ tickets, statuses, onStatusChange, onTicketClick 
             status={status}
             tickets={ticketsByStatus[status.id] || []}
             onTicketClick={onTicketClick}
+            modules={modules}
+            ownerSides={ownerSides}
           />
         ))}
       </div>

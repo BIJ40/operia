@@ -35,6 +35,14 @@ export interface ApogeeImpactTag {
   created_at: string;
 }
 
+export interface ApogeeOwnerSide {
+  id: string;
+  label: string;
+  display_order: number;
+  color: string;
+  created_at: string;
+}
+
 // Qui porte le sujet (contrainte DB: HC, APOGEE, PARTAGE uniquement)
 export type OwnerSide = 'HC' | 'APOGEE' | 'PARTAGE';
 // Qui a rapporté/identifié le ticket

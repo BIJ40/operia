@@ -26,12 +26,13 @@ import {
   Layers,
   Thermometer,
   AlertCircle,
-  Loader2
+  Loader2,
+  Users
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import type { ApogeeTicketStatus, ApogeeModule, ApogeePriority, ApogeeImpactTag } from '../types';
+import type { ApogeeTicketStatus, ApogeeModule, ApogeePriority, ApogeeImpactTag, ApogeeOwnerSide } from '../types';
 
 interface ActionsConfigDialogProps {
   open: boolean;
@@ -174,11 +175,26 @@ export function ActionsConfigDialog({
     enabled: open,
   });
 
+  // Fetch owner sides
+  const { data: ownerSides = [], isLoading: loadingOwnerSides } = useQuery({
+    queryKey: ['apogee-owner-sides-config'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('apogee_owner_sides')
+        .select('*')
+        .order('display_order');
+      if (error) throw error;
+      return data as ApogeeOwnerSide[];
+    },
+    enabled: open,
+  });
+
   // Local state for editing
   const [editedStatuses, setEditedStatuses] = useState<ApogeeTicketStatus[]>([]);
   const [editedModules, setEditedModules] = useState<ApogeeModule[]>([]);
   const [editedPriorities, setEditedPriorities] = useState<ApogeePriority[]>([]);
   const [editedTags, setEditedTags] = useState<ApogeeImpactTag[]>([]);
+  const [editedOwnerSides, setEditedOwnerSides] = useState<ApogeeOwnerSide[]>([]);
 
   // Sync when data is loaded
   useEffect(() => {
@@ -197,7 +213,11 @@ export function ActionsConfigDialog({
     if (tags.length > 0) setEditedTags([...tags]);
   }, [tags]);
 
-  const isLoading = loadingStatuses || loadingModules || loadingPriorities || loadingTags;
+  useEffect(() => {
+    if (ownerSides.length > 0) setEditedOwnerSides([...ownerSides]);
+  }, [ownerSides]);
+
+  const isLoading = loadingStatuses || loadingModules || loadingPriorities || loadingTags || loadingOwnerSides;
 
   // Save handlers
   const saveStatuses = async () => {
@@ -309,6 +329,33 @@ export function ActionsConfigDialog({
     }
   };
 
+  const saveOwnerSides = async () => {
+    try {
+      const existingIds = ownerSides.map(o => o.id);
+      const currentIds = editedOwnerSides.map(o => o.id);
+      const toDelete = existingIds.filter(id => !currentIds.includes(id));
+      
+      if (toDelete.length > 0) {
+        await supabase.from('apogee_owner_sides').delete().in('id', toDelete);
+      }
+
+      for (let i = 0; i < editedOwnerSides.length; i++) {
+        const owner = editedOwnerSides[i];
+        await supabase.from('apogee_owner_sides').upsert({
+          id: owner.id,
+          label: owner.label,
+          display_order: i,
+          color: owner.color,
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['apogee-owner-sides'] });
+      toast.success('Porteurs sauvegardés');
+    } catch (error: any) {
+      toast.error(`Erreur: ${error.message}`);
+    }
+  };
+
   // Add new item
   const addStatus = () => {
     const newId = `STATUS_${Date.now()}`;
@@ -355,6 +402,17 @@ export function ActionsConfigDialog({
     }]);
   };
 
+  const addOwnerSide = () => {
+    const newId = `OWNER_${Date.now()}`;
+    setEditedOwnerSides([...editedOwnerSides, {
+      id: newId,
+      label: 'Nouveau porteur',
+      display_order: editedOwnerSides.length,
+      color: 'gray',
+      created_at: new Date().toISOString(),
+    }]);
+  };
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="max-w-3xl max-h-[85vh] p-0">
@@ -371,7 +429,7 @@ export function ActionsConfigDialog({
           </div>
         ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-          <TabsList className="mx-6 grid w-auto grid-cols-4">
+          <TabsList className="mx-6 grid w-auto grid-cols-5">
             <TabsTrigger value="statuses" className="flex items-center gap-1.5">
               <LayoutGrid className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Statuts ({editedStatuses.length})</span>
@@ -381,9 +439,13 @@ export function ActionsConfigDialog({
               <Layers className="h-3.5 w-3.5" />
               Modules ({editedModules.length})
             </TabsTrigger>
+            <TabsTrigger value="owners" className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" />
+              Porteurs ({editedOwnerSides.length})
+            </TabsTrigger>
             <TabsTrigger value="priorities" className="flex items-center gap-1.5">
               <Thermometer className="h-3.5 w-3.5" />
-              Priorités ({editedPriorities.length})
+              Priorités
             </TabsTrigger>
             <TabsTrigger value="tags" className="flex items-center gap-1.5">
               <Tag className="h-3.5 w-3.5" />
@@ -736,6 +798,95 @@ export function ActionsConfigDialog({
                 <Button onClick={saveTags}>
                   <Save className="h-4 w-4 mr-2" />
                   Sauvegarder les tags
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Porteurs (Owner sides) */}
+            <TabsContent value="owners" className="px-6 pb-6 space-y-4 mt-4">
+              <Card className="bg-muted/30">
+                <CardHeader className="py-3">
+                  <CardDescription className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    Les porteurs indiquent qui est responsable du ticket (HC, Apogée, Partagé)
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              {editedOwnerSides.map((owner, idx) => (
+                <Card key={`owner-${idx}`} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <GripVertical className="h-4 w-4 text-muted-foreground cursor-move shrink-0" />
+                      <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                      
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">ID technique</Label>
+                          <Input
+                            value={owner.id}
+                            onChange={(e) => {
+                              const updated = [...editedOwnerSides];
+                              updated[idx] = { ...owner, id: e.target.value.toUpperCase().replace(/\s/g, '_') };
+                              setEditedOwnerSides(updated);
+                            }}
+                            placeholder="HC"
+                            className="h-9 text-xs font-mono"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Libellé affiché</Label>
+                          <Input
+                            value={owner.label}
+                            onChange={(e) => {
+                              const updated = [...editedOwnerSides];
+                              updated[idx] = { ...owner, label: e.target.value };
+                              setEditedOwnerSides(updated);
+                            }}
+                            placeholder="HelpConfort"
+                            className="h-9"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Couleur</Label>
+                          <ColorPicker
+                            value={owner.color}
+                            onChange={(color) => {
+                              const updated = [...editedOwnerSides];
+                              updated[idx] = { ...owner, color };
+                              setEditedOwnerSides(updated);
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Aperçu</Label>
+                          <div className="h-9 flex items-center">
+                            <BadgePreview label={owner.label} color={owner.color} />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0"
+                        onClick={() => setEditedOwnerSides(editedOwnerSides.filter((_, i) => i !== idx))}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              
+              <div className="flex justify-between pt-2">
+                <Button variant="outline" onClick={addOwnerSide}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter un porteur
+                </Button>
+                <Button onClick={saveOwnerSides}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Sauvegarder les porteurs
                 </Button>
               </div>
             </TabsContent>
