@@ -105,14 +105,25 @@ export function UnifiedSidebar() {
     return active ? new Set([active]) : new Set();
   });
   
-  // Fermer les autres groupes et sous-menus, ouvrir uniquement celui de la route active
+  // Ouvrir le groupe et sous-menu actifs en fonction de la route
   useEffect(() => {
     const activeGroup = getActiveGroup();
     if (activeGroup) {
       setOpenGroups(new Set([activeGroup]));
     }
-    // Fermer tous les sous-menus lors du changement de route
-    setOpenSubmenus(new Set());
+    
+    // Auto-ouvrir le sous-menu Statistiques si on est sur une de ses routes
+    const statsRoutes = [
+      ROUTES.pilotage.statsHub,
+      ROUTES.pilotage.indicateurs,
+      ROUTES.pilotage.indicateursApporteurs,
+      ROUTES.pilotage.indicateursUnivers,
+      ROUTES.pilotage.indicateursTechniciens,
+      ROUTES.pilotage.indicateursSav,
+    ];
+    if (statsRoutes.some(route => location.pathname === route || location.pathname.startsWith(route + '/'))) {
+      setOpenSubmenus(new Set(['statistiques']));
+    }
   }, [location.pathname]);
 
   const caps = getRoleCapabilities(globalRole);
@@ -375,6 +386,12 @@ export function UnifiedSidebar() {
                                   {item.url ? (
                                     <Link
                                       to={getUrlWithEditMode(item.url)}
+                                      onClick={() => {
+                                        // Ouvrir le sous-menu quand on clique sur le lien parent
+                                        if (!openSubmenus.has(submenuKey)) {
+                                          setOpenSubmenus(prev => new Set([...prev, submenuKey]));
+                                        }
+                                      }}
                                       className="flex items-center gap-2 flex-1 py-1.5 px-2 hover:translate-x-0.5 transition-transform"
                                     >
                                       <Icon className="w-4 h-4 shrink-0" />
