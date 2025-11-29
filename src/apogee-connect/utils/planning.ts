@@ -133,13 +133,23 @@ function getUserName(user: RawUser): string {
 // ========================================
 
 interface BuildPlanningParams {
-  creneaux: RawCreneau[];
+  creneaux: RawCreneau[] | null;
   users: RawUser[];
   interventions?: RawIntervention[];
   projects?: RawProject[];
   clients?: RawClient[];
 }
 
+/**
+ * Construit le planning par technicien
+ * 
+ * STRATÉGIE: Les RDV viennent de deux sources possibles:
+ * 1. L'endpoint getInterventionsCreneaux (si disponible)
+ * 2. Les visites extraites de chaque intervention (fallback principal)
+ * 
+ * La méthode principale est d'extraire les visites des interventions
+ * car c'est plus fiable et contient toutes les infos nécessaires.
+ */
 export function buildPlanningByTech({
   creneaux,
   users,
@@ -147,7 +157,7 @@ export function buildPlanningByTech({
   projects = [],
   clients = [],
 }: BuildPlanningParams): PlanningByTech {
-  if (!creneaux || creneaux.length === 0 || !users || users.length === 0) {
+  if (!users || users.length === 0) {
     return {};
   }
 
@@ -157,25 +167,13 @@ export function buildPlanningByTech({
     userMap.set(u.id, u);
   });
 
-  // 2) Index interventions par pEventId
-  const visitesByEventId = new Map<number, { intervention: RawIntervention; visite: RawVisite }[]>();
-  interventions.forEach((intervention) => {
-    const visites = intervention.data?.visites || [];
-    visites.forEach((visite) => {
-      if (visite.pEventId == null) return;
-      const current = visitesByEventId.get(visite.pEventId) || [];
-      current.push({ intervention, visite });
-      visitesByEventId.set(visite.pEventId, current);
-    });
-  });
-
-  // 3) Index projects
+  // 2) Index projects
   const projectMap = new Map<number, RawProject>();
   projects.forEach((p) => {
     projectMap.set(p.id, p);
   });
 
-  // 4) Index clients
+  // 3) Index clients
   const clientMap = new Map<number, RawClient>();
   clients.forEach((c) => {
     clientMap.set(c.id, c);
@@ -183,60 +181,58 @@ export function buildPlanningByTech({
 
   const planningByTech: PlanningByTech = {};
 
-  creneaux.forEach((creneau) => {
-    const startDate = new Date(creneau.date);
-    const endDate = addMinutes(startDate, creneau.duree);
-    const visitesLinked = visitesByEventId.get(creneau.id) || [];
-
-    creneau.usersIds.forEach((techId) => {
-      const user = userMap.get(techId);
-      if (!user) return;
-
-      if (!planningByTech[techId]) {
-        planningByTech[techId] = {
-          techId,
-          techName: getUserName(user),
-          color: getUserColor(user),
-          slots: [],
-        };
+  // MÉTHODE PRINCIPALE: Extraire les visites directement des interventions
+  // C'est plus fiable que getInterventionsCreneaux qui peut être vide
+  interventions.forEach((intervention) => {
+    const visites = intervention.data?.visites || [];
+    const type = intervention.data?.type2 ?? null;
+    const isBreak = type != null && type.toLowerCase().includes("pause");
+    
+    // Récupérer les infos du projet et client
+    const project = intervention.projectId ? projectMap.get(intervention.projectId) : undefined;
+    const client = project?.clientId ? clientMap.get(project.clientId) : undefined;
+    
+    let clientName: string | null = null;
+    if (client) {
+      if (client.company) {
+        clientName = client.company;
+      } else {
+        const fn = client.firstname || "";
+        const ln = client.lastname || "";
+        clientName = `${fn} ${ln}`.trim() || null;
       }
+    }
 
-      const baseSlot: TechPlanningSlot = {
-        slotId: creneau.id,
-        start: startDate.toISOString(),
-        end: endDate.toISOString(),
-        durationMinutes: creneau.duree,
-      };
-
-      if (visitesLinked.length === 0) {
-        planningByTech[techId].slots.push(baseSlot);
+    visites.forEach((visite, visiteIndex) => {
+      if (!visite.date || !visite.usersIds || visite.usersIds.length === 0) {
         return;
       }
 
-      visitesLinked.forEach(({ intervention, visite }) => {
-        if (visite.usersIds && !visite.usersIds.includes(techId)) {
-          return;
+      const startDate = new Date(visite.date);
+      const durationMinutes = visite.duree || 60; // default 1h si pas de durée
+      const endDate = addMinutes(startDate, durationMinutes);
+      
+      // Créer un ID unique pour le slot
+      const slotId = visite.pEventId ?? (intervention.id * 1000 + visiteIndex);
+
+      visite.usersIds.forEach((techId) => {
+        const user = userMap.get(techId);
+        if (!user) return;
+
+        if (!planningByTech[techId]) {
+          planningByTech[techId] = {
+            techId,
+            techName: getUserName(user),
+            color: getUserColor(user),
+            slots: [],
+          };
         }
 
-        const project = intervention.projectId ? projectMap.get(intervention.projectId) : undefined;
-        const client = project?.clientId ? clientMap.get(project.clientId) : undefined;
-
-        let clientName: string | null = null;
-        if (client) {
-          if (client.company) {
-            clientName = client.company;
-          } else {
-            const fn = client.firstname || "";
-            const ln = client.lastname || "";
-            clientName = `${fn} ${ln}`.trim() || null;
-          }
-        }
-
-        const type = intervention.data?.type2 ?? null;
-        const isBreak = type != null && type.toLowerCase().includes("pause");
-
-        const enrichedSlot: TechPlanningSlot = {
-          ...baseSlot,
+        const slot: TechPlanningSlot = {
+          slotId,
+          start: startDate.toISOString(),
+          end: endDate.toISOString(),
+          durationMinutes,
           interventionId: intervention.id,
           projectId: intervention.projectId ?? null,
           projectRef: project?.ref ?? null,
@@ -246,13 +242,112 @@ export function buildPlanningByTech({
           isBreak,
         };
 
-        planningByTech[techId].slots.push(enrichedSlot);
+        planningByTech[techId].slots.push(slot);
       });
     });
   });
 
-  // Sort slots by start time
+  // MÉTHODE SECONDAIRE: Utiliser les créneaux si disponibles et pas de visites trouvées
+  // (backup au cas où les interventions ne contiennent pas toutes les visites)
+  if (creneaux && creneaux.length > 0) {
+    // Index des visites par pEventId pour enrichissement
+    const visitesByEventId = new Map<number, { intervention: RawIntervention; visite: RawVisite }[]>();
+    interventions.forEach((intervention) => {
+      const visites = intervention.data?.visites || [];
+      visites.forEach((visite) => {
+        if (visite.pEventId == null) return;
+        const current = visitesByEventId.get(visite.pEventId) || [];
+        current.push({ intervention, visite });
+        visitesByEventId.set(visite.pEventId, current);
+      });
+    });
+
+    creneaux.forEach((creneau) => {
+      // Vérifier si ce créneau n'a pas déjà été ajouté via les visites
+      const alreadyAdded = Object.values(planningByTech).some(tp =>
+        tp.slots.some(s => s.slotId === creneau.id)
+      );
+      if (alreadyAdded) return;
+
+      const startDate = new Date(creneau.date);
+      const endDate = addMinutes(startDate, creneau.duree);
+      const visitesLinked = visitesByEventId.get(creneau.id) || [];
+
+      creneau.usersIds.forEach((techId) => {
+        const user = userMap.get(techId);
+        if (!user) return;
+
+        if (!planningByTech[techId]) {
+          planningByTech[techId] = {
+            techId,
+            techName: getUserName(user),
+            color: getUserColor(user),
+            slots: [],
+          };
+        }
+
+        const baseSlot: TechPlanningSlot = {
+          slotId: creneau.id,
+          start: startDate.toISOString(),
+          end: endDate.toISOString(),
+          durationMinutes: creneau.duree,
+        };
+
+        if (visitesLinked.length === 0) {
+          planningByTech[techId].slots.push(baseSlot);
+          return;
+        }
+
+        visitesLinked.forEach(({ intervention, visite }) => {
+          if (visite.usersIds && !visite.usersIds.includes(techId)) {
+            return;
+          }
+
+          const project = intervention.projectId ? projectMap.get(intervention.projectId) : undefined;
+          const client = project?.clientId ? clientMap.get(project.clientId) : undefined;
+
+          let clientName: string | null = null;
+          if (client) {
+            if (client.company) {
+              clientName = client.company;
+            } else {
+              const fn = client.firstname || "";
+              const ln = client.lastname || "";
+              clientName = `${fn} ${ln}`.trim() || null;
+            }
+          }
+
+          const type = intervention.data?.type2 ?? null;
+          const isBreak = type != null && type.toLowerCase().includes("pause");
+
+          const enrichedSlot: TechPlanningSlot = {
+            ...baseSlot,
+            interventionId: intervention.id,
+            projectId: intervention.projectId ?? null,
+            projectRef: project?.ref ?? null,
+            clientName,
+            type,
+            state: visite.state ?? null,
+            isBreak,
+          };
+
+          planningByTech[techId].slots.push(enrichedSlot);
+        });
+      });
+    });
+  }
+
+  // Sort slots by start time and deduplicate
   Object.values(planningByTech).forEach((techPlanning) => {
+    // Dédupliquer par slotId + start
+    const seen = new Set<string>();
+    techPlanning.slots = techPlanning.slots.filter((slot) => {
+      const key = `${slot.slotId}-${slot.start}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    
     techPlanning.slots.sort(
       (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
     );

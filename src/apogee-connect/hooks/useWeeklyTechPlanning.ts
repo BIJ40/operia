@@ -123,13 +123,14 @@ export function useWeeklyTechPlanning(techFilterId?: number): WeeklyPlanningHook
     errorCreneaux || errorUsers || errorInterventions || errorProjects || errorClients;
 
   // Build planning data
+  // Note: creneaux peut être null/vide, les visites sont extraites des interventions
   const { planningByTech, weeklyData } = useMemo(() => {
-    if (isLoading || error || !creneaux || !users) {
+    if (isLoading || error || !users) {
       return { planningByTech: undefined, weeklyData: undefined };
     }
 
     const planning = buildPlanningByTech({
-      creneaux,
+      creneaux: creneaux ?? [],
       users,
       interventions: interventions ?? [],
       projects: projects ?? [],
