@@ -164,7 +164,6 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
           <Snowflake className="h-4 w-4" style={{ color: getHeatColor(0) }} />
-          <span>Priorité ≥</span>
         </div>
         
         <div className="flex-1 px-2">
@@ -180,23 +179,10 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
           />
         </div>
         
-        <div className="flex items-center gap-2 text-sm shrink-0">
-          <Badge 
-            variant="outline" 
-            className={`font-mono text-xs transition-all ${isOnFire ? 'animate-pulse shadow-lg shadow-red-500/50' : ''}`}
-            style={{ 
-              borderColor: getHeatColor(heatThreshold),
-              color: getHeatColor(heatThreshold),
-              backgroundColor: isOnFire ? 'rgba(239, 68, 68, 0.1)' : undefined
-            }}
-          >
-            {heatThreshold} • {getHeatLabel(heatThreshold)}
-          </Badge>
-          <Flame 
-            className={`h-5 w-5 transition-all ${isOnFire ? 'animate-pulse scale-125' : ''}`} 
-            style={{ color: getHeatColor(heatThreshold) }} 
-          />
-        </div>
+        <Flame 
+          className={`h-5 w-5 transition-all ${isOnFire ? 'animate-pulse scale-125' : ''}`} 
+          style={{ color: getHeatColor(heatThreshold) }} 
+        />
       </div>
     </div>
   );
