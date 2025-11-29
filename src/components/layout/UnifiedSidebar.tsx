@@ -42,7 +42,7 @@ interface NavGroup {
 export function UnifiedSidebar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { canViewScope, isAdmin } = useAuth();
+  const { canViewScope, isAdmin, globalRole, suggestedGlobalRole } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   // All menu sections collapsed by default on first load
@@ -52,6 +52,16 @@ export function UnifiedSidebar() {
   const canAccessFranchiseeAdmin = useHasGlobalRole('franchisee_admin'); // N2+
   const canAccessFranchiseur = useHasGlobalRole('franchisor_user'); // N3+
   const canAccessAdmin = useHasGlobalRole('platform_admin'); // N5+
+
+  // DEBUG: Log role values for troubleshooting
+  console.log('[SIDEBAR] Role check:', {
+    globalRole,
+    suggestedGlobalRole,
+    isAdmin,
+    canAccessFranchiseeAdmin,
+    canAccessFranchiseur,
+    canAccessAdmin
+  });
 
   // Check if currently in edit mode (admin legacy pour édition)
   const isInEditMode = searchParams.get('edit') === 'true' && (isAdmin || canAccessAdmin);
