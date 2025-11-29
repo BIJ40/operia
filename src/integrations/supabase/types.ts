@@ -298,6 +298,239 @@ export type Database = {
         }
         Relationships: []
       }
+      apogee_modules: {
+        Row: {
+          color: string | null
+          created_at: string
+          display_order: number
+          id: string
+          label: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id: string
+          label: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          label?: string
+        }
+        Relationships: []
+      }
+      apogee_priorities: {
+        Row: {
+          color: string | null
+          created_at: string
+          display_order: number
+          id: string
+          label: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id: string
+          label: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          label?: string
+        }
+        Relationships: []
+      }
+      apogee_ticket_comments: {
+        Row: {
+          author_name: string | null
+          author_type: string
+          body: string
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          is_internal: boolean | null
+          source_field: string | null
+          ticket_id: string
+        }
+        Insert: {
+          author_name?: string | null
+          author_type: string
+          body: string
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          is_internal?: boolean | null
+          source_field?: string | null
+          ticket_id: string
+        }
+        Update: {
+          author_name?: string | null
+          author_type?: string
+          body?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          is_internal?: boolean | null
+          source_field?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apogee_ticket_comments_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apogee_ticket_comments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apogee_ticket_statuses: {
+        Row: {
+          color: string | null
+          created_at: string
+          display_order: number
+          id: string
+          is_final: boolean
+          label: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id: string
+          is_final?: boolean
+          label: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_final?: boolean
+          label?: string
+        }
+        Relationships: []
+      }
+      apogee_tickets: {
+        Row: {
+          action_type: string | null
+          apogee_status_raw: string | null
+          created_at: string
+          created_by_user_id: string | null
+          created_from: string
+          description: string | null
+          element_concerne: string
+          external_key: string | null
+          h_max: number | null
+          h_min: number | null
+          hc_status_raw: string | null
+          hca_code: string | null
+          id: string
+          kanban_status: string
+          module: string | null
+          module_area: string | null
+          needs_completion: boolean | null
+          owner_side: string | null
+          priority: string | null
+          severity: string | null
+          source_row_index: number | null
+          source_sheet: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_type?: string | null
+          apogee_status_raw?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          created_from?: string
+          description?: string | null
+          element_concerne: string
+          external_key?: string | null
+          h_max?: number | null
+          h_min?: number | null
+          hc_status_raw?: string | null
+          hca_code?: string | null
+          id?: string
+          kanban_status?: string
+          module?: string | null
+          module_area?: string | null
+          needs_completion?: boolean | null
+          owner_side?: string | null
+          priority?: string | null
+          severity?: string | null
+          source_row_index?: number | null
+          source_sheet?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string | null
+          apogee_status_raw?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          created_from?: string
+          description?: string | null
+          element_concerne?: string
+          external_key?: string | null
+          h_max?: number | null
+          h_min?: number | null
+          hc_status_raw?: string | null
+          hca_code?: string | null
+          id?: string
+          kanban_status?: string
+          module?: string | null
+          module_area?: string | null
+          needs_completion?: boolean | null
+          owner_side?: string | null
+          priority?: string | null
+          severity?: string | null
+          source_row_index?: number | null
+          source_sheet?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apogee_tickets_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apogee_tickets_kanban_status_fkey"
+            columns: ["kanban_status"]
+            isOneToOne: false
+            referencedRelation: "apogee_ticket_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apogee_tickets_module_fkey"
+            columns: ["module"]
+            isOneToOne: false
+            referencedRelation: "apogee_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apogee_tickets_priority_fkey"
+            columns: ["priority"]
+            isOneToOne: false
+            referencedRelation: "apogee_priorities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apporteur_blocks: {
         Row: {
           attachments: Json | null
