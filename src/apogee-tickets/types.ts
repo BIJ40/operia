@@ -184,4 +184,6 @@ export interface TicketFilters {
   is_qualified?: boolean;
   impact_tag?: string;
   heat_priority_min?: number;
+  heat_priority_max?: number;
+  heat_priority_exact?: number; // For clicking on a specific dot
 }

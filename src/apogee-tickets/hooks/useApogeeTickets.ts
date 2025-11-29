@@ -115,8 +115,18 @@ export function useApogeeTickets(filters?: TicketFilters) {
       if (filters?.impact_tag) {
         query = query.contains('impact_tags', [filters.impact_tag]);
       }
-      if (filters?.heat_priority_min !== undefined) {
-        query = query.lte('heat_priority', filters.heat_priority_min);
+      // Priority range filter
+      if (filters?.heat_priority_exact !== undefined) {
+        // Exact priority filter (clicking on a dot)
+        query = query.eq('heat_priority', filters.heat_priority_exact);
+      } else {
+        // Range filter (dual slider)
+        if (filters?.heat_priority_min !== undefined && filters.heat_priority_min > 0) {
+          query = query.gte('heat_priority', filters.heat_priority_min);
+        }
+        if (filters?.heat_priority_max !== undefined && filters.heat_priority_max < 12) {
+          query = query.lte('heat_priority', filters.heat_priority_max);
+        }
       }
 
       const { data, error } = await query;
