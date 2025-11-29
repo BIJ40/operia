@@ -91,6 +91,7 @@ export const ROUTES = {
     userActivity: '/admin/user-activity',
     support: '/admin/support',
     escalationHistory: '/admin/escalation-history',
+    pageMetadata: '/admin/page-metadata',
   },
 
   // ============================================
