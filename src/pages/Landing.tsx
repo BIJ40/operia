@@ -190,27 +190,27 @@ function DashboardTileCard({ tile, dynamicBadge }: { tile: DashboardTile; dynami
 
   return (
     <Link to={tile.route}>
-      <Card className="group h-full hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 cursor-pointer relative">
+      <Card className="group hover:shadow-lg hover:border-primary/30 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer relative">
         {badgeContent && (
-          <span className={`absolute bottom-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full z-10 ${
+          <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full z-10 ${
             typeof badgeContent === 'number' 
-              ? 'bg-red-500 text-white animate-pulse min-w-[24px] text-center' 
+              ? 'bg-red-500 text-white animate-pulse min-w-[20px] text-center' 
               : 'bg-orange-500 text-white text-[10px]'
           }`}>
             {badgeContent}
           </span>
         )}
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${colorClasses[tile.color]}`}>
-              <Icon className="w-6 h-6" />
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center transition-colors ${colorClasses[tile.color]}`}>
+              <Icon className="w-5 h-5" />
             </div>
-            <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-base font-medium truncate">{tile.title}</CardTitle>
+              <CardDescription className="text-xs truncate">{tile.description}</CardDescription>
+            </div>
+            <ArrowRight className="w-4 h-4 flex-shrink-0 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
           </div>
-        </CardHeader>
-        <CardContent>
-          <CardTitle className="text-lg mb-1">{tile.title}</CardTitle>
-          <CardDescription className="text-sm">{tile.description}</CardDescription>
         </CardContent>
       </Card>
     </Link>
@@ -228,14 +228,16 @@ function SectionHeader({ title, icon: Icon, colorClass, indexUrl }: SectionHeade
   return (
     <Link 
       to={indexUrl}
-      className="group flex items-center justify-between mb-4 p-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+      className="group flex items-center justify-between mb-4 py-2 px-4 -mx-4 rounded-xl border border-transparent hover:border-border hover:bg-muted/80 hover:shadow-sm transition-all cursor-pointer"
     >
-      <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-        <Icon className={`w-5 h-5 ${colorClass}`} />
+      <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-muted group-hover:bg-background transition-colors`}>
+          <Icon className={`w-4 h-4 ${colorClass}`} />
+        </div>
         {title}
       </h2>
-      <div className="flex items-center gap-1 text-sm text-muted-foreground group-hover:text-primary transition-colors">
-        <span className="hidden sm:inline">Voir tout</span>
+      <div className="flex items-center gap-1.5 text-sm text-muted-foreground group-hover:text-primary transition-colors">
+        <span className="hidden sm:inline text-xs font-medium">Voir tout</span>
         <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
       </div>
     </Link>
