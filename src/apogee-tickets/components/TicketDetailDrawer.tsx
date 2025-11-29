@@ -26,6 +26,7 @@ import {
   Sparkles,
   CheckCircle2,
   Flame,
+  Snowflake,
   History
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -322,17 +323,39 @@ export function TicketDetailDrawer({
                   </label>
                   <div className="mt-2 flex items-center gap-4">
                     <HeatPriorityBadge priority={ticket.heat_priority} size="default" showLabel />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newValue = Math.max(0, (ticket.heat_priority ?? 3) - 1);
+                        onUpdate({ id: ticket.id, heat_priority: newValue });
+                      }}
+                      className="p-1 hover:bg-blue-100 rounded transition-colors"
+                      title="Diminuer la priorité"
+                    >
+                      <Snowflake className="h-5 w-5 text-blue-400" />
+                    </button>
                     <div className="flex-1">
                       <Slider
                         value={[ticket.heat_priority ?? 3]}
                         min={0}
                         max={12}
                         step={1}
-                        onValueChange={(v) => handleFieldUpdate('heat_priority', v[0])}
+                        onValueChange={(v) => onUpdate({ id: ticket.id, heat_priority: v[0] })}
                         className="w-full"
                         trackClassName="bg-gradient-to-r from-blue-400 via-yellow-400 to-red-500"
                       />
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newValue = Math.min(12, (ticket.heat_priority ?? 3) + 1);
+                        onUpdate({ id: ticket.id, heat_priority: newValue });
+                      }}
+                      className="p-1 hover:bg-red-100 rounded transition-colors"
+                      title="Augmenter la priorité"
+                    >
+                      <Flame className="h-5 w-5 text-red-500" />
+                    </button>
                   </div>
                 </div>
 
