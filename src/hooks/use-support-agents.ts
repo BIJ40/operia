@@ -3,7 +3,7 @@
  * 
  * Un agent support est défini par:
  * - profiles.enabled_modules.support.enabled = true
- * - ET (options.agent_support = true OU options.admin_support = true)
+ * - ET (options.agent = true OU options.admin = true)
  * 
  * Ne plus utiliser support_level ou autres attributs legacy.
  */
@@ -29,8 +29,8 @@ interface EnabledModules {
   support?: {
     enabled?: boolean;
     options?: {
-      agent_support?: boolean;
-      admin_support?: boolean;
+      agent?: boolean;
+      admin?: boolean;
       level?: number;
       skills?: string[];
     };
@@ -69,7 +69,7 @@ export function useSupportAgents() {
           if (!modules?.support?.enabled) return false;
           
           const options = modules.support.options || {};
-          return options.agent_support === true || options.admin_support === true;
+          return options.agent === true || options.admin === true;
         })
         .map(profile => {
           const modules = profile.enabled_modules as EnabledModules;
@@ -82,8 +82,8 @@ export function useSupportAgents() {
             last_name: profile.last_name,
             agence: profile.agence,
             global_role: profile.global_role,
-            isAgent: options.agent_support === true,
-            isAdmin: options.admin_support === true,
+            isAgent: options.agent === true,
+            isAdmin: options.admin === true,
             level: options.level ?? null,
             skills: options.skills ?? [],
           };

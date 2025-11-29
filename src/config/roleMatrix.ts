@@ -23,7 +23,7 @@ export interface RoleCapabilities {
   canAccessSupport: boolean;
   /**
    * canAccessSupportConsole: Accès au back-office support (/admin/support)
-   * Contrôlé par enabled_modules.support.options.agent_support OU admin_support
+   * Contrôlé par enabled_modules.support.options.agent OU admin
    * ROLE_MATRIX définit le baseline, mais l'accès réel dépend de AuthContext.canAccessSupportConsole
    * qui combine ROLE_MATRIX + enabled_modules.support.options
    */
