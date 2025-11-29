@@ -404,7 +404,7 @@ export function ActionsConfigDialog({
               </Card>
               
               {editedStatuses.map((status, idx) => (
-                <Card key={status.id} className="overflow-hidden">
+                <Card key={`status-${idx}`} className="overflow-hidden">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <GripVertical className="h-4 w-4 text-muted-foreground cursor-move shrink-0" />
@@ -506,7 +506,7 @@ export function ActionsConfigDialog({
               </Card>
 
               {editedModules.map((mod, idx) => (
-                <Card key={mod.id} className="overflow-hidden">
+                <Card key={`module-${idx}`} className="overflow-hidden">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <GripVertical className="h-4 w-4 text-muted-foreground cursor-move shrink-0" />
@@ -663,7 +663,7 @@ export function ActionsConfigDialog({
               </Card>
 
               {editedTags.map((tag, idx) => (
-                <Card key={tag.id} className="overflow-hidden">
+                <Card key={`tag-${idx}`} className="overflow-hidden">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <GripVertical className="h-4 w-4 text-muted-foreground cursor-move shrink-0" />
