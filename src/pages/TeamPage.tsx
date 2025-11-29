@@ -4,7 +4,9 @@
  */
 
 import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +38,25 @@ interface TeamMember {
 }
 
 export default function TeamPage() {
-  const { agence, agencyId, hasGlobalRole } = useAuth();
+  const { agence, agencyId: authAgencyId, hasGlobalRole } = useAuth();
+
+  // Résoudre l'agency_id depuis le slug si nécessaire
+  const { data: resolvedAgency } = useQuery({
+    queryKey: ["resolveAgencyBySlug", agence],
+    enabled: !authAgencyId && !!agence,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("apogee_agencies")
+        .select("id, label")
+        .eq("slug", agence)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Utiliser l'ID résolu ou celui du context
+  const agencyId = authAgencyId || resolvedAgency?.id || null;
 
   // Hooks data
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useAgencyCollaborators(agencyId);
