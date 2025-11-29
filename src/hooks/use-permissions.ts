@@ -14,7 +14,7 @@ export function useFilteredBlocks<T extends Block>(blocks: T[]): T[] {
 
 /**
  * Legacy wrapper pour compatibilité - NEUTRALISÉ
- * Les IDs de blocks legacy (block-* ou UUID) retournent toujours false (pas locked)
+ * Les IDs de blocks legacy (block-*, cat-*, ou UUID) retournent toujours false (pas locked)
  * Seuls les vrais scopes V2 ('apogee', 'apporteurs', etc.) sont vérifiés
  */
 export function useIsBlockLocked() {
@@ -23,27 +23,23 @@ export function useIsBlockLocked() {
   return useCallback((scopeSlug: string, _blocks: Block[] = []): boolean => {
     // Admin = jamais locked
     if (isAdmin) {
-      console.log('[useIsBlockLocked] Admin detected, returning false');
       return false;
     }
 
-    // Détection des IDs de blocks legacy (format block-* ou UUID)
+    // Détection des IDs de blocks legacy (format block-*, cat-*, ou UUID)
     const isBlockPrefix = scopeSlug.startsWith('block-');
+    const isCatPrefix = scopeSlug.startsWith('cat-');
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(scopeSlug);
-    const isLegacyBlockId = isBlockPrefix || isUUID;
-
-    console.log('[useIsBlockLocked] Check:', { scopeSlug, isBlockPrefix, isUUID, isLegacyBlockId, isAdmin });
+    const isLegacyBlockId = isBlockPrefix || isCatPrefix || isUUID;
 
     // Les blocks legacy ne sont plus verrouillés par ce système
     // La V2 (RoleGuard / hasGlobalRole) contrôle l'accès aux pages
     if (isLegacyBlockId) {
-      console.log('[useIsBlockLocked] Legacy block ID detected, returning false (unlocked)');
       return false;
     }
 
     // Pour les vrais scopes V2, utiliser le système normal
     const perm = getEffectivePermission(scopeSlug);
-    console.log('[useIsBlockLocked] V2 scope check:', { scopeSlug, canView: perm.canView, level: perm.level });
     return !perm.canView;
   }, [isAdmin, getEffectivePermission]);
 }
