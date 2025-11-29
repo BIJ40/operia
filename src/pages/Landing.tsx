@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getRoleCapabilities, canAccessTileGroup, canAccessTile, TileGroup } from '@/config/roleMatrix';
 
 export default function Landing() {
-  const { agence, globalRole } = useAuth();
+  const { agence, globalRole, canAccessSupportConsole } = useAuth();
   const [pendingTicketsCount, setPendingTicketsCount] = useState<number>(0);
 
   // V2: Capacités basées sur ROLE_MATRIX
@@ -16,7 +16,7 @@ export default function Landing() {
 
   // Fetch pending tickets count for support console users
   useEffect(() => {
-    if (!caps.canAccessSupportConsole) return;
+    if (!canAccessSupportConsole) return;
 
     const fetchPendingCount = async () => {
       const { count, error } = await supabase
@@ -43,19 +43,19 @@ export default function Landing() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [caps.canAccessSupportConsole]);
+  }, [canAccessSupportConsole]);
 
-  // V2: Filtrer les tuiles basé sur ROLE_MATRIX
+  // V2: Filtrer les tuiles basé sur ROLE_MATRIX + canAccessSupportConsole de AuthContext
   const visibleTiles = useMemo(() => {
     return DASHBOARD_TILES.filter(tile => {
       // 1. Vérifier l'accès au groupe
       const groupAccess = canAccessTileGroup(globalRole, tile.group as TileGroup, { agence });
       if (!groupAccess) return false;
       
-      // 2. Vérifier l'accès à la tuile spécifique
-      return canAccessTile(globalRole, tile.id, { agence });
+      // 2. Vérifier l'accès à la tuile spécifique (passer canAccessSupportConsole pour CONSOLE_SUPPORT)
+      return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsole });
     });
-  }, [globalRole, agence]);
+  }, [globalRole, agence, canAccessSupportConsole]);
 
   // Grouper les tuiles visibles par catégorie
   const tilesByGroup = useMemo(() => {
