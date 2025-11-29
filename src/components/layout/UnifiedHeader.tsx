@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, User, Settings, Headset, Loader2, Menu, Pencil, FileEdit } from 'lucide-react';
+import { 
+  LogOut, User, Settings, Headset, Loader2, Menu, Pencil, FileEdit,
+  BarChart3, CheckSquare, Tv, CalendarDays, Users, Gauge,
+  BookOpen, Handshake, FolderOpen, GraduationCap,
+  MessageSquare, LifeBuoy,
+  LayoutDashboard, Building2, UserCog, PieChart, GitCompare, Calculator, Network,
+  Building, Database, FileText, Home,
+  LucideIcon
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -35,6 +43,15 @@ import { toast } from 'sonner';
 import { PAGE_TITLES } from '@/config/navigation';
 import { getPageConfigByPath, getPageDefaultByKey } from '@/config/pageDefaults';
 
+// Mapping des noms d'icônes vers les composants
+const ICON_MAP: Record<string, LucideIcon> = {
+  BarChart3, CheckSquare, Tv, CalendarDays, Users, Gauge,
+  BookOpen, Handshake, FolderOpen, GraduationCap,
+  MessageSquare, LifeBuoy, Headset,
+  LayoutDashboard, Building2, UserCog, PieChart, GitCompare, Calculator, Network,
+  Building, Database, FileText, Home, Settings,
+};
+
 // Vérifier si l'utilisateur peut éditer les métadonnées (N5/N6)
 function canEditPageMetadata(globalRole: GlobalRole | null): boolean {
   if (!globalRole) return false;
@@ -60,6 +77,10 @@ export function UnifiedHeader() {
   
   // Titre affiché (métadonnées ou défaut)
   const displayTitle = metadata?.header_title || defaultTitle;
+  
+  // Icône de la page (depuis config)
+  const iconName = pageConfig?.icon;
+  const PageIcon = iconName ? ICON_MAP[iconName] : null;
   
   // État du dialog d'édition des métadonnées
   const [isMetadataDialogOpen, setIsMetadataDialogOpen] = useState(false);
@@ -138,8 +159,9 @@ export function UnifiedHeader() {
             <Menu className="w-5 h-5" />
           </Button>
 
-          {/* Zone centrale avec titre */}
-          <div className="flex-1 flex items-center justify-center min-w-0">
+          {/* Zone centrale avec titre et icône */}
+          <div className="flex-1 flex items-center justify-center min-w-0 gap-2">
+            {PageIcon && <PageIcon className="w-5 h-5 text-primary shrink-0" />}
             <h1 className="text-lg font-semibold text-foreground truncate">
               {displayTitle}
             </h1>
