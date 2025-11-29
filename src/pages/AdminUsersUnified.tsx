@@ -16,8 +16,6 @@ import {
   canViewUser,
   canManageUser,
   canDeactivateUser as canDeactivateUserHelper,
-  canAssignRoleV2,
-  LEGACY_FIELDS
 } from '@/config/roleMatrix';
 import { 
   MODULE_DEFINITIONS, 
@@ -25,10 +23,6 @@ import {
   ModuleOptionsState,
   ModuleKey
 } from '@/types/modules';
-import { 
-  getGlobalRoleFromLegacy, 
-  getEnabledModulesFromLegacy 
-} from '@/types/accessControl';
 import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
@@ -38,7 +32,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { 
   Select, 
   SelectContent, 
@@ -77,19 +71,13 @@ import {
   Save, 
   ChevronLeft,
   ChevronRight,
-  CheckCircle2,
-  MinusCircle,
-  AlertCircle,
   Loader2,
   Info,
   ChevronDown,
   Building2,
-  Briefcase,
   Shield,
-  UserCog,
   Zap,
   Eye,
-  Wand2,
   UserPlus,
   MoreHorizontal,
   UserX,
@@ -128,7 +116,7 @@ interface UserProfile {
   agence: string | null;
   global_role: GlobalRole | null;
   enabled_modules: EnabledModules | null;
-  // Legacy fields
+  // Legacy fields (lecture seule)
   system_role: string | null;
   role_agence: string | null;
   service_competencies: any;
@@ -138,22 +126,6 @@ interface UserProfile {
   is_active: boolean | null;
   deactivated_at: string | null;
   deactivated_by: string | null;
-}
-
-interface UserCapability {
-  user_id: string;
-  capability: string;
-  is_active: boolean;
-}
-
-interface UserAppRole {
-  user_id: string;
-  role: string;
-}
-
-interface FranchiseurRole {
-  user_id: string;
-  franchiseur_role: string;
 }
 
 const PAGE_SIZE = 20;
@@ -171,7 +143,7 @@ export default function AdminUsersUnified() {
   const { globalRole, suggestedGlobalRole, isAdmin, user, agence: currentUserAgency } = useAuth();
   
   // ============================================================================
-  // PERMISSIONS V2 - Utilisant la matrice de gestion centralisée
+  // PERMISSIONS - Utilisant la matrice de gestion centralisée
   // ============================================================================
   const effectiveUserRole = globalRole ?? suggestedGlobalRole;
   const currentUserLevel = getRoleLevel(effectiveUserRole);
@@ -258,52 +230,11 @@ export default function AdminUsersUnified() {
     },
   });
 
-  // Fetch user capabilities
-  const { data: capabilities } = useQuery({
-    queryKey: ['admin-users-unified-capabilities'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('user_capabilities')
-        .select('user_id, capability, is_active')
-        .eq('is_active', true);
-      
-      if (error) throw error;
-      return data as UserCapability[];
-    },
-  });
-
-  // Fetch user roles
-  const { data: userRoles } = useQuery({
-    queryKey: ['admin-users-unified-roles'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
-      
-      if (error) throw error;
-      return data as UserAppRole[];
-    },
-  });
-
-  // Fetch franchiseur roles
-  const { data: franchiseurRoles } = useQuery({
-    queryKey: ['admin-users-unified-franchiseur-roles'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('franchiseur_roles')
-        .select('user_id, franchiseur_role');
-      
-      if (error) throw error;
-      return data as FranchiseurRole[];
-    },
-  });
-
-  // Calculate suggestions for each user
-  const usersWithSuggestions = useMemo(() => {
+  // Filter users based on viewScope
+  const visibleUsers = useMemo(() => {
     if (!users) return [];
     
-    // Filter users based on viewScope from getUserManagementCapabilities
-    const visibleUsers = users.filter(u => {
+    return users.filter(u => {
       // Self scope: only see yourself
       if (userManagementCaps.viewScope === 'self') {
         return u.id === user?.id;
@@ -311,42 +242,7 @@ export default function AdminUsersUnified() {
       // Use the centralized canViewUser helper for other cases
       return canViewUser(effectiveUserRole, currentUserAgency, u.agence);
     });
-    
-    return visibleUsers.map(user => {
-      const userCaps = capabilities?.filter(c => c.user_id === user.id) || [];
-      const userAppRoles = userRoles?.filter(r => r.user_id === user.id) || [];
-      const userFranchiseurRole = franchiseurRoles?.find(r => r.user_id === user.id);
-      
-      const isAdmin = userAppRoles.some(r => r.role === 'admin');
-      const isFranchiseur = userAppRoles.some(r => r.role === 'franchiseur');
-      const isSupport = userCaps.some(c => c.capability === 'support' && c.is_active);
-      
-      const suggestedGlobalRole = getGlobalRoleFromLegacy({
-        hasAdminRole: isAdmin,
-        hasFranchiseurRole: isFranchiseur,
-        franchiseurRole: userFranchiseurRole?.franchiseur_role as string | null,
-        systemRole: user.system_role,
-        roleAgence: user.role_agence,
-        hasSupportRole: isSupport,
-      });
-      
-      const suggestedEnabledModules = getEnabledModulesFromLegacy({
-        globalRole: suggestedGlobalRole,
-        hasAdminRole: isAdmin,
-        hasFranchiseurRole: isFranchiseur,
-        hasSupportRole: isSupport,
-      });
-      
-      return {
-        ...user,
-        suggestedGlobalRole,
-        suggestedEnabledModules,
-        legacyRoles: userAppRoles.map(r => r.role),
-        legacyCapabilities: userCaps.map(c => c.capability),
-        franchiseurRole: userFranchiseurRole?.franchiseur_role,
-      };
-    });
-  }, [users, capabilities, userRoles, franchiseurRoles, userManagementCaps, effectiveUserRole, currentUserAgency, user?.id]);
+  }, [users, userManagementCaps, effectiveUserRole, currentUserAgency, user?.id]);
 
   // Get unique agencies
   const agencies = useMemo(() => {
@@ -365,7 +261,7 @@ export default function AdminUsersUnified() {
 
   // Filter users
   const filteredUsers = useMemo(() => {
-    return usersWithSuggestions.filter(user => {
+    return visibleUsers.filter(user => {
       // Active status filter (by default, only show active users)
       const isUserActive = user.is_active !== false;
       if (!showDeactivated && !isUserActive) {
@@ -403,7 +299,7 @@ export default function AdminUsersUnified() {
       
       return true;
     });
-  }, [usersWithSuggestions, searchQuery, agencyFilter, roleFilter, moduleFilter, modifiedUsers, showDeactivated]);
+  }, [visibleUsers, searchQuery, agencyFilter, roleFilter, moduleFilter, modifiedUsers, showDeactivated]);
 
   // Paginated users
   const paginatedUsers = useMemo(() => {
@@ -432,8 +328,8 @@ export default function AdminUsersUnified() {
       return { userId, globalRole, enabledModules };
     },
     onSuccess: ({ userId }) => {
-      logAuth.info(`[V2] Permissions sauvegardées pour user ${userId}`);
-      toast.success('Permissions V2 enregistrées');
+      logAuth.info(`Permissions sauvegardées pour user ${userId}`);
+      toast.success('Permissions enregistrées');
       
       setModifiedUsers(prev => {
         const next = { ...prev };
@@ -444,29 +340,8 @@ export default function AdminUsersUnified() {
       queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
     },
     onError: (error) => {
-      logAuth.error('[V2] Erreur sauvegarde:', error);
+      logAuth.error('Erreur sauvegarde:', error);
       toast.error('Erreur lors de la sauvegarde');
-    },
-  });
-
-  // Batch migration mutation (V2 à tous)
-  const batchMigrateMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('migrate-user-roles-v2', {
-        body: {},
-      });
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      const { migrated = 0, skipped = 0 } = data || {};
-      logAuth.info(`[V2] Migration batch terminée: ${migrated} migrés, ${skipped} ignorés`);
-      toast.success(`Migration V2 terminée : ${migrated} profil(s) mis à jour, ${skipped} déjà migrés`);
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
-    },
-    onError: (error: Error) => {
-      logAuth.error('[V2] Erreur migration batch:', error);
-      toast.error(`Erreur migration : ${error.message || 'Inconnue'}`);
     },
   });
 
@@ -574,26 +449,17 @@ export default function AdminUsersUnified() {
 
   // Check if user is superadmin (N6)
   const isSuperAdmin = effectiveUserRole === 'superadmin';
-  const applyV2 = (user: typeof usersWithSuggestions[0]) => {
-    if (!user.suggestedGlobalRole) return;
-    
-    saveMutation.mutate({
-      userId: user.id,
-      globalRole: user.suggestedGlobalRole,
-      enabledModules: user.suggestedEnabledModules,
-    });
-  };
 
   // Save manual changes
   const saveChanges = (userId: string) => {
-    const user = usersWithSuggestions.find(u => u.id === userId);
+    const targetUser = visibleUsers.find(u => u.id === userId);
     const changes = modifiedUsers[userId];
-    if (!user || !changes) return;
+    if (!targetUser || !changes) return;
     
     saveMutation.mutate({
       userId,
-      globalRole: changes.global_role ?? user.global_role,
-      enabledModules: changes.enabled_modules ?? user.enabled_modules,
+      globalRole: changes.global_role ?? targetUser.global_role,
+      enabledModules: changes.enabled_modules ?? targetUser.enabled_modules,
     });
   };
 
@@ -610,10 +476,10 @@ export default function AdminUsersUnified() {
 
   // Handle module toggle
   const handleModuleToggle = (userId: string, moduleKey: ModuleKey, enabled: boolean) => {
-    const user = usersWithSuggestions.find(u => u.id === userId);
-    if (!user) return;
+    const targetUser = visibleUsers.find(u => u.id === userId);
+    if (!targetUser) return;
     
-    const currentModules = modifiedUsers[userId]?.enabled_modules ?? user.enabled_modules ?? {};
+    const currentModules = modifiedUsers[userId]?.enabled_modules ?? targetUser.enabled_modules ?? {};
     const moduleState = currentModules[moduleKey];
     
     let newModuleState: ModuleOptionsState;
@@ -642,10 +508,10 @@ export default function AdminUsersUnified() {
 
   // Handle module option toggle
   const handleOptionToggle = (userId: string, moduleKey: ModuleKey, optionKey: string, enabled: boolean) => {
-    const user = usersWithSuggestions.find(u => u.id === userId);
-    if (!user) return;
+    const targetUser = visibleUsers.find(u => u.id === userId);
+    if (!targetUser) return;
     
-    const currentModules = modifiedUsers[userId]?.enabled_modules ?? user.enabled_modules ?? {};
+    const currentModules = modifiedUsers[userId]?.enabled_modules ?? targetUser.enabled_modules ?? {};
     const moduleState = currentModules[moduleKey];
     
     let currentOptions: Record<string, boolean> = {};
@@ -673,11 +539,11 @@ export default function AdminUsersUnified() {
   };
 
   // Get effective values
-  const getEffectiveRole = (user: typeof usersWithSuggestions[0]) => {
+  const getEffectiveRole = (user: UserProfile) => {
     return modifiedUsers[user.id]?.global_role ?? user.global_role;
   };
 
-  const getEffectiveModules = (user: typeof usersWithSuggestions[0]): EnabledModules => {
+  const getEffectiveModules = (user: UserProfile): EnabledModules => {
     return modifiedUsers[user.id]?.enabled_modules ?? user.enabled_modules ?? {};
   };
 
@@ -686,26 +552,6 @@ export default function AdminUsersUnified() {
     const state = modules[moduleKey];
     if (typeof state === 'object' && state.options) return state.options;
     return {};
-  };
-
-  // Status indicator
-  const getStatusIndicator = (user: typeof usersWithSuggestions[0]) => {
-    const effectiveRole = getEffectiveRole(user);
-    const effectiveModules = getEffectiveModules(user);
-    
-    const roleMatch = effectiveRole === user.suggestedGlobalRole;
-    const modulesMatch = JSON.stringify(effectiveModules) === JSON.stringify(user.suggestedEnabledModules);
-    
-    if (!effectiveRole && !user.suggestedGlobalRole) {
-      return { status: 'empty', label: 'Non configuré', color: 'bg-muted text-muted-foreground', icon: MinusCircle };
-    }
-    if (!effectiveRole) {
-      return { status: 'pending', label: 'À appliquer', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', icon: AlertCircle };
-    }
-    if (roleMatch && modulesMatch) {
-      return { status: 'ok', label: 'V2 OK', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', icon: CheckCircle2 };
-    }
-    return { status: 'different', label: 'Différent', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', icon: AlertCircle };
   };
 
   // User initials
@@ -745,7 +591,7 @@ export default function AdminUsersUnified() {
             <Users className="w-8 h-8 text-primary" />
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">Utilisateurs & Permissions V2</h1>
+            <h1 className="text-2xl font-bold">Gestion Utilisateurs & Permissions</h1>
             <p className="text-muted-foreground">
               Gestion des rôles globaux et modules activés par utilisateur
             </p>
@@ -753,34 +599,11 @@ export default function AdminUsersUnified() {
           <Badge variant="outline" className="text-lg px-4 py-2">
             {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
           </Badge>
-          <Button
-            onClick={() => setShowCreateDialog(true)}
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Nouvel utilisateur
-          </Button>
-          {currentUserLevel >= GLOBAL_ROLES.platform_admin && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => batchMigrateMutation.mutate()}
-                  disabled={batchMigrateMutation.isPending}
-                >
-                  {batchMigrateMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-4 h-4 mr-2" />
-                  )}
-                  Appliquer V2 à tous
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Migrer tous les utilisateurs vers le système V2.0</p>
-                <p className="text-xs text-muted-foreground">Basé sur leurs rôles legacy</p>
-              </TooltipContent>
-            </Tooltip>
+          {canCreateUsers && (
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <UserPlus className="w-4 h-4 mr-2" />
+              Nouvel utilisateur
+            </Button>
           )}
         </div>
 
@@ -867,39 +690,37 @@ export default function AdminUsersUnified() {
               onValueChange={setOpenItems}
               className="divide-y"
             >
-              {paginatedUsers.map((user) => {
-                const effectiveRole = getEffectiveRole(user);
-                const effectiveModules = getEffectiveModules(user);
-                const isModified = !!modifiedUsers[user.id];
-                const status = getStatusIndicator(user);
-                const StatusIcon = status.icon;
-                const userCanBeEdited = canEditUser(user.global_role, user.agence);
-                const userCanBeDeleted = canDeleteUser(user.global_role);
-                const isDeactivated = user.is_active === false;
+              {paginatedUsers.map((userItem) => {
+                const effectiveRole = getEffectiveRole(userItem);
+                const effectiveModules = getEffectiveModules(userItem);
+                const isModified = !!modifiedUsers[userItem.id];
+                const userCanBeEdited = canEditUser(userItem.global_role, userItem.agence);
+                const userCanBeDeleted = canDeleteUser(userItem.global_role);
+                const isDeactivated = userItem.is_active === false;
 
                 return (
-                  <AccordionItem key={user.id} value={user.id} className={`border-0 ${isDeactivated ? 'opacity-60 bg-muted/30' : ''}`}>
+                  <AccordionItem key={userItem.id} value={userItem.id} className={`border-0 ${isDeactivated ? 'opacity-60 bg-muted/30' : ''}`}>
                     <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 hover:no-underline">
                       <div className="flex items-center gap-4 flex-1 text-left">
                         {/* Avatar */}
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-medium shrink-0 ${isDeactivated ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
-                          {getInitials(user)}
+                          {getInitials(userItem)}
                         </div>
                         
                         {/* User Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{getDisplayName(user)}</div>
-                          <div className="text-sm text-muted-foreground truncate">{user.email || 'Pas d\'email'}</div>
+                          <div className="font-medium truncate">{getDisplayName(userItem)}</div>
+                          <div className="text-sm text-muted-foreground truncate">{userItem.email || 'Pas d\'email'}</div>
                         </div>
 
                         {/* Agency */}
                         <div className="hidden md:block w-32 text-sm text-muted-foreground truncate">
-                          {user.agence || 'Sans agence'}
+                          {userItem.agence || 'Sans agence'}
                         </div>
 
-                        {/* Poste (legacy info) */}
+                        {/* Poste */}
                         <div className="hidden lg:block w-28 text-sm text-muted-foreground">
-                          {ROLE_AGENCE_LABELS[user.role_agence || ''] || user.role_agence || '-'}
+                          {ROLE_AGENCE_LABELS[userItem.role_agence || ''] || userItem.role_agence || '-'}
                         </div>
 
                         {/* Global Role */}
@@ -913,19 +734,6 @@ export default function AdminUsersUnified() {
                           )}
                         </div>
 
-                        {/* Status */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Badge className={`${status.color} shrink-0`}>
-                              <StatusIcon className="w-3 h-3 mr-1" />
-                              {status.label}
-                            </Badge>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            Comparaison avec les valeurs suggérées V2
-                          </TooltipContent>
-                        </Tooltip>
-
                         {/* Modified indicator */}
                         {isModified && (
                           <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
@@ -934,7 +742,7 @@ export default function AdminUsersUnified() {
                         )}
 
                         {/* Deactivated indicator */}
-                        {user.is_active === false && (
+                        {userItem.is_active === false && (
                           <Badge variant="destructive" className="shrink-0">
                             <UserX className="w-3 h-3 mr-1" />
                             Désactivé
@@ -944,32 +752,15 @@ export default function AdminUsersUnified() {
                         {/* Actions */}
                         <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                           {userCanBeEdited ? (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => saveChanges(user.id)}
-                                disabled={!isModified || saveMutation.isPending}
-                              >
-                                <Save className="w-4 h-4 mr-1" />
-                                Sauver
-                              </Button>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    onClick={() => applyV2(user)}
-                                    disabled={isModified || !user.suggestedGlobalRole || status.status === 'ok' || saveMutation.isPending}
-                                  >
-                                    V2
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  Appliquer les valeurs V2 suggérées
-                                </TooltipContent>
-                              </Tooltip>
-                            </>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => saveChanges(userItem.id)}
+                              disabled={!isModified || saveMutation.isPending}
+                            >
+                              <Save className="w-4 h-4 mr-1" />
+                              Sauver
+                            </Button>
                           ) : (
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -992,9 +783,9 @@ export default function AdminUsersUnified() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                {user.is_active !== false ? (
+                                {userItem.is_active !== false ? (
                                   <DropdownMenuItem
-                                    onClick={() => setDeactivateDialog({ open: true, user })}
+                                    onClick={() => setDeactivateDialog({ open: true, user: userItem })}
                                     className="text-orange-600"
                                   >
                                     <UserX className="w-4 h-4 mr-2" />
@@ -1002,7 +793,7 @@ export default function AdminUsersUnified() {
                                   </DropdownMenuItem>
                                 ) : (
                                   <DropdownMenuItem
-                                    onClick={() => setReactivateDialog({ open: true, user })}
+                                    onClick={() => setReactivateDialog({ open: true, user: userItem })}
                                     className="text-green-600"
                                   >
                                     <UserCheck className="w-4 h-4 mr-2" />
@@ -1011,7 +802,7 @@ export default function AdminUsersUnified() {
                                 )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                  onClick={() => setDeleteDialog({ open: true, user })}
+                                  onClick={() => setDeleteDialog({ open: true, user: userItem })}
                                   className="text-destructive"
                                 >
                                   <Trash2 className="w-4 h-4 mr-2" />
@@ -1026,11 +817,11 @@ export default function AdminUsersUnified() {
                     
                     <AccordionContent className="px-4 pb-4">
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-                        {/* V2 Configuration */}
+                        {/* Configuration */}
                         <div className="space-y-4">
                           <h4 className="font-medium flex items-center gap-2">
                             <Shield className="w-4 h-4" />
-                            Configuration V2
+                            Configuration des permissions
                             {!userCanBeEdited && (
                               <Badge variant="outline" className="ml-2 text-muted-foreground">Lecture seule</Badge>
                             )}
@@ -1041,7 +832,7 @@ export default function AdminUsersUnified() {
                             <label className="text-sm font-medium">Rôle global</label>
                             <Select
                               value={effectiveRole || ''}
-                              onValueChange={(v) => handleRoleChange(user.id, v as GlobalRole)}
+                              onValueChange={(v) => handleRoleChange(userItem.id, v as GlobalRole)}
                               disabled={!userCanBeEdited}
                             >
                               <SelectTrigger>
@@ -1060,11 +851,6 @@ export default function AdminUsersUnified() {
                                 Vous pouvez assigner des rôles jusqu'à N{effectiveUserRole ? GLOBAL_ROLES[effectiveUserRole] : 0}
                               </p>
                             )}
-                            {user.suggestedGlobalRole && (
-                              <p className="text-xs text-muted-foreground">
-                                Suggéré: N{GLOBAL_ROLES[user.suggestedGlobalRole]} – {GLOBAL_ROLE_LABELS[user.suggestedGlobalRole]}
-                              </p>
-                            )}
                           </div>
 
                           {/* Modules */}
@@ -1079,9 +865,9 @@ export default function AdminUsersUnified() {
                                   <div key={moduleDef.key} className="border rounded-lg p-3">
                                     <div className="flex items-center justify-between">
                                       <div className="flex items-center gap-2">
-                                <Switch
+                                        <Switch
                                           checked={isEnabled}
-                                          onCheckedChange={(checked) => handleModuleToggle(user.id, moduleDef.key, checked)}
+                                          onCheckedChange={(checked) => handleModuleToggle(userItem.id, moduleDef.key, checked)}
                                           disabled={!userCanBeEdited}
                                         />
                                         <span className="text-sm font-medium">{moduleDef.label}</span>
@@ -1099,8 +885,8 @@ export default function AdminUsersUnified() {
                                                   <div key={opt.key} className="flex items-center gap-2">
                                                     <Checkbox
                                                       checked={options[opt.key] ?? opt.defaultEnabled}
-                                                      onCheckedChange={(checked) => handleOptionToggle(user.id, moduleDef.key, opt.key, !!checked)}
-                                                      disabled={!isEnabled}
+                                                      onCheckedChange={(checked) => handleOptionToggle(userItem.id, moduleDef.key, opt.key, !!checked)}
+                                                      disabled={!isEnabled || !userCanBeEdited}
                                                     />
                                                     <span className="text-sm">{opt.label}</span>
                                                   </div>
@@ -1123,67 +909,38 @@ export default function AdminUsersUnified() {
                           <Collapsible>
                             <CollapsibleTrigger className="flex items-center gap-2 font-medium text-muted-foreground hover:text-foreground">
                               <Eye className="w-4 h-4" />
-                              Informations legacy (lecture seule)
+                              Informations complémentaires
                               <ChevronDown className="w-4 h-4" />
                             </CollapsibleTrigger>
                             <CollapsibleContent className="pt-3 space-y-3">
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
                                   <span className="text-muted-foreground">Créé le:</span>
-                                  <p>{new Date(user.created_at).toLocaleDateString('fr-FR')}</p>
+                                  <p>{new Date(userItem.created_at).toLocaleDateString('fr-FR')}</p>
                                 </div>
                                 <div>
                                   <span className="text-muted-foreground">Poste occupé:</span>
-                                  <p>{ROLE_AGENCE_LABELS[user.role_agence || ''] || user.role_agence || '-'}</p>
+                                  <p>{ROLE_AGENCE_LABELS[userItem.role_agence || ''] || userItem.role_agence || '-'}</p>
                                 </div>
-                                <div>
-                                  <span className="text-muted-foreground">System role (legacy):</span>
-                                  <p>{user.system_role || '-'}</p>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Support level:</span>
-                                  <p>{user.support_level ?? '-'}</p>
-                                </div>
+                                {userItem.system_role && (
+                                  <div>
+                                    <span className="text-muted-foreground">System role (legacy):</span>
+                                    <p>{userItem.system_role}</p>
+                                  </div>
+                                )}
+                                {userItem.support_level !== null && userItem.support_level > 0 && (
+                                  <div>
+                                    <span className="text-muted-foreground">Support level:</span>
+                                    <p>{userItem.support_level}</p>
+                                  </div>
+                                )}
                               </div>
                               
-                              <div>
-                                <span className="text-muted-foreground text-sm">Rôles app (user_roles):</span>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {user.legacyRoles.length > 0 ? (
-                                    user.legacyRoles.map(role => (
-                                      <Badge key={role} variant="outline" className="text-xs">{role}</Badge>
-                                    ))
-                                  ) : (
-                                    <span className="text-xs text-muted-foreground">Aucun</span>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div>
-                                <span className="text-muted-foreground text-sm">Capabilities:</span>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {user.legacyCapabilities.length > 0 ? (
-                                    user.legacyCapabilities.map(cap => (
-                                      <Badge key={cap} variant="outline" className="text-xs">{cap}</Badge>
-                                    ))
-                                  ) : (
-                                    <span className="text-xs text-muted-foreground">Aucune</span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {user.franchiseurRole && (
-                                <div>
-                                  <span className="text-muted-foreground text-sm">Rôle franchiseur:</span>
-                                  <Badge variant="secondary" className="ml-2 text-xs">{user.franchiseurRole}</Badge>
-                                </div>
-                              )}
-
-                              {user.service_competencies && Object.keys(user.service_competencies).length > 0 && (
+                              {userItem.service_competencies && Object.keys(userItem.service_competencies).length > 0 && (
                                 <div>
                                   <span className="text-muted-foreground text-sm">Compétences service:</span>
                                   <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-auto">
-                                    {JSON.stringify(user.service_competencies, null, 2)}
+                                    {JSON.stringify(userItem.service_competencies, null, 2)}
                                   </pre>
                                 </div>
                               )}
@@ -1241,7 +998,7 @@ export default function AdminUsersUnified() {
                 Nouvel utilisateur
               </DialogTitle>
               <DialogDescription>
-                Créer un nouveau compte utilisateur avec le système V2
+                Créer un nouveau compte utilisateur
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -1308,7 +1065,7 @@ export default function AdminUsersUnified() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="globalRole">Rôle global V2</Label>
+                <Label htmlFor="globalRole">Rôle global</Label>
                 <Select
                   value={newUserData.globalRole}
                   onValueChange={(v) => setNewUserData(prev => ({ ...prev, globalRole: v as GlobalRole }))}
@@ -1340,42 +1097,31 @@ export default function AdminUsersUnified() {
                 Annuler
               </Button>
               <Button
-                onClick={() => createUserMutation.mutate(newUserData)}
-                disabled={
-                  createUserMutation.isPending ||
-                  !newUserData.email ||
-                  !newUserData.password ||
-                  !newUserData.firstName ||
-                  !newUserData.lastName
-                }
+                onClick={() => createUserMutation.mutate({
+                  ...newUserData,
+                  agence: currentUserLevel === GLOBAL_ROLES.franchisee_admin ? (currentUserAgency || '') : newUserData.agence,
+                })}
+                disabled={!newUserData.email || !newUserData.password || !newUserData.firstName || createUserMutation.isPending}
               >
                 {createUserMutation.isPending ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 ) : (
                   <UserPlus className="w-4 h-4 mr-2" />
                 )}
-                Créer l'utilisateur
+                Créer
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Deactivate User Dialog */}
-        <AlertDialog open={deactivateDialog.open} onOpenChange={(open) => setDeactivateDialog({ open, user: open ? deactivateDialog.user : null })}>
+        {/* Deactivate Dialog */}
+        <AlertDialog open={deactivateDialog.open} onOpenChange={(open) => setDeactivateDialog({ open, user: deactivateDialog.user })}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <UserX className="w-5 h-5 text-orange-600" />
-                Désactiver l'utilisateur ?
-              </AlertDialogTitle>
+              <AlertDialogTitle>Désactiver l'utilisateur ?</AlertDialogTitle>
               <AlertDialogDescription>
-                <p className="mb-2">
-                  Vous allez désactiver le compte de <strong>{deactivateDialog.user?.email}</strong>.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  L'utilisateur ne pourra plus se connecter, mais ses données resteront dans les historiques 
-                  (tickets, statistiques, etc.). Vous pourrez réactiver le compte plus tard si nécessaire.
-                </p>
+                L'utilisateur <strong>{deactivateDialog.user?.email}</strong> ne pourra plus se connecter, 
+                mais ses données resteront dans les historiques (tickets, statistiques, etc.).
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -1383,7 +1129,6 @@ export default function AdminUsersUnified() {
               <AlertDialogAction
                 onClick={() => deactivateDialog.user && deactivateMutation.mutate(deactivateDialog.user)}
                 className="bg-orange-600 hover:bg-orange-700"
-                disabled={deactivateMutation.isPending}
               >
                 {deactivateMutation.isPending ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1396,21 +1141,13 @@ export default function AdminUsersUnified() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Reactivate User Dialog */}
-        <AlertDialog open={reactivateDialog.open} onOpenChange={(open) => setReactivateDialog({ open, user: open ? reactivateDialog.user : null })}>
+        {/* Reactivate Dialog */}
+        <AlertDialog open={reactivateDialog.open} onOpenChange={(open) => setReactivateDialog({ open, user: reactivateDialog.user })}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <UserCheck className="w-5 h-5 text-green-600" />
-                Réactiver l'utilisateur ?
-              </AlertDialogTitle>
+              <AlertDialogTitle>Réactiver l'utilisateur ?</AlertDialogTitle>
               <AlertDialogDescription>
-                <p className="mb-2">
-                  Vous allez réactiver le compte de <strong>{reactivateDialog.user?.email}</strong>.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  L'utilisateur pourra à nouveau se connecter avec ses anciens identifiants.
-                </p>
+                L'utilisateur <strong>{reactivateDialog.user?.email}</strong> pourra à nouveau se connecter.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -1418,7 +1155,6 @@ export default function AdminUsersUnified() {
               <AlertDialogAction
                 onClick={() => reactivateDialog.user && reactivateMutation.mutate(reactivateDialog.user)}
                 className="bg-green-600 hover:bg-green-700"
-                disabled={reactivateMutation.isPending}
               >
                 {reactivateMutation.isPending ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1431,22 +1167,15 @@ export default function AdminUsersUnified() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Hard Delete User Dialog */}
-        <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, user: open ? deleteDialog.user : null })}>
+        {/* Hard Delete Dialog */}
+        <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, user: deleteDialog.user })}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-                <Trash2 className="w-5 h-5" />
-                Supprimer définitivement ?
-              </AlertDialogTitle>
+              <AlertDialogTitle className="text-destructive">Supprimer définitivement ?</AlertDialogTitle>
               <AlertDialogDescription>
-                <p className="mb-2">
-                  Vous allez <strong>supprimer définitivement</strong> le compte de <strong>{deleteDialog.user?.email}</strong>.
-                </p>
-                <p className="text-sm text-destructive font-medium">
-                  ⚠️ ATTENTION : Cette action est IRRÉVERSIBLE. Toutes les données de l'utilisateur seront définitivement supprimées 
-                  (profil, tickets, historiques, etc.). Utilisez uniquement pour les comptes de test.
-                </p>
+                <strong className="text-destructive">ATTENTION :</strong> Cette action est irréversible.
+                Toutes les données de l'utilisateur <strong>{deleteDialog.user?.email}</strong> seront 
+                définitivement supprimées (profil, tickets, historiques, etc.).
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -1454,7 +1183,6 @@ export default function AdminUsersUnified() {
               <AlertDialogAction
                 onClick={() => deleteDialog.user && hardDeleteMutation.mutate(deleteDialog.user)}
                 className="bg-destructive hover:bg-destructive/90"
-                disabled={hardDeleteMutation.isPending}
               >
                 {hardDeleteMutation.isPending ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
