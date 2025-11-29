@@ -7,8 +7,8 @@
 
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv, Calendar,
-  Headset, MessageSquare, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Shield, Database, Activity, Home, User, Grid3X3
+  Headset, Network, Building2, PieChart, GitCompare,
+  Coins, Settings, Users, Shield, Database, Activity, Home, User, Grid3X3, LifeBuoy
 } from 'lucide-react';
 
 export interface NavItem {
@@ -162,7 +162,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { 
         title: 'Mes Demandes', 
         url: '/mes-demandes', 
-        icon: MessageSquare, 
+        icon: LifeBuoy, 
         scope: 'mes_demandes', 
         description: 'Créer et suivre vos demandes de support' 
       },
