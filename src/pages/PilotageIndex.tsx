@@ -205,14 +205,172 @@ function TileVersion5({ title, description, icon: Icon, href, badge }: TileProps
   );
 }
 
+// VERSION 6: Fond transparent avec bordure pointillée
+function TileVersion6({ title, description, icon: Icon, href, badge }: TileProps) {
+  return (
+    <Link to={href}>
+      <div className="group h-full bg-white/50 border-2 border-dashed border-helpconfort-blue/30 rounded-xl p-6
+        transition-all duration-200
+        hover:border-solid hover:border-helpconfort-blue hover:bg-white">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-helpconfort-blue/10 to-helpconfort-orange/10 
+            flex items-center justify-center
+            group-hover:from-helpconfort-blue/20 group-hover:to-helpconfort-orange/20 transition-all">
+            <Icon className="w-6 h-6 text-helpconfort-blue" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-foreground">{title}</h3>
+              {badge && (
+                <Badge className="text-xs bg-helpconfort-orange text-white border-0">
+                  {badge}
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// VERSION 7: Style carte avec ombre colorée
+function TileVersion7({ title, description, icon: Icon, href, badge }: TileProps) {
+  return (
+    <Link to={href}>
+      <div className="group h-full bg-white rounded-2xl p-6
+        shadow-[0_4px_20px_-4px_rgba(0,122,204,0.15)]
+        border border-helpconfort-blue/10
+        transition-all duration-300
+        hover:shadow-[0_8px_30px_-4px_rgba(0,122,204,0.25)]
+        hover:border-helpconfort-blue/30">
+        <div className="flex flex-col h-full">
+          <div className="flex items-start justify-between mb-4">
+            <div className="w-10 h-10 rounded-lg bg-helpconfort-blue flex items-center justify-center">
+              <Icon className="w-5 h-5 text-white" />
+            </div>
+            {badge && (
+              <Badge className="text-xs bg-helpconfort-orange text-white border-0">
+                {badge}
+              </Badge>
+            )}
+          </div>
+          <h3 className="font-semibold text-foreground mb-1">{title}</h3>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// VERSION 8: Style minimal avec icône outline
+function TileVersion8({ title, description, icon: Icon, href, badge }: TileProps) {
+  return (
+    <Link to={href}>
+      <div className="group h-full bg-white border border-border rounded-lg p-5
+        transition-all duration-200
+        hover:border-helpconfort-blue">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
+            group-hover:border-helpconfort-blue group-hover:bg-helpconfort-blue/5 transition-all">
+            <Icon className="w-5 h-5 text-helpconfort-blue" />
+          </div>
+          <div className="flex-1 pt-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-medium text-foreground">{title}</h3>
+              {badge && (
+                <Badge className="text-xs bg-helpconfort-orange/10 text-helpconfort-orange border border-helpconfort-orange/30">
+                  {badge}
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// VERSION 9: Style bicolore avec séparateur
+function TileVersion9({ title, description, icon: Icon, href, badge }: TileProps) {
+  return (
+    <Link to={href}>
+      <div className="group h-full bg-white rounded-xl overflow-hidden border border-border
+        transition-all duration-200
+        hover:shadow-md">
+        <div className="flex">
+          <div className="w-16 bg-helpconfort-blue/5 flex items-center justify-center
+            group-hover:bg-helpconfort-blue/10 transition-colors">
+            <Icon className="w-6 h-6 text-helpconfort-blue" />
+          </div>
+          <div className="flex-1 p-4 border-l border-helpconfort-blue/10">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-foreground">{title}</h3>
+              {badge && (
+                <Badge className="text-xs bg-helpconfort-orange text-white border-0">
+                  {badge}
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// VERSION 10: Style avec accent en coin
+function TileVersion10({ title, description, icon: Icon, href, badge }: TileProps) {
+  return (
+    <Link to={href}>
+      <div className="group h-full bg-white rounded-xl p-6 border border-border relative overflow-hidden
+        transition-all duration-200
+        hover:shadow-md">
+        {/* Corner accent */}
+        <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-helpconfort-orange/20 to-transparent
+          group-hover:from-helpconfort-orange/30 transition-colors" />
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-3">
+            <Icon className="w-5 h-5 text-helpconfort-blue" />
+            <h3 className="font-semibold text-foreground">{title}</h3>
+            {badge && (
+              <Badge className="text-xs bg-helpconfort-orange text-white border-0">
+                {badge}
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 // Composant de sélection basé sur la variante
-const TILE_COMPONENTS = {
+const TILE_COMPONENTS: Record<number, React.FC<TileProps>> = {
   1: TileVersion1,
   2: TileVersion2,
   3: TileVersion3,
   4: TileVersion4,
   5: TileVersion5,
+  6: TileVersion6,
+  7: TileVersion7,
+  8: TileVersion8,
+  9: TileVersion9,
+  10: TileVersion10,
 };
+
+// Tuiles vides pour afficher les versions 6-10
+const emptyTiles = [
+  { variant: 6, title: 'Version 6', description: 'Bordure pointillée + gradient icône', icon: BarChart3 },
+  { variant: 7, title: 'Version 7', description: 'Ombre colorée bleue + icône pleine', icon: ListTodo },
+  { variant: 8, title: 'Version 8', description: 'Icône outline circulaire', icon: Tv },
+  { variant: 9, title: 'Version 9', description: 'Bicolore avec séparateur', icon: Calendar },
+  { variant: 10, title: 'Version 10', description: 'Accent en coin orange', icon: Users },
+];
 
 export default function PilotageIndex() {
   const menuLabels = useMenuLabels();
@@ -225,14 +383,13 @@ export default function PilotageIndex() {
     return module.title;
   };
 
-  return (
+return (
     <div className="container mx-auto py-8 px-4 space-y-12">
       
       {/* Affichage des 5 versions pour comparaison */}
       <div className="space-y-8">
         <div className="text-center">
-          <h2 className="text-lg font-semibold text-muted-foreground mb-2">5 versions à comparer</h2>
-          <p className="text-sm text-muted-foreground">Chaque tuile utilise une version différente</p>
+          <h2 className="text-lg font-semibold text-muted-foreground mb-2">Versions 1-5</h2>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -251,6 +408,34 @@ export default function PilotageIndex() {
                   icon={module.icon}
                   href={module.href}
                   badge={module.badge}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Versions 6-10 */}
+      <div className="space-y-8">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-muted-foreground mb-2">Versions 6-10</h2>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {emptyTiles.map((tile) => {
+            const TileComponent = TILE_COMPONENTS[tile.variant];
+            return (
+              <div key={tile.variant} className="relative">
+                <div className="absolute -top-3 left-4 z-10">
+                  <Badge variant="outline" className="bg-white text-xs font-mono">
+                    Version {tile.variant}
+                  </Badge>
+                </div>
+                <TileComponent
+                  title={tile.title}
+                  description={tile.description}
+                  icon={tile.icon}
+                  href="#"
                 />
               </div>
             );
