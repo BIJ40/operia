@@ -21,6 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Clock, GripVertical } from 'lucide-react';
+import { HeatPriorityBadge } from './HeatPriorityBadge';
 import type { ApogeeTicket, ApogeeTicketStatus } from '../types';
 
 interface TicketKanbanProps {
@@ -41,13 +42,6 @@ const MODULE_COLORS: Record<string, string> = {
   APPORTEURS: 'bg-yellow-500',
   STATS: 'bg-red-500',
   AUTRE: 'bg-gray-500',
-};
-
-const PRIORITY_COLORS: Record<string, string> = {
-  A: 'bg-red-600',
-  B: 'bg-orange-500',
-  V1: 'bg-blue-500',
-  PLUS_TARD: 'bg-gray-400',
 };
 
 const OWNER_COLORS: Record<string, string> = {
@@ -120,11 +114,7 @@ function DraggableTicketCard({
                 {ticket.apogee_modules?.label || ticket.module}
               </Badge>
             )}
-            {ticket.priority && (
-              <Badge className={`${PRIORITY_COLORS[ticket.priority] || 'bg-gray-400'} text-white text-xs`}>
-                {ticket.priority}
-              </Badge>
-            )}
+            <HeatPriorityBadge priority={ticket.heat_priority} size="sm" showLabel={false} />
             {ticket.owner_side && (
               <Badge className={`${OWNER_COLORS[ticket.owner_side]} text-white text-xs`}>
                 {ticket.owner_side}

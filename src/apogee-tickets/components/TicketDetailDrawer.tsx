@@ -142,11 +142,7 @@ export function TicketDetailDrawer({
                     {ticket.apogee_modules?.label || ticket.module}
                   </Badge>
                 )}
-                {ticket.priority && (
-                  <Badge className="bg-orange-500 text-white">
-                    {ticket.priority}
-                  </Badge>
-                )}
+                <HeatPriorityBadge priority={ticket.heat_priority} size="sm" />
                 {ticket.owner_side && (
                   <Badge variant="outline">{ticket.owner_side}</Badge>
                 )}
@@ -245,7 +241,7 @@ export function TicketDetailDrawer({
                 </div>
 
                 {/* PARAMÈTRES en ligne */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
                     <label className="text-xs text-muted-foreground">Module</label>
                     <Select
@@ -258,22 +254,6 @@ export function TicketDetailDrawer({
                       <SelectContent>
                         {modules.map((m) => (
                           <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">Priorité</label>
-                    <Select
-                      value={ticket.priority || ''}
-                      onValueChange={(v) => handleFieldUpdate('priority', v || null)}
-                    >
-                      <SelectTrigger className="h-9 mt-1">
-                        <SelectValue placeholder="—" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {priorities.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
