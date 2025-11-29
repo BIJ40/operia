@@ -345,7 +345,7 @@ export default function ApporteurGuide() {
     if (isEmpty) {
       return "bg-muted/50 border-muted-foreground/30 border-l-muted-foreground/50 opacity-60";
     }
-    return "bg-gradient-to-r from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 border-helpconfort-orange/40 border-l-primary hover:border-helpconfort-orange/60 hover:border-l-accent hover:shadow-xl";
+    return "bg-helpconfort-blue/8 border-helpconfort-blue/20 border-l-helpconfort-blue hover:bg-helpconfort-blue/12 hover:border-helpconfort-blue/30 hover:shadow-lg";
   };
 
   const IconComponent = (iconName: string) => {
