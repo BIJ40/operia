@@ -7,20 +7,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, CheckCircle2, FolderOpen, SkipForward } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, FolderOpen, SkipForward, Eye } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { HeatPriorityBadge } from '../components/HeatPriorityBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from '../components/OwnerSideSlider';
+import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
 import type { ApogeeTicket, OwnerSide } from '../types';
 import { ROUTES } from '@/config/routes';
 
 export default function ApogeeTicketsClassify() {
   const navigate = useNavigate();
-  const { tickets: allTickets, statuses, updateTicket, isLoading } = useApogeeTickets();
+  const { tickets: allTickets, modules, priorities, statuses, updateTicket, isLoading } = useApogeeTickets();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [ownerSliderValue, setOwnerSliderValue] = useState<number>(50);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Liste stable de tickets "À spécifier" pour la session
   const [stableTickets, setStableTickets] = useState<ApogeeTicket[]>([]);
@@ -157,6 +159,15 @@ export default function ApogeeTicketsClassify() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setDrawerOpen(true)}
+                  title="Voir / Éditer le ticket"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
                 {currentTicket.heat_priority !== null && (
                   <HeatPriorityBadge priority={currentTicket.heat_priority} size="sm" />
                 )}
@@ -246,6 +257,17 @@ export default function ApogeeTicketsClassify() {
           </CardContent>
         </Card>
       )}
+
+      {/* Drawer pour édition détaillée */}
+      <TicketDetailDrawer
+        ticket={currentTicket || null}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        modules={modules}
+        priorities={priorities}
+        statuses={statuses}
+        onUpdate={(updates) => updateTicket.mutate(updates)}
+      />
     </div>
   );
 }

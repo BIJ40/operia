@@ -20,11 +20,14 @@ import {
   FileSpreadsheet,
   Filter,
   X,
-  Save
+  Save,
+  Eye
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { HeatPriorityBadge, HEAT_PRIORITY_OPTIONS } from '../components/HeatPriorityBadge';
+import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from '../components/OwnerSideSlider';
+import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
 import type { ApogeeTicket, TicketFilters } from '../types';
 import { ROUTES } from '@/config/routes';
 
@@ -33,6 +36,7 @@ export default function ApogeeTicketsReview() {
   const { tickets: liveTickets, modules, priorities, statuses, updateTicket, isLoading } = useApogeeTickets(filters);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasChanges, setHasChanges] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Liste stable de tickets pour la session de revue (ne change pas quand on complète un ticket)
   const [stableTickets, setStableTickets] = useState<ApogeeTicket[]>([]);
@@ -78,6 +82,7 @@ export default function ApogeeTicketsReview() {
         severity: currentTicket.severity,
         notes_internes: currentTicket.notes_internes,
         heat_priority: currentTicket.heat_priority,
+        owner_side: currentTicket.owner_side,
       });
       setHasChanges(false);
     }
@@ -295,11 +300,22 @@ export default function ApogeeTicketsReview() {
                   Ticket #{currentIndex + 1}
                 </CardTitle>
               </div>
-              {hasChanges && (
-                <Badge variant="outline" className="text-orange-600 border-orange-300">
-                  Modifié
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setDrawerOpen(true)}
+                  title="Voir / Éditer le ticket"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+                {hasChanges && (
+                  <Badge variant="outline" className="text-orange-600 border-orange-300">
+                    Modifié
+                  </Badge>
+                )}
+              </div>
             </div>
 
             {/* Source info */}
@@ -456,6 +472,19 @@ export default function ApogeeTicketsReview() {
               </div>
             </div>
 
+            {/* Porteur du projet */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Porteur du projet
+              </label>
+              <div className="mt-2">
+                <OwnerSideSlider
+                  value={ownerSideToSliderValue(formValues.owner_side as string | null)}
+                  onChange={(v) => updateField('owner_side', sliderValueToOwnerSide(v))}
+                />
+              </div>
+            </div>
+
             {/* Notes internes */}
             <div>
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -517,6 +546,17 @@ export default function ApogeeTicketsReview() {
           </CardContent>
         </Card>
       )}
+
+      {/* Drawer pour édition détaillée */}
+      <TicketDetailDrawer
+        ticket={currentTicket || null}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        modules={modules}
+        priorities={priorities}
+        statuses={statuses}
+        onUpdate={(updates) => updateTicket.mutate(updates)}
+      />
     </div>
   );
 }

@@ -35,6 +35,7 @@ import { useApogeeTicket } from '../hooks/useApogeeTickets';
 import { useTicketAttachments } from '../hooks/useTicketAttachments';
 import { useTicketQualification } from '../hooks/useTicketQualification';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
+import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
 import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType, ReportedBy } from '../types';
@@ -357,6 +358,19 @@ export function TicketDetailDrawer({
                     >
                       <Flame className="h-5 w-5 text-red-500" />
                     </button>
+                  </div>
+                </div>
+
+                {/* PORTEUR DU PROJET */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Porteur du projet
+                  </label>
+                  <div className="mt-2">
+                    <OwnerSideSlider
+                      value={ownerSideToSliderValue(ticket.owner_side)}
+                      onChange={(v) => handleFieldUpdate('owner_side', sliderValueToOwnerSide(v))}
+                    />
                   </div>
                 </div>
 

@@ -10,12 +10,14 @@ import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, SkipForward, Snowflake, Flame, ChevronsUpDown, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, SkipForward, Snowflake, Flame, ChevronsUpDown, Check, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useIncompleteTickets, useApogeeTickets } from '../hooks/useApogeeTickets';
 import { HeatPriorityBadge } from '../components/HeatPriorityBadge';
+import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from '../components/OwnerSideSlider';
+import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
 import type { ApogeeTicket } from '../types';
 import { ROUTES } from '@/config/routes';
 
@@ -85,8 +87,9 @@ function ModuleCombobox({
 export default function ApogeeTicketsIncomplete() {
   const navigate = useNavigate();
   const { tickets: rawIncompleteTickets, isLoading } = useIncompleteTickets();
-  const { modules, updateTicket } = useApogeeTickets();
+  const { modules, priorities, statuses, updateTicket } = useApogeeTickets();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Liste stable de tickets pour la session (ne change pas quand on complète un ticket)
   const [stableTickets, setStableTickets] = useState<ApogeeTicket[]>([]);
@@ -116,16 +119,19 @@ export default function ApogeeTicketsIncomplete() {
   const [formValuesByTicket, setFormValuesByTicket] = useState<Record<string, {
     module: string | null;
     heat_priority: number | null;
+    owner_side_value: number;
   }>>({});
 
   // Valeurs du formulaire pour le ticket courant
   const currentTicketId = incompleteTickets[currentIndex]?.id;
+  const currentTicketData = incompleteTickets[currentIndex];
   const formValues = currentTicketId ? (formValuesByTicket[currentTicketId] || {
     module: null,
     heat_priority: null,
-  }) : { module: null, heat_priority: null };
+    owner_side_value: ownerSideToSliderValue(currentTicketData?.owner_side || null),
+  }) : { module: null, heat_priority: null, owner_side_value: 50 };
 
-  const setFormValues = (values: { module: string | null; heat_priority: number | null }) => {
+  const setFormValues = (values: { module: string | null; heat_priority: number | null; owner_side_value: number }) => {
     if (currentTicketId) {
       setFormValuesByTicket(prev => ({
         ...prev,
@@ -148,6 +154,7 @@ export default function ApogeeTicketsIncomplete() {
     
     if (formValues.module) updates.module = formValues.module;
     if (formValues.heat_priority !== null) updates.heat_priority = formValues.heat_priority;
+    updates.owner_side = sliderValueToOwnerSide(formValues.owner_side_value);
 
     await updateTicket.mutateAsync(updates);
     
@@ -252,10 +259,21 @@ export default function ApogeeTicketsIncomplete() {
                   )}
                 </CardDescription>
               </div>
-              <Badge variant="outline" className="text-orange-600 border-orange-300 shrink-0">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                {missingFields.length} champ(s) manquant(s)
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setDrawerOpen(true)}
+                  title="Voir / Éditer le ticket"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Badge variant="outline" className="text-orange-600 border-orange-300 shrink-0">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  {missingFields.length} champ(s) manquant(s)
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -315,6 +333,18 @@ export default function ApogeeTicketsIncomplete() {
                 </div>
               )}
 
+              {/* Porteur du projet - toujours visible */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Porteur du projet
+                </label>
+                <OwnerSideSlider
+                  value={formValues.owner_side_value}
+                  onChange={(v) => setFormValues({ ...formValues, owner_side_value: v })}
+                  disabled={updateTicket.isPending}
+                />
+              </div>
+
             </div>
 
             {/* Actions */}
@@ -356,6 +386,17 @@ export default function ApogeeTicketsIncomplete() {
           </CardContent>
         </Card>
       )}
+
+      {/* Drawer pour édition détaillée */}
+      <TicketDetailDrawer
+        ticket={currentTicket || null}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        modules={modules}
+        priorities={priorities}
+        statuses={statuses}
+        onUpdate={(updates) => updateTicket.mutate(updates)}
+      />
     </div>
   );
 }
