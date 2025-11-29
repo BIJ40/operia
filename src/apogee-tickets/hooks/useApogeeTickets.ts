@@ -118,9 +118,6 @@ export function useApogeeTickets(filters?: TicketFilters) {
       if (filters?.heat_priority_min !== undefined) {
         query = query.gte('heat_priority', filters.heat_priority_min);
       }
-      if (filters?.heat_priority_max !== undefined) {
-        query = query.lte('heat_priority', filters.heat_priority_max);
-      }
 
       const { data, error } = await query;
       if (error) throw error;
