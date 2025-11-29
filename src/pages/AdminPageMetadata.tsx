@@ -129,7 +129,6 @@ export default function AdminPageMetadata() {
     <div className="container max-w-6xl mx-auto p-6 space-y-6">
       <PageHeader
         pageKey="admin_page_metadata"
-        defaultTitle="Métadonnées des pages"
         defaultSubtitle="Gérez les titres, descriptions et labels de menu de toutes les pages"
         backTo={ROUTES.admin.index}
         backLabel="Retour Administration"

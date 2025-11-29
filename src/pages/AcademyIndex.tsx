@@ -36,7 +36,6 @@ export default function AcademyIndex() {
     <div className="container mx-auto py-8 px-4">
       <PageHeader
         pageKey="academy_index"
-        defaultTitle="Help! Academy"
         defaultSubtitle="Accédez à l'ensemble des guides et ressources de formation HelpConfort."
         backTo={ROUTES.home}
         backLabel="Retour accueil"
