@@ -31,6 +31,7 @@ interface NavItem {
   children?: NavItem[];
   badge?: string;
   minRole?: GlobalRole; // Rôle minimum pour voir cet item
+  requiresSupportConsole?: boolean; // Visible seulement si console support activée
 }
 
 interface NavGroup {
@@ -38,7 +39,7 @@ interface NavGroup {
   labelKey: string;
   items: NavItem[];
   // Condition d'accès basée sur ROLE_MATRIX
-  accessKey?: 'canAccessHelpAcademy' | 'canAccessPilotageAgence' | 'canAccessSupport' | 'canAccessSupportConsole' | 'canAccessFranchiseur' | 'canAccessAdmin';
+  accessKey?: 'canAccessHelpAcademy' | 'canAccessPilotageAgence' | 'canAccessSupport' | 'canAccessFranchiseur' | 'canAccessAdmin';
 }
 
 export function UnifiedSidebar() {
@@ -115,16 +116,9 @@ export function UnifiedSidebar() {
       labelKey: 'support',
       items: [
         { title: 'Mes Demandes', url: '/mes-demandes', icon: LifeBuoy, description: 'Créer et suivre vos demandes de support' },
+        { title: 'Gestion Tickets', url: '/admin/support', icon: Headset, description: 'Traiter les demandes de support', requiresSupportConsole: true },
       ],
       accessKey: 'canAccessSupport',
-    },
-    {
-      label: 'Gestion Support',
-      labelKey: 'support-admin',
-      items: [
-        { title: 'Gestion Tickets', url: '/admin/support', icon: Headset, description: 'Traiter les demandes de support' },
-      ],
-      accessKey: 'canAccessSupportConsole',
     },
     {
       label: 'Réseau Franchiseur',
@@ -145,6 +139,7 @@ export function UnifiedSidebar() {
       items: [
         { title: 'Utilisateurs', url: '/admin/users', icon: Users, description: 'Gérer les comptes utilisateurs' },
         { title: 'Agences', url: '/admin/agencies', icon: Building2 },
+        { title: 'Niveaux Support', url: '/admin/support-levels', icon: Headset, description: 'Configuration des niveaux de support' },
         { title: 'Sauvegardes', url: '/admin/backup', icon: Database },
         { title: 'Activité', url: '/admin/user-activity', icon: Activity },
         { title: 'Paramètres', url: '/admin', icon: Settings, description: 'Configuration du système' },
@@ -153,7 +148,7 @@ export function UnifiedSidebar() {
     },
   ];
 
-  // V2: Filtrage des groupes basé sur ROLE_MATRIX + canAccessSupportConsole de AuthContext
+  // V2: Filtrage des groupes basé sur ROLE_MATRIX
   const filteredGroups = navGroups.filter(group => {
     if (!group.accessKey) return true;
     
@@ -162,17 +157,15 @@ export function UnifiedSidebar() {
       if (caps.requiresAgencyForPilotage && !agence) return false;
     }
     
-    // Cas spécial console support : utiliser la valeur combinée de AuthContext
-    if (group.accessKey === 'canAccessSupportConsole') {
-      return canAccessSupportConsole;
-    }
-    
     return caps[group.accessKey];
   });
 
-  // V2: Filtrage par minRole si défini
+  // V2: Filtrage par minRole et requiresSupportConsole
   const getFilteredItems = (items: NavItem[]): NavItem[] => {
     return items.filter(item => {
+      // Check requiresSupportConsole
+      if (item.requiresSupportConsole && !canAccessSupportConsole) return false;
+      // Check minRole
       if (!item.minRole) return true;
       const userLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
       const requiredLevel = GLOBAL_ROLES[item.minRole];
