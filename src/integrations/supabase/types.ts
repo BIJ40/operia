@@ -496,6 +496,7 @@ export type Database = {
         Row: {
           admin_notes: string | null
           answer: string | null
+          chat_context: string | null
           context_found: string | null
           created_at: string | null
           id: string
@@ -510,6 +511,7 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           answer?: string | null
+          chat_context?: string | null
           context_found?: string | null
           created_at?: string | null
           id?: string
@@ -524,6 +526,7 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           answer?: string | null
+          chat_context?: string | null
           context_found?: string | null
           created_at?: string | null
           id?: string

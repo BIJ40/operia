@@ -244,15 +244,23 @@ serve(async (req) => {
           // Enregistrer la question/réponse dans la base
           const isIncomplete = isIncompleteAnswer(fullAnswer);
           
-          await supabase.from('chatbot_queries').insert({
+          // Log the interaction to chatbot_queries
+          const { error: insertError } = await supabase.from('chatbot_queries').insert({
             user_id: userId || null,
             question: userQuestion,
             answer: fullAnswer,
             is_incomplete: isIncomplete,
             context_found: guideContent.substring(0, 5000), // Limite à 5000 chars
             similarity_scores: similarityScores || null,
-            status: isIncomplete ? 'pending' : 'resolved'
+            status: isIncomplete ? 'pending' : 'resolved',
+            chat_context: chatContext || 'apogee'
           });
+          
+          if (insertError) {
+            console.error('[CHAT-GUIDE] Failed to log query:', insertError);
+          } else {
+            console.log('[CHAT-GUIDE] Query logged successfully');
+          }
           
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
           controller.close();

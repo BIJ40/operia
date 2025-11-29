@@ -19,13 +19,15 @@ type ChatQuery = {
   created_at: string | null;
   admin_notes: string | null;
   context_found: string | null;
+  chat_context: string | null;
+  is_incomplete: boolean | null;
 };
 
 export function RagQuestionsTab() {
   const [queries, setQueries] = useState<ChatQuery[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'resolved'>('all');
-  const [familyFilter, setFamilyFilter] = useState<string>('all');
+  const [contextFilter, setContextFilter] = useState<string>('all');
   const [editingNotes, setEditingNotes] = useState<{ [key: string]: string }>({});
   const [selectedQuery, setSelectedQuery] = useState<ChatQuery | null>(null);
   const { toast } = useToast();
@@ -41,6 +43,10 @@ export function RagQuestionsTab() {
 
       if (filter !== 'all') {
         query = query.eq('status', filter);
+      }
+      
+      if (contextFilter !== 'all') {
+        query = query.eq('chat_context', contextFilter);
       }
 
       const { data, error } = await query;
@@ -61,7 +67,7 @@ export function RagQuestionsTab() {
 
   useEffect(() => {
     loadQueries();
-  }, [filter]);
+  }, [filter, contextFilter]);
 
   const updateStatus = async (id: string, status: string) => {
     try {
@@ -123,7 +129,7 @@ export function RagQuestionsTab() {
       </CardHeader>
       <CardContent>
         {/* Filters */}
-        <div className="flex gap-2 mb-4 flex-wrap">
+        <div className="flex gap-2 mb-4 flex-wrap items-center">
           <Button
             size="sm"
             variant={filter === 'all' ? 'default' : 'outline'}
@@ -147,6 +153,20 @@ export function RagQuestionsTab() {
             <CheckCircle2 className="w-3 h-3 mr-1" />
             Résolues
           </Button>
+          
+          <Select value={contextFilter} onValueChange={setContextFilter}>
+            <SelectTrigger className="w-[140px] h-8">
+              <SelectValue placeholder="Contexte" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous contextes</SelectItem>
+              <SelectItem value="apogee">Apogée</SelectItem>
+              <SelectItem value="apporteurs">Apporteurs</SelectItem>
+              <SelectItem value="helpconfort">HelpConfort</SelectItem>
+              <SelectItem value="autre">Autre</SelectItem>
+            </SelectContent>
+          </Select>
+          
           <div className="ml-auto">
             <Button variant="outline" size="sm" onClick={loadQueries} disabled={loading}>
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -176,6 +196,11 @@ export function RagQuestionsTab() {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
+                    {query.chat_context && (
+                      <Badge variant="outline" className="text-xs">
+                        {query.chat_context}
+                      </Badge>
+                    )}
                     <Badge
                       variant={
                         query.status === 'pending'
