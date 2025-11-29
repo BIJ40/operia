@@ -92,11 +92,53 @@ export const useChatbot = () => {
     playTone(600, now + 0.15, 0.15);
   };
 
+  // Build contextual query for RAG based on conversation history
+  const buildContextualQuery = (currentQuery: string, conversationHistory: Message[]): string => {
+    // If conversation is short or query is substantial, use as-is
+    if (conversationHistory.length < 2 || currentQuery.length > 50) {
+      return currentQuery;
+    }
+    
+    // Find the last substantive user question (longer than 20 chars)
+    const previousUserMessages = conversationHistory
+      .filter(m => m.role === 'user')
+      .map(m => m.content)
+      .filter(c => c.length > 20);
+    
+    if (previousUserMessages.length === 0) {
+      return currentQuery;
+    }
+    
+    // Get the last substantive topic
+    const lastTopic = previousUserMessages[previousUserMessages.length - 1];
+    
+    // Check if current query is a follow-up (short, generic)
+    const followUpIndicators = [
+      'étape', 'détail', 'plus', 'comment', 'pourquoi', 'exemple', 
+      'précis', 'expliqu', 's\'il te', 's\'il vous', 'merci', 'ok'
+    ];
+    
+    const isFollowUp = currentQuery.length < 50 && 
+      followUpIndicators.some(ind => currentQuery.toLowerCase().includes(ind));
+    
+    if (isFollowUp) {
+      // Combine previous topic with current request
+      console.log('[RAG] Follow-up detected, combining with previous topic:', lastTopic.substring(0, 50));
+      return `${lastTopic} - ${currentQuery}`;
+    }
+    
+    return currentQuery;
+  };
+
   // Search relevant content with context-specific RAG
-  const searchRelevantContent = async (query: string, context: ChatContext): Promise<{ content: string; hasContent: boolean }> => {
+  const searchRelevantContent = async (query: string, context: ChatContext, conversationHistory: Message[]): Promise<{ content: string; hasContent: boolean }> => {
+    // Build contextual query for better RAG retrieval
+    const contextualQuery = buildContextualQuery(query, conversationHistory);
+    console.log('[RAG] Contextual query:', contextualQuery);
+    
     // For Apogée context, use dedicated RAG function
     if (context === 'apogee') {
-      const ragResult = await getApogeeContext(query);
+      const ragResult = await getApogeeContext(contextualQuery);
       
       if (!ragResult.hasContent) {
         console.log('[CHATBOT] RAG Apogée: aucun chunk trouvé');
@@ -133,7 +175,7 @@ export const useChatbot = () => {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({ 
-            query, 
+            query: contextualQuery, 
             topK: 15,
             source: source
           }),
@@ -199,7 +241,7 @@ export const useChatbot = () => {
     setIsLoading(true);
 
     try {
-      const ragResult = await searchRelevantContent(input, chatContext);
+      const ragResult = await searchRelevantContent(input, chatContext, messages);
 
       // For Apogée context with no RAG content, respond immediately without calling AI
       if (chatContext === 'apogee' && !ragResult.hasContent) {
