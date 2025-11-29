@@ -27,6 +27,14 @@ export interface ApogeePriority {
   created_at: string;
 }
 
+export interface ApogeeImpactTag {
+  id: string;
+  label: string;
+  display_order: number;
+  color: string;
+  created_at: string;
+}
+
 export type OwnerSide = 'HC' | 'APOGEE' | 'PARTAGE';
 export type Severity = 'CRITIQUE' | 'MAJEUR' | 'CONFORT';
 export type CreatedFrom = 'IMPORT' | 'MANUAL';

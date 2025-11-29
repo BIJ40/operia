@@ -298,6 +298,30 @@ export type Database = {
         }
         Relationships: []
       }
+      apogee_impact_tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          display_order: number
+          id: string
+          label: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id: string
+          label: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          label?: string
+        }
+        Relationships: []
+      }
       apogee_modules: {
         Row: {
           color: string | null
