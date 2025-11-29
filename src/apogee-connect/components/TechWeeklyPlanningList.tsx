@@ -88,10 +88,24 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
   }
 
   if (error) {
+    const isCorsError = error instanceof Error && 
+      (error.message.includes("Failed to fetch") || error.message.includes("CORS"));
+    
     return (
-      <Card className="border-destructive">
-        <CardContent className="pt-6">
-          <p className="text-destructive">Erreur lors du chargement du planning.</p>
+      <Card className="border-amber-500/50 bg-amber-500/5">
+        <CardContent className="pt-6 space-y-2">
+          <p className="text-amber-700 dark:text-amber-400 font-medium">
+            {isCorsError 
+              ? "API Apogée non accessible depuis cet environnement"
+              : "Erreur lors du chargement du planning"
+            }
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {isCorsError 
+              ? "L'API Apogée n'autorise pas les requêtes depuis l'environnement de preview Lovable. Cette fonctionnalité sera opérationnelle une fois déployée sur votre domaine de production."
+              : "Une erreur s'est produite lors de la récupération des données. Veuillez réessayer."
+            }
+          </p>
         </CardContent>
       </Card>
     );
