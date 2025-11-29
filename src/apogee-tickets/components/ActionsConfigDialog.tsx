@@ -1,6 +1,6 @@
 /**
  * Dialog de configuration admin pour les tickets Apogée
- * Interface améliorée avec color pickers et previews
+ * Interface améliorée avec color pickers et previews + drag-and-drop
  */
 
 import { useState, useEffect } from 'react';
@@ -33,6 +33,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import type { ApogeeTicketStatus, ApogeeModule, ApogeePriority, ApogeeImpactTag, ApogeeOwnerSide } from '../types';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface ActionsConfigDialogProps {
   open: boolean;
@@ -109,6 +126,44 @@ function BadgePreview({ label, color }: { label: string; color: string }) {
     >
       {label || 'Aperçu'}
     </Badge>
+  );
+}
+
+// Sortable item wrapper
+function SortableItem({ id, children }: { id: string; children: React.ReactNode }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <Card className={`overflow-hidden ${isDragging ? 'ring-2 ring-primary' : ''}`}>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <button
+              {...listeners}
+              className="touch-none cursor-grab active:cursor-grabbing shrink-0 p-1 hover:bg-muted rounded"
+              type="button"
+            >
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </button>
+            {children}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -218,6 +273,64 @@ export function ActionsConfigDialog({
   }, [ownerSides]);
 
   const isLoading = loadingStatuses || loadingModules || loadingPriorities || loadingTags || loadingOwnerSides;
+
+  // DnD sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Drag handlers for each list
+  const handleStatusDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = editedStatuses.findIndex((s) => s.id === active.id);
+      const newIndex = editedStatuses.findIndex((s) => s.id === over.id);
+      setEditedStatuses(arrayMove(editedStatuses, oldIndex, newIndex));
+    }
+  };
+
+  const handleModuleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = editedModules.findIndex((m) => m.id === active.id);
+      const newIndex = editedModules.findIndex((m) => m.id === over.id);
+      setEditedModules(arrayMove(editedModules, oldIndex, newIndex));
+    }
+  };
+
+  const handlePriorityDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = editedPriorities.findIndex((p) => p.id === active.id);
+      const newIndex = editedPriorities.findIndex((p) => p.id === over.id);
+      setEditedPriorities(arrayMove(editedPriorities, oldIndex, newIndex));
+    }
+  };
+
+  const handleTagDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = editedTags.findIndex((t) => t.id === active.id);
+      const newIndex = editedTags.findIndex((t) => t.id === over.id);
+      setEditedTags(arrayMove(editedTags, oldIndex, newIndex));
+    }
+  };
+
+  const handleOwnerDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = editedOwnerSides.findIndex((o) => o.id === active.id);
+      const newIndex = editedOwnerSides.findIndex((o) => o.id === over.id);
+      setEditedOwnerSides(arrayMove(editedOwnerSides, oldIndex, newIndex));
+    }
+  };
 
   // Save handlers
   const saveStatuses = async () => {
@@ -460,89 +573,97 @@ export function ActionsConfigDialog({
                 <CardHeader className="py-3">
                   <CardDescription className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" />
-                    Les statuts définissent les colonnes du Kanban. L'ordre définit l'affichage de gauche à droite.
+                    Les statuts définissent les colonnes du Kanban. L'ordre définit l'affichage de gauche à droite. Glissez pour réordonner.
                   </CardDescription>
                 </CardHeader>
               </Card>
               
-              {editedStatuses.map((status, idx) => (
-                <Card key={`status-${idx}`} className="overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <GripVertical className="h-4 w-4 text-muted-foreground cursor-move shrink-0" />
-                      <span className="text-xs text-muted-foreground w-6">{idx + 1}</span>
-                      
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <div>
-                          <Label className="text-xs text-muted-foreground">ID technique</Label>
-                          <Input
-                            value={status.id}
-                            onChange={(e) => {
-                              const updated = [...editedStatuses];
-                              updated[idx] = { ...status, id: e.target.value.toUpperCase().replace(/\s/g, '_') };
-                              setEditedStatuses(updated);
-                            }}
-                            placeholder="BACKLOG"
-                            className="h-9 text-xs font-mono"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Libellé affiché</Label>
-                          <Input
-                            value={status.label}
-                            onChange={(e) => {
-                              const updated = [...editedStatuses];
-                              updated[idx] = { ...status, label: e.target.value };
-                              setEditedStatuses(updated);
-                            }}
-                            placeholder="Backlog"
-                            className="h-9"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Couleur</Label>
-                          <ColorPicker
-                            value={status.color}
-                            onChange={(color) => {
-                              const updated = [...editedStatuses];
-                              updated[idx] = { ...status, color };
-                              setEditedStatuses(updated);
-                            }}
-                          />
-                        </div>
-                        <div className="flex items-end gap-2">
-                          <div className="flex-1">
-                            <Label className="text-xs text-muted-foreground">Aperçu</Label>
-                            <div className="h-9 flex items-center">
-                              <BadgePreview label={status.label} color={status.color} />
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 pb-1">
-                            <Switch
-                              checked={status.is_final}
-                              onCheckedChange={(checked) => {
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleStatusDragEnd}
+              >
+                <SortableContext
+                  items={editedStatuses.map(s => s.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {editedStatuses.map((status, idx) => (
+                      <SortableItem key={status.id} id={status.id}>
+                        <span className="text-xs text-muted-foreground w-6">{idx + 1}</span>
+                        
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">ID technique</Label>
+                            <Input
+                              value={status.id}
+                              onChange={(e) => {
                                 const updated = [...editedStatuses];
-                                updated[idx] = { ...status, is_final: checked };
+                                updated[idx] = { ...status, id: e.target.value.toUpperCase().replace(/\s/g, '_') };
+                                setEditedStatuses(updated);
+                              }}
+                              placeholder="BACKLOG"
+                              className="h-9 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Libellé affiché</Label>
+                            <Input
+                              value={status.label}
+                              onChange={(e) => {
+                                const updated = [...editedStatuses];
+                                updated[idx] = { ...status, label: e.target.value };
+                                setEditedStatuses(updated);
+                              }}
+                              placeholder="Backlog"
+                              className="h-9"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Couleur</Label>
+                            <ColorPicker
+                              value={status.color}
+                              onChange={(color) => {
+                                const updated = [...editedStatuses];
+                                updated[idx] = { ...status, color };
                                 setEditedStatuses(updated);
                               }}
                             />
-                            <Label className="text-xs whitespace-nowrap">Final</Label>
+                          </div>
+                          <div className="flex items-end gap-2">
+                            <div className="flex-1">
+                              <Label className="text-xs text-muted-foreground">Aperçu</Label>
+                              <div className="h-9 flex items-center">
+                                <BadgePreview label={status.label} color={status.color} />
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 pb-1">
+                              <Switch
+                                checked={status.is_final}
+                                onCheckedChange={(checked) => {
+                                  const updated = [...editedStatuses];
+                                  updated[idx] = { ...status, is_final: checked };
+                                  setEditedStatuses(updated);
+                                }}
+                              />
+                              <Label className="text-xs whitespace-nowrap">Final</Label>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0"
-                        onClick={() => setEditedStatuses(editedStatuses.filter((_, i) => i !== idx))}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                        
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0"
+                          onClick={() => setEditedStatuses(editedStatuses.filter((_, i) => i !== idx))}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </SortableItem>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
               
               <div className="flex justify-between pt-2">
                 <Button variant="outline" onClick={addStatus}>
@@ -562,76 +683,84 @@ export function ActionsConfigDialog({
                 <CardHeader className="py-3">
                   <CardDescription className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" />
-                    Les modules catégorisent les tickets par fonctionnalité (RDV, Devis, Planning, etc.)
+                    Les modules catégorisent les tickets par fonctionnalité. Glissez pour réordonner.
                   </CardDescription>
                 </CardHeader>
               </Card>
 
-              {editedModules.map((mod, idx) => (
-                <Card key={`module-${idx}`} className="overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <GripVertical className="h-4 w-4 text-muted-foreground cursor-move shrink-0" />
-                      <span className="text-xs text-muted-foreground w-6">{idx + 1}</span>
-                      
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <div>
-                          <Label className="text-xs text-muted-foreground">ID technique</Label>
-                          <Input
-                            value={mod.id}
-                            onChange={(e) => {
-                              const updated = [...editedModules];
-                              updated[idx] = { ...mod, id: e.target.value.toUpperCase().replace(/\s/g, '_') };
-                              setEditedModules(updated);
-                            }}
-                            placeholder="RDV"
-                            className="h-9 text-xs font-mono"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Libellé affiché</Label>
-                          <Input
-                            value={mod.label}
-                            onChange={(e) => {
-                              const updated = [...editedModules];
-                              updated[idx] = { ...mod, label: e.target.value };
-                              setEditedModules(updated);
-                            }}
-                            placeholder="Rendez-vous"
-                            className="h-9"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Couleur</Label>
-                          <ColorPicker
-                            value={mod.color}
-                            onChange={(color) => {
-                              const updated = [...editedModules];
-                              updated[idx] = { ...mod, color };
-                              setEditedModules(updated);
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Aperçu</Label>
-                          <div className="h-9 flex items-center">
-                            <BadgePreview label={mod.label} color={mod.color} />
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleModuleDragEnd}
+              >
+                <SortableContext
+                  items={editedModules.map(m => m.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {editedModules.map((mod, idx) => (
+                      <SortableItem key={mod.id} id={mod.id}>
+                        <span className="text-xs text-muted-foreground w-6">{idx + 1}</span>
+                        
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">ID technique</Label>
+                            <Input
+                              value={mod.id}
+                              onChange={(e) => {
+                                const updated = [...editedModules];
+                                updated[idx] = { ...mod, id: e.target.value.toUpperCase().replace(/\s/g, '_') };
+                                setEditedModules(updated);
+                              }}
+                              placeholder="RDV"
+                              className="h-9 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Libellé affiché</Label>
+                            <Input
+                              value={mod.label}
+                              onChange={(e) => {
+                                const updated = [...editedModules];
+                                updated[idx] = { ...mod, label: e.target.value };
+                                setEditedModules(updated);
+                              }}
+                              placeholder="Rendez-vous"
+                              className="h-9"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Couleur</Label>
+                            <ColorPicker
+                              value={mod.color}
+                              onChange={(color) => {
+                                const updated = [...editedModules];
+                                updated[idx] = { ...mod, color };
+                                setEditedModules(updated);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Aperçu</Label>
+                            <div className="h-9 flex items-center">
+                              <BadgePreview label={mod.label} color={mod.color} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0"
-                        onClick={() => setEditedModules(editedModules.filter((_, i) => i !== idx))}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                        
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0"
+                          onClick={() => setEditedModules(editedModules.filter((_, i) => i !== idx))}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </SortableItem>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
               
               <div className="flex justify-between pt-2">
                 <Button variant="outline" onClick={addModule}>
@@ -719,76 +848,84 @@ export function ActionsConfigDialog({
                 <CardHeader className="py-3">
                   <CardDescription className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" />
-                    Les tags d'impact permettent de catégoriser les tickets (Performance, UX, Sécurité, etc.)
+                    Les tags d'impact permettent de catégoriser les tickets. Glissez pour réordonner.
                   </CardDescription>
                 </CardHeader>
               </Card>
 
-              {editedTags.map((tag, idx) => (
-                <Card key={`tag-${idx}`} className="overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <GripVertical className="h-4 w-4 text-muted-foreground cursor-move shrink-0" />
-                      <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
-                      
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <div>
-                          <Label className="text-xs text-muted-foreground">ID technique</Label>
-                          <Input
-                            value={tag.id}
-                            onChange={(e) => {
-                              const updated = [...editedTags];
-                              updated[idx] = { ...tag, id: e.target.value.toLowerCase().replace(/\s/g, '_') };
-                              setEditedTags(updated);
-                            }}
-                            placeholder="perf"
-                            className="h-9 text-xs font-mono"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Libellé affiché</Label>
-                          <Input
-                            value={tag.label}
-                            onChange={(e) => {
-                              const updated = [...editedTags];
-                              updated[idx] = { ...tag, label: e.target.value };
-                              setEditedTags(updated);
-                            }}
-                            placeholder="Performance"
-                            className="h-9"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Couleur</Label>
-                          <ColorPicker
-                            value={tag.color}
-                            onChange={(color) => {
-                              const updated = [...editedTags];
-                              updated[idx] = { ...tag, color };
-                              setEditedTags(updated);
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Aperçu</Label>
-                          <div className="h-9 flex items-center">
-                            <BadgePreview label={tag.label} color={tag.color} />
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleTagDragEnd}
+              >
+                <SortableContext
+                  items={editedTags.map(t => t.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {editedTags.map((tag, idx) => (
+                      <SortableItem key={tag.id} id={tag.id}>
+                        <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
+                        
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">ID technique</Label>
+                            <Input
+                              value={tag.id}
+                              onChange={(e) => {
+                                const updated = [...editedTags];
+                                updated[idx] = { ...tag, id: e.target.value.toLowerCase().replace(/\s/g, '_') };
+                                setEditedTags(updated);
+                              }}
+                              placeholder="perf"
+                              className="h-9 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Libellé affiché</Label>
+                            <Input
+                              value={tag.label}
+                              onChange={(e) => {
+                                const updated = [...editedTags];
+                                updated[idx] = { ...tag, label: e.target.value };
+                                setEditedTags(updated);
+                              }}
+                              placeholder="Performance"
+                              className="h-9"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Couleur</Label>
+                            <ColorPicker
+                              value={tag.color}
+                              onChange={(color) => {
+                                const updated = [...editedTags];
+                                updated[idx] = { ...tag, color };
+                                setEditedTags(updated);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Aperçu</Label>
+                            <div className="h-9 flex items-center">
+                              <BadgePreview label={tag.label} color={tag.color} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0"
-                        onClick={() => setEditedTags(editedTags.filter((_, i) => i !== idx))}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                        
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0"
+                          onClick={() => setEditedTags(editedTags.filter((_, i) => i !== idx))}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </SortableItem>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
               
               <div className="flex justify-between pt-2">
                 <Button variant="outline" onClick={addTag}>
@@ -808,76 +945,84 @@ export function ActionsConfigDialog({
                 <CardHeader className="py-3">
                   <CardDescription className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" />
-                    Les porteurs indiquent qui est responsable du ticket (HC, Apogée, Partagé)
+                    Les porteurs indiquent qui est responsable du ticket. Glissez pour réordonner.
                   </CardDescription>
                 </CardHeader>
               </Card>
 
-              {editedOwnerSides.map((owner, idx) => (
-                <Card key={`owner-${idx}`} className="overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <GripVertical className="h-4 w-4 text-muted-foreground cursor-move shrink-0" />
-                      <Users className="h-4 w-4 text-muted-foreground shrink-0" />
-                      
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <div>
-                          <Label className="text-xs text-muted-foreground">ID technique</Label>
-                          <Input
-                            value={owner.id}
-                            onChange={(e) => {
-                              const updated = [...editedOwnerSides];
-                              updated[idx] = { ...owner, id: e.target.value.toUpperCase().replace(/\s/g, '_') };
-                              setEditedOwnerSides(updated);
-                            }}
-                            placeholder="HC"
-                            className="h-9 text-xs font-mono"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Libellé affiché</Label>
-                          <Input
-                            value={owner.label}
-                            onChange={(e) => {
-                              const updated = [...editedOwnerSides];
-                              updated[idx] = { ...owner, label: e.target.value };
-                              setEditedOwnerSides(updated);
-                            }}
-                            placeholder="HelpConfort"
-                            className="h-9"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Couleur</Label>
-                          <ColorPicker
-                            value={owner.color}
-                            onChange={(color) => {
-                              const updated = [...editedOwnerSides];
-                              updated[idx] = { ...owner, color };
-                              setEditedOwnerSides(updated);
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Aperçu</Label>
-                          <div className="h-9 flex items-center">
-                            <BadgePreview label={owner.label} color={owner.color} />
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleOwnerDragEnd}
+              >
+                <SortableContext
+                  items={editedOwnerSides.map(o => o.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {editedOwnerSides.map((owner, idx) => (
+                      <SortableItem key={owner.id} id={owner.id}>
+                        <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                        
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">ID technique</Label>
+                            <Input
+                              value={owner.id}
+                              onChange={(e) => {
+                                const updated = [...editedOwnerSides];
+                                updated[idx] = { ...owner, id: e.target.value.toUpperCase().replace(/\s/g, '_') };
+                                setEditedOwnerSides(updated);
+                              }}
+                              placeholder="HC"
+                              className="h-9 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Libellé affiché</Label>
+                            <Input
+                              value={owner.label}
+                              onChange={(e) => {
+                                const updated = [...editedOwnerSides];
+                                updated[idx] = { ...owner, label: e.target.value };
+                                setEditedOwnerSides(updated);
+                              }}
+                              placeholder="HelpConfort"
+                              className="h-9"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Couleur</Label>
+                            <ColorPicker
+                              value={owner.color}
+                              onChange={(color) => {
+                                const updated = [...editedOwnerSides];
+                                updated[idx] = { ...owner, color };
+                                setEditedOwnerSides(updated);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Aperçu</Label>
+                            <div className="h-9 flex items-center">
+                              <BadgePreview label={owner.label} color={owner.color} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0"
-                        onClick={() => setEditedOwnerSides(editedOwnerSides.filter((_, i) => i !== idx))}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                        
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0"
+                          onClick={() => setEditedOwnerSides(editedOwnerSides.filter((_, i) => i !== idx))}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </SortableItem>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
               
               <div className="flex justify-between pt-2">
                 <Button variant="outline" onClick={addOwnerSide}>
