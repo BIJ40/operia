@@ -107,43 +107,11 @@ export function UnifiedHeader() {
   const [editTitle, setEditTitle] = useState('');
   const [editSubtitle, setEditSubtitle] = useState('');
   const [editMenuLabel, setEditMenuLabel] = useState('');
-  const [editTitleSize, setEditTitleSize] = useState('3xl');
-  const [editIconSize, setEditIconSize] = useState('3xl');
-  const [editIconColor, setEditIconColor] = useState('');
-  const [editSubtitleBgColor, setEditSubtitleBgColor] = useState('');
-  const [editSubtitleTextSize, setEditSubtitleTextSize] = useState('xs');
 
-  // Size mappings
-  const TITLE_SIZES: Record<string, string> = {
-    'sm': 'text-sm',
-    'base': 'text-base',
-    'lg': 'text-lg',
-    'xl': 'text-xl',
-    '2xl': 'text-2xl',
-    '3xl': 'text-3xl',
-    '4xl': 'text-4xl',
-  };
-  const ICON_SIZES: Record<string, string> = {
-    'sm': 'w-4 h-4',
-    'md': 'w-5 h-5',
-    'lg': 'w-6 h-6',
-    'xl': 'w-7 h-7',
-    '2xl': 'w-8 h-8',
-    '3xl': 'w-10 h-10',
-  };
-  const SUBTITLE_TEXT_SIZES: Record<string, string> = {
-    'xs': 'text-xs',
-    'sm': 'text-sm',
-    'base': 'text-base',
-    'lg': 'text-lg',
-  };
-  
-  // Forcer les valeurs par défaut : titre ÉNORME (3xl), icône MAXIMUM (3xl), description GRANDE sur fond BLANC
-  const titleSizeClass = TITLE_SIZES['3xl'];
-  const iconSizeClass = ICON_SIZES['3xl'];
-  const iconColorStyle = metadata?.header_icon_color ? { color: metadata.header_icon_color } : undefined;
-  const subtitleTextSizeClass = SUBTITLE_TEXT_SIZES['base'];
-  // Fond blanc forcé pour les descriptions
+  // Styles forcés : titre ÉNORME (3xl), icône MAXIMUM (3xl), description GRANDE sur fond BLANC
+  const titleSizeClass = 'text-3xl';
+  const iconSizeClass = 'w-10 h-10';
+  const subtitleTextSizeClass = 'text-base';
   const subtitleBgClass = 'bg-white dark:bg-card';
 
   const canEdit = canEditPageMetadata(globalRole) && pageKey;
@@ -152,11 +120,6 @@ export function UnifiedHeader() {
     setEditTitle(metadata?.header_title || defaultTitle);
     setEditSubtitle(metadata?.header_subtitle || defaultSubtitle);
     setEditMenuLabel(metadata?.menu_label || '');
-    setEditTitleSize(metadata?.header_title_size || '3xl');
-    setEditIconSize(metadata?.header_icon_size || '3xl');
-    setEditIconColor(metadata?.header_icon_color || '');
-    setEditSubtitleBgColor(metadata?.header_subtitle_bg_color || '');
-    setEditSubtitleTextSize(metadata?.header_subtitle_text_size || 'xs');
     setIsMetadataDialogOpen(true);
   };
 
@@ -168,11 +131,6 @@ export function UnifiedHeader() {
         header_title: editTitle || null,
         header_subtitle: editSubtitle || null,
         menu_label: editMenuLabel || null,
-        header_title_size: editTitleSize || '3xl',
-        header_icon_size: editIconSize || '3xl',
-        header_icon_color: editIconColor || null,
-        header_subtitle_bg_color: editSubtitleBgColor || null,
-        header_subtitle_text_size: editSubtitleTextSize || 'xs',
       });
       toast.success('Métadonnées de page mises à jour');
       setIsMetadataDialogOpen(false);
@@ -241,10 +199,7 @@ export function UnifiedHeader() {
           <div className="flex-1 flex items-center justify-center min-w-0">
             <div className="flex items-center gap-2">
               {PageIcon && (
-                <PageIcon 
-                  className={`${iconSizeClass} shrink-0 ${!iconColorStyle ? 'text-primary' : ''}`} 
-                  style={iconColorStyle}
-                />
+                <PageIcon className={`${iconSizeClass} shrink-0 text-primary`} />
               )}
               <h1 className={`${titleSizeClass} font-semibold text-foreground truncate`}>
                 {formatHelpTitle(displayTitle)}
@@ -403,116 +358,6 @@ export function UnifiedHeader() {
                 onChange={(e) => setEditMenuLabel(e.target.value)}
                 placeholder="Texte dans la navigation"
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="meta-title-size">Taille du titre</Label>
-                <select
-                  id="meta-title-size"
-                  value={editTitleSize}
-                  onChange={(e) => setEditTitleSize(e.target.value)}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                >
-                  <option value="sm">Petit (sm)</option>
-                  <option value="base">Normal (base)</option>
-                  <option value="lg">Grand (lg)</option>
-                  <option value="xl">Très grand (xl)</option>
-                  <option value="2xl">Extra grand (2xl)</option>
-                  <option value="3xl">Énorme (3xl)</option>
-                  <option value="4xl">Maximum (4xl)</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="meta-icon-size">Taille de l'icône</Label>
-                <select
-                  id="meta-icon-size"
-                  value={editIconSize}
-                  onChange={(e) => setEditIconSize(e.target.value)}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                >
-                  <option value="sm">Petit (sm)</option>
-                  <option value="md">Moyen (md)</option>
-                  <option value="lg">Grand (lg)</option>
-                  <option value="xl">Très grand (xl)</option>
-                  <option value="2xl">Extra grand (2xl)</option>
-                  <option value="3xl">Maximum (3xl)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="meta-icon-color">Couleur de l'icône</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="meta-icon-color"
-                  type="color"
-                  value={editIconColor || '#3b82f6'}
-                  onChange={(e) => setEditIconColor(e.target.value)}
-                  className="w-12 h-10 p-1 cursor-pointer"
-                />
-                <Input
-                  value={editIconColor}
-                  onChange={(e) => setEditIconColor(e.target.value)}
-                  placeholder="#3b82f6 ou vide pour défaut"
-                  className="flex-1"
-                />
-                {editIconColor && (
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setEditIconColor('')}
-                  >
-                    Reset
-                  </Button>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Laissez vide pour utiliser la couleur primaire par défaut
-              </p>
-            </div>
-
-            {/* Subtitle bar customization */}
-            <div className="pt-4 border-t">
-              <Label className="text-sm font-medium">Style de la barre de description</Label>
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                <div className="space-y-2">
-                  <Label htmlFor="meta-subtitle-text-size">Taille du texte</Label>
-                  <select
-                    id="meta-subtitle-text-size"
-                    value={editSubtitleTextSize}
-                    onChange={(e) => setEditSubtitleTextSize(e.target.value)}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  >
-                    <option value="xs">Petit (xs)</option>
-                    <option value="sm">Normal (sm)</option>
-                    <option value="base">Grand (base)</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="meta-subtitle-bg">Couleur de fond</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="meta-subtitle-bg"
-                      type="color"
-                      value={editSubtitleBgColor || '#f3f4f6'}
-                      onChange={(e) => setEditSubtitleBgColor(e.target.value)}
-                      className="w-12 h-10 p-1 cursor-pointer"
-                    />
-                    {editSubtitleBgColor && (
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => setEditSubtitleBgColor('')}
-                      >
-                        Reset
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
