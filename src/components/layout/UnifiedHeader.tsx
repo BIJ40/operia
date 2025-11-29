@@ -94,8 +94,8 @@ export function UnifiedHeader() {
   const [editTitle, setEditTitle] = useState('');
   const [editSubtitle, setEditSubtitle] = useState('');
   const [editMenuLabel, setEditMenuLabel] = useState('');
-  const [editTitleSize, setEditTitleSize] = useState('lg');
-  const [editIconSize, setEditIconSize] = useState('md');
+  const [editTitleSize, setEditTitleSize] = useState('3xl');
+  const [editIconSize, setEditIconSize] = useState('3xl');
   const [editIconColor, setEditIconColor] = useState('');
   const [editSubtitleBgColor, setEditSubtitleBgColor] = useState('');
   const [editSubtitleTextSize, setEditSubtitleTextSize] = useState('xs');
@@ -124,8 +124,8 @@ export function UnifiedHeader() {
     'base': 'text-base',
   };
   
-  const titleSizeClass = TITLE_SIZES[metadata?.header_title_size || 'lg'] || 'text-lg';
-  const iconSizeClass = ICON_SIZES[metadata?.header_icon_size || 'md'] || 'w-5 h-5';
+  const titleSizeClass = TITLE_SIZES[metadata?.header_title_size || '3xl'] || 'text-3xl';
+  const iconSizeClass = ICON_SIZES[metadata?.header_icon_size || '3xl'] || 'w-10 h-10';
   const iconColorStyle = metadata?.header_icon_color ? { color: metadata.header_icon_color } : undefined;
   const subtitleTextSizeClass = SUBTITLE_TEXT_SIZES[metadata?.header_subtitle_text_size || 'xs'] || 'text-xs';
   const subtitleBgStyle = metadata?.header_subtitle_bg_color ? { backgroundColor: metadata.header_subtitle_bg_color } : undefined;
@@ -136,8 +136,8 @@ export function UnifiedHeader() {
     setEditTitle(metadata?.header_title || defaultTitle);
     setEditSubtitle(metadata?.header_subtitle || defaultSubtitle);
     setEditMenuLabel(metadata?.menu_label || '');
-    setEditTitleSize(metadata?.header_title_size || 'lg');
-    setEditIconSize(metadata?.header_icon_size || 'md');
+    setEditTitleSize(metadata?.header_title_size || '3xl');
+    setEditIconSize(metadata?.header_icon_size || '3xl');
     setEditIconColor(metadata?.header_icon_color || '');
     setEditSubtitleBgColor(metadata?.header_subtitle_bg_color || '');
     setEditSubtitleTextSize(metadata?.header_subtitle_text_size || 'xs');
@@ -152,8 +152,8 @@ export function UnifiedHeader() {
         header_title: editTitle || null,
         header_subtitle: editSubtitle || null,
         menu_label: editMenuLabel || null,
-        header_title_size: editTitleSize || 'lg',
-        header_icon_size: editIconSize || 'md',
+        header_title_size: editTitleSize || '3xl',
+        header_icon_size: editIconSize || '3xl',
         header_icon_color: editIconColor || null,
         header_subtitle_bg_color: editSubtitleBgColor || null,
         header_subtitle_text_size: editSubtitleTextSize || 'xs',
