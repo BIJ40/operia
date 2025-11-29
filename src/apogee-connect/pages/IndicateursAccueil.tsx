@@ -13,6 +13,8 @@ import { calculateMonthlyCA } from "@/apogee-connect/utils/monthlyCalculations";
 import { MonthlyCAChart } from "@/apogee-connect/components/widgets/MonthlyCAChart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ROUTES } from "@/config/routes";
 
 export default function IndicateursAccueil() {
   const { filters } = useFilters();
@@ -160,11 +162,13 @@ export default function IndicateursAccueil() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-          Indicateurs généraux
-        </h1>
-      </div>
+      <PageHeader
+        pageKey="pilotage_indicateurs"
+        defaultTitle="Indicateurs généraux"
+        defaultSubtitle="Suivez vos principaux KPI agence."
+        backTo={ROUTES.pilotage.index}
+        backLabel="Retour Pilotage Agence"
+      />
 
       {/* Layout 2 colonnes : Temporels à gauche, Globaux à droite */}
       <div className="grid grid-cols-2 gap-4">

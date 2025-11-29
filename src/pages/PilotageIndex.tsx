@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { BarChart3, ListTodo, Tv, Calendar } from 'lucide-react';
+import { BarChart3, ListTodo, Tv, Calendar, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const pilotageModules = [
   {
@@ -38,19 +39,28 @@ const pilotageModules = [
     color: 'text-green-500',
     bgColor: 'bg-green-500/10',
   },
+  {
+    title: 'Mon équipe',
+    description: 'Gestion des collaborateurs de l\'agence',
+    icon: Users,
+    href: ROUTES.pilotage.equipe,
+    color: 'text-indigo-500',
+    bgColor: 'bg-indigo-500/10',
+  },
 ];
 
 export default function PilotageIndex() {
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Pilotage Agence</h1>
-        <p className="text-muted-foreground">
-          Outils de gestion et de suivi de l'activité de votre agence.
-        </p>
-      </div>
+      <PageHeader
+        pageKey="pilotage_index"
+        defaultTitle="Pilotage Agence"
+        defaultSubtitle="Outils de gestion et de suivi de l'activité de votre agence."
+        backTo={ROUTES.home}
+        backLabel="Retour accueil"
+      />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {pilotageModules.map((module) => {
           const Icon = module.icon;
           return (

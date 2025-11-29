@@ -797,6 +797,36 @@ export type Database = {
         }
         Relationships: []
       }
+      page_metadata: {
+        Row: {
+          created_at: string
+          header_subtitle: string | null
+          header_title: string | null
+          id: string
+          menu_label: string | null
+          page_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          header_subtitle?: string | null
+          header_title?: string | null
+          id?: string
+          menu_label?: string | null
+          page_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          header_subtitle?: string | null
+          header_title?: string | null
+          id?: string
+          menu_label?: string | null
+          page_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       planning_signatures: {
         Row: {
           comment: string | null
