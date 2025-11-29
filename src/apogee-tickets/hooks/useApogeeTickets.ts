@@ -150,7 +150,7 @@ export function useApogeeTickets(filters?: TicketFilters) {
         .insert({
           ...ticket,
           created_by_user_id: user?.id,
-          needs_completion: !ticket.module || !ticket.priority || !ticket.owner_side,
+          needs_completion: !ticket.module || ticket.heat_priority === null || ticket.heat_priority === undefined || !ticket.owner_side,
         })
         .select()
         .single();
@@ -172,23 +172,24 @@ export function useApogeeTickets(filters?: TicketFilters) {
       // Only recalculate needs_completion if relevant fields are being updated
       const updatePayload: Record<string, any> = { ...updates };
       
-      // Check if we're updating fields that affect completion status
-      const hasCompletionFields = 'module' in updates || 'priority' in updates || 'owner_side' in updates;
+      // Check if we're updating fields that affect completion status (using heat_priority instead of priority)
+      const hasCompletionFields = 'module' in updates || 'heat_priority' in updates || 'owner_side' in updates;
       
       if (hasCompletionFields) {
         // Fetch current values to check completion
         const { data: current } = await supabase
           .from('apogee_tickets')
-          .select('module, priority, owner_side')
+          .select('module, heat_priority, owner_side')
           .eq('id', id)
           .single();
         
         if (current) {
           const finalModule = 'module' in updates ? updates.module : current.module;
-          const finalPriority = 'priority' in updates ? updates.priority : current.priority;
+          const finalHeatPriority = 'heat_priority' in updates ? updates.heat_priority : current.heat_priority;
           const finalOwnerSide = 'owner_side' in updates ? updates.owner_side : current.owner_side;
           
-          updatePayload.needs_completion = !finalModule || !finalPriority || !finalOwnerSide;
+          // needs_completion = false only if all 3 fields are filled
+          updatePayload.needs_completion = !finalModule || finalHeatPriority === null || finalHeatPriority === undefined || !finalOwnerSide;
         }
       }
 
