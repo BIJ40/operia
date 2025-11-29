@@ -55,30 +55,22 @@ export default function AdminSupportLevels() {
   const loadSupportUsers = async () => {
     setIsLoading(true);
     try {
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'support');
-
-      if (rolesError) throw rolesError;
-
-      if (!userRoles || userRoles.length === 0) {
-        setSupportUsers([]);
-        return;
-      }
-
-      const userIds = userRoles.map(ur => ur.user_id);
-
+      // V2: Récupérer les utilisateurs avec enabled_modules.support.enabled = true
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, email, support_level, agence, role_agence, service_competencies')
-        .in('id', userIds)
+        .select('id, first_name, last_name, email, support_level, agence, role_agence, service_competencies, enabled_modules')
         .order('support_level', { ascending: true })
         .order('last_name', { ascending: true });
 
       if (profilesError) throw profilesError;
 
-      setSupportUsers(profiles as SupportUser[]);
+      // Filtrer côté client les utilisateurs avec accès support
+      const supportProfiles = (profiles || []).filter(p => {
+        const modules = p.enabled_modules as any;
+        return modules?.support?.enabled === true;
+      });
+
+      setSupportUsers(supportProfiles as SupportUser[]);
     } catch (error) {
       console.error('Error loading support users:', error);
       toast.error('Impossible de charger les utilisateurs support');
