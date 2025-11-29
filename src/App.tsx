@@ -158,8 +158,8 @@ function AppContent() {
             <Route path="agences/:agencyId" element={<FranchiseurAgencyProfile />} />
             <Route path="stats" element={<FranchiseurStats />} />
             <Route path="comparatifs" element={<FranchiseurComparison />} />
-            <Route path="redevances" element={<FranchiseurRoyalties />} />
-            <Route path="animateurs" element={<FranchiseurAnimateurs />} />
+            <Route path="redevances" element={<RoleGuard minRole="franchisor_admin"><FranchiseurRoyalties /></RoleGuard>} />
+            <Route path="animateurs" element={<RoleGuard minRole="franchisor_admin"><FranchiseurAnimateurs /></RoleGuard>} />
             <Route path="parametres" element={<FranchiseurSettings />} />
           </Route>
           
