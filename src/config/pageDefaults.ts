@@ -109,8 +109,15 @@ export interface PageHeaderConfig {
  * L'ordre est important : les routes plus spécifiques doivent être en premier.
  */
 export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
-  // Pilotage - Indicateurs (sous-routes d'abord)
-  { match: (path) => path === '/hc-agency/indicateurs' || path.startsWith('/hc-agency/indicateurs/'), pageKey: 'pilotage_indicateurs', defaultTitle: 'Indicateurs généraux', defaultSubtitle: 'Suivez vos principaux KPI agence', icon: 'BarChart3', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
+  // Pilotage - Statistiques et sous-indicateurs (plus spécifiques d'abord)
+  { match: (path) => path === '/hc-agency/statistiques/apporteurs', pageKey: 'pilotage_indicateurs_apporteurs', defaultTitle: 'Indicateurs Apporteurs', defaultSubtitle: 'Performance de vos apporteurs d\'affaires', icon: 'Users', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
+  { match: (path) => path === '/hc-agency/statistiques/univers', pageKey: 'pilotage_indicateurs_univers', defaultTitle: 'Indicateurs Univers', defaultSubtitle: 'Répartition par univers de métier', icon: 'Building2', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
+  { match: (path) => path === '/hc-agency/statistiques/techniciens', pageKey: 'pilotage_indicateurs_techniciens', defaultTitle: 'Indicateurs Techniciens', defaultSubtitle: 'Performance de vos techniciens', icon: 'CalendarDays', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
+  { match: (path) => path === '/hc-agency/statistiques/sav', pageKey: 'pilotage_indicateurs_sav', defaultTitle: 'Indicateurs SAV', defaultSubtitle: 'Suivi du service après-vente', icon: 'LifeBuoy', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
+  { match: (path) => path === '/hc-agency/statistiques', pageKey: 'pilotage_statistiques', defaultTitle: 'Statistiques', defaultSubtitle: 'Accédez à l\'ensemble des indicateurs de votre agence', icon: 'PieChart', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
+  
+  // Pilotage - Indicateurs généraux (ancienne route)
+  { match: (path) => path === '/hc-agency/indicateurs' || path.startsWith('/hc-agency/indicateurs/'), pageKey: 'pilotage_indicateurs', defaultTitle: 'Indicateurs généraux', defaultSubtitle: 'Suivez vos principaux KPI agence', icon: 'BarChart3', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
   { match: (path) => path === '/hc-agency/actions', pageKey: 'pilotage_actions', defaultTitle: 'Actions à Mener', defaultSubtitle: 'Suivi des actions et tâches en cours', icon: 'CheckSquare', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
   { match: (path) => path === '/hc-agency/diffusion', pageKey: 'pilotage_diffusion', defaultTitle: 'Mode Diffusion', defaultSubtitle: 'Affichage TV pour l\'agence', icon: 'Tv', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
   { match: (path) => path === '/hc-agency/rh-tech', pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens', icon: 'CalendarDays', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
