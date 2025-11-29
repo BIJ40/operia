@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye } from 'lucide-react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -34,9 +33,6 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { usePermissions } from '@/hooks/use-permissions';
-import { ConditionalRender } from '@/components/PermissionGuard';
-import { PERMISSION_LEVELS } from '@/types/permissions';
 
 interface Agency {
   id: string;
@@ -60,9 +56,8 @@ interface UserProfile {
   role_agence: string | null;
 }
 
+// Route protégée par RoleGuard dans App.tsx
 export default function AdminAgencies() {
-  const { isAdmin } = useAuth();
-  const { canViewScope, canEditScope, canAdminScope } = usePermissions();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [agencies, setAgencies] = useState<Agency[]>([]);
@@ -77,21 +72,9 @@ export default function AdminAgencies() {
     is_active: true,
   });
 
-  // Permissions basées sur scope
-  const canView = canViewScope('franchiseur_agencies') || isAdmin;
-  const canEdit = canEditScope('franchiseur_agencies') || isAdmin;
-  const canAdmin = canAdminScope('franchiseur_agencies') || isAdmin;
-
-  // Redirection si pas d'accès
-  if (!canView) {
-    return <Navigate to="/" replace />;
-  }
-
   useEffect(() => {
-    if (canView) {
-      loadData();
-    }
-  }, [canView]);
+    loadData();
+  }, []);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -229,10 +212,6 @@ export default function AdminAgencies() {
       });
     }
   };
-
-  if (!isAdmin) {
-    return <Navigate to="/" replace />;
-  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">

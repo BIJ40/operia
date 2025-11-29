@@ -11,12 +11,10 @@ import { DiffusionSlides } from '@/components/diffusion/DiffusionSlides';
 import { DiffusionSettingsPanel } from '@/components/diffusion/DiffusionSettingsPanel';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { SCOPE_SLUGS } from '@/types/permissions';
 
+// Route protégée par RoleGuard dans App.tsx
 export default function DiffusionDashboard() {
   const { settings, isLoading, updateSettings } = useDiffusionSettings();
-  const { isAuthenticated, canViewScope } = useAuth();
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -29,15 +27,6 @@ export default function DiffusionDashboard() {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
-
-  // Vérifier les permissions
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (!canViewScope(SCOPE_SLUGS.DIFFUSION)) {
-    return <Navigate to="/" replace />;
-  }
 
   const nbMonths = 12; // Mois de l'année
   const nbSlides = settings?.enabled_slides?.length || 4;

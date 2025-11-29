@@ -1,20 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { usePermissions } from "@/hooks/use-permissions";
-
+// Route protégée par RoleGuard (franchisor_user) dans App.tsx
 export default function FranchiseurRoyalties() {
-  const navigate = useNavigate();
-  const { canViewScope, isAdmin, isFranchiseur } = usePermissions();
-  
-  // Guard: vérifier l'accès aux redevances
-  const canView = canViewScope('franchiseur_royalties');
-  
-  useEffect(() => {
-    if (!canView && !isAdmin && !isFranchiseur) {
-      navigate('/');
-    }
-  }, [canView, isAdmin, isFranchiseur, navigate]);
-
   return (
     <div className="space-y-6">
       <div>

@@ -4,9 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
-import { Lock, Clock, Sparkles, RefreshCw, Ban } from 'lucide-react';
-import { usePermissions } from '@/hooks/use-permissions';
-import { SCOPE_SLUGS, PERMISSION_LEVELS } from '@/types/permissions';
+import { Clock, Sparkles, RefreshCw, Ban } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -253,14 +251,11 @@ const SortableCategory = ({
 
 export default function ApogeeGuide() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useEditor();
-  const { isAdmin, isAuthenticated, canViewScope, canEditScope, canDeleteScope } = useAuth();
-  const { getPermissionLevel } = usePermissions();
+  const { isAdmin, isAuthenticated } = useAuth();
   
-  // Vérifier les permissions pour le scope Apogée
-  const canView = canViewScope(SCOPE_SLUGS.APOGEE);
-  const canEdit = canEditScope(SCOPE_SLUGS.APOGEE);
-  const canDelete = canDeleteScope(SCOPE_SLUGS.APOGEE);
-  const permissionLevel = getPermissionLevel(SCOPE_SLUGS.APOGEE);
+  // Route protégée par RoleGuard dans App.tsx - plus besoin de vérifications manuelles
+  const canEdit = isAdmin;
+  const canDelete = isAdmin;
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -286,13 +281,8 @@ export default function ApogeeGuide() {
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
-
-  // Vérifier les permissions pour accéder à cette page (niveau 1 minimum)
-  if (!canView) {
-    return <Navigate to="/" replace />;
-  }
   
-  // Bloquer l'édition si niveau < 2 (Écriture)
+  // Bloquer l'édition si pas admin
   const effectiveEditMode = isEditMode && canEdit;
 
   // Filtrer uniquement les catégories Apogée (exclure FAQ et HelpConfort)
