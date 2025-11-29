@@ -98,6 +98,10 @@ export const ROUTES = {
     documents: '/admin/documents',
     storageQuota: '/admin/storage-quota',
     pageMetadata: '/admin/page-metadata',
+    // Apogée Tickets
+    apogeeTickets: '/admin/apogee-tickets',
+    apogeeTicketsImport: '/admin/apogee-tickets/import',
+    apogeeTicketsIncomplete: '/admin/apogee-tickets/incomplets',
     apogeeGuides: '/admin/apogee-guides',
     chatbotRag: '/admin/chatbot-rag',
   },

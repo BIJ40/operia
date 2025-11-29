@@ -77,6 +77,11 @@ const AdminPageMetadata = lazy(() => import("./pages/AdminPageMetadata"));
 const AdminApogeeGuides = lazy(() => import("./pages/AdminApogeeGuides"));
 const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
 
+// Lazy loaded pages - Apogée Tickets
+const ApogeeTicketsKanban = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsKanban"));
+const ApogeeTicketsImport = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImport"));
+const ApogeeTicketsIncomplete = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsIncomplete"));
+
 // Lazy loaded pages - User
 const Profile = lazy(() => import("./pages/Profile"));
 const Favorites = lazy(() => import("./pages/Favorites"));
@@ -229,6 +234,9 @@ function AppContent() {
           <Route path="/admin/page-metadata" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminPageMetadata /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-guides" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminApogeeGuides /></RoleGuard></MainLayout>} />
           <Route path="/admin/chatbot-rag" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminChatbotRag /></RoleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsKanban /></RoleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/import" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImport /></RoleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/incomplets" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsIncomplete /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* USER PAGES - Accessible à tous les connectés */}
