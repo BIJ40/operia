@@ -50,6 +50,7 @@ const FranchiseurStats = lazy(() => import("./franchiseur/pages/FranchiseurStats
 const FranchiseurComparison = lazy(() => import("./franchiseur/pages/FranchiseurComparison"));
 const FranchiseurRoyalties = lazy(() => import("./franchiseur/pages/FranchiseurRoyalties"));
 const FranchiseurSettings = lazy(() => import("./franchiseur/pages/FranchiseurSettings"));
+const FranchiseurAnimateurs = lazy(() => import("./franchiseur/pages/FranchiseurAnimateurs"));
 
 // Lazy loaded pages - Admin
 const AdminIndex = lazy(() => import("./pages/AdminIndex"));
@@ -156,6 +157,7 @@ function AppContent() {
             <Route path="stats" element={<FranchiseurStats />} />
             <Route path="comparatifs" element={<FranchiseurComparison />} />
             <Route path="redevances" element={<FranchiseurRoyalties />} />
+            <Route path="animateurs" element={<FranchiseurAnimateurs />} />
             <Route path="parametres" element={<FranchiseurSettings />} />
           </Route>
           
