@@ -8,11 +8,9 @@ import { toast } from 'sonner';
 // SYSTÈME V2.0 - Imports des types et fonctions
 // ============================================================================
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
-import { EnabledModules, ModuleKey, isModuleEnabled as checkModuleEnabled, isModuleOptionEnabled } from '@/types/modules';
+import { EnabledModules, ModuleKey, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
 import { 
   AccessControlContext,
-  getGlobalRoleFromLegacy,
-  getEnabledModulesFromLegacy,
   hasGlobalRole as hasGlobalRoleFn,
   hasModule as hasModuleFn,
   hasModuleOption as hasModuleOptionFn,
@@ -93,7 +91,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================================================
   const [globalRole, setGlobalRole] = useState<GlobalRole | null>(null);
   const [enabledModules, setEnabledModules] = useState<EnabledModules | null>(null);
-  const [hasSupportCapability, setHasSupportCapability] = useState(false);
 
   // ============================================================================
   // Calculs dérivés V2
@@ -101,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const globalRoleLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
   const isAdmin = globalRoleLevel >= GLOBAL_ROLES.platform_admin; // N5+
   const isFranchiseur = globalRoleLevel >= GLOBAL_ROLES.franchisor_user; // N3+
-  const isSupport = hasSupportCapability || checkModuleEnabled(enabledModules, 'support');
+  const isSupport = checkModuleEnabled(enabledModules, 'support');
 
   // ============================================================================
   // MODULE SUPPORT - Logique granulaire
@@ -127,9 +124,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const accessContext: AccessControlContext = {
     globalRole: globalRole ?? 'base_user',
     enabledModules: enabledModules ?? {},
-    legacyIsAdmin: isAdmin,
-    legacyIsSupport: isSupport,
-    legacyIsFranchiseur: isFranchiseur,
   };
 
   // ============================================================================
@@ -152,10 +146,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================================================
   const loadUserData = useCallback(async (userId: string) => {
     try {
-      // 1. Charger le profil avec les champs V2
+      // Charger le profil avec les champs V2
       const { data: profile } = await supabase
         .from('profiles')
-        .select('agence, role_agence, must_change_password, global_role, enabled_modules, system_role, support_level, is_active')
+        .select('agence, role_agence, must_change_password, global_role, enabled_modules, is_active')
         .eq('id', userId)
         .single();
       
@@ -177,92 +171,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // 2. Charger les rôles système pour le mapping legacy
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-      
-      const hasAdminRole = roles?.some(r => r.role === 'admin') || false;
-      const hasFranchiseurRole = roles?.some(r => r.role === 'franchiseur') || false;
-
-      // 3. Charger les capabilities (support)
-      const { data: capabilitiesData } = await supabase
-        .from('user_capabilities')
-        .select('capability, is_active')
-        .eq('user_id', userId)
-        .eq('is_active', true);
-      
-      const supportCapability = capabilitiesData?.some(
-        (c: { capability: string }) => c.capability === 'support'
-      ) || false;
-      setHasSupportCapability(supportCapability);
-
-      // 4. Charger le rôle franchiseur si applicable
-      let userFranchiseurRole: string | null = null;
-      if (hasFranchiseurRole) {
-        const { data: franchiseurRoleData } = await supabase
-          .from('franchiseur_roles')
-          .select('franchiseur_role')
-          .eq('user_id', userId)
-          .single();
-        userFranchiseurRole = franchiseurRoleData?.franchiseur_role || null;
-      }
-
-      // ========================================================================
-      // V2.0 - Détermination du global_role et enabled_modules
-      // ========================================================================
+      // V2.0 - Utiliser directement les valeurs de la DB
       const dbGlobalRole = profile?.global_role as GlobalRole | null;
       const dbEnabledModules = profile?.enabled_modules as EnabledModules | null;
 
-      // Si les valeurs V2 sont en DB, les utiliser directement
-      // Sinon, calculer depuis le legacy
-      if (dbGlobalRole) {
-        setGlobalRole(dbGlobalRole);
-      } else {
-        // Fallback: calculer depuis legacy
-        const computedRole = getGlobalRoleFromLegacy({
-          systemRole: profile?.system_role,
-          roleAgence: profile?.role_agence,
-          hasAdminRole,
-          hasSupportRole: supportCapability,
-          hasFranchiseurRole,
-          franchiseurRole: userFranchiseurRole,
-          supportLevel: profile?.support_level,
-        });
-        setGlobalRole(computedRole);
-      }
-
-      if (dbEnabledModules) {
-        setEnabledModules(dbEnabledModules);
-      } else {
-        // Fallback: calculer depuis legacy
-        const effectiveRole = dbGlobalRole || getGlobalRoleFromLegacy({
-          systemRole: profile?.system_role,
-          roleAgence: profile?.role_agence,
-          hasAdminRole,
-          hasSupportRole: supportCapability,
-          hasFranchiseurRole,
-          franchiseurRole: userFranchiseurRole,
-          supportLevel: profile?.support_level,
-        });
-        const computedModules = getEnabledModulesFromLegacy({
-          globalRole: effectiveRole,
-          hasAdminRole,
-          hasSupportRole: supportCapability,
-          hasFranchiseurRole,
-          supportLevel: profile?.support_level,
-        });
-        setEnabledModules(computedModules);
-      }
+      // Définir le rôle global (valeur par défaut si non défini)
+      setGlobalRole(dbGlobalRole || 'base_user');
+      
+      // Définir les modules activés (objet vide si non défini)
+      setEnabledModules(dbEnabledModules || {});
 
       // Logging en dev
       if (import.meta.env.DEV) {
         logAuth.info('[AUTH][V2] User loaded:', {
           userId,
-          dbGlobalRole,
-          dbEnabledModules: dbEnabledModules ? 'defined' : 'null',
-          effectiveGlobalRole: dbGlobalRole || 'computed from legacy',
+          globalRole: dbGlobalRole || 'base_user (default)',
+          modulesCount: dbEnabledModules ? Object.keys(dbEnabledModules).length : 0,
         });
       }
 
@@ -339,7 +263,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsActive(true);
           setGlobalRole(null);
           setEnabledModules(null);
-          setHasSupportCapability(false);
           setIsAuthLoading(false);
         }
       }
@@ -398,7 +321,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsActive(true);
       setGlobalRole(null);
       setEnabledModules(null);
-      setHasSupportCapability(false);
       setUser(null);
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);

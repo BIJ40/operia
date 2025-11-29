@@ -256,15 +256,27 @@ Historique des calculs de redevances.
 - `agency_id`, `config_id`, `year`, `month`, `ca_cumul_annuel`
 - `redevance_calculee`, `detail_tranches` (JSON), `calculated_by`
 
-### Tables Permissions (Legacy - non utilisées)
+### Tables et Fichiers Legacy (SUPPRIMÉS)
 
-Les tables suivantes existent en base mais ne sont plus utilisées par le système actuel :
+**Tables DB conservées pour référence historique (non consultées par le code) :**
 - `role_permissions` - Anciennes permissions par rôle_agence
 - `user_permissions` - Anciennes permissions individuelles  
 - `group_permissions` - Anciennes permissions par groupe
 - `scopes` - Anciens scopes de permissions
+- `user_capabilities` - Anciennes capabilities
+- `groups` - Anciens groupes de permissions
 
-> **Note :** Ces tables sont conservées pour référence historique uniquement. Elles ne sont plus consultées par le code.
+**Fichiers supprimés lors du nettoyage legacy (2025-01-29) :**
+- `src/types/permissions.ts` - Types V1 (SystemRole, AppRole, ScopeSlug, PERMISSION_LEVELS)
+- `src/services/permissionsService.ts` - Service V1 complet (groups, scopes, user_permissions)
+- `src/config/permissionsHelpTexts.ts` - Textes d'aide V1
+- `src/hooks/use-permissions-admin.ts` - Hooks admin V1
+
+**Fichiers nettoyés :**
+- `src/types/accessControl.ts` - Suppression des fonctions legacy mapping (`getGlobalRoleFromLegacy`, `getEnabledModulesFromLegacy`, `createAccessContext`)
+- `src/contexts/AuthContext.tsx` - Simplification pour V2 only (plus de fallback legacy)
+
+> **Note :** Le système V2 est maintenant la seule source de vérité. Tous les utilisateurs DOIVENT avoir `global_role` et `enabled_modules` définis en DB.
 
 ---
 
