@@ -90,10 +90,19 @@ serve(async (req) => {
     let chunks = allChunks;
     if (source && allChunks) {
       chunks = allChunks.filter(chunk => {
-        const metadata = chunk.metadata as Record<string, any> | null;
-        return metadata?.source === source;
+        // Handle metadata as string (needs parsing) or object
+        let metadata = chunk.metadata;
+        if (typeof metadata === 'string') {
+          try {
+            metadata = JSON.parse(metadata);
+          } catch {
+            return false;
+          }
+        }
+        const metaObj = metadata as Record<string, any> | null;
+        return metaObj?.source === source;
       });
-      console.log(`Filtered to ${chunks.length} chunks with source="${source}"`);
+      console.log(`Filtered to ${chunks.length} chunks with source="${source}" (from ${allChunks.length} total)`);
     }
 
     if (!chunks || chunks.length === 0) {
@@ -114,23 +123,31 @@ serve(async (req) => {
 
     // Calculate similarity for each chunk
     const resultsWithScores = chunks.map(chunk => {
-      const chunkEmbedding = chunk.embedding as number[];
-      const similarity = cosineSimilarity(queryEmbedding, chunkEmbedding);
+      // Handle embedding as string or array
+      let chunkEmbedding = chunk.embedding;
+      if (typeof chunkEmbedding === 'string') {
+        try {
+          chunkEmbedding = JSON.parse(chunkEmbedding);
+        } catch {
+          return { ...chunk, similarity: 0 };
+        }
+      }
+      const similarity = cosineSimilarity(queryEmbedding, chunkEmbedding as number[]);
       
       return {
         ...chunk,
-        similarity_score: similarity,
+        similarity,
       };
     });
 
     // Sort by similarity and get top K
     const topResults = resultsWithScores
-      .sort((a, b) => b.similarity_score - a.similarity_score)
+      .sort((a, b) => b.similarity - a.similarity)
       .slice(0, topK);
 
     console.log('Top results:', topResults.map(r => ({
       title: r.block_title,
-      score: r.similarity_score
+      score: r.similarity
     })));
 
     return new Response(
