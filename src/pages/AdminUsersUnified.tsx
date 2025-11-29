@@ -84,8 +84,29 @@ import {
   Zap,
   Eye,
   Wand2,
-  UserPlus
+  UserPlus,
+  MoreHorizontal,
+  UserX,
+  UserCheck,
+  Trash2
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Tooltip,
   TooltipContent,
@@ -107,6 +128,10 @@ interface UserProfile {
   service_competencies: any;
   support_level: number | null;
   created_at: string;
+  // Deactivation fields
+  is_active: boolean | null;
+  deactivated_at: string | null;
+  deactivated_by: string | null;
 }
 
 interface UserCapability {
@@ -186,12 +211,18 @@ export default function AdminUsersUnified() {
   const [agencyFilter, setAgencyFilter] = useState<string>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [moduleFilter, setModuleFilter] = useState<string>('all');
+  const [showDeactivated, setShowDeactivated] = useState(false);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(0);
   
   // Create user dialog
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  
+  // Deactivation/Delete dialogs
+  const [deactivateDialog, setDeactivateDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
+  const [reactivateDialog, setReactivateDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   const [newUserData, setNewUserData] = useState({
     email: '',
     password: '',
@@ -217,7 +248,7 @@ export default function AdminUsersUnified() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, agence, global_role, enabled_modules, system_role, role_agence, service_competencies, support_level, created_at')
+        .select('id, email, first_name, last_name, agence, global_role, enabled_modules, system_role, role_agence, service_competencies, support_level, created_at, is_active, deactivated_at, deactivated_by')
         .order('email');
       
       if (error) throw error;
@@ -348,6 +379,12 @@ export default function AdminUsersUnified() {
   // Filter users
   const filteredUsers = useMemo(() => {
     return usersWithSuggestions.filter(user => {
+      // Active status filter (by default, only show active users)
+      const isUserActive = user.is_active !== false;
+      if (!showDeactivated && !isUserActive) {
+        return false;
+      }
+      
       // Search filter
       if (searchQuery) {
         const search = searchQuery.toLowerCase();
@@ -379,7 +416,7 @@ export default function AdminUsersUnified() {
       
       return true;
     });
-  }, [usersWithSuggestions, searchQuery, agencyFilter, roleFilter, moduleFilter, modifiedUsers]);
+  }, [usersWithSuggestions, searchQuery, agencyFilter, roleFilter, moduleFilter, modifiedUsers, showDeactivated]);
 
   // Paginated users
   const paginatedUsers = useMemo(() => {
@@ -475,7 +512,81 @@ export default function AdminUsersUnified() {
     },
   });
 
-  // Apply V2 suggestion
+  // Deactivate user mutation
+  const deactivateMutation = useMutation({
+    mutationFn: async (targetUser: UserProfile) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          is_active: false,
+          deactivated_at: new Date().toISOString(),
+          deactivated_by: user?.email || 'unknown',
+        })
+        .eq('id', targetUser.id);
+      
+      if (error) throw error;
+      return targetUser;
+    },
+    onSuccess: (targetUser) => {
+      logAuth.info(`[ADMIN] Utilisateur désactivé: ${targetUser.email}`);
+      toast.success(`${targetUser.email || 'Utilisateur'} a été désactivé`);
+      setDeactivateDialog({ open: false, user: null });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+
+  // Reactivate user mutation
+  const reactivateMutation = useMutation({
+    mutationFn: async (targetUser: UserProfile) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          is_active: true,
+          deactivated_at: null,
+          deactivated_by: null,
+        })
+        .eq('id', targetUser.id);
+      
+      if (error) throw error;
+      return targetUser;
+    },
+    onSuccess: (targetUser) => {
+      logAuth.info(`[ADMIN] Utilisateur réactivé: ${targetUser.email}`);
+      toast.success(`${targetUser.email || 'Utilisateur'} a été réactivé`);
+      setReactivateDialog({ open: false, user: null });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+
+  // Hard delete user mutation (superadmin only)
+  const hardDeleteMutation = useMutation({
+    mutationFn: async (targetUser: UserProfile) => {
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: targetUser.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return targetUser;
+    },
+    onSuccess: (targetUser) => {
+      logAuth.info(`[ADMIN] Utilisateur SUPPRIMÉ définitivement: ${targetUser.email}`);
+      toast.success(`${targetUser.email || 'Utilisateur'} a été supprimé définitivement`);
+      setDeleteDialog({ open: false, user: null });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur suppression: ${error.message}`);
+    },
+  });
+
+  // Check if user is superadmin (N6)
+  const isSuperAdmin = effectiveUserRole === 'superadmin';
   const applyV2 = (user: typeof usersWithSuggestions[0]) => {
     if (!user.suggestedGlobalRole) return;
     
@@ -744,6 +855,18 @@ export default function AdminUsersUnified() {
                   ))}
                 </SelectContent>
               </Select>
+
+              {/* Toggle désactivés */}
+              <div className="flex items-center space-x-2 border-l pl-4 ml-2">
+                <Switch
+                  id="showDeactivated"
+                  checked={showDeactivated}
+                  onCheckedChange={(checked) => { setShowDeactivated(checked); setCurrentPage(0); }}
+                />
+                <Label htmlFor="showDeactivated" className="text-sm text-muted-foreground cursor-pointer">
+                  Inclure désactivés
+                </Label>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -765,13 +888,14 @@ export default function AdminUsersUnified() {
                 const StatusIcon = status.icon;
                 const userCanBeEdited = canEditUser(user.global_role, user.agence);
                 const userCanBeDeleted = canDeleteUser(user.global_role);
+                const isDeactivated = user.is_active === false;
 
                 return (
-                  <AccordionItem key={user.id} value={user.id} className="border-0">
+                  <AccordionItem key={user.id} value={user.id} className={`border-0 ${isDeactivated ? 'opacity-60 bg-muted/30' : ''}`}>
                     <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 hover:no-underline">
                       <div className="flex items-center gap-4 flex-1 text-left">
                         {/* Avatar */}
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-medium text-primary shrink-0">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-medium shrink-0 ${isDeactivated ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
                           {getInitials(user)}
                         </div>
                         
@@ -822,6 +946,14 @@ export default function AdminUsersUnified() {
                           </Badge>
                         )}
 
+                        {/* Deactivated indicator */}
+                        {user.is_active === false && (
+                          <Badge variant="destructive" className="shrink-0">
+                            <UserX className="w-3 h-3 mr-1" />
+                            Désactivé
+                          </Badge>
+                        )}
+
                         {/* Actions */}
                         <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                           {userCanBeEdited ? (
@@ -862,6 +994,44 @@ export default function AdminUsersUnified() {
                                 Vous ne pouvez pas modifier cet utilisateur (niveau supérieur ou autre agence)
                               </TooltipContent>
                             </Tooltip>
+                          )}
+
+                          {/* Action menu for superadmin */}
+                          {isSuperAdmin && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {user.is_active !== false ? (
+                                  <DropdownMenuItem
+                                    onClick={() => setDeactivateDialog({ open: true, user })}
+                                    className="text-orange-600"
+                                  >
+                                    <UserX className="w-4 h-4 mr-2" />
+                                    Désactiver l'utilisateur
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem
+                                    onClick={() => setReactivateDialog({ open: true, user })}
+                                    className="text-green-600"
+                                  >
+                                    <UserCheck className="w-4 h-4 mr-2" />
+                                    Réactiver l'utilisateur
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => setDeleteDialog({ open: true, user })}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Supprimer définitivement
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           )}
                         </div>
                       </div>
@@ -1202,6 +1372,113 @@ export default function AdminUsersUnified() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Deactivate User Dialog */}
+        <AlertDialog open={deactivateDialog.open} onOpenChange={(open) => setDeactivateDialog({ open, user: open ? deactivateDialog.user : null })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <UserX className="w-5 h-5 text-orange-600" />
+                Désactiver l'utilisateur ?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                <p className="mb-2">
+                  Vous allez désactiver le compte de <strong>{deactivateDialog.user?.email}</strong>.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  L'utilisateur ne pourra plus se connecter, mais ses données resteront dans les historiques 
+                  (tickets, statistiques, etc.). Vous pourrez réactiver le compte plus tard si nécessaire.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deactivateDialog.user && deactivateMutation.mutate(deactivateDialog.user)}
+                className="bg-orange-600 hover:bg-orange-700"
+                disabled={deactivateMutation.isPending}
+              >
+                {deactivateMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <UserX className="w-4 h-4 mr-2" />
+                )}
+                Désactiver
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Reactivate User Dialog */}
+        <AlertDialog open={reactivateDialog.open} onOpenChange={(open) => setReactivateDialog({ open, user: open ? reactivateDialog.user : null })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-green-600" />
+                Réactiver l'utilisateur ?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                <p className="mb-2">
+                  Vous allez réactiver le compte de <strong>{reactivateDialog.user?.email}</strong>.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  L'utilisateur pourra à nouveau se connecter avec ses anciens identifiants.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => reactivateDialog.user && reactivateMutation.mutate(reactivateDialog.user)}
+                className="bg-green-600 hover:bg-green-700"
+                disabled={reactivateMutation.isPending}
+              >
+                {reactivateMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <UserCheck className="w-4 h-4 mr-2" />
+                )}
+                Réactiver
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Hard Delete User Dialog */}
+        <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, user: open ? deleteDialog.user : null })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                <Trash2 className="w-5 h-5" />
+                Supprimer définitivement ?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                <p className="mb-2">
+                  Vous allez <strong>supprimer définitivement</strong> le compte de <strong>{deleteDialog.user?.email}</strong>.
+                </p>
+                <p className="text-sm text-destructive font-medium">
+                  ⚠️ ATTENTION : Cette action est IRRÉVERSIBLE. Toutes les données de l'utilisateur seront définitivement supprimées 
+                  (profil, tickets, historiques, etc.). Utilisez uniquement pour les comptes de test.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteDialog.user && hardDeleteMutation.mutate(deleteDialog.user)}
+                className="bg-destructive hover:bg-destructive/90"
+                disabled={hardDeleteMutation.isPending}
+              >
+                {hardDeleteMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4 mr-2" />
+                )}
+                Supprimer définitivement
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </TooltipProvider>
   );
