@@ -59,6 +59,20 @@ async function generateEmbedding(text: string): Promise<number[]> {
   return data.data[0].embedding;
 }
 
+// Map global_role to level
+function getRoleLevel(role: string | null): number {
+  const roleLevels: Record<string, number> = {
+    'superadmin': 6,
+    'platform_admin': 5,
+    'franchisor_admin': 4,
+    'franchisor_user': 3,
+    'franchisee_admin': 2,
+    'franchisee_user': 1,
+    'base_user': 0,
+  };
+  return roleLevels[role || 'base_user'] || 0;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -74,7 +88,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify user is admin
+    // Verify user is admin (N5+)
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
@@ -82,14 +96,16 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('global_role')
+      .eq('id', user.id)
       .single();
 
-    if (!roleData || roleData.role !== 'admin') {
-      throw new Error('Admin access required');
+    const roleLevel = getRoleLevel(profile?.global_role);
+
+    if (roleLevel < 5) {
+      throw new Error('Admin access required (N5+)');
     }
 
     const { documentId, filePath } = await req.json();
@@ -98,7 +114,7 @@ serve(async (req) => {
       throw new Error('Missing documentId or filePath');
     }
 
-    console.log(`Indexing document ${documentId} from ${filePath}`);
+    console.log(`[INDEX-DOCUMENT] Indexing document ${documentId} from ${filePath}`);
 
     // Get document metadata
     const { data: document, error: docError } = await supabase
@@ -148,7 +164,7 @@ serve(async (req) => {
 
     // Create chunks
     const chunks = chunkText(documentText, 500);
-    console.log(`Document ${documentId} split into ${chunks.length} chunks`);
+    console.log(`[INDEX-DOCUMENT] Document ${documentId} split into ${chunks.length} chunks`);
 
     let totalChunks = 0;
 
@@ -171,21 +187,25 @@ serve(async (req) => {
             embedding: embedding,
             metadata: {
               document_id: documentId,
-              scope: document.scope,
+              source: document.scope || 'autre',
+              family: document.scope || 'autre',
+              source_type: 'document',
               file_type: document.file_type,
               description: document.description,
             }
           });
 
         if (insertError) {
-          console.error(`Error inserting chunk ${i}:`, insertError);
+          console.error(`[INDEX-DOCUMENT] Error inserting chunk ${i}:`, insertError);
         } else {
           totalChunks++;
         }
       } catch (embeddingError) {
-        console.error(`Error generating embedding for chunk ${i}:`, embeddingError);
+        console.error(`[INDEX-DOCUMENT] Error generating embedding for chunk ${i}:`, embeddingError);
       }
     }
+
+    console.log(`[INDEX-DOCUMENT] Completed: ${totalChunks} chunks created for document ${documentId}`);
 
     return new Response(
       JSON.stringify({
@@ -200,7 +220,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('[INDEX-DOCUMENT] Error:', error);
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Unknown error',

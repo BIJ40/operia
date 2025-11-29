@@ -75,6 +75,7 @@ const AdminUsersUnified = lazy(() => import("./pages/AdminUsersUnified"));
 const AdminCollaborators = lazy(() => import("./pages/AdminCollaborators"));
 const AdminPageMetadata = lazy(() => import("./pages/AdminPageMetadata"));
 const AdminApogeeGuides = lazy(() => import("./pages/AdminApogeeGuides"));
+const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
 
 // Lazy loaded pages - User
 const Profile = lazy(() => import("./pages/Profile"));
@@ -227,6 +228,7 @@ function AppContent() {
           <Route path="/admin/collaborateurs" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminCollaborators /></RoleGuard></MainLayout>} />
           <Route path="/admin/page-metadata" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminPageMetadata /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-guides" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminApogeeGuides /></RoleGuard></MainLayout>} />
+          <Route path="/admin/chatbot-rag" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminChatbotRag /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* USER PAGES - Accessible à tous les connectés */}
