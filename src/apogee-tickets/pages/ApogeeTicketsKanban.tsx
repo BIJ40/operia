@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
@@ -52,6 +52,7 @@ export default function ApogeeTicketsKanban() {
   // Compteurs
   const incompleteCount = tickets.filter(t => t.needs_completion).length;
   const unqualifiedCount = tickets.filter(t => !t.is_qualified).length;
+  const toClassifyCount = tickets.filter(t => t.kanban_status === 'SPEC_A_FAIRE').length;
 
   const handleStatusChange = (ticketId: string, newStatus: string) => {
     updateKanbanStatus.mutate({ ticketId, newStatus });
@@ -131,6 +132,17 @@ export default function ApogeeTicketsKanban() {
             >
               <AlertCircle className="h-4 w-4 mr-1" />
               {incompleteCount}
+            </Button>
+          </Link>
+          {/* Bouton classification "À spécifier" */}
+          <Link to={ROUTES.admin.apogeeTicketsClassify}>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className={toClassifyCount > 0 ? "text-amber-600 border-amber-300 hover:bg-amber-50" : ""}
+            >
+              <FolderOpen className="h-4 w-4 mr-1" />
+              {toClassifyCount}
             </Button>
           </Link>
           {/* Bouton qualification IA - toujours visible */}
