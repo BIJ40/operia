@@ -13,7 +13,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, SkipForward, Snowflak
 import { Link } from 'react-router-dom';
 import { useIncompleteTickets, useApogeeTickets } from '../hooks/useApogeeTickets';
 import { HeatPriorityBadge } from '../components/HeatPriorityBadge';
-import type { ApogeeTicket, OwnerSide } from '../types';
+import type { ApogeeTicket } from '../types';
 import { ROUTES } from '@/config/routes';
 
 export default function ApogeeTicketsIncomplete() {
@@ -25,11 +25,9 @@ export default function ApogeeTicketsIncomplete() {
   const [formValues, setFormValues] = useState<{
     module: string | null;
     heat_priority: number | null;
-    owner_side: OwnerSide | null;
   }>({
     module: null,
     heat_priority: null,
-    owner_side: null,
   });
 
   // Déterminer les champs manquants
@@ -37,7 +35,6 @@ export default function ApogeeTicketsIncomplete() {
     const missing: string[] = [];
     if (!ticket.module) missing.push('module');
     if (ticket.heat_priority === null || ticket.heat_priority === undefined) missing.push('heat_priority');
-    if (!ticket.owner_side) missing.push('owner_side');
     return missing;
   };
 
@@ -58,19 +55,18 @@ export default function ApogeeTicketsIncomplete() {
     
     if (formValues.module) updates.module = formValues.module;
     if (formValues.heat_priority !== null) updates.heat_priority = formValues.heat_priority;
-    if (formValues.owner_side) updates.owner_side = formValues.owner_side;
 
     await updateTicket.mutateAsync(updates);
     
     // Reset form et passer au suivant
-    setFormValues({ module: null, heat_priority: null, owner_side: null });
+    setFormValues({ module: null, heat_priority: null });
     if (currentIndex < totalTickets - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
 
   const handleSkip = () => {
-    setFormValues({ module: null, heat_priority: null, owner_side: null });
+    setFormValues({ module: null, heat_priority: null });
     if (currentIndex < totalTickets - 1) {
       setCurrentIndex(currentIndex + 1);
     }
@@ -79,7 +75,7 @@ export default function ApogeeTicketsIncomplete() {
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
-      setFormValues({ module: null, heat_priority: null, owner_side: null });
+      setFormValues({ module: null, heat_priority: null });
     }
   };
 
@@ -243,26 +239,6 @@ export default function ApogeeTicketsIncomplete() {
                 </div>
               )}
 
-              {missingFields.includes('owner_side') && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Qui porte le sujet ?
-                  </label>
-                  <Select
-                    value={formValues.owner_side || currentTicket.owner_side || ''}
-                    onValueChange={(v) => setFormValues({ ...formValues, owner_side: (v || null) as OwnerSide })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner le propriétaire" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="HC">Help Confort</SelectItem>
-                      <SelectItem value="APOGEE">Apogée</SelectItem>
-                      <SelectItem value="PARTAGE">Partagé (HC + Apogée)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
             </div>
 
             {/* Actions */}
