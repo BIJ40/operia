@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BookOpen, BarChart3, MessageSquare, Network, Settings } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashboardTiles';
 import { useMemo, useEffect, useState } from 'react';
@@ -90,7 +90,7 @@ export default function Landing() {
       {tilesByGroup.help_academy.length > 0 && (
         <section>
           <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <BookOpen className={`w-5 h-5 ${DASHBOARD_GROUPS.help_academy.colorClass}`} />
+            <DASHBOARD_GROUPS.help_academy.icon className={`w-5 h-5 ${DASHBOARD_GROUPS.help_academy.colorClass}`} />
             <span>Help</span><span className="text-helpconfort-orange animate-pulse">!</span><span> Academy</span>
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
@@ -105,7 +105,7 @@ export default function Landing() {
       {tilesByGroup.pilotage.length > 0 && (
         <section>
           <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <BarChart3 className={`w-5 h-5 ${DASHBOARD_GROUPS.pilotage.colorClass}`} />
+            <DASHBOARD_GROUPS.pilotage.icon className={`w-5 h-5 ${DASHBOARD_GROUPS.pilotage.colorClass}`} />
             {DASHBOARD_GROUPS.pilotage.title}
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
@@ -120,7 +120,7 @@ export default function Landing() {
       {tilesByGroup.support.length > 0 && (
         <section>
           <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <MessageSquare className={`w-5 h-5 ${DASHBOARD_GROUPS.support.colorClass}`} />
+            <DASHBOARD_GROUPS.support.icon className={`w-5 h-5 ${DASHBOARD_GROUPS.support.colorClass}`} />
             {DASHBOARD_GROUPS.support.title}
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
@@ -139,7 +139,7 @@ export default function Landing() {
       {tilesByGroup.franchiseur.length > 0 && (
         <section>
           <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Network className={`w-5 h-5 ${DASHBOARD_GROUPS.franchiseur.colorClass}`} />
+            <DASHBOARD_GROUPS.franchiseur.icon className={`w-5 h-5 ${DASHBOARD_GROUPS.franchiseur.colorClass}`} />
             {DASHBOARD_GROUPS.franchiseur.title}
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
@@ -154,7 +154,7 @@ export default function Landing() {
       {tilesByGroup.admin.length > 0 && (
         <section>
           <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Settings className={`w-5 h-5 ${DASHBOARD_GROUPS.admin.colorClass}`} />
+            <DASHBOARD_GROUPS.admin.icon className={`w-5 h-5 ${DASHBOARD_GROUPS.admin.colorClass}`} />
             {DASHBOARD_GROUPS.admin.title}
           </h2>
           <div className="grid md:grid-cols-4 gap-4">
