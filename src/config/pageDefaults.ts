@@ -51,8 +51,16 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'admin_index', defaultTitle: 'Administration', defaultSubtitle: 'Configuration du système', route: ROUTES.admin.index },
   { pageKey: 'admin_users', defaultTitle: 'Gestion Utilisateurs', defaultSubtitle: 'Comptes et permissions', route: ROUTES.admin.users },
   { pageKey: 'admin_agencies', defaultTitle: 'Gestion Agences', defaultSubtitle: 'Configuration des agences', route: ROUTES.admin.agencies },
+  { pageKey: 'admin_collaborateurs', defaultTitle: 'Collaborateurs non-inscrits', defaultSubtitle: 'Collaborateurs sans compte utilisateur', route: ROUTES.admin.collaborateurs },
   { pageKey: 'admin_backup', defaultTitle: 'Sauvegardes', defaultSubtitle: 'Export et import des données', route: ROUTES.admin.backup },
-  { pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu de toutes les pages', route: ROUTES.admin.pageMetadata },
+  { pageKey: 'admin_user_activity', defaultTitle: 'Activité Utilisateurs', defaultSubtitle: 'Historique des connexions', route: ROUTES.admin.userActivity },
+  { pageKey: 'admin_support', defaultTitle: 'Console Support Admin', defaultSubtitle: 'Gestion avancée des tickets', route: ROUTES.admin.support },
+  { pageKey: 'admin_escalation_history', defaultTitle: 'Historique Escalades', defaultSubtitle: 'Suivi des escalades de tickets', route: ROUTES.admin.escalationHistory },
+  { pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu', route: ROUTES.admin.pageMetadata },
+  
+  // User
+  { pageKey: 'profile', defaultTitle: 'Mon Compte', defaultSubtitle: 'Gérez vos informations personnelles', route: ROUTES.profile },
+  { pageKey: 'favorites', defaultTitle: 'Mes Favoris', defaultSubtitle: 'Accès rapide à vos contenus favoris', route: ROUTES.favorites },
 ];
 
 /**
@@ -132,9 +140,17 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   // Admin
   { match: (path) => path === '/admin/users', pageKey: 'admin_users', defaultTitle: 'Gestion Utilisateurs', defaultSubtitle: 'Comptes et permissions', icon: 'Users', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/agencies', pageKey: 'admin_agencies', defaultTitle: 'Gestion Agences', defaultSubtitle: 'Configuration des agences', icon: 'Building', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/collaborateurs', pageKey: 'admin_collaborateurs', defaultTitle: 'Collaborateurs non-inscrits', defaultSubtitle: 'Collaborateurs sans compte utilisateur', icon: 'UserMinus', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/backup', pageKey: 'admin_backup', defaultTitle: 'Sauvegarde & Restauration', defaultSubtitle: 'Export et import des données', icon: 'Database', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/user-activity', pageKey: 'admin_user_activity', defaultTitle: 'Activité Utilisateurs', defaultSubtitle: 'Historique des connexions', icon: 'Activity', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/support', pageKey: 'admin_support', defaultTitle: 'Console Support Admin', defaultSubtitle: 'Gestion avancée des tickets', icon: 'HeadphonesIcon', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/escalation-history', pageKey: 'admin_escalation_history', defaultTitle: 'Historique Escalades', defaultSubtitle: 'Suivi des escalades de tickets', icon: 'ArrowUpCircle', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/page-metadata', pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu', icon: 'FileText', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin', pageKey: 'admin_index', defaultTitle: 'Administration', defaultSubtitle: 'Configuration du système', icon: 'Settings', parentRoute: '/', parentLabel: 'Accueil' },
+  
+  // User pages
+  { match: (path) => path === '/profile', pageKey: 'profile', defaultTitle: 'Mon Compte', defaultSubtitle: 'Gérez vos informations personnelles', icon: 'User', parentRoute: '/', parentLabel: 'Accueil' },
+  { match: (path) => path === '/favorites', pageKey: 'favorites', defaultTitle: 'Mes Favoris', defaultSubtitle: 'Accès rapide à vos contenus favoris', icon: 'Star', parentRoute: '/', parentLabel: 'Accueil' },
   
   // Home (pas de retour)
   { match: (path) => path === '/', pageKey: 'home', defaultTitle: 'Tableau de bord', icon: 'Home' },
