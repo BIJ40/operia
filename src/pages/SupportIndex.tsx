@@ -1,11 +1,9 @@
-import { Link } from 'react-router-dom';
 import { LifeBuoy, Headset } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { IndexTile, getVariantForIndex } from '@/components/ui/index-tile';
 import { useAuth } from '@/contexts/AuthContext';
 import { ROUTES } from '@/config/routes';
 import { useMenuLabels } from '@/hooks/use-page-metadata';
 
-// Page keys correspondant aux routes
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.support.userTickets]: 'support_mes_demandes',
   [ROUTES.support.console]: 'support_console',
@@ -21,8 +19,6 @@ export default function SupportIndex() {
       description: 'Créer et suivre vos demandes de support',
       icon: LifeBuoy,
       href: ROUTES.support.userTickets,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-500/10',
       visible: true,
     },
     {
@@ -30,8 +26,6 @@ export default function SupportIndex() {
       description: 'Traiter les demandes de support',
       icon: Headset,
       href: ROUTES.support.console,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-500/10',
       visible: canAccessSupportConsole,
     },
   ];
@@ -48,29 +42,17 @@ export default function SupportIndex() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {visibleModules.map((module) => {
-          const Icon = module.icon;
-          return (
-            <Link key={module.href} to={module.href}>
-              <Card className="h-full transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer">
-                <CardHeader>
-                  <div className={`w-12 h-12 rounded-lg ${module.bgColor} flex items-center justify-center mb-4`}>
-                    <Icon className={`w-6 h-6 ${module.color}`} />
-                  </div>
-                  <CardTitle>{getModuleTitle(module)}</CardTitle>
-                  <CardDescription>{module.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <span className="text-sm text-primary font-medium">
-                    Accéder →
-                  </span>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
+        {visibleModules.map((module, index) => (
+          <IndexTile
+            key={module.href}
+            title={getModuleTitle(module)}
+            description={module.description}
+            icon={module.icon}
+            href={module.href}
+            variant={getVariantForIndex(index)}
+          />
+        ))}
       </div>
     </div>
   );
