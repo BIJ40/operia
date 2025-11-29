@@ -58,10 +58,15 @@ function PlanningHebdoContent() {
           </div>
 
           {/* Filters */}
-          <Card className="w-full lg:w-auto">
+          <div className="group w-full lg:w-auto rounded-xl border border-helpconfort-blue/20 overflow-hidden
+            bg-gradient-to-br from-white to-helpconfort-blue/5
+            shadow-sm transition-all duration-300
+            hover:to-helpconfort-blue/10 hover:shadow-lg">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <UserCheck className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center">
+                  <UserCheck className="w-4 h-4 text-helpconfort-blue" />
+                </div>
                 Filtrer par technicien
               </CardTitle>
             </CardHeader>
@@ -108,7 +113,7 @@ function PlanningHebdoContent() {
                 </Label>
               </div>
             </CardContent>
-          </Card>
+          </div>
         </div>
 
         {/* Planning List */}

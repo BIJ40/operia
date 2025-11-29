@@ -166,49 +166,43 @@ function ActionsAMenerContent() {
           {/* Statistiques rapides */}
           {!isLoading && actions && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">Total actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{filteredActions.length}</div>
-                  {activeFiltersCount > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      sur {actions.length} total
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">En retard</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-destructive">
-                    {filteredActions.filter(a => a.isLate).length}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">Factures à faire</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {filteredActions.filter(a => a.actionType === 'a_facturer' && a.isLate).length}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">Relances technicien</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {filteredActions.filter(a => a.actionType === 'relance_technicien' && a.isLate).length}
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="group rounded-xl border border-helpconfort-blue/20 p-4
+                bg-gradient-to-br from-white to-helpconfort-blue/5
+                shadow-sm transition-all duration-300
+                hover:to-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Total actions</p>
+                <div className="text-2xl font-bold text-helpconfort-blue">{filteredActions.length}</div>
+                {activeFiltersCount > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">sur {actions.length} total</p>
+                )}
+              </div>
+              <div className="group rounded-xl border border-helpconfort-blue/15 p-4
+                bg-gradient-to-b from-helpconfort-blue/5 to-white
+                shadow-sm transition-all duration-300
+                hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
+                <p className="text-sm font-medium text-muted-foreground mb-2">En retard</p>
+                <div className="text-2xl font-bold text-destructive">
+                  {filteredActions.filter(a => a.isLate).length}
+                </div>
+              </div>
+              <div className="group rounded-xl border border-helpconfort-blue/15 p-4 border-l-4 border-l-helpconfort-blue/40
+                bg-gradient-to-r from-helpconfort-blue/5 to-white
+                shadow-sm transition-all duration-300
+                hover:from-helpconfort-blue/15 hover:border-l-helpconfort-blue hover:shadow-lg hover:-translate-y-1">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Factures à faire</p>
+                <div className="text-2xl font-bold text-helpconfort-blue">
+                  {filteredActions.filter(a => a.actionType === 'a_facturer' && a.isLate).length}
+                </div>
+              </div>
+              <div className="group rounded-xl border border-helpconfort-blue/15 p-4
+                bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+                shadow-sm transition-all duration-300
+                hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-1">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Relances technicien</p>
+                <div className="text-2xl font-bold text-helpconfort-blue">
+                  {filteredActions.filter(a => a.actionType === 'relance_technicien' && a.isLate).length}
+                </div>
+              </div>
             </div>
           )}
 
