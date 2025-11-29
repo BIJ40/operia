@@ -269,6 +269,10 @@ Analyse et retourne la qualification complète via la fonction qualify_ticket.`;
         // Calculer la priorité thermique
         const heatPriority = calculateHeatPriority(ticket.source_sheet, ticket.priority);
 
+        // Sauvegarder les textes originaux avant modification (seulement si pas déjà qualifié)
+        const originalTitle = ticket.original_title || ticket.element_concerne;
+        const originalDescription = ticket.original_description || ticket.description;
+
         // Mettre à jour le ticket
         const { error: updateError } = await supabase
           .from("apogee_tickets")
@@ -281,6 +285,9 @@ Analyse et retourne la qualification complète via la fonction qualify_ticket.`;
             notes_internes: qualification.notes_internes,
             element_concerne: qualification.titre_ameliore || ticket.element_concerne,
             description: qualification.description_amelioree || ticket.description,
+            // Sauvegarder les textes originaux
+            original_title: originalTitle,
+            original_description: originalDescription,
             heat_priority: heatPriority,
             is_qualified: true,
             qualified_at: new Date().toISOString(),

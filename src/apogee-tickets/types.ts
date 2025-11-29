@@ -35,10 +35,12 @@ export interface ApogeeImpactTag {
   created_at: string;
 }
 
-export type OwnerSide = 'HC' | 'APOGEE' | 'PARTAGE';
+// Origine du ticket (qui a remonté) - garde compatibilité avec anciennes valeurs
+export type OwnerSide = 'HC' | 'APOGEE' | 'PARTAGE' | 'JEROME' | 'FLORIAN' | 'ERIC' | 'AUTRE';
 export type Severity = 'CRITIQUE' | 'MAJEUR' | 'CONFORT';
 export type CreatedFrom = 'IMPORT' | 'MANUAL';
-export type AuthorType = 'HC' | 'APOGEE' | 'DYN' | 'AUTRE';
+// Types d'auteurs pour les commentaires (HC ou Apogée uniquement)
+export type AuthorType = 'HC' | 'APOGEE';
 
 // Types pour la qualification IA
 export type TicketTheme = 
@@ -92,8 +94,11 @@ export interface ApogeeTicket {
   is_qualified: boolean;
   qualified_at: string | null;
   qualified_by: string | null;
-  // Priorité thermique (0-12)
+  // Priorité (0-12)
   heat_priority: number | null;
+  // Historique qualification (textes originaux avant IA)
+  original_title: string | null;
+  original_description: string | null;
   // Relations
   apogee_modules?: ApogeeModule;
   apogee_priorities?: ApogeePriority;
@@ -147,6 +152,7 @@ export interface ApogeeTicketCommentInsert {
   source_field?: string | null;
   body: string;
   is_internal?: boolean;
+  created_by_user_id?: string | null;
 }
 
 // Import types

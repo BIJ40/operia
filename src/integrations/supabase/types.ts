@@ -512,6 +512,8 @@ export type Database = {
           module_area: string | null
           needs_completion: boolean | null
           notes_internes: string | null
+          original_description: string | null
+          original_title: string | null
           owner_side: string | null
           priority: string | null
           priority_normalized: string | null
@@ -547,6 +549,8 @@ export type Database = {
           module_area?: string | null
           needs_completion?: boolean | null
           notes_internes?: string | null
+          original_description?: string | null
+          original_title?: string | null
           owner_side?: string | null
           priority?: string | null
           priority_normalized?: string | null
@@ -582,6 +586,8 @@ export type Database = {
           module_area?: string | null
           needs_completion?: boolean | null
           notes_internes?: string | null
+          original_description?: string | null
+          original_title?: string | null
           owner_side?: string | null
           priority?: string | null
           priority_normalized?: string | null
