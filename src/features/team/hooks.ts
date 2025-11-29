@@ -79,12 +79,17 @@ export function useUnregisteredCollaborators(agencyIdFilter?: string | null) {
 /**
  * Crée un nouveau collaborateur
  */
-export function useCreateAgencyCollaborator(agencyId: string) {
+export function useCreateAgencyCollaborator(agencyId: string | null) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (payload: CreateCollaboratorPayload) => {
+      // Validation: agency_id est obligatoire
+      if (!agencyId) {
+        throw new Error("Aucune agence associée. Veuillez vous reconnecter.");
+      }
+
       const { data, error } = await supabase
         .from("agency_collaborators")
         .insert({
@@ -108,9 +113,9 @@ export function useCreateAgencyCollaborator(agencyId: string) {
       queryClient.invalidateQueries({ queryKey: ["unregisteredCollaborators"] });
       toast.success("Collaborateur ajouté");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Erreur création collaborateur:", error);
-      toast.error("Erreur lors de l'ajout du collaborateur");
+      toast.error(error.message || "Erreur lors de l'ajout du collaborateur");
     },
   });
 }
