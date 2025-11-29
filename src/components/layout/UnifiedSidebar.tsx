@@ -2,7 +2,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   Headset, MessageSquare, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Shield, Database, Activity, ChevronRight, Home, User, Grid3X3
+  Coins, Settings, Users, Shield, Database, Activity, ChevronRight, Home, User, Grid3X3, CalendarDays
 } from 'lucide-react';
 import {
   Sidebar,
@@ -155,6 +155,7 @@ export function UnifiedSidebar() {
           ]
         },
         { title: 'Agences', url: '/admin/agencies', icon: Building2, scope: 'admin_settings' },
+        { title: 'Planning Hebdo', url: '/rh-tech', icon: CalendarDays, scope: 'admin_settings', description: 'Planning hebdomadaire techniciens' },
         { title: 'Sauvegardes', url: '/admin/backup', icon: Database, scope: 'admin_backup' },
         { title: 'Activité', url: '/admin/user-activity', icon: Activity, scope: 'admin_settings' },
         { title: 'Paramètres', url: '/admin', icon: Settings, scope: 'admin_settings', description: 'Configuration du système' },
