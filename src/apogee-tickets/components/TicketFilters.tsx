@@ -57,6 +57,10 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
   };
 
   const hasActiveFilters = Object.values(filters).some(v => v !== undefined && v !== '');
+  
+  // Vérifie si on a des filtres actifs en plus de la recherche
+  const hasSearchAndFilters = filters.search && filters.search.length > 0 && 
+    Object.entries(filters).some(([key, v]) => key !== 'search' && v !== undefined && v !== '');
 
   // Valeurs du slider range (min et max)
   const heatMin = filters.heat_priority_min ?? 0;
@@ -116,6 +120,11 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
             onChange={(e) => updateFilter('search', e.target.value)}
             className="pl-9"
           />
+          {hasSearchAndFilters && (
+            <p className="absolute -bottom-5 left-0 text-[11px] text-destructive">
+              ⚠ Attention : tu filtres en même temps
+            </p>
+          )}
         </div>
 
         {/* Module */}
