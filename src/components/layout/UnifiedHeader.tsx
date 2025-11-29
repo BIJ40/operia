@@ -208,8 +208,8 @@ export function UnifiedHeader() {
             )}
           </div>
 
-          {/* Center: Title with icon + subtitle */}
-          <div className="flex-1 flex flex-col items-center justify-center min-w-0">
+          {/* Center: Title with icon */}
+          <div className="flex-1 flex items-center justify-center min-w-0">
             <div className="flex items-center gap-2">
               {PageIcon && (
                 <PageIcon 
@@ -221,11 +221,6 @@ export function UnifiedHeader() {
                 {displayTitle}
               </h1>
             </div>
-            {displaySubtitle && (
-              <p className="text-xs text-muted-foreground truncate max-w-md">
-                {displaySubtitle}
-              </p>
-            )}
           </div>
 
           {/* Right side actions */}
@@ -323,6 +318,15 @@ export function UnifiedHeader() {
             </DropdownMenu>
           </div>
         </div>
+        
+        {/* Subtitle bar - below main header */}
+        {displaySubtitle && (
+          <div className="px-4 py-1 bg-muted/30 border-t border-border/50">
+            <p className="text-xs text-muted-foreground text-center truncate">
+              {displaySubtitle}
+            </p>
+          </div>
+        )}
       </header>
 
       {/* Dialog d'édition des métadonnées */}
