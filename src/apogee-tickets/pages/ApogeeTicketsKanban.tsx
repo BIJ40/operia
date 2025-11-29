@@ -81,6 +81,10 @@ export default function ApogeeTicketsKanban() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="bg-background border shadow-lg z-50">
+              <DropdownMenuItem onClick={() => navigate(ROUTES.admin.apogeeTicketsImportPriorities)}>
+                <Flame className="h-4 w-4 mr-2 text-red-600" />
+                Priorités A / B
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/admin/apogee-tickets/import-bugs')}>
                 <Bug className="h-4 w-4 mr-2 text-orange-600" />
                 Import BUGS
