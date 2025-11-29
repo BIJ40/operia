@@ -120,3 +120,22 @@ export function useAllPageMetadata() {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+/**
+ * Hook pour récupérer un mapping des menu_labels par pageKey
+ */
+export function useMenuLabels() {
+  const { data: allMetadata } = useAllPageMetadata();
+  
+  const menuLabels = new Map<string, string>();
+  
+  if (allMetadata) {
+    allMetadata.forEach(meta => {
+      if (meta.menu_label) {
+        menuLabels.set(meta.page_key, meta.menu_label);
+      }
+    });
+  }
+  
+  return menuLabels;
+}
