@@ -166,7 +166,7 @@ function DraggableTicketCard({
         )}
 
         {/* Indicateurs en bas */}
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
           {(ticket.h_min || ticket.h_max) && (
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -181,13 +181,18 @@ function DraggableTicketCard({
           )}
           {/* Badges barrés pour champs manquants */}
           {!ticket.module && (
-            <Badge variant="outline" className="text-xs text-orange-600 border-orange-300 line-through">
+            <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 line-through">
               Module
             </Badge>
           )}
-          {(ticket.heat_priority === null || ticket.heat_priority === undefined) && (
-            <Badge variant="outline" className="text-xs text-orange-600 border-orange-300 line-through">
-              Heures
+          {(!ticket.h_min && !ticket.h_max) && (
+            <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 line-through">
+              Temps
+            </Badge>
+          )}
+          {!ticket.owner_side && (
+            <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 line-through">
+              PEC
             </Badge>
           )}
         </div>
