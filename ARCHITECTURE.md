@@ -165,10 +165,6 @@ Profils utilisateurs étendant `auth.users`.
 - `support_level` (remplacé par enabled_modules.support)
 - `service_competencies` (legacy)
 
-#### `user_roles`
-Rôles applicatifs des utilisateurs.  
-Enum `app_role` : `admin`, `user`, `support`, `franchiseur`.  
-
 #### `franchiseur_roles`
 Rôles spécifiques franchiseur pour le module "Tête de Réseau".  
 Enum `franchiseur_role` : `animateur`, `directeur`, `dg`.  
@@ -241,7 +237,9 @@ Configuration Mode TV (diffusion).
 Configuration des agences pour le module indicateurs.  
 - `slug` (utilisé pour construire l'URL API), `label`, `is_active`
 - `adresse`, `code_postal`, `ville`, `contact_email`, `contact_phone`
-- `date_ouverture`, `animateur_id`
+- `date_ouverture`
+
+Note : Les associations animateurs/directeurs ↔ agences utilisent la table `franchiseur_agency_assignments` (many-to-many).
 
 #### `agency_royalty_config`
 Configuration des redevances par agence.  
@@ -255,6 +253,13 @@ Paliers de redevances (système progressif).
 Historique des calculs de redevances.  
 - `agency_id`, `config_id`, `year`, `month`, `ca_cumul_annuel`
 - `redevance_calculee`, `detail_tranches` (JSON), `calculated_by`
+
+#### `agency_collaborators`
+Collaborateurs d'agence (inscrits ou non).
+- `agency_id`, `first_name`, `last_name`, `email`, `phone`
+- `role` (assistant, technicien, commercial, direction_agence, associe, autre)
+- `is_registered_user`, `user_id` (lien vers profiles si inscrit)
+- `created_by`, `notes`
 
 ### Tables et Fichiers Legacy (SUPPRIMÉS)
 
@@ -663,9 +668,10 @@ KPIs agrégés pour franchiseur (expérimental, limitations API backend).
 
 1. Vérification session Supabase
 2. Si non authentifié → `LoginDialog` (email + mot de passe)
-3. Récupération profil (`profiles`) et rôles (`user_roles`, `franchiseur_roles`)
-4. Redirection si `must_change_password`
-5. `AuthContext` expose : `user`, `profile`, `isAdmin`, `isSupport`, `franchiseurRole`
+3. Récupération profil (`profiles`) avec `global_role` et `enabled_modules`
+4. Récupération rôle franchiseur (`franchiseur_roles`) si applicable
+5. Redirection si `must_change_password`
+6. `AuthContext` expose : `user`, `globalRole`, `hasGlobalRole()`, `isFranchiseur`, etc.
 
 ### 2. Consultation guide + Chatbot
 
@@ -768,15 +774,19 @@ Le système V2.0 simplifie la gestion des accès avec :
 | Route | minRole | Niveau | Description |
 |-------|---------|--------|-------------|
 | `/`, `/profile`, `/favorites` | - | N0+ | Tous utilisateurs connectés |
-| `/apogee/*`, `/apporteurs/*`, `/helpconfort/*` | - | N0+ | HELP Academy |
-| `/documents`, `/support`, `/mes-demandes` | - | N0+ | Ressources & Support |
-| `/mes-indicateurs/*` | `franchisee_admin` | N2+ | Pilotage agence - Indicateurs |
-| `/actions-a-mener/*` | `franchisee_admin` | N2+ | Actions à mener |
-| `/diffusion` | `franchisee_admin` | N2+ | Écran diffusion |
-| `/tete-de-reseau/*` | `franchisor_user` | N3+ | Réseau franchiseur |
-| `/admin/users-unified` | `franchisor_user` | N3+ | Gestion utilisateurs (plafonnée) |
-| `/admin/users`, `/admin/users-list` | `franchisor_user` | N3+ | Création utilisateurs |
-| `/admin/support`, `/admin/tickets` | `franchisor_user` | N3+ | Support admin |
+| `/academy/*` | - | N0+ | Help Academy (Apogée, Apporteurs, Documents) |
+| `/support/mes-demandes` | - | N0+ | Mes demandes support |
+| `/pilotage/indicateurs/*` | `franchisee_admin` | N2+ | Indicateurs agence |
+| `/pilotage/actions/*` | `franchisee_admin` | N2+ | Actions à mener |
+| `/pilotage/diffusion` | `franchisee_admin` | N2+ | Écran diffusion TV |
+| `/pilotage/rh-tech` | `franchisee_admin` | N2+ | Planning hebdo techniciens |
+| `/pilotage/equipe` | `franchisee_admin` | N2+ | Gestion équipe agence |
+| `/reseau/*` | `franchisor_user` | N3+ | Réseau franchiseur |
+| `/reseau/agences/:id` | `franchisor_user` | N3+ | Profil agence (franchiseur) |
+| `/support/console` | `franchisor_user` | N3+ | Console support |
+| `/admin/users` | `franchisor_user` | N3+ | Gestion utilisateurs |
+| `/admin/agencies` | `platform_admin` | N5+ | Gestion agences |
+| `/admin/agencies/:id` | `platform_admin` | N5+ | Profil agence (admin) |
 | `/admin/*` (autres) | `platform_admin` | N5+ | Administration plateforme |
 
 ### Fichiers TypeScript
@@ -797,20 +807,20 @@ src/components/auth/
 ├── RoleGuard.tsx       # Composant protection routes (minRole, redirectTo, showError)
 
 src/config/
-├── modulesByRole.ts    # Modules par défaut selon le rôle (pour création/migration)
-
-supabase/functions/
-├── migrate-user-roles-v2/ # Edge function migration batch (N5+ requis)
+├── modulesByRole.ts    # Modules par défaut selon le rôle (pour création)
+├── routes.ts           # Registre centralisé de toutes les routes
 ```
 
-### Pages Admin V2
+### Pages Admin
 
 | Route | Fichier | Description |
 |-------|---------|-------------|
-| `/admin/users-unified` | `AdminUsersUnified.tsx` | **Page principale** - Gestion centralisée utilisateurs & permissions V2 + Migration batch |
-| `/admin/permissions-v2` | `AdminPermissionsV2.tsx` | Page avancée - Édition détaillée des modules/options |
-| `/admin/roles-v2` | `AdminRolesV2.tsx` | Audit - Comparaison DB vs suggestions legacy |
-| `/admin/users-list` | `AdminUsersList.tsx` | Legacy - Ancienne liste utilisateurs (conservée) |
+| `/admin` | `AdminIndex.tsx` | Hub administration |
+| `/admin/users` | `AdminUsersUnified.tsx` | Gestion utilisateurs & permissions |
+| `/admin/agencies` | `AdminAgencies.tsx` | Liste et gestion des agences |
+| `/admin/agencies/:id` | `FranchiseurAgencyProfile.tsx` | Profil détaillé agence (partagé avec franchiseur) |
+| `/admin/collaborateurs` | `AdminCollaborators.tsx` | Collaborateurs non inscrits |
+| `/admin/backup` | `AdminBackup.tsx` | Sauvegardes guides |
 
 ### Protection des routes (RoleGuard)
 
@@ -849,13 +859,7 @@ global_role     global_role  -- Enum nullable (N0-N6)
 enabled_modules jsonb        -- Structure modules/options activés
 ```
 
-### Cohabitation Legacy
-
-Pendant la migration, les deux systèmes coexistent via `createAccessContext()` :
-- Si `global_role` défini → utilise V2.0
-- Sinon → calcule depuis legacy (user_roles, franchiseur_roles, etc.)
-
-Voir `DOC_PERMISSIONS.md` et `DOC_MIGRATION.md` pour les détails.
+> **Note :** Le système V2 est la seule source de vérité. Plus de fallback legacy.
 
 ---
 
