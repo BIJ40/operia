@@ -343,19 +343,19 @@ export function UnifiedSidebar() {
               onOpenChange={() => {}}
             >
               <SidebarGroup className="py-0.5">
-                <div className="flex items-center group/nav">
+                <div className="flex items-center group/nav mx-1">
                   {/* Label cliquable → navigation vers la page index */}
                   <Link
                     to={group.indexUrl}
                     className={`
-                      flex-1 cursor-pointer rounded-l-md transition-all duration-200 flex items-center px-2 py-1.5 mx-1
+                      flex-1 cursor-pointer rounded-xl transition-all duration-300 ease-out flex items-center px-3 py-2
                       ${groupIsActive 
-                        ? 'bg-primary/15 text-primary border-l-2 border-primary' 
-                        : 'hover:bg-primary/10'
+                        ? 'bg-primary/15 text-primary border-l-2 border-primary shadow-sm' 
+                        : 'hover:bg-primary/10 hover:scale-[1.02] hover:shadow-sm'
                       }
                     `}
                   >
-                    <span className={`text-xs font-semibold tracking-wide uppercase transition-colors duration-200 ${groupIsActive ? 'text-primary' : 'text-muted-foreground group-hover/nav:text-primary'}`}>
+                    <span className={`text-xs font-semibold tracking-wide uppercase transition-colors duration-300 ${groupIsActive ? 'text-primary' : 'text-muted-foreground group-hover/nav:text-primary'}`}>
                       {!collapsed ? getGroupLabel(group) : group.labelKey.charAt(0).toUpperCase()}
                     </span>
                   </Link>
@@ -365,12 +365,12 @@ export function UnifiedSidebar() {
                     <button
                       onClick={(e) => toggleGroup(group.labelKey, e)}
                       className={`
-                        p-1.5 mr-1 rounded-r-md transition-colors
-                        ${groupIsActive ? 'text-primary hover:bg-primary/20' : 'text-muted-foreground hover:bg-muted/50'}
+                        p-2 rounded-xl transition-all duration-300 ease-out
+                        ${groupIsActive ? 'text-primary hover:bg-primary/20 hover:scale-110' : 'text-muted-foreground hover:bg-muted/50 hover:text-primary hover:scale-110'}
                       `}
                     >
                       <ChevronRight 
-                        className={`w-3.5 h-3.5 transition-transform ${isGroupOpen ? 'rotate-90' : ''}`}
+                        className={`w-3.5 h-3.5 transition-transform duration-300 ${isGroupOpen ? 'rotate-90' : ''}`}
                       />
                     </button>
                   )}
@@ -395,12 +395,12 @@ export function UnifiedSidebar() {
                             >
                               <SidebarMenuItem>
                                 <div className={`
-                                  flex items-center w-full rounded-md transition-all duration-200
+                                  flex items-center w-full rounded-xl transition-all duration-300 ease-out
                                   ${hasActiveChild || isActive(item.url)
                                     ? isSubmenuOpen 
                                       ? 'bg-primary/10 text-primary' 
-                                      : 'bg-primary/15 text-primary border-l-2 border-primary'
-                                    : 'hover:bg-muted'
+                                      : 'bg-primary/15 text-primary border-l-2 border-primary shadow-sm'
+                                    : 'hover:bg-muted/80 hover:scale-[1.01]'
                                   }
                                 `}>
                                   {/* Partie cliquable pour navigation */}
@@ -413,7 +413,7 @@ export function UnifiedSidebar() {
                                           setOpenSubmenus(prev => new Set([...prev, submenuKey]));
                                         }
                                       }}
-                                      className="flex items-center gap-2 flex-1 py-1.5 px-2 hover:translate-x-0.5 transition-transform"
+                                      className="flex items-center gap-2 flex-1 py-2 px-3 hover:translate-x-0.5 transition-all duration-300"
                                     >
                                       <Icon className="w-4 h-4 shrink-0" />
                                       {!collapsed && <span className="truncate text-sm">{getItemLabel(item)}</span>}
@@ -421,7 +421,7 @@ export function UnifiedSidebar() {
                                   ) : (
                                     <button
                                       onClick={() => toggleSubmenu(submenuKey)}
-                                      className="flex items-center gap-2 flex-1 py-1.5 px-2"
+                                      className="flex items-center gap-2 flex-1 py-2 px-3"
                                     >
                                       <Icon className="w-4 h-4 shrink-0" />
                                       {!collapsed && <span className="truncate text-sm">{getItemLabel(item)}</span>}
@@ -455,10 +455,10 @@ export function UnifiedSidebar() {
                                         <SidebarMenuButton 
                                           asChild 
                                           className={`
-                                            transition-all duration-200 text-xs py-1
+                                            transition-all duration-300 ease-out text-xs py-1.5 rounded-lg
                                             ${childActive 
                                               ? 'bg-primary text-primary-foreground shadow-sm' 
-                                              : 'hover:bg-muted hover:translate-x-0.5'
+                                              : 'hover:bg-muted/80 hover:translate-x-0.5 hover:scale-[1.01]'
                                             }
                                           `}
                                           title={child.description}
@@ -484,10 +484,10 @@ export function UnifiedSidebar() {
                             <SidebarMenuButton 
                               asChild 
                               className={`
-                                transition-all duration-200 py-1.5
+                                transition-all duration-300 ease-out py-2 rounded-xl
                                 ${active 
                                   ? 'bg-primary text-primary-foreground shadow-sm' 
-                                  : 'hover:bg-muted hover:translate-x-0.5'
+                                  : 'hover:bg-muted/80 hover:translate-x-0.5 hover:scale-[1.01]'
                                 }
                               `}
                               title={item.description}
