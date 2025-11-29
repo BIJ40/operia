@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LogOut, User, Settings, Headset, Loader2, Menu, Pencil, FileEdit, ArrowLeft,
@@ -57,6 +57,19 @@ function canEditPageMetadata(globalRole: GlobalRole | null): boolean {
   if (!globalRole) return false;
   const level = GLOBAL_ROLES[globalRole];
   return level >= 5; // platform_admin (5) ou superadmin (6)
+}
+
+// Helper pour styliser "Help!" avec le "!" en orange
+function formatHelpTitle(title: string): React.ReactNode {
+  if (title.includes('Help!')) {
+    const parts = title.split('Help!');
+    return (
+      <>
+        {parts[0]}Help<span className="text-helpconfort-orange">!</span>{parts[1]}
+      </>
+    );
+  }
+  return title;
 }
 
 export function UnifiedHeader() {
@@ -231,7 +244,7 @@ export function UnifiedHeader() {
                 />
               )}
               <h1 className={`${titleSizeClass} font-semibold text-foreground truncate`}>
-                {displayTitle}
+                {formatHelpTitle(displayTitle)}
               </h1>
             </div>
           </div>
