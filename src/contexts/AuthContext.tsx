@@ -322,10 +322,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // canDeleteScope => level >= 3 (Gestion)
   // canAdminScope  => level >= 4 (Admin)
   
+  // Mapping scope -> module V2 pour la vérification
+  const getScopeModule = useCallback((scopeSlug: string): ModuleKey | null => {
+    // Help Academy
+    if (['apogee', 'apporteurs', 'helpconfort', 'documents'].includes(scopeSlug)) {
+      return 'help_academy';
+    }
+    // Pilotage Agence
+    if (['mes_indicateurs', 'actions_a_mener', 'diffusion'].includes(scopeSlug)) {
+      return 'pilotage_agence';
+    }
+    // Support
+    if (['support_tickets', 'mes_demandes', 'support'].includes(scopeSlug)) {
+      return 'support';
+    }
+    // Réseau Franchiseur
+    if (scopeSlug.startsWith('franchiseur_') || ['reseau_franchiseur'].includes(scopeSlug)) {
+      return 'reseau_franchiseur';
+    }
+    // Admin
+    if (scopeSlug.startsWith('admin_') || ['admin_plateforme'].includes(scopeSlug)) {
+      return 'admin_plateforme';
+    }
+    return null;
+  }, []);
+  
+  // Vérifier si un module est activé (utilise enabledModules ou suggestedEnabledModules)
+  const isModuleEnabled = useCallback((moduleKey: ModuleKey): boolean => {
+    const effectiveModules = enabledModules ?? suggestedEnabledModules;
+    if (!effectiveModules) return false;
+    const moduleState = effectiveModules[moduleKey];
+    if (typeof moduleState === 'boolean') return moduleState;
+    if (typeof moduleState === 'object' && moduleState !== null) {
+      return moduleState.enabled === true;
+    }
+    return false;
+  }, [enabledModules, suggestedEnabledModules]);
+  
   const canViewScope = useCallback((scopeSlug: string): boolean => {
     if (isAdmin) return true;
+    
+    // V2: Vérifier d'abord via le système de modules
+    const moduleKey = getScopeModule(scopeSlug);
+    if (moduleKey && isModuleEnabled(moduleKey)) {
+      return true;
+    }
+    
+    // Fallback: ancien système de permissions
     return getEffectivePermission(scopeSlug).canView;
-  }, [getEffectivePermission, isAdmin]);
+  }, [getEffectivePermission, isAdmin, getScopeModule, isModuleEnabled]);
 
   const canEditScope = useCallback((scopeSlug: string): boolean => {
     if (isAdmin) return true;
