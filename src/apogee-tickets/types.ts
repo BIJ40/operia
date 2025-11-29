@@ -164,4 +164,5 @@ export interface TicketFilters {
   owner_side?: OwnerSide;
   search?: string;
   needs_completion?: boolean;
+  is_qualified?: boolean;
 }
