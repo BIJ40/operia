@@ -270,13 +270,16 @@ export const PAGE_TITLES: Record<string, string> = {
   
   // Admin (V2 routes)
   [ROUTES.admin.index]: 'Administration',
-  [ROUTES.admin.support]: 'Gestion Tickets',
+  [ROUTES.admin.supportStats]: 'Statistiques Support',
   [ROUTES.admin.users]: 'Gestion Utilisateurs',
   [ROUTES.admin.agencies]: 'Gestion Agences',
   [ROUTES.admin.backup]: 'Sauvegardes',
   [ROUTES.admin.collaborateurs]: 'Collaborateurs non inscrits',
   [ROUTES.admin.userActivity]: 'Activité Utilisateurs',
   [ROUTES.admin.escalationHistory]: 'Historique Escalades',
+  [ROUTES.admin.documents]: 'Documents RAG',
+  [ROUTES.admin.storageQuota]: 'Stockage',
+  [ROUTES.admin.cacheBackup]: 'Cache Backup',
   
   // User
   [ROUTES.profile]: 'Mon Profil',
