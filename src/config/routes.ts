@@ -28,31 +28,31 @@ export const ROUTES = {
     apporteurs: '/academy/apporteurs',
     apporteursCategory: (slug: string) => `/academy/apporteurs/category/${slug}`,
     apporteursSubCategory: (slug: string, subslug: string) => `/academy/apporteurs/category/${slug}/sub/${subslug}`,
-    // Base Documentaire
-    documents: '/academy/documents',
-    documentsCategory: (slug: string) => `/academy/documents/category/${slug}`,
+  // Base Documentaire
+    documents: '/academy/hc-base',
+    documentsCategory: (slug: string) => `/academy/hc-base/category/${slug}`,
   },
 
   // ============================================
   // PILOTAGE AGENCE
   // ============================================
   pilotage: {
-    index: '/pilotage',
+    index: '/hc-agency',
     // Indicateurs
-    indicateurs: '/pilotage/indicateurs',
-    indicateursApporteurs: '/pilotage/indicateurs/apporteurs',
-    indicateursUnivers: '/pilotage/indicateurs/univers',
-    indicateursTechniciens: '/pilotage/indicateurs/techniciens',
-    indicateursSav: '/pilotage/indicateurs/sav',
+    indicateurs: '/hc-agency/indicateurs',
+    indicateursApporteurs: '/hc-agency/indicateurs/apporteurs',
+    indicateursUnivers: '/hc-agency/indicateurs/univers',
+    indicateursTechniciens: '/hc-agency/indicateurs/techniciens',
+    indicateursSav: '/hc-agency/indicateurs/sav',
     // Actions à mener
-    actions: '/pilotage/actions',
-    actionsCategory: (slug: string) => `/pilotage/actions/category/${slug}`,
+    actions: '/hc-agency/actions',
+    actionsCategory: (slug: string) => `/hc-agency/actions/category/${slug}`,
     // Diffusion
-    diffusion: '/pilotage/diffusion',
+    diffusion: '/hc-agency/diffusion',
     // RH Tech
-    rhTech: '/pilotage/rh-tech',
+    rhTech: '/hc-agency/rh-tech',
     // Équipe
-    equipe: '/pilotage/equipe',
+    equipe: '/hc-agency/equipe',
   },
 
   // ============================================
@@ -68,14 +68,14 @@ export const ROUTES = {
   // RÉSEAU FRANCHISEUR
   // ============================================
   reseau: {
-    index: '/reseau',
-    dashboard: '/reseau/dashboard',
-    agences: '/reseau/agences',
-    agenceProfile: (agencyId: string) => `/reseau/agences/${agencyId}`,
-    animateurs: '/reseau/animateurs',
-    stats: '/reseau/stats',
-    comparatifs: '/reseau/comparatifs',
-    redevances: '/reseau/redevances',
+    index: '/hc-reseau',
+    dashboard: '/hc-reseau/dashboard',
+    agences: '/hc-reseau/agences',
+    agenceProfile: (agencyId: string) => `/hc-reseau/agences/${agencyId}`,
+    animateurs: '/hc-reseau/animateurs',
+    stats: '/hc-reseau/stats',
+    comparatifs: '/hc-reseau/comparatifs',
+    redevances: '/hc-reseau/redevances',
   },
 
   // ============================================

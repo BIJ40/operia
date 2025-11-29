@@ -52,9 +52,9 @@ export function UnifiedSidebar() {
   const getInitialOpenGroups = () => {
     const groups = new Set<string>();
     if (location.pathname.startsWith('/academy')) groups.add('help-academy');
-    if (location.pathname.startsWith('/pilotage')) groups.add('pilotage');
+    if (location.pathname.startsWith('/hc-agency')) groups.add('pilotage');
     if (location.pathname.startsWith('/support')) groups.add('support');
-    if (location.pathname.startsWith('/reseau')) groups.add('franchiseur');
+    if (location.pathname.startsWith('/hc-reseau')) groups.add('franchiseur');
     if (location.pathname.startsWith('/admin')) groups.add('admin');
     return groups;
   };
@@ -74,7 +74,7 @@ export function UnifiedSidebar() {
   const isInEditMode = searchParams.get('edit') === 'true' && caps.canAccessAdmin;
 
   const getUrlWithEditMode = (url: string) => {
-    const editablePrefix = ['/academy/apogee', '/academy/apporteurs', '/academy/documents', '/apogee', '/apporteurs', '/helpconfort'];
+    const editablePrefix = ['/academy/apogee', '/academy/apporteurs', '/academy/hc-base', '/apogee', '/apporteurs', '/helpconfort'];
     const isEditableUrl = editablePrefix.some(prefix => url.startsWith(prefix));
     if (isInEditMode && isEditableUrl) {
       return `${url}?edit=true`;
@@ -192,7 +192,7 @@ export function UnifiedSidebar() {
   const isActive = (url?: string) => {
     if (!url) return false;
     if (url === '/') return location.pathname === '/';
-    if (url === '/admin' || url === '/pilotage/indicateurs') return location.pathname === url;
+    if (url === '/admin' || url === '/hc-agency/indicateurs') return location.pathname === url;
     return location.pathname === url || location.pathname.startsWith(url + '/');
   };
 

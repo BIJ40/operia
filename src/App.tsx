@@ -135,16 +135,16 @@ function AppContent() {
           <Route path="/academy/apporteurs/category/:slug/sub/:subslug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryApporteur /></RoleGuard></MainLayout>} />
           
           {/* Base Documentaire */}
-          <Route path="/academy/documents" element={<MainLayout><RoleGuard minRole="franchisee_user"><HelpConfort /></RoleGuard></MainLayout>} />
-          <Route path="/academy/documents/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryHelpConfort /></RoleGuard></MainLayout>} />
+          <Route path="/academy/hc-base" element={<MainLayout><RoleGuard minRole="franchisee_user"><HelpConfort /></RoleGuard></MainLayout>} />
+          <Route path="/academy/hc-base/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryHelpConfort /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* PILOTAGE AGENCE - Section Index + Sous-pages */}
           {/* ============================================ */}
-          <Route path="/pilotage" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PilotageIndex /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PilotageIndex /></RoleGuard></MainLayout>} />
           
           {/* Statistiques / Indicateurs */}
-          <Route path="/pilotage/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><IndicateursLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-agency/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><IndicateursLayout /></RoleGuard></MainLayout>}>
             <Route index element={<IndicateursAccueil />} />
             <Route path="apporteurs" element={<IndicateursApporteurs />} />
             <Route path="univers" element={<IndicateursUnivers />} />
@@ -153,17 +153,17 @@ function AppContent() {
           </Route>
           
           {/* Actions à Mener */}
-          <Route path="/pilotage/actions" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ActionsAMener /></RoleGuard></MainLayout>} />
-          <Route path="/pilotage/actions/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_admin"><CategoryActionsAMener /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/actions" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ActionsAMener /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/actions/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_admin"><CategoryActionsAMener /></RoleGuard></MainLayout>} />
           
           {/* Diffusion */}
-          <Route path="/pilotage/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><DiffusionDashboard /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><DiffusionDashboard /></RoleGuard></MainLayout>} />
           
           {/* RH Tech */}
-          <Route path="/pilotage/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PlanningHebdo /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PlanningHebdo /></RoleGuard></MainLayout>} />
           
           {/* Équipe */}
-          <Route path="/pilotage/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><TeamPage /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><TeamPage /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* SUPPORT - Section Index + Sous-pages */}
@@ -175,28 +175,28 @@ function AppContent() {
           {/* ============================================ */}
           {/* RÉSEAU FRANCHISEUR - Section Index + Sous-pages */}
           {/* ============================================ */}
-          <Route path="/reseau" element={<MainLayout><RoleGuard minRole="franchisor_user"><ReseauIndex /></RoleGuard></MainLayout>} />
+          <Route path="/hc-reseau" element={<MainLayout><RoleGuard minRole="franchisor_user"><ReseauIndex /></RoleGuard></MainLayout>} />
           
-          <Route path="/reseau/dashboard" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/dashboard" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurHome />} />
           </Route>
-          <Route path="/reseau/agences" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/agences" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurAgencies />} />
             <Route path=":agencyId" element={<FranchiseurAgencyProfile />} />
           </Route>
-          <Route path="/reseau/animateurs" element={<MainLayout><RoleGuard minRole="franchisor_admin"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/animateurs" element={<MainLayout><RoleGuard minRole="franchisor_admin"><FranchiseurLayout /></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurAnimateurs />} />
           </Route>
-          <Route path="/reseau/stats" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/stats" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurStats />} />
           </Route>
-          <Route path="/reseau/comparatifs" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/comparatifs" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurComparison />} />
           </Route>
-          <Route path="/reseau/redevances" element={<MainLayout><RoleGuard minRole="franchisor_admin"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/redevances" element={<MainLayout><RoleGuard minRole="franchisor_admin"><FranchiseurLayout /></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurRoyalties />} />
           </Route>
-          <Route path="/reseau/parametres" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/parametres" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurSettings />} />
           </Route>
           
