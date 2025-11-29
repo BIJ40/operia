@@ -197,46 +197,70 @@ export default function AdminSupport() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <MessageSquare className="w-3.5 h-3.5" />
+        <div className="group rounded-xl border border-helpconfort-blue/20 p-4
+          bg-gradient-to-br from-white to-helpconfort-blue/5
+          shadow-sm transition-all duration-300
+          hover:to-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
+              group-hover:border-helpconfort-blue transition-all">
+              <MessageSquare className="w-4 h-4 text-helpconfort-blue" />
+            </div>
             <h3 className="text-xs font-medium">Total tickets</h3>
           </div>
-          <div className="text-xl font-bold">{stats.totalTickets}</div>
+          <div className="text-xl font-bold text-helpconfort-blue">{stats.totalTickets}</div>
           <p className="text-xs text-muted-foreground">Tous statuts</p>
-        </Card>
+        </div>
 
-        <Card className="p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+        <div className="group rounded-xl border border-helpconfort-blue/15 p-4
+          bg-gradient-to-b from-helpconfort-blue/5 to-white
+          shadow-sm transition-all duration-300
+          hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-lg border-2 border-green-500/30 flex items-center justify-center
+              group-hover:border-green-500 transition-all">
+              <CheckCircle2 className="w-4 h-4 text-green-500" />
+            </div>
             <h3 className="text-xs font-medium">Résolution</h3>
           </div>
           <div className="flex items-end gap-1">
-            <span className="text-xl font-bold">{stats.resolutionRate}</span>
+            <span className="text-xl font-bold text-green-600">{stats.resolutionRate}</span>
             <span className="text-xs text-muted-foreground mb-0.5">%</span>
           </div>
           <p className="text-xs text-muted-foreground">{stats.resolvedCount} résolus</p>
-        </Card>
+        </div>
 
-        <Card className="p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Clock className="w-3.5 h-3.5 text-orange-500" />
+        <div className="group rounded-xl border border-helpconfort-blue/15 p-4 border-l-4 border-l-orange-400
+          bg-gradient-to-r from-helpconfort-blue/5 to-white
+          shadow-sm transition-all duration-300
+          hover:from-helpconfort-blue/15 hover:border-l-orange-500 hover:shadow-lg hover:-translate-y-1">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-full border-2 border-orange-400/30 flex items-center justify-center
+              group-hover:border-orange-500 transition-all">
+              <Clock className="w-4 h-4 text-orange-500" />
+            </div>
             <h3 className="text-xs font-medium">En cours</h3>
           </div>
-          <div className="text-xl font-bold">
+          <div className="text-xl font-bold text-orange-600">
             {stats.inProgressCount + stats.newCount}
           </div>
           <p className="text-xs text-muted-foreground">{stats.newCount} nouveaux</p>
-        </Card>
+        </div>
 
-        <Card className="p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <MessageSquare className="w-3.5 h-3.5" />
+        <div className="group rounded-xl border border-helpconfort-blue/15 p-4
+          bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+          shadow-sm transition-all duration-300
+          hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-1">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
+              group-hover:border-helpconfort-blue transition-all">
+              <MessageSquare className="w-4 h-4 text-helpconfort-blue" />
+            </div>
             <h3 className="text-xs font-medium">Note moyenne</h3>
           </div>
-          <div className="text-xl font-bold">{stats.avgRating}</div>
+          <div className="text-xl font-bold text-helpconfort-blue">{stats.avgRating}</div>
           <p className="text-xs text-muted-foreground">Sur 5</p>
-        </Card>
+        </div>
       </div>
 
       <Accordion type="single" collapsible className="mb-4">

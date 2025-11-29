@@ -151,75 +151,91 @@ export default function IndicateursSAV() {
         </div>
       ) : (
         <>
-          {/* KPI Globaux */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="p-6 bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border-l-4 border-l-red-500 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]">
+          {/* KPI Globaux - Dégradés rouges */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="group rounded-xl border border-red-200 p-5
+              bg-gradient-to-br from-white to-red-50
+              shadow-sm transition-all duration-300 border-l-4 border-l-red-500
+              hover:to-red-100 hover:shadow-lg hover:-translate-y-1">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-red-500/10 rounded-xl">
+                <div className="w-12 h-12 rounded-full border-2 border-red-300 flex items-center justify-center
+                  group-hover:border-red-500 group-hover:bg-white/50 transition-all">
                   <AlertTriangle className="w-6 h-6 text-red-600" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Taux SAV Global</p>
-                  <p className="text-2xl font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">
+                  <p className="text-2xl font-bold text-red-600">
                     {globalStats?.tauxSAV.toFixed(1)}%
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-3">
                 {globalStats?.nbSAVProjects} / {globalStats?.nbTotalProjects} dossiers
               </p>
-            </Card>
+            </div>
 
-            <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/20 dark:to-orange-900/10 border-l-4 border-l-orange-500 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]">
+            <div className="group rounded-xl border border-orange-200 p-5
+              bg-gradient-to-b from-orange-50/50 to-white
+              shadow-sm transition-all duration-300 border-l-4 border-l-orange-500
+              hover:from-orange-100/50 hover:shadow-lg hover:-translate-y-1">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-orange-500/10 rounded-xl">
+                <div className="w-12 h-12 rounded-lg border-2 border-orange-300 flex items-center justify-center
+                  group-hover:border-orange-500 group-hover:bg-white transition-all">
                   <TrendingUp className="w-6 h-6 text-orange-600" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">CA SAV</p>
-                  <p className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent">
+                  <p className="text-2xl font-bold text-orange-600">
                     {formatEuros(globalStats?.caSAV || 0)}
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-3">
                 Chiffre d'affaires généré
               </p>
-            </Card>
+            </div>
 
-            <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-l-4 border-l-blue-500 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]">
+            <div className="group rounded-xl border border-red-200/50 p-5
+              bg-gradient-to-r from-red-50/30 to-white
+              shadow-sm transition-all duration-300 border-l-4 border-l-red-400
+              hover:from-red-100/50 hover:border-l-red-500 hover:shadow-lg hover:-translate-y-1">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-500/10 rounded-xl">
-                  <Users className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 rounded-full border-2 border-red-300 flex items-center justify-center
+                  group-hover:border-red-500 group-hover:bg-white transition-all">
+                  <Users className="w-6 h-6 text-red-500" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Dossiers SAV</p>
-                  <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                  <p className="text-2xl font-bold text-red-500">
                     {globalStats?.nbSAVProjects || 0}
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-3">
                 Dossiers avec intervention SAV
               </p>
-            </Card>
+            </div>
 
-            <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-l-4 border-l-purple-500 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]">
+            <div className="group rounded-xl border border-rose-200 p-5
+              bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-rose-100/50 via-white to-white
+              shadow-sm transition-all duration-300 border-l-4 border-l-rose-500
+              hover:from-rose-200/50 hover:shadow-lg hover:-translate-y-1">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-purple-500/10 rounded-xl">
-                  <CalendarDays className="w-6 h-6 text-purple-600" />
+                <div className="w-12 h-12 rounded-full border-2 border-rose-300 flex items-center justify-center
+                  group-hover:border-rose-500 group-hover:bg-white transition-all">
+                  <CalendarDays className="w-6 h-6 text-rose-600" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Interventions SAV</p>
-                  <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                  <p className="text-2xl font-bold text-rose-600">
                     {globalStats?.nbInterventionsSAV || 0}
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-3">
                 Total interventions période
               </p>
-            </Card>
+            </div>
           </div>
 
           {/* Évolution mensuelle */}

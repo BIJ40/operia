@@ -222,10 +222,14 @@ export default function IndicateursApporteurs() {
       {/* Métriques clés en 5 cartes horizontales */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {/* Carte 1: Dû global */}
-        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-orange-500/50 shadow-lg">
+        <div className="group rounded-xl border border-helpconfort-blue/20 p-4
+          bg-gradient-to-br from-white to-helpconfort-blue/5
+          shadow-sm transition-all duration-300 border-l-4 border-l-orange-500
+          hover:to-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
-              <Euro className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-full border-2 border-orange-400/50 flex items-center justify-center bg-orange-500/10
+              group-hover:border-orange-500 transition-all">
+              <Euro className="w-4 h-4 text-orange-500" />
             </div>
             <p className="text-sm font-bold text-muted-foreground">Dû global TTC</p>
           </div>
@@ -233,13 +237,17 @@ export default function IndicateursApporteurs() {
             <p className="text-2xl font-bold text-orange-500">{formatEuros(data?.duGlobal || 0)}</p>
             <p className="text-xs text-muted-foreground">à encaisser</p>
           </div>
-        </Card>
+        </div>
 
         {/* Carte 2: Total dossiers confiés */}
-        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-blue-500/50 shadow-lg">
+        <div className="group rounded-xl border border-helpconfort-blue/15 p-4
+          bg-gradient-to-b from-helpconfort-blue/5 to-white
+          shadow-sm transition-all duration-300 border-l-4 border-l-blue-500
+          hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
-              <FolderOpen className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-lg border-2 border-blue-400/50 flex items-center justify-center bg-blue-500/10
+              group-hover:border-blue-500 transition-all">
+              <FolderOpen className="w-4 h-4 text-blue-500" />
             </div>
             <p className="text-sm font-bold text-muted-foreground">Dossiers confiés</p>
           </div>
@@ -249,13 +257,17 @@ export default function IndicateursApporteurs() {
             </p>
             <p className="text-xs text-muted-foreground">total période</p>
           </div>
-        </Card>
+        </div>
 
         {/* Carte 3: Taux de transformation moyen */}
-        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-purple-500/50 shadow-lg">
+        <div className="group rounded-xl border border-helpconfort-blue/15 p-4
+          bg-gradient-to-r from-helpconfort-blue/5 to-white
+          shadow-sm transition-all duration-300 border-l-4 border-l-purple-500
+          hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
-              <Percent className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-full border-2 border-purple-400/50 flex items-center justify-center bg-purple-500/10
+              group-hover:border-purple-500 transition-all">
+              <Percent className="w-4 h-4 text-purple-500" />
             </div>
             <p className="text-sm font-bold text-muted-foreground">Taux de transfo moyen</p>
           </div>
@@ -263,13 +275,17 @@ export default function IndicateursApporteurs() {
             <p className="text-2xl font-bold text-purple-500">{(data?.tauxTransformationMoyen || 0).toFixed(0)}%</p>
             <p className="text-xs text-muted-foreground">Devis → Factures</p>
           </div>
-        </Card>
+        </div>
 
         {/* Carte 4: Panier moyen HT */}
-        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-green-500/50 shadow-lg">
+        <div className="group rounded-xl border border-helpconfort-blue/15 p-4
+          bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+          shadow-sm transition-all duration-300 border-l-4 border-l-green-500
+          hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
-              <ShoppingCart className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-full border-2 border-green-400/50 flex items-center justify-center bg-green-500/10
+              group-hover:border-green-500 transition-all">
+              <ShoppingCart className="w-4 h-4 text-green-500" />
             </div>
             <p className="text-sm font-bold text-muted-foreground">Panier moyen HT</p>
           </div>
@@ -277,13 +293,17 @@ export default function IndicateursApporteurs() {
             <p className="text-2xl font-bold text-green-500">{formatEuros(data?.panierMoyenHT || 0)}</p>
             <p className="text-xs text-muted-foreground">Dossier apporteur</p>
           </div>
-        </Card>
+        </div>
 
         {/* Carte 5: Délai moyen */}
-        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-indigo-500/50 shadow-lg">
+        <div className="group rounded-xl border border-helpconfort-blue/20 p-4
+          bg-gradient-to-br from-white to-helpconfort-blue/5
+          shadow-sm transition-all duration-300 border-l-4 border-l-indigo-500
+          hover:to-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-1.5 rounded-lg">
-              <Clock className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-full border-2 border-indigo-400/50 flex items-center justify-center bg-indigo-500/10
+              group-hover:border-indigo-500 transition-all">
+              <Clock className="w-4 h-4 text-indigo-500" />
             </div>
             <p className="text-sm font-bold text-muted-foreground">Délai moyen</p>
           </div>
@@ -291,16 +311,20 @@ export default function IndicateursApporteurs() {
             <p className="text-2xl font-bold text-indigo-500">{Math.round(data?.delaiMoyenFacturation || 0)} j</p>
             <p className="text-xs text-muted-foreground">Dossier → Facture</p>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* 5 nouveaux KPI avec données réelles */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {/* KPI 6: Nombre d'apporteurs actifs */}
-        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-cyan-500/50 shadow-lg">
+        <div className="group rounded-xl border border-helpconfort-blue/15 p-4
+          bg-gradient-to-b from-helpconfort-blue/5 to-white
+          shadow-sm transition-all duration-300 border-l-4 border-l-cyan-500
+          hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 p-1.5 rounded-lg">
-              <Users className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-lg border-2 border-cyan-400/50 flex items-center justify-center bg-cyan-500/10
+              group-hover:border-cyan-500 transition-all">
+              <Users className="w-4 h-4 text-cyan-500" />
             </div>
             <p className="text-sm font-bold text-muted-foreground">Apporteurs actifs</p>
           </div>
@@ -308,13 +332,17 @@ export default function IndicateursApporteurs() {
             <p className="text-2xl font-bold text-cyan-500">{apporteursActifs.nbActifs}</p>
             <p className="text-xs text-muted-foreground">sur la période</p>
           </div>
-        </Card>
+        </div>
 
         {/* KPI 7: CA moyen par apporteur */}
-        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-pink-500/50 shadow-lg">
+        <div className="group rounded-xl border border-helpconfort-blue/15 p-4
+          bg-gradient-to-r from-helpconfort-blue/5 to-white
+          shadow-sm transition-all duration-300 border-l-4 border-l-pink-500
+          hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-gradient-to-br from-pink-500 to-pink-600 p-1.5 rounded-lg">
-              <TrendingUp className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-full border-2 border-pink-400/50 flex items-center justify-center bg-pink-500/10
+              group-hover:border-pink-500 transition-all">
+              <TrendingUp className="w-4 h-4 text-pink-500" />
             </div>
             <p className="text-sm font-bold text-muted-foreground">CA moyen / Apporteur</p>
           </div>
@@ -322,13 +350,17 @@ export default function IndicateursApporteurs() {
             <p className="text-2xl font-bold text-pink-500">{formatEuros(caMoyenApporteur.caMoyen)}</p>
             <p className="text-xs text-muted-foreground">moyenne HT</p>
           </div>
-        </Card>
+        </div>
 
         {/* KPI 8: Délai moyen de paiement */}
-        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-amber-500/50 shadow-lg">
+        <div className="group rounded-xl border border-helpconfort-blue/20 p-4
+          bg-gradient-to-br from-white to-helpconfort-blue/5
+          shadow-sm transition-all duration-300 border-l-4 border-l-amber-500
+          hover:to-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-1.5 rounded-lg">
-              <Clock className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-full border-2 border-amber-400/50 flex items-center justify-center bg-amber-500/10
+              group-hover:border-amber-500 transition-all">
+              <Clock className="w-4 h-4 text-amber-500" />
             </div>
             <p className="text-sm font-bold text-muted-foreground">Délai paiement</p>
           </div>
@@ -336,13 +368,17 @@ export default function IndicateursApporteurs() {
             <p className="text-2xl font-bold text-amber-500">{delaiPaiement.delaiMoyen} j</p>
             <p className="text-xs text-muted-foreground">moyen</p>
           </div>
-        </Card>
+        </div>
 
         {/* KPI 9: Taux de fidélité */}
-        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-emerald-500/50 shadow-lg">
+        <div className="group rounded-xl border border-helpconfort-blue/15 p-4
+          bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+          shadow-sm transition-all duration-300 border-l-4 border-l-emerald-500
+          hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-1.5 rounded-lg">
-              <Heart className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-full border-2 border-emerald-400/50 flex items-center justify-center bg-emerald-500/10
+              group-hover:border-emerald-500 transition-all">
+              <Heart className="w-4 h-4 text-emerald-500" />
             </div>
             <p className="text-sm font-bold text-muted-foreground">Taux de fidélité</p>
           </div>
@@ -356,13 +392,17 @@ export default function IndicateursApporteurs() {
               <p className="text-sm text-muted-foreground italic">Données N-1 indisponibles</p>
             )}
           </div>
-        </Card>
+        </div>
 
         {/* KPI 10: Croissance CA */}
-        <Card className="p-4 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-violet-500/50 shadow-lg">
+        <div className="group rounded-xl border border-helpconfort-blue/15 p-4
+          bg-gradient-to-b from-helpconfort-blue/5 to-white
+          shadow-sm transition-all duration-300 border-l-4 border-l-violet-500
+          hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-gradient-to-br from-violet-500 to-violet-600 p-1.5 rounded-lg">
-              <ArrowUpRight className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-lg border-2 border-violet-400/50 flex items-center justify-center bg-violet-500/10
+              group-hover:border-violet-500 transition-all">
+              <ArrowUpRight className="w-4 h-4 text-violet-500" />
             </div>
             <p className="text-sm font-bold text-muted-foreground">Croissance CA</p>
           </div>
@@ -378,7 +418,7 @@ export default function IndicateursApporteurs() {
               <p className="text-sm text-muted-foreground italic">Données N-1 indisponibles</p>
             )}
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Widgets TOP/FLOP + Dossiers confiés */}

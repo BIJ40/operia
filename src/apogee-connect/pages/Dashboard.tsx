@@ -325,10 +325,14 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* KPI 1: Dossiers reçus */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-blue-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/20 p-3
+                bg-gradient-to-br from-white to-helpconfort-blue/5
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-blue-500
+                hover:to-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
-                    <FolderOpen className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-full border-2 border-blue-400/50 flex items-center justify-center bg-blue-500/10
+                    group-hover:border-blue-500 transition-all">
+                    <FolderOpen className="w-3.5 h-3.5 text-blue-500" />
                   </div>
                   <div className="flex items-center gap-1">
                     {(data?.variations.dossiers || 0) > 0 ? (
@@ -342,8 +346,8 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Dossiers reçus</p>
-                <p className="text-xl font-bold">{data?.dossiersJour || 0}</p>
-              </Card>
+                <p className="text-xl font-bold text-blue-600">{data?.dossiersJour || 0}</p>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Nombre de dossiers créés sur la période sélectionnée.
               </div>
@@ -351,20 +355,24 @@ export default function Dashboard() {
 
             {/* KPI 2: RT */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-green-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/15 p-3
+                bg-gradient-to-b from-helpconfort-blue/5 to-white
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-green-500
+                hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-green-500 to-green-600 p-1.5 rounded-lg">
-                    <ClipboardCheck className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-lg border-2 border-green-400/50 flex items-center justify-center bg-green-500/10
+                    group-hover:border-green-500 transition-all">
+                    <ClipboardCheck className="w-3.5 h-3.5 text-green-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">RT réalisés</p>
                 <div className="flex items-baseline gap-1">
-                  <p className="text-xl font-bold">{data?.rtJour || 0}</p>
+                  <p className="text-xl font-bold text-green-600">{data?.rtJour || 0}</p>
                   {data?.heuresRT !== undefined && (
                     <span className="text-[10px] text-muted-foreground">({data.heuresRT.toFixed(1)}h)</span>
                   )}
                 </div>
-              </Card>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Nombre de relevés techniques réalisés sur la période (et heures associées).
               </div>
@@ -372,20 +380,24 @@ export default function Dashboard() {
 
             {/* KPI 3: Devis */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-purple-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/15 p-3
+                bg-gradient-to-r from-helpconfort-blue/5 to-white
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-purple-500
+                hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 rounded-lg">
-                    <FileText className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-full border-2 border-purple-400/50 flex items-center justify-center bg-purple-500/10
+                    group-hover:border-purple-500 transition-all">
+                    <FileText className="w-3.5 h-3.5 text-purple-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Devis émis</p>
                 <div className="flex items-baseline gap-1">
-                  <p className="text-xl font-bold">{data?.devisJour || 0}</p>
+                  <p className="text-xl font-bold text-purple-600">{data?.devisJour || 0}</p>
                   {data?.caDevis !== undefined && (
                     <span className="text-[10px] text-muted-foreground">({formatEuros(data.caDevis)})</span>
                   )}
                 </div>
-              </Card>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Devis envoyés (state ≠ draft) sur la période, avec leur montant cumulé.
               </div>
@@ -393,10 +405,14 @@ export default function Dashboard() {
 
             {/* KPI 4: CA */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-orange-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/15 p-3
+                bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-orange-500
+                hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-1.5 rounded-lg">
-                    <Euro className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-full border-2 border-orange-400/50 flex items-center justify-center bg-orange-500/10
+                    group-hover:border-orange-500 transition-all">
+                    <Euro className="w-3.5 h-3.5 text-orange-500" />
                   </div>
                   <div className="flex items-center gap-1">
                     {(data?.variations.ca || 0) > 0 ? (
@@ -411,12 +427,12 @@ export default function Dashboard() {
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">CA période</p>
                 <div className="flex items-baseline gap-1">
-                  <p className="text-xl font-bold">{formatEuros(data?.caJour || 0)}</p>
+                  <p className="text-xl font-bold text-orange-600">{formatEuros(data?.caJour || 0)}</p>
                   {data?.nbFacturesCA !== undefined && (
                     <span className="text-[10px] text-muted-foreground">({data.nbFacturesCA})</span>
                   )}
                 </div>
-              </Card>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Somme du montant HT des factures (type = facture) sur la période, avec le nombre de factures.
               </div>
@@ -424,17 +440,21 @@ export default function Dashboard() {
 
             {/* KPI 5: Taux de SAV */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-red-500/50">
+              <div className="rounded-xl border border-red-200 p-3
+                bg-gradient-to-br from-white to-red-50
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-red-500
+                hover:to-red-100 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-red-500 to-red-600 p-1.5 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-xs">SAV</span>
+                  <div className="w-7 h-7 rounded-full border-2 border-red-400/50 flex items-center justify-center bg-red-500/10
+                    group-hover:border-red-500 transition-all">
+                    <span className="text-red-500 font-bold text-[9px]">SAV</span>
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Taux de SAV</p>
                 <div className="flex items-baseline gap-1">
-                  <p className="text-xl font-bold">{(data?.tauxSAVGlobal || 0).toFixed(1)}%</p>
+                  <p className="text-xl font-bold text-red-600">{(data?.tauxSAVGlobal || 0).toFixed(1)}%</p>
                 </div>
-              </Card>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Pourcentage d&apos;interventions de type SAV sur l&apos;ensemble des interventions.
               </div>
@@ -442,15 +462,19 @@ export default function Dashboard() {
 
             {/* KPI 6: Délai moyen */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-cyan-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/20 p-3
+                bg-gradient-to-br from-white to-helpconfort-blue/5
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-cyan-500
+                hover:to-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 p-1.5 rounded-lg">
-                    <Clock className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-full border-2 border-cyan-400/50 flex items-center justify-center bg-cyan-500/10
+                    group-hover:border-cyan-500 transition-all">
+                    <Clock className="w-3.5 h-3.5 text-cyan-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Délai moyen dossier</p>
-                <p className="text-xl font-bold">{data?.delaiMoyenDossier || 0}j</p>
-              </Card>
+                <p className="text-xl font-bold text-cyan-600">{data?.delaiMoyenDossier || 0}j</p>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Délai moyen en jours entre la création du dossier et sa facturation.
               </div>
@@ -458,15 +482,19 @@ export default function Dashboard() {
 
             {/* KPI 7: Dossiers complexes */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-amber-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/15 p-3
+                bg-gradient-to-b from-helpconfort-blue/5 to-white
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-amber-500
+                hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-1.5 rounded-lg">
-                    <Layers className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-lg border-2 border-amber-400/50 flex items-center justify-center bg-amber-500/10
+                    group-hover:border-amber-500 transition-all">
+                    <Layers className="w-3.5 h-3.5 text-amber-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Dossiers complexes</p>
-                <p className="text-xl font-bold">{(data?.tauxDossiersComplexes || 0).toFixed(1)}%</p>
-              </Card>
+                <p className="text-xl font-bold text-amber-600">{(data?.tauxDossiersComplexes || 0).toFixed(1)}%</p>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Pourcentage de dossiers avec &gt; 6 interventions ou au moins 2 interventions travaux.
               </div>
@@ -474,15 +502,19 @@ export default function Dashboard() {
 
             {/* KPI 8: Interventions/dossier */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-indigo-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/15 p-3
+                bg-gradient-to-r from-helpconfort-blue/5 to-white
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-indigo-500
+                hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-1.5 rounded-lg">
-                    <BarChart3 className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-full border-2 border-indigo-400/50 flex items-center justify-center bg-indigo-500/10
+                    group-hover:border-indigo-500 transition-all">
+                    <BarChart3 className="w-3.5 h-3.5 text-indigo-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Interventions/dossier</p>
-                <p className="text-xl font-bold">{(data?.nbMoyenInterventionsParDossier || 0).toFixed(1)}</p>
-              </Card>
+                <p className="text-xl font-bold text-indigo-600">{(data?.nbMoyenInterventionsParDossier || 0).toFixed(1)}</p>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Nombre moyen d&apos;interventions réalisées par dossier.
               </div>
@@ -490,15 +522,19 @@ export default function Dashboard() {
 
             {/* KPI 9: Taux transformation devis */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-teal-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/15 p-3
+                bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-teal-500
+                hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-1.5 rounded-lg">
-                    <Target className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-full border-2 border-teal-400/50 flex items-center justify-center bg-teal-500/10
+                    group-hover:border-teal-500 transition-all">
+                    <Target className="w-3.5 h-3.5 text-teal-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Taux transformation</p>
-                <p className="text-xl font-bold">{(data?.tauxTransformationDevis || 0).toFixed(1)}%</p>
-              </Card>
+                <p className="text-xl font-bold text-teal-600">{(data?.tauxTransformationDevis || 0).toFixed(1)}%</p>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Pourcentage de devis envoyés qui sont passés au statut accepté / facturé.
               </div>
@@ -506,15 +542,19 @@ export default function Dashboard() {
 
             {/* KPI 10: Panier moyen */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-pink-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/20 p-3
+                bg-gradient-to-br from-white to-helpconfort-blue/5
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-pink-500
+                hover:to-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-pink-500 to-pink-600 p-1.5 rounded-lg">
-                    <Package className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-full border-2 border-pink-400/50 flex items-center justify-center bg-pink-500/10
+                    group-hover:border-pink-500 transition-all">
+                    <Package className="w-3.5 h-3.5 text-pink-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Panier moyen</p>
-                <p className="text-xl font-bold">{formatEuros(data?.panierMoyen || 0)}</p>
-              </Card>
+                <p className="text-xl font-bold text-pink-600">{formatEuros(data?.panierMoyen || 0)}</p>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Montant moyen HT par facture sur la période.
               </div>
@@ -522,15 +562,19 @@ export default function Dashboard() {
 
             {/* KPI 11: Visites/RDV */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-lime-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/15 p-3
+                bg-gradient-to-b from-helpconfort-blue/5 to-white
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-lime-500
+                hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-lime-500 to-lime-600 p-1.5 rounded-lg">
-                    <Users className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-lg border-2 border-lime-400/50 flex items-center justify-center bg-lime-500/10
+                    group-hover:border-lime-500 transition-all">
+                    <Users className="w-3.5 h-3.5 text-lime-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Visites/RDV</p>
-                <p className="text-xl font-bold">{(data?.nbMoyenVisitesParIntervention || 0).toFixed(1)}</p>
-              </Card>
+                <p className="text-xl font-bold text-lime-600">{(data?.nbMoyenVisitesParIntervention || 0).toFixed(1)}</p>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Nombre moyen de visites par intervention (toutes sources confondues).
               </div>
@@ -538,15 +582,19 @@ export default function Dashboard() {
 
             {/* KPI 12: Multi-univers */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-violet-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/15 p-3
+                bg-gradient-to-r from-helpconfort-blue/5 to-white
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-violet-500
+                hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-violet-500 to-violet-600 p-1.5 rounded-lg">
-                    <Layers className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-full border-2 border-violet-400/50 flex items-center justify-center bg-violet-500/10
+                    group-hover:border-violet-500 transition-all">
+                    <Layers className="w-3.5 h-3.5 text-violet-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Multi-univers</p>
-                <p className="text-xl font-bold">{(data?.tauxDossiersMultiUnivers || 0).toFixed(1)}%</p>
-              </Card>
+                <p className="text-xl font-bold text-violet-600">{(data?.tauxDossiersMultiUnivers || 0).toFixed(1)}%</p>
+              </div>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Pourcentage de dossiers faisant intervenir au moins deux univers (plomberie, électricité, etc.).
               </div>
@@ -554,14 +602,18 @@ export default function Dashboard() {
 
             {/* KPI 13: Dossiers sans devis */}
             <div className="relative group">
-              <Card className="p-3 hover:scale-102 transition-all duration-300 cursor-pointer border-2 hover:border-rose-500/50">
+              <div className="rounded-xl border border-helpconfort-blue/15 p-3
+                bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+                shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-rose-500
+                hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-gradient-to-br from-rose-500 to-rose-600 p-1.5 rounded-lg">
-                    <FileText className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-full border-2 border-rose-400/50 flex items-center justify-center bg-rose-500/10
+                    group-hover:border-rose-500 transition-all">
+                    <FileText className="w-3.5 h-3.5 text-rose-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-0.5">Sans devis</p>
-                <p className="text-xl font-bold">{(data?.tauxDossiersSansDevis || 0).toFixed(1)}%</p>
+                <p className="text-xl font-bold text-rose-600">{(data?.tauxDossiersSansDevis || 0).toFixed(1)}%</p>
               </Card>
               <div className="pointer-events-none absolute z-50 left-1/2 top-full mt-2 -translate-x-1/2 rounded-md border bg-popover px-3 py-1.5 text-[11px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                 Pourcentage de factures émises sans devis associé dans Apogée.

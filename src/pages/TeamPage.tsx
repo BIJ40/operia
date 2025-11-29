@@ -189,17 +189,22 @@ export default function TeamPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
+      <div className="group rounded-xl border border-helpconfort-blue/20 p-0 overflow-hidden
+        bg-gradient-to-br from-white to-helpconfort-blue/5
+        shadow-sm transition-all duration-300
+        hover:to-helpconfort-blue/10 hover:shadow-lg">
+        <CardHeader className="border-b border-helpconfort-blue/10">
           <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Équipe ({teamMembers.length})
+            <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center">
+              <Users className="h-5 w-5 text-helpconfort-blue" />
+            </div>
+            <span>Équipe ({teamMembers.length})</span>
           </CardTitle>
           <CardDescription>
             Liste complète des membres de l'agence
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -295,7 +300,7 @@ export default function TeamPage() {
             </div>
           )}
         </CardContent>
-      </Card>
+      </div>
 
       {/* Dialog création/édition */}
       <CollaboratorFormDialog
