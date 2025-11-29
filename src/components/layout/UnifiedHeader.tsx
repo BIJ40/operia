@@ -135,13 +135,16 @@ export function UnifiedHeader() {
     'xs': 'text-xs',
     'sm': 'text-sm',
     'base': 'text-base',
+    'lg': 'text-lg',
   };
   
-  const titleSizeClass = TITLE_SIZES[metadata?.header_title_size || '3xl'] || 'text-3xl';
-  const iconSizeClass = ICON_SIZES[metadata?.header_icon_size || '3xl'] || 'w-10 h-10';
+  // Forcer les valeurs par défaut : titre ÉNORME (3xl), icône MAXIMUM (3xl), description GRANDE sur fond BLANC
+  const titleSizeClass = TITLE_SIZES['3xl'];
+  const iconSizeClass = ICON_SIZES['3xl'];
   const iconColorStyle = metadata?.header_icon_color ? { color: metadata.header_icon_color } : undefined;
-  const subtitleTextSizeClass = SUBTITLE_TEXT_SIZES[metadata?.header_subtitle_text_size || 'xs'] || 'text-xs';
-  const subtitleBgStyle = metadata?.header_subtitle_bg_color ? { backgroundColor: metadata.header_subtitle_bg_color } : undefined;
+  const subtitleTextSizeClass = SUBTITLE_TEXT_SIZES['base'];
+  // Fond blanc forcé pour les descriptions
+  const subtitleBgClass = 'bg-white dark:bg-card';
 
   const canEdit = canEditPageMetadata(globalRole) && pageKey;
 
@@ -348,8 +351,7 @@ export function UnifiedHeader() {
         {/* Subtitle bar - below main header */}
         {displaySubtitle && (
           <div 
-            className={`px-4 py-1 border-t border-border/50 ${!subtitleBgStyle ? 'bg-muted/30' : ''}`}
-            style={subtitleBgStyle}
+            className={`px-4 py-2 border-t border-border/50 ${subtitleBgClass}`}
           >
             <p className={`${subtitleTextSizeClass} text-muted-foreground text-center truncate`}>
               {displaySubtitle}
