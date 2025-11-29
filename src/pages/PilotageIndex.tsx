@@ -3,13 +3,24 @@ import { BarChart3, ListTodo, Tv, Calendar, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
+import { useMenuLabels } from '@/hooks/use-page-metadata';
+
+// Page keys correspondant aux routes
+const ROUTE_TO_PAGE_KEY: Record<string, string> = {
+  [ROUTES.pilotage.statsHub]: 'pilotage_statistiques',
+  [ROUTES.pilotage.indicateurs]: 'pilotage_indicateurs',
+  [ROUTES.pilotage.actions]: 'pilotage_actions',
+  [ROUTES.pilotage.diffusion]: 'pilotage_diffusion',
+  [ROUTES.pilotage.rhTech]: 'pilotage_rh_tech',
+  [ROUTES.pilotage.equipe]: 'pilotage_equipe',
+};
 
 const pilotageModules = [
   {
     title: 'Statistiques',
     description: 'Tableau de bord et KPI de votre agence',
     icon: BarChart3,
-    href: ROUTES.pilotage.indicateurs,
+    href: ROUTES.pilotage.statsHub,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
   },
@@ -49,6 +60,16 @@ const pilotageModules = [
 ];
 
 export default function PilotageIndex() {
+  const menuLabels = useMenuLabels();
+
+  const getModuleTitle = (module: typeof pilotageModules[0]): string => {
+    const pageKey = ROUTE_TO_PAGE_KEY[module.href];
+    if (pageKey && menuLabels.has(pageKey)) {
+      return menuLabels.get(pageKey)!;
+    }
+    return module.title;
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
 
@@ -63,9 +84,9 @@ export default function PilotageIndex() {
                     <Icon className={`w-6 h-6 ${module.color}`} />
                   </div>
                   <div className="flex items-center gap-2">
-                    <CardTitle className="text-lg">{module.title}</CardTitle>
+                    <CardTitle className="text-lg">{getModuleTitle(module)}</CardTitle>
                     {module.badge && (
-                      <Badge variant="secondary" className="text-xs bg-orange-500 text-white">
+                      <Badge variant="secondary" className="text-xs bg-helpconfort-orange text-white">
                         {module.badge}
                       </Badge>
                     )}
