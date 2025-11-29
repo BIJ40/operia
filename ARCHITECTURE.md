@@ -276,16 +276,19 @@ Collaborateurs d'agence (inscrits ou non).
 - `get_effective_permission_level()` - Fonction de calcul permissions - **SUPPRIMÉE**
 - `app_role` - Enum des rôles applicatifs - **SUPPRIMÉ**
 
-**Colonnes conservées dans `profiles` (référence historique, non utilisées) :**
-- `group_id` - Ancien lien vers groups
-- `role_id` - Ancien lien vers roles
-- `system_role` - Ancien rôle système V1
+**Colonnes legacy supprimées de `profiles` (2025-11-29) :**
+- `group_id` - Ancien lien vers groups - **SUPPRIMÉE**
+- `role_id` - Ancien lien vers roles - **SUPPRIMÉE**
+- `system_role` - Ancien rôle système V1 - **SUPPRIMÉE**
+- `support_level` - Ancien niveau support - **SUPPRIMÉE** (remplacé par `enabled_modules.support.options.level`)
+- `service_competencies` - Anciennes compétences - **SUPPRIMÉE** (remplacé par `enabled_modules.support.options.skills`)
 
 **Fichiers supprimés lors du nettoyage legacy :**
 - `src/types/permissions.ts` - Types V1 (SystemRole, AppRole, ScopeSlug)
 - `src/services/permissionsService.ts` - Service V1 complet
 - `src/config/permissionsHelpTexts.ts` - Textes d'aide V1
 - `src/hooks/use-permissions-admin.ts` - Hooks admin V1
+- `src/pages/AdminSupportLevels.tsx` - Page admin legacy
 - `supabase/functions/migrate-user-roles-v2/` - Edge function de migration
 
 > **Note :** Le système V2 est la seule source de vérité. Toutes les policies RLS utilisent `has_min_global_role()`, `has_support_access()`, `has_franchiseur_access()`.

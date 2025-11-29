@@ -53,12 +53,6 @@ export function NavigationCards() {
           description: 'Gérer les tickets',
         },
         {
-          to: '/admin/support-levels',
-          icon: TrendingUp,
-          title: 'Niveaux de support',
-          description: 'Gérer N1, N2, N3',
-        },
-        {
           to: '/admin/escalation-history',
           icon: FileStack,
           title: 'Historique des escalades',

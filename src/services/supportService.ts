@@ -130,28 +130,42 @@ export interface TicketFilters {
 // ============================================
 
 /**
- * Récupère tous les Support Users avec leurs compétences
+ * Récupère tous les Support Users V2 avec leurs compétences
+ * Utilise enabled_modules.support au lieu des anciennes colonnes
  */
 export async function getAllSupportUsers(): Promise<SupportUser[]> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, email, first_name, last_name, support_level, service_competencies')
-    .not('support_level', 'is', null)
-    .gt('support_level', 0);
+    .select('id, email, first_name, last_name, enabled_modules')
+    .eq('is_active', true);
 
   if (error) {
     console.error('Error fetching support users:', error);
     return [];
   }
 
-  return (data || []).map(profile => ({
-    id: profile.id,
-    email: profile.email,
-    first_name: profile.first_name,
-    last_name: profile.last_name,
-    support_level: profile.support_level || 1,
-    service_competencies: profile.service_competencies as Record<string, boolean> | null,
-  }));
+  // Filtrer les profils avec support activé
+  return (data || [])
+    .filter(profile => {
+      const modules = profile.enabled_modules as any;
+      if (!modules?.support?.enabled) return false;
+      const options = modules.support.options || {};
+      return options.agent_support === true || options.admin_support === true;
+    })
+    .map(profile => {
+      const modules = profile.enabled_modules as any;
+      const options = modules?.support?.options || {};
+      return {
+        id: profile.id,
+        email: profile.email,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        support_level: options.level || 1,
+        service_competencies: options.skills ? 
+          options.skills.reduce((acc: any, skill: string) => ({ ...acc, [skill]: true }), {}) : 
+          null,
+      };
+    });
 }
 
 /**
@@ -348,17 +362,17 @@ export function buildTicketFilterQuery(
 
 /**
  * Récupère les tickets filtrés pour un Support User
- * Basé sur ses compétences et son niveau
+ * Basé sur ses compétences et son niveau (V2: enabled_modules.support)
  */
 export async function getTicketsForSupportUser(
   userId: string,
   filters: TicketFilters = {}
 ): Promise<any[]> {
   try {
-    // Récupérer le profil du SU
+    // Récupérer le profil du SU avec enabled_modules
     const { data: profile } = await supabase
       .from('profiles')
-      .select('support_level, service_competencies')
+      .select('enabled_modules')
       .eq('id', userId)
       .single();
 
@@ -366,8 +380,11 @@ export async function getTicketsForSupportUser(
       return [];
     }
 
-    const supportLevel = profile.support_level || 1;
-    const competencies = profile.service_competencies as Record<string, boolean> | null;
+    const modules = profile.enabled_modules as any;
+    const options = modules?.support?.options || {};
+    const supportLevel = options.level || 1;
+    const skills = options.skills || [];
+    const competencies = skills.reduce((acc: any, skill: string) => ({ ...acc, [skill]: true }), {});
 
     // Construire la requête de base
     let query = supabase.from('support_tickets').select('*');

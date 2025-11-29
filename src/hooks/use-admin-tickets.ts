@@ -8,8 +8,8 @@ interface SupportUser {
   id: string;
   first_name: string;
   last_name: string;
-  support_level: number;
-  service_competencies: any;
+  global_role: string | null;
+  enabled_modules: any;
   franchiseur_role?: string;
 }
 
@@ -405,12 +405,11 @@ export const useAdminTickets = () => {
 
   const loadSupportUsers = async () => {
     try {
-      // V2: Charger les utilisateurs avec global_role N3+ (peuvent gérer les tickets)
-      // N3 = franchisor_user, N4 = franchisor_admin, N5 = platform_admin, N6 = superadmin
+      // V2: Charger les utilisateurs avec enabled_modules.support
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, support_level, service_competencies, global_role')
-        .in('global_role', ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin']);
+        .select('id, first_name, last_name, global_role, enabled_modules')
+        .eq('is_active', true);
 
       if (profilesError) throw profilesError;
 
@@ -419,7 +418,15 @@ export const useAdminTickets = () => {
         return;
       }
 
-      const userIds = profiles.map(p => p.id);
+      // Filtrer les profils qui ont accès support activé
+      const supportProfiles = profiles.filter(p => {
+        const modules = p.enabled_modules as any;
+        if (!modules?.support?.enabled) return false;
+        const options = modules.support.options || {};
+        return options.agent_support === true || options.admin_support === true;
+      });
+
+      const userIds = supportProfiles.map(p => p.id);
 
       // Also load franchiseur roles for these users
       const { data: franchiseurRoles } = await supabase
@@ -428,7 +435,7 @@ export const useAdminTickets = () => {
         .in('user_id', userIds);
 
       // Merge franchiseur_role into profiles
-      const usersWithRoles = profiles.map(profile => ({
+      const usersWithRoles = supportProfiles.map(profile => ({
         ...profile,
         franchiseur_role: franchiseurRoles?.find(fr => fr.user_id === profile.id)?.franchiseur_role
       }));
