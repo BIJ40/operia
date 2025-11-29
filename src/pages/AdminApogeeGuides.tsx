@@ -22,6 +22,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   getAllApogeeGuides,
   insertApogeeGuide,
@@ -45,6 +47,7 @@ export default function AdminApogeeGuides() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRegeneratingRAG, setIsRegeneratingRAG] = useState(false);
   const [isSavingWithRAG, setIsSavingWithRAG] = useState(false);
+  const [autoRegenerateRAG, setAutoRegenerateRAG] = useState(true);
   const [formData, setFormData] = useState<ApogeeGuideInsert>({
     titre: '',
     categorie: '',
@@ -101,13 +104,15 @@ export default function AdminApogeeGuides() {
       queryClient.invalidateQueries({ queryKey: ['apogee-guides'] });
       toast.success('Guide créé avec succès');
       
-      // Auto-regenerate RAG
-      toast.info('Mise à jour de l\'index RAG...');
-      const ragSuccess = await regenerateRAGIndex();
-      if (ragSuccess) {
-        toast.success('Index RAG actualisé');
-      } else {
-        toast.warning('Guide créé mais index RAG non actualisé');
+      // Auto-regenerate RAG if enabled
+      if (autoRegenerateRAG) {
+        toast.info('Mise à jour de l\'index RAG...');
+        const ragSuccess = await regenerateRAGIndex();
+        if (ragSuccess) {
+          toast.success('Index RAG actualisé');
+        } else {
+          toast.warning('Guide créé mais index RAG non actualisé');
+        }
       }
       
       setIsSavingWithRAG(false);
@@ -126,13 +131,15 @@ export default function AdminApogeeGuides() {
       queryClient.invalidateQueries({ queryKey: ['apogee-guides'] });
       toast.success('Guide mis à jour');
       
-      // Auto-regenerate RAG
-      toast.info('Mise à jour de l\'index RAG...');
-      const ragSuccess = await regenerateRAGIndex();
-      if (ragSuccess) {
-        toast.success('Index RAG actualisé');
-      } else {
-        toast.warning('Guide mis à jour mais index RAG non actualisé');
+      // Auto-regenerate RAG if enabled
+      if (autoRegenerateRAG) {
+        toast.info('Mise à jour de l\'index RAG...');
+        const ragSuccess = await regenerateRAGIndex();
+        if (ragSuccess) {
+          toast.success('Index RAG actualisé');
+        } else {
+          toast.warning('Guide mis à jour mais index RAG non actualisé');
+        }
       }
       
       setIsSavingWithRAG(false);
@@ -455,6 +462,16 @@ export default function AdminApogeeGuides() {
                 onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                 placeholder="tag1, tag2, tag3"
               />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="auto-rag"
+                checked={autoRegenerateRAG}
+                onCheckedChange={setAutoRegenerateRAG}
+              />
+              <Label htmlFor="auto-rag" className="text-sm">
+                Régénérer l'index RAG automatiquement après enregistrement
+              </Label>
             </div>
             <div>
               <label className="text-sm font-medium">Texte *</label>
