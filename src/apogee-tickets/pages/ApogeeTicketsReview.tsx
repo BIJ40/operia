@@ -55,6 +55,7 @@ export default function ApogeeTicketsReview() {
         h_max: currentTicket.h_max,
         severity: currentTicket.severity,
         notes_internes: currentTicket.notes_internes,
+        heat_priority: currentTicket.heat_priority,
       });
       setHasChanges(false);
     }
@@ -415,6 +416,26 @@ export default function ApogeeTicketsReview() {
                     value={formValues.h_max ?? ''}
                     onChange={(e) => updateField('h_max', e.target.value ? Number(e.target.value) : null)}
                     className="h-9"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Priorité Thermique */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Priorité Thermique (0-12)
+              </label>
+              <div className="mt-2 flex items-center gap-4">
+                <HeatPriorityBadge priority={formValues.heat_priority as number | undefined} size="default" showLabel />
+                <div className="flex-1">
+                  <Slider
+                    value={[(formValues.heat_priority as number) ?? 3]}
+                    min={0}
+                    max={12}
+                    step={1}
+                    onValueChange={(v) => updateField('heat_priority', v[0])}
+                    className="w-full"
                   />
                 </div>
               </div>

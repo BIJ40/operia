@@ -34,12 +34,20 @@ TYPES DE TICKET :
 - data : donnée incohérente, mauvais calcul, doublon
 - process : workflow, statut, transition, règle métier
 
-PRIORITÉS NORMALISÉES :
-- P0 : Bloquant (plante, page blanche, impossible de, crash)
-- P1 : Critique (bug sur fonction critique)
-- P2 : Important (incomplet, manque, pas clair)
-- P3 : Confort/UX (amélioration, serait bien)
-- P4 : Idée/Backlog
+PRIORITÉ THERMIQUE (0-12) - Calcul basé sur l'onglet source et urgence:
+- 12: Urgence absolue (production bloquée)
+- 11: Critique (blocage majeur)
+- 10: Brûlant (Priorité A x1)
+- 9: Chaud+ (Priorité A x2)
+- 8: Chaud (Priorité A x3)
+- 7: Chaud- (Priorité B x1)
+- 6: Tiède+ (Priorité B x2)
+- 5: Tiède (Priorité B x3)
+- 4: Tiède- (Priorité C)
+- 3: Frais (sans priorité)
+- 2: Froid
+- 1: Glacial
+- 0: Gelé (backlog lointain)
 
 TAGS D'IMPACT (plusieurs possibles) :
 - impact_facturation
@@ -50,6 +58,47 @@ TAGS D'IMPACT (plusieurs possibles) :
 
 STATUTS QUALIF :
 - a_qualifier, reproduit, spec_ok, pret_dev, en_dev, en_test, deploye, obsolete`;
+
+// Fonction de calcul de priorité thermique basée sur les règles métier
+function calculateHeatPriority(sourceSheet: string | null, priority: string | null): number {
+  const sheet = (sourceSheet || '').toLowerCase().trim();
+  const prio = (priority || '').toLowerCase().trim();
+
+  // Priorités A
+  if (sheet.includes('priorit') && sheet.includes('a')) {
+    if (prio.includes('x1') || prio === '1') return 10;
+    if (prio.includes('x2') || prio === '2') return 9;
+    if (prio.includes('x3') || prio === '3') return 8;
+    return 9;
+  }
+
+  // Priorités B
+  if (sheet.includes('priorit') && sheet.includes('b')) {
+    if (prio.includes('x1') || prio === '1') return 7;
+    if (prio.includes('x2') || prio === '2') return 6;
+    if (prio.includes('x3') || prio === '3') return 5;
+    return 6;
+  }
+
+  // Liste évaluée
+  if (sheet.includes('evalué') || sheet.includes('prioriser')) {
+    if (prio.includes('c')) return 4;
+    return 3;
+  }
+
+  // LISTE V1
+  if (sheet.includes('v1')) return 3;
+
+  // Bugs
+  if (sheet.includes('bug')) {
+    if (prio.includes('urgent') || prio.includes('bloquant')) return 11;
+    if (prio.includes('critique')) return 9;
+    if (prio.includes('important')) return 7;
+    return 5;
+  }
+
+  return 3;
+}
 
 const FUNCTION_SCHEMA = {
   type: "function",
@@ -217,6 +266,9 @@ Analyse et retourne la qualification complète via la fonction qualify_ticket.`;
 
         const qualification = JSON.parse(toolCall.function.arguments);
 
+        // Calculer la priorité thermique
+        const heatPriority = calculateHeatPriority(ticket.source_sheet, ticket.priority);
+
         // Mettre à jour le ticket
         const { error: updateError } = await supabase
           .from("apogee_tickets")
@@ -229,6 +281,7 @@ Analyse et retourne la qualification complète via la fonction qualify_ticket.`;
             notes_internes: qualification.notes_internes,
             element_concerne: qualification.titre_ameliore || ticket.element_concerne,
             description: qualification.description_amelioree || ticket.description,
+            heat_priority: heatPriority,
             is_qualified: true,
             qualified_at: new Date().toISOString(),
             qualified_by: user_id || null,

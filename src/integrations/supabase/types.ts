@@ -503,6 +503,7 @@ export type Database = {
           h_min: number | null
           hc_status_raw: string | null
           hca_code: string | null
+          heat_priority: number | null
           id: string
           impact_tags: string[] | null
           is_qualified: boolean | null
@@ -537,6 +538,7 @@ export type Database = {
           h_min?: number | null
           hc_status_raw?: string | null
           hca_code?: string | null
+          heat_priority?: number | null
           id?: string
           impact_tags?: string[] | null
           is_qualified?: boolean | null
@@ -571,6 +573,7 @@ export type Database = {
           h_min?: number | null
           hc_status_raw?: string | null
           hca_code?: string | null
+          heat_priority?: number | null
           id?: string
           impact_tags?: string[] | null
           is_qualified?: boolean | null

@@ -236,6 +236,9 @@ function rowToTicket(row: ImportedRow): ApogeeTicketInsert {
     priority = PRIORITY_MAPPING[prioRaw] || prioRaw;
   }
 
+  // Calculer heat_priority basé sur source_sheet et priority
+  const heatPriority = calculateHeatPriorityFromRow(row.sheetName, prioRaw);
+
   // Construire le titre: element_concerne > module > description
   let title = 'Sans titre';
   if (elementConcerne && elementConcerne !== moduleValue) {
@@ -269,7 +272,49 @@ function rowToTicket(row: ImportedRow): ApogeeTicketInsert {
     source_row_index: row.rowIndex,
     external_key: `${row.sheetName}#${row.rowIndex}`,
     created_from: 'IMPORT',
+    heat_priority: heatPriority,
   };
+}
+
+/**
+ * Calcule la priorité thermique (0-12) basée sur l'onglet source et la priorité
+ * Règles:
+ * - Priorités A: x1=10, x2=9, x3=8
+ * - Priorités B: x1=7, x2=6, x3=5
+ * - Liste évaluée: C=4, sans prio=3
+ * - LISTE V1: 3
+ */
+function calculateHeatPriorityFromRow(sourceSheet: string, priority: string): number {
+  const sheet = (sourceSheet || '').toLowerCase();
+  const prio = (priority || '').toLowerCase();
+
+  // Priorités A
+  if (sheet.includes('priorit') && sheet.includes('a')) {
+    if (prio.includes('x1') || prio === '1' || prio === 'a') return 10;
+    if (prio.includes('x2') || prio === '2') return 9;
+    if (prio.includes('x3') || prio === '3') return 8;
+    return 9; // Défaut A
+  }
+
+  // Priorités B
+  if (sheet.includes('priorit') && sheet.includes('b')) {
+    if (prio.includes('x1') || prio === '1' || prio === 'b') return 7;
+    if (prio.includes('x2') || prio === '2') return 6;
+    if (prio.includes('x3') || prio === '3') return 5;
+    return 6; // Défaut B
+  }
+
+  // Liste évaluée à prioriser
+  if (sheet.includes('évalué') || sheet.includes('evalué') || sheet.includes('prioriser')) {
+    if (prio.includes('c')) return 4;
+    return 3;
+  }
+
+  // LISTE V1 
+  if (sheet.includes('v1')) return 3;
+
+  // Défaut
+  return 3;
 }
 
 // Extraire les commentaires d'une ligne

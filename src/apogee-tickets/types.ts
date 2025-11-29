@@ -92,6 +92,8 @@ export interface ApogeeTicket {
   is_qualified: boolean;
   qualified_at: string | null;
   qualified_by: string | null;
+  // Priorité thermique (0-12)
+  heat_priority: number | null;
   // Relations
   apogee_modules?: ApogeeModule;
   apogee_priorities?: ApogeePriority;
@@ -135,6 +137,7 @@ export interface ApogeeTicketInsert {
   module_area?: string | null;
   created_from?: CreatedFrom;
   needs_completion?: boolean;
+  heat_priority?: number | null;
 }
 
 export interface ApogeeTicketCommentInsert {
