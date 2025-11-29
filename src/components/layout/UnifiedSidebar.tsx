@@ -166,10 +166,10 @@ export function UnifiedSidebar() {
           icon: PieChart, 
           children: [
             { title: 'Indicateurs généraux', url: ROUTES.pilotage.indicateurs, icon: BarChart3, description: 'Tableau de bord et KPI de votre agence' },
-            { title: 'Indicateurs Apporteurs', url: ROUTES.pilotage.indicateursApporteurs, icon: BarChart3, description: 'Statistiques apporteurs' },
-            { title: 'Indicateurs Univers', url: ROUTES.pilotage.indicateursUnivers, icon: BarChart3, description: 'Statistiques par univers' },
-            { title: 'Indicateurs Techniciens', url: ROUTES.pilotage.indicateursTechniciens, icon: BarChart3, description: 'Statistiques techniciens' },
-            { title: 'Indicateurs SAV', url: ROUTES.pilotage.indicateursSav, icon: BarChart3, description: 'Statistiques SAV' },
+            { title: 'Indicateurs Apporteurs', url: ROUTES.pilotage.indicateursApporteurs, icon: Users, description: 'Statistiques apporteurs' },
+            { title: 'Indicateurs Univers', url: ROUTES.pilotage.indicateursUnivers, icon: Building2, description: 'Statistiques par univers' },
+            { title: 'Indicateurs Techniciens', url: ROUTES.pilotage.indicateursTechniciens, icon: Calendar, description: 'Statistiques techniciens' },
+            { title: 'Indicateurs SAV', url: ROUTES.pilotage.indicateursSav, icon: LifeBuoy, description: 'Statistiques SAV' },
           ]
         },
         { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
