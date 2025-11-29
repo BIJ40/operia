@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
@@ -13,6 +13,7 @@ import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
 import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { ActionsConfigDialog } from '../components/ActionsConfigDialog';
 import { useTicketQualification } from '../hooks/useTicketQualification';
+import { useRecalculateHeatPriority } from '../hooks/useRecalculateHeatPriority';
 import type { ApogeeTicket, TicketFilters as Filters } from '../types';
 import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
@@ -37,6 +38,7 @@ export default function ApogeeTicketsKanban() {
   } = useApogeeTickets(filters);
 
   const { qualifyAllUnqualified, isQualifying } = useTicketQualification();
+  const { recalculateAll, isRecalculating } = useRecalculateHeatPriority();
 
   // Compteurs
   const incompleteCount = tickets.filter(t => t.needs_completion).length;
@@ -101,6 +103,14 @@ export default function ApogeeTicketsKanban() {
               {isQualifying ? 'Qualification...' : `Qualifier ${unqualifiedCount} ticket(s)`}
             </Button>
           )}
+          <Button
+            variant="outline"
+            onClick={() => recalculateAll()}
+            disabled={isRecalculating}
+          >
+            <Flame className="h-4 w-4 mr-2" />
+            {isRecalculating ? 'Recalcul...' : 'Recalculer priorités'}
+          </Button>
           {incompleteCount > 0 && (
             <Link to={ROUTES.admin.apogeeTicketsIncomplete}>
               <Button variant="outline" className="text-orange-600 border-orange-300 hover:bg-orange-50">

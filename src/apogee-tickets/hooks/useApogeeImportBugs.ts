@@ -155,15 +155,22 @@ function rowToTicket(row: BugsRow): ApogeeTicketInsert {
   const firstLine = row.description.split('\n')[0].split('<br>')[0].substring(0, 255);
   const normalizedModule = normalizeModule(row.module);
   
+  // Calcul heat_priority pour BUGS (5 par défaut, ajusté selon statut)
+  let heatPriority = 5;
+  const statut = (row.statut || '').toLowerCase();
+  if (statut.includes('urgent') || statut.includes('bloquant')) heatPriority = 11;
+  else if (statut.includes('critique')) heatPriority = 9;
+  else if (statut.includes('important')) heatPriority = 7;
+  
   return {
     element_concerne: firstLine,
     description: row.description,
     module: normalizedModule,
-    module_area: row.module || null, // Garder la valeur brute pour référence
-    priority: null, // Pas de priorité dans BUGS
+    module_area: row.module || null,
+    priority: null,
     action_type: row.statut || null,
     kanban_status: normalizeStatus(row.statut),
-    owner_side: 'HC', // Par défaut HC pour les bugs
+    owner_side: 'HC',
     h_min: null,
     h_max: null,
     hca_code: null,
@@ -173,7 +180,8 @@ function rowToTicket(row: BugsRow): ApogeeTicketInsert {
     source_row_index: row.rowIndex,
     external_key: `BUGS#${row.rowIndex}`,
     created_from: 'IMPORT',
-    needs_completion: !row.module, // Incomplet si pas de module
+    needs_completion: !row.module,
+    heat_priority: heatPriority,
   };
 }
 

@@ -26,13 +26,16 @@ import {
   Download,
   Trash2,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Flame
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useApogeeTicket } from '../hooks/useApogeeTickets';
 import { useTicketAttachments } from '../hooks/useTicketAttachments';
 import { useTicketQualification } from '../hooks/useTicketQualification';
+import { HeatPriorityBadge } from './HeatPriorityBadge';
+import { Slider } from '@/components/ui/slider';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType } from '../types';
 
 interface TicketDetailDrawerProps {
@@ -307,6 +310,27 @@ export function TicketDetailDrawer({
                         value={ticket.h_max ?? ''}
                         onChange={(e) => handleFieldUpdate('h_max', e.target.value ? Number(e.target.value) : null)}
                         className="h-9"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* PRIORITÉ THERMIQUE */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                    <Flame className="h-4 w-4" />
+                    Priorité Thermique
+                  </label>
+                  <div className="mt-2 flex items-center gap-4">
+                    <HeatPriorityBadge priority={ticket.heat_priority} size="default" showLabel />
+                    <div className="flex-1">
+                      <Slider
+                        value={[ticket.heat_priority ?? 3]}
+                        min={0}
+                        max={12}
+                        step={1}
+                        onValueChange={(v) => handleFieldUpdate('heat_priority', v[0])}
+                        className="w-full"
                       />
                     </div>
                   </div>
