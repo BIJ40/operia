@@ -800,8 +800,10 @@ export type Database = {
       page_metadata: {
         Row: {
           created_at: string
+          header_icon_size: string | null
           header_subtitle: string | null
           header_title: string | null
+          header_title_size: string | null
           id: string
           menu_label: string | null
           page_key: string
@@ -809,8 +811,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          header_icon_size?: string | null
           header_subtitle?: string | null
           header_title?: string | null
+          header_title_size?: string | null
           id?: string
           menu_label?: string | null
           page_key: string
@@ -818,8 +822,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          header_icon_size?: string | null
           header_subtitle?: string | null
           header_title?: string | null
+          header_title_size?: string | null
           id?: string
           menu_label?: string | null
           page_key?: string

@@ -7,6 +7,8 @@ export interface PageMetadata {
   header_title: string | null;
   header_subtitle: string | null;
   menu_label: string | null;
+  header_title_size: string | null;
+  header_icon_size: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -16,6 +18,8 @@ interface UpsertPageMetadataParams {
   header_title?: string | null;
   header_subtitle?: string | null;
   menu_label?: string | null;
+  header_title_size?: string | null;
+  header_icon_size?: string | null;
 }
 
 /**
@@ -64,9 +68,11 @@ export function useUpsertPageMetadata() {
         const { data, error } = await supabase
           .from('page_metadata')
           .update({
-            header_title,
-            header_subtitle,
-            menu_label,
+            header_title: params.header_title,
+            header_subtitle: params.header_subtitle,
+            menu_label: params.menu_label,
+            header_title_size: params.header_title_size,
+            header_icon_size: params.header_icon_size,
             updated_at: new Date().toISOString(),
           })
           .eq('page_key', page_key)
@@ -81,9 +87,11 @@ export function useUpsertPageMetadata() {
           .from('page_metadata')
           .insert({
             page_key,
-            header_title,
-            header_subtitle,
-            menu_label,
+            header_title: params.header_title,
+            header_subtitle: params.header_subtitle,
+            menu_label: params.menu_label,
+            header_title_size: params.header_title_size,
+            header_icon_size: params.header_icon_size,
           })
           .select()
           .single();
