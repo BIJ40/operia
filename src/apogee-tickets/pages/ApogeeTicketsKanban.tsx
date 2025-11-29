@@ -9,9 +9,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
@@ -34,6 +39,22 @@ export default function ApogeeTicketsKanban() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [columnWidth, setColumnWidth] = useState(288); // 288px = w-72
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+
+  const toggleColumnVisibility = (statusId: string) => {
+    setHiddenColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(statusId)) {
+        next.delete(statusId);
+      } else {
+        next.add(statusId);
+      }
+      return next;
+    });
+  };
+
+  const showAllColumns = () => setHiddenColumns(new Set());
+  const hideAllColumns = () => setHiddenColumns(new Set(statuses.map(s => s.id)));
 
   const {
     tickets,
@@ -195,18 +216,65 @@ export default function ApogeeTicketsKanban() {
           })}
         </div>
         
-        {/* Contrôle largeur colonnes */}
-        <div className="flex items-center gap-2 ml-auto">
-          <Columns className="h-4 w-4 text-muted-foreground" />
-          <Slider
-            value={[columnWidth]}
-            onValueChange={([v]) => setColumnWidth(v)}
-            min={200}
-            max={450}
-            step={10}
-            className="w-28"
-          />
-          <span className="text-xs text-muted-foreground w-12">{columnWidth}px</span>
+        {/* Contrôles colonnes */}
+        <div className="flex items-center gap-4 ml-auto">
+          {/* Visibilité colonnes */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Eye className="h-4 w-4" />
+                Colonnes
+                {hiddenColumns.size > 0 && (
+                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                    {statuses.length - hiddenColumns.size}/{statuses.length}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-56">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Colonnes visibles</span>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={showAllColumns}>
+                      Tout
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={hideAllColumns}>
+                      Aucun
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  {statuses.map((status) => (
+                    <label
+                      key={status.id}
+                      className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1"
+                    >
+                      <Checkbox
+                        checked={!hiddenColumns.has(status.id)}
+                        onCheckedChange={() => toggleColumnVisibility(status.id)}
+                      />
+                      <span className="text-sm">{status.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Largeur colonnes */}
+          <div className="flex items-center gap-2">
+            <Columns className="h-4 w-4 text-muted-foreground" />
+            <Slider
+              value={[columnWidth]}
+              onValueChange={([v]) => setColumnWidth(v)}
+              min={200}
+              max={450}
+              step={10}
+              className="w-28"
+            />
+            <span className="text-xs text-muted-foreground w-12">{columnWidth}px</span>
+          </div>
         </div>
       </div>
 
@@ -218,7 +286,7 @@ export default function ApogeeTicketsKanban() {
       ) : (
         <TicketKanban
           tickets={tickets}
-          statuses={statuses}
+          statuses={statuses.filter(s => !hiddenColumns.has(s.id))}
           modules={modules}
           ownerSides={ownerSides}
           onStatusChange={handleStatusChange}
