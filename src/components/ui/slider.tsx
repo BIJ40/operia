@@ -3,11 +3,15 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 
 import { cn } from "@/lib/utils";
 
+interface SliderProps extends React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> {
+  trackClassName?: string;
+  rangeClassName?: string;
+}
+
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
->(({ className, value, defaultValue, ...props }, ref) => {
-  // Determine number of thumbs based on value/defaultValue
+  SliderProps
+>(({ className, value, defaultValue, trackClassName, rangeClassName, ...props }, ref) => {
   const thumbCount = value?.length ?? defaultValue?.length ?? 1;
   
   return (
@@ -18,8 +22,8 @@ const Slider = React.forwardRef<
       defaultValue={defaultValue}
       {...props}
     >
-      <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
-        <SliderPrimitive.Range className="absolute h-full bg-primary" />
+      <SliderPrimitive.Track className={cn("relative h-2 w-full grow overflow-hidden rounded-full bg-secondary", trackClassName)}>
+        <SliderPrimitive.Range className={cn("absolute h-full bg-primary", rangeClassName)} />
       </SliderPrimitive.Track>
       {Array.from({ length: thumbCount }).map((_, index) => (
         <SliderPrimitive.Thumb
