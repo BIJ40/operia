@@ -9,10 +9,16 @@ import {
   GLOBAL_ROLE_COLORS,
   GlobalRole,
   getAllRolesSorted,
-  getAssignableRoles,
-  canManageUsers,
   getRoleLevel
 } from '@/types/globalRoles';
+import {
+  getUserManagementCapabilities,
+  canViewUser,
+  canManageUser,
+  canDeactivateUser as canDeactivateUserHelper,
+  canAssignRoleV2,
+  LEGACY_FIELDS
+} from '@/config/roleMatrix';
 import { 
   MODULE_DEFINITIONS, 
   EnabledModules,
@@ -165,46 +171,42 @@ export default function AdminUsersUnified() {
   const { globalRole, suggestedGlobalRole, isAdmin, user, agence: currentUserAgency } = useAuth();
   
   // ============================================================================
-  // PERMISSIONS V2 - Helpers locaux
+  // PERMISSIONS V2 - Utilisant la matrice de gestion centralisée
   // ============================================================================
-  // Utiliser le rôle effectif (DB ou suggestion depuis legacy)
   const effectiveUserRole = globalRole ?? suggestedGlobalRole;
   const currentUserLevel = getRoleLevel(effectiveUserRole);
+  const userManagementCaps = useMemo(
+    () => getUserManagementCapabilities(effectiveUserRole),
+    [effectiveUserRole]
+  );
   
-  // N2+ peut accéder à la page
-  const canAccessPage = currentUserLevel >= GLOBAL_ROLES.franchisee_admin || isAdmin;
+  // N2+ peut accéder à la page (viewScope !== 'none')
+  const canAccessPage = userManagementCaps.viewScope !== 'none' || isAdmin;
   
-  // N3+ peut créer des utilisateurs, N2 uniquement dans sa propre agence
-  const canCreateUsers = currentUserLevel >= GLOBAL_ROLES.franchisee_admin;
+  // Peut créer des utilisateurs si canCreateRoles non vide
+  const canCreateUsers = userManagementCaps.canCreateRoles.length > 0;
   
-  // N5+ peut supprimer des utilisateurs
-  const canDeleteUsers = currentUserLevel >= GLOBAL_ROLES.platform_admin;
+  // Peut supprimer des utilisateurs (hard delete)
+  const canDeleteUsers = userManagementCaps.canDeleteUsers;
   
-  // Vérifier si on peut modifier un utilisateur donné
+  // Vérifier si on peut modifier un utilisateur donné (utilise le helper centralisé)
   const canEditUser = (targetRole: GlobalRole | null, targetAgency: string | null): boolean => {
-    if (currentUserLevel < GLOBAL_ROLES.franchisee_admin) return false;
-    
-    const targetLevel = getRoleLevel(targetRole);
-    
-    // N2: uniquement même agence et max N2
-    if (currentUserLevel === GLOBAL_ROLES.franchisee_admin) {
-      if (currentUserAgency !== targetAgency) return false;
-      if (targetLevel > GLOBAL_ROLES.franchisee_admin) return false;
-      return true;
-    }
-    
-    // N3+: peut modifier si niveau cible <= niveau appelant
-    return targetLevel <= currentUserLevel;
+    return canManageUser(effectiveUserRole, currentUserAgency, targetRole, targetAgency);
   };
   
-  // Vérifier si on peut supprimer un utilisateur donné  
+  // Vérifier si on peut désactiver un utilisateur donné
+  const canDeactivateUserCheck = (targetRole: GlobalRole | null): boolean => {
+    return canDeactivateUserHelper(effectiveUserRole, targetRole);
+  };
+  
+  // Vérifier si on peut supprimer un utilisateur donné (hard delete)
   const canDeleteUser = (targetRole: GlobalRole | null): boolean => {
     if (!canDeleteUsers) return false;
-    const targetLevel = getRoleLevel(targetRole);
-    return targetLevel <= currentUserLevel;
+    return canDeactivateUserHelper(effectiveUserRole, targetRole);
   };
   
-  const assignableRoles = useMemo(() => getAssignableRoles(effectiveUserRole), [effectiveUserRole]);
+  // Rôles assignables selon la matrice
+  const assignableRoles = useMemo(() => userManagementCaps.canCreateRoles, [userManagementCaps]);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -300,29 +302,14 @@ export default function AdminUsersUnified() {
   const usersWithSuggestions = useMemo(() => {
     if (!users) return [];
     
-    // Filter users based on role level hierarchy:
-    // N3+ (franchisor_user, franchisor_admin, platform_admin, superadmin): all users
-    // N2 (franchisee_admin): only users from same agency
-    // N1 (franchisee_user): only users from same agency
-    // N0 (base_user): only themselves
+    // Filter users based on viewScope from getUserManagementCapabilities
     const visibleUsers = users.filter(u => {
-      // N3+ sees everyone
-      if (currentUserLevel >= GLOBAL_ROLES.franchisor_user) {
-        return true;
+      // Self scope: only see yourself
+      if (userManagementCaps.viewScope === 'self') {
+        return u.id === user?.id;
       }
-      
-      // N2 (franchisee_admin): same agency only
-      if (currentUserLevel === GLOBAL_ROLES.franchisee_admin) {
-        return u.agence === currentUserAgency;
-      }
-      
-      // N1 (franchisee_user): same agency only
-      if (currentUserLevel === GLOBAL_ROLES.franchisee_user) {
-        return u.agence === currentUserAgency;
-      }
-      
-      // N0 (base_user): only themselves
-      return u.id === user?.id;
+      // Use the centralized canViewUser helper for other cases
+      return canViewUser(effectiveUserRole, currentUserAgency, u.agence);
     });
     
     return visibleUsers.map(user => {
@@ -359,7 +346,7 @@ export default function AdminUsersUnified() {
         franchiseurRole: userFranchiseurRole?.franchiseur_role,
       };
     });
-  }, [users, capabilities, userRoles, franchiseurRoles]);
+  }, [users, capabilities, userRoles, franchiseurRoles, userManagementCaps, effectiveUserRole, currentUserAgency, user?.id]);
 
   // Get unique agencies
   const agencies = useMemo(() => {
