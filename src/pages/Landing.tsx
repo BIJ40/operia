@@ -52,9 +52,12 @@ export default function Landing() {
       const groupAccess = canAccessTileGroup(globalRole, tile.group as TileGroup, { agence });
       if (!groupAccess) return false;
       
-      // 2. Vérifier si la tuile nécessite un module spécifique
-      if (tile.requiresModule && !isModuleEnabled(enabledModules, tile.requiresModule)) {
-        return false;
+      // 2. Vérifier si la tuile nécessite un module spécifique (admins bypass)
+      if (tile.requiresModule) {
+        const isAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
+        if (!isAdmin && !isModuleEnabled(enabledModules, tile.requiresModule)) {
+          return false;
+        }
       }
       
       // 3. Vérifier l'accès à la tuile spécifique (passer canAccessSupportConsole pour CONSOLE_SUPPORT)
