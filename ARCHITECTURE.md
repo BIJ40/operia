@@ -258,6 +258,11 @@ Historique des calculs de redevances.
 
 ### Tables et Fichiers Legacy (SUPPRIMÉS)
 
+**Tables et fonctions DB supprimées (migration V2 complète) :**
+- `user_roles` - Table des rôles applicatifs (admin, user, support, franchiseur) - **SUPPRIMÉE**
+- `has_role()` - Fonction de vérification de rôle - **SUPPRIMÉE**
+- `app_role` - Enum des rôles applicatifs - **SUPPRIMÉ**
+
 **Tables DB conservées pour référence historique (non consultées par le code) :**
 - `role_permissions` - Anciennes permissions par rôle_agence
 - `user_permissions` - Anciennes permissions individuelles  
@@ -276,7 +281,8 @@ Historique des calculs de redevances.
 - `src/types/accessControl.ts` - Suppression des fonctions legacy mapping (`getGlobalRoleFromLegacy`, `getEnabledModulesFromLegacy`, `createAccessContext`)
 - `src/contexts/AuthContext.tsx` - Simplification pour V2 only (plus de fallback legacy)
 
-> **Note :** Le système V2 est maintenant la seule source de vérité. Tous les utilisateurs DOIVENT avoir `global_role` et `enabled_modules` définis en DB.
+> **Note :** Le système V2 est maintenant la seule source de vérité. Toutes les policies RLS utilisent `has_min_global_role()`, `has_support_access()`, `has_franchiseur_access()` au lieu de `has_role()`.
+
 
 ---
 
