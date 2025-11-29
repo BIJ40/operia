@@ -17,7 +17,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { getPageTitle } from '@/config/navigation';
 
 export function UnifiedHeader() {
   const location = useLocation();
@@ -25,9 +24,6 @@ export function UnifiedHeader() {
   const { isAdmin, isSupport, isLoggingOut, logout } = useAuth();
   const { toggleSidebar } = useSidebar();
   const { hasNewTickets, newTicketsCount } = useSupportNotifications();
-
-  // Get dynamic page title from centralized config
-  const currentPageTitle = getPageTitle(location.pathname);
 
   // Check if current page is editable (guides)
   const isEditablePage = location.pathname.startsWith('/apogee') || 
@@ -62,7 +58,7 @@ export function UnifiedHeader() {
         </div>
       )}
 
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 h-16">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 h-14">
         <div className="h-full px-4 flex items-center gap-4">
           {/* Sidebar toggle */}
           <Button 
@@ -74,12 +70,8 @@ export function UnifiedHeader() {
             <Menu className="w-5 h-5" />
           </Button>
 
-          {/* Page title - centered */}
-          <div className="flex-1 flex justify-center">
-            <h1 className="text-lg font-semibold text-foreground truncate">
-              {currentPageTitle}
-            </h1>
-          </div>
+          {/* Zone centrale vide - le titre est maintenant dans PageHeader */}
+          <div className="flex-1" />
 
           {/* Right side actions */}
           <div className="flex items-center gap-2 shrink-0">

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen, FileText, FolderOpen } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ROUTES } from '@/config/routes';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const academyModules = [
   {
@@ -33,16 +34,13 @@ const academyModules = [
 export default function AcademyIndex() {
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          <span>Help</span>
-          <span className="text-helpconfort-orange animate-pulse">!</span>
-          <span> Academy</span>
-        </h1>
-        <p className="text-muted-foreground">
-          Accédez à l'ensemble des guides et ressources de formation HelpConfort.
-        </p>
-      </div>
+      <PageHeader
+        pageKey="academy_index"
+        defaultTitle="Help! Academy"
+        defaultSubtitle="Accédez à l'ensemble des guides et ressources de formation HelpConfort."
+        backTo={ROUTES.home}
+        backLabel="Retour accueil"
+      />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {academyModules.map((module) => {

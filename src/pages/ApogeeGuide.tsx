@@ -1,7 +1,7 @@
 // Page dédiée au Guide Apogée (anciennement Home)
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 import * as Icons from 'lucide-react';
@@ -14,6 +14,7 @@ import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
 import { ImageUploader } from '@/components/ImageUploader';
 import { Block } from '@/types/block';
+import { PageHeader } from '@/components/layout/PageHeader';
 import {
   DndContext,
   closestCenter,
@@ -433,19 +434,13 @@ export default function ApogeeGuide() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-6xl mx-auto px-4 py-8">
-        <Link to={ROUTES.home} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
-          <Icons.ArrowLeft className="w-4 h-4" />
-          <span>Retour accueil</span>
-        </Link>
-        
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Guide d'utilisation Apogée
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Tout ce que vous devez savoir sur l'utilisation d'Apogée
-          </p>
-        </div>
+        <PageHeader
+          pageKey="academy_apogee"
+          defaultTitle="Guide d'utilisation Apogée"
+          defaultSubtitle="Tout ce que vous devez savoir sur l'utilisation d'Apogée"
+          backTo={ROUTES.academy.index}
+          backLabel="Retour Help! Academy"
+        />
 
         {!isEditMode && (
           <div className="mb-6 max-w-md mx-auto">
