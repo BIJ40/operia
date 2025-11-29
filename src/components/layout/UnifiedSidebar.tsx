@@ -49,23 +49,25 @@ export function UnifiedSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   // Auto-open groups based on current route
-  const getInitialOpenGroups = () => {
-    const groups = new Set<string>();
-    if (location.pathname.startsWith('/academy')) groups.add('help-academy');
-    if (location.pathname.startsWith('/hc-agency')) groups.add('pilotage');
-    if (location.pathname.startsWith('/support')) groups.add('support');
-    if (location.pathname.startsWith('/hc-reseau')) groups.add('franchiseur');
-    if (location.pathname.startsWith('/admin')) groups.add('admin');
-    return groups;
+  const getActiveGroup = (): string | null => {
+    if (location.pathname.startsWith('/academy')) return 'help-academy';
+    if (location.pathname.startsWith('/hc-agency')) return 'pilotage';
+    if (location.pathname.startsWith('/support')) return 'support';
+    if (location.pathname.startsWith('/hc-reseau')) return 'franchiseur';
+    if (location.pathname.startsWith('/admin')) return 'admin';
+    return null;
   };
   
-  const [openGroups, setOpenGroups] = useState<Set<string>>(() => getInitialOpenGroups());
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
+    const active = getActiveGroup();
+    return active ? new Set([active]) : new Set();
+  });
   
-  // Update open groups when route changes
+  // Fermer les autres groupes et ouvrir uniquement celui de la route active
   useEffect(() => {
-    const newGroups = getInitialOpenGroups();
-    if (newGroups.size > 0) {
-      setOpenGroups(prev => new Set([...prev, ...newGroups]));
+    const activeGroup = getActiveGroup();
+    if (activeGroup) {
+      setOpenGroups(new Set([activeGroup]));
     }
   }, [location.pathname]);
 
