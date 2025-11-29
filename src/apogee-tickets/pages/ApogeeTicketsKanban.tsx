@@ -38,6 +38,7 @@ export default function ApogeeTicketsKanban() {
     statuses,
     modules,
     priorities,
+    impactTags,
     isLoading,
     createTicket,
     updateTicket,
@@ -149,6 +150,7 @@ export default function ApogeeTicketsKanban() {
         onFiltersChange={setFilters}
         modules={modules}
         priorities={priorities}
+        impactTags={impactTags}
       />
 
       {/* Stats rapides */}
