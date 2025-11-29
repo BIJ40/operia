@@ -30,6 +30,7 @@ const CategoryHelpConfort = lazy(() => import("./pages/CategoryHelpConfort"));
 const Documents = lazy(() => import("./pages/Documents"));
 
 // Lazy loaded pages - Pilotage Agence
+const PilotageStatsHub = lazy(() => import("./pages/PilotageStatsHub"));
 const ActionsAMener = lazy(() => import("./pages/ActionsAMener"));
 const CategoryActionsAMener = lazy(() => import("./pages/CategoryActionsAMener"));
 const DiffusionDashboard = lazy(() => import("./pages/DiffusionDashboard"));
@@ -144,7 +145,10 @@ function AppContent() {
           {/* ============================================ */}
           <Route path="/hc-agency" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PilotageIndex /></RoleGuard></MainLayout>} />
           
-          {/* Statistiques / Indicateurs */}
+          {/* Hub Statistiques */}
+          <Route path="/hc-agency/statistiques" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PilotageStatsHub /></RoleGuard></MainLayout>} />
+          
+          {/* Indicateurs détaillés */}
           <Route path="/hc-agency/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><IndicateursLayout /></RoleGuard></MainLayout>}>
             <Route index element={<IndicateursAccueil />} />
             <Route path="apporteurs" element={<IndicateursApporteurs />} />

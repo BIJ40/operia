@@ -54,11 +54,11 @@ export const DASHBOARD_TILES: DashboardTile[] = [
   },
   // Pilotage Agence
   {
-    id: 'MES_INDICATEURS',
-    title: 'Indicateurs généraux',
-    description: 'Tableau de bord et KPI de votre agence',
-    icon: BarChart3,
-    route: ROUTES.pilotage.indicateurs,
+    id: 'STATISTIQUES_HUB',
+    title: 'Statistiques',
+    description: 'Accès aux indicateurs et KPI de votre agence',
+    icon: PieChart,
+    route: ROUTES.pilotage.statsHub,
     scopeSlug: 'mes_indicateurs',
     color: 'accent',
     group: 'pilotage',

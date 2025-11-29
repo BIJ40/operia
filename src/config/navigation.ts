@@ -94,11 +94,18 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { 
         title: 'Statistiques', 
-        url: ROUTES.pilotage.indicateurs,
+        url: ROUTES.pilotage.statsHub,
         icon: PieChart, 
         scope: 'mes_indicateurs',
-        description: 'Tableau de bord et KPI de votre agence',
+        description: 'Hub d\'accès aux indicateurs de l\'agence',
         children: [
+          { 
+            title: 'Indicateurs généraux', 
+            url: ROUTES.pilotage.indicateurs, 
+            icon: BarChart3, 
+            scope: 'mes_indicateurs', 
+            description: 'Vue d\'ensemble des KPI' 
+          },
           { 
             title: 'Indicateurs Apporteurs', 
             url: ROUTES.pilotage.indicateursApporteurs, 
@@ -236,6 +243,7 @@ export const PAGE_TITLES: Record<string, string> = {
   
   // Pilotage (V2 routes)
   [ROUTES.pilotage.index]: 'Pilotage Agence',
+  [ROUTES.pilotage.statsHub]: 'Statistiques',
   [ROUTES.pilotage.indicateurs]: 'Indicateurs généraux',
   [ROUTES.pilotage.indicateursApporteurs]: 'Indicateurs Apporteurs',
   [ROUTES.pilotage.indicateursUnivers]: 'Indicateurs Univers',

@@ -782,7 +782,8 @@ Le système V2.0 simplifie la gestion des accès avec :
 | `/academy/*` | - | N0+ | Help Academy (Apogée, Apporteurs, Documents) |
 | `/academy/hc-base/*` | - | N0+ | Base documentaire HelpConfort |
 | `/support/mes-demandes` | - | N0+ | Mes demandes support |
-| `/hc-agency/indicateurs/*` | `franchisee_admin` | N2+ | Indicateurs agence |
+| `/hc-agency/statistiques` | `franchisee_admin` | N2+ | Hub statistiques agence |
+| `/hc-agency/indicateurs/*` | `franchisee_admin` | N2+ | Indicateurs agence détaillés |
 | `/hc-agency/actions/*` | `franchisee_admin` | N2+ | Actions à mener |
 | `/hc-agency/diffusion` | `franchisee_admin` | N2+ | Écran diffusion TV |
 | `/hc-agency/rh-tech` | `franchisee_admin` | N2+ | Planning hebdo techniciens |
@@ -942,7 +943,7 @@ navigate(ROUTES.support.userTickets);
 | Section | Préfixe | Exemples |
 |---------|---------|----------|
 | Help Academy | `/academy` | `/academy/apogee`, `/academy/apporteurs`, `/academy/hc-base` |
-| Pilotage Agence | `/hc-agency` | `/hc-agency/indicateurs`, `/hc-agency/actions`, `/hc-agency/equipe` |
+| Pilotage Agence | `/hc-agency` | `/hc-agency/statistiques` (hub), `/hc-agency/indicateurs`, `/hc-agency/actions`, `/hc-agency/equipe` |
 | Support | `/support` | `/support/mes-demandes`, `/support/console` |
 | Réseau Franchiseur | `/hc-reseau` | `/hc-reseau/dashboard`, `/hc-reseau/agences` |
 | Admin | `/admin` | `/admin/users`, `/admin/backup` |
