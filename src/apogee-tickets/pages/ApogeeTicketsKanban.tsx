@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, AlertCircle, Settings, Sparkles } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
@@ -84,6 +84,12 @@ export default function ApogeeTicketsKanban() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link to={ROUTES.admin.apogeeTicketsReview}>
+            <Button variant="outline">
+              <ListChecks className="h-4 w-4 mr-2" />
+              Revue en masse
+            </Button>
+          </Link>
           {unqualifiedCount > 0 && (
             <Button 
               variant="outline" 
