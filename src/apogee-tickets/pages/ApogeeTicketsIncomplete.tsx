@@ -54,7 +54,7 @@ function ModuleCombobox({
             <CommandList>
               <CommandEmpty>Aucun module trouvé.</CommandEmpty>
               <CommandGroup>
-                {modules.map((m) => (
+                {[...modules].sort((a, b) => a.label.localeCompare(b.label, 'fr')).map((m) => (
                   <CommandItem
                     key={m.id}
                     value={m.label}
