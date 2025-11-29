@@ -131,11 +131,11 @@ export const useChatbot = () => {
       return currentQuery;
     }
     
-    // Find the last substantive user question (longer than 20 chars)
+    // Find the last substantive user question (longer than 15 chars)
     const previousUserMessages = conversationHistory
       .filter(m => m.role === 'user')
       .map(m => m.content)
-      .filter(c => c.length > 20);
+      .filter(c => c.length > 15);
     
     if (previousUserMessages.length === 0) {
       return currentQuery;
@@ -144,10 +144,17 @@ export const useChatbot = () => {
     // Get the last substantive topic
     const lastTopic = previousUserMessages[previousUserMessages.length - 1];
     
+    // Very short queries (< 10 chars) are always treated as follow-ups needing context
+    if (currentQuery.length < 10) {
+      console.log('[RAG] Very short query, using previous topic:', lastTopic.substring(0, 50));
+      return lastTopic;
+    }
+    
     // Check if current query is a follow-up (short, generic)
     const followUpIndicators = [
       'étape', 'détail', 'plus', 'comment', 'pourquoi', 'exemple', 
-      'précis', 'expliqu', 's\'il te', 's\'il vous', 'merci', 'ok'
+      'précis', 'expliqu', 's\'il te', 's\'il vous', 'merci', 'ok',
+      '?', 'oui', 'non', 'suite', 'encore', 'autre'
     ];
     
     const isFollowUp = currentQuery.length < 50 && 
