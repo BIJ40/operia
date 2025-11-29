@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Database, RefreshCw, FileJson, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +11,6 @@ export function QuickActions() {
   const [indexing, setIndexing] = useState(false);
   const [indexProgress, setIndexProgress] = useState({ current: 0, total: 0 });
 
-  // Fonction pour extraire le texte pur sans HTML
   const extractPlainText = (html: string): string => {
     if (!html) return '';
     const temp = document.createElement('div');
@@ -285,86 +283,99 @@ export function QuickActions() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-        Actions rapides
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-accent rounded-2xl">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="w-5 h-5 text-primary" />
-              Sauvegardes
-            </CardTitle>
-            <CardDescription>
-              Exporter les guides en JSON ou TXT
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button
-              onClick={exportAllJson}
-              disabled={exportingJson}
-              className="w-full bg-gradient-to-r from-primary to-helpconfort-blue-dark"
-            >
-              <FileJson className="w-4 h-4 mr-2" />
-              {exportingJson ? 'Export en cours...' : 'Export JSON'}
-            </Button>
-            <Button
-              onClick={exportAllTxt}
-              disabled={exportingTxt}
-              className="w-full bg-gradient-to-r from-primary to-helpconfort-blue-dark"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              {exportingTxt ? 'Export en cours...' : 'Export TXT'}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-accent rounded-2xl">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <RefreshCw className="w-5 h-5 text-primary" />
-              MAJ BOT (Mme MICHU)
-            </CardTitle>
-            <CardDescription>
-              Réindexer après modification des guides
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button
-              onClick={handleIndexChatbot}
-              disabled={indexing}
-              className="w-full bg-gradient-to-r from-primary to-helpconfort-blue-dark"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              {indexing ? 'Indexation en cours...' : 'Lancer la mise à jour'}
-            </Button>
-
-            {indexing && indexProgress.total > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>{indexProgress.current} / {indexProgress.total} blocs</span>
-                  <span>{Math.round((indexProgress.current / indexProgress.total) * 100)}%</span>
-                </div>
-                <div className="grid grid-cols-20 gap-1">
-                  {Array.from({ length: 20 }).map((_, i) => {
-                    const blockThreshold = (indexProgress.total / 20) * (i + 1);
-                    const isFilled = indexProgress.current >= blockThreshold;
-                    return (
-                      <div
-                        key={i}
-                        className={`h-3 rounded transition-all duration-300 ${
-                          isFilled 
-                            ? 'bg-primary shadow-sm' 
-                            : 'bg-muted'
-                        }`}
-                      />
-                    );
-                  })}
-                </div>
+      <h2 className="text-xl font-semibold mb-4 text-foreground">Actions rapides</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Variant 1 - Sauvegardes */}
+        <div className="group h-full rounded-xl border border-helpconfort-blue/20 p-5
+          bg-gradient-to-br from-white to-helpconfort-blue/5
+          shadow-sm transition-all duration-300
+          hover:to-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
+          <div className="flex items-start gap-4">
+            <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
+              group-hover:border-helpconfort-blue group-hover:bg-white/50 transition-all shrink-0">
+              <Database className="w-5 h-5 text-helpconfort-blue" />
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="font-semibold text-foreground">Sauvegardes</h3>
+                <p className="text-sm text-muted-foreground">Exporter les guides en JSON ou TXT</p>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <div className="flex gap-2">
+                <Button
+                  onClick={exportAllJson}
+                  disabled={exportingJson}
+                  size="sm"
+                  className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
+                >
+                  <FileJson className="w-4 h-4 mr-1" />
+                  {exportingJson ? 'Export...' : 'JSON'}
+                </Button>
+                <Button
+                  onClick={exportAllTxt}
+                  disabled={exportingTxt}
+                  size="sm"
+                  className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
+                >
+                  <FileText className="w-4 h-4 mr-1" />
+                  {exportingTxt ? 'Export...' : 'TXT'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Variant 2 - MAJ BOT */}
+        <div className="group h-full rounded-xl border border-helpconfort-blue/15 p-5
+          bg-gradient-to-b from-helpconfort-blue/5 to-white
+          shadow-sm transition-all duration-300
+          hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
+          <div className="flex items-start gap-4">
+            <div className="w-11 h-11 rounded-lg border-2 border-helpconfort-blue/25 flex items-center justify-center
+              group-hover:border-helpconfort-blue group-hover:bg-white transition-all shrink-0">
+              <RefreshCw className="w-5 h-5 text-helpconfort-blue" />
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="font-semibold text-foreground">MAJ BOT (Mme MICHU)</h3>
+                <p className="text-sm text-muted-foreground">Réindexer après modification des guides</p>
+              </div>
+              <Button
+                onClick={handleIndexChatbot}
+                disabled={indexing}
+                size="sm"
+                className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
+              >
+                <RefreshCw className={`w-4 h-4 mr-1 ${indexing ? 'animate-spin' : ''}`} />
+                {indexing ? 'Indexation...' : 'Lancer la MAJ'}
+              </Button>
+
+              {indexing && indexProgress.total > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{indexProgress.current} / {indexProgress.total} blocs</span>
+                    <span>{Math.round((indexProgress.current / indexProgress.total) * 100)}%</span>
+                  </div>
+                  <div className="grid grid-cols-20 gap-0.5">
+                    {Array.from({ length: 20 }).map((_, i) => {
+                      const blockThreshold = (indexProgress.total / 20) * (i + 1);
+                      const isFilled = indexProgress.current >= blockThreshold;
+                      return (
+                        <div
+                          key={i}
+                          className={`h-2 rounded transition-all duration-300 ${
+                            isFilled 
+                              ? 'bg-helpconfort-blue shadow-sm' 
+                              : 'bg-muted'
+                          }`}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
