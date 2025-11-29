@@ -162,10 +162,9 @@ export function UnifiedSidebar() {
       items: [
         { 
           title: 'Statistiques', 
-          url: ROUTES.pilotage.indicateurs,
           icon: PieChart, 
-          description: 'Tableau de bord et KPI de votre agence',
           children: [
+            { title: 'Indicateurs généraux', url: ROUTES.pilotage.indicateurs, icon: BarChart3, description: 'Tableau de bord et KPI de votre agence' },
             { title: 'Indicateurs Apporteurs', url: ROUTES.pilotage.indicateursApporteurs, icon: BarChart3, description: 'Statistiques apporteurs' },
             { title: 'Indicateurs Univers', url: ROUTES.pilotage.indicateursUnivers, icon: BarChart3, description: 'Statistiques par univers' },
             { title: 'Indicateurs Techniciens', url: ROUTES.pilotage.indicateursTechniciens, icon: BarChart3, description: 'Statistiques techniciens' },
@@ -362,59 +361,30 @@ export function UnifiedSidebar() {
                               onOpenChange={() => toggleSubmenu(submenuKey)}
                             >
                               <SidebarMenuItem>
-                                <div className="flex items-center w-full">
-                                  {/* Label cliquable → navigation si url existe */}
-                                  {item.url ? (
-                                    <Link
-                                      to={getUrlWithEditMode(item.url)}
-                                      className={`
-                                        flex-1 flex items-center gap-2 px-2 py-1.5 rounded-l-md transition-all duration-200
-                                        ${isActive(item.url)
-                                          ? 'bg-primary text-primary-foreground shadow-sm' 
-                                          : hasActiveChild 
-                                            ? 'bg-primary/10 text-primary'
-                                            : 'hover:bg-muted hover:translate-x-0.5'
-                                        }
-                                      `}
-                                    >
-                                      <Icon className="w-4 h-4 shrink-0" />
-                                      {!collapsed && <span className="truncate text-sm">{getItemLabel(item)}</span>}
-                                    </Link>
-                                  ) : (
-                                    <button
-                                      onClick={() => toggleSubmenu(submenuKey)}
-                                      className={`
-                                        flex-1 flex items-center gap-2 px-2 py-1.5 rounded-l-md transition-all duration-200
-                                        ${hasActiveChild 
-                                          ? 'bg-primary/10 text-primary'
-                                          : 'hover:bg-muted hover:translate-x-0.5'
-                                        }
-                                      `}
-                                    >
-                                      <Icon className="w-4 h-4 shrink-0" />
-                                      {!collapsed && <span className="truncate text-sm">{getItemLabel(item)}</span>}
-                                    </button>
-                                  )}
-                                  
-                                  {/* Chevron séparé → expand/collapse */}
-                                  {!collapsed && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        toggleSubmenu(submenuKey);
-                                      }}
-                                      className={`
-                                        p-1.5 rounded-r-md transition-colors
-                                        ${hasActiveChild ? 'text-primary hover:bg-primary/20' : 'text-muted-foreground hover:bg-muted'}
-                                      `}
-                                    >
-                                      <ChevronRight 
-                                        className={`w-3.5 h-3.5 transition-transform ${isSubmenuOpen ? 'rotate-90' : ''}`}
-                                      />
-                                    </button>
-                                  )}
-                                </div>
+                                <SidebarMenuButton 
+                                  onClick={() => toggleSubmenu(submenuKey)}
+                                  className={`
+                                    cursor-pointer transition-all duration-200 py-1.5
+                                    ${hasActiveChild 
+                                      ? isSubmenuOpen 
+                                        ? 'bg-primary/10 text-primary' 
+                                        : 'bg-primary/15 text-primary border-l-2 border-primary'
+                                      : 'hover:bg-muted hover:translate-x-0.5'
+                                    }
+                                  `}
+                                >
+                                  <div className="flex items-center gap-2 w-full">
+                                    <Icon className="w-4 h-4 shrink-0" />
+                                    {!collapsed && (
+                                      <>
+                                        <span className="truncate flex-1 text-sm">{getItemLabel(item)}</span>
+                                        <ChevronRight 
+                                          className={`w-3.5 h-3.5 transition-transform ${hasActiveChild ? 'text-primary' : 'text-muted-foreground'} ${isSubmenuOpen ? 'rotate-90' : ''}`}
+                                        />
+                                      </>
+                                    )}
+                                  </div>
+                                </SidebarMenuButton>
                               </SidebarMenuItem>
                               <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-out data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                                 <div className="ml-3 border-l border-border/50 pl-2 py-0.5 space-y-0.5 animate-fade-in">
