@@ -33,6 +33,7 @@ interface AuthContextType {
   
   // Profil utilisateur
   agence: string | null;
+  agencyId: string | null; // UUID de l'agence
   roleAgence: string | null;
   mustChangePassword: boolean;
   isActive: boolean;
@@ -82,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   // Profil utilisateur
   const [agence, setAgence] = useState<string | null>(null);
+  const [agencyId, setAgencyId] = useState<string | null>(null);
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [isActive, setIsActive] = useState(true);
@@ -149,11 +151,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Charger le profil avec les champs V2
       const { data: profile } = await supabase
         .from('profiles')
-        .select('agence, role_agence, must_change_password, global_role, enabled_modules, is_active')
+        .select('agence, agency_id, role_agence, must_change_password, global_role, enabled_modules, is_active')
         .eq('id', userId)
         .single();
       
       setAgence(profile?.agence || null);
+      setAgencyId(profile?.agency_id || null);
       setRoleAgence(profile?.role_agence || null);
       setMustChangePassword(profile?.must_change_password || false);
       
@@ -258,6 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           // Reset state on logout
           setAgence(null);
+          setAgencyId(null);
           setRoleAgence(null);
           setMustChangePassword(false);
           setIsActive(true);
@@ -316,6 +320,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Reset V2 state
       setAgence(null);
+      setAgencyId(null);
       setRoleAgence(null);
       setMustChangePassword(false);
       setIsActive(true);
@@ -339,6 +344,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isLoggingOut,
       agence,
+      agencyId,
       roleAgence,
       mustChangePassword,
       isActive,

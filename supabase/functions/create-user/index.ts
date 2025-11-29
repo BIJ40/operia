@@ -49,14 +49,15 @@ serve(async (req) => {
     // Récupérer le profil de l'appelant
     const { data: callerProfile } = await supabaseAdmin
       .from('profiles')
-      .select('global_role, agence')
+      .select('global_role, agence, agency_id')
       .eq('id', user.id)
       .single()
 
     const callerLevel = getRoleLevel(callerProfile?.global_role)
     const callerAgency = callerProfile?.agence || null
+    const callerAgencyId = callerProfile?.agency_id || null
 
-    console.log(`[create-user] Appelant: ${user.id}, N${callerLevel}, agence: ${callerAgency}`)
+    console.log(`[create-user] Appelant: ${user.id}, N${callerLevel}, agence: ${callerAgency}, agency_id: ${callerAgencyId}`)
 
     // Vérifier les droits de gestion (N3+ requis pour créer, N2 uniquement sa propre agence)
     if (!canAccessUsersPage(callerLevel)) {
@@ -65,18 +66,61 @@ serve(async (req) => {
     }
 
     // Récupérer les données de la requête
-    const { email, password, firstName, lastName, agence, globalRole, sendEmail } = await req.json()
+    const body = await req.json()
+    
+    // Accepter les deux formats: snake_case et camelCase
+    const email = body.email
+    const password = body.password || generateSecurePassword()
+    const firstName = body.firstName || body.first_name
+    const lastName = body.lastName || body.last_name
+    const agence = body.agence || null
+    const agencyId = body.agency_id || null
+    const globalRole = body.globalRole || body.global_role || 'franchisee_user'
+    const roleAgence = body.role_agence || body.roleAgence || null
+    const sendEmail = body.sendEmail !== false
 
-    if (!email || !password || !firstName || !lastName) {
-      throw new Error('Email, mot de passe, prénom et nom sont requis')
+    if (!email || !firstName || !lastName) {
+      throw new Error('Email, prénom et nom sont requis')
     }
 
-    const targetAgency = agence || null
+    // Déterminer l'agence cible (UUID ou slug)
+    let targetAgency = agence
+    let targetAgencyId = agencyId
+
+    // Si on a agency_id mais pas agence, récupérer le slug
+    if (targetAgencyId && !targetAgency) {
+      const { data: agency } = await supabaseAdmin
+        .from('apogee_agencies')
+        .select('slug')
+        .eq('id', targetAgencyId)
+        .single()
+      
+      if (agency) {
+        targetAgency = agency.slug
+      }
+    }
+
+    // Si on a agence mais pas agency_id, récupérer l'UUID
+    if (targetAgency && !targetAgencyId) {
+      const { data: agency } = await supabaseAdmin
+        .from('apogee_agencies')
+        .select('id')
+        .eq('slug', targetAgency)
+        .maybeSingle()
+      
+      if (agency) {
+        targetAgencyId = agency.id
+      }
+    }
+
     const targetRoleLevel = getRoleLevel(globalRole)
 
     // N2 ne peut créer que dans sa propre agence
     if (callerLevel === GLOBAL_ROLES.franchisee_admin) {
-      if (targetAgency !== callerAgency) {
+      const sameAgencyBySlug = targetAgency && callerAgency && targetAgency === callerAgency
+      const sameAgencyById = targetAgencyId && callerAgencyId && targetAgencyId === callerAgencyId
+      
+      if (!sameAgencyBySlug && !sameAgencyById) {
         console.log(`[create-user] N2 tente de créer hors agence: ${targetAgency} != ${callerAgency}`)
         throw new Error('Vous ne pouvez créer des utilisateurs que dans votre propre agence')
       }
@@ -97,10 +141,12 @@ serve(async (req) => {
       throw new Error('L\'adresse email n\'est pas valide')
     }
 
-    // Validation du mot de passe
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/])[A-Za-z\d!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]{8,100}$/;
-    if (!passwordRegex.test(password)) {
-      throw new Error('Le mot de passe doit contenir au moins 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole')
+    // Validation du mot de passe si fourni
+    if (body.password) {
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/])[A-Za-z\d!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]{8,100}$/;
+      if (!passwordRegex.test(password)) {
+        throw new Error('Le mot de passe doit contenir au moins 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole')
+      }
     }
 
     // Vérifier si l'email existe déjà
@@ -132,8 +178,14 @@ serve(async (req) => {
     // Mettre à jour le profil
     const profileUpdate: Record<string, any> = { 
       agence: targetAgency,
+      agency_id: targetAgencyId,
       must_change_password: true,
-      global_role: globalRole || 'franchisee_user'
+      global_role: globalRole
+    }
+
+    // Ajouter role_agence si fourni
+    if (roleAgence) {
+      profileUpdate.role_agence = roleAgence
     }
 
     const { error: updateError } = await supabaseAdmin
@@ -147,7 +199,7 @@ serve(async (req) => {
     }
 
     // Auto-créer l'agence si elle n'existe pas
-    if (targetAgency) {
+    if (targetAgency && !targetAgencyId) {
       const { data: existingAgency } = await supabaseAdmin
         .from('apogee_agencies')
         .select('id')
@@ -156,19 +208,30 @@ serve(async (req) => {
 
       if (!existingAgency) {
         const agencySlug = targetAgency.toLowerCase().replace(/[^a-z0-9]/g, '-')
-        await supabaseAdmin
+        const { data: newAgency } = await supabaseAdmin
           .from('apogee_agencies')
           .insert({
             slug: agencySlug,
             label: targetAgency,
             is_active: true
           })
+          .select('id')
+          .single()
+        
         console.log('[create-user] Agence créée:', agencySlug)
+        
+        // Mettre à jour l'agency_id du nouveau profil
+        if (newAgency) {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ agency_id: newAgency.id })
+            .eq('id', newUser.user.id)
+        }
       }
     }
 
     // Envoyer l'email
-    if (sendEmail !== false) {
+    if (sendEmail) {
       try {
         const emailHtml = `
           <!DOCTYPE html>
@@ -232,7 +295,7 @@ serve(async (req) => {
       }
     }
 
-    console.log(`[create-user] Succès: ${email} avec rôle ${globalRole || 'franchisee_user'}`)
+    console.log(`[create-user] Succès: ${email} avec rôle ${globalRole}`)
 
     return new Response(
       JSON.stringify({ 
@@ -250,3 +313,25 @@ serve(async (req) => {
     )
   }
 })
+
+// Génère un mot de passe sécurisé si non fourni
+function generateSecurePassword(): string {
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz'
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  const numbers = '0123456789'
+  const symbols = '!@#$%^&*()_+-='
+  const all = lowercase + uppercase + numbers + symbols
+  
+  let password = ''
+  password += lowercase[Math.floor(Math.random() * lowercase.length)]
+  password += uppercase[Math.floor(Math.random() * uppercase.length)]
+  password += numbers[Math.floor(Math.random() * numbers.length)]
+  password += symbols[Math.floor(Math.random() * symbols.length)]
+  
+  for (let i = 4; i < 12; i++) {
+    password += all[Math.floor(Math.random() * all.length)]
+  }
+  
+  // Mélanger le mot de passe
+  return password.split('').sort(() => Math.random() - 0.5).join('')
+}
