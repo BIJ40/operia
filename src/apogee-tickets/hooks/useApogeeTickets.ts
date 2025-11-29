@@ -169,14 +169,32 @@ export function useApogeeTickets(filters?: TicketFilters) {
   // Update ticket
   const updateTicket = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<ApogeeTicket> & { id: string }) => {
-      const needsCompletion = 
-        (updates.module === null || updates.module === undefined) ||
-        (updates.priority === null || updates.priority === undefined) ||
-        (updates.owner_side === null || updates.owner_side === undefined);
+      // Only recalculate needs_completion if relevant fields are being updated
+      const updatePayload: Record<string, any> = { ...updates };
+      
+      // Check if we're updating fields that affect completion status
+      const hasCompletionFields = 'module' in updates || 'priority' in updates || 'owner_side' in updates;
+      
+      if (hasCompletionFields) {
+        // Fetch current values to check completion
+        const { data: current } = await supabase
+          .from('apogee_tickets')
+          .select('module, priority, owner_side')
+          .eq('id', id)
+          .single();
+        
+        if (current) {
+          const finalModule = 'module' in updates ? updates.module : current.module;
+          const finalPriority = 'priority' in updates ? updates.priority : current.priority;
+          const finalOwnerSide = 'owner_side' in updates ? updates.owner_side : current.owner_side;
+          
+          updatePayload.needs_completion = !finalModule || !finalPriority || !finalOwnerSide;
+        }
+      }
 
       const { data, error } = await supabase
         .from('apogee_tickets')
-        .update({ ...updates, needs_completion: needsCompletion })
+        .update(updatePayload)
         .eq('id', id)
         .select()
         .single();
