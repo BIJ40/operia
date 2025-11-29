@@ -175,7 +175,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
             step={1}
             value={[heatMin, heatMax]}
             onValueChange={handleHeatRangeChange}
-            className="w-full"
+            className="w-full [&_[data-slot=track]]:bg-gradient-to-r [&_[data-slot=track]]:from-blue-400 [&_[data-slot=track]]:via-yellow-400 [&_[data-slot=track]]:to-red-500 [&_[data-slot=range]]:bg-transparent"
           />
         </div>
         
