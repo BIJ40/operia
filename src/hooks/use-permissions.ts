@@ -22,20 +22,28 @@ export function useIsBlockLocked() {
 
   return useCallback((scopeSlug: string, _blocks: Block[] = []): boolean => {
     // Admin = jamais locked
-    if (isAdmin) return false;
+    if (isAdmin) {
+      console.log('[useIsBlockLocked] Admin detected, returning false');
+      return false;
+    }
 
     // Détection des IDs de blocks legacy (format block-* ou UUID)
-    const isLegacyBlockId = scopeSlug.startsWith('block-') || 
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(scopeSlug);
+    const isBlockPrefix = scopeSlug.startsWith('block-');
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(scopeSlug);
+    const isLegacyBlockId = isBlockPrefix || isUUID;
+
+    console.log('[useIsBlockLocked] Check:', { scopeSlug, isBlockPrefix, isUUID, isLegacyBlockId, isAdmin });
 
     // Les blocks legacy ne sont plus verrouillés par ce système
     // La V2 (RoleGuard / hasGlobalRole) contrôle l'accès aux pages
     if (isLegacyBlockId) {
+      console.log('[useIsBlockLocked] Legacy block ID detected, returning false (unlocked)');
       return false;
     }
 
     // Pour les vrais scopes V2, utiliser le système normal
     const perm = getEffectivePermission(scopeSlug);
+    console.log('[useIsBlockLocked] V2 scope check:', { scopeSlug, canView: perm.canView, level: perm.level });
     return !perm.canView;
   }, [isAdmin, getEffectivePermission]);
 }
