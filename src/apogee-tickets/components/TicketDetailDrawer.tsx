@@ -3,8 +3,8 @@
  * Une seule page principale + onglet Documents joints
  */
 
-import { useState, useMemo, useCallback } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useState, useMemo } from 'react';
+import { Sheet, SheetContent, SheetHeader } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,19 +15,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
-  Clock, 
   Send, 
   ChevronDown,
   ChevronUp,
   Paperclip,
   Upload,
-  X,
   FileText,
   Download,
   Trash2,
   Sparkles,
   CheckCircle2,
-  Flame
+  Flame,
+  History
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -36,6 +35,7 @@ import { useTicketAttachments } from '../hooks/useTicketAttachments';
 import { useTicketQualification } from '../hooks/useTicketQualification';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { Slider } from '@/components/ui/slider';
+import { useAuth } from '@/contexts/AuthContext';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType } from '../types';
 
 interface TicketDetailDrawerProps {
@@ -51,8 +51,25 @@ interface TicketDetailDrawerProps {
 const AUTHOR_COLORS: Record<AuthorType, string> = {
   HC: 'bg-helpconfort-blue text-white',
   APOGEE: 'bg-purple-600 text-white',
-  DYN: 'bg-amber-500 text-white',
-  AUTRE: 'bg-gray-500 text-white',
+};
+
+// Options pour le champ Origine
+const ORIGINE_OPTIONS = [
+  { value: 'JEROME', label: 'Jérôme' },
+  { value: 'FLORIAN', label: 'Florian' },
+  { value: 'ERIC', label: 'Éric' },
+  { value: 'APOGEE', label: 'Apogée' },
+  { value: 'AUTRE', label: 'Autre' },
+];
+
+// Couleurs pour le slider de priorité
+const getSliderColor = (value: number): string => {
+  if (value >= 10) return 'bg-red-600';
+  if (value >= 8) return 'bg-orange-500';
+  if (value >= 6) return 'bg-amber-400';
+  if (value >= 4) return 'bg-yellow-300';
+  if (value >= 2) return 'bg-blue-300';
+  return 'bg-blue-100';
 };
 
 const MAX_VISIBLE_COMMENTS = 3;
@@ -66,6 +83,7 @@ export function TicketDetailDrawer({
   statuses,
   onUpdate,
 }: TicketDetailDrawerProps) {
+  const { user } = useAuth();
   const { comments, addComment } = useApogeeTicket(ticket?.id || null);
   const { attachments, uploadAttachment, deleteAttachment, isUploading } = useTicketAttachments(ticket?.id || null);
   const { qualifyOne, isQualifying } = useTicketQualification();
@@ -93,11 +111,16 @@ export function TicketDetailDrawer({
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     
+    // Utilise l'email de l'utilisateur connecté comme nom
+    const authorName = user?.email?.split('@')[0] || 'Utilisateur';
+    
     await addComment.mutateAsync({
       ticket_id: ticket.id,
       author_type: commentType,
+      author_name: authorName,
       body: newComment.trim(),
       is_internal: false,
+      created_by_user_id: user?.id,
     });
     
     setNewComment('');
@@ -203,6 +226,12 @@ export function TicketDetailDrawer({
         <Tabs defaultValue="main" className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-6 mt-2 w-auto justify-start">
             <TabsTrigger value="main">Ticket</TabsTrigger>
+            {ticket.is_qualified && ticket.original_title && (
+              <TabsTrigger value="history" className="flex items-center gap-1">
+                <History className="h-3 w-3" />
+                Historique qualif
+              </TabsTrigger>
+            )}
             <TabsTrigger value="documents" className="flex items-center gap-1">
               <Paperclip className="h-3 w-3" />
               Documents ({attachments.length})
@@ -259,7 +288,7 @@ export function TicketDetailDrawer({
                     </Select>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Propriétaire</label>
+                    <label className="text-xs text-muted-foreground">Origine</label>
                     <Select
                       value={ticket.owner_side || ''}
                       onValueChange={(v) => handleFieldUpdate('owner_side', v || null)}
@@ -268,9 +297,9 @@ export function TicketDetailDrawer({
                         <SelectValue placeholder="—" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="HC">Help Confort</SelectItem>
-                        <SelectItem value="APOGEE">Apogée</SelectItem>
-                        <SelectItem value="PARTAGE">Partagé</SelectItem>
+                        {ORIGINE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -295,15 +324,19 @@ export function TicketDetailDrawer({
                   </div>
                 </div>
 
-                {/* PRIORITÉ THERMIQUE */}
+                {/* PRIORITÉ */}
                 <div>
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                     <Flame className="h-4 w-4" />
-                    Priorité Thermique
+                    Priorité
                   </label>
                   <div className="mt-2 flex items-center gap-4">
                     <HeatPriorityBadge priority={ticket.heat_priority} size="default" showLabel />
-                    <div className="flex-1">
+                    <div className="flex-1 relative">
+                      <div 
+                        className={`absolute inset-0 h-2 rounded-full ${getSliderColor(ticket.heat_priority ?? 3)} opacity-30`}
+                        style={{ top: '50%', transform: 'translateY(-50%)' }}
+                      />
                       <Slider
                         value={[ticket.heat_priority ?? 3]}
                         min={0}
@@ -363,20 +396,27 @@ export function TicketDetailDrawer({
 
                   {/* Formulaire nouveau commentaire */}
                   <div className="bg-muted/30 rounded-lg p-3 mb-4 space-y-2">
-                    <div className="flex gap-2">
-                      <Select
-                        value={commentType}
-                        onValueChange={(v) => setCommentType(v as AuthorType)}
-                      >
-                        <SelectTrigger className="w-28 h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="HC">HC</SelectItem>
-                          <SelectItem value="APOGEE">Apogée</SelectItem>
-                          <SelectItem value="DYN">Dynoco</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="flex gap-2 items-start">
+                      <div className="flex gap-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={commentType === 'HC' ? 'default' : 'outline'}
+                          className={commentType === 'HC' ? 'bg-helpconfort-blue hover:bg-helpconfort-blue/90' : ''}
+                          onClick={() => setCommentType('HC')}
+                        >
+                          HC
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={commentType === 'APOGEE' ? 'default' : 'outline'}
+                          className={commentType === 'APOGEE' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                          onClick={() => setCommentType('APOGEE')}
+                        >
+                          Apogée
+                        </Button>
+                      </div>
                       <Textarea
                         placeholder="Ajouter un commentaire..."
                         value={newComment}
@@ -479,6 +519,47 @@ export function TicketDetailDrawer({
               </div>
             </ScrollArea>
           </TabsContent>
+
+          {/* Onglet Historique Qualification */}
+          {ticket.is_qualified && ticket.original_title && (
+            <TabsContent value="history" className="flex-1 overflow-hidden m-0">
+              <ScrollArea className="h-full">
+                <div className="p-6 space-y-6">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <p className="text-sm text-amber-700 mb-4">
+                      Textes originaux avant requalification IA
+                    </p>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Titre original
+                        </label>
+                        <p className="mt-1 p-3 bg-white border rounded-md text-sm">
+                          {ticket.original_title || '—'}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Description originale
+                        </label>
+                        <p className="mt-1 p-3 bg-white border rounded-md text-sm whitespace-pre-wrap">
+                          {ticket.original_description || '—'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {ticket.qualified_at && (
+                      <p className="text-xs text-amber-600 mt-4">
+                        Qualifié le {format(new Date(ticket.qualified_at), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          )}
 
           {/* Onglet Documents */}
           <TabsContent value="documents" className="flex-1 overflow-hidden m-0">
