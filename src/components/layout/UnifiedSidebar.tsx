@@ -177,7 +177,7 @@ export function UnifiedSidebar() {
   // Navigation groups avec indexUrl pour chaque section
   const navGroups: NavGroup[] = [
     {
-      label: <>Help<span className="text-helpconfort-orange">!</span> Academy</>,
+      label: <>Help<span className="text-helpconfort-orange font-black">!</span> Academy</>,
       labelKey: 'help-academy',
       indexUrl: ROUTES.academy.index,
       items: [
@@ -318,8 +318,8 @@ export function UnifiedSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild className={isActive('/') && location.pathname === '/' ? 'bg-primary/10 text-primary' : ''}>
-                  <Link to="/" className="flex items-center gap-2 py-1.5">
-                    <Home className="w-4 h-4" />
+                  <Link to="/" className="group/item flex items-center gap-2 py-1.5">
+                    <Home className="w-4 h-4 transition-transform duration-300 group-hover/item:animate-bounce-subtle" />
                     {!collapsed && <span className="text-sm">Accueil</span>}
                   </Link>
                 </SidebarMenuButton>
@@ -413,17 +413,17 @@ export function UnifiedSidebar() {
                                           setOpenSubmenus(prev => new Set([...prev, submenuKey]));
                                         }
                                       }}
-                                      className="flex items-center gap-2 flex-1 py-2 px-3 hover:translate-x-0.5 transition-all duration-300"
+                                      className="group/item flex items-center gap-2 flex-1 py-2 px-3 hover:translate-x-0.5 transition-all duration-300"
                                     >
-                                      <Icon className="w-4 h-4 shrink-0" />
+                                      <Icon className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/item:animate-bounce-subtle" />
                                       {!collapsed && <span className="truncate text-sm">{getItemLabel(item)}</span>}
                                     </Link>
                                   ) : (
                                     <button
                                       onClick={() => toggleSubmenu(submenuKey)}
-                                      className="flex items-center gap-2 flex-1 py-2 px-3"
+                                      className="group/item flex items-center gap-2 flex-1 py-2 px-3"
                                     >
-                                      <Icon className="w-4 h-4 shrink-0" />
+                                      <Icon className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/item:animate-bounce-subtle" />
                                       {!collapsed && <span className="truncate text-sm">{getItemLabel(item)}</span>}
                                     </button>
                                   )}
@@ -463,8 +463,8 @@ export function UnifiedSidebar() {
                                           `}
                                           title={child.description}
                                         >
-                                          <Link to={getUrlWithEditMode(child.url!)} className="flex items-center gap-2">
-                                            <ChildIcon className="w-3.5 h-3.5 shrink-0" />
+                                        <Link to={getUrlWithEditMode(child.url!)} className="group/child flex items-center gap-2">
+                                            <ChildIcon className="w-3.5 h-3.5 shrink-0 transition-transform duration-300 group-hover/child:animate-bounce-subtle" />
                                             {!collapsed && <span className="truncate">{getItemLabel(child)}</span>}
                                           </Link>
                                         </SidebarMenuButton>
@@ -492,13 +492,13 @@ export function UnifiedSidebar() {
                               `}
                               title={item.description}
                             >
-                              <Link to={getUrlWithEditMode(item.url!)} className="flex items-center gap-2">
-                                <Icon className="w-4 h-4 shrink-0" />
+                              <Link to={getUrlWithEditMode(item.url!)} className="group/item flex items-center gap-2">
+                                <Icon className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/item:animate-bounce-subtle" />
                                 {!collapsed && (
                                   <div className="flex items-center gap-2 flex-1 min-w-0">
                                     <span className="truncate text-sm">{getItemLabel(item)}</span>
                                     {item.badge && (
-                                      <span className="text-[10px] bg-orange-500 text-white px-1.5 py-0.5 rounded-full font-medium shrink-0">
+                                      <span className="text-[10px] bg-helpconfort-orange text-white px-1.5 py-0.5 rounded-full font-medium shrink-0">
                                         {item.badge}
                                       </span>
                                     )}
