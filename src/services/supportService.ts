@@ -150,7 +150,9 @@ export async function getAllSupportUsers(): Promise<SupportUser[]> {
       const modules = profile.enabled_modules as any;
       if (!modules?.support?.enabled) return false;
       const options = modules.support.options || {};
-      return options.agent_support === true || options.admin_support === true;
+      // Support les deux formats de clés: agent/admin ou agent_support/admin_support
+      return options.agent === true || options.admin === true || 
+             options.agent_support === true || options.admin_support === true;
     })
     .map(profile => {
       const modules = profile.enabled_modules as any;
@@ -383,7 +385,8 @@ export async function getTicketsForSupportUser(
     const modules = profile.enabled_modules as any;
     const options = modules?.support?.options || {};
     const supportLevel = options.level || 1;
-    const skills = options.skills || [];
+    // Support les deux formats de clés
+    const skills = options.skills || options.service_competencies || [];
     const competencies = skills.reduce((acc: any, skill: string) => ({ ...acc, [skill]: true }), {});
 
     // Construire la requête de base
