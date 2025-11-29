@@ -319,7 +319,7 @@ export function UnifiedSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className={isActive('/') && location.pathname === '/' ? 'bg-primary/10 text-primary' : ''}>
+                <SidebarMenuButton asChild className={isActive('/') && location.pathname === '/' ? 'bg-helpconfort-blue/8 text-helpconfort-blue border-l-2 border-helpconfort-blue' : ''}>
                   <Link to="/" className="group/item flex items-center gap-2 py-1.5">
                     <Home className="w-4 h-4 transition-transform duration-300 group-hover/item:animate-bounce-subtle" />
                     {!collapsed && <span className="text-sm">Accueil</span>}
@@ -352,12 +352,12 @@ export function UnifiedSidebar() {
                     className={`
                       flex-1 cursor-pointer rounded-xl transition-all duration-300 ease-out flex items-center px-3 py-2
                       ${groupIsActive 
-                        ? 'bg-primary/15 text-primary border-l-2 border-primary shadow-sm' 
-                        : 'hover:bg-primary/10 hover:scale-[1.02] hover:shadow-sm'
+                        ? 'bg-helpconfort-blue/8 text-helpconfort-blue border-l-2 border-helpconfort-blue' 
+                        : 'hover:bg-helpconfort-blue/5 hover:scale-[1.02] hover:shadow-sm'
                       }
                     `}
                   >
-                    <span className={`text-xs font-semibold tracking-wide uppercase transition-colors duration-300 ${groupIsActive ? 'text-primary' : 'text-muted-foreground group-hover/nav:text-primary'}`}>
+                    <span className={`text-xs font-semibold tracking-wide uppercase transition-colors duration-300 ${groupIsActive ? 'text-helpconfort-blue' : 'text-muted-foreground group-hover/nav:text-helpconfort-blue'}`}>
                       {!collapsed ? getGroupLabel(group) : group.labelKey.charAt(0).toUpperCase()}
                     </span>
                   </Link>
@@ -368,7 +368,7 @@ export function UnifiedSidebar() {
                       onClick={(e) => toggleGroup(group.labelKey, e)}
                       className={`
                         p-2 rounded-xl transition-all duration-300 ease-out
-                        ${groupIsActive ? 'text-primary hover:bg-primary/20 hover:scale-110' : 'text-muted-foreground hover:bg-muted/50 hover:text-primary hover:scale-110'}
+                        ${groupIsActive ? 'text-helpconfort-blue hover:bg-helpconfort-blue/10 hover:scale-110' : 'text-muted-foreground hover:bg-muted/50 hover:text-helpconfort-blue hover:scale-110'}
                       `}
                     >
                       <ChevronRight 
@@ -400,9 +400,9 @@ export function UnifiedSidebar() {
                                   flex items-center w-full rounded-xl transition-all duration-300 ease-out
                                   ${hasActiveChild || isActive(item.url)
                                     ? isSubmenuOpen 
-                                      ? 'bg-primary/10 text-primary' 
-                                      : 'bg-primary/15 text-primary border-l-2 border-primary shadow-sm'
-                                    : 'hover:bg-muted/80 hover:scale-[1.01]'
+                                      ? 'bg-helpconfort-blue/5 text-helpconfort-blue' 
+                                      : 'bg-helpconfort-blue/8 text-helpconfort-blue border-l-2 border-helpconfort-blue'
+                                    : 'hover:bg-helpconfort-blue/5 hover:scale-[1.01]'
                                   }
                                 `}>
                                   {/* Partie cliquable pour navigation */}
@@ -440,7 +440,7 @@ export function UnifiedSidebar() {
                                       className="p-1.5 hover:bg-muted rounded-r-md"
                                     >
                                       <ChevronRight 
-                                        className={`w-3.5 h-3.5 transition-transform ${hasActiveChild || isActive(item.url) ? 'text-primary' : 'text-muted-foreground'} ${isSubmenuOpen ? 'rotate-90' : ''}`}
+                                        className={`w-3.5 h-3.5 transition-transform ${hasActiveChild || isActive(item.url) ? 'text-helpconfort-blue' : 'text-muted-foreground'} ${isSubmenuOpen ? 'rotate-90' : ''}`}
                                       />
                                     </button>
                                   )}
@@ -459,8 +459,8 @@ export function UnifiedSidebar() {
                                           className={`
                                             transition-all duration-300 ease-out text-xs py-1.5 rounded-lg
                                             ${childActive 
-                                              ? 'bg-primary text-primary-foreground shadow-sm' 
-                                              : 'hover:bg-muted/80 hover:translate-x-0.5 hover:scale-[1.01]'
+                                              ? 'bg-helpconfort-blue/10 text-helpconfort-blue border-l-2 border-helpconfort-blue' 
+                                              : 'hover:bg-helpconfort-blue/5 hover:translate-x-0.5 hover:scale-[1.01]'
                                             }
                                           `}
                                           title={child.description}
@@ -488,8 +488,8 @@ export function UnifiedSidebar() {
                               className={`
                                 transition-all duration-300 ease-out py-2 rounded-xl
                                 ${active 
-                                  ? 'bg-primary text-primary-foreground shadow-sm' 
-                                  : 'hover:bg-muted/80 hover:translate-x-0.5 hover:scale-[1.01]'
+                                  ? 'bg-helpconfort-blue/10 text-helpconfort-blue border-l-2 border-helpconfort-blue' 
+                                  : 'hover:bg-helpconfort-blue/5 hover:translate-x-0.5 hover:scale-[1.01]'
                                 }
                               `}
                               title={item.description}
