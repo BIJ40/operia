@@ -391,12 +391,22 @@ Titre du poste (indépendant du niveau d'accès) :
 
 ### Row Level Security (RLS)
 
-Policies RLS actives sur les tables sensibles :
-- **`profiles`** : Users voient/modifient leur profil. N5+ voient tout.
-- **`apogee_agencies`** : N3+/admin voient tout. Users voient leur agence.
-- **`blocks`/`apporteur_blocks`** : Lecture authentifiés. Écriture N5+.
-- **`support_tickets`** : Users voient leurs tickets. N3+ voient tout.
+**Fonctions SECURITY DEFINER V2 (utilisées par toutes les policies RLS) :**
+- `has_min_global_role(_user_id, _min_level)` : Vérifie si l'utilisateur a le niveau global_role minimum (0-6)
+- `has_support_access(_user_id)` : Vérifie `enabled_modules.support.enabled = true` OU `global_role IN (platform_admin, superadmin)`
+- `has_franchiseur_access(_user_id)` : Vérifie `enabled_modules.reseau_franchiseur.enabled = true` OU `global_role IN (franchisor_user+)`
+- `is_admin(_user_id)` : Wrapper pour `has_min_global_role(_, 5)`
+- `get_user_global_role_level(_user_id)` : Retourne le niveau numérique du global_role
+- `get_user_agency(_user_id)` : Retourne l'agence de l'utilisateur
+
+**Policies RLS actives sur les tables sensibles :**
+- **`profiles`** : Users voient/modifient leur profil. `has_min_global_role(5)` voient tout.
+- **`apogee_agencies`** : `has_franchiseur_access` ou admin voient tout. Users voient leur agence via `get_user_agency`.
+- **`blocks`/`apporteur_blocks`** : Lecture authentifiés. Écriture `has_min_global_role(5)`.
+- **`support_tickets`** : Users voient leurs tickets. `has_support_access` ou `has_min_global_role(5)` voient tout.
 - **`favorites`/`user_history`** : Accès utilisateur uniquement.
+
+> **Note :** Toutes les policies RLS ont été migrées de `has_role()` (qui consultait la table `user_roles` legacy) vers les fonctions V2 ci-dessus qui consultent uniquement `profiles.global_role` et `profiles.enabled_modules`.
 
 ---
 

@@ -1612,6 +1612,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: number
       }
+      has_franchiseur_access: { Args: { _user_id: string }; Returns: boolean }
       has_franchiseur_role: {
         Args: {
           _role: Database["public"]["Enums"]["franchiseur_role"]
@@ -1630,6 +1631,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_support_access: { Args: { _user_id: string }; Returns: boolean }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user" | "support" | "franchiseur"
