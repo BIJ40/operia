@@ -1,8 +1,8 @@
 /**
- * Vue Kanban des tickets Apogée
+ * Vue Kanban des tickets Apogée - Drag and drop corrigé
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -16,12 +16,11 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useDraggable } from '@dnd-kit/core';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, Clock, User } from 'lucide-react';
+import { MessageSquare, Clock, GripVertical } from 'lucide-react';
 import type { ApogeeTicket, ApogeeTicketStatus } from '../types';
 
 interface TicketKanbanProps {
@@ -66,7 +65,7 @@ const STATUS_COLORS: Record<string, string> = {
   CLOTURE: 'bg-gray-50 border-gray-200',
 };
 
-// Composant carte de ticket draggable
+// Composant carte de ticket draggable - utilise useDraggable au lieu de useSortable
 function DraggableTicketCard({
   ticket,
   onClick,
@@ -79,47 +78,65 @@ function DraggableTicketCard({
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
-  } = useSortable({ id: ticket.id });
+  } = useDraggable({ id: ticket.id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0.5 : 1,
-  };
+    zIndex: isDragging ? 1000 : 1,
+  } : undefined;
+
+  // Gérer le clic sans interférer avec le drag
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    // Ne pas déclencher onClick si on clique sur le handle de drag
+    if ((e.target as HTMLElement).closest('[data-drag-handle]')) {
+      return;
+    }
+    onClick();
+  }, [onClick]);
 
   return (
     <Card
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow mb-2 border-l-4"
-      onClick={onClick}
+      className="hover:shadow-md transition-shadow mb-2 border-l-4 group"
+      onClick={handleClick}
     >
       <CardContent className="p-3 space-y-2">
-        {/* Badges en haut */}
-        <div className="flex flex-wrap gap-1">
-          {ticket.module && (
-            <Badge className={`${MODULE_COLORS[ticket.module] || 'bg-gray-500'} text-white text-xs`}>
-              {ticket.apogee_modules?.label || ticket.module}
-            </Badge>
-          )}
-          {ticket.priority && (
-            <Badge className={`${PRIORITY_COLORS[ticket.priority] || 'bg-gray-400'} text-white text-xs`}>
-              {ticket.priority}
-            </Badge>
-          )}
-          {ticket.owner_side && (
-            <Badge className={`${OWNER_COLORS[ticket.owner_side]} text-white text-xs`}>
-              {ticket.owner_side}
-            </Badge>
-          )}
+        {/* Handle de drag + badges */}
+        <div className="flex items-start gap-2">
+          <div
+            {...attributes}
+            {...listeners}
+            data-drag-handle
+            className="cursor-grab active:cursor-grabbing p-1 -ml-1 opacity-40 hover:opacity-100 transition-opacity"
+          >
+            <GripVertical className="h-4 w-4" />
+          </div>
+          <div className="flex-1 flex flex-wrap gap-1">
+            {ticket.module && (
+              <Badge className={`${MODULE_COLORS[ticket.module] || 'bg-gray-500'} text-white text-xs`}>
+                {ticket.apogee_modules?.label || ticket.module}
+              </Badge>
+            )}
+            {ticket.priority && (
+              <Badge className={`${PRIORITY_COLORS[ticket.priority] || 'bg-gray-400'} text-white text-xs`}>
+                {ticket.priority}
+              </Badge>
+            )}
+            {ticket.owner_side && (
+              <Badge className={`${OWNER_COLORS[ticket.owner_side]} text-white text-xs`}>
+                {ticket.owner_side}
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Titre */}
-        <p className="text-sm font-medium line-clamp-2">{ticket.element_concerne}</p>
+        <p className="text-sm font-medium line-clamp-2 cursor-pointer hover:text-primary">
+          {ticket.element_concerne}
+        </p>
 
         {/* Description courte */}
         {ticket.description && (
@@ -168,7 +185,7 @@ function DroppableColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col w-72 min-w-72 rounded-lg border-2 ${STATUS_COLORS[status.id] || 'bg-gray-50 border-gray-200'} ${isOver ? 'ring-2 ring-primary' : ''}`}
+      className={`flex flex-col w-72 min-w-72 rounded-lg border-2 ${STATUS_COLORS[status.id] || 'bg-gray-50 border-gray-200'} ${isOver ? 'ring-2 ring-primary ring-offset-2' : ''} transition-all`}
     >
       <div className="p-3 border-b">
         <div className="flex items-center justify-between">
@@ -180,15 +197,13 @@ function DroppableColumn({
       </div>
 
       <ScrollArea className="flex-1 p-2" style={{ maxHeight: 'calc(100vh - 300px)' }}>
-        <SortableContext items={tickets.map(t => t.id)} strategy={verticalListSortingStrategy}>
-          {tickets.map((ticket) => (
-            <DraggableTicketCard
-              key={ticket.id}
-              ticket={ticket}
-              onClick={() => onTicketClick(ticket)}
-            />
-          ))}
-        </SortableContext>
+        {tickets.map((ticket) => (
+          <DraggableTicketCard
+            key={ticket.id}
+            ticket={ticket}
+            onClick={() => onTicketClick(ticket)}
+          />
+        ))}
         {tickets.length === 0 && (
           <p className="text-xs text-muted-foreground text-center py-4">
             Aucun ticket
@@ -203,7 +218,7 @@ export function TicketKanban({ tickets, statuses, onStatusChange, onTicketClick 
   const [activeTicket, setActiveTicket] = useState<ApogeeTicket | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
   );
 
@@ -259,7 +274,7 @@ export function TicketKanban({ tickets, statuses, onStatusChange, onTicketClick 
 
       <DragOverlay>
         {activeTicket && (
-          <Card className="w-72 shadow-lg border-2 border-primary">
+          <Card className="w-72 shadow-xl border-2 border-primary rotate-3">
             <CardContent className="p-3">
               <p className="text-sm font-medium">{activeTicket.element_concerne}</p>
             </CardContent>
