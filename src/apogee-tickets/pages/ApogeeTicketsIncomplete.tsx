@@ -12,7 +12,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, SkipForward, Snowflake, Flame, ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useIncompleteTickets, useApogeeTickets } from '../hooks/useApogeeTickets';
 import { HeatPriorityBadge } from '../components/HeatPriorityBadge';
 import type { ApogeeTicket } from '../types';
@@ -82,6 +83,7 @@ function ModuleCombobox({
 }
 
 export default function ApogeeTicketsIncomplete() {
+  const navigate = useNavigate();
   const { tickets: rawIncompleteTickets, isLoading } = useIncompleteTickets();
   const { modules, updateTicket } = useApogeeTickets();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -149,8 +151,11 @@ export default function ApogeeTicketsIncomplete() {
 
     await updateTicket.mutateAsync(updates);
     
-    // Passer au suivant (on garde les valeurs en mémoire au cas où on revient)
-    if (currentIndex < totalTickets - 1) {
+    // Si c'est le dernier ticket, rediriger vers le Kanban
+    if (currentIndex >= totalTickets - 1) {
+      toast.success('Tous les tickets ont été traités !');
+      navigate(ROUTES.admin.apogeeTickets);
+    } else {
       setCurrentIndex(currentIndex + 1);
     }
   };
