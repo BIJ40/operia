@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, Upload, Download, Search, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, Download, Search, X, RefreshCw, Database } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,6 +43,7 @@ export default function AdminApogeeGuides() {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingGuide, setEditingGuide] = useState<ApogeeGuide | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRegeneratingRAG, setIsRegeneratingRAG] = useState(false);
   const [formData, setFormData] = useState<ApogeeGuideInsert>({
     titre: '',
     categorie: '',
@@ -180,12 +182,68 @@ export default function AdminApogeeGuides() {
     URL.revokeObjectURL(url);
   };
 
+  // Regenerate RAG Index
+  const handleRegenerateRAG = async () => {
+    if (!confirm('Régénérer l\'index RAG ? Cela peut prendre quelques minutes.')) return;
+    
+    setIsRegeneratingRAG(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Session expirée');
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/regenerate-apogee-rag`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({}),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de la régénération');
+      }
+
+      toast.success(`${result.message}: ${result.chunks_created} chunks créés pour ${result.guides_processed} guides`);
+    } catch (err) {
+      console.error('[RAG] Error:', err);
+      toast.error(`Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+    } finally {
+      setIsRegeneratingRAG(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Apogee Guides (RAG)</CardTitle>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={handleRegenerateRAG}
+              disabled={isRegeneratingRAG || guides.length === 0}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isRegeneratingRAG ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-1 animate-spin" /> Régénération...
+                </>
+              ) : (
+                <>
+                  <Database className="w-4 h-4 mr-1" /> Recréer index RAG
+                </>
+              )}
+            </Button>
             <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
               Template CSV
             </Button>
