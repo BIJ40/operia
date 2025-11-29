@@ -780,14 +780,15 @@ Le système V2.0 simplifie la gestion des accès avec :
 |-------|---------|--------|-------------|
 | `/`, `/profile`, `/favorites` | - | N0+ | Tous utilisateurs connectés |
 | `/academy/*` | - | N0+ | Help Academy (Apogée, Apporteurs, Documents) |
+| `/academy/hc-base/*` | - | N0+ | Base documentaire HelpConfort |
 | `/support/mes-demandes` | - | N0+ | Mes demandes support |
-| `/pilotage/indicateurs/*` | `franchisee_admin` | N2+ | Indicateurs agence |
-| `/pilotage/actions/*` | `franchisee_admin` | N2+ | Actions à mener |
-| `/pilotage/diffusion` | `franchisee_admin` | N2+ | Écran diffusion TV |
-| `/pilotage/rh-tech` | `franchisee_admin` | N2+ | Planning hebdo techniciens |
-| `/pilotage/equipe` | `franchisee_admin` | N2+ | Gestion équipe agence |
-| `/reseau/*` | `franchisor_user` | N3+ | Réseau franchiseur |
-| `/reseau/agences/:id` | `franchisor_user` | N3+ | Profil agence (franchiseur) |
+| `/hc-agency/indicateurs/*` | `franchisee_admin` | N2+ | Indicateurs agence |
+| `/hc-agency/actions/*` | `franchisee_admin` | N2+ | Actions à mener |
+| `/hc-agency/diffusion` | `franchisee_admin` | N2+ | Écran diffusion TV |
+| `/hc-agency/rh-tech` | `franchisee_admin` | N2+ | Planning hebdo techniciens |
+| `/hc-agency/equipe` | `franchisee_admin` | N2+ | Gestion équipe agence |
+| `/hc-reseau/*` | `franchisor_user` | N3+ | Réseau franchiseur |
+| `/hc-reseau/agences/:id` | `franchisor_user` | N3+ | Profil agence (franchiseur) |
 | `/support/console` | `franchisor_user` | N3+ | Console support |
 | `/admin/users` | `franchisor_user` | N3+ | Gestion utilisateurs |
 | `/admin/agencies` | `platform_admin` | N5+ | Gestion agences |
@@ -940,10 +941,10 @@ navigate(ROUTES.support.userTickets);
 
 | Section | Préfixe | Exemples |
 |---------|---------|----------|
-| Help Academy | `/academy` | `/academy/apogee`, `/academy/apporteurs` |
-| Pilotage | `/pilotage` | `/pilotage/indicateurs`, `/pilotage/actions` |
+| Help Academy | `/academy` | `/academy/apogee`, `/academy/apporteurs`, `/academy/hc-base` |
+| Pilotage Agence | `/hc-agency` | `/hc-agency/indicateurs`, `/hc-agency/actions`, `/hc-agency/equipe` |
 | Support | `/support` | `/support/mes-demandes`, `/support/console` |
-| Réseau | `/reseau` | `/reseau/dashboard`, `/reseau/agences` |
+| Réseau Franchiseur | `/hc-reseau` | `/hc-reseau/dashboard`, `/hc-reseau/agences` |
 | Admin | `/admin` | `/admin/users`, `/admin/backup` |
 | User | `/profile`, `/favorites` | Pages utilisateur |
 
@@ -952,9 +953,13 @@ navigate(ROUTES.support.userTickets);
 Les anciennes routes sont maintenues pour rétrocompatibilité mais NE DOIVENT PAS être utilisées dans le nouveau code :
 
 - `/apogee` → `/academy/apogee`
-- `/mes-indicateurs` → `/pilotage/indicateurs`
+- `/helpconfort` → `/academy/hc-base`
+- `/mes-indicateurs` → `/hc-agency/indicateurs`
 - `/mes-demandes` → `/support/mes-demandes`
-- `/tete-de-reseau` → `/reseau/dashboard`
+- `/tete-de-reseau` → `/hc-reseau/dashboard`
+- `/pilotage/*` → `/hc-agency/*` (migration nov 2025)
+- `/academy/documents` → `/academy/hc-base` (migration nov 2025)
+- `/reseau/*` → `/hc-reseau/*` (migration nov 2025)
 
 ### Ajouter une nouvelle route
 
