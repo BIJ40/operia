@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Users, UserCheck } from "lucide-react";
+import { AppLayout } from "@/apogee-connect/components/layout/AppLayout";
 import { TechWeeklyPlanningList } from "@/apogee-connect/components/TechWeeklyPlanningList";
 import { AgencyProvider, useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
@@ -31,16 +32,18 @@ function PlanningHebdoContent() {
 
   if (!isAgencyReady) {
     return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-12 w-full max-w-md" />
-        <Skeleton className="h-96 w-full" />
-      </div>
+      <AppLayout>
+        <div className="p-6 space-y-4">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-12 w-full max-w-md" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <>
+    <AppLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -111,7 +114,7 @@ function PlanningHebdoContent() {
         {/* Planning List */}
         <TechWeeklyPlanningList techFilterId={selectedTechId} />
       </div>
-    </>
+    </AppLayout>
   );
 }
 

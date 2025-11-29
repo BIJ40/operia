@@ -89,12 +89,9 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
 
   if (error) {
     return (
-      <Card className="border-destructive/50 bg-destructive/5">
+      <Card className="border-destructive">
         <CardContent className="pt-6">
-          <p className="text-destructive font-medium">Erreur lors du chargement du planning</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            {error instanceof Error ? error.message : "Une erreur s'est produite lors de la récupération des données."}
-          </p>
+          <p className="text-destructive">Erreur lors du chargement du planning.</p>
         </CardContent>
       </Card>
     );

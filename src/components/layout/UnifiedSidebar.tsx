@@ -2,7 +2,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   Headset, MessageSquare, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Shield, Database, Activity, ChevronRight, Home, User, Grid3X3, CalendarDays
+  Coins, Settings, Users, Shield, Database, Activity, ChevronRight, Home, User, Grid3X3
 } from 'lucide-react';
 import {
   Sidebar,
@@ -42,7 +42,7 @@ interface NavGroup {
 export function UnifiedSidebar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { canViewScope, isAdmin, globalRole, suggestedGlobalRole } = useAuth();
+  const { canViewScope, isAdmin } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   // All menu sections collapsed by default on first load
@@ -52,16 +52,6 @@ export function UnifiedSidebar() {
   const canAccessFranchiseeAdmin = useHasGlobalRole('franchisee_admin'); // N2+
   const canAccessFranchiseur = useHasGlobalRole('franchisor_user'); // N3+
   const canAccessAdmin = useHasGlobalRole('platform_admin'); // N5+
-
-  // DEBUG: Log role values for troubleshooting
-  console.log('[SIDEBAR] Role check:', {
-    globalRole,
-    suggestedGlobalRole,
-    isAdmin,
-    canAccessFranchiseeAdmin,
-    canAccessFranchiseur,
-    canAccessAdmin
-  });
 
   // Check if currently in edit mode (admin legacy pour édition)
   const isInEditMode = searchParams.get('edit') === 'true' && (isAdmin || canAccessAdmin);
@@ -165,7 +155,6 @@ export function UnifiedSidebar() {
           ]
         },
         { title: 'Agences', url: '/admin/agencies', icon: Building2, scope: 'admin_settings' },
-        { title: 'Planning Hebdo', url: '/rh-tech', icon: CalendarDays, scope: 'admin_settings', description: 'Planning hebdomadaire techniciens' },
         { title: 'Sauvegardes', url: '/admin/backup', icon: Database, scope: 'admin_backup' },
         { title: 'Activité', url: '/admin/user-activity', icon: Activity, scope: 'admin_settings' },
         { title: 'Paramètres', url: '/admin', icon: Settings, scope: 'admin_settings', description: 'Configuration du système' },
