@@ -137,10 +137,10 @@ const SortableCategory = ({
           </div>
         </div>
       )}
-      {/* Badge En cours - arrondi accentué orange */}
+      {/* Badge En cours - arrondi accentué bleu */}
       {hasInProgress && !isEmpty && !isEditMode && (
         <div className="absolute -top-2 -right-2 z-20">
-          <div className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
+          <div className="bg-helpconfort-blue text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
             <Clock className="w-3 h-3" />
             En cours
           </div>
@@ -551,10 +551,10 @@ export default function ApogeeGuide() {
                       </div>
                     </div>
                   )}
-                  {/* Badge En cours - arrondi accentué orange */}
+                  {/* Badge En cours - arrondi accentué bleu */}
                   {badges.hasInProgress && (
                     <div className="absolute -top-2 -right-2 z-20">
-                      <div className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
+                      <div className="bg-helpconfort-blue text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         En cours
                       </div>
