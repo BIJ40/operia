@@ -76,7 +76,7 @@ export function CollaboratorFormDialog({
     last_name: "",
     email: "",
     phone: "",
-    role: "autre" as CollaboratorRole,
+    role: "technicien" as CollaboratorRole,
     notes: "",
   });
 

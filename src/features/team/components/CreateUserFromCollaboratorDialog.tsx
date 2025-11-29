@@ -50,6 +50,14 @@ export function CreateUserFromCollaboratorDialog({
   
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState<GlobalRole>("franchisee_user");
+  const [email, setEmail] = useState("");
+
+  // Reset email when dialog opens with new collaborator
+  useState(() => {
+    if (collaborator?.email) {
+      setEmail(collaborator.email);
+    }
+  });
 
   // Rôles assignables par l'utilisateur courant
   const assignableRoles = getAssignableRoles(globalRole);
@@ -58,16 +66,19 @@ export function CreateUserFromCollaboratorDialog({
     (r) => r === "franchisee_user" || r === "franchisee_admin"
   );
 
+  // Email final (du formulaire ou du collaborateur)
+  const finalEmail = email || collaborator?.email || "";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!collaborator || !collaborator.email) return;
+    if (!collaborator || !finalEmail) return;
 
     setIsLoading(true);
     try {
       // Appeler l'edge function create-user
       const { data, error } = await supabase.functions.invoke("create-user", {
         body: {
-          email: collaborator.email,
+          email: finalEmail,
           first_name: collaborator.first_name,
           last_name: collaborator.last_name,
           global_role: selectedRole,
@@ -124,8 +135,15 @@ export function CreateUserFromCollaboratorDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Email</Label>
-            <Input value={collaborator.email || ""} disabled />
+            <Label htmlFor="email">Email *</Label>
+            <Input 
+              id="email"
+              type="email"
+              value={email || collaborator.email || ""}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="email@exemple.com"
+              required
+            />
           </div>
 
           {agencyLabel && (
@@ -167,7 +185,7 @@ export function CreateUserFromCollaboratorDialog({
             >
               Annuler
             </Button>
-            <Button type="submit" disabled={isLoading || !collaborator.email}>
+            <Button type="submit" disabled={isLoading || !finalEmail}>
               {isLoading ? "Création..." : "Créer le compte"}
             </Button>
           </DialogFooter>

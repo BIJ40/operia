@@ -3,13 +3,12 @@
  * Accessible aux N2+ (franchisee_admin)
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Users, UserCircle, Loader2 } from "lucide-react";
+import { Plus, Users, Loader2, UserPlus } from "lucide-react";
 import {
   useAgencyCollaborators,
   useCreateAgencyCollaborator,
@@ -17,20 +16,34 @@ import {
   useDeleteAgencyCollaborator,
 } from "@/features/team/hooks";
 import { useAgencyUsers } from "@/franchiseur/hooks/useAgencyUsers";
-import { AgencyCollaborator, CreateCollaboratorPayload, UpdateCollaboratorPayload } from "@/features/team/types";
-import { CollaboratorFormDialog, CollaboratorsTable, CreateUserFromCollaboratorDialog } from "@/features/team/components";
+import { AgencyCollaborator, CreateCollaboratorPayload, UpdateCollaboratorPayload, COLLABORATOR_ROLE_LABELS } from "@/features/team/types";
+import { CollaboratorFormDialog, CreateUserFromCollaboratorDialog } from "@/features/team/components";
 import { GLOBAL_ROLE_LABELS } from "@/types/globalRoles";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-export default function TeamPage() {
-  const { user, agence, agencyId, hasGlobalRole } = useAuth();
+// Type unifié pour la liste
+interface TeamMember {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email?: string | null;
+  role: string;
+  hasAccount: boolean;
+  isActive?: boolean;
+  globalRole?: string | null;
+  // Pour les collaborateurs sans compte
+  collaborator?: AgencyCollaborator;
+}
 
-  // Hooks data - agencyId (UUID) pour collaborateurs, agence (slug) pour users
+export default function TeamPage() {
+  const { agence, agencyId, hasGlobalRole } = useAuth();
+
+  // Hooks data
   const { data: collaborators = [], isLoading: isLoadingCollaborators } = useAgencyCollaborators(agencyId);
   const { data: registeredUsers = [], isLoading: isLoadingUsers } = useAgencyUsers(agence);
 
   // Mutations
-  const createCollaborator = useCreateAgencyCollaborator(agencyId || "");
+  const createCollaborator = useCreateAgencyCollaborator(agencyId);
   const updateCollaborator = useUpdateAgencyCollaborator(agencyId || "");
   const deleteCollaborator = useDeleteAgencyCollaborator(agencyId || "");
 
@@ -39,12 +52,48 @@ export default function TeamPage() {
   const [editingCollaborator, setEditingCollaborator] = useState<AgencyCollaborator | null>(null);
   const [createUserTarget, setCreateUserTarget] = useState<AgencyCollaborator | null>(null);
 
-  // Filtrer les collaborateurs non inscrits
-  const unregisteredCollaborators = collaborators.filter((c) => !c.is_registered_user);
-
   // Permissions
   const canCreateUser = hasGlobalRole("franchisee_admin"); // N2+
   const canDelete = hasGlobalRole("franchisor_user"); // N3+
+
+  // Fusionner users inscrits + collaborateurs en une seule liste
+  const teamMembers = useMemo((): TeamMember[] => {
+    const members: TeamMember[] = [];
+
+    // Ajouter les utilisateurs inscrits
+    registeredUsers.forEach((user) => {
+      members.push({
+        id: `user-${user.id}`,
+        first_name: user.first_name || "",
+        last_name: user.last_name || "",
+        email: user.email,
+        role: user.role_agence || "Utilisateur",
+        hasAccount: true,
+        isActive: user.is_active !== false,
+        globalRole: user.global_role,
+      });
+    });
+
+    // Ajouter les collaborateurs NON inscrits
+    collaborators
+      .filter((c) => !c.is_registered_user)
+      .forEach((collab) => {
+        members.push({
+          id: `collab-${collab.id}`,
+          first_name: collab.first_name,
+          last_name: collab.last_name,
+          email: collab.email,
+          role: COLLABORATOR_ROLE_LABELS[collab.role] || collab.role,
+          hasAccount: false,
+          collaborator: collab,
+        });
+      });
+
+    // Trier par nom
+    return members.sort((a, b) => 
+      `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
+    );
+  }, [registeredUsers, collaborators]);
 
   const handleSubmit = (data: CreateCollaboratorPayload | UpdateCollaboratorPayload) => {
     if ("id" in data) {
@@ -90,6 +139,8 @@ export default function TeamPage() {
     );
   }
 
+  const isLoading = isLoadingCollaborators || isLoadingUsers;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -99,124 +150,119 @@ export default function TeamPage() {
             Gérez les membres de votre agence
           </p>
         </div>
+        <Button onClick={() => setIsFormOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Ajouter un membre
+        </Button>
       </div>
 
-      <Tabs defaultValue="registered" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="registered" className="flex items-center gap-2">
-            <UserCircle className="h-4 w-4" />
-            Utilisateurs inscrits
-            <Badge variant="secondary" className="ml-1">
-              {registeredUsers.length}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="collaborators" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Collaborateurs
-            {unregisteredCollaborators.length > 0 && (
-              <Badge variant="destructive" className="ml-1">
-                {unregisteredCollaborators.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Équipe ({teamMembers.length})
+          </CardTitle>
+          <CardDescription>
+            Liste complète des membres de l'agence
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : teamMembers.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Aucun membre dans l'équipe
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {teamMembers.map((member) => (
+                <div
+                  key={member.id}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className={member.hasAccount ? "bg-primary/10" : "bg-muted"}>
+                        {member.first_name?.[0]}
+                        {member.last_name?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">
+                        {member.first_name} {member.last_name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {member.email || "Pas d'email"}
+                      </p>
+                    </div>
+                  </div>
 
-        {/* Onglet Utilisateurs inscrits */}
-        <TabsContent value="registered">
-          <Card>
-            <CardHeader>
-              <CardTitle>Utilisateurs inscrits</CardTitle>
-              <CardDescription>
-                Utilisateurs ayant un compte sur la plateforme
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoadingUsers ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : registeredUsers.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Aucun utilisateur inscrit
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {registeredUsers.map((registeredUser) => (
-                    <div
-                      key={registeredUser.id}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback>
-                            {registeredUser.first_name?.[0]}
-                            {registeredUser.last_name?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">
-                            {registeredUser.first_name} {registeredUser.last_name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {registeredUser.email}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {registeredUser.role_agence && (
-                          <Badge variant="outline">{registeredUser.role_agence}</Badge>
-                        )}
-                        {registeredUser.global_role && (
+                  <div className="flex items-center gap-2">
+                    {/* Poste */}
+                    <Badge variant="outline">{member.role}</Badge>
+
+                    {/* Statut compte */}
+                    {member.hasAccount ? (
+                      <>
+                        <Badge variant="default" className="bg-green-600">
+                          Compte actif
+                        </Badge>
+                        {member.globalRole && (
                           <Badge variant="secondary">
-                            {GLOBAL_ROLE_LABELS[registeredUser.global_role as keyof typeof GLOBAL_ROLE_LABELS] || registeredUser.global_role}
+                            {GLOBAL_ROLE_LABELS[member.globalRole as keyof typeof GLOBAL_ROLE_LABELS] || member.globalRole}
                           </Badge>
                         )}
-                        {registeredUser.is_active === false && (
+                        {member.isActive === false && (
                           <Badge variant="destructive">Inactif</Badge>
                         )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                      </>
+                    ) : (
+                      <>
+                        <Badge variant="secondary">Sans compte</Badge>
+                        {canCreateUser && member.collaborator && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCreateUser(member.collaborator!)}
+                          >
+                            <UserPlus className="h-4 w-4 mr-1" />
+                            Créer compte
+                          </Button>
+                        )}
+                      </>
+                    )}
 
-        {/* Onglet Collaborateurs */}
-        <TabsContent value="collaborators">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Collaborateurs non inscrits</CardTitle>
-                <CardDescription>
-                  Personnes de l'équipe n'ayant pas encore de compte
-                </CardDescription>
-              </div>
-              <Button onClick={() => setIsFormOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {isLoadingCollaborators ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    {/* Actions pour collaborateurs non inscrits */}
+                    {!member.hasAccount && member.collaborator && (
+                      <div className="flex items-center gap-1 ml-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(member.collaborator!)}
+                        >
+                          Modifier
+                        </Button>
+                        {canDelete && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(member.collaborator!)}
+                          >
+                            Supprimer
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <CollaboratorsTable
-                  collaborators={unregisteredCollaborators}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onCreateUser={handleCreateUser}
-                  canDelete={canDelete}
-                  canCreateUser={canCreateUser}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Dialog création/édition */}
       <CollaboratorFormDialog
@@ -237,7 +283,6 @@ export default function TeamPage() {
         collaborator={createUserTarget}
         agencyLabel={agence || undefined}
         onSuccess={() => {
-          // Refetch après création
           setCreateUserTarget(null);
         }}
       />
