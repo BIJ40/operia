@@ -7,7 +7,7 @@ export * from './types';
 
 // Hooks
 export { useApogeeTickets, useApogeeTicket, useIncompleteTickets } from './hooks/useApogeeTickets';
-export { useApogeeImport, parseXlsxFile } from './hooks/useApogeeImport';
+export { useApogeeImport, parseXlsxFile, type SheetDebugInfo } from './hooks/useApogeeImport';
 
 // Components
 export { TicketKanban } from './components/TicketKanban';

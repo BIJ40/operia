@@ -19,12 +19,13 @@ import {
   Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useApogeeImport, parseXlsxFile } from '../hooks/useApogeeImport';
+import { useApogeeImport, parseXlsxFile, type SheetDebugInfo } from '../hooks/useApogeeImport';
 import type { ImportedRow } from '../types';
 import { ROUTES } from '@/config/routes';
 
 export default function ApogeeTicketsImport() {
   const [parsedRows, setParsedRows] = useState<ImportedRow[]>([]);
+  const [debugInfo, setDebugInfo] = useState<SheetDebugInfo[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
 
@@ -37,10 +38,12 @@ export default function ApogeeTicketsImport() {
     setFileName(file.name);
     setParseError(null);
     setParsedRows([]);
+    setDebugInfo([]);
 
     try {
-      const rows = await parseXlsxFile(file);
-      setParsedRows(rows);
+      const parseResult = await parseXlsxFile(file);
+      setParsedRows(parseResult.rows);
+      setDebugInfo(parseResult.debug);
     } catch (error: any) {
       setParseError(error.message || 'Erreur lors de la lecture du fichier');
     }
