@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { BookOpen, FileText, FolderOpen } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ROUTES } from '@/config/routes';
-import { PageHeader } from '@/components/layout/PageHeader';
 
 const academyModules = [
   {
@@ -34,11 +33,6 @@ const academyModules = [
 export default function AcademyIndex() {
   return (
     <div className="container mx-auto py-8 px-4">
-      <PageHeader
-        pageKey="academy_index"
-        backTo={ROUTES.home}
-        backLabel="Retour accueil"
-      />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {academyModules.map((module) => {

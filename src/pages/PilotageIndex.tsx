@@ -3,7 +3,6 @@ import { BarChart3, ListTodo, Tv, Calendar, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
-import { PageHeader } from '@/components/layout/PageHeader';
 
 const pilotageModules = [
   {
@@ -52,11 +51,6 @@ const pilotageModules = [
 export default function PilotageIndex() {
   return (
     <div className="container mx-auto py-8 px-4">
-      <PageHeader
-        pageKey="pilotage_index"
-        backTo={ROUTES.home}
-        backLabel="Retour accueil"
-      />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {pilotageModules.map((module) => {
