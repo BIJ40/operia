@@ -13,40 +13,90 @@ import type { ImportedRow, ImportResult, ApogeeTicketInsert, ApogeeTicketComment
 
 // Mapping flexible des colonnes - cherche parmi ces variations
 const COLUMN_VARIANTS: Record<string, string[]> = {
-  element_concerne: ['ELEMENTS CONCERNES', 'ELEMENT CONCERNE', 'ÉLÉMENT CONCERNÉ', 'ÉLÉMENTS CONCERNÉS', 'Élément concerné'],
-  description: ['DESCRIPTIF', 'Descriptif', 'DESCRIPTION', 'Description'],
-  priority: ['PRIO', 'Prio', 'PRIORITE', 'PRIORITÉ', 'Priorité'],
-  action_type: ['ACTION', 'Action', 'TYPE ACTION'],
-  h_min: ['Temps mini', 'TEMPS MINI', 'H Min', 'H MIN', 'H_MIN', 'Min'],
-  h_max: ['Temps maxi', 'TEMPS MAXI', 'H Max', 'H MAX', 'H_MAX', 'Max'],
-  owner_side: ['PRISE EN CHARGE', 'Prise en charge', 'PEC', 'OWNER'],
-  hca_code: ['HCA', 'CODE HCA', 'Code HCA'],
-  apogee_status: ['APOGEE', 'Apogee', 'APOGÉE', 'Apogée', 'STATUT APOGEE', 'STATUT APOGÉE'],
+  // Élément concerné (titre principal)
+  element_concerne: [
+    'ELEMENTS CONCERNES', 'ELEMENT CONCERNE', 'ÉLÉMENT CONCERNÉ', 'ÉLÉMENTS CONCERNÉS', 
+    'Élément concerné', 'Éléments concernés', 'MODULE', 'Module'
+  ],
+  // Description du problème / demande
+  description: [
+    'DESCRIPTIF', 'Descriptif', 'DESCRIPTION', 'Description',
+    'DESCRIPTION DU PROBLEME', 'DESCRIPTION DU PROBLÈME', 'Description du problème',
+  ],
+  // Priorité
+  priority: ['PRIO', 'Prio', 'PRIORITE', 'PRIORITÉ', 'Priorité', '1', '2', '3'],
+  // Type d'action / statut workflow
+  action_type: ['ACTION', 'Action', 'TYPE ACTION', 'STATUT', 'Statut'],
+  // Heures min/max estimées
+  h_min: ['Temps mini', 'TEMPS MINI', 'H Min', 'H MIN', 'H_MIN', 'Min', 'Hmin'],
+  h_max: ['Temps maxi', 'TEMPS MAXI', 'H Max', 'H MAX', 'H_MAX', 'Max', 'Hmax'],
+  // Prise en charge (HC / Apogée / Partagé)
+  owner_side: [
+    'PRISE EN CHARGE', 'Prise en charge', 'PEC', 'OWNER',
+    '% Pris en charge Dynoco', '% Pris en charge', 'Dynoco'
+  ],
+  // Code HCA (plan de charge)
+  hca_code: ['HCA', 'CODE HCA', 'Code HCA', 'CODE HCA (plan de charge)', 'code HCA'],
+  // Statut côté Apogée
+  apogee_status: [
+    'APOGEE', 'Apogee', 'APOGÉE', 'Apogée', 
+    'STATUT APOGEE', 'STATUT APOGÉE', 'ACTION APOGEE', 'ACTION APOGÉE'
+  ],
+  // Statut côté HC
   hc_status: ['HC', 'STATUT HC', 'Statut HC'],
-  module: ['MODULE', 'Module', 'RUBRIQUE'],
-  comment_apogee: ['COMMENTAIRE APOGÉE', 'COMMENTAIRE APOGEE', 'Commentaire Apogée', 'Commentaire Apogee'],
-  comment_florian: ['COMMENTAIRE florian', 'COMMENTAIRE Florian', 'COMMENTAIRE FLORIAN', 'Florian'],
-  comment_jerome: ['COMMENTAIRE Jérome', 'COMMENTAIRE Jérôme', 'COMMENTAIRE Jerome', 'COMMENTAIRE JEROME', 'Jérôme'],
+  // Module concerné
+  module: ['MODULE', 'Module', 'RUBRIQUE', 'USER', 'User'],
+  // Commentaires importés
+  comment_apogee: [
+    'COMMENTAIRE APOGÉE', 'COMMENTAIRE APOGEE', 'Commentaire Apogée', 'Commentaire Apogee'
+  ],
+  comment_florian: [
+    'COMMENTAIRE florian', 'COMMENTAIRE Florian', 'COMMENTAIRE FLORIAN', 
+    'Florian', 'florian'
+  ],
+  comment_jerome: [
+    'COMMENTAIRE Jérome', 'COMMENTAIRE Jérôme', 'COMMENTAIRE Jerome', 
+    'COMMENTAIRE JEROME', 'Jérôme', 'Jerome', 'jérôme'
+  ],
+  comment_hc: ['HC', 'COMMENTAIRE HC', 'Commentaire HC'],
+  // Utilisateur / demandeur
+  user: ['USER', 'User', 'UTILISATEUR', 'Utilisateur', 'DEMANDEUR', 'Demandeur'],
+  // Image / Screenshot
+  image: ['SCREEN', 'IMAGE', 'Image', 'Screen', 'SCREENSHOT'],
 };
 
 // Mapping des priorités Excel vers les IDs en base
 const PRIORITY_MAPPING: Record<string, string> = {
   'A': 'A',
   'B': 'B',
+  'C': 'B',  // Pas de C, on mappe vers B
+  '1': 'A',
+  '2': 'B',
+  '3': 'V1',
+  'PRIO 1': 'A',
+  'PRIO 2': 'B',
+  'PRIO 3': 'V1',
   'V1': 'V1',
+  '-': 'PLUS_TARD',
+  'NON': 'PLUS_TARD',
   'PLUS TARD': 'PLUS_TARD',
-  'Plus tard': 'PLUS_TARD',
-  'C': 'C',
 };
 
 // Mapping des owner_side
 const OWNER_MAPPING: Record<string, 'HC' | 'APOGEE' | 'PARTAGE'> = {
   'HC': 'HC',
+  '0': 'HC',
+  '100': 'HC',
   'APOGEE': 'APOGEE',
   'APOGÉE': 'APOGEE',
   '%': 'PARTAGE',
   'PARTAGE': 'PARTAGE',
   'DYNOCO': 'PARTAGE',
+  '50/50': 'PARTAGE',
+  '50': 'PARTAGE',
+  '25/75': 'PARTAGE',
+  '75/25': 'PARTAGE',
+  '?': null,
 };
 
 // Trouve la valeur d'une colonne en utilisant les variantes
@@ -166,25 +216,41 @@ function rowToTicket(row: ImportedRow): ApogeeTicketInsert {
   const hcaCode = findColumnValue(data, 'hca_code');
   const apogeeStatus = findColumnValue(data, 'apogee_status');
   const hcStatus = findColumnValue(data, 'hc_status');
+  const moduleValue = findColumnValue(data, 'module');
+  const userValue = findColumnValue(data, 'user');
   
   // Déterminer owner_side
   let ownerSide: 'HC' | 'APOGEE' | 'PARTAGE' | null = null;
-  const priseEnCharge = String(findColumnValue(data, 'owner_side') || '').toUpperCase();
-  if (OWNER_MAPPING[priseEnCharge]) {
+  const priseEnCharge = String(findColumnValue(data, 'owner_side') || '').toUpperCase().trim();
+  if (priseEnCharge && OWNER_MAPPING[priseEnCharge] !== undefined) {
     ownerSide = OWNER_MAPPING[priseEnCharge];
-  } else if (priseEnCharge.includes('DYNOCO') || priseEnCharge.includes('%')) {
+  } else if (priseEnCharge.includes('DYNOCO') || priseEnCharge.includes('%') || priseEnCharge.includes('/')) {
     ownerSide = 'PARTAGE';
+  } else if (priseEnCharge === '100' || priseEnCharge === '0') {
+    ownerSide = 'HC';
   }
 
-  // Déterminer priorité
-  const priority = PRIORITY_MAPPING[prioRaw] || null;
+  // Déterminer priorité (normaliser les valeurs)
+  let priority: string | null = null;
+  if (prioRaw) {
+    priority = PRIORITY_MAPPING[prioRaw] || prioRaw;
+  }
 
-  // Construire le titre: prendre element_concerne ou description tronqué
-  const title = elementConcerne 
-    ? String(elementConcerne).substring(0, 255)
-    : description 
-      ? String(description).substring(0, 255)
-      : 'Sans titre';
+  // Construire le titre: element_concerne > module > description
+  let title = 'Sans titre';
+  if (elementConcerne && elementConcerne !== moduleValue) {
+    title = String(elementConcerne).substring(0, 255);
+  } else if (description) {
+    // Prendre le premier segment significatif de la description
+    const descStr = String(description);
+    const firstLine = descStr.split('\n')[0].split('<br>')[0];
+    title = firstLine.substring(0, 255);
+  } else if (moduleValue) {
+    title = String(moduleValue).substring(0, 255);
+  }
+
+  // Module/area: utiliser module s'il existe, sinon element_concerne pour certaines feuilles
+  const moduleArea = moduleValue ? String(moduleValue) : null;
 
   return {
     element_concerne: title,
@@ -193,11 +259,12 @@ function rowToTicket(row: ImportedRow): ApogeeTicketInsert {
     action_type: actionType ? String(actionType) : null,
     kanban_status: determineInitialStatus(data),
     owner_side: ownerSide,
-    h_min: hMin ? Number(hMin) : null,
-    h_max: hMax ? Number(hMax) : null,
+    h_min: hMin ? parseFloat(String(hMin).replace(',', '.')) : null,
+    h_max: hMax ? parseFloat(String(hMax).replace(',', '.')) : null,
     hca_code: hcaCode ? String(hcaCode) : null,
     apogee_status_raw: apogeeStatus ? String(apogeeStatus) : null,
     hc_status_raw: hcStatus ? String(hcStatus) : null,
+    module_area: moduleArea,
     source_sheet: row.sheetName,
     source_row_index: row.rowIndex,
     external_key: `${row.sheetName}#${row.rowIndex}`,
@@ -212,7 +279,7 @@ function extractComments(row: ImportedRow, ticketId: string): ApogeeTicketCommen
 
   // Commentaire Apogée
   const commentApogee = findColumnValue(data, 'comment_apogee');
-  if (commentApogee) {
+  if (commentApogee && String(commentApogee).trim()) {
     comments.push({
       ticket_id: ticketId,
       author_type: 'APOGEE',
@@ -222,9 +289,21 @@ function extractComments(row: ImportedRow, ticketId: string): ApogeeTicketCommen
     });
   }
 
+  // Commentaire HC (colonne HC des feuilles)
+  const commentHC = findColumnValue(data, 'comment_hc');
+  if (commentHC && String(commentHC).trim() && commentHC !== commentApogee) {
+    comments.push({
+      ticket_id: ticketId,
+      author_type: 'HC',
+      author_name: 'HelpConfort',
+      source_field: 'COMMENTAIRE_HC',
+      body: String(commentHC),
+    });
+  }
+
   // Commentaire Florian
   const commentFlorian = findColumnValue(data, 'comment_florian');
-  if (commentFlorian) {
+  if (commentFlorian && String(commentFlorian).trim()) {
     comments.push({
       ticket_id: ticketId,
       author_type: 'HC',
@@ -236,7 +315,7 @@ function extractComments(row: ImportedRow, ticketId: string): ApogeeTicketCommen
 
   // Commentaire Jérôme
   const commentJerome = findColumnValue(data, 'comment_jerome');
-  if (commentJerome) {
+  if (commentJerome && String(commentJerome).trim()) {
     comments.push({
       ticket_id: ticketId,
       author_type: 'HC',
