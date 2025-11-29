@@ -423,7 +423,7 @@ export const useAdminTickets = () => {
         const modules = p.enabled_modules as any;
         if (!modules?.support?.enabled) return false;
         const options = modules.support.options || {};
-        return options.agent_support === true || options.admin_support === true;
+        return options.agent === true || options.admin === true;
       });
 
       const userIds = supportProfiles.map(p => p.id);

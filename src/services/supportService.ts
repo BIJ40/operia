@@ -150,9 +150,7 @@ export async function getAllSupportUsers(): Promise<SupportUser[]> {
       const modules = profile.enabled_modules as any;
       if (!modules?.support?.enabled) return false;
       const options = modules.support.options || {};
-      // Support les deux formats de clés: agent/admin ou agent_support/admin_support
-      return options.agent === true || options.admin === true || 
-             options.agent_support === true || options.admin_support === true;
+      return options.agent === true || options.admin === true;
     })
     .map(profile => {
       const modules = profile.enabled_modules as any;
