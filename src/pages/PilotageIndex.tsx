@@ -54,7 +54,6 @@ export default function PilotageIndex() {
     <div className="container mx-auto py-8 px-4">
       <PageHeader
         pageKey="pilotage_index"
-        defaultTitle="Pilotage Agence"
         defaultSubtitle="Outils de gestion et de suivi de l'activité de votre agence."
         backTo={ROUTES.home}
         backLabel="Retour accueil"

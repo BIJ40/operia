@@ -436,7 +436,6 @@ export default function ApogeeGuide() {
       <div className="container max-w-6xl mx-auto px-4 py-8">
         <PageHeader
           pageKey="academy_apogee"
-          defaultTitle="Guide d'utilisation Apogée"
           defaultSubtitle="Tout ce que vous devez savoir sur l'utilisation d'Apogée"
           backTo={ROUTES.academy.index}
           backLabel="Retour Help! Academy"
