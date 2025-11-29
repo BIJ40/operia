@@ -55,13 +55,13 @@ const TAILWIND_COLORS: Record<string, string> = {
   rose: '#f43f5e',
 };
 
-// Helper pour générer un fond léger à partir d'une couleur hex
-function getColumnStyle(color: string | null): React.CSSProperties {
-  if (!color) return { backgroundColor: '#f3f4f6', borderColor: '#d1d5db' };
-  // Utiliser la couleur configurée avec opacité pour le fond
+// Helper pour générer un fond léger à partir d'un nom de couleur Tailwind
+function getColumnStyle(colorName: string | null): React.CSSProperties {
+  if (!colorName) return { backgroundColor: '#f3f4f6', borderColor: '#d1d5db' };
+  const hex = TAILWIND_COLORS[colorName] || '#6b7280';
   return {
-    backgroundColor: `${color}15`,  // 15 = ~8% opacité
-    borderColor: `${color}50`,      // 50 = ~30% opacité
+    backgroundColor: `${hex}20`,  // 20 = ~12% opacité
+    borderColor: `${hex}60`,      // 60 = ~38% opacité
   };
 }
 
