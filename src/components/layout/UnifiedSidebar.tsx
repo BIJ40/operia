@@ -301,8 +301,8 @@ export function UnifiedSidebar() {
                   )}
                 </div>
                 
-                <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                  <SidebarGroupContent className="pt-0.5">
+                <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-out data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <SidebarGroupContent className="pt-0.5 animate-fade-in">
                     <SidebarMenu className="space-y-0.5">
                       {items.map((item) => {
                         const Icon = item.icon;
@@ -344,8 +344,8 @@ export function UnifiedSidebar() {
                                   </div>
                                 </SidebarMenuButton>
                               </SidebarMenuItem>
-                              <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                                <div className="ml-3 border-l border-border/50 pl-2 py-0.5 space-y-0.5">
+                              <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-out data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                                <div className="ml-3 border-l border-border/50 pl-2 py-0.5 space-y-0.5 animate-fade-in">
                                   {item.children.map((child) => {
                                     const ChildIcon = child.icon;
                                     const childActive = isActive(child.url);
