@@ -156,12 +156,18 @@ function PilotageStatsHubContent() {
         apiData.devis || []
       );
       
+      // Large plage pour le taux SAV global (toutes données)
+      const globalRange = {
+        start: new Date(2020, 0, 1),
+        end: new Date(2030, 11, 31)
+      };
+      
       const tauxSAVGlobal = calculateTauxSAVGlobal(
         apiData.interventions || [],
         apiData.factures || [],
         apiData.projects || [],
         apiData.clients || [],
-        undefined // Global, sans filtre de période
+        globalRange
       );
       
       return {
