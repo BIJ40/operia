@@ -405,26 +405,21 @@ export const useAdminTickets = () => {
 
   const loadSupportUsers = async () => {
     try {
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'support');
+      // V2: Charger les utilisateurs avec global_role N3+ (peuvent gérer les tickets)
+      // N3 = franchisor_user, N4 = franchisor_admin, N5 = platform_admin, N6 = superadmin
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, support_level, service_competencies, global_role')
+        .in('global_role', ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin']);
 
-      if (rolesError) throw rolesError;
+      if (profilesError) throw profilesError;
 
-      if (!userRoles || userRoles.length === 0) {
+      if (!profiles || profiles.length === 0) {
         setSupportUsers([]);
         return;
       }
 
-      const userIds = userRoles.map(ur => ur.user_id);
-
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, support_level, service_competencies')
-        .in('id', userIds);
-
-      if (profilesError) throw profilesError;
+      const userIds = profiles.map(p => p.id);
 
       // Also load franchiseur roles for these users
       const { data: franchiseurRoles } = await supabase
@@ -433,7 +428,7 @@ export const useAdminTickets = () => {
         .in('user_id', userIds);
 
       // Merge franchiseur_role into profiles
-      const usersWithRoles = (profiles || []).map(profile => ({
+      const usersWithRoles = profiles.map(profile => ({
         ...profile,
         franchiseur_role: franchiseurRoles?.find(fr => fr.user_id === profile.id)?.franchiseur_role
       }));

@@ -1,60 +1,11 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { Resend } from 'https://esm.sh/resend@2.0.0'
+import { GLOBAL_ROLES, getRoleLevel, canResetPassword } from '../_shared/roles.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-// ============================================================================
-// SYSTÈME DE PERMISSIONS V2.0 - Helpers centralisés
-// ============================================================================
-
-const GLOBAL_ROLES: Record<string, number> = {
-  base_user: 0,        // N0
-  franchisee_user: 1,  // N1
-  franchisee_admin: 2, // N2
-  franchisor_user: 3,  // N3
-  franchisor_admin: 4, // N4
-  platform_admin: 5,   // N5
-  superadmin: 6,       // N6
-}
-
-const getRoleLevel = (role: string | null): number => {
-  if (!role) return 0
-  return GLOBAL_ROLES[role] ?? 0
-}
-
-// Vérifier si l'appelant peut réinitialiser le mot de passe d'un utilisateur
-const canResetPassword = (
-  callerLevel: number, 
-  targetLevel: number, 
-  callerAgency: string | null, 
-  targetAgency: string | null
-): { allowed: boolean; reason?: string } => {
-  // N0-N1: ne peuvent pas réinitialiser
-  if (callerLevel < GLOBAL_ROLES.franchisee_admin) {
-    return { allowed: false, reason: 'Niveau insuffisant pour réinitialiser des mots de passe' }
-  }
-  
-  // N2 (franchisee_admin): uniquement même agence
-  if (callerLevel === GLOBAL_ROLES.franchisee_admin) {
-    if (callerAgency !== targetAgency) {
-      return { allowed: false, reason: 'Vous ne pouvez réinitialiser que les mots de passe de votre agence' }
-    }
-    if (targetLevel > GLOBAL_ROLES.franchisee_admin) {
-      return { allowed: false, reason: 'Vous ne pouvez pas réinitialiser le mot de passe d\'un utilisateur de niveau supérieur' }
-    }
-    return { allowed: true }
-  }
-  
-  // N3+ : peut réinitialiser mais pas pour un niveau supérieur
-  if (targetLevel > callerLevel) {
-    return { allowed: false, reason: 'Vous ne pouvez pas réinitialiser le mot de passe d\'un utilisateur de niveau supérieur' }
-  }
-  
-  return { allowed: true }
 }
 
 serve(async (req) => {

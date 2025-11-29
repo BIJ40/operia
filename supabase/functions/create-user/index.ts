@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { Resend } from 'https://esm.sh/resend@4.0.0'
+import { GLOBAL_ROLES, getRoleLevel, canAccessUsersPage, canEditTarget } from '../_shared/roles.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,66 +9,6 @@ const corsHeaders = {
 }
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
-
-// ============================================================================
-// SYSTÈME DE PERMISSIONS V2.0 - Helpers centralisés
-// ============================================================================
-
-const GLOBAL_ROLES: Record<string, number> = {
-  base_user: 0,        // N0
-  franchisee_user: 1,  // N1
-  franchisee_admin: 2, // N2
-  franchisor_user: 3,  // N3
-  franchisor_admin: 4, // N4
-  platform_admin: 5,   // N5
-  superadmin: 6,       // N6
-}
-
-const getRoleLevel = (role: string | null): number => {
-  if (!role) return 0
-  return GLOBAL_ROLES[role] ?? 0
-}
-
-// N2+ peut accéder à la gestion utilisateurs
-const canAccessUsersPage = (roleLevel: number): boolean => {
-  return roleLevel >= GLOBAL_ROLES.franchisee_admin // N2+
-}
-
-// N3+ peut gérer des utilisateurs (créer/modifier)
-const canManageUsers = (roleLevel: number): boolean => {
-  return roleLevel >= GLOBAL_ROLES.franchisor_user // N3+
-}
-
-// Vérifier si l'appelant peut créer/modifier un utilisateur cible
-const canEditTarget = (
-  callerLevel: number, 
-  targetLevel: number, 
-  callerAgency: string | null, 
-  targetAgency: string | null
-): { allowed: boolean; reason?: string } => {
-  // N0-N1: ne peuvent pas modifier d'autres utilisateurs
-  if (callerLevel < GLOBAL_ROLES.franchisee_admin) {
-    return { allowed: false, reason: 'Niveau insuffisant pour gérer des utilisateurs' }
-  }
-  
-  // N2 (franchisee_admin): uniquement même agence, max N2
-  if (callerLevel === GLOBAL_ROLES.franchisee_admin) {
-    if (callerAgency !== targetAgency) {
-      return { allowed: false, reason: 'Vous ne pouvez gérer que les utilisateurs de votre agence' }
-    }
-    if (targetLevel > GLOBAL_ROLES.franchisee_admin) {
-      return { allowed: false, reason: 'Vous ne pouvez pas attribuer un rôle supérieur à N2 (Admin agence)' }
-    }
-    return { allowed: true }
-  }
-  
-  // N3+ : accès global, mais plafonnement au niveau de l'appelant
-  if (targetLevel > callerLevel) {
-    return { allowed: false, reason: `Vous ne pouvez pas attribuer un rôle supérieur à N${callerLevel}` }
-  }
-  
-  return { allowed: true }
-}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
