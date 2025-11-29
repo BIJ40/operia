@@ -10,6 +10,8 @@ export interface PageMetadata {
   header_title_size: string | null;
   header_icon_size: string | null;
   header_icon_color: string | null;
+  header_subtitle_bg_color: string | null;
+  header_subtitle_text_size: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,6 +24,8 @@ interface UpsertPageMetadataParams {
   header_title_size?: string | null;
   header_icon_size?: string | null;
   header_icon_color?: string | null;
+  header_subtitle_bg_color?: string | null;
+  header_subtitle_text_size?: string | null;
 }
 
 /**
@@ -76,6 +80,8 @@ export function useUpsertPageMetadata() {
             header_title_size: params.header_title_size,
             header_icon_size: params.header_icon_size,
             header_icon_color: params.header_icon_color,
+            header_subtitle_bg_color: params.header_subtitle_bg_color,
+            header_subtitle_text_size: params.header_subtitle_text_size,
             updated_at: new Date().toISOString(),
           })
           .eq('page_key', page_key)
@@ -96,6 +102,8 @@ export function useUpsertPageMetadata() {
             header_title_size: params.header_title_size,
             header_icon_size: params.header_icon_size,
             header_icon_color: params.header_icon_color,
+            header_subtitle_bg_color: params.header_subtitle_bg_color,
+            header_subtitle_text_size: params.header_subtitle_text_size,
           })
           .select()
           .single();
