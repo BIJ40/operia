@@ -2,7 +2,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   Headset, MessageSquare, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Shield, Database, Activity, ChevronRight, Home, User, Grid3X3
+  Coins, Settings, Users, Shield, Database, Activity, ChevronRight, Home, User, Grid3X3, Calendar
 } from 'lucide-react';
 import {
   Sidebar,
@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
-import { useHasGlobalRole } from '@/hooks/useHasGlobalRole';
+import { getRoleCapabilities } from '@/config/roleMatrix';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { useState, ReactNode } from 'react';
 
@@ -35,24 +35,23 @@ interface NavGroup {
   label: ReactNode;
   labelKey: string;
   items: NavItem[];
-  minRole?: 'franchisee_admin' | 'franchisor_user' | 'platform_admin';
+  // Condition d'accès basée sur ROLE_MATRIX
+  accessKey?: 'canAccessHelpAcademy' | 'canAccessPilotageAgence' | 'canAccessSupport' | 'canAccessSupportConsole' | 'canAccessFranchiseur' | 'canAccessAdmin';
 }
 
 export function UnifiedSidebar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { isAdmin } = useAuth();
+  const { globalRole, agence } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
 
-  // V2 role checks - Source de vérité unique
-  const canAccessFranchiseeAdmin = useHasGlobalRole('franchisee_admin'); // N2+
-  const canAccessFranchiseur = useHasGlobalRole('franchisor_user'); // N3+
-  const canAccessAdmin = useHasGlobalRole('platform_admin'); // N5+
+  // V2: Capacités basées sur ROLE_MATRIX
+  const caps = getRoleCapabilities(globalRole);
 
   // Check if currently in edit mode
-  const isInEditMode = searchParams.get('edit') === 'true' && (isAdmin || canAccessAdmin);
+  const isInEditMode = searchParams.get('edit') === 'true' && caps.canAccessAdmin;
 
   // Helper to preserve edit mode for guide URLs
   const getUrlWithEditMode = (url: string) => {
@@ -76,7 +75,7 @@ export function UnifiedSidebar() {
     });
   };
 
-  // Navigation groups - Filtrage basé uniquement sur V2 (minRole)
+  // Navigation groups - Filtrage basé sur ROLE_MATRIX (accessKey)
   const navGroups: NavGroup[] = [
     {
       label: <><span>Help</span><span className="text-helpconfort-orange animate-pulse">!</span><span> Academy</span></>,
@@ -86,7 +85,7 @@ export function UnifiedSidebar() {
         { title: 'Guide Apporteurs', url: '/apporteurs', icon: FileText, description: 'Ressources pour les apporteurs d\'affaires' },
         { title: 'Base Documentaire', url: '/helpconfort', icon: FolderOpen, description: 'Documents et ressources HelpConfort' },
       ],
-      // Pas de minRole - accessible à tous (N0+)
+      accessKey: 'canAccessHelpAcademy',
     },
     {
       label: 'Pilotage Agence',
@@ -105,8 +104,9 @@ export function UnifiedSidebar() {
         },
         { title: 'Actions à Mener', url: '/actions-a-mener', icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
         { title: 'Diffusion', url: '/diffusion', icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
+        { title: 'RH Tech', url: '/rh-tech', icon: Calendar, description: 'Planning hebdomadaire techniciens' },
       ],
-      minRole: 'franchisee_admin', // N2+ pour pilotage agence
+      accessKey: 'canAccessPilotageAgence',
     },
     {
       label: 'Support',
@@ -114,7 +114,7 @@ export function UnifiedSidebar() {
       items: [
         { title: 'Mes Demandes', url: '/mes-demandes', icon: MessageSquare, description: 'Créer et suivre vos demandes de support' },
       ],
-      // Pas de minRole - accessible à tous les utilisateurs connectés (N0+)
+      accessKey: 'canAccessSupport',
     },
     {
       label: 'Gestion Support',
@@ -122,7 +122,7 @@ export function UnifiedSidebar() {
       items: [
         { title: 'Gestion Tickets', url: '/admin/support', icon: Headset, description: 'Traiter les demandes de support' },
       ],
-      minRole: 'franchisor_user', // N3+ pour gestion tickets
+      accessKey: 'canAccessSupportConsole',
     },
     {
       label: 'Réseau Franchiseur',
@@ -135,7 +135,7 @@ export function UnifiedSidebar() {
         { title: 'Comparatifs', url: '/tete-de-reseau/comparatifs', icon: GitCompare },
         { title: 'Redevances', url: '/tete-de-reseau/redevances', icon: Coins },
       ],
-      minRole: 'franchisor_user', // N3+ pour franchiseur
+      accessKey: 'canAccessFranchiseur',
     },
     {
       label: 'Administration',
@@ -156,17 +156,20 @@ export function UnifiedSidebar() {
         { title: 'Activité', url: '/admin/user-activity', icon: Activity },
         { title: 'Paramètres', url: '/admin', icon: Settings, description: 'Configuration du système' },
       ],
-      minRole: 'platform_admin', // N5+ pour admin plateforme
+      accessKey: 'canAccessAdmin',
     },
   ];
 
-  // V2: Filtrage des groupes basé uniquement sur minRole
+  // V2: Filtrage des groupes basé sur ROLE_MATRIX
   const filteredGroups = navGroups.filter(group => {
-    if (!group.minRole) return true;
-    if (group.minRole === 'platform_admin') return canAccessAdmin;
-    if (group.minRole === 'franchisor_user') return canAccessFranchiseur;
-    if (group.minRole === 'franchisee_admin') return canAccessFranchiseeAdmin;
-    return true;
+    if (!group.accessKey) return true;
+    
+    // Cas spécial pilotage : nécessite agence si requiresAgencyForPilotage
+    if (group.accessKey === 'canAccessPilotageAgence') {
+      if (caps.requiresAgencyForPilotage && !agence) return false;
+    }
+    
+    return caps[group.accessKey];
   });
 
   // V2: Pas de filtrage par scope, tous les items sont visibles si le groupe est visible

@@ -5,21 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashboardTiles';
 import { useMemo, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useHasGlobalRole } from '@/hooks/useHasGlobalRole';
+import { getRoleCapabilities, canAccessTileGroup, canAccessTile, TileGroup } from '@/config/roleMatrix';
 
 export default function Landing() {
-  const { agence } = useAuth();
+  const { agence, globalRole } = useAuth();
   const [pendingTicketsCount, setPendingTicketsCount] = useState<number>(0);
 
-  // V2 role checks - Source de vérité unique
-  const canAccessPilotage = useHasGlobalRole('franchisee_admin'); // N2+
-  const canAccessFranchiseur = useHasGlobalRole('franchisor_user'); // N3+
-  const canAccessAdmin = useHasGlobalRole('platform_admin'); // N5+
-  const canAccessSupport = useHasGlobalRole('franchisor_user'); // N3+ for support console
+  // V2: Capacités basées sur ROLE_MATRIX
+  const caps = getRoleCapabilities(globalRole);
 
-  // Fetch pending tickets count for support users
+  // Fetch pending tickets count for support console users
   useEffect(() => {
-    if (!canAccessSupport) return;
+    if (!caps.canAccessSupportConsole) return;
 
     const fetchPendingCount = async () => {
       const { count, error } = await supabase
@@ -46,35 +43,19 @@ export default function Landing() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [canAccessSupport]);
+  }, [caps.canAccessSupportConsole]);
 
-  // V2: Filtrer les tuiles basé uniquement sur les rôles globaux
+  // V2: Filtrer les tuiles basé sur ROLE_MATRIX
   const visibleTiles = useMemo(() => {
     return DASHBOARD_TILES.filter(tile => {
-      // N5+ voit tout (admin)
-      if (canAccessAdmin) return true;
+      // 1. Vérifier l'accès au groupe
+      const groupAccess = canAccessTileGroup(globalRole, tile.group as TileGroup, { agence });
+      if (!groupAccess) return false;
       
-      // Admin strict : nécessite N5+
-      if (tile.requiresAdmin) return false;
-      
-      // Franchiseur (N3+) pour gestion users
-      if (tile.requiresFranchisor) return canAccessFranchiseur;
-      
-      // Console support : nécessite N3+
-      if (tile.requiresSupport) return canAccessSupport;
-      
-      // Section franchiseur : nécessite N3+
-      if (tile.group === 'franchiseur') return canAccessFranchiseur;
-      
-      // Pilotage agence : nécessite N2+ ET une agence
-      if (tile.group === 'pilotage') {
-        return canAccessPilotage && !!agence;
-      }
-      
-      // Help Academy et Support user : toujours visible pour authentifiés
-      return true;
+      // 2. Vérifier l'accès à la tuile spécifique
+      return canAccessTile(globalRole, tile.id, { agence });
     });
-  }, [canAccessAdmin, canAccessFranchiseur, canAccessPilotage, canAccessSupport, agence]);
+  }, [globalRole, agence]);
 
   // Grouper les tuiles visibles par catégorie
   const tilesByGroup = useMemo(() => {

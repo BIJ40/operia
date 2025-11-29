@@ -242,60 +242,91 @@ Historique des calculs de redevances.
 - `agency_id`, `config_id`, `year`, `month`, `ca_cumul_annuel`
 - `redevance_calculee`, `detail_tranches` (JSON), `calculated_by`
 
-### Tables Permissions
+### Tables Permissions (Legacy - non utilisées)
 
-#### `role_permissions`
-Permissions par rôle_agence (poste) et bloc.  
-- `role_agence`, `block_id`, `can_access`
-
-#### `user_permissions`
-Permissions individuelles par utilisateur.  
-- `user_id`, `block_id`, `can_access`
+Les tables suivantes existent en base mais ne sont plus utilisées par le code V2 :
+- `role_permissions` - Anciennes permissions par rôle_agence
+- `user_permissions` - Anciennes permissions individuelles  
+- `group_permissions` - Anciennes permissions par groupe
+- `scopes` - Anciens scopes de permissions
 
 ---
 
-## Rôles & Permissions
+## Système de Permissions V2 (ROLE_MATRIX)
 
-### Rôles applicatifs (`app_role`)
+### Architecture
 
-| Rôle | Description |
-|------|-------------|
-| `admin` | Accès total à l'application |
-| `support` | Accès interface support pour gérer tickets |
-| `franchiseur` | Accès interface Tête de Réseau |
-| `user` | Utilisateur standard |
+Le système V2 utilise une **source de vérité unique** : la **ROLE_MATRIX** définie dans `src/config/roleMatrix.ts`.
+
+**Fichiers clés :**
+- `src/config/roleMatrix.ts` - Matrice des capacités par rôle
+- `src/types/globalRoles.ts` - Définition des 7 niveaux de rôles (N0-N6)
+- `src/contexts/AuthContext.tsx` - Expose `globalRole` et helpers V2
+
+### Rôles globaux (`global_role`)
+
+| Niveau | Rôle | Description |
+|--------|------|-------------|
+| N0 | `base_user` | Visiteur de base (lecture guides) |
+| N1 | `franchisee_user` | Technicien, assistant |
+| N2 | `franchisee_admin` | Dirigeant agence |
+| N3 | `franchisor_user` | Animateur réseau |
+| N4 | `franchisor_admin` | Directeur réseau, DG |
+| N5 | `platform_admin` | Admin plateforme |
+| N6 | `superadmin` | Super administrateur |
+
+### Matrice des capacités
+
+| Capacité | N0 | N1 | N2 | N3 | N4 | N5 | N6 |
+|----------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| Help Academy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Pilotage Agence* | - | - | ✓ | - | - | ✓ | ✓ |
+| Support (tickets) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Console Support | - | - | - | ✓ | ✓ | ✓ | ✓ |
+| Réseau Franchiseur | - | - | - | ✓ | ✓ | ✓ | ✓ |
+| Administration | - | - | - | - | - | ✓ | ✓ |
+| Gestion utilisateurs | - | - | - | ✓ | ✓ | ✓ | ✓ |
+
+*N2 nécessite une agence assignée pour Pilotage Agence.
+
+### Utilisation dans le code
+
+```typescript
+import { getRoleCapabilities, canAccessTileGroup } from '@/config/roleMatrix';
+
+// Obtenir les capacités d'un utilisateur
+const caps = getRoleCapabilities(globalRole);
+if (caps.canAccessFranchiseur) { /* ... */ }
+
+// Vérifier accès à un groupe de tuiles
+if (canAccessTileGroup(globalRole, 'pilotage', { agence })) { /* ... */ }
+```
 
 ### Rôles franchiseur (`franchiseur_role`)
 
+Sous-rôles pour le module Tête de Réseau :
+
 | Rôle | Accès |
 |------|-------|
-| `animateur` | Statistiques, navigation agences, données nationales agrégées. PAS accès redevances. |
-| `directeur` | Tout animateur + gestion redevances + affectation animateurs |
+| `animateur` | Stats réseau, agences assignées, pas de redevances |
+| `directeur` | Tout + redevances + affectation animateurs |
 | `dg` | Accès complet |
 
 ### Postes occupés (`role_agence`)
 
-Indépendant des rôles applicatifs :
+Titre du poste (indépendant du niveau d'accès) :
 - `dirigeant`, `assistante`, `commercial`, `tete_de_reseau`, `externe`
 
-**Note** : `tete_de_reseau` déclenche automatiquement l'assignation des rôles `franchiseur` + `support`.
-
-### Mécanisme de permissions
-
-- **Permissions par catégorie** : L'accès est géré au niveau des 3 principales catégories (Apogée, Apporteurs, HelpConfort).
-- **Fonction SQL `has_role(_user_id, _role)`** : Vérifie les rôles sans déclencher de récursion RLS.
-- **Fonction SQL `has_franchiseur_role(_user_id, _role)`** : Vérifie les rôles franchiseur.
-- **Fonction SQL `get_user_agency(_user_id)`** : Récupère l'agence de l'utilisateur (SECURITY DEFINER).
+**Note** : `tete_de_reseau` déclenche auto-assignation `franchiseur` + `support`.
 
 ### Row Level Security (RLS)
 
-Toutes les tables sensibles ont des policies RLS :
-- **`profiles`** : Users voient/modifient uniquement leur profil. Admins voient tout.
-- **`apogee_agencies`** : Admin/franchiseur/support voient toutes les agences. Users voient uniquement leur agence.
-- **`blocks`/`apporteur_blocks`** : Lecture authentifiés. Écriture admin uniquement.
-- **`guide_chunks`** : Lecture authentifiés. CRUD admin uniquement.
-- **`support_tickets`** : Users voient leurs tickets. Support/franchiseur/admin voient tout.
-- **`favorites`/`user_history`** : Chaque user ne voit que ses données.
+Policies RLS actives sur les tables sensibles :
+- **`profiles`** : Users voient/modifient leur profil. N5+ voient tout.
+- **`apogee_agencies`** : N3+/admin voient tout. Users voient leur agence.
+- **`blocks`/`apporteur_blocks`** : Lecture authentifiés. Écriture N5+.
+- **`support_tickets`** : Users voient leurs tickets. N3+ voient tout.
+- **`favorites`/`user_history`** : Accès utilisateur uniquement.
 
 ---
 
