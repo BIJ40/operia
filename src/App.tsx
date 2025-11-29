@@ -71,6 +71,7 @@ const AdminCacheBackup = lazy(() => import("./pages/AdminCacheBackup"));
 const AdminUserActivity = lazy(() => import("./pages/AdminUserActivity"));
 const AdminUsersUnified = lazy(() => import("./pages/AdminUsersUnified"));
 const AdminCollaborators = lazy(() => import("./pages/AdminCollaborators"));
+const AdminPageMetadata = lazy(() => import("./pages/AdminPageMetadata"));
 
 // Lazy loaded pages - User
 const Profile = lazy(() => import("./pages/Profile"));
@@ -218,6 +219,7 @@ function AppContent() {
           <Route path="/admin/cache-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminCacheBackup /></RoleGuard></MainLayout>} />
           <Route path="/admin/user-activity" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminUserActivity /></RoleGuard></MainLayout>} />
           <Route path="/admin/collaborateurs" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminCollaborators /></RoleGuard></MainLayout>} />
+          <Route path="/admin/page-metadata" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminPageMetadata /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* USER PAGES - Accessible à tous les connectés */}

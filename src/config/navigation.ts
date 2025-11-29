@@ -214,6 +214,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: 'Collaborateurs', url: ROUTES.admin.collaborateurs, icon: Users, scope: 'admin_users' },
       { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database, scope: 'admin_backup' },
       { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity, scope: 'admin_settings' },
+      { title: 'Métadonnées pages', url: ROUTES.admin.pageMetadata, icon: FileText, scope: 'admin_settings' },
       { 
         title: 'Paramètres', 
         url: ROUTES.admin.index, 
