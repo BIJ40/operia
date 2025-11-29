@@ -13,7 +13,13 @@ import { RoleGuard } from "./components/auth/RoleGuard";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 
-// Lazy loaded pages - Guides
+// Lazy loaded pages - Section Index Pages
+const AcademyIndex = lazy(() => import("./pages/AcademyIndex"));
+const PilotageIndex = lazy(() => import("./pages/PilotageIndex"));
+const SupportIndex = lazy(() => import("./pages/SupportIndex"));
+const ReseauIndex = lazy(() => import("./pages/ReseauIndex"));
+
+// Lazy loaded pages - Help Academy (Guides)
 const ApogeeGuide = lazy(() => import("./pages/ApogeeGuide"));
 const ApporteurGuide = lazy(() => import("./pages/ApporteurGuide"));
 const ApporteurSubcategories = lazy(() => import("./pages/ApporteurSubcategories"));
@@ -21,11 +27,11 @@ const Category = lazy(() => import("./pages/Category"));
 const CategoryApporteur = lazy(() => import("./pages/CategoryApporteur"));
 const HelpConfort = lazy(() => import("./pages/HelpConfort"));
 const CategoryHelpConfort = lazy(() => import("./pages/CategoryHelpConfort"));
+const Documents = lazy(() => import("./pages/Documents"));
 
-// Lazy loaded pages - Pilotage
+// Lazy loaded pages - Pilotage Agence
 const ActionsAMener = lazy(() => import("./pages/ActionsAMener"));
 const CategoryActionsAMener = lazy(() => import("./pages/CategoryActionsAMener"));
-const Documents = lazy(() => import("./pages/Documents"));
 const DiffusionDashboard = lazy(() => import("./pages/DiffusionDashboard"));
 
 // Lazy loaded pages - Indicateurs
@@ -38,11 +44,9 @@ const IndicateursSAV = lazy(() => import("./apogee-connect/pages/IndicateursSAV"
 const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
 
 // Lazy loaded pages - Support
-const Support = lazy(() => import("./pages/Support"));
-const UserTickets = lazy(() => import("./pages/UserTickets"));
 const UserDemands = lazy(() => import("./pages/UserDemands"));
 
-// Lazy loaded pages - Franchiseur
+// Lazy loaded pages - Franchiseur (Réseau)
 const FranchiseurLayout = lazy(() => import("./franchiseur/components/layout/FranchiseurLayout"));
 const FranchiseurHome = lazy(() => import("./franchiseur/pages/FranchiseurHome"));
 const FranchiseurAgencies = lazy(() => import("./franchiseur/pages/FranchiseurAgencies"));
@@ -57,8 +61,6 @@ const FranchiseurAnimateurs = lazy(() => import("./franchiseur/pages/Franchiseur
 const AdminIndex = lazy(() => import("./pages/AdminIndex"));
 const AdminDocuments = lazy(() => import("./pages/AdminDocuments"));
 const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
-// DEPRECATED V2: AdminSupportLevels - utiliser enabled_modules.support.options à la place
-// const AdminSupportLevels = lazy(() => import("./pages/AdminSupportLevels"));
 const AdminEscalationHistory = lazy(() => import("./pages/AdminEscalationHistory"));
 const AdminBackup = lazy(() => import("./pages/AdminBackup"));
 const AdminHelpConfortBackup = lazy(() => import("./pages/AdminHelpConfortBackup"));
@@ -116,8 +118,25 @@ function AppContent() {
           {/* Dashboard / Home - Accessible à tous les utilisateurs connectés */}
           <Route path="/" element={<MainLayout><Landing /></MainLayout>} />
           
-          {/* HELP Academy - Accessible à tous les utilisateurs connectés (N0+) */}
-          {/* HELP Academy - N1+ (franchisee_user) - N0 n'a pas accès */}
+          {/* ============================================ */}
+          {/* HELP ACADEMY - Section Index + Sous-pages */}
+          {/* ============================================ */}
+          <Route path="/academy" element={<MainLayout><RoleGuard minRole="franchisee_user"><AcademyIndex /></RoleGuard></MainLayout>} />
+          
+          {/* Guide Apogée */}
+          <Route path="/academy/apogee" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApogeeGuide /></RoleGuard></MainLayout>} />
+          <Route path="/academy/apogee/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><Category /></RoleGuard></MainLayout>} />
+          
+          {/* Guide Apporteurs */}
+          <Route path="/academy/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApporteurGuide /></RoleGuard></MainLayout>} />
+          <Route path="/academy/apporteurs/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApporteurSubcategories /></RoleGuard></MainLayout>} />
+          <Route path="/academy/apporteurs/category/:slug/sub/:subslug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryApporteur /></RoleGuard></MainLayout>} />
+          
+          {/* Base Documentaire */}
+          <Route path="/academy/documents" element={<MainLayout><RoleGuard minRole="franchisee_user"><HelpConfort /></RoleGuard></MainLayout>} />
+          <Route path="/academy/documents/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryHelpConfort /></RoleGuard></MainLayout>} />
+          
+          {/* Legacy routes - redirects for backward compatibility */}
           <Route path="/apogee" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApogeeGuide /></RoleGuard></MainLayout>} />
           <Route path="/apogee/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><Category /></RoleGuard></MainLayout>} />
           <Route path="/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApporteurGuide /></RoleGuard></MainLayout>} />
@@ -127,7 +146,31 @@ function AppContent() {
           <Route path="/helpconfort/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryHelpConfort /></RoleGuard></MainLayout>} />
           <Route path="/documents" element={<MainLayout><RoleGuard minRole="franchisee_user"><Documents /></RoleGuard></MainLayout>} />
           
-          {/* Pilotage Agence - N2+ (franchisee_admin) */}
+          {/* ============================================ */}
+          {/* PILOTAGE AGENCE - Section Index + Sous-pages */}
+          {/* ============================================ */}
+          <Route path="/pilotage" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PilotageIndex /></RoleGuard></MainLayout>} />
+          
+          {/* Statistiques / Indicateurs */}
+          <Route path="/pilotage/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><IndicateursLayout /></RoleGuard></MainLayout>}>
+            <Route index element={<IndicateursAccueil />} />
+            <Route path="apporteurs" element={<IndicateursApporteurs />} />
+            <Route path="univers" element={<IndicateursUnivers />} />
+            <Route path="techniciens" element={<IndicateursTechniciens />} />
+            <Route path="sav" element={<IndicateursSAV />} />
+          </Route>
+          
+          {/* Actions à Mener */}
+          <Route path="/pilotage/actions" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ActionsAMener /></RoleGuard></MainLayout>} />
+          <Route path="/pilotage/actions/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_admin"><CategoryActionsAMener /></RoleGuard></MainLayout>} />
+          
+          {/* Diffusion */}
+          <Route path="/pilotage/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><DiffusionDashboard /></RoleGuard></MainLayout>} />
+          
+          {/* RH Tech */}
+          <Route path="/pilotage/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PlanningHebdo /></RoleGuard></MainLayout>} />
+          
+          {/* Legacy routes - backward compatibility */}
           <Route path="/mes-indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><IndicateursLayout /></RoleGuard></MainLayout>}>
             <Route index element={<IndicateursAccueil />} />
             <Route path="apporteurs" element={<IndicateursApporteurs />} />
@@ -140,12 +183,45 @@ function AppContent() {
           <Route path="/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><DiffusionDashboard /></RoleGuard></MainLayout>} />
           <Route path="/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PlanningHebdo /></RoleGuard></MainLayout>} />
           
-          {/* Support - Accessible à tous les utilisateurs connectés */}
-          <Route path="/support" element={<MainLayout><RoleGuard><Support /></RoleGuard></MainLayout>} />
-          <Route path="/support-tickets" element={<MainLayout><RoleGuard><UserTickets /></RoleGuard></MainLayout>} />
+          {/* ============================================ */}
+          {/* SUPPORT - Section Index + Sous-pages */}
+          {/* ============================================ */}
+          <Route path="/support" element={<MainLayout><RoleGuard><SupportIndex /></RoleGuard></MainLayout>} />
+          <Route path="/support/mes-demandes" element={<MainLayout><RoleGuard><UserDemands /></RoleGuard></MainLayout>} />
+          <Route path="/support/console" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
+          
+          {/* Legacy routes */}
           <Route path="/mes-demandes" element={<MainLayout><RoleGuard><UserDemands /></RoleGuard></MainLayout>} />
           
-          {/* Franchiseur - N3+ (franchisor_user) */}
+          {/* ============================================ */}
+          {/* RÉSEAU FRANCHISEUR - Section Index + Sous-pages */}
+          {/* ============================================ */}
+          <Route path="/reseau" element={<MainLayout><RoleGuard minRole="franchisor_user"><ReseauIndex /></RoleGuard></MainLayout>} />
+          
+          <Route path="/reseau/dashboard" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+            <Route index element={<FranchiseurHome />} />
+          </Route>
+          <Route path="/reseau/agences" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+            <Route index element={<FranchiseurAgencies />} />
+            <Route path=":agencyId" element={<FranchiseurAgencyProfile />} />
+          </Route>
+          <Route path="/reseau/animateurs" element={<MainLayout><RoleGuard minRole="franchisor_admin"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+            <Route index element={<FranchiseurAnimateurs />} />
+          </Route>
+          <Route path="/reseau/stats" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+            <Route index element={<FranchiseurStats />} />
+          </Route>
+          <Route path="/reseau/comparatifs" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+            <Route index element={<FranchiseurComparison />} />
+          </Route>
+          <Route path="/reseau/redevances" element={<MainLayout><RoleGuard minRole="franchisor_admin"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+            <Route index element={<FranchiseurRoyalties />} />
+          </Route>
+          <Route path="/reseau/parametres" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+            <Route index element={<FranchiseurSettings />} />
+          </Route>
+          
+          {/* Legacy routes - backward compatibility */}
           <Route path="/tete-de-reseau" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurHome />} />
             <Route path="agences" element={<FranchiseurAgencies />} />
@@ -157,22 +233,24 @@ function AppContent() {
             <Route path="parametres" element={<FranchiseurSettings />} />
           </Route>
           
-          {/* Administration - Gestion utilisateurs N3+, Plateforme N5+ */}
+          {/* ============================================ */}
+          {/* ADMINISTRATION - Section Index + Sous-pages */}
+          {/* ============================================ */}
           <Route path="/admin" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminIndex /></RoleGuard></MainLayout>} />
           <Route path="/admin/documents" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminDocuments /></RoleGuard></MainLayout>} />
           <Route path="/admin/support" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
-          {/* DEPRECATED V2: Route /admin/support-levels supprimée - géré via enabled_modules.support.options */}
           <Route path="/admin/escalation-history" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminEscalationHistory /></RoleGuard></MainLayout>} />
           <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminBackup /></RoleGuard></MainLayout>} />
           <Route path="/admin/helpconfort-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminHelpConfortBackup /></RoleGuard></MainLayout>} />
-          {/* User Management - N3+ (franchisor_user) can manage users */}
           <Route path="/admin/users" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminUsersUnified /></RoleGuard></MainLayout>} />
           <Route path="/admin/agencies" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminAgencies /></RoleGuard></MainLayout>} />
           <Route path="/admin/storage-quota" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminStorageQuota /></RoleGuard></MainLayout>} />
           <Route path="/admin/cache-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminCacheBackup /></RoleGuard></MainLayout>} />
           <Route path="/admin/user-activity" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminUserActivity /></RoleGuard></MainLayout>} />
           
-          {/* User pages - Accessible à tous les utilisateurs connectés */}
+          {/* ============================================ */}
+          {/* USER PAGES - Accessible à tous les connectés */}
+          {/* ============================================ */}
           <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
           <Route path="/favorites" element={<MainLayout><RoleGuard><Favorites /></RoleGuard></MainLayout>} />
           
