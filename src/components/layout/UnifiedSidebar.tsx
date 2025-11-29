@@ -20,13 +20,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useAuth } from '@/contexts/AuthContext';
 import { useHasGlobalRole } from '@/hooks/useHasGlobalRole';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
-import { useState, useMemo, ReactNode } from 'react';
+import { useState, ReactNode } from 'react';
 
 interface NavItem {
   title: string;
   url?: string;
   icon: React.ElementType;
-  scope?: string;
   description?: string;
   children?: NavItem[];
   badge?: string;
@@ -42,18 +41,17 @@ interface NavGroup {
 export function UnifiedSidebar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { canViewScope, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
-  // All menu sections collapsed by default on first load
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
 
-  // V2 role checks
+  // V2 role checks - Source de vérité unique
   const canAccessFranchiseeAdmin = useHasGlobalRole('franchisee_admin'); // N2+
   const canAccessFranchiseur = useHasGlobalRole('franchisor_user'); // N3+
   const canAccessAdmin = useHasGlobalRole('platform_admin'); // N5+
 
-  // Check if currently in edit mode (admin legacy pour édition)
+  // Check if currently in edit mode
   const isInEditMode = searchParams.get('edit') === 'true' && (isAdmin || canAccessAdmin);
 
   // Helper to preserve edit mode for guide URLs
@@ -78,16 +76,17 @@ export function UnifiedSidebar() {
     });
   };
 
-  // Navigation groups with permission-based filtering
+  // Navigation groups - Filtrage basé uniquement sur V2 (minRole)
   const navGroups: NavGroup[] = [
     {
       label: <><span>Help</span><span className="text-helpconfort-orange animate-pulse">!</span><span> Academy</span></>,
       labelKey: 'help-academy',
       items: [
-        { title: 'Guide Apogée', url: '/apogee', icon: BookOpen, scope: 'apogee', description: 'Guide complet pour maîtriser le logiciel Apogée' },
-        { title: 'Guide Apporteurs', url: '/apporteurs', icon: FileText, scope: 'apporteurs', description: 'Ressources pour les apporteurs d\'affaires' },
-        { title: 'Base Documentaire', url: '/helpconfort', icon: FolderOpen, scope: 'helpconfort', description: 'Documents et ressources HelpConfort' },
+        { title: 'Guide Apogée', url: '/apogee', icon: BookOpen, description: 'Guide complet pour maîtriser le logiciel Apogée' },
+        { title: 'Guide Apporteurs', url: '/apporteurs', icon: FileText, description: 'Ressources pour les apporteurs d\'affaires' },
+        { title: 'Base Documentaire', url: '/helpconfort', icon: FolderOpen, description: 'Documents et ressources HelpConfort' },
       ],
+      // Pas de minRole - accessible à tous (N0+)
     },
     {
       label: 'Pilotage Agence',
@@ -96,17 +95,16 @@ export function UnifiedSidebar() {
         { 
           title: 'Statistiques', 
           icon: PieChart, 
-          scope: 'mes_indicateurs',
           children: [
-            { title: 'Indicateurs généraux', url: '/mes-indicateurs', icon: BarChart3, scope: 'mes_indicateurs', description: 'Tableau de bord et KPI de votre agence' },
-            { title: 'Indicateurs Apporteurs', url: '/mes-indicateurs/apporteurs', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques apporteurs' },
-            { title: 'Indicateurs Univers', url: '/mes-indicateurs/univers', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques par univers' },
-            { title: 'Indicateurs Techniciens', url: '/mes-indicateurs/techniciens', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques techniciens' },
-            { title: 'Indicateurs SAV', url: '/mes-indicateurs/sav', icon: BarChart3, scope: 'mes_indicateurs', description: 'Statistiques SAV' },
+            { title: 'Indicateurs généraux', url: '/mes-indicateurs', icon: BarChart3, description: 'Tableau de bord et KPI de votre agence' },
+            { title: 'Indicateurs Apporteurs', url: '/mes-indicateurs/apporteurs', icon: BarChart3, description: 'Statistiques apporteurs' },
+            { title: 'Indicateurs Univers', url: '/mes-indicateurs/univers', icon: BarChart3, description: 'Statistiques par univers' },
+            { title: 'Indicateurs Techniciens', url: '/mes-indicateurs/techniciens', icon: BarChart3, description: 'Statistiques techniciens' },
+            { title: 'Indicateurs SAV', url: '/mes-indicateurs/sav', icon: BarChart3, description: 'Statistiques SAV' },
           ]
         },
-        { title: 'Actions à Mener', url: '/actions-a-mener', icon: ListTodo, scope: 'actions_a_mener', description: 'Suivi des actions et tâches en cours' },
-        { title: 'Diffusion', url: '/diffusion', icon: Tv, scope: 'diffusion', description: 'Mode affichage TV agence', badge: 'En cours' },
+        { title: 'Actions à Mener', url: '/actions-a-mener', icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
+        { title: 'Diffusion', url: '/diffusion', icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
       ],
       minRole: 'franchisee_admin', // N2+ pour pilotage agence
     },
@@ -114,7 +112,7 @@ export function UnifiedSidebar() {
       label: 'Support',
       labelKey: 'support',
       items: [
-        { title: 'Mes Demandes', url: '/mes-demandes', icon: MessageSquare, scope: 'mes_demandes', description: 'Créer et suivre vos demandes de support' },
+        { title: 'Mes Demandes', url: '/mes-demandes', icon: MessageSquare, description: 'Créer et suivre vos demandes de support' },
       ],
       // Pas de minRole - accessible à tous les utilisateurs connectés (N0+)
     },
@@ -122,7 +120,7 @@ export function UnifiedSidebar() {
       label: 'Gestion Support',
       labelKey: 'support-admin',
       items: [
-        { title: 'Gestion Tickets', url: '/admin/support', icon: Headset, scope: 'support_tickets', description: 'Traiter les demandes de support' },
+        { title: 'Gestion Tickets', url: '/admin/support', icon: Headset, description: 'Traiter les demandes de support' },
       ],
       minRole: 'franchisor_user', // N3+ pour gestion tickets
     },
@@ -130,12 +128,12 @@ export function UnifiedSidebar() {
       label: 'Réseau Franchiseur',
       labelKey: 'franchiseur',
       items: [
-        { title: 'Dashboard Réseau', url: '/tete-de-reseau', icon: Network, scope: 'franchiseur_dashboard' },
-        { title: 'Agences', url: '/tete-de-reseau/agences', icon: Building2, scope: 'franchiseur_agencies' },
-        { title: 'Animateurs', url: '/tete-de-reseau/animateurs', icon: Users, scope: 'franchiseur_agencies' },
-        { title: 'Statistiques', url: '/tete-de-reseau/stats', icon: PieChart, scope: 'franchiseur_kpi' },
-        { title: 'Comparatifs', url: '/tete-de-reseau/comparatifs', icon: GitCompare, scope: 'franchiseur_kpi' },
-        { title: 'Redevances', url: '/tete-de-reseau/redevances', icon: Coins, scope: 'franchiseur_royalties' },
+        { title: 'Dashboard Réseau', url: '/tete-de-reseau', icon: Network },
+        { title: 'Agences', url: '/tete-de-reseau/agences', icon: Building2 },
+        { title: 'Animateurs', url: '/tete-de-reseau/animateurs', icon: Users },
+        { title: 'Statistiques', url: '/tete-de-reseau/stats', icon: PieChart },
+        { title: 'Comparatifs', url: '/tete-de-reseau/comparatifs', icon: GitCompare },
+        { title: 'Redevances', url: '/tete-de-reseau/redevances', icon: Coins },
       ],
       minRole: 'franchisor_user', // N3+ pour franchiseur
     },
@@ -143,27 +141,26 @@ export function UnifiedSidebar() {
       label: 'Administration',
       labelKey: 'admin',
       items: [
-        { title: 'Utilisateurs', url: '/admin/users-list', icon: Users, scope: 'admin_users', description: 'Gérer les comptes utilisateurs' },
+        { title: 'Utilisateurs', url: '/admin/users-list', icon: Users, description: 'Gérer les comptes utilisateurs' },
         { 
           title: 'Permissions', 
           icon: Shield, 
-          scope: 'admin_roles',
           children: [
-            { title: 'Groupes', url: '/admin/permissions/groups', icon: Users, scope: 'admin_roles', description: 'Gérer les groupes et leurs permissions' },
-            { title: 'Utilisateurs', url: '/admin/permissions/users', icon: User, scope: 'admin_roles', description: 'Permissions individuelles' },
-            { title: 'Matrice', url: '/admin/permissions/matrix', icon: Grid3X3, scope: 'admin_roles', description: 'Vue matricielle globale' },
+            { title: 'Groupes', url: '/admin/permissions/groups', icon: Users, description: 'Gérer les groupes et leurs permissions' },
+            { title: 'Utilisateurs', url: '/admin/permissions/users', icon: User, description: 'Permissions individuelles' },
+            { title: 'Matrice', url: '/admin/permissions/matrix', icon: Grid3X3, description: 'Vue matricielle globale' },
           ]
         },
-        { title: 'Agences', url: '/admin/agencies', icon: Building2, scope: 'admin_settings' },
-        { title: 'Sauvegardes', url: '/admin/backup', icon: Database, scope: 'admin_backup' },
-        { title: 'Activité', url: '/admin/user-activity', icon: Activity, scope: 'admin_settings' },
-        { title: 'Paramètres', url: '/admin', icon: Settings, scope: 'admin_settings', description: 'Configuration du système' },
+        { title: 'Agences', url: '/admin/agencies', icon: Building2 },
+        { title: 'Sauvegardes', url: '/admin/backup', icon: Database },
+        { title: 'Activité', url: '/admin/user-activity', icon: Activity },
+        { title: 'Paramètres', url: '/admin', icon: Settings, description: 'Configuration du système' },
       ],
       minRole: 'platform_admin', // N5+ pour admin plateforme
     },
   ];
 
-  // Filter groups based on V2 roles
+  // V2: Filtrage des groupes basé uniquement sur minRole
   const filteredGroups = navGroups.filter(group => {
     if (!group.minRole) return true;
     if (group.minRole === 'platform_admin') return canAccessAdmin;
@@ -172,26 +169,14 @@ export function UnifiedSidebar() {
     return true;
   });
 
-  // Filter items within each group based on scope permissions (including nested children)
+  // V2: Pas de filtrage par scope, tous les items sont visibles si le groupe est visible
   const getFilteredItems = (items: NavItem[]): NavItem[] => {
-    return items.map(item => {
-      if (item.children) {
-        const filteredChildren = item.children.filter(child => {
-          if (!child.scope) return true;
-          return canViewScope(child.scope);
-        });
-        if (filteredChildren.length === 0) return null;
-        return { ...item, children: filteredChildren };
-      }
-      if (!item.scope) return item;
-      return canViewScope(item.scope) ? item : null;
-    }).filter(Boolean) as NavItem[];
+    return items;
   };
 
   const isActive = (url?: string) => {
     if (!url) return false;
     if (url === '/') return location.pathname === '/';
-    // For /admin and /mes-indicateurs, only match exact path to avoid highlighting parent when on sub-routes
     if (url === '/admin' || url === '/mes-indicateurs') return location.pathname === url;
     return location.pathname === url || location.pathname.startsWith(url + '/');
   };
@@ -202,7 +187,6 @@ export function UnifiedSidebar() {
     return false;
   };
 
-  // State for open submenus - all closed by default
   const [openSubmenus, setOpenSubmenus] = useState<Set<string>>(() => new Set());
 
   const toggleSubmenu = (key: string) => {
@@ -378,14 +362,14 @@ export function UnifiedSidebar() {
                               <Link to={getUrlWithEditMode(item.url!)} className="flex items-center gap-2">
                                 <Icon className="w-4 h-4 shrink-0" />
                                 {!collapsed && (
-                                  <>
-                                    <span className="truncate text-sm flex-1">{item.title}</span>
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <span className="truncate text-sm">{item.title}</span>
                                     {item.badge && (
-                                      <span className="text-[10px] font-medium bg-orange-500 text-white px-1.5 py-0.5 rounded-full">
+                                      <span className="text-[10px] bg-orange-500 text-white px-1.5 py-0.5 rounded-full font-medium shrink-0">
                                         {item.badge}
                                       </span>
                                     )}
-                                  </>
+                                  </div>
                                 )}
                               </Link>
                             </SidebarMenuButton>

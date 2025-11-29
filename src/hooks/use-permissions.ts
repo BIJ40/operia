@@ -1,139 +1,135 @@
+/**
+ * Hooks de permissions V2.0
+ * 
+ * Ce fichier fournit des wrappers de compatibilité pour la migration vers V2.
+ * À terme, utiliser directement useAuth() avec hasGlobalRole() et hasModule().
+ */
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useMemo, useCallback } from 'react';
-import { ScopeSlug, EffectivePermission, PERMISSION_LEVELS } from '@/types/permissions';
+import { GLOBAL_ROLES } from '@/types/globalRoles';
 
-interface Block {
-  id: string;
-  parentId?: string | null;
-}
+// ============================================================================
+// HOOKS DE COMPATIBILITÉ - Migration vers V2
+// ============================================================================
 
-// Hook pour obtenir les blocks filtrés (conservé pour compatibilité)
-export function useFilteredBlocks<T extends Block>(blocks: T[]): T[] {
-  return blocks;
+/**
+ * @deprecated Utiliser useHasGlobalRole() à la place
+ * Ce hook est conservé uniquement pour compatibilité pendant la migration
+ */
+export function useIsBlockLocked() {
+  const { isAdmin } = useAuth();
+
+  return useCallback((_scopeSlug: string, _blocks: any[] = []): boolean => {
+    // V2: Plus de verrouillage par block, tout passe par RoleGuard
+    // Les admins ne sont jamais bloqués
+    if (isAdmin) return false;
+    
+    // Par défaut, ne pas bloquer (V2 utilise RoleGuard sur les routes)
+    return false;
+  }, [isAdmin]);
 }
 
 /**
- * Legacy wrapper pour compatibilité - NEUTRALISÉ
- * Les IDs de blocks legacy (block-*, cat-*, ou UUID) retournent toujours false (pas locked)
- * Seuls les vrais scopes V2 ('apogee', 'apporteurs', etc.) sont vérifiés
+ * @deprecated Utiliser useAuth() directement avec hasGlobalRole() et hasModule()
  */
-export function useIsBlockLocked() {
-  const { isAdmin, getEffectivePermission } = useAuth();
-
-  return useCallback((scopeSlug: string, _blocks: Block[] = []): boolean => {
-    // Admin = jamais locked
-    if (isAdmin) {
-      return false;
-    }
-
-    // Détection des IDs de blocks legacy (format block-*, cat-*, ou UUID)
-    const isBlockPrefix = scopeSlug.startsWith('block-');
-    const isCatPrefix = scopeSlug.startsWith('cat-');
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(scopeSlug);
-    const isLegacyBlockId = isBlockPrefix || isCatPrefix || isUUID;
-
-    // Les blocks legacy ne sont plus verrouillés par ce système
-    // La V2 (RoleGuard / hasGlobalRole) contrôle l'accès aux pages
-    if (isLegacyBlockId) {
-      return false;
-    }
-
-    // Pour les vrais scopes V2, utiliser le système normal
-    const perm = getEffectivePermission(scopeSlug);
-    return !perm.canView;
-  }, [isAdmin, getEffectivePermission]);
-}
-
-// Hook principal pour les permissions de scope
 export function usePermissions() {
-  const { 
-    canViewScope, 
-    canEditScope, 
-    canCreateScope, 
-    canDeleteScope,
-    canAdminScope,
-    getEffectivePermission,
-    hasCapability,
-    isAdmin,
-    isSupport,
-    isFranchiseur,
-    scopes
-  } = useAuth();
+  const auth = useAuth();
+  const { globalRole, isAdmin, isSupport, isFranchiseur } = auth;
+  
+  const globalRoleLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
 
-  // Vérifier l'accès à un scope avec une action spécifique
-  const checkAccess = useCallback((scopeSlug: ScopeSlug | string, action: 'view' | 'edit' | 'create' | 'delete' | 'admin' = 'view'): boolean => {
+  // Wrapper simplifié basé sur V2
+  const checkAccess = useCallback((
+    _scopeSlug: string, 
+    action: 'view' | 'edit' | 'create' | 'delete' | 'admin' = 'view'
+  ): boolean => {
+    if (isAdmin) return true;
+    
     switch (action) {
-      case 'view': return canViewScope(scopeSlug);
-      case 'edit': return canEditScope(scopeSlug);
-      case 'create': return canCreateScope(scopeSlug);
-      case 'delete': return canDeleteScope(scopeSlug);
-      case 'admin': return canAdminScope(scopeSlug);
-      default: return canViewScope(scopeSlug);
+      case 'view': return true; // V2: contrôlé par RoleGuard
+      case 'edit': return globalRoleLevel >= GLOBAL_ROLES.franchisee_admin;
+      case 'create': return globalRoleLevel >= GLOBAL_ROLES.franchisee_admin;
+      case 'delete': return globalRoleLevel >= GLOBAL_ROLES.franchisor_user;
+      case 'admin': return globalRoleLevel >= GLOBAL_ROLES.platform_admin;
+      default: return true;
     }
-  }, [canViewScope, canEditScope, canCreateScope, canDeleteScope, canAdminScope]);
+  }, [isAdmin, globalRoleLevel]);
 
-  // Obtenir le niveau de permission effectif
-  const getPermissionLevel = useCallback((scopeSlug: ScopeSlug | string): number => {
-    return getEffectivePermission(scopeSlug).level;
-  }, [getEffectivePermission]);
+  const getPermissionLevel = useCallback((_scopeSlug: string): number => {
+    if (isAdmin) return 4;
+    if (isFranchiseur) return 3;
+    if (globalRoleLevel >= GLOBAL_ROLES.franchisee_admin) return 2;
+    return 1;
+  }, [isAdmin, isFranchiseur, globalRoleLevel]);
 
-  // Vérifier si l'utilisateur a un niveau minimum
-  const hasMinLevel = useCallback((scopeSlug: ScopeSlug | string, minLevel: number): boolean => {
-    return getPermissionLevel(scopeSlug) >= minLevel;
+  const hasMinLevel = useCallback((_scopeSlug: string, minLevel: number): boolean => {
+    return getPermissionLevel(_scopeSlug) >= minLevel;
   }, [getPermissionLevel]);
 
-  // Obtenir tous les scopes accessibles par area
-  const getScopesByArea = useCallback((area: string): typeof scopes => {
-    return scopes.filter(s => s.area === area && canViewScope(s.slug));
-  }, [scopes, canViewScope]);
+  const getScopesByArea = useCallback((_area: string): any[] => {
+    return []; // V2: plus de scopes, utiliser modules
+  }, []);
 
-  // Vérifier si l'utilisateur peut gérer le support
   const canManageSupport = useMemo(() => {
-    return isAdmin || isSupport || isFranchiseur || hasCapability('support');
-  }, [isAdmin, isSupport, isFranchiseur, hasCapability]);
+    return isAdmin || isSupport || isFranchiseur;
+  }, [isAdmin, isSupport, isFranchiseur]);
 
-  // Vérifier si l'utilisateur peut éditer le contenu
   const canEditContent = useMemo(() => {
-    return isAdmin || hasCapability('content_editor');
-  }, [isAdmin, hasCapability]);
+    return isAdmin || globalRoleLevel >= GLOBAL_ROLES.franchisee_admin;
+  }, [isAdmin, globalRoleLevel]);
 
   return {
     checkAccess,
     getPermissionLevel,
     hasMinLevel,
     getScopesByArea,
-    getEffectivePermission,
-    hasCapability,
+    getEffectivePermission: auth.getEffectivePermission,
+    hasCapability: auth.hasCapability,
     canManageSupport,
     canEditContent,
     isAdmin,
     isSupport,
     isFranchiseur,
-    scopes,
-    PERMISSION_LEVELS,
-    // Helpers directs
-    canViewScope,
-    canEditScope,
-    canCreateScope,
-    canDeleteScope,
-    canAdminScope
+    scopes: [],
+    PERMISSION_LEVELS: { NONE: 0, VIEW: 1, EDIT: 2, MANAGE: 3, ADMIN: 4 },
+    // Wrappers de compatibilité
+    canViewScope: auth.canViewScope,
+    canEditScope: auth.canEditScope,
+    canCreateScope: auth.canCreateScope,
+    canDeleteScope: auth.canDeleteScope,
+    canAdminScope: auth.canAdminScope,
   };
 }
 
-// Hook simplifié pour vérifier rapidement un accès
-export function useCanAccess(scopeSlug: ScopeSlug | string, action: 'view' | 'edit' | 'create' | 'delete' | 'admin' = 'view'): boolean {
-  const { checkAccess } = usePermissions();
-  return useMemo(() => checkAccess(scopeSlug, action), [checkAccess, scopeSlug, action]);
+/**
+ * @deprecated Utiliser useAuth().canViewScope() ou mieux: useHasGlobalRole()
+ */
+export function useCanAccess(_scopeSlug: string, _action: string = 'view'): boolean {
+  const { isAdmin } = useAuth();
+  // V2: L'accès est contrôlé par RoleGuard, donc retourner true par défaut
+  return isAdmin || true;
 }
 
-// Hook pour obtenir la permission effective d'un scope
-export function useScopePermission(scopeSlug: ScopeSlug | string): EffectivePermission {
-  const { getEffectivePermission } = usePermissions();
-  return useMemo(() => getEffectivePermission(scopeSlug), [getEffectivePermission, scopeSlug]);
+/**
+ * @deprecated Plus utilisé en V2
+ */
+export function useScopePermission(_scopeSlug: string) {
+  const { getEffectivePermission } = useAuth();
+  return useMemo(() => getEffectivePermission(_scopeSlug), [getEffectivePermission, _scopeSlug]);
 }
 
-// Hook pour vérifier le niveau minimum requis
-export function useRequiredLevel(scopeSlug: ScopeSlug | string, requiredLevel: number): boolean {
+/**
+ * @deprecated Utiliser useHasGlobalRole() à la place
+ */
+export function useRequiredLevel(_scopeSlug: string, requiredLevel: number): boolean {
   const { hasMinLevel } = usePermissions();
-  return useMemo(() => hasMinLevel(scopeSlug, requiredLevel), [hasMinLevel, scopeSlug, requiredLevel]);
+  return useMemo(() => hasMinLevel(_scopeSlug, requiredLevel), [hasMinLevel, _scopeSlug, requiredLevel]);
+}
+
+// ============================================================================
+// Pour compatibilité avec les anciens imports
+// ============================================================================
+export function useFilteredBlocks<T>(blocks: T[]): T[] {
+  return blocks;
 }
