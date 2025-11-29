@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUnregisteredCollaborators } from "@/features/team/hooks";
-import { useAgencyList } from "@/franchiseur/hooks/useAgencyList";
+import { useAdminAgencies } from "@/hooks/use-admin-agencies";
 import { AgencyCollaborator } from "@/features/team/types";
 import { CollaboratorsTable, CreateUserFromCollaboratorDialog } from "@/features/team/components";
 
@@ -23,7 +23,7 @@ export default function AdminCollaborators() {
   const [agencyFilter, setAgencyFilter] = useState<string>("all");
   const [createUserTarget, setCreateUserTarget] = useState<AgencyCollaborator | null>(null);
 
-  const { data: agencies = [] } = useAgencyList();
+  const { data: agencies = [] } = useAdminAgencies();
   const { data: collaborators = [], isLoading, refetch } = useUnregisteredCollaborators(
     agencyFilter === "all" ? null : agencyFilter
   );
