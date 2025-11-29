@@ -20,7 +20,7 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
 import { getRoleCapabilities } from '@/config/roleMatrix';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
-import { useState, ReactNode } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 
 interface NavItem {
   title: string;
@@ -47,7 +47,26 @@ export function UnifiedSidebar() {
   const { globalRole, agence, canAccessSupportConsole } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
-  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
+  // Auto-open groups based on current route
+  const getInitialOpenGroups = () => {
+    const groups = new Set<string>();
+    if (location.pathname.startsWith('/academy')) groups.add('help-academy');
+    if (location.pathname.startsWith('/pilotage')) groups.add('pilotage');
+    if (location.pathname.startsWith('/support')) groups.add('support');
+    if (location.pathname.startsWith('/reseau')) groups.add('franchiseur');
+    if (location.pathname.startsWith('/admin')) groups.add('admin');
+    return groups;
+  };
+  
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => getInitialOpenGroups());
+  
+  // Update open groups when route changes
+  useEffect(() => {
+    const newGroups = getInitialOpenGroups();
+    if (newGroups.size > 0) {
+      setOpenGroups(prev => new Set([...prev, ...newGroups]));
+    }
+  }, [location.pathname]);
 
   const caps = getRoleCapabilities(globalRole);
 
