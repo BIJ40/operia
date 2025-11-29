@@ -1,8 +1,8 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
-  Headset, MessageSquare, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Shield, Database, Activity, ChevronRight, Home, User, Grid3X3, Calendar
+  Headset, Network, Building2, PieChart, GitCompare,
+  Coins, Settings, Users, Shield, Database, Activity, ChevronRight, Home, User, Grid3X3, Calendar, LifeBuoy
 } from 'lucide-react';
 import {
   Sidebar,
@@ -42,7 +42,7 @@ interface NavGroup {
 export function UnifiedSidebar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { globalRole, agence } = useAuth();
+  const { globalRole, agence, canAccessSupportConsole } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
@@ -112,7 +112,7 @@ export function UnifiedSidebar() {
       label: 'Support',
       labelKey: 'support',
       items: [
-        { title: 'Mes Demandes', url: '/mes-demandes', icon: MessageSquare, description: 'Créer et suivre vos demandes de support' },
+        { title: 'Mes Demandes', url: '/mes-demandes', icon: LifeBuoy, description: 'Créer et suivre vos demandes de support' },
       ],
       accessKey: 'canAccessSupport',
     },
@@ -160,13 +160,18 @@ export function UnifiedSidebar() {
     },
   ];
 
-  // V2: Filtrage des groupes basé sur ROLE_MATRIX
+  // V2: Filtrage des groupes basé sur ROLE_MATRIX + canAccessSupportConsole de AuthContext
   const filteredGroups = navGroups.filter(group => {
     if (!group.accessKey) return true;
     
     // Cas spécial pilotage : nécessite agence si requiresAgencyForPilotage
     if (group.accessKey === 'canAccessPilotageAgence') {
       if (caps.requiresAgencyForPilotage && !agence) return false;
+    }
+    
+    // Cas spécial console support : utiliser la valeur combinée de AuthContext
+    if (group.accessKey === 'canAccessSupportConsole') {
+      return canAccessSupportConsole;
     }
     
     return caps[group.accessKey];

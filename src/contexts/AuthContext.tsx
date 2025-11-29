@@ -16,6 +16,7 @@ import {
   hasModule as hasModuleFn,
   hasModuleOption as hasModuleOptionFn,
 } from '@/types/accessControl';
+import { getRoleCapabilities } from '@/config/roleMatrix';
 
 interface AuthContextType {
   // État utilisateur
@@ -45,6 +46,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isSupport: boolean;
   isFranchiseur: boolean;
+  canAccessSupportConsole: boolean; // Combinaison ROLE_MATRIX + enabled_modules
   
   // Auth actions
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -83,6 +85,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = globalRoleLevel >= GLOBAL_ROLES.platform_admin; // N5+
   const isFranchiseur = globalRoleLevel >= GLOBAL_ROLES.franchisor_user; // N3+
   const isSupport = hasSupportCapability || checkModuleEnabled(enabledModules, 'support');
+
+  // Console Support = ROLE_MATRIX permet l'accès + module support activé avec option agent
+  const caps = getRoleCapabilities(globalRole);
+  const supportModule = enabledModules?.support;
+  const canAccessSupportConsole = caps.canAccessSupportConsole && (
+    isAdmin || // Les admins ont toujours accès
+    (typeof supportModule === 'object' && supportModule !== null && (supportModule as any).agent === true)
+  );
 
   // Contexte d'accès V2.0
   const accessContext: AccessControlContext = {
@@ -376,6 +386,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin,
       isSupport,
       isFranchiseur,
+      canAccessSupportConsole,
       login, 
       logout,
       signup,

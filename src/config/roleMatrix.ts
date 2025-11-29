@@ -62,12 +62,12 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
   // N2 - Admin franchisé (dirigeant agence)
   franchisee_admin: {
     canAccessHelpAcademy: true,
-    canAccessPilotageAgence: true, // Accès pilotage SI agence
+    canAccessPilotageAgence: true,   // Accès pilotage SI agence
     canAccessSupport: true,
-    canAccessSupportConsole: false,
-    canAccessFranchiseur: false,
-    canAccessAdmin: false,
-    canManageUsers: false,
+    canAccessSupportConsole: false,  // Pas de console support
+    canAccessFranchiseur: false,     // Pas de vue réseau
+    canAccessAdmin: false,           // Pas d'admin plateforme
+    canManageUsers: false,           // Ne crée pas d'utilisateurs
     canAssignRolesUpTo: null,
     requiresAgencyForPilotage: true, // Doit avoir une agence
   },
@@ -75,24 +75,24 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
   // N3 - Utilisateur franchiseur (animateur réseau)
   franchisor_user: {
     canAccessHelpAcademy: true,
-    canAccessPilotageAgence: false, // Pas de pilotage individuel
+    canAccessPilotageAgence: false,       // Pas de pilotage agence direct
     canAccessSupport: true,
-    canAccessSupportConsole: true, // Console support
-    canAccessFranchiseur: true,    // Vue réseau
-    canAccessAdmin: false,
-    canManageUsers: true,          // Peut gérer des utilisateurs
-    canAssignRolesUpTo: 'franchisee_admin', // Peut assigner jusqu'à N2
+    canAccessSupportConsole: false,       // Pas console par défaut (module activable)
+    canAccessFranchiseur: true,           // Accès Réseau Franchiseur
+    canAccessAdmin: false,                // Pas d'admin globale
+    canManageUsers: true,                 // Peut créer/modifier des users
+    canAssignRolesUpTo: 'franchisor_user',// Jusqu'à N3 (son propre niveau)
     requiresAgencyForPilotage: false,
   },
 
   // N4 - Admin franchiseur (directeur réseau, DG)
   franchisor_admin: {
     canAccessHelpAcademy: true,
-    canAccessPilotageAgence: false,
+    canAccessPilotageAgence: true,
     canAccessSupport: true,
     canAccessSupportConsole: true,
     canAccessFranchiseur: true,
-    canAccessAdmin: false,
+    canAccessAdmin: true,
     canManageUsers: true,
     canAssignRolesUpTo: 'franchisor_user', // Peut assigner jusqu'à N3
     requiresAgencyForPilotage: false,
@@ -227,18 +227,20 @@ export function canAccessTileGroup(
 
 /**
  * Vérifie si une tuile spécifique est visible
+ * Note: Pour CONSOLE_SUPPORT, utiliser canAccessSupportConsole de AuthContext
  */
 export function canAccessTile(
   role: GlobalRole | null,
   tileId: string,
-  options?: { agence?: string | null }
+  options?: { agence?: string | null; canAccessSupportConsole?: boolean }
 ): boolean {
   const caps = getRoleCapabilities(role);
   
   // Tuiles spéciales
   switch (tileId) {
     case 'CONSOLE_SUPPORT':
-      return caps.canAccessSupportConsole;
+      // Utiliser la valeur combinée si fournie, sinon fallback sur ROLE_MATRIX
+      return options?.canAccessSupportConsole ?? caps.canAccessSupportConsole;
     case 'ADMIN_USERS':
       return caps.canManageUsers;
     case 'ADMIN_ROLES':
