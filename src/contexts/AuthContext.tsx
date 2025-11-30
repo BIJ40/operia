@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
+import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 
 // ============================================================================
 // SYSTÈME V2.0 - Imports des types et fonctions
@@ -184,6 +185,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Définir les modules activés (objet vide si non défini)
       setEnabledModules(dbEnabledModules || {});
 
+      // Configurer Sentry avec le contexte utilisateur
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        setSentryUser({
+          id: userId,
+          email: userData.user.email,
+          globalRole: dbGlobalRole || 'base_user',
+          agencySlug: profile?.agence || null,
+        });
+      }
+
       // Logging en dev
       if (import.meta.env.DEV) {
         logAuth.info('[AUTH][V2] User loaded:', {
@@ -317,6 +329,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .forEach((key) => localStorage.removeItem(key));
 
       localStorage.removeItem('editMode');
+      
+      // Clear Sentry user context
+      clearSentryUser();
       
       // Reset V2 state
       setAgence(null);

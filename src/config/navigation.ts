@@ -225,6 +225,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity, scope: 'admin_settings' },
       { title: 'Métadonnées pages', url: ROUTES.admin.pageMetadata, icon: FileText, scope: 'admin_settings' },
       { title: 'Chatbot & RAG', url: ROUTES.admin.chatbotRag, icon: Database, scope: 'admin_settings' },
+      { title: 'Santé Système', url: ROUTES.admin.systemHealth, icon: Activity, scope: 'admin_settings' },
       { 
         title: 'Paramètres', 
         url: ROUTES.admin.index, 
@@ -286,6 +287,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.admin.userActivity]: 'Activité Utilisateurs',
   [ROUTES.admin.escalationHistory]: 'Historique Escalades',
   [ROUTES.admin.chatbotRag]: 'Chatbot & RAG',
+  [ROUTES.admin.systemHealth]: 'Santé Système',
   [ROUTES.admin.storageQuota]: 'Stockage',
   [ROUTES.admin.cacheBackup]: 'Cache Backup',
   [ROUTES.admin.apogeeTickets]: 'TICKETING DEVELOPPEMENT',

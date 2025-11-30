@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
+import { captureEdgeException } from '../_shared/sentry.ts';
 
 // Cache management
 interface CacheEntry {
@@ -458,6 +459,12 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Error in network-kpis:', error);
+    
+    // Report to Sentry
+    await captureEdgeException(error, {
+      function: 'network-kpis',
+    });
+    
     return withCors(req, new Response(
       JSON.stringify({ error: String(error) }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

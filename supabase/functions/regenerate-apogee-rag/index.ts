@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
+import { captureEdgeException } from '../_shared/sentry.ts';
 
 // Strip HTML tags and decode entities for cleaner text
 function stripHtml(html: string): string {
@@ -266,6 +267,12 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('[RAG] Error:', error);
+    
+    // Report to Sentry
+    await captureEdgeException(error, {
+      function: 'regenerate-apogee-rag',
+    });
+    
     return withCors(req, new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Unknown error',

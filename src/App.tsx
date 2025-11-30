@@ -76,6 +76,7 @@ const AdminCollaborators = lazy(() => import("./pages/AdminCollaborators"));
 const AdminPageMetadata = lazy(() => import("./pages/AdminPageMetadata"));
 const AdminApogeeGuides = lazy(() => import("./pages/AdminApogeeGuides"));
 const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
+const AdminSystemHealth = lazy(() => import("./pages/AdminSystemHealth"));
 
 // Lazy loaded pages - Apogée Tickets
 const ApogeeTicketsKanban = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsKanban"));
@@ -100,6 +101,7 @@ import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
+import { SentryErrorBoundary } from "./components/SentryErrorBoundary";
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -251,6 +253,7 @@ function AppContent() {
           <Route path="/admin/apogee-tickets/classifier" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsClassify /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-tickets/review" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsReview /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-tickets/permissions" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsAdmin /></RoleGuard></MainLayout>} />
+          <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminSystemHealth /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* USER PAGES - Accessible à tous les connectés */}
@@ -291,7 +294,9 @@ function App() {
             <ImpersonationProvider>
               <EditorProvider>
                 <ApporteurEditorProvider>
-                  <AppContent />
+                  <SentryErrorBoundary>
+                    <AppContent />
+                  </SentryErrorBoundary>
                   <Toaster />
                   <Sonner />
                 </ApporteurEditorProvider>
