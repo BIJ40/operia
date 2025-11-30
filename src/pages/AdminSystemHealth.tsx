@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import * as Sentry from '@sentry/react';
 import { MainLayout } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   Activity, 
   AlertTriangle, 
@@ -245,6 +246,22 @@ export default function AdminSystemHealth() {
                   Ouvrir Sentry
                   <ExternalLink className="h-3 w-3" />
                 </a>
+              </div>
+
+              {/* TEST BUTTON - À RETIRER APRÈS VALIDATION */}
+              <div className="pt-4 border-t mt-4">
+                <p className="text-xs text-destructive font-medium mb-2">
+                  🧪 Test Sentry (à retirer après validation)
+                </p>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    throw new Error('This is your first error!');
+                  }}
+                >
+                  Break the world
+                </Button>
               </div>
             </CardContent>
           </Card>
