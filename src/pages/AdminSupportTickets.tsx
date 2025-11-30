@@ -93,7 +93,8 @@ export default function AdminSupportTickets() {
            filters.source !== 'all' || 
            filters.category !== 'all' || 
            filters.agency !== 'all' ||
-           filters.priority !== 'all';
+           filters.priority !== 'all' ||
+           filters.assignment !== 'all';
   };
 
   const resetFilters = () => {
@@ -103,6 +104,7 @@ export default function AdminSupportTickets() {
       category: 'all',
       agency: 'all',
       priority: 'all',
+      assignment: 'all',
     });
   };
 
@@ -473,6 +475,17 @@ export default function AdminSupportTickets() {
                         <SelectItem value="closed">Fermé</SelectItem>
                       </SelectContent>
                     </Select>
+
+                    <Select value={filters.assignment} onValueChange={(v) => setFilters({ ...filters, assignment: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Assignation" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        <SelectItem value="all">Tous</SelectItem>
+                        <SelectItem value="mine">📌 Mes tickets</SelectItem>
+                        <SelectItem value="unassigned">⏳ Non assignés</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <TabsContent value="actifs" className="mt-4">
@@ -628,8 +641,8 @@ export default function AdminSupportTickets() {
                           }
                         />
 
-                        {/* Bouton pour prendre la main sur un chat_ai */}
-                        {selectedTicket.type === 'chat_ai' && (
+                        {/* Bouton pour prendre la main sur un chat_ai - seulement si non assigné à un autre */}
+                        {selectedTicket.type === 'chat_ai' && (!selectedTicket.assigned_to || selectedTicket.assigned_to === user?.id) && (
                           <Button
                             onClick={() => user && takeOverChat(selectedTicket.id, user.id)}
                             className="gap-2 bg-green-600 hover:bg-green-700 text-white"
