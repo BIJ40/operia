@@ -338,7 +338,7 @@ export function SupportChatCore({
         // Appeler la classification IA automatique
         await safeInvoke(
           supabase.functions.invoke('support-auto-classify', {
-            body: { ticketId: result.data.id },
+            body: { ticket_id: result.data.id },
           }),
           'SUPPORT_CHAT_AUTO_CLASSIFY'
         );
