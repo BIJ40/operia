@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, UserCircle } from 'lucide-react';
+import { Send, Headphones } from 'lucide-react';
 
 interface ChatInputProps {
   input: string;
@@ -35,25 +35,9 @@ export function ChatInput({
   };
 
   return (
-    <>
-      {/* Support button */}
-      {messages.length > 0 && !activeTicket && !showChoiceMode && (
-        <div className="px-4 pt-2 pb-2 border-t">
-          <Button
-            onClick={onCreateSupportTicket}
-            disabled={isCreating}
-            variant="outline"
-            size="sm"
-            className="w-full"
-          >
-            <UserCircle className="h-4 w-4 mr-2" />
-            {isCreating ? 'Création...' : 'Parler à un conseiller'}
-          </Button>
-        </div>
-      )}
-
+    <div className="border-t">
       {/* Input */}
-      <div className="p-4 border-t">
+      <div className="p-3">
         <div className="flex gap-2">
           <Input
             value={input}
@@ -75,6 +59,22 @@ export function ChatInput({
           </Button>
         </div>
       </div>
-    </>
+
+      {/* Support button - always visible when in AI chat mode */}
+      {!activeTicket && !showChoiceMode && (
+        <div className="px-3 pb-3">
+          <Button
+            onClick={onCreateSupportTicket}
+            disabled={isCreating}
+            variant="outline"
+            size="sm"
+            className="w-full text-primary border-primary/30 hover:bg-primary/5 hover:border-primary/50"
+          >
+            <Headphones className="h-4 w-4 mr-2" />
+            {isCreating ? 'Connexion...' : 'Contacter le support'}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
