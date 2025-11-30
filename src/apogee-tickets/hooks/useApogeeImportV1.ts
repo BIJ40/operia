@@ -177,8 +177,6 @@ export function parseV1Sheet(file: File): Promise<{ rows: V1Row[], headers: stri
         const commentFlorianIdx = findIndex(['COMMENTAIRE FLORIAN']);
         const commentJeromeIdx = findIndex(['COMMENTAIRE JÉROME', 'COMMENTAIRE JEROME']);
         
-        console.log('V1 - Colonnes détectées:', { elementIdx, prioIdx, actionIdx, descriptifIdx, commentApogeeIdx });
-        
         const rows: V1Row[] = [];
         
         for (let i = 1; i < jsonData.length; i++) {

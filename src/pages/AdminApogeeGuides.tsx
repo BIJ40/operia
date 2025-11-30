@@ -37,6 +37,7 @@ import {
   generateCSVTemplate,
 } from '@/lib/apogee-guides-csv';
 import type { ApogeeGuide, ApogeeGuideInsert, ApogeeGuideUpdate } from '@/types/apogeeGuides';
+import { logError } from '@/lib/logger';
 
 export default function AdminApogeeGuides() {
   const queryClient = useQueryClient();
@@ -86,7 +87,7 @@ export default function AdminApogeeGuides() {
 
       return true;
     } catch (err) {
-      console.error('[RAG] Error:', err);
+      logError('RAG', 'Erreur régénération index', { error: err });
       return false;
     }
   };
@@ -292,7 +293,7 @@ export default function AdminApogeeGuides() {
 
       toast.success(`${result.message}: ${result.chunks_created} chunks créés pour ${result.guides_processed} guides`);
     } catch (err) {
-      console.error('[RAG] Error:', err);
+      logError('RAG', 'Erreur régénération manuelle index', { error: err });
       toast.error(`Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
     } finally {
       setIsRegeneratingRAG(false);

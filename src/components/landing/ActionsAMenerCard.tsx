@@ -7,6 +7,7 @@ import { buildActionsAMener, calculateActionsStats } from '@/apogee-connect/util
 import { useActionsConfig } from '@/apogee-connect/hooks/useActionsConfig';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
+import { logError } from '@/lib/logger';
 
 export function ActionsAMenerCard() {
   const { agence } = useAuth();
@@ -31,7 +32,7 @@ export function ActionsAMenerCard() {
 
         return calculateActionsStats(actions);
       } catch (error) {
-        console.error('Erreur chargement actions preview:', error);
+        logError('LANDING', 'Erreur chargement actions preview', { error });
         return null;
       }
     },

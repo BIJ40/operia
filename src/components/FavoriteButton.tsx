@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logError } from '@/lib/logger';
 
 interface FavoriteButtonProps {
   blockId: string;
@@ -39,7 +40,7 @@ export function FavoriteButton({ blockId, blockTitle, blockSlug, categorySlug, s
       if (error) throw error;
       setIsFavorite(!!data);
     } catch (error) {
-      console.error('Error checking favorite:', error);
+      logError('FAVORITES', 'Error checking favorite', { error });
     }
   };
 
@@ -92,7 +93,7 @@ export function FavoriteButton({ blockId, blockTitle, blockSlug, categorySlug, s
         });
       }
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      logError('FAVORITES', 'Error toggling favorite', { error });
       toast({
         title: 'Erreur',
         description: 'Impossible de modifier le favori',

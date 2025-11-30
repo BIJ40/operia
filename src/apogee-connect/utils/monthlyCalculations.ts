@@ -1,5 +1,6 @@
 import { parseISO, format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { logDebug, logError } from "@/lib/logger";
 
 export interface MonthlyCA {
   month: string;
@@ -31,11 +32,7 @@ export const calculateMonthlyCA = (
   });
   
   if (import.meta.env.DEV) {
-    console.log('📊 calculateMonthlyCA - Début', {
-      nbFactures: factures.length,
-      year,
-      userAgency
-    });
+    logDebug('MONTHLY_CALC', 'calculateMonthlyCA - Début', { nbFactures: factures.length, year, userAgency });
   }
   
   // Filtrer et traiter les factures
@@ -74,28 +71,18 @@ export const calculateMonthlyCA = (
       monthData.nbFactures++;
       
       if (import.meta.env.DEV && monthData.nbFactures <= 3) {
-        console.log("✅ Facture ajoutée (monthly):", {
-          ref: facture.reference || facture.numeroFacture,
-          mois: monthData.monthLabel,
-          montant,
-          date: dateValue,
-          type: typeFacture,
-        });
+        logDebug('MONTHLY_CALC', 'Facture ajoutée', { ref: facture.reference || facture.numeroFacture, mois: monthData.monthLabel, montant, date: dateValue, type: typeFacture });
       }
       
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error("❌ Erreur parsing date facture (monthly):", dateValue, error);
+        logError('MONTHLY_CALC', 'Erreur parsing date facture', { dateValue, error });
       }
     }
   });
   
   if (import.meta.env.DEV) {
-    console.log("📊 calculateMonthlyCA - Résultat:", monthlyData.map(m => ({
-      mois: m.monthLabel,
-      ca: m.caTotal,
-      nbFactures: m.nbFactures,
-    })));
+    logDebug('MONTHLY_CALC', 'calculateMonthlyCA - Résultat', { data: monthlyData.map(m => ({ mois: m.monthLabel, ca: m.caTotal, nbFactures: m.nbFactures })) });
   }
   
   // Retourner dans le format attendu par MonthlyCAChart
