@@ -10,9 +10,13 @@ import {
   Shield,
   Database,
   Zap,
-  RefreshCw
+  RefreshCw,
+  MessageSquare,
+  Send,
+  Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface HealthCheck {
   name: string;
@@ -29,6 +33,35 @@ export default function AdminSystemHealth() {
     { name: "Edge Functions", status: "checking", message: "Vérification...", icon: <Zap className="h-5 w-5" /> },
   ]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [smsTestResult, setSmsTestResult] = useState<{ success: boolean; message: string; details?: unknown } | null>(null);
+  const [isSmsTestLoading, setIsSmsTestLoading] = useState(false);
+
+  const testSmsApi = async (simulate: boolean) => {
+    setIsSmsTestLoading(true);
+    setSmsTestResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('test-sms', {
+        body: { simulate }
+      });
+      
+      if (error) {
+        setSmsTestResult({ success: false, message: error.message });
+        toast.error(`Erreur: ${error.message}`);
+      } else if (data?.success) {
+        setSmsTestResult({ success: true, message: data.message, details: data });
+        toast.success(data.message);
+      } else {
+        setSmsTestResult({ success: false, message: data?.message || 'Erreur inconnue', details: data });
+        toast.error(data?.message || 'Erreur inconnue');
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur inattendue';
+      setSmsTestResult({ success: false, message });
+      toast.error(message);
+    } finally {
+      setIsSmsTestLoading(false);
+    }
+  };
 
   const environment = import.meta.env.DEV 
     ? "development" 
@@ -313,6 +346,87 @@ export default function AdminSystemHealth() {
               <span className="font-medium text-green-600">Configuré</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* SMS Test */}
+      <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+            <MessageSquare className="w-5 h-5 text-helpconfort-blue" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">Test SMS AllMySMS</h3>
+            <p className="text-sm text-muted-foreground">Vérifier la connectivité API SMS</p>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => testSmsApi(true)}
+              disabled={isSmsTestLoading}
+              className="border-helpconfort-blue/30 hover:bg-helpconfort-blue/10"
+            >
+              {isSmsTestLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Activity className="h-4 w-4 mr-2" />
+              )}
+              Test connectivité (simulation)
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => testSmsApi(false)}
+              disabled={isSmsTestLoading}
+              className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
+            >
+              {isSmsTestLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4 mr-2" />
+              )}
+              Envoyer SMS réel
+            </Button>
+          </div>
+
+          {smsTestResult && (
+            <div className={`p-4 rounded-lg ${smsTestResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+              <div className="flex items-start gap-3">
+                {smsTestResult.success ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+                )}
+                <div className="flex-1">
+                  <p className={`font-medium ${smsTestResult.success ? 'text-green-800' : 'text-red-800'}`}>
+                    {smsTestResult.success ? 'Succès' : 'Échec'}
+                  </p>
+                  <p className={`text-sm ${smsTestResult.success ? 'text-green-700' : 'text-red-700'}`}>
+                    {smsTestResult.message}
+                  </p>
+                  {smsTestResult.details && (
+                    <details className="mt-2">
+                      <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                        Détails techniques
+                      </summary>
+                      <pre className="mt-2 p-2 bg-background/50 rounded text-xs overflow-auto max-h-40">
+                        {JSON.stringify(smsTestResult.details, null, 2)}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <p className="text-xs text-muted-foreground">
+            Le test de simulation vérifie la connectivité API sans envoyer de SMS. 
+            Le test réel envoie un SMS au numéro configuré (ALLMYSMS_TEST_PHONE).
+          </p>
         </div>
       </div>
     </div>
