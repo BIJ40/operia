@@ -25,15 +25,17 @@ export function NetworkKpiTile({ title, value, icon: Icon, format = 'number', su
   })();
 
   return (
-    <Card className="rounded-2xl border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]">
+    <Card className="rounded-xl border border-helpconfort-blue/20 bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm hover:to-helpconfort-blue/15 hover:shadow-lg transition-all">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <div className="w-8 h-8 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-helpconfort-blue/10">
+          <Icon className="h-4 w-4 text-helpconfort-blue" />
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+        <div className="text-2xl font-bold text-foreground">
           {formattedValue}
         </div>
         {subtitle && (

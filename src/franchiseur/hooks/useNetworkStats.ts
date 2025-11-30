@@ -44,11 +44,11 @@ interface NetworkStats {
 }
 
 export function useNetworkStats() {
-  const { franchiseurRole } = useFranchiseur();
+  const { franchiseurRole, selectedAgencies } = useFranchiseur();
   const { dateRange } = useNetworkFilters();
 
   return useQuery<NetworkStats>({
-    queryKey: ['network-stats', dateRange],
+    queryKey: ['network-stats', dateRange, selectedAgencies],
     queryFn: async (): Promise<NetworkStats> => {
       logNetwork.info('Chargement des données réseau...');
 
@@ -92,11 +92,16 @@ export function useNetworkStats() {
           return DEFAULT_STATS;
         }
 
-      logNetwork.debug(`Chargement de ${agencies.length} agences...`);
+        // Filter agencies based on selection
+        const filteredAgencies = selectedAgencies.length > 0
+          ? agencies.filter(a => selectedAgencies.includes(a.id))
+          : agencies;
+
+        logNetwork.debug(`Chargement de ${filteredAgencies.length} agences (${selectedAgencies.length > 0 ? 'filtré' : 'toutes'})...`);
 
       // Load all agencies data SEQUENTIALLY (to avoid BASE_URL race condition)
       const agencyData = [];
-      for (const agency of agencies) {
+      for (const agency of filteredAgencies) {
         logNetwork.debug(`Chargement ${agency.slug}...`);
         const data = await NetworkDataService.loadAgencyData(agency.slug);
         if (data) {
@@ -109,7 +114,7 @@ export function useNetworkStats() {
         }
       }
 
-      logNetwork.info(`${agencyData.length}/${agencies.length} agences chargées`);
+      logNetwork.info(`${agencyData.length}/${filteredAgencies.length} agences chargées`);
 
       // Calculate all KPIs using the same calculation functions
       const now = new Date();
