@@ -175,9 +175,26 @@ export const useAdminSupport = () => {
 
       if (!result.success) throw new Error(result.error);
 
+      // Mettre à jour le statut automatiquement après une réponse support (pas une note interne)
+      if (!isInternalNote) {
+        const currentStatus = selectedTicket.status;
+        // Si nouveau → en cours, sinon → attente utilisateur
+        const newStatus = currentStatus === TICKET_STATUSES.NEW 
+          ? TICKET_STATUSES.IN_PROGRESS 
+          : TICKET_STATUSES.WAITING_USER;
+        
+        await safeMutation(
+          supabase.from('support_tickets').update({ status: newStatus }).eq('id', selectedTicket.id),
+          'ADMIN_SUPPORT_AUTO_STATUS_UPDATE'
+        );
+        
+        setSelectedTicket(prev => prev ? { ...prev, status: newStatus } : null);
+      }
+
       setNewMessage('');
       setIsInternalNote(false);
       await loadMessages(selectedTicket.id);
+      await loadTickets();
     } catch (error) {
       logError('[ADMIN-SUPPORT] Error sending message', error);
       errorToast('Erreur lors de l\'envoi du message');
