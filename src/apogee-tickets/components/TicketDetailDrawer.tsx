@@ -89,7 +89,7 @@ export function TicketDetailDrawer({
   const [localHMin, setLocalHMin] = useState(ticket?.h_min?.toString() || '');
   const [localHMax, setLocalHMax] = useState(ticket?.h_max?.toString() || '');
 
-  // Synchroniser les états locaux quand le ticket change
+  // Synchroniser les états locaux quand le ticket change (ID ou données)
   useEffect(() => {
     if (ticket) {
       setLocalTitle(ticket.element_concerne || '');
@@ -97,7 +97,7 @@ export function TicketDetailDrawer({
       setLocalHMin(ticket.h_min?.toString() || '');
       setLocalHMax(ticket.h_max?.toString() || '');
     }
-  }, [ticket?.id]);
+  }, [ticket?.id, ticket?.element_concerne, ticket?.description, ticket?.h_min, ticket?.h_max]);
 
   // Trier les commentaires du plus récent au plus ancien
   const sortedComments = useMemo(() => {
