@@ -130,19 +130,30 @@ export function useSupportNotifications() {
         },
         async (payload) => {
           loadUnreadMessages();
-          playNotificationSound();
 
-          // Récupérer les infos du ticket
+          // Récupérer les infos du ticket pour vérifier si c'est un nouveau ticket
           const { data: ticket } = await supabase
             .from('support_tickets')
-            .select('subject, user_id')
+            .select('subject, user_id, created_at')
             .eq('id', (payload.new as any).ticket_id)
             .single();
 
+          if (!ticket) return;
+
+          // Si le ticket a été créé il y a moins de 5 secondes, c'est le message initial
+          // La notification "Nouveau ticket" sera déjà affichée, pas besoin de "Nouvelle réponse"
+          const ticketCreatedAt = new Date(ticket.created_at).getTime();
+          const now = Date.now();
+          const isInitialMessage = (now - ticketCreatedAt) < 5000;
+
+          if (isInitialMessage) {
+            // Ne pas notifier, le ticket INSERT notification s'en charge
+            return;
+          }
+
+          playNotificationSound();
           toast.info('Nouvelle réponse utilisateur', {
-            description: ticket 
-              ? `Nouvelle réponse sur: ${ticket.subject}`
-              : 'Un utilisateur a répondu à un ticket',
+            description: `Nouvelle réponse sur: ${ticket.subject}`,
             duration: 5000,
           });
         }
