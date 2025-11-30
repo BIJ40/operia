@@ -17,6 +17,7 @@ import { PeriodSelector } from "@/apogee-connect/components/filters/PeriodSelect
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
 import { calculateLast7DaysActivity, calculateVariationVs30Days } from "@/apogee-connect/utils/activityCalculations";
 import { ActivityChart } from "@/apogee-connect/components/widgets/ActivityChart";
+import { logApogee } from "@/lib/logger";
 import { calculateMonthlyCA } from "@/apogee-connect/utils/monthlyCalculations";
 import { MonthlyCAChart } from "@/apogee-connect/components/widgets/MonthlyCAChart";
 import { 
@@ -55,7 +56,7 @@ export default function Dashboard() {
     queryFn: async () => {
       // GUARD: Ne pas charger si l'agence n'est pas définie
       if (!currentAgency?.id) {
-        console.warn('⚠️ Agence non définie - Chargement des données annulé');
+        logApogee.warn('Agence non définie - Chargement des données annulé');
         return null;
       }
       
@@ -199,10 +200,7 @@ export default function Dashboard() {
       );
       
       if (import.meta.env.DEV) {
-        console.log("📊 Stats calculées pour la période:", filters.dateRange, stats);
-        console.log("📈 Activité 7 jours:", activityData);
-        console.log("📈 Variation vs 30j:", activityVariation);
-        console.log("📦 Nombre de dossiers total:", apiData.projects?.length || 0);
+        logApogee.debug('Stats calculées pour la période', { dateRange: filters.dateRange, stats, activityData, activityVariation, nbProjects: apiData.projects?.length || 0 });
       }
       
       return {
@@ -250,7 +248,7 @@ export default function Dashboard() {
   }
 
   if (error) {
-    console.error('Erreur de chargement du dashboard:', error);
+    logApogee.error('Erreur de chargement du dashboard', { error });
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] space-y-4">

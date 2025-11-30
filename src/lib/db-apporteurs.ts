@@ -1,15 +1,16 @@
 import { AppData, Block } from '@/types/block';
 import { supabase } from '@/integrations/supabase/client';
+import { logInfo, logWarn, logError } from '@/lib/logger';
 
 // Helpers DB spécifiques pour la table apporteur_blocks
 export async function saveApporteurData(data: AppData): Promise<void> {
   try {
     if (!data.blocks || data.blocks.length === 0) {
-      console.warn('⚠️ Sauvegarde apporteurs annulée (0 blocks)');
+      logWarn('DB_APPORTEURS', 'Sauvegarde apporteurs annulée (0 blocks)');
       return;
     }
 
-    console.log(`💾 Sauvegarde BATCH apporteurs: ${data.blocks.length} blocks...`);
+    logInfo('DB_APPORTEURS', `Sauvegarde BATCH apporteurs: ${data.blocks.length} blocks`);
 
     const { data: existingBlocks } = await supabase
       .from('apporteur_blocks' as any)
@@ -75,9 +76,9 @@ export async function saveApporteurData(data: AppData): Promise<void> {
       if (error) throw error;
     }
 
-    console.log('✅ Apporteurs sauvegardés (BATCH optimisé)');
+    logInfo('DB_APPORTEURS', 'Apporteurs sauvegardés (BATCH optimisé)');
   } catch (error) {
-    console.error('❌ Erreur sauvegarde apporteurs:', error);
+    logError('DB_APPORTEURS', 'Erreur sauvegarde apporteurs', { error });
     throw error;
   }
 }
@@ -123,10 +124,10 @@ export async function loadApporteurData(): Promise<AppData | null> {
       lastModified: Date.now(),
     };
 
-    console.log(`✅ ${blocks.length} blocs apporteurs chargés depuis le serveur`);
+    logInfo('DB_APPORTEURS', `${blocks.length} blocs apporteurs chargés depuis le serveur`);
     return appData;
   } catch (error) {
-    console.error('❌ Erreur chargement apporteurs Supabase:', error);
+    logError('DB_APPORTEURS', 'Erreur chargement apporteurs Supabase', { error });
     return null;
   }
 }
