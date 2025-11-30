@@ -1,7 +1,8 @@
 import { 
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
-  PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity
+  PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity,
+  HelpCircle
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -87,6 +88,16 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     badge: 'En cours',
   },
   // Support
+  {
+    id: 'CENTRE_AIDE',
+    title: "Centre d'aide",
+    description: 'FAQ, chat et assistance en ligne',
+    icon: HelpCircle,
+    route: ROUTES.support.helpcenter,
+    scopeSlug: 'mes_demandes',
+    color: 'primary',
+    group: 'support',
+  },
   {
     id: 'MES_DEMANDES',
     title: 'Mes Demandes',
