@@ -14,6 +14,10 @@ export interface TicketRoleInfo {
   ticketRole: TicketRole | null;
   scope: 'none' | 'agency' | 'network';
   reason?: string;
+  // Granular permissions from module options
+  canViewKanban: boolean;
+  canImport: boolean;
+  canManage: boolean; // Create/edit tickets
 }
 
 // Objet par défaut pour les cas d'erreur ou non-authentifié
@@ -24,6 +28,9 @@ const DEFAULT_TICKET_ROLE_INFO: TicketRoleInfo = {
   ticketRole: null,
   scope: 'none',
   reason: 'not_authenticated',
+  canViewKanban: false,
+  canImport: false,
+  canManage: false,
 };
 
 export interface TicketUserRole {
@@ -95,8 +102,15 @@ export function useMyTicketRole() {
         }
         
         // Vérifier si le module apogee_tickets est activé
-        const enabledModules = profile.enabled_modules as Record<string, { enabled?: boolean }> | null;
-        const isModuleEnabled = enabledModules?.apogee_tickets?.enabled === true;
+        const enabledModules = profile.enabled_modules as Record<string, { enabled?: boolean; options?: Record<string, boolean> }> | null;
+        const moduleConfig = enabledModules?.apogee_tickets;
+        const isModuleEnabled = moduleConfig?.enabled === true;
+        
+        // Extraire les sous-options (par défaut: tout à true si module activé sans options)
+        const moduleOptions = moduleConfig?.options || {};
+        const canViewKanban = moduleOptions.kanban !== false; // Default true if not explicitly false
+        const canImport = moduleOptions.import === true; // Default false
+        const canManage = moduleOptions.manage !== false; // Default true if not explicitly false
         
         // Vérifier le niveau de rôle global (N5+ = admin)
         const isN5Plus = ['platform_admin', 'superadmin'].includes(profile.global_role || '');
@@ -120,7 +134,7 @@ export function useMyTicketRole() {
         
         const ticketRole = (roleData?.ticket_role as TicketRole) || null;
         
-        // Cas 3: Admin (N5+)
+        // Cas 3: Admin (N5+) - tous droits
         if (isN5Plus) {
           return {
             canUseTicketing: true,
@@ -128,16 +142,22 @@ export function useMyTicketRole() {
             isSupport: true,
             ticketRole,
             scope: 'network',
+            canViewKanban: true,
+            canImport: true,
+            canManage: true,
           };
         }
         
-        // Cas 4: Module activé, utilisateur standard
+        // Cas 4: Module activé, utilisateur standard - appliquer les options
         return {
           canUseTicketing: true,
           isAdmin: false,
           isSupport: ticketRole === 'franchiseur',
           ticketRole,
           scope: 'agency',
+          canViewKanban,
+          canImport,
+          canManage,
         };
         
       } catch (error) {
