@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/react";
 
-// Sentry DSN - must be set in environment
-const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+// Sentry DSN - safe to expose in frontend code
+const SENTRY_DSN = "https://e1979a94b181809d1377b522ee77e214@o4510453309571072.ingest.de.sentry.io/4510453328183376";
 
 // Determine environment
 function getEnvironment(): string {
