@@ -108,9 +108,6 @@ export function parseBugsSheet(file: File): Promise<{ rows: BugsRow[], headers: 
         const commentIdx = findIndex(['COMMENTAIRE APOGÉE', 'COMMENTAIRE APOGEE']);
         const statutIdx = findIndex(['STATUT']);
         
-        console.log('Colonnes détectées:', { userIdx, dateIdx, moduleIdx, descIdx, commentIdx, statutIdx });
-        console.log('Headers:', headers);
-        
         const rows: BugsRow[] = [];
         
         for (let i = 1; i < jsonData.length; i++) {

@@ -4,6 +4,7 @@ import { loadApporteurData, saveApporteurData, exportApporteurData, importApport
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CacheManager } from '@/lib/cache-manager';
+import { logError, logDebug } from '@/lib/logger';
 
 interface ApporteurEditorContextType {
   blocks: Block[];
@@ -50,7 +51,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
           CacheManager.setItem(CACHE_KEY, data.blocks, CACHE_TTL);
         }
       } catch (error) {
-        console.error('Erreur chargement données apporteurs:', error);
+        logError('APPORTEUR_EDITOR', 'Erreur chargement données apporteurs', { error });
       } finally {
         setLoading(false);
       }
@@ -152,14 +153,14 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
         }]);
         
         if (error) {
-          console.error('Erreur insertion Supabase:', error);
+          logError('APPORTEUR_EDITOR', 'Erreur insertion Supabase', { error });
           throw error;
         }
         setBlocks(prev => [...prev, newBlock]);
       }
       return newId;
     } catch (error) {
-      console.error('Erreur sauvegarde apporteur:', error);
+      logError('APPORTEUR_EDITOR', 'Erreur sauvegarde apporteur', { error });
       return '';
     }
   }, [blocks, isAdmin]);
@@ -200,7 +201,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
         block.id === id ? { ...block, ...updates } : block
       ));
     } catch (error) {
-      console.error('Erreur mise à jour apporteur:', error);
+      logError('APPORTEUR_EDITOR', 'Erreur mise à jour apporteur', { error });
     }
   }, [isAdmin]);
 
@@ -253,7 +254,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
         ));
       }
     } catch (error) {
-      console.error('Erreur suppression apporteur:', error);
+      logError('APPORTEUR_EDITOR', 'Erreur suppression apporteur', { error });
     }
   }, [isAdmin, blocks]);
 
@@ -275,9 +276,9 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
           .eq('id', block.id);
       }
       
-      console.log('✅ Ordre apporteurs sauvegardé dans Supabase');
+      logDebug('APPORTEUR_EDITOR', 'Ordre apporteurs sauvegardé dans Supabase');
     } catch (error) {
-      console.error('Erreur sauvegarde ordre apporteurs:', error);
+      logError('APPORTEUR_EDITOR', 'Erreur sauvegarde ordre apporteurs', { error });
     }
   }, [isAdmin]);
 

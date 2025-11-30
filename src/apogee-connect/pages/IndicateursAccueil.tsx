@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ROUTES } from "@/config/routes";
+import { logWarn, logError } from "@/lib/logger";
 
 export default function IndicateursAccueil() {
   const { filters } = useFilters();
@@ -28,7 +29,7 @@ export default function IndicateursAccueil() {
     enabled: isAgencyReady && isApiEnabled,
     queryFn: async () => {
       if (!currentAgency?.id) {
-        console.warn('⚠️ Agence non définie - Chargement des données annulé');
+        logWarn('INDICATEURS', 'Agence non définie - Chargement des données annulé');
         return null;
       }
       
@@ -144,7 +145,7 @@ export default function IndicateursAccueil() {
   }
 
   if (error) {
-    console.error('Erreur de chargement des indicateurs:', error);
+    logError('INDICATEURS', 'Erreur de chargement des indicateurs', { error });
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
         <p className="text-2xl text-muted-foreground">Erreur de chargement des données</p>

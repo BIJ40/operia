@@ -5,6 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logWarn } from '@/lib/logger';
 
 interface TicketAttachment {
   id: string;
@@ -116,7 +117,7 @@ export function useTicketAttachments(ticketId: string | null) {
         .remove([filePath]);
 
       if (storageError) {
-        console.warn('Erreur suppression storage:', storageError);
+        logWarn('APOGEE_TICKETS', 'Erreur suppression storage', { storageError });
       }
     },
     onSuccess: () => {

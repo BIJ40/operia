@@ -214,11 +214,6 @@ export function parseEvaluatedSheet(file: File): Promise<{ rows: EvaluatedRow[],
         const commentFlorianIdx = findIndex(['COMMENTAIRE FLORIAN', 'florian']);
         const commentJeromeIdx = findIndex(['COMMENTAIRE JÉROME', 'COMMENTAIRE JEROME', 'Jérome', 'Jerome']);
         
-        console.log(`${normalizedSheetName} - Colonnes détectées:`, { 
-          elementIdx, prioIdx, hMinIdx, hMaxIdx, descriptifIdx, commentApogeeIdx, commentFlorianIdx, commentJeromeIdx 
-        });
-        console.log('Headers:', headers);
-        
         const rows: EvaluatedRow[] = [];
         
         for (let i = 1; i < jsonData.length; i++) {

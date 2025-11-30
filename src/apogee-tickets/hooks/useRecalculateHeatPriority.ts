@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { calculateHeatPriority } from '../utils/heatPriorityCalculation';
+import { logError } from '@/lib/logger';
 
 export function useRecalculateHeatPriority() {
   const queryClient = useQueryClient();
@@ -52,7 +53,7 @@ export function useRecalculateHeatPriority() {
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
     },
     onError: (error) => {
-      console.error('Erreur recalcul heat_priority:', error);
+      logError('APOGEE_TICKETS', 'Erreur recalcul heat_priority', { error });
       toast.error('Erreur lors du recalcul des priorités');
     },
   });

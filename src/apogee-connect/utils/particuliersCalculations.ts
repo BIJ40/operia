@@ -1,4 +1,5 @@
 import { parseISO, isWithinInterval } from "date-fns";
+import { logDebug, logWarn, logError } from "@/lib/logger";
 
 export interface ParticuliersStats {
   caHT: number;
@@ -19,10 +20,7 @@ const filterFacturesPeriodeParticuliers = (
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
   if (import.meta.env.DEV) {
-    console.log("🔍 PARTICULIERS - Filtrage des factures", {
-      nbFactures: factures.length,
-      nbProjects: projects.length
-    });
+    logDebug('PARTICULIERS', 'Filtrage des factures', { nbFactures: factures.length, nbProjects: projects.length });
   }
   
   const result = factures.filter(facture => {
@@ -52,24 +50,18 @@ const filterFacturesPeriodeParticuliers = (
       const dansLaPeriode = isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end });
       
       if (dansLaPeriode && import.meta.env.DEV) {
-        console.log("✅ Facture particulier trouvée:", {
-          id: facture.id,
-          ref: facture.reference,
-          projectId: facture.projectId,
-          commanditaireId,
-          montant: facture.totalHT || facture.data?.totalHT
-        });
+        logDebug('PARTICULIERS', 'Facture particulier trouvée', { id: facture.id, ref: facture.reference, projectId: facture.projectId, commanditaireId, montant: facture.totalHT || facture.data?.totalHT });
       }
       
       return dansLaPeriode;
     } catch (error) {
-      console.error("❌ Erreur parsing date facture:", dateReelle, error);
+      logError('PARTICULIERS', 'Erreur parsing date facture', { dateReelle, error });
       return false;
     }
   });
   
   if (import.meta.env.DEV) {
-    console.log("📋 PARTICULIERS - Résultat filtrage:", result.length);
+    logDebug('PARTICULIERS', 'Résultat filtrage', { count: result.length });
   }
   return result;
 };
@@ -84,11 +76,7 @@ export const calculateParticuliersStats = (
   dateRange: { start: Date; end: Date }
 ): ParticuliersStats => {
   if (import.meta.env.DEV) {
-    console.log("🔍 PARTICULIERS - Début du calcul", {
-      nbFactures: factures.length,
-      nbProjects: projects.length,
-      dateRange
-    });
+    logDebug('PARTICULIERS', 'Début du calcul', { nbFactures: factures.length, nbProjects: projects.length, dateRange });
   }
   
   const projectsMap = new Map(projects.map(p => [p.id, p]));
@@ -96,11 +84,7 @@ export const calculateParticuliersStats = (
   // Debug: vérifier quelques projets
   if (import.meta.env.DEV) {
     const sampleProjects = projects.slice(0, 5);
-    console.log("📦 Échantillon de projets:", sampleProjects.map(p => ({
-      id: p.id,
-      commanditaireId: p.data?.commanditaireId || p.commanditaireId,
-      isParticulier: !p.data?.commanditaireId && !p.commanditaireId
-    })));
+    logDebug('PARTICULIERS', 'Échantillon de projets', { sample: sampleProjects.map(p => ({ id: p.id, commanditaireId: p.data?.commanditaireId || p.commanditaireId, isParticulier: !p.data?.commanditaireId && !p.commanditaireId })) });
   }
   
   // Filtrer les factures de la période pour particuliers
@@ -128,12 +112,7 @@ export const calculateParticuliersStats = (
       nbFactures += 1;
       dossiers.add(facture.projectId);
     } else {
-      console.warn("⚠️ PARTICULIERS - Montant invalide pour facture:", {
-        id: facture.id,
-        ref: facture.reference,
-        montantRaw,
-        montant
-      });
+      logWarn('PARTICULIERS', 'Montant invalide pour facture', { id: facture.id, ref: facture.reference, montantRaw, montant });
     }
   });
   
@@ -141,12 +120,7 @@ export const calculateParticuliersStats = (
   const panierMoyen = nbDossiers > 0 ? caHT / nbDossiers : 0;
   
   if (import.meta.env.DEV) {
-    console.log("📊 PARTICULIERS - Résultats:", {
-      caHT,
-      nbDossiers,
-      nbFactures,
-      panierMoyen
-    });
+    logDebug('PARTICULIERS', 'Résultats', { caHT, nbDossiers, nbFactures, panierMoyen });
   }
   
   // Calculer le taux de transformation

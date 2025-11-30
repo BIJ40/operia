@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/logger';
 
 interface ChangePasswordDialogProps {
   open: boolean;
@@ -60,7 +61,7 @@ export function ChangePasswordDialog({ open, onOpenChange, onSuccess }: ChangePa
           .update({ must_change_password: false } as any)
           .eq('id', user.id);
 
-        if (profileError) console.error('Erreur mise à jour profil:', profileError);
+        if (profileError) logError('PASSWORD_CHANGE', 'Erreur mise à jour profil', { profileError });
       }
 
       toast({
@@ -72,7 +73,7 @@ export function ChangePasswordDialog({ open, onOpenChange, onSuccess }: ChangePa
       setConfirmPassword('');
       onSuccess();
     } catch (error: any) {
-      console.error('Erreur changement mot de passe:', error);
+      logError('PASSWORD_CHANGE', 'Erreur changement mot de passe', { error });
       
       // Si la session n'existe plus, fermer le dialog pour permettre une reconnexion
       if (error.message?.includes('session') || error.message?.includes('Session')) {

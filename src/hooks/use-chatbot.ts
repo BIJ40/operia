@@ -8,7 +8,7 @@ import type { ChatContext } from '@/components/chatbot/ChatContextSelector';
 import { getApogeeContext, getNoContentResponse } from '@/lib/rag-michu';
 import { safeQuery, safeMutation, safeInvoke } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
-import { logError } from '@/lib/logger';
+import { logError, logDebug } from '@/lib/logger';
 
 // Custom hook for chatbot functionality
 
@@ -147,7 +147,7 @@ export const useChatbot = () => {
     
     // Very short queries (< 10 chars) are always treated as follow-ups needing context
     if (currentQuery.length < 10) {
-      console.log('[RAG] Very short query, using previous topic:', lastTopic.substring(0, 50));
+      logDebug('RAG', 'Very short query, using previous topic', { topic: lastTopic.substring(0, 50) });
       return lastTopic;
     }
     
@@ -163,7 +163,7 @@ export const useChatbot = () => {
     
     if (isFollowUp) {
       // Combine previous topic with current request
-      console.log('[RAG] Follow-up detected, combining with previous topic:', lastTopic.substring(0, 50));
+      logDebug('RAG', 'Follow-up detected, combining with previous topic', { topic: lastTopic.substring(0, 50) });
       return `${lastTopic} - ${currentQuery}`;
     }
     
@@ -174,21 +174,21 @@ export const useChatbot = () => {
   const searchRelevantContent = async (query: string, context: ChatContext, conversationHistory: Message[]): Promise<{ content: string; hasContent: boolean }> => {
     // Build contextual query for better RAG retrieval
     const contextualQuery = buildContextualQuery(query, conversationHistory);
-    console.log('[RAG] Contextual query:', contextualQuery);
+    logDebug('RAG', 'Contextual query built', { query: contextualQuery });
     
     // For Apogée context, use dedicated RAG function
     if (context === 'apogee') {
       const ragResult = await getApogeeContext(contextualQuery);
       
       if (!ragResult.hasContent) {
-        console.log('[CHATBOT] RAG Apogée: aucun chunk trouvé');
+        logDebug('CHATBOT', 'RAG Apogée: aucun chunk trouvé');
         return { 
           content: '', 
           hasContent: false 
         };
       }
       
-      console.log(`[CHATBOT] RAG Apogée: ${ragResult.chunks.length} chunks trouvés`);
+      logDebug('CHATBOT', `RAG Apogée: ${ragResult.chunks.length} chunks trouvés`);
       return { 
         content: ragResult.formattedDocs, 
         hasContent: true 

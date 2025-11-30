@@ -45,7 +45,6 @@ export function getAllMentionSuggestions(blocks: Block[]): MentionSuggestion[] {
     }
   });
 
-  console.log('Mention suggestions:', suggestions.length, suggestions);
   return suggestions;
 }
 

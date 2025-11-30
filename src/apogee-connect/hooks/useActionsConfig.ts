@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ActionsConfig, DEFAULT_CONFIG } from '../types/actions';
 import { toast } from 'sonner';
+import { logError } from '@/lib/logger';
 
 export function useActionsConfig() {
   const { user } = useAuth();
@@ -22,7 +23,7 @@ export function useActionsConfig() {
         .maybeSingle();
 
       if (error) {
-        console.error('Erreur chargement config actions:', error);
+        logError('ACTIONS_CONFIG', 'Erreur chargement config actions', { error });
         return DEFAULT_CONFIG;
       }
 
@@ -83,7 +84,7 @@ export function useActionsConfig() {
       toast.success('Configuration sauvegardée');
     },
     onError: (error) => {
-      console.error('Erreur sauvegarde config:', error);
+      logError('ACTIONS_CONFIG', 'Erreur sauvegarde config', { error });
       toast.error('Erreur lors de la sauvegarde');
     },
   });
@@ -111,7 +112,7 @@ export function useActionsConfig() {
       toast.success('Configuration réinitialisée');
     },
     onError: (error) => {
-      console.error('Erreur réinitialisation config:', error);
+      logError('ACTIONS_CONFIG', 'Erreur réinitialisation config', { error });
       toast.error('Erreur lors de la réinitialisation');
     },
   });

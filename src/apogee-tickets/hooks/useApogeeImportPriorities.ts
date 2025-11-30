@@ -169,9 +169,6 @@ export function parsePrioritySheet(file: File): Promise<{ rows: PriorityRow[], h
         const hcIdx = headers.findIndex(h => h.toUpperCase() === 'HC');
         const commentFlorianIdx = findIndex(['COMMENTAIRE FLORIAN']);
         
-        console.log(`Priorités ${isA ? 'A' : 'B'} - Colonnes détectées:`, { elementIdx, prioIdx, actionIdx, descriptifIdx });
-        console.log('Headers:', headers);
-        
         const rows: PriorityRow[] = [];
         
         for (let i = 1; i < jsonData.length; i++) {

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Download, Eye } from 'lucide-react';
+import { logError } from '@/lib/logger';
 
 interface Document {
   id: string;
@@ -46,7 +47,7 @@ export function DocumentsList({ blockId, scope }: DocumentsListProps) {
       if (error) throw error;
       setDocuments(data || []);
     } catch (error) {
-      console.error('Error loading documents:', error);
+      logError('DOCUMENTS', 'Error loading documents', { error });
     } finally {
       setLoading(false);
     }
