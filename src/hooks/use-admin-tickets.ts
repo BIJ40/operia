@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 import { logError, logWarn } from '@/lib/logger';
+import { safeQuery, safeMutation, safeInvoke } from '@/lib/safeQuery';
+import { errorToast, successToast, warningToast } from '@/lib/toastHelpers';
 import { Ticket, Attachment } from './use-user-tickets';
 
 interface SupportUser {
@@ -16,7 +17,6 @@ interface SupportUser {
 
 export const useAdminTickets = () => {
   const { canManageTickets, user } = useAuth();
-  const { toast } = useToast();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [allTickets, setAllTickets] = useState<Ticket[]>([]); // Liste complète pour les stats
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -36,242 +36,233 @@ export const useAdminTickets = () => {
     if (!canManageTickets) return;
 
     setIsLoading(true);
-    try {
-      // Charger d'abord tous les tickets pour les stats
-      const { data: allData, error: allError } = await supabase
+    
+    // Charger d'abord tous les tickets pour les stats
+    const allResult = await safeQuery<Ticket[]>(
+      supabase
         .from('support_tickets')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }),
+      'ADMIN_TICKETS_LOAD_ALL'
+    );
 
-      if (allError) throw allError;
-      setAllTickets((allData || []) as Ticket[]);
-
-      // Puis charger les tickets filtrés
-      let query = supabase
-        .from('support_tickets')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      // Apply filters
-      if (filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-      if (filters.category !== 'all') {
-        query = query.eq('category', filters.category);
-      }
-      if (filters.source !== 'all') {
-        // Filter by demand type
-        if (filters.source === 'live_chat') {
-          query = query.eq('is_live_chat', true);
-        } else if (filters.source === 'escalated') {
-          query = query.eq('escalated_from_chat', true);
-        } else if (filters.source === 'portal') {
-          query = query.eq('is_live_chat', false).eq('escalated_from_chat', false);
-        }
-      }
-      if (filters.agency !== 'all') {
-        query = query.eq('agency_slug', filters.agency);
-      }
-      if (filters.priority !== 'all') {
-        query = query.eq('priority', filters.priority);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setTickets((data || []) as Ticket[]);
-    } catch (error) {
-      logError('[ADMIN-TICKETS] Error loading tickets', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les tickets',
-        variant: 'destructive',
-        duration: 3000,
-      });
-    } finally {
+    if (!allResult.success) {
+      errorToast(allResult.error!);
       setIsLoading(false);
+      return;
     }
+    setAllTickets(allResult.data || []);
+
+    // Puis charger les tickets filtrés
+    let query = supabase
+      .from('support_tickets')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    // Apply filters
+    if (filters.status !== 'all') {
+      query = query.eq('status', filters.status);
+    }
+    if (filters.category !== 'all') {
+      query = query.eq('category', filters.category);
+    }
+    if (filters.source !== 'all') {
+      // Filter by demand type
+      if (filters.source === 'live_chat') {
+        query = query.eq('is_live_chat', true);
+      } else if (filters.source === 'escalated') {
+        query = query.eq('escalated_from_chat', true);
+      } else if (filters.source === 'portal') {
+        query = query.eq('is_live_chat', false).eq('escalated_from_chat', false);
+      }
+    }
+    if (filters.agency !== 'all') {
+      query = query.eq('agency_slug', filters.agency);
+    }
+    if (filters.priority !== 'all') {
+      query = query.eq('priority', filters.priority);
+    }
+
+    const filteredResult = await safeQuery<Ticket[]>(query, 'ADMIN_TICKETS_LOAD_FILTERED');
+
+    if (!filteredResult.success) {
+      errorToast(filteredResult.error!);
+      setTickets([]);
+    } else {
+      setTickets(filteredResult.data || []);
+    }
+    
+    setIsLoading(false);
   };
 
   const loadTicketDetails = async (ticketId: string) => {
-    try {
-      // Marquer le ticket comme vu par le support (si pas déjà fait)
-      const { error: viewedError } = await supabase
+    // Marquer le ticket comme vu par le support (si pas déjà fait)
+    const viewedResult = await safeMutation(
+      supabase
         .from('support_tickets')
         .update({ viewed_by_support_at: new Date().toISOString() })
         .eq('id', ticketId)
-        .is('viewed_by_support_at', null);
+        .is('viewed_by_support_at', null),
+      'ADMIN_TICKETS_MARK_VIEWED'
+    );
 
-      if (viewedError) {
-        logWarn('[ADMIN-TICKETS] Error marking ticket as viewed', viewedError);
-      }
+    if (!viewedResult.success) {
+      logWarn('[ADMIN-TICKETS] Error marking ticket as viewed', viewedResult.error);
+    }
 
-      // Load messages
-      const { data: msgs, error: msgsError } = await supabase
+    // Load messages
+    const msgsResult = await safeQuery<any[]>(
+      supabase
         .from('support_messages')
         .select('*')
         .eq('ticket_id', ticketId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true }),
+      'ADMIN_TICKETS_LOAD_MESSAGES'
+    );
 
-      if (msgsError) throw msgsError;
-      setMessages(msgs || []);
+    if (!msgsResult.success) {
+      errorToast(msgsResult.error!);
+      setMessages([]);
+      return;
+    }
+    
+    const msgs = msgsResult.data || [];
+    setMessages(msgs);
 
-      // Mark unread user messages as read
-      const unreadUserMessages = (msgs || []).filter(
-        (msg: any) => !msg.is_from_support && !msg.read_at
-      );
+    // Mark unread user messages as read
+    const unreadUserMessages = msgs.filter(
+      (msg: any) => !msg.is_from_support && !msg.read_at
+    );
 
-      if (unreadUserMessages.length > 0) {
-        const { error: updateError } = await supabase
+    if (unreadUserMessages.length > 0) {
+      const markReadResult = await safeMutation(
+        supabase
           .from('support_messages')
           .update({ read_at: new Date().toISOString() })
-          .in('id', unreadUserMessages.map((msg: any) => msg.id));
+          .in('id', unreadUserMessages.map((msg: any) => msg.id)),
+        'ADMIN_TICKETS_MARK_READ'
+      );
 
-        if (updateError) {
-          logWarn('[ADMIN-TICKETS] Error marking messages as read', updateError);
-        }
+      if (!markReadResult.success) {
+        logWarn('[ADMIN-TICKETS] Error marking messages as read', markReadResult.error);
       }
+    }
 
-      // Load attachments
-      const { data: atts, error: attsError } = await supabase
+    // Load attachments
+    const attsResult = await safeQuery<Attachment[]>(
+      supabase
         .from('support_attachments')
         .select('*')
         .eq('ticket_id', ticketId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true }),
+      'ADMIN_TICKETS_LOAD_ATTACHMENTS'
+    );
 
-      if (attsError) throw attsError;
-      setAttachments(atts || []);
-    } catch (error) {
-      logError('[ADMIN-TICKETS] Error loading ticket details', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les détails du ticket',
-        variant: 'destructive',
-        duration: 3000,
-      });
+    if (!attsResult.success) {
+      errorToast(attsResult.error!);
+      setAttachments([]);
+      return;
+    }
+    
+    setAttachments(attsResult.data || []);
+  };
+
+  const refreshSelectedTicket = async (ticketId: string) => {
+    const result = await safeQuery<Ticket>(
+      supabase
+        .from('support_tickets')
+        .select('*')
+        .eq('id', ticketId)
+        .maybeSingle(),
+      'ADMIN_TICKETS_REFRESH'
+    );
+
+    if (result.success && result.data) {
+      setSelectedTicket(result.data);
     }
   };
 
   const updateTicketStatus = async (ticketId: string, status: string) => {
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('support_tickets')
         .update({ 
           status,
           updated_at: new Date().toISOString(),
           resolved_at: status === 'resolved' ? new Date().toISOString() : null 
         })
-        .eq('id', ticketId);
+        .eq('id', ticketId),
+      'ADMIN_TICKETS_UPDATE_STATUS'
+    );
 
-      if (error) throw error;
+    if (!result.success) {
+      errorToast(result.error!);
+      return;
+    }
 
-      toast({
-        title: 'Succès',
-        description: 'Statut mis à jour',
-        duration: 3000,
-      });
-      
-      // Reload tickets and refresh selected ticket if it matches
-      await loadTickets();
-      if (selectedTicket?.id === ticketId) {
-        const { data } = await supabase
-          .from('support_tickets')
-          .select('*')
-          .eq('id', ticketId)
-          .single();
-        if (data) setSelectedTicket(data as Ticket);
-      }
-    } catch (error) {
-      logError('[ADMIN-TICKETS] Error updating status', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de mettre à jour le statut',
-        variant: 'destructive',
-        duration: 3000,
-      });
+    successToast('Statut mis à jour');
+    
+    // Reload tickets and refresh selected ticket if it matches
+    await loadTickets();
+    if (selectedTicket?.id === ticketId) {
+      await refreshSelectedTicket(ticketId);
     }
   };
 
   const updateTicketPriority = async (ticketId: string, priority: string) => {
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('support_tickets')
         .update({ 
           priority,
           updated_at: new Date().toISOString()
         })
-        .eq('id', ticketId);
+        .eq('id', ticketId),
+      'ADMIN_TICKETS_UPDATE_PRIORITY'
+    );
 
-      if (error) throw error;
+    if (!result.success) {
+      errorToast(result.error!);
+      return;
+    }
 
-      toast({
-        title: 'Succès',
-        description: 'Priorité mise à jour',
-        duration: 3000,
-      });
-      
-      // Reload tickets and refresh selected ticket if it matches
-      await loadTickets();
-      if (selectedTicket?.id === ticketId) {
-        const { data } = await supabase
-          .from('support_tickets')
-          .select('*')
-          .eq('id', ticketId)
-          .single();
-        if (data) setSelectedTicket(data as Ticket);
-      }
-    } catch (error) {
-      logError('[ADMIN-TICKETS] Error updating priority', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de mettre à jour la priorité',
-        variant: 'destructive',
-        duration: 3000,
-      });
+    successToast('Priorité mise à jour');
+    
+    // Reload tickets and refresh selected ticket if it matches
+    await loadTickets();
+    if (selectedTicket?.id === ticketId) {
+      await refreshSelectedTicket(ticketId);
     }
   };
 
   const assignTicket = async (ticketId: string, userId: string) => {
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('support_tickets')
         .update({ 
           assigned_to: userId || null,
           updated_at: new Date().toISOString()
         } as any)
-        .eq('id', ticketId);
+        .eq('id', ticketId),
+      'ADMIN_TICKETS_ASSIGN'
+    );
 
-      if (error) throw error;
+    if (!result.success) {
+      errorToast(result.error!);
+      return;
+    }
 
-      toast({
-        title: 'Succès',
-        description: userId ? 'Ticket assigné' : 'Ticket désassigné',
-        duration: 3000,
-      });
-      
-      await loadTickets();
-      if (selectedTicket?.id === ticketId) {
-        const { data } = await supabase
-          .from('support_tickets')
-          .select('*')
-          .eq('id', ticketId)
-          .single();
-        if (data) setSelectedTicket(data as Ticket);
-      }
-    } catch (error) {
-      logError('[ADMIN-TICKETS] Error assigning ticket', error);
-      toast({
-        title: 'Erreur',
-        description: "Impossible d'assigner le ticket",
-        variant: 'destructive',
-        duration: 3000,
-      });
+    successToast(userId ? 'Ticket assigné' : 'Ticket désassigné');
+    
+    await loadTickets();
+    if (selectedTicket?.id === ticketId) {
+      await refreshSelectedTicket(ticketId);
     }
   };
 
   const takeTicket = async (ticketId: string, userId: string) => {
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('support_tickets')
         .update({ 
           assigned_to: userId,
@@ -279,70 +270,58 @@ export const useAdminTickets = () => {
           viewed_by_support_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         } as any)
-        .eq('id', ticketId);
+        .eq('id', ticketId),
+      'ADMIN_TICKETS_TAKE'
+    );
 
-      if (error) throw error;
+    if (!result.success) {
+      errorToast(result.error!);
+      return;
+    }
 
-      toast({
-        title: 'Succès',
-        description: 'Vous avez pris en charge ce ticket',
-        duration: 3000,
-      });
-      
-      await loadTickets();
-      if (selectedTicket?.id === ticketId) {
-        const { data } = await supabase
-          .from('support_tickets')
-          .select('*')
-          .eq('id', ticketId)
-          .single();
-        if (data) setSelectedTicket(data as Ticket);
-      }
-    } catch (error) {
-      logError('[ADMIN-TICKETS] Error taking ticket', error);
-      toast({
-        title: 'Erreur',
-        description: "Impossible de prendre en charge le ticket",
-        variant: 'destructive',
-        duration: 3000,
-      });
+    successToast('Vous avez pris en charge ce ticket');
+    
+    await loadTickets();
+    if (selectedTicket?.id === ticketId) {
+      await refreshSelectedTicket(ticketId);
     }
   };
 
   const addSupportMessage = async (ticketId: string, message: string, userId: string) => {
-    try {
-      const { error } = await supabase.from('support_messages').insert({
+    const result = await safeMutation(
+      supabase.from('support_messages').insert({
         ticket_id: ticketId,
         sender_id: userId,
         message,
         is_from_support: true,
-      } as any);
+      } as any),
+      'ADMIN_TICKETS_ADD_MESSAGE'
+    );
 
-      if (error) throw error;
+    if (!result.success) {
+      errorToast(result.error!);
+      return;
+    }
 
-      // Update ticket status to in_progress if it was new or waiting_user
-      // Compatibilité avec l'ancien statut 'waiting'
-      if (selectedTicket?.status === 'new' || selectedTicket?.status === 'waiting' || selectedTicket?.status === 'waiting_user') {
-        await updateTicketStatus(ticketId, 'in_progress');
-      }
-    } catch (error) {
-      logError('[ADMIN-TICKETS] Error adding message', error);
-      toast({
-        title: 'Erreur',
-        description: "Impossible d'envoyer le message",
-        variant: 'destructive',
-        duration: 3000,
-      });
+    // Update ticket status to in_progress if it was new or waiting_user
+    // Compatibilité avec l'ancien statut 'waiting'
+    if (selectedTicket?.status === 'new' || selectedTicket?.status === 'waiting' || selectedTicket?.status === 'waiting_user') {
+      await updateTicketStatus(ticketId, 'in_progress');
     }
   };
 
+  // Storage: on garde try/catch local (pas safeQuery)
   const downloadAttachment = async (attachment: Attachment) => {
     try {
       const { data, error } = await supabase.storage
         .from('support-attachments')
         .download(attachment.file_path);
 
-      if (error) throw error;
+      if (error) {
+        logError('[ADMIN-TICKETS] Storage download error', error);
+        errorToast('Impossible de télécharger le fichier');
+        return;
+      }
 
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
@@ -354,97 +333,93 @@ export const useAdminTickets = () => {
       URL.revokeObjectURL(url);
     } catch (error) {
       logError('[ADMIN-TICKETS] Error downloading attachment', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de télécharger le fichier',
-        variant: 'destructive',
-        duration: 3000,
-      });
+      errorToast('Impossible de télécharger le fichier');
     }
   };
 
   const reopenTicket = async (ticketId: string) => {
-    try {
-      // Utiliser le nouveau statut 'in_progress' pour réouverture
-      const { error } = await supabase
+    // Utiliser le nouveau statut 'in_progress' pour réouverture
+    const result = await safeMutation(
+      supabase
         .from('support_tickets')
         .update({ 
           status: 'in_progress',
           resolved_at: null,
           updated_at: new Date().toISOString()
         })
-        .eq('id', ticketId);
+        .eq('id', ticketId),
+      'ADMIN_TICKETS_REOPEN'
+    );
 
-      if (error) throw error;
+    if (!result.success) {
+      errorToast(result.error!);
+      return;
+    }
 
-      toast({
-        title: 'Succès',
-        description: 'Ticket réouvert',
-        duration: 3000,
-      });
-      
-      // Reload tickets and refresh selected ticket if it matches
-      await loadTickets();
-      if (selectedTicket?.id === ticketId) {
-        const { data } = await supabase
-          .from('support_tickets')
-          .select('*')
-          .eq('id', ticketId)
-          .single();
-        if (data) setSelectedTicket(data as Ticket);
-      }
-    } catch (error) {
-      logError('[ADMIN-TICKETS] Error reopening ticket', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de réouvrir le ticket',
-        variant: 'destructive',
-        duration: 3000,
-      });
+    successToast('Ticket réouvert');
+    
+    // Reload tickets and refresh selected ticket if it matches
+    await loadTickets();
+    if (selectedTicket?.id === ticketId) {
+      await refreshSelectedTicket(ticketId);
     }
   };
 
   const loadSupportUsers = async () => {
-    try {
-      // V2: Charger les utilisateurs avec enabled_modules.support
-      const { data: profiles, error: profilesError } = await supabase
+    // V2: Charger les utilisateurs avec enabled_modules.support
+    const profilesResult = await safeQuery<any[]>(
+      supabase
         .from('profiles')
         .select('id, first_name, last_name, global_role, enabled_modules')
-        .eq('is_active', true);
+        .eq('is_active', true),
+      'ADMIN_TICKETS_LOAD_PROFILES'
+    );
 
-      if (profilesError) throw profilesError;
+    if (!profilesResult.success) {
+      logError('[ADMIN-TICKETS] Error loading support users', profilesResult.error);
+      setSupportUsers([]);
+      return;
+    }
 
-      if (!profiles || profiles.length === 0) {
-        setSupportUsers([]);
-        return;
-      }
+    const profiles = profilesResult.data || [];
+    if (profiles.length === 0) {
+      setSupportUsers([]);
+      return;
+    }
 
-      // Filtrer les profils qui ont accès support activé
-      const supportProfiles = profiles.filter(p => {
-        const modules = p.enabled_modules as any;
-        if (!modules?.support?.enabled) return false;
-        const options = modules.support.options || {};
-        return options.agent === true || options.admin === true;
-      });
+    // Filtrer les profils qui ont accès support activé
+    const supportProfiles = profiles.filter(p => {
+      const modules = p.enabled_modules as any;
+      if (!modules?.support?.enabled) return false;
+      const options = modules.support.options || {};
+      return options.agent === true || options.admin === true;
+    });
 
-      const userIds = supportProfiles.map(p => p.id);
+    const userIds = supportProfiles.map(p => p.id);
 
-      // Also load franchiseur roles for these users
-      const { data: franchiseurRoles } = await supabase
+    if (userIds.length === 0) {
+      setSupportUsers([]);
+      return;
+    }
+
+    // Also load franchiseur roles for these users
+    const franchiseurResult = await safeQuery<any[]>(
+      supabase
         .from('franchiseur_roles')
         .select('user_id, franchiseur_role')
-        .in('user_id', userIds);
+        .in('user_id', userIds),
+      'ADMIN_TICKETS_LOAD_FRANCHISEUR_ROLES'
+    );
 
-      // Merge franchiseur_role into profiles
-      const usersWithRoles = supportProfiles.map(profile => ({
-        ...profile,
-        franchiseur_role: franchiseurRoles?.find(fr => fr.user_id === profile.id)?.franchiseur_role
-      }));
+    const franchiseurRoles = franchiseurResult.success ? franchiseurResult.data || [] : [];
 
-      setSupportUsers(usersWithRoles as SupportUser[]);
-    } catch (error) {
-      logError('[ADMIN-TICKETS] Error loading support users', error);
-    }
+    // Merge franchiseur_role into profiles
+    const usersWithRoles = supportProfiles.map(profile => ({
+      ...profile,
+      franchiseur_role: franchiseurRoles.find(fr => fr.user_id === profile.id)?.franchiseur_role
+    }));
+
+    setSupportUsers(usersWithRoles as SupportUser[]);
   };
 
   const escalateTicket = async (
@@ -453,63 +428,83 @@ export const useAdminTickets = () => {
     targetUserId: string,
     reason: string
   ) => {
-    try {
-      const currentTicket = tickets.find(t => t.id === ticketId) || selectedTicket;
-      if (!currentTicket) throw new Error('Ticket not found');
+    const currentTicket = tickets.find(t => t.id === ticketId) || selectedTicket;
+    if (!currentTicket) {
+      errorToast("Ticket non trouvé");
+      return;
+    }
 
-      // Get current user info with franchiseur role
-      const { data: currentUser } = await supabase
+    // Get current user info with franchiseur role
+    const currentUserResult = await safeQuery<any>(
+      supabase
         .from('profiles')
         .select('first_name, last_name')
         .eq('id', user?.id)
-        .single();
-      
-      const { data: currentUserFranchiseurRole } = await supabase
+        .maybeSingle(),
+      'ADMIN_TICKETS_ESCALATE_CURRENT_USER'
+    );
+    
+    const currentUserFranchiseurResult = await safeQuery<any>(
+      supabase
         .from('franchiseur_roles')
         .select('franchiseur_role')
         .eq('user_id', user?.id || '')
-        .maybeSingle();
+        .maybeSingle(),
+      'ADMIN_TICKETS_ESCALATE_CURRENT_FR_ROLE'
+    );
 
-      // Get target user info with franchiseur role
-      const { data: targetUser } = await supabase
+    // Get target user info with franchiseur role
+    const targetUserResult = await safeQuery<any>(
+      supabase
         .from('profiles')
         .select('first_name, last_name')
         .eq('id', targetUserId)
-        .single();
-        
-      const { data: targetUserFranchiseurRole } = await supabase
+        .maybeSingle(),
+      'ADMIN_TICKETS_ESCALATE_TARGET_USER'
+    );
+      
+    const targetUserFranchiseurResult = await safeQuery<any>(
+      supabase
         .from('franchiseur_roles')
         .select('franchiseur_role')
         .eq('user_id', targetUserId)
-        .maybeSingle();
+        .maybeSingle(),
+      'ADMIN_TICKETS_ESCALATE_TARGET_FR_ROLE'
+    );
 
-      let fromRole = undefined;
-      let toRole = undefined;
+    const currentUser = currentUserResult.data;
+    const targetUser = targetUserResult.data;
+    const currentUserFranchiseurRole = currentUserFranchiseurResult.data;
+    const targetUserFranchiseurRole = targetUserFranchiseurResult.data;
 
-      // For HelpConfort, determine roles from franchiseur_roles table
-      if (currentTicket.service === 'HelpConfort') {
-        fromRole = currentUserFranchiseurRole?.franchiseur_role || 'animateur';
-        toRole = targetUserFranchiseurRole?.franchiseur_role || 'directeur';
-      }
+    let fromRole = undefined;
+    let toRole = undefined;
 
-      const escalationEntry = {
-        timestamp: new Date().toISOString(),
-        from_level: currentTicket.support_level || 1,
-        to_level: targetLevel,
-        from_role: fromRole,
-        to_role: toRole,
-        escalated_by: user?.id,
-        escalated_by_name: currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'Inconnu',
-        escalated_to: targetUserId,
-        escalated_to_name: targetUser ? `${targetUser.first_name} ${targetUser.last_name}` : 'Non assigné',
-        reason,
-      };
+    // For HelpConfort, determine roles from franchiseur_roles table
+    if (currentTicket.service === 'HelpConfort') {
+      fromRole = currentUserFranchiseurRole?.franchiseur_role || 'animateur';
+      toRole = targetUserFranchiseurRole?.franchiseur_role || 'directeur';
+    }
 
-      const currentHistory = Array.isArray(currentTicket.escalation_history) 
-        ? currentTicket.escalation_history 
-        : [];
+    const escalationEntry = {
+      timestamp: new Date().toISOString(),
+      from_level: currentTicket.support_level || 1,
+      to_level: targetLevel,
+      from_role: fromRole,
+      to_role: toRole,
+      escalated_by: user?.id,
+      escalated_by_name: currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'Inconnu',
+      escalated_to: targetUserId,
+      escalated_to_name: targetUser ? `${targetUser.first_name} ${targetUser.last_name}` : 'Non assigné',
+      reason,
+    };
 
-      const { error } = await supabase
+    const currentHistory = Array.isArray(currentTicket.escalation_history) 
+      ? currentTicket.escalation_history 
+      : [];
+
+    const escalateResult = await safeMutation(
+      supabase
         .from('support_tickets')
         .update({
           support_level: targetLevel || currentTicket.support_level,
@@ -517,55 +512,45 @@ export const useAdminTickets = () => {
           escalation_history: [...currentHistory, escalationEntry],
           updated_at: new Date().toISOString(),
         })
-        .eq('id', ticketId);
+        .eq('id', ticketId),
+      'ADMIN_TICKETS_ESCALATE'
+    );
 
-      if (error) throw error;
+    if (!escalateResult.success) {
+      errorToast(escalateResult.error!);
+      return;
+    }
 
-      // Send email notification
-      try {
-        await supabase.functions.invoke('notify-escalation', {
-          body: {
-            ticket_id: ticketId,
-            ticket_subject: currentTicket.subject,
-            ticket_service: currentTicket.service || 'Non défini',
-            from_level: currentTicket.support_level || 1,
-            to_level: targetLevel,
-            from_role: fromRole,
-            to_role: toRole,
-            escalated_by_name: escalationEntry.escalated_by_name,
-            escalated_to_id: targetUserId,
-            escalated_to_name: escalationEntry.escalated_to_name,
-            reason,
-          },
-        });
-      } catch (emailError) {
-        console.error('Error sending escalation email:', emailError);
-        // Don't fail the escalation if email fails
-      }
+    // Send email notification via edge function
+    const notifyResult = await safeInvoke(
+      supabase.functions.invoke('notify-escalation', {
+        body: {
+          ticket_id: ticketId,
+          ticket_subject: currentTicket.subject,
+          ticket_service: currentTicket.service || 'Non défini',
+          from_level: currentTicket.support_level || 1,
+          to_level: targetLevel,
+          from_role: fromRole,
+          to_role: toRole,
+          escalated_by_name: escalationEntry.escalated_by_name,
+          escalated_to_id: targetUserId,
+          escalated_to_name: escalationEntry.escalated_to_name,
+          reason,
+        },
+      }),
+      'ADMIN_TICKETS_NOTIFY_ESCALATION'
+    );
 
-      toast({
-        title: 'Succès',
-        description: `Ticket escaladé`,
-        duration: 3000,
-      });
+    if (!notifyResult.success) {
+      // Don't fail the escalation if email fails, just warn
+      warningToast('Ticket escaladé mais notification email échouée');
+    } else {
+      successToast('Ticket escaladé');
+    }
 
-      await loadTickets();
-      if (selectedTicket?.id === ticketId) {
-        const { data } = await supabase
-          .from('support_tickets')
-          .select('*')
-          .eq('id', ticketId)
-          .single();
-        if (data) setSelectedTicket(data as Ticket);
-      }
-    } catch (error) {
-      console.error('Error escalating ticket:', error);
-      toast({
-        title: 'Erreur',
-        description: "Impossible d'escalader le ticket",
-        variant: 'destructive',
-        duration: 3000,
-      });
+    await loadTickets();
+    if (selectedTicket?.id === ticketId) {
+      await refreshSelectedTicket(ticketId);
     }
   };
 
