@@ -4,6 +4,8 @@
  * Conforme à la section 0.3 du guide de calcul
  */
 
+import { logDebug } from '@/lib/logger';
+
 export interface TechnicianRef {
   id: string;
   fullName: string;
@@ -70,7 +72,7 @@ export class EnrichmentService {
     });
 
     if (import.meta.env.DEV) {
-      console.log(`✅ Référentiel techniciens créé: ${Object.keys(this.mapTechniciens).length} entrées`);
+      logDebug('ENRICHMENT', `Référentiel techniciens créé: ${Object.keys(this.mapTechniciens).length} entrées`);
     }
   }
 
@@ -97,7 +99,7 @@ export class EnrichmentService {
     });
 
     if (import.meta.env.DEV) {
-      console.log(`✅ Référentiel clients créé: ${Object.keys(this.mapClients).length} entrées`);
+      logDebug('ENRICHMENT', `Référentiel clients créé: ${Object.keys(this.mapClients).length} entrées`);
     }
   }
 
@@ -163,7 +165,7 @@ export class EnrichmentService {
     });
 
     if (import.meta.env.DEV) {
-      console.log(`✅ Référentiel univers créé: ${Object.keys(this.mapUnivers).length} entrées`);
+      logDebug('ENRICHMENT', `Référentiel univers créé: ${Object.keys(this.mapUnivers).length} entrées`);
     }
   }
 

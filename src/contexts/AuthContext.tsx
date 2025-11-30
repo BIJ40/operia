@@ -206,7 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
     } catch (error) {
-      console.error('Erreur chargement données utilisateur:', error);
+      logAuth.error('Erreur chargement données utilisateur', error);
     }
   }, []);
 
@@ -240,7 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsAuthLoading(false);
         }
       } catch (error) {
-        console.error('Erreur initialisation auth:', error);
+        logAuth.error('Erreur initialisation auth', error);
         if (isMounted) {
           setIsAuthLoading(false);
         }
@@ -263,7 +263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
               await loadUserData(session.user.id);
             } catch (error) {
-              console.error('Erreur chargement données utilisateur:', error);
+              logAuth.error('Erreur chargement données utilisateur', error);
             }
             if (isMounted) {
               setIsAuthLoading(false);
@@ -299,7 +299,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) return { success: false, error: error.message };
       return { success: true };
     } catch (err) {
-      console.error('Erreur connexion:', err);
+      logAuth.error('Erreur connexion', err);
       return { success: false, error: 'Une erreur est survenue' };
     }
   };
@@ -343,7 +343,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setEnabledModules(null);
       setUser(null);
     } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
+      logAuth.error('Erreur déconnexion', error);
     } finally {
       window.location.href = '/';
     }

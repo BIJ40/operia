@@ -1,4 +1,5 @@
 import { parseISO, isWithinInterval } from "date-fns";
+import { logDebug } from "@/lib/logger";
 
 export interface PipelineStage {
   name: string;
@@ -20,7 +21,7 @@ export const calculatePipelineStats = (
   dateRange?: { start: Date; end: Date }
 ): PipelineData => {
   if (import.meta.env.DEV) {
-    console.log("🔍 calculatePipelineStats - Début", {
+    logDebug('PIPELINE_CALC', 'calculatePipelineStats - Début', {
       projects: projects?.length || 0,
       interventions: interventions?.length || 0,
       devis: devis?.length || 0,
@@ -66,9 +67,9 @@ export const calculatePipelineStats = (
   });
 
   if (import.meta.env.DEV) {
-    console.log("🔍 Factures filtrées (pipeline):", filteredFactures.length);
+    logDebug('PIPELINE_CALC', `Factures filtrées (pipeline): ${filteredFactures.length}`);
     if (filteredFactures.length > 0) {
-      console.log("📄 Exemple de facture (pipeline):", filteredFactures[0]);
+      logDebug('PIPELINE_CALC', 'Exemple de facture (pipeline)', filteredFactures[0]);
     }
   }
 
@@ -76,7 +77,7 @@ export const calculatePipelineStats = (
   // ce qui évite de tomber à 0% alors qu'il y a du CA
   const travauxRealises = filteredFactures.length;
 
-  console.log("✅ Travaux réalisés comptés (nb factures période):", travauxRealises);
+  logDebug('PIPELINE_CALC', `Travaux réalisés comptés (nb factures période): ${travauxRealises}`);
 
   const totalDossiers = filteredProjects.length;
 
@@ -107,7 +108,7 @@ export const calculatePipelineStats = (
     },
   ];
 
-  console.log("📊 Pipeline calculé:", stages);
+  logDebug('PIPELINE_CALC', 'Pipeline calculé', stages);
 
   return {
     stages,

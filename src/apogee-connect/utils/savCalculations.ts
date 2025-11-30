@@ -1,6 +1,7 @@
 import { parseISO, isWithinInterval, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { resolveTech, TechnicienInfo } from "./techTools";
+import { logDebug, logWarn } from "@/lib/logger";
 
 // ====================================================================
 // INTERFACES
@@ -228,7 +229,7 @@ export const calculateSAVGlobalStats = (
   factures: any[],
   dateRange: { start: Date; end: Date }
 ): SAVGlobalStats => {
-  console.log("[SAV Global] === Début du calcul ===");
+  logDebug('SAV_CALC', 'Début du calcul SAV Global');
   
   // NOUVELLE LOGIQUE: Base sur les INTERVENTIONS, pas sur les FACTURES
   // 1. Filtrer les interventions sur la période
@@ -244,7 +245,7 @@ export const calculateSAVGlobalStats = (
     }
   });
 
-  console.log(`[SAV Global] Interventions dans la période: ${interventionsPeriode.length}`);
+  logDebug('SAV_CALC', `Interventions dans la période: ${interventionsPeriode.length}`);
 
   // 2. Identifier TOUS les dossiers actifs (avec au moins 1 intervention)
   const dossiersActifs = new Set<number>();
@@ -254,7 +255,7 @@ export const calculateSAVGlobalStats = (
     }
   });
 
-  console.log(`[SAV Global] Dossiers actifs (avec interventions): ${dossiersActifs.size}`);
+  logDebug('SAV_CALC', `Dossiers actifs (avec interventions): ${dossiersActifs.size}`);
 
   // 3. Identifier les dossiers avec SAV et compter les interventions SAV
   const dossiersSAV = new Set<number>();
@@ -272,8 +273,7 @@ export const calculateSAVGlobalStats = (
     }
   });
 
-  console.log(`[SAV Global] Dossiers avec SAV: ${dossiersSAV.size}`);
-  console.log(`[SAV Global] Interventions SAV: ${nbInterventionsSAV}`);
+  logDebug('SAV_CALC', `Dossiers avec SAV: ${dossiersSAV.size}, Interventions SAV: ${nbInterventionsSAV}`);
 
   // 4. Calculer le CA SAV (en utilisant les factures disponibles)
   let caSAV = 0;
@@ -281,12 +281,12 @@ export const calculateSAVGlobalStats = (
     caSAV += getProjectCA(projectId, factures, dateRange);
   });
 
-  console.log(`[SAV Global] CA SAV: ${caSAV.toFixed(2)} €`);
+  logDebug('SAV_CALC', `CA SAV: ${caSAV.toFixed(2)} €`);
 
   const nbTotalProjects = dossiersActifs.size;
   const tauxSAV = nbTotalProjects > 0 ? (dossiersSAV.size / nbTotalProjects) * 100 : 0;
 
-  console.log(`[SAV Global] Taux SAV: ${tauxSAV.toFixed(1)}% (${dossiersSAV.size} / ${nbTotalProjects})`);
+  logDebug('SAV_CALC', `Taux SAV: ${tauxSAV.toFixed(1)}% (${dossiersSAV.size} / ${nbTotalProjects})`);
 
   return {
     nbTotalProjects,
@@ -396,7 +396,7 @@ export const calculateSAVByTechnicien = (
     projectDetails: Map<number, { ca: number }>;
   }>();
 
-  console.log("[SAV Technicien] Début calcul - TECHS:", Object.keys(TECHS).length, "projets:", projects.length, "interventions:", interventions.length);
+  logDebug('SAV_CALC', `SAV Technicien début - TECHS: ${Object.keys(TECHS).length}, projets: ${projects.length}, interventions: ${interventions.length}`);
 
   // 1. Grouper les interventions par projectId pour un accès rapide
   const interventionsByProject = new Map<number, any[]>();
@@ -424,7 +424,7 @@ export const calculateSAVByTechnicien = (
     return type2.toLowerCase().includes("sav") || type.toLowerCase().includes("sav");
   });
 
-  console.log(`[SAV Technicien] ${savInterventions.length} interventions SAV trouvées dans la période`);
+  logDebug('SAV_CALC', `${savInterventions.length} interventions SAV trouvées dans la période`);
 
   // 3. Pour chaque intervention SAV, trouver le technicien responsable (dernier intervenu AVANT le SAV)
   const savAttributions = new Map<string, { 
@@ -443,7 +443,7 @@ export const calculateSAVByTechnicien = (
     const responsible = getResponsibleTechBeforeSAV(savInterv, projectInterventions);
 
     if (!responsible) {
-      console.warn(`[SAV Technicien] Aucun technicien responsable trouvé pour SAV projet ${projectId} (intervention ${savInterv.id})`);
+      logWarn('SAV_CALC', `Aucun technicien responsable trouvé pour SAV projet ${projectId} (intervention ${savInterv.id})`);
       return;
     }
 
@@ -472,7 +472,7 @@ export const calculateSAVByTechnicien = (
     }
   });
 
-  console.log(`[SAV Technicien] SAV attribués à ${savAttributions.size} techniciens`);
+  logDebug('SAV_CALC', `SAV attribués à ${savAttributions.size} techniciens`);
 
   // 4. Calculer le CA SAV pour chaque projet et l'attribuer
   const projectsWithSAV = new Set<number>();
@@ -517,7 +517,7 @@ export const calculateSAVByTechnicien = (
     const techIdNum = typeof techId === 'string' ? parseInt(techId, 10) : techId;
     const resolved = resolveTech(techIdNum, TECHS);
 
-    console.log(`[SAV Technicien] ${resolved.label}: ${stats.projects.size} projets, ${stats.interventions.size} interventions, ${stats.ca.toFixed(2)}€`);
+    logDebug('SAV_CALC', `${resolved.label}: ${stats.projects.size} projets, ${stats.interventions.size} interventions, ${stats.ca.toFixed(2)}€`);
 
     // Construire les détails des dossiers
     const dossiers: Array<{

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInHours, startOfMonth, endOfMonth, subMonths, format, parseISO } from 'date-fns';
+import { logError } from '@/lib/logger';
 
 interface SupportStats {
   ticketsThisMonth: number;
@@ -130,7 +131,7 @@ export function useSupportStats(): SupportStats {
           isLoading: false,
         });
       } catch (error) {
-        console.error('Error fetching support stats:', error);
+        logError('SUPPORT_STATS', 'Erreur chargement statistiques support', { error });
         setStats(prev => ({ ...prev, isLoading: false }));
       }
     };

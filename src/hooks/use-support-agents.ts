@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/logger';
 
 export interface SupportAgent {
   id: string;
@@ -91,7 +92,7 @@ export function useSupportAgents() {
 
       setAgents(supportAgents);
     } catch (err) {
-      console.error('Error loading support agents:', err);
+      logError('SUPPORT_AGENTS', 'Erreur chargement agents support', { error: err });
       setError('Erreur lors du chargement des agents support');
     } finally {
       setIsLoading(false);

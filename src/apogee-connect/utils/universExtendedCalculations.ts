@@ -1,4 +1,5 @@
 import { parseISO, isWithinInterval } from "date-fns";
+import { logDebug, logWarn } from "@/lib/logger";
 
 /**
  * Normaliser les slugs d'univers
@@ -68,7 +69,7 @@ export function calculateTransfoParUnivers(
   // États acceptés pour les devis (order = commandé, invoice = facturé)
   const acceptedStates = ["order", "invoice"];
 
-  console.log(`[TransfoParUnivers] Début analyse - ${devis.length} devis, ${factures.length} factures`);
+  logDebug('UNIVERS_CALC', `TransfoParUnivers début - ${devis.length} devis, ${factures.length} factures`);
 
   // ÉTAPE 1: Identifier les projets ayant au moins un devis accepté dans la période
   const projectsWithAcceptedQuote = new Set<number>();
@@ -80,7 +81,7 @@ export function calculateTransfoParUnivers(
     const state = d.state || "undefined";
     devisStatesCounts.set(state, (devisStatesCounts.get(state) || 0) + 1);
   });
-  console.log(`[TransfoParUnivers] États des devis:`, Object.fromEntries(devisStatesCounts));
+  logDebug('UNIVERS_CALC', 'États des devis', Object.fromEntries(devisStatesCounts));
 
   devis.forEach((d) => {
     if (!acceptedStates.includes(d.state)) return;
@@ -106,7 +107,7 @@ export function calculateTransfoParUnivers(
     acceptedQuotesByProject.set(d.projectId, list);
   });
 
-  console.log(`[TransfoParUnivers] Projets avec devis accepté: ${projectsWithAcceptedQuote.size}`);
+  logDebug('UNIVERS_CALC', `Projets avec devis accepté: ${projectsWithAcceptedQuote.size}`);
   
   // Log des univers trouvés dans les projets avec devis
   const universesInProjects = new Set<string>();
@@ -117,7 +118,7 @@ export function calculateTransfoParUnivers(
       universes.forEach((u: string) => universesInProjects.add(u));
     }
   });
-  console.log(`[TransfoParUnivers] Univers trouvés dans projets avec devis:`, Array.from(universesInProjects));
+  logDebug('UNIVERS_CALC', 'Univers trouvés dans projets avec devis', Array.from(universesInProjects));
 
   // ÉTAPE 2: Calculer CA devis par univers (uniquement projets avec devis accepté)
   projectsWithAcceptedQuote.forEach((projectId) => {
@@ -182,7 +183,7 @@ export function calculateTransfoParUnivers(
     const caFacture = parseFloat(montantStr);
     
     if (isNaN(caFacture)) {
-      console.warn(`[TransfoParUnivers] Montant NaN pour facture ${f.id} projet ${f.projectId}:`, montantRaw);
+      logWarn('UNIVERS_CALC', `Montant NaN pour facture ${f.id} projet ${f.projectId}`, { montantRaw });
       facturesNaN++;
       return;
     }
@@ -202,7 +203,7 @@ export function calculateTransfoParUnivers(
     });
   });
 
-  console.log(`[TransfoParUnivers] Factures: ${facturesCountIncluded} incluses / ${facturesCountTotal} totales, ${facturesNaN} avec montant NaN`);
+  logDebug('UNIVERS_CALC', `Factures: ${facturesCountIncluded} incluses / ${facturesCountTotal} totales, ${facturesNaN} avec montant NaN`);
 
   // ÉTAPE 4: Calculer taux de transformation (plafonné à 100%)
   const result: Record<string, { caDevis: number; caFactures: number; tauxTransfo: number }> = {};
@@ -216,7 +217,7 @@ export function calculateTransfoParUnivers(
       tauxTransfo: Math.min(taux, 100), // Plafonner à 100%
     };
 
-    console.log(`[TransfoParUnivers] ${univers}: CA devis=${data.caDevis.toFixed(2)}€, CA factures=${data.caFactures.toFixed(2)}€, taux=${taux.toFixed(1)}%`);
+    logDebug('UNIVERS_CALC', `${univers}: CA devis=${data.caDevis.toFixed(2)}€, CA factures=${data.caFactures.toFixed(2)}€, taux=${taux.toFixed(1)}%`);
   });
 
   return result;

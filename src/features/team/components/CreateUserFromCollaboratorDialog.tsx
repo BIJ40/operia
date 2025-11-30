@@ -28,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useMarkCollaboratorAsRegistered } from "../hooks";
 import { useQueryClient } from "@tanstack/react-query";
+import { logError } from "@/lib/logger";
 
 interface CreateUserFromCollaboratorDialogProps {
   open: boolean;
@@ -103,7 +104,7 @@ export function CreateUserFromCollaboratorDialog({
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
-      console.error("Erreur création utilisateur:", error);
+      logError("TEAM", "Erreur création utilisateur depuis collaborateur", { error });
       toast.error(error.message || "Erreur lors de la création du compte");
     } finally {
       setIsLoading(false);

@@ -4,6 +4,7 @@ import { DataService } from "@/apogee-connect/services/dataService";
 import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
 import { useApiToggle } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
+import { logWarn, logError } from "@/lib/logger";
 import { Card } from "@/components/ui/card";
 import { FolderOpen, Euro, Percent, ShoppingCart, Clock, Users, TrendingUp, Heart, ArrowUpRight } from "lucide-react";
 import { formatEuros, formatApporteurType } from "@/apogee-connect/utils/formatters";
@@ -47,7 +48,7 @@ export default function IndicateursApporteurs() {
     queryFn: async () => {
       // GUARD: Ne pas charger si l'agence n'est pas définie
       if (!currentAgency?.id) {
-        console.warn('⚠️ Agence non définie - Chargement des données annulé');
+        logWarn('INDICATEURS_APPORTEURS', 'Agence non définie - Chargement des données annulé');
         return null;
       }
       
@@ -194,7 +195,7 @@ export default function IndicateursApporteurs() {
   }
 
   if (error) {
-    console.error('Erreur de chargement des données apporteurs:', error);
+    logError('INDICATEURS_APPORTEURS', 'Erreur de chargement des données', { error });
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
         <p className="text-2xl text-muted-foreground">Erreur de chargement des données</p>

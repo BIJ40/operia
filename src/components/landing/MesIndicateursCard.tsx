@@ -8,6 +8,7 @@ import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROUTES } from "@/config/routes";
+import { logDebug, logError } from "@/lib/logger";
 
 export function MesIndicateursCard() {
   const { agence } = useAuth();
@@ -18,7 +19,7 @@ export function MesIndicateursCard() {
     enabled: !!agence && isAgencyReady,
     staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
-      console.log('🎯 MesIndicateursCard - Chargement KPIs pour agence:', agence, 'isAgencyReady:', isAgencyReady);
+      logDebug('LANDING_CARD', `Chargement KPIs pour agence: ${agence}, isAgencyReady: ${isAgencyReady}`);
       try {
         const apiData = await DataService.loadAllData(true);
         
@@ -69,7 +70,7 @@ export function MesIndicateursCard() {
           nbProjets: stats.dossiersJour || 0,
         };
       } catch (error) {
-        console.error('Erreur chargement KPIs preview:', error);
+        logError('LANDING_CARD', 'Erreur chargement KPIs preview', { error });
         return null;
       }
     },
