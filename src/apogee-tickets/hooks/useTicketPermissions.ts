@@ -71,25 +71,35 @@ export function useTicketUserRoles() {
   return useQuery({
     queryKey: ['ticket-user-roles'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get all roles
+      const { data: roles, error: rolesError } = await supabase
         .from('apogee_ticket_user_roles')
-        .select(`
-          *,
-          profiles:user_id (
-            email,
-            first_name,
-            last_name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (rolesError) throw rolesError;
+      if (!roles || roles.length === 0) return [];
       
-      return (data || []).map((item: any) => ({
-        ...item,
-        user_email: item.profiles?.email,
-        user_name: item.profiles ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() : '',
-      })) as TicketUserRole[];
+      // Then get profiles for those users
+      const userIds = roles.map(r => r.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name')
+        .in('id', userIds);
+      
+      if (profilesError) throw profilesError;
+      
+      // Map profiles by id for quick lookup
+      const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+      
+      return roles.map((item) => {
+        const profile = profilesMap.get(item.user_id);
+        return {
+          ...item,
+          user_email: profile?.email,
+          user_name: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : '',
+        };
+      }) as TicketUserRole[];
     },
   });
 }
@@ -258,29 +268,37 @@ export function useTicketHistory(ticketId?: string) {
     queryFn: async () => {
       let query = supabase
         .from('apogee_ticket_history')
-        .select(`
-          *,
-          profiles:user_id (
-            email,
-            first_name,
-            last_name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
       
       if (ticketId) {
         query = query.eq('ticket_id', ticketId);
       }
       
-      const { data, error } = await query.limit(100);
+      const { data: history, error: historyError } = await query.limit(100);
       
-      if (error) throw error;
+      if (historyError) throw historyError;
+      if (!history || history.length === 0) return [];
       
-      return (data || []).map((item: any) => ({
-        ...item,
-        user_email: item.profiles?.email,
-        user_name: item.profiles ? `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() : '',
-      })) as TicketHistoryEntry[];
+      // Get unique user ids and fetch profiles
+      const userIds = [...new Set(history.map(h => h.user_id))];
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name')
+        .in('id', userIds);
+      
+      if (profilesError) throw profilesError;
+      
+      const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+      
+      return history.map((item) => {
+        const profile = profilesMap.get(item.user_id);
+        return {
+          ...item,
+          user_email: profile?.email,
+          user_name: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : '',
+        };
+      }) as TicketHistoryEntry[];
     },
     enabled: ticketId !== undefined,
   });
