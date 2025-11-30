@@ -15,17 +15,9 @@ import {
   Activity,
   LucideIcon,
   Bot,
-  Ticket,
-  Upload,
-  ListChecks,
-  Tags,
-  Eye,
-  Shield,
   ChevronDown,
   ChevronRight,
-  FileText,
   History,
-  Bug,
   Archive
 } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
@@ -165,36 +157,6 @@ export function NavigationCards() {
           icon: BookOpen, 
           title: 'Guides Apogée', 
           description: 'Éditer les guides RAG' 
-        },
-      ],
-    },
-    {
-      title: 'Ticketing Développement',
-      description: 'Suivi des évolutions et bugs Apogée',
-      cards: [
-        { 
-          to: ROUTES.admin.apogeeTickets, 
-          icon: Ticket, 
-          title: 'Kanban Tickets', 
-          description: 'Vue kanban principale',
-          children: [
-            { to: ROUTES.admin.apogeeTicketsIncomplete, icon: ListChecks, title: 'Tickets incomplets' },
-            { to: ROUTES.admin.apogeeTicketsClassify, icon: Tags, title: 'Classifier tickets' },
-            { to: ROUTES.admin.apogeeTicketsReview, icon: Eye, title: 'Review tickets' },
-            { to: ROUTES.admin.apogeeTicketsPermissions, icon: Shield, title: 'Permissions' },
-          ]
-        },
-        { 
-          to: ROUTES.admin.apogeeTicketsImport, 
-          icon: Upload, 
-          title: 'Import Tickets', 
-          description: 'Importer depuis Excel',
-          children: [
-            { to: ROUTES.admin.apogeeTicketsImportPriorities, icon: FileText, title: 'Import Priorités' },
-            { to: ROUTES.admin.apogeeTicketsImportEvaluated, icon: FileText, title: 'Import Évalué' },
-            { to: ROUTES.admin.apogeeTicketsImportBugs, icon: Bug, title: 'Import Bugs' },
-            { to: ROUTES.admin.apogeeTicketsImportV1, icon: Archive, title: 'Import V1' },
-          ]
         },
       ],
     },
