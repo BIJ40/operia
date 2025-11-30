@@ -1,6 +1,6 @@
 /**
  * Page Admin - Statistiques Support
- * Statistiques et métriques du support avec SLA
+ * Statistiques et métriques du support (V2 sans SLA)
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,12 +10,11 @@ import { useSupportStats } from '@/hooks/use-support-stats';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS, SLA_STATUS_LABELS } from '@/services/supportService';
+import { TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS } from '@/services/supportService';
 
 const STATUS_COLORS: Record<string, string> = {
   new: 'hsl(var(--chart-1))',
   in_progress: 'hsl(var(--chart-2))',
-  waiting: 'hsl(var(--chart-3))',
   waiting_user: 'hsl(var(--chart-4))',
   resolved: 'hsl(var(--chart-5))',
   closed: 'hsl(var(--muted-foreground))',
@@ -27,12 +26,6 @@ const PRIORITY_COLORS: Record<string, string> = {
   important: 'hsl(var(--chart-3))',
   urgent: 'hsl(var(--chart-4))',
   bloquant: 'hsl(var(--destructive))',
-};
-
-const SLA_COLORS: Record<string, string> = {
-  ok: 'hsl(142.1 76.2% 36.3%)', // green
-  warning: 'hsl(47.9 95.8% 53.1%)', // yellow
-  late: 'hsl(var(--destructive))', // red
 };
 
 export default function AdminSupportStats() {
@@ -48,12 +41,6 @@ export default function AdminSupportStats() {
     name: TICKET_PRIORITY_LABELS[priority] || priority,
     value: count,
     fill: PRIORITY_COLORS[priority] || 'hsl(var(--muted-foreground))',
-  }));
-
-  const slaData = Object.entries(stats.ticketsBySLA).map(([sla, count]) => ({
-    name: SLA_STATUS_LABELS[sla] || sla,
-    value: count,
-    fill: SLA_COLORS[sla] || 'hsl(var(--muted-foreground))',
   }));
 
   const monthTrend = stats.ticketsLastMonth > 0
@@ -148,101 +135,7 @@ export default function AdminSupportStats() {
         </Card>
       </div>
 
-      {/* Second Row - SLA Compliance */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Respect SLA</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {stats.isLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className={`text-2xl font-bold ${
-                  stats.slaComplianceRate >= 90 ? 'text-green-600' :
-                  stats.slaComplianceRate >= 70 ? 'text-yellow-600' : 'text-red-600'
-                }`}>
-                  {stats.slaComplianceRate}%
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Tickets résolus dans les délais
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">En retard</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            {stats.isLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className={`text-2xl font-bold ${
-                  stats.ticketsBySLA.late > 0 ? 'text-red-600' : 'text-green-600'
-                }`}>
-                  {stats.ticketsBySLA.late || 0}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Tickets hors délai
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Échéance proche</CardTitle>
-            <Timer className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            {stats.isLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className={`text-2xl font-bold ${
-                  stats.ticketsBySLA.warning > 0 ? 'text-yellow-600' : 'text-green-600'
-                }`}>
-                  {stats.ticketsBySLA.warning || 0}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Moins d'1h restante
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Dans les délais</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            {stats.isLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold text-green-600">
-                  {stats.ticketsBySLA.ok || 0}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Tickets conformes
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Third Row - Satisfaction & Evolution */}
+      {/* Second Row - Satisfaction & Evolution */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -310,8 +203,8 @@ export default function AdminSupportStats() {
         </Card>
       </div>
 
-      {/* Fourth Row - Status, Priority & SLA Distribution */}
-      <div className="grid gap-6 md:grid-cols-3">
+      {/* Third Row - Status & Priority Distribution */}
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -415,61 +308,9 @@ export default function AdminSupportStats() {
             )}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Timer className="h-5 w-5" />
-              Statut SLA
-            </CardTitle>
-            <CardDescription>
-              Tickets ouverts par statut SLA
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {stats.isLoading ? (
-              <Skeleton className="h-[200px] w-full" />
-            ) : slaData.length > 0 && slaData.some(d => d.value > 0) ? (
-              <div className="flex items-center gap-4">
-                <div className="h-[160px] w-[160px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={slaData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={70}
-                        dataKey="value"
-                      >
-                        {slaData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  {slaData.map((item) => (
-                    <div key={item.name} className="flex items-center gap-2 text-sm">
-                      <div
-                        className="w-2.5 h-2.5 rounded-full"
-                        style={{ backgroundColor: item.fill }}
-                      />
-                      <span className="truncate max-w-[100px]">{item.name}</span>
-                      <span className="font-medium ml-auto">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-center py-8">Aucun ticket ouvert</p>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Fifth Row - AI Classification Stats (P3#2) */}
+      {/* Fourth Row - AI Classification Stats (P3#2) */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

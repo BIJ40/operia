@@ -1,7 +1,7 @@
 /**
  * Liste des tickets support
  * Mise à jour Phase 3 : utilise les constantes centralisées de supportService.ts
- * P3#1 : Intégration SLA badges
+ * V2 : SLA removed, priority-based highlighting
  * P3#2 : Intégration AI badges
  */
 
@@ -14,7 +14,6 @@ import { SupportTicket } from '@/hooks/use-admin-support';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { TicketStatusBadge } from './TicketStatusBadge';
 import { TicketPriorityBadge } from './TicketPriorityBadge';
-import { SLABadge, calculateSLAStatus } from '@/components/tickets/SLABadge';
 import { AIClassificationBadge } from '@/components/support/AIClassificationBadge';
 import { AIIncompleteBadge } from '@/components/support/AIIncompleteBadge';
 
@@ -60,8 +59,8 @@ export function TicketList({ tickets, selectedTicket, onSelectTicket, showResolv
   return (
     <div className="space-y-2">
       {displayTickets.map((ticket) => {
-        const slaStatus = calculateSLAStatus(ticket.due_at, ticket.status);
-        const isLate = slaStatus === 'late';
+        // V2: Priority-based highlighting (no more SLA)
+        const isUrgent = ticket.priority === 'urgent' || ticket.priority === 'bloquant';
         
         return (
         <Card
@@ -69,7 +68,7 @@ export function TicketList({ tickets, selectedTicket, onSelectTicket, showResolv
           className={`cursor-pointer transition-all ${
             selectedTicket?.id === ticket.id
               ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-              : isLate
+              : isUrgent
               ? 'border-red-400 bg-red-50 dark:bg-red-950/20 ring-1 ring-red-300'
               : ticket.has_unread_support_response
               ? 'border-orange-400 bg-orange-50 dark:bg-orange-950/20 hover:bg-orange-100 dark:hover:bg-orange-950/30 shadow-md'
@@ -95,8 +94,6 @@ export function TicketList({ tickets, selectedTicket, onSelectTicket, showResolv
                 <CardDescription className="text-xs flex items-center gap-2 flex-wrap">
                   {format(new Date(ticket.created_at), "d MMM 'à' HH:mm", { locale: fr })}
                   {ticket.service && <ServiceBadge service={ticket.service} />}
-                  {/* Badge SLA */}
-                  <SLABadge dueAt={ticket.due_at} status={ticket.status} size="sm" />
                   {/* Badge AI P3#2 */}
                   <AIClassificationBadge 
                     isAutoClassified={ticket.auto_classified || false}

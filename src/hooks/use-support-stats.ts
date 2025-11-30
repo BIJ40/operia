@@ -13,6 +13,7 @@ interface SupportStats {
   totalRatings: number;
   ticketsByStatus: Record<string, number>;
   ticketsByPriority: Record<string, number>;
+  // SLA removed in V2 - keeping empty object for backward compatibility
   ticketsBySLA: Record<string, number>;
   slaComplianceRate: number;
   monthlyEvolution: { month: string; count: number }[];
@@ -121,24 +122,9 @@ const [stats, setStats] = useState<SupportStats>({
           ticketsByPriority[t.priority] = (ticketsByPriority[t.priority] || 0) + 1;
         });
 
-        // SLA stats - tickets ouverts seulement
-        const openTickets = tickets.filter(t => !['resolved', 'closed'].includes(t.status));
+        // SLA removed in V2 - priority-based instead
         const ticketsBySLA: Record<string, number> = { ok: 0, warning: 0, late: 0 };
-        openTickets.forEach(t => {
-          const slaStatus = t.sla_status || 'ok';
-          ticketsBySLA[slaStatus] = (ticketsBySLA[slaStatus] || 0) + 1;
-        });
-
-        // SLA compliance rate (tickets résolus dans les délais)
-        const resolvedWithSLA = tickets.filter(t => 
-          ['resolved', 'closed'].includes(t.status) && t.due_at && t.resolved_at
-        );
-        const compliantTickets = resolvedWithSLA.filter(t => 
-          new Date(t.resolved_at!) <= new Date(t.due_at!)
-        );
-        const slaComplianceRate = resolvedWithSLA.length > 0
-          ? Math.round((compliantTickets.length / resolvedWithSLA.length) * 100)
-          : 100;
+        const slaComplianceRate = 100; // Deprecated
 
         // P3#2 AI Classification stats
         const autoClassifiedTickets = tickets.filter(t => t.auto_classified === true);
