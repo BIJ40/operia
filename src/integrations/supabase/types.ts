@@ -217,6 +217,63 @@ export type Database = {
           },
         ]
       }
+      animator_visits: {
+        Row: {
+          agency_id: string
+          animator_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          report_content: string | null
+          report_file_path: string | null
+          status: string
+          updated_at: string
+          visit_date: string
+          visit_type: string
+        }
+        Insert: {
+          agency_id: string
+          animator_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          report_content?: string | null
+          report_file_path?: string | null
+          status?: string
+          updated_at?: string
+          visit_date: string
+          visit_type?: string
+        }
+        Update: {
+          agency_id?: string
+          animator_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          report_content?: string | null
+          report_file_path?: string | null
+          status?: string
+          updated_at?: string
+          visit_date?: string
+          visit_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "animator_visits_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animator_visits_animator_id_fkey"
+            columns: ["animator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apogee_agencies: {
         Row: {
           adresse: string | null
@@ -1142,6 +1199,79 @@ export type Database = {
             columns: ["block_id"]
             isOneToOne: false
             referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_requests: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approver_id: string | null
+          category: string
+          created_at: string
+          description: string
+          expense_date: string
+          id: string
+          receipt_file_path: string | null
+          rejection_reason: string | null
+          requester_id: string
+          status: string
+          updated_at: string
+          visit_id: string | null
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approver_id?: string | null
+          category?: string
+          created_at?: string
+          description: string
+          expense_date: string
+          id?: string
+          receipt_file_path?: string | null
+          rejection_reason?: string | null
+          requester_id: string
+          status?: string
+          updated_at?: string
+          visit_id?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approver_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          receipt_file_path?: string | null
+          rejection_reason?: string | null
+          requester_id?: string
+          status?: string
+          updated_at?: string
+          visit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_requests_approver_id_fkey"
+            columns: ["approver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_requests_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "animator_visits"
             referencedColumns: ["id"]
           },
         ]

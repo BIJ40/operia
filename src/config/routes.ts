@@ -77,6 +77,7 @@ export const ROUTES = {
     agences: '/hc-reseau/agences',
     agenceProfile: (agencyId: string) => `/hc-reseau/agences/${agencyId}`,
     animateurs: '/hc-reseau/animateurs',
+    animateurProfile: (animatorId: string) => `/hc-reseau/animateurs/${animatorId}`,
     stats: '/hc-reseau/stats',
     comparatifs: '/hc-reseau/comparatifs',
     redevances: '/hc-reseau/redevances',
