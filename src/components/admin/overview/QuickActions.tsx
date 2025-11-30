@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Database, FileJson, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/logger';
 
 export function QuickActions() {
   const { toast } = useToast();
@@ -124,7 +125,7 @@ export function QuickActions() {
         description: '3 fichiers exportés (Apogée, Apporteurs, HelpConfort)',
       });
     } catch (error) {
-      console.error('Erreur export:', error);
+      logError('QUICK_ACTIONS', 'Erreur export JSON', { error });
       toast({
         title: "Erreur d'export",
         description: 'Impossible d\'exporter les données',
@@ -202,7 +203,7 @@ export function QuickActions() {
         description: '3 fichiers exportés (Apogée, Apporteurs, HelpConfort)',
       });
     } catch (error) {
-      console.error('Erreur export:', error);
+      logError('QUICK_ACTIONS', 'Erreur export TXT', { error });
       toast({
         title: "Erreur d'export",
         description: 'Impossible d\'exporter les données',

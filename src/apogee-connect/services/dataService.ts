@@ -1,6 +1,7 @@
 import { api, getApiBaseUrl } from "./api";
 import { GlobalFilters } from "@/apogee-connect/contexts/FiltersContext";
 import { isWithinInterval, parseISO } from "date-fns";
+import { logApogee } from "@/lib/logger";
 
 // TTL du cache en millisecondes (5 minutes)
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -44,22 +45,22 @@ export class DataService {
     
     // Cache invalide si : URL différente OU TTL expiré
     if (this.cacheEntry.agencyUrl !== currentUrl) {
-      console.log('🔄 Cache invalidé: agence différente');
+      logApogee.debug('Cache invalidé: agence différente');
       return false;
     }
     
     if (age > CACHE_TTL_MS) {
-      console.log(`⏰ Cache expiré (âge: ${Math.round(age / 1000)}s, TTL: ${CACHE_TTL_MS / 1000}s)`);
+      logApogee.debug(`Cache expiré (âge: ${Math.round(age / 1000)}s, TTL: ${CACHE_TTL_MS / 1000}s)`);
       return false;
     }
     
-    console.log(`✅ Cache valide (âge: ${Math.round(age / 1000)}s/${CACHE_TTL_MS / 1000}s)`);
+    logApogee.debug(`Cache valide (âge: ${Math.round(age / 1000)}s/${CACHE_TTL_MS / 1000}s)`);
     return true;
   }
 
   // Vider le cache
   static clearCache() {
-    console.log('🗑️ Vidage du cache DataService');
+    logApogee.debug('Vidage du cache DataService');
     this.cache = {};
     this.cacheEntry = null;
   }
@@ -72,7 +73,7 @@ export class DataService {
   
   // Forcer le rafraîchissement du cache
   static async refreshCache(): Promise<void> {
-    console.log('🔄 Rafraîchissement forcé du cache');
+    logApogee.debug('Rafraîchissement forcé du cache');
     this.cacheEntry = null;
     await this.loadAllData(true);
   }
@@ -82,7 +83,7 @@ export class DataService {
     const baseUrl = getApiBaseUrl();
     
     if (!baseUrl) {
-      console.warn('⚠️ BASE_URL non définie - Aucun appel API ne sera effectué');
+      logApogee.warn('BASE_URL non définie - Aucun appel API ne sera effectué');
       return {
         users: [],
         clients: [],
@@ -96,23 +97,23 @@ export class DataService {
     
     // Si l'API est désactivée, utiliser le cache existant s'il existe
     if (!isApiEnabled && Object.keys(this.cache).length > 0 && this.cache.users?.length) {
-      console.log('🔇 API désactivée - Utilisation du cache existant');
+      logApogee.debug('API désactivée - Utilisation du cache existant');
       return this.cache;
     }
 
     if (!isApiEnabled) {
-      console.log('🔇 API désactivée - Aucune donnée en cache disponible');
+      logApogee.debug('API désactivée - Aucune donnée en cache disponible');
       return this.cache;
     }
     
     // Vérifier si le cache est valide (TTL non expiré et même agence)
     if (!forceRefresh && this.isCacheValid() && this.cacheEntry) {
-      console.log('📦 Utilisation du cache (TTL valide)');
+      logApogee.debug('Utilisation du cache (TTL valide)');
       this.cache = this.cacheEntry.data;
       return this.cache;
     }
 
-    console.log('🔄 Chargement des données API (cache expiré ou forcé)...');
+    logApogee.info('Chargement des données API (cache expiré ou forcé)...');
     
     const results = await Promise.allSettled([
       api.getUsers(),
@@ -126,11 +127,11 @@ export class DataService {
 
     const [usersRes, clientsRes, projectsRes, interventionsRes, facturesRes, devisRes, creneauxRes] = results.map((res, index) => {
       if (res.status === 'fulfilled') return res.value;
-      console.warn(`⚠️ Erreur lors de l'appel API #${index}:`, res.reason);
+      logApogee.warn(`Erreur lors de l'appel API #${index}:`, res.reason);
       return [];
     });
 
-    console.log('📦 Réponses API brutes:', {
+    logApogee.debug('Réponses API brutes:', {
       users: usersRes,
       clients: clientsRes,
       projects: projectsRes,
@@ -146,7 +147,7 @@ export class DataService {
       if (Array.isArray(response)) return response;
       if (response.data && Array.isArray(response.data)) return response.data;
       if (response.success && response.data && Array.isArray(response.data)) return response.data;
-      console.warn('⚠️ Format de réponse inattendu:', response);
+      logApogee.warn('Format de réponse inattendu:', response);
       return [];
     };
 
@@ -167,7 +168,7 @@ export class DataService {
       agencyUrl: baseUrl,
     };
 
-    console.log('✅ Données extraites et mises en cache (TTL: 5min):', {
+    logApogee.info('Données extraites et mises en cache (TTL: 5min):', {
       users: this.cache.users.length,
       clients: this.cache.clients.length,
       projects: this.cache.projects.length,
@@ -191,7 +192,7 @@ export class DataService {
   // Filtrer par date
   static filterByDateRange(items: any[], filters: GlobalFilters, dateField: string = 'date') {
     if (!items || items.length === 0) {
-      console.log(`⚠️ Aucun item à filtrer pour le champ ${dateField}`);
+      logApogee.debug(`Aucun item à filtrer pour le champ ${dateField}`);
       return [];
     }
 
@@ -220,12 +221,12 @@ export class DataService {
           end: filters.dateRange.end 
         });
       } catch (e) {
-        console.warn(`⚠️ Date invalide pour ${dateField}:`, dateValue);
+        logApogee.warn(`Date invalide pour ${dateField}:`, dateValue);
         return false;
       }
     });
 
-    console.log(`📅 Filtrage par date (${dateField}): ${items.length} → ${filtered.length} items`);
+    logApogee.debug(`Filtrage par date (${dateField}): ${items.length} → ${filtered.length} items`);
     return filtered;
   }
 
@@ -258,7 +259,7 @@ export class DataService {
   // CA par technicien (ALGORITHME MÉTIER BASÉ SUR LE TEMPS)
   static calculateCAByTechnician(filters: GlobalFilters) {
     const factures = this.filterByDateRange(this.cache.factures || [], filters);
-    console.log(`💰 Calcul CA par technicien: ${factures.length} factures`);
+    logApogee.debug(`Calcul CA par technicien: ${factures.length} factures`);
     
     const caByTech: Record<string, number> = {};
     const statsParTech: Record<string, { nbFactures: number, minutesTotal: number, caTotal: number }> = {};
@@ -420,22 +421,9 @@ export class DataService {
       caByTechArrondi[topTech[0]] += diff;
     }
 
-    console.log(`✅ CA par technicien calculé (basé temps):`, caByTechArrondi);
-    console.log(`   CA total période: ${Math.round(caTotalPeriode)} €, CA tech total: ${Object.values(caByTechArrondi).reduce((s, c) => s + c, 0)} €`);
-    console.log(`   Factures traitées: ${nbFacturesTraitees}/${factures.length}`);
-    console.log(`   📊 Stats détaillées par technicien (valeurs finales après arrondissement et ajustement):`);
-    
-    // Afficher les stats triées par CA décroissant en utilisant les valeurs finales
-    Object.entries(caByTechArrondi)
-      .sort(([, a], [, b]) => b - a)
-      .forEach(([techId, caFinal]) => {
-        const tech = this.cache.users?.find(u => u.id === parseInt(techId));
-        const techName = tech ? `${tech.firstname} ${tech.name}` : `Tech ${techId}`;
-        const stats = statsParTech[techId];
-        const heures = stats ? Math.round(stats.minutesTotal / 60 * 10) / 10 : 0;
-        const nbFact = stats ? stats.nbFactures : 0;
-        console.log(`      ${techName}: ${caFinal}€ (${nbFact} factures, ${heures}h)`);
-      });
+    logApogee.debug('CA par technicien calculé (basé temps):', caByTechArrondi);
+    logApogee.debug(`CA total période: ${Math.round(caTotalPeriode)} €, CA tech total: ${Object.values(caByTechArrondi).reduce((s, c) => s + c, 0)} €`);
+    logApogee.debug(`Factures traitées: ${nbFacturesTraitees}/${factures.length}`);
     
     return caByTechArrondi;
   }
@@ -443,7 +431,7 @@ export class DataService {
   // CA par univers
   static calculateCAByUniverse(filters: GlobalFilters) {
     const factures = this.filterByDateRange(this.cache.factures || [], filters);
-    console.log(`🎯 Calcul CA par univers: ${factures.length} factures`);
+    logApogee.debug(`Calcul CA par univers: ${factures.length} factures`);
     
     const caByUniverse: Record<string, number> = {};
     let nbFacturesSansProjet = 0;
@@ -470,9 +458,8 @@ export class DataService {
       });
     });
 
-    console.log(`✅ CA par univers calculé:`, caByUniverse);
-    console.log(`   Factures: ${nbFacturesAvecProjet} avec dossier, ${nbFacturesSansProjet} sans dossier`);
-    console.log(`   Univers uniques trouvés: ${Array.from(universesSet).join(', ')}`);
+    logApogee.debug('CA par univers calculé:', caByUniverse);
+    logApogee.debug(`Factures: ${nbFacturesAvecProjet} avec dossier, ${nbFacturesSansProjet} sans dossier`);
     return caByUniverse;
   }
 

@@ -174,14 +174,14 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       }]);
       
       if (error) {
-        console.error('Erreur insertion Supabase:', error);
+        logEditor.error('Erreur insertion Supabase:', error);
         throw error;
       }
       
       setBlocks((prev) => [...prev, newBlock]);
       return newBlock.id;
     } catch (error) {
-      console.error('Erreur sauvegarde:', error);
+      logEditor.error('Erreur sauvegarde:', error);
       toast({ title: 'Erreur', description: 'Impossible de sauvegarder la catégorie', variant: 'destructive' });
       return '';
     }
@@ -202,7 +202,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         
         // Si on essaie de vider un contenu existant SANS autorisation explicite
         if (newContent.length === 0 && !options?.allowContentDeletion) {
-          console.error('🚫 TENTATIVE DE VIDAGE DE CONTENU BLOQUÉE:', {
+          logEditor.error('TENTATIVE DE VIDAGE DE CONTENU BLOQUÉE:', {
             blockId: id,
             blockTitle: existingBlock.title,
             previousContentLength: existingBlock.content.length,
@@ -297,7 +297,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         toast({ title: 'Bloc archivé', description: 'Le contenu est conservé en base mais masqué.' });
       }
     } catch (error) {
-      console.error('Erreur suppression:', error);
+      logEditor.error('Erreur suppression:', error);
       toast({ title: 'Erreur', description: 'Impossible de supprimer le bloc', variant: 'destructive' });
     }
   }, [toast, isAdmin, blocks]);

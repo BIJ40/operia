@@ -11,6 +11,7 @@ import { Plus, Trash2, Search, GripVertical, Upload, X, Edit2, Ban, Clock } from
 import { toast } from 'sonner';
 import { IconPicker } from '@/components/IconPicker';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/logger';
 import {
   DndContext,
   closestCenter,
@@ -401,7 +402,7 @@ export default function ApporteurGuide() {
       setEditIcon(publicUrl);
       toast.success('Image uploadée avec succès');
     } catch (error) {
-      console.error('Erreur upload:', error);
+      logError('APPORTEUR_GUIDE', 'Erreur upload image', { error });
       toast.error('Erreur lors de l\'upload de l\'image');
     } finally {
       setUploadingImage(false);
