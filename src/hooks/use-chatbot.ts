@@ -8,6 +8,7 @@ import type { ChatContext } from '@/components/chatbot/ChatContextSelector';
 import { getApogeeContext, getNoContentResponse } from '@/lib/rag-michu';
 import { safeQuery, safeMutation, safeInvoke } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
+import { logError } from '@/lib/logger';
 
 // Custom hook for chatbot functionality
 
@@ -384,7 +385,7 @@ export const useChatbot = () => {
         }
       }
     } catch (error) {
-      console.error('Chat error:', error);
+      logError('rag-chat', 'Chat error during message processing', error);
       errorToast('Impossible de se connecter au chatbot');
     } finally {
       setIsLoading(false);
@@ -568,7 +569,7 @@ export const useChatbot = () => {
 
     if (!notifyResult.success) {
       // Log but don't block - ticket is created
-      console.error('[CHAT] Notification support failed:', notifyResult.error);
+      logError('rag-chat', 'Notification support failed', notifyResult.error);
     }
 
     successToast('Votre demande a été transmise au support. Vous serez recontacté.');
