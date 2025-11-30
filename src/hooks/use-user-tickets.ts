@@ -28,6 +28,9 @@ export interface Ticket {
   viewed_by_support_at: string | null;
   support_level: number;
   escalation_history: any[];
+  // P3#1 SLA fields
+  due_at?: string | null;
+  sla_status?: string | null;
 }
 
 export interface Attachment {

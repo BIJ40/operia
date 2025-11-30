@@ -31,6 +31,9 @@ export interface SupportTicket {
   support_level?: number;
   category?: string | null;
   escalation_history?: any;
+  // P3#1 SLA fields
+  due_at?: string | null;
+  sla_status?: string | null;
 }
 
 export interface SupportMessage {
