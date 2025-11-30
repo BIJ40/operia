@@ -210,13 +210,15 @@ export default function AdminSupportTickets() {
   };
 
   const getDemandTypeBadge = (ticket: Ticket) => {
-    if (ticket.is_live_chat && ticket.status === 'waiting') {
+    // Chat en cours = is_live_chat true et pas résolu
+    if (ticket.is_live_chat && !['resolved', 'closed'].includes(ticket.status)) {
       return (
         <Badge className="bg-green-500 text-white animate-pulse">
           🟢 Chat en cours
         </Badge>
       );
     }
+    // Ex-demande = anciennement un chat, maintenant converti en ticket
     if (ticket.escalated_from_chat) {
       return (
         <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">
@@ -224,6 +226,7 @@ export default function AdminSupportTickets() {
         </Badge>
       );
     }
+    // Ticket standard = créé via le portail
     return (
       <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
         🎫 Ticket
