@@ -6,4 +6,5 @@ export { RagDebugTab } from './RagDebugTab';
 export { RagCoverageTab } from './RagCoverageTab';
 export { RagGapsTab } from './RagGapsTab';
 export { RagStatsTab } from './RagStatsTab';
+export { RagIngestionTab } from './RagIngestionTab';
 export { ImproveGuideDialog } from './ImproveGuideDialog';

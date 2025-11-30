@@ -1591,6 +1591,110 @@ export type Database = {
           },
         ]
       }
+      rag_index_documents: {
+        Row: {
+          apporteur_code: string | null
+          chunk_count: number | null
+          context_type: string | null
+          created_at: string
+          detected_context: string | null
+          error_message: string | null
+          file_path: string | null
+          file_size: number | null
+          filename: string
+          id: string
+          job_id: string
+          processed_at: string | null
+          role_cible: string | null
+          status: string
+          univers_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          apporteur_code?: string | null
+          chunk_count?: number | null
+          context_type?: string | null
+          created_at?: string
+          detected_context?: string | null
+          error_message?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          filename: string
+          id?: string
+          job_id: string
+          processed_at?: string | null
+          role_cible?: string | null
+          status?: string
+          univers_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          apporteur_code?: string | null
+          chunk_count?: number | null
+          context_type?: string | null
+          created_at?: string
+          detected_context?: string | null
+          error_message?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          filename?: string
+          id?: string
+          job_id?: string
+          processed_at?: string | null
+          role_cible?: string | null
+          status?: string
+          univers_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rag_index_documents_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "rag_index_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rag_index_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          error_count: number | null
+          id: string
+          metadata: Json | null
+          processed_documents: number | null
+          started_at: string | null
+          status: string
+          total_documents: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_count?: number | null
+          id?: string
+          metadata?: Json | null
+          processed_documents?: number | null
+          started_at?: string | null
+          status?: string
+          total_documents?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_count?: number | null
+          id?: string
+          metadata?: Json | null
+          processed_documents?: number | null
+          started_at?: string | null
+          status?: string
+          total_documents?: number | null
+        }
+        Relationships: []
+      }
       sections: {
         Row: {
           category_id: string
