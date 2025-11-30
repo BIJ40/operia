@@ -82,21 +82,24 @@ function UserRolesTab() {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedRole, setSelectedRole] = useState<TicketRole | ''>('');
   
-  // Get all users with apogee_tickets module
+  // Get all users with apogee_tickets module or admins
   const { data: eligibleUsers } = useQuery({
     queryKey: ['eligible-ticket-users'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, enabled_modules')
+        .select('id, email, first_name, last_name, enabled_modules, global_role')
+        .eq('is_active', true)
         .order('email');
       
       if (error) throw error;
       
-      // Filter users with apogee_tickets module enabled or admins
+      // Filter users with apogee_tickets module enabled or admins (N5+)
       return (data || []).filter((u: any) => {
         const modules = u.enabled_modules as any;
-        return modules?.apogee_tickets?.enabled;
+        const hasModule = modules?.apogee_tickets?.enabled === true;
+        const isAdmin = u.global_role === 'platform_admin' || u.global_role === 'superadmin';
+        return hasModule || isAdmin;
       });
     },
   });
