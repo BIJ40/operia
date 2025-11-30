@@ -255,6 +255,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { title: 'Dashboard Réseau', url: ROUTES.reseau.dashboard, icon: Network, scope: 'franchiseur_dashboard' },
       { title: 'Agences', url: ROUTES.reseau.agences, icon: Building2, scope: 'franchiseur_agencies' },
+      { title: 'Utilisateurs', url: ROUTES.reseau.users, icon: Users, scope: 'franchiseur_agencies' },
       { title: 'Animateurs', url: ROUTES.reseau.animateurs, icon: Users, scope: 'franchiseur_agencies' },
       { title: 'Statistiques', url: ROUTES.reseau.stats, icon: PieChart, scope: 'franchiseur_kpi' },
       { title: 'Comparatifs', url: ROUTES.reseau.comparatifs, icon: GitCompare, scope: 'franchiseur_kpi' },
@@ -373,6 +374,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.reseau.index]: 'Réseau Franchiseur',
   [ROUTES.reseau.dashboard]: 'Dashboard Réseau',
   [ROUTES.reseau.agences]: 'Agences du Réseau',
+  [ROUTES.reseau.users]: 'Utilisateurs Réseau',
   [ROUTES.reseau.animateurs]: 'Gestion Animateurs',
   [ROUTES.reseau.stats]: 'Statistiques Réseau',
   [ROUTES.reseau.comparatifs]: 'Comparatifs',

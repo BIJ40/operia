@@ -62,6 +62,7 @@ const FranchiseurRoyalties = lazy(() => import("./franchiseur/pages/FranchiseurR
 const FranchiseurSettings = lazy(() => import("./franchiseur/pages/FranchiseurSettings"));
 const FranchiseurAnimateurs = lazy(() => import("./franchiseur/pages/FranchiseurAnimateurs"));
 const AnimatorProfile = lazy(() => import("./franchiseur/pages/AnimatorProfile"));
+const FranchiseurUsers = lazy(() => import("./franchiseur/pages/FranchiseurUsers"));
 
 // Lazy loaded pages - Admin
 const AdminIndex = lazy(() => import("./pages/AdminIndex"));
@@ -235,6 +236,9 @@ function AppContent() {
           </Route>
           <Route path="/hc-reseau/parametres" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurSettings />} />
+          </Route>
+          <Route path="/hc-reseau/utilisateurs" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+            <Route index element={<FranchiseurUsers />} />
           </Route>
           
           {/* ============================================ */}
