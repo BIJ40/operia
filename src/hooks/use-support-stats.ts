@@ -13,6 +13,8 @@ interface SupportStats {
   totalRatings: number;
   ticketsByStatus: Record<string, number>;
   ticketsByPriority: Record<string, number>;
+  ticketsBySLA: Record<string, number>;
+  slaComplianceRate: number;
   monthlyEvolution: { month: string; count: number }[];
   isLoading: boolean;
 }
@@ -28,6 +30,8 @@ export function useSupportStats(): SupportStats {
     totalRatings: 0,
     ticketsByStatus: {},
     ticketsByPriority: {},
+    ticketsBySLA: {},
+    slaComplianceRate: 0,
     monthlyEvolution: [],
     isLoading: true,
   });
@@ -101,6 +105,25 @@ export function useSupportStats(): SupportStats {
           ticketsByPriority[t.priority] = (ticketsByPriority[t.priority] || 0) + 1;
         });
 
+        // SLA stats - tickets ouverts seulement
+        const openTickets = tickets.filter(t => !['resolved', 'closed'].includes(t.status));
+        const ticketsBySLA: Record<string, number> = { ok: 0, warning: 0, late: 0 };
+        openTickets.forEach(t => {
+          const slaStatus = t.sla_status || 'ok';
+          ticketsBySLA[slaStatus] = (ticketsBySLA[slaStatus] || 0) + 1;
+        });
+
+        // SLA compliance rate (tickets résolus dans les délais)
+        const resolvedWithSLA = tickets.filter(t => 
+          ['resolved', 'closed'].includes(t.status) && t.due_at && t.resolved_at
+        );
+        const compliantTickets = resolvedWithSLA.filter(t => 
+          new Date(t.resolved_at!) <= new Date(t.due_at!)
+        );
+        const slaComplianceRate = resolvedWithSLA.length > 0
+          ? Math.round((compliantTickets.length / resolvedWithSLA.length) * 100)
+          : 100;
+
         // Monthly evolution (last 6 months)
         const monthlyEvolution: { month: string; count: number }[] = [];
         for (let i = 5; i >= 0; i--) {
@@ -127,6 +150,8 @@ export function useSupportStats(): SupportStats {
           totalRatings: ratedTickets.length,
           ticketsByStatus,
           ticketsByPriority,
+          ticketsBySLA,
+          slaComplianceRate,
           monthlyEvolution,
           isLoading: false,
         });

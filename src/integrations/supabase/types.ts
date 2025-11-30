@@ -1876,6 +1876,7 @@ export type Database = {
           category: string | null
           chatbot_conversation: Json | null
           created_at: string
+          due_at: string | null
           escalated_from_chat: boolean | null
           escalation_history: Json | null
           has_attachments: boolean
@@ -1886,6 +1887,7 @@ export type Database = {
           rating_comment: string | null
           resolved_at: string | null
           service: string | null
+          sla_status: string | null
           source: string
           status: string
           subject: string
@@ -1900,6 +1902,7 @@ export type Database = {
           category?: string | null
           chatbot_conversation?: Json | null
           created_at?: string
+          due_at?: string | null
           escalated_from_chat?: boolean | null
           escalation_history?: Json | null
           has_attachments?: boolean
@@ -1910,6 +1913,7 @@ export type Database = {
           rating_comment?: string | null
           resolved_at?: string | null
           service?: string | null
+          sla_status?: string | null
           source?: string
           status?: string
           subject?: string
@@ -1924,6 +1928,7 @@ export type Database = {
           category?: string | null
           chatbot_conversation?: Json | null
           created_at?: string
+          due_at?: string | null
           escalated_from_chat?: boolean | null
           escalation_history?: Json | null
           has_attachments?: boolean
@@ -1934,6 +1939,7 @@ export type Database = {
           rating_comment?: string | null
           resolved_at?: string | null
           service?: string | null
+          sla_status?: string | null
           source?: string
           status?: string
           subject?: string
@@ -2162,6 +2168,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_sla_status: {
+        Args: { p_due_at: string; p_status: string }
+        Returns: string
+      }
+      calculate_ticket_due_at: {
+        Args: { p_category: string; p_created_at?: string; p_priority: string }
+        Returns: string
+      }
       can_transition_ticket: {
         Args: { _from_status: string; _to_status: string; _user_id: string }
         Returns: boolean
