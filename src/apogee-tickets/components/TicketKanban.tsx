@@ -20,7 +20,8 @@ import { useDraggable } from '@dnd-kit/core';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, Clock, GripVertical, Lock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MessageSquare, Clock, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { toast } from 'sonner';
 import { useCanTransition, useLogTicketAction } from '../hooks/useTicketPermissions';
@@ -214,6 +215,8 @@ function DroppableColumn({
   modules,
   ownerSides,
   columnWidth = 288,
+  isCollapsed,
+  onToggleCollapse,
 }: {
   status: ApogeeTicketStatus;
   tickets: ApogeeTicket[];
@@ -221,8 +224,43 @@ function DroppableColumn({
   modules?: ApogeeModule[];
   ownerSides?: ApogeeOwnerSide[];
   columnWidth?: number;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status.id });
+
+  // Colonne repliée
+  if (isCollapsed) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={{ ...getColumnStyle(status.color) }}
+        className={`flex flex-col rounded-lg border-2 w-12 min-w-12 ${isOver ? 'ring-2 ring-primary ring-offset-2' : ''} transition-all`}
+      >
+        <div className="p-2 border-b flex flex-col items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={onToggleCollapse}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Badge variant="secondary" className="text-xs">
+            {tickets.length}
+          </Badge>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <span 
+            className="text-xs font-semibold whitespace-nowrap origin-center"
+            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+          >
+            {status.label}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -231,9 +269,17 @@ function DroppableColumn({
       className={`flex flex-col rounded-lg border-2 ${isOver ? 'ring-2 ring-primary ring-offset-2' : ''} transition-all`}
     >
       <div className="p-3 border-b">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-sm">{status.label}</h3>
-          <Badge variant="secondary" className="text-xs">
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0"
+            onClick={onToggleCollapse}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h3 className="font-semibold text-sm flex-1 truncate">{status.label}</h3>
+          <Badge variant="secondary" className="text-xs shrink-0">
             {tickets.length}
           </Badge>
         </div>
@@ -261,8 +307,21 @@ function DroppableColumn({
 
 export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusChange, onTicketClick, columnWidth = 288, onColumnWidthChange }: TicketKanbanProps) {
   const [activeTicket, setActiveTicket] = useState<ApogeeTicket | null>(null);
+  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const canTransition = useCanTransition();
   const logAction = useLogTicketAction();
+
+  const toggleColumnCollapse = useCallback((statusId: string) => {
+    setCollapsedColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(statusId)) {
+        next.delete(statusId);
+      } else {
+        next.add(statusId);
+      }
+      return next;
+    });
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -334,6 +393,8 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
             modules={modules}
             ownerSides={ownerSides}
             columnWidth={columnWidth}
+            isCollapsed={collapsedColumns.has(status.id)}
+            onToggleCollapse={() => toggleColumnCollapse(status.id)}
           />
         ))}
       </div>
