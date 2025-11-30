@@ -87,39 +87,31 @@ serve(async (req) => {
     }
 
     // Filter users who should receive support notifications:
-    // 1. platform_admin or superadmin (always)
-    // 2. Users with support module enabled
-    const supportUsers = profiles?.filter(p => {
-      // Check admin roles
+    // 1. Must have support module with agent flag enabled (actual support agents)
+    // 2. Must have email_notifications_enabled = true (explicit opt-in)
+    const supportAgents = profiles?.filter(p => {
+      // Must be a support agent (has support.agent flag or is admin)
       const isAdmin = p.global_role === 'platform_admin' || p.global_role === 'superadmin';
+      const isSupportAgent = p.enabled_modules?.support?.agent === true;
       
-      // Check support module enabled
-      const hasSupportModule = p.enabled_modules?.support?.enabled === true;
+      // Must have email notifications explicitly enabled
+      const hasNotificationsEnabled = p.email_notifications_enabled === true;
       
-      return isAdmin || hasSupportModule;
+      return (isAdmin || isSupportAgent) && hasNotificationsEnabled;
     }) || [];
 
-    if (supportUsers.length === 0) {
-      console.log('No support users found');
+    if (supportAgents.length === 0) {
+      console.log('No support agents with notifications enabled found');
       return withCors(req, new Response(
-        JSON.stringify({ message: 'No support users to notify' }),
+        JSON.stringify({ message: 'No support agents to notify' }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       ));
     }
 
-    console.log(`Found ${supportUsers.length} support users`);
+    console.log(`Found ${supportAgents.length} support agents with notifications enabled`);
 
-    // Filter only users with email notifications enabled
-    const usersWithNotificationsEnabled = supportUsers.filter(p => p.email_notifications_enabled !== false);
+    const usersWithNotificationsEnabled = supportAgents;
     
-    if (usersWithNotificationsEnabled.length === 0) {
-      console.log('No support users with email notifications enabled');
-      return withCors(req, new Response(
-        JSON.stringify({ message: 'No support users with notifications enabled to notify' }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
     const supportEmails = usersWithNotificationsEnabled
       .map(p => p.email)
       .filter(email => email) as string[];
