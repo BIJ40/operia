@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect, lazy, Suspense } from "react";
 import { CacheBackupNotification } from "./components/CacheBackupNotification";
 import { MainLayout } from "./components/layout";
@@ -62,7 +62,7 @@ const FranchiseurAnimateurs = lazy(() => import("./franchiseur/pages/Franchiseur
 
 // Lazy loaded pages - Admin
 const AdminIndex = lazy(() => import("./pages/AdminIndex"));
-const AdminDocuments = lazy(() => import("./pages/AdminDocuments"));
+// AdminDocuments supprimé - redirigé vers AdminChatbotRag
 const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
 const AdminSupportStats = lazy(() => import("./pages/AdminSupportStats"));
 const AdminEscalationHistory = lazy(() => import("./pages/AdminEscalationHistory"));
@@ -227,7 +227,7 @@ function AppContent() {
           {/* ADMINISTRATION - Section Index + Sous-pages */}
           {/* ============================================ */}
           <Route path="/admin" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminIndex /></RoleGuard></MainLayout>} />
-          <Route path="/admin/documents" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminDocuments /></RoleGuard></MainLayout>} />
+          <Route path="/admin/documents" element={<Navigate to="/admin/chatbot-rag" replace />} />
           <Route path="/admin/support-stats" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminSupportStats /></RoleGuard></MainLayout>} />
           <Route path="/admin/escalation-history" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminEscalationHistory /></RoleGuard></MainLayout>} />
           <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminBackup /></RoleGuard></MainLayout>} />
