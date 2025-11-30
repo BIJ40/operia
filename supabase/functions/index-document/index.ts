@@ -150,12 +150,55 @@ serve(async (req) => {
     // Check file type
     const fileType = document.file_type.toLowerCase();
     
-    if (fileType.includes('text') || fileType.includes('plain')) {
-      // Plain text
+    // Supported complex document types that need parsing
+    const needsParsing = 
+      fileType.includes('pdf') ||
+      fileType.includes('wordprocessingml') || // .docx
+      fileType.includes('msword') || // .doc
+      fileType.includes('presentationml') || // .pptx
+      fileType.includes('powerpoint'); // .ppt
+    
+    if (fileType.includes('text') || fileType.includes('plain') || fileType.includes('markdown')) {
+      // Plain text or markdown
       documentText = await fileData.text();
-    } else if (fileType.includes('pdf')) {
-      // For PDF, we'll need to use the parse-document function
-      throw new Error('PDF parsing not yet implemented - use parse-document endpoint');
+    } else if (needsParsing) {
+      // Use parse-document edge function for complex documents
+      console.log(`[INDEX-DOCUMENT] Calling parse-document for ${fileType}`);
+      
+      // Convert blob to base64
+      const arrayBuffer = await fileData.arrayBuffer();
+      const base64Content = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      
+      // Get file extension from path
+      const extension = filePath.split('.').pop()?.toLowerCase() || 'bin';
+      
+      const parseResponse = await fetch(`${supabaseUrl}/functions/v1/parse-document`, {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileContent: base64Content,
+          fileName: document.title || `document.${extension}`,
+          mimeType: document.file_type,
+        }),
+      });
+      
+      if (!parseResponse.ok) {
+        const errorText = await parseResponse.text();
+        console.error('[INDEX-DOCUMENT] parse-document error:', errorText);
+        throw new Error(`Failed to parse document: ${parseResponse.status}`);
+      }
+      
+      const parseResult = await parseResponse.json();
+      documentText = parseResult.text || parseResult.content || '';
+      
+      if (!documentText) {
+        throw new Error('parse-document returned empty content');
+      }
+      
+      console.log(`[INDEX-DOCUMENT] Parsed ${documentText.length} characters from ${fileType}`);
     } else {
       throw new Error(`Unsupported file type: ${fileType}`);
     }
