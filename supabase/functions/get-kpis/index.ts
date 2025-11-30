@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { captureEdgeException } from '../_shared/sentry.ts';
+import { errorResponse, successResponse, authError, validationError } from '../_shared/error.ts';
 
 interface KpiRequest {
   period?: 'day' | '7days' | 'month' | 'year' | 'rolling12';
@@ -107,10 +108,7 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return withCors(req, new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      ));
+      return withCors(req, authError('En-tête d\'autorisation manquant'));
     }
 
     const supabase = createClient(
@@ -121,14 +119,11 @@ Deno.serve(async (req) => {
 
     const {
       data: { user },
-      error: authError,
+      error: authErr,
     } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return withCors(req, new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      ));
+    if (authErr || !user) {
+      return withCors(req, authError('Non autorisé'));
     }
 
     // Rate limit: 20 req/min per user
@@ -146,10 +141,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (profileError || !profile?.agence) {
-      return withCors(req, new Response(
-        JSON.stringify({ error: 'User agency not configured' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      ));
+      return withCors(req, validationError('Agence utilisateur non configurée'));
     }
 
     const agencySlug = profile.agence;
@@ -497,9 +489,7 @@ Deno.serve(async (req) => {
 
     console.log('[get-kpis] Response generated successfully');
 
-    return withCors(req, new Response(JSON.stringify(response), {
-      headers: { 'Content-Type': 'application/json' },
-    }));
+    return withCors(req, successResponse(response));
 
   } catch (error) {
     console.error('[get-kpis] Error:', error);
@@ -540,9 +530,10 @@ Deno.serve(async (req) => {
       agencySlug,
     });
     
-    return withCors(req, new Response(
-      JSON.stringify({ error: 'Internal error in get-kpis' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    return withCors(req, errorResponse(
+      'GET_KPIS_FAILED',
+      'Erreur interne lors de la récupération des KPIs',
+      { error: error instanceof Error ? error.message : String(error) }
     ));
   }
 });

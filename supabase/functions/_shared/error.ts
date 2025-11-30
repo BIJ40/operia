@@ -70,3 +70,34 @@ export function notFoundError(message: string = "Ressource non trouvée"): Respo
 export function internalError(code: string, detail?: unknown): Response {
   return errorResponse(code, "Une erreur interne est survenue", detail, 500);
 }
+
+/**
+ * Helper pour les réponses de succès standardisées
+ */
+export interface SuccessResponseBody<T = unknown> {
+  success: true;
+  data: T;
+}
+
+export function successResponse<T>(data: T, status: number = 200): Response {
+  const body: SuccessResponseBody<T> = {
+    success: true,
+    data,
+  };
+
+  const defaultCorsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+
+  return new Response(
+    JSON.stringify(body),
+    { 
+      status, 
+      headers: { 
+        "Content-Type": "application/json",
+        ...defaultCorsHeaders 
+      } 
+    }
+  );
+}

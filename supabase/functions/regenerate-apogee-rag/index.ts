@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { captureEdgeException } from '../_shared/sentry.ts';
+import { errorResponse, successResponse, authError, forbiddenError, internalError } from '../_shared/error.ts';
 
 // Strip HTML tags and decode entities for cleaner text
 function stripHtml(html: string): string {
@@ -96,7 +97,7 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('No authorization header');
+      return withCors(req, authError('En-tête d\'autorisation manquant'));
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -108,7 +109,7 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
-      throw new Error('Unauthorized');
+      return withCors(req, authError('Non autorisé'));
     }
 
     const { data: profile } = await supabase
@@ -120,7 +121,7 @@ serve(async (req) => {
     const roleLevel = getRoleLevel(profile?.global_role);
 
     if (roleLevel < 5) {
-      throw new Error('Admin access required (N5+)');
+      return withCors(req, forbiddenError('Accès admin requis (N5+)'));
     }
 
     // Rate limit: 5 req/10min per user (heavy operation)
@@ -161,7 +162,7 @@ serve(async (req) => {
       .not('slug', 'like', 'apporteur-%');
 
     if (sectionsError) {
-      throw new Error(`Failed to fetch blocks: ${sectionsError.message}`);
+      return withCors(req, internalError('REGENERATE_APOGEE_RAG_FETCH_BLOCKS', { supabaseError: sectionsError.message }));
     }
 
     // Get parent categories for context
@@ -250,20 +251,16 @@ serve(async (req) => {
 
     console.log(`[RAG] Regeneration complete: ${processedSections} sections processed, ${skippedSections} skipped, ${totalChunks} chunks created`);
 
-    return withCors(req, new Response(
-      JSON.stringify({
-        success: true,
-        sections_processed: processedSections,
-        sections_skipped: skippedSections,
-        chunks_created: totalChunks,
-        total_sections: sections?.length || 0,
-        errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
-        message: errors.length > 0 
-          ? `Terminé avec ${errors.length} erreur(s)` 
-          : 'Index RAG régénéré avec succès depuis les blocs Apogée'
-      }),
-      { headers: { 'Content-Type': 'application/json' } }
-    ));
+    return withCors(req, successResponse({
+      sections_processed: processedSections,
+      sections_skipped: skippedSections,
+      chunks_created: totalChunks,
+      total_sections: sections?.length || 0,
+      errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
+      message: errors.length > 0 
+        ? `Terminé avec ${errors.length} erreur(s)` 
+        : 'Index RAG régénéré avec succès depuis les blocs Apogée'
+    }));
 
   } catch (error) {
     console.error('[RAG] Error:', error);
@@ -273,12 +270,10 @@ serve(async (req) => {
       function: 'regenerate-apogee-rag',
     });
     
-    return withCors(req, new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error',
-        details: 'Check edge function logs for more information'
-      }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    return withCors(req, errorResponse(
+      'REGENERATE_APOGEE_RAG_FAILED',
+      error instanceof Error ? error.message : 'Erreur inconnue',
+      { details: 'Consultez les logs pour plus d\'informations' }
     ));
   }
 });

@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { captureEdgeException } from '../_shared/sentry.ts';
+import { errorResponse, successResponse, authError } from '../_shared/error.ts';
 
 // Cache management
 interface CacheEntry {
@@ -384,7 +385,7 @@ serve(async (req) => {
     // Get authenticated user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('Missing Authorization header');
+      return withCors(req, authError('En-tête d\'autorisation manquant'));
     }
 
     const supabaseClient = createClient(
@@ -395,7 +396,7 @@ serve(async (req) => {
 
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
-      throw new Error('Unauthorized');
+      return withCors(req, authError('Non autorisé'));
     }
 
     // Rate limit: 20 req/min per user
@@ -426,7 +427,7 @@ serve(async (req) => {
       .eq('is_active', true);
 
     if (!agencies || agencies.length === 0) {
-      throw new Error('No active agencies found');
+      return withCors(req, errorResponse('NETWORK_KPIS_NO_AGENCIES', 'Aucune agence active trouvée', null, 404));
     }
 
     console.log(`🔄 Loading data for ${agencies.length} agencies`);
@@ -459,9 +460,7 @@ serve(async (req) => {
 
     console.log('✅ KPIs calculated and cached');
 
-    return withCors(req, new Response(JSON.stringify(kpis), {
-      headers: { 'Content-Type': 'application/json' },
-    }));
+    return withCors(req, successResponse(kpis));
 
   } catch (error) {
     console.error('❌ Error in network-kpis:', error);
@@ -501,9 +500,10 @@ serve(async (req) => {
     });
     console.log('[SENTRY] captureEdgeException result:', sentryEventId ? `Event ID: ${sentryEventId}` : 'Failed to send');
     
-    return withCors(req, new Response(
-      JSON.stringify({ error: 'Internal error in network-kpis' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    return withCors(req, errorResponse(
+      'NETWORK_KPIS_FAILED',
+      'Erreur interne lors de la récupération des KPIs réseau',
+      { error: error instanceof Error ? error.message : String(error) }
     ));
   }
 });
