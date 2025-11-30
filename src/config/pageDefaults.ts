@@ -112,64 +112,106 @@ export interface PageHeaderConfig {
  * L'ordre est important : les routes plus spécifiques doivent être en premier.
  */
 export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
-  // Pilotage - Statistiques et sous-indicateurs (plus spécifiques d'abord)
+  // ============================================
+  // PILOTAGE AGENCE
+  // ============================================
+  // Statistiques et sous-indicateurs (plus spécifiques d'abord)
   { match: (path) => path === '/hc-agency/statistiques/apporteurs', pageKey: 'pilotage_indicateurs_apporteurs', defaultTitle: 'Indicateurs Apporteurs', defaultSubtitle: 'Performance de vos apporteurs d\'affaires', icon: 'Users', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
   { match: (path) => path === '/hc-agency/statistiques/univers', pageKey: 'pilotage_indicateurs_univers', defaultTitle: 'Indicateurs Univers', defaultSubtitle: 'Répartition par univers de métier', icon: 'Building2', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
   { match: (path) => path === '/hc-agency/statistiques/techniciens', pageKey: 'pilotage_indicateurs_techniciens', defaultTitle: 'Indicateurs Techniciens', defaultSubtitle: 'Performance de vos techniciens', icon: 'CalendarDays', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
   { match: (path) => path === '/hc-agency/statistiques/sav', pageKey: 'pilotage_indicateurs_sav', defaultTitle: 'Indicateurs SAV', defaultSubtitle: 'Suivi du service après-vente', icon: 'LifeBuoy', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
   { match: (path) => path === '/hc-agency/statistiques', pageKey: 'pilotage_statistiques', defaultTitle: 'Statistiques', defaultSubtitle: 'Accédez à l\'ensemble des indicateurs de votre agence', icon: 'PieChart', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
   
-  // Pilotage - Indicateurs (anciennes routes /hc-agency/indicateurs/*)
+  // Indicateurs (anciennes routes /hc-agency/indicateurs/*)
   { match: (path) => path === '/hc-agency/indicateurs/apporteurs', pageKey: 'pilotage_indicateurs_apporteurs', defaultTitle: 'Indicateurs Apporteurs', defaultSubtitle: 'Performance de vos apporteurs d\'affaires', icon: 'Users', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
   { match: (path) => path === '/hc-agency/indicateurs/univers', pageKey: 'pilotage_indicateurs_univers', defaultTitle: 'Indicateurs Univers', defaultSubtitle: 'Répartition par univers de métier', icon: 'Building2', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
   { match: (path) => path === '/hc-agency/indicateurs/techniciens', pageKey: 'pilotage_indicateurs_techniciens', defaultTitle: 'Indicateurs Techniciens', defaultSubtitle: 'Performance de vos techniciens', icon: 'CalendarDays', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
   { match: (path) => path === '/hc-agency/indicateurs/sav', pageKey: 'pilotage_indicateurs_sav', defaultTitle: 'Indicateurs SAV', defaultSubtitle: 'Suivi du service après-vente', icon: 'LifeBuoy', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
   { match: (path) => path === '/hc-agency/indicateurs', pageKey: 'pilotage_indicateurs', defaultTitle: 'Indicateurs généraux', defaultSubtitle: 'Suivez vos principaux KPI agence', icon: 'BarChart3', parentRoute: '/hc-agency/statistiques', parentLabel: 'Statistiques' },
+  
+  // Autres pages Pilotage
+  { match: (path) => path.startsWith('/hc-agency/actions/category/'), pageKey: 'pilotage_actions_category', defaultTitle: 'Détail Actions', defaultSubtitle: 'Actions par catégorie', icon: 'CheckSquare', parentRoute: '/hc-agency/actions', parentLabel: 'Actions' },
   { match: (path) => path === '/hc-agency/actions', pageKey: 'pilotage_actions', defaultTitle: 'Actions à Mener', defaultSubtitle: 'Suivi des actions et tâches en cours', icon: 'CheckSquare', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
   { match: (path) => path === '/hc-agency/diffusion', pageKey: 'pilotage_diffusion', defaultTitle: 'Mode Diffusion', defaultSubtitle: 'Affichage TV pour l\'agence', icon: 'Tv', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
   { match: (path) => path === '/hc-agency/rh-tech', pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens', icon: 'CalendarDays', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
   { match: (path) => path === '/hc-agency/equipe', pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Gestion des collaborateurs de l\'agence', icon: 'Users', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
   { match: (path) => path === '/hc-agency', pageKey: 'pilotage_index', defaultTitle: 'Pilotage Agence', defaultSubtitle: 'Gérez votre activité au quotidien', icon: 'Gauge', parentRoute: '/', parentLabel: 'Accueil' },
   
-  // Help Academy
+  // ============================================
+  // HELP ACADEMY
+  // ============================================
+  { match: (path) => path.startsWith('/academy/apogee/category/'), pageKey: 'academy_apogee_category', defaultTitle: 'Guide Apogée', defaultSubtitle: 'Détail de la catégorie', icon: 'BookOpen', parentRoute: '/academy/apogee', parentLabel: 'Guide Apogée' },
   { match: (path) => path.startsWith('/academy/apogee'), pageKey: 'academy_apogee', defaultTitle: 'Guide Apogée', defaultSubtitle: 'Tout ce que vous devez savoir sur l\'utilisation d\'Apogée', icon: 'BookOpen', parentRoute: '/academy', parentLabel: 'Academy' },
+  { match: (path) => path.includes('/academy/apporteurs/category/') && path.includes('/sub/'), pageKey: 'academy_apporteurs_sub', defaultTitle: 'Guide Apporteurs', defaultSubtitle: 'Détail sous-catégorie', icon: 'Handshake', parentRoute: '/academy/apporteurs', parentLabel: 'Apporteurs' },
+  { match: (path) => path.startsWith('/academy/apporteurs/category/'), pageKey: 'academy_apporteurs_category', defaultTitle: 'Guide Apporteurs', defaultSubtitle: 'Sous-catégories', icon: 'Handshake', parentRoute: '/academy/apporteurs', parentLabel: 'Apporteurs' },
   { match: (path) => path.startsWith('/academy/apporteurs'), pageKey: 'academy_apporteurs', defaultTitle: 'Guide Apporteurs', defaultSubtitle: 'Ressources pour les apporteurs d\'affaires', icon: 'Handshake', parentRoute: '/academy', parentLabel: 'Academy' },
+  { match: (path) => path.startsWith('/academy/hc-base/category/'), pageKey: 'academy_documents_category', defaultTitle: 'Base Documentaire', defaultSubtitle: 'Détail de la catégorie', icon: 'FolderOpen', parentRoute: '/academy/hc-base', parentLabel: 'Base Doc' },
   { match: (path) => path.startsWith('/academy/hc-base'), pageKey: 'academy_documents', defaultTitle: 'Base Documentaire', defaultSubtitle: 'Documents et ressources HelpConfort', icon: 'FolderOpen', parentRoute: '/academy', parentLabel: 'Academy' },
   { match: (path) => path === '/academy', pageKey: 'academy_index', defaultTitle: 'Help! Academy', defaultSubtitle: 'Accédez à tous les guides et ressources', icon: 'GraduationCap', parentRoute: '/', parentLabel: 'Accueil' },
   
-  // Support
+  // ============================================
+  // SUPPORT
+  // ============================================
   { match: (path) => path === '/support/mes-demandes', pageKey: 'support_mes_demandes', defaultTitle: 'Mes Demandes', defaultSubtitle: 'Créer et suivre vos demandes de support', icon: 'MessageSquare', parentRoute: '/support', parentLabel: 'Support' },
+  { match: (path) => path === '/support/faq', pageKey: 'support_faq', defaultTitle: 'FAQ', defaultSubtitle: 'Questions fréquemment posées', icon: 'HelpCircle', parentRoute: '/support', parentLabel: 'Support' },
   { match: (path) => path === '/support/console', pageKey: 'support_console', defaultTitle: 'Console Support', defaultSubtitle: 'Traiter les demandes de support', icon: 'Headset', parentRoute: '/support', parentLabel: 'Support' },
   { match: (path) => path === '/support', pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Assistance et demandes', icon: 'LifeBuoy', parentRoute: '/', parentLabel: 'Accueil' },
   
-  // Réseau Franchiseur
+  // ============================================
+  // RÉSEAU FRANCHISEUR
+  // ============================================
   { match: (path) => path === '/hc-reseau/dashboard', pageKey: 'reseau_dashboard', defaultTitle: 'Dashboard Réseau', defaultSubtitle: 'Vue d\'ensemble du réseau', icon: 'LayoutDashboard', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
+  { match: (path) => /^\/hc-reseau\/agences\/[^/]+$/.test(path), pageKey: 'reseau_agence_profile', defaultTitle: 'Profil Agence', defaultSubtitle: 'Détails et configuration de l\'agence', icon: 'Building2', parentRoute: '/hc-reseau/agences', parentLabel: 'Agences' },
   { match: (path) => path === '/hc-reseau/agences', pageKey: 'reseau_agences', defaultTitle: 'Agences du Réseau', defaultSubtitle: 'Gestion des agences franchisées', icon: 'Building2', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
   { match: (path) => path === '/hc-reseau/animateurs', pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs', defaultSubtitle: 'Équipe d\'animation réseau', icon: 'UserCog', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
   { match: (path) => path === '/hc-reseau/stats', pageKey: 'reseau_stats', defaultTitle: 'Statistiques Réseau', defaultSubtitle: 'KPI consolidés du réseau', icon: 'PieChart', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
   { match: (path) => path === '/hc-reseau/comparatifs', pageKey: 'reseau_comparatifs', defaultTitle: 'Comparatifs', defaultSubtitle: 'Comparaison entre agences', icon: 'GitCompare', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
   { match: (path) => path === '/hc-reseau/redevances', pageKey: 'reseau_redevances', defaultTitle: 'Redevances', defaultSubtitle: 'Calcul et suivi des redevances', icon: 'Calculator', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
+  { match: (path) => path === '/hc-reseau/parametres', pageKey: 'reseau_parametres', defaultTitle: 'Paramètres Réseau', defaultSubtitle: 'Configuration du réseau franchiseur', icon: 'Settings', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
   { match: (path) => path === '/hc-reseau', pageKey: 'reseau_index', defaultTitle: 'Réseau Franchiseur', defaultSubtitle: 'Pilotage du réseau HelpConfort', icon: 'Network', parentRoute: '/', parentLabel: 'Accueil' },
   
-  // Admin
+  // ============================================
+  // ADMINISTRATION
+  // ============================================
+  // Apogée Tickets (sous-pages spécifiques d'abord)
+  { match: (path) => path === '/admin/apogee-tickets/import', pageKey: 'admin_apogee_tickets_import', defaultTitle: 'Import Tickets', defaultSubtitle: 'Importer des tickets depuis Excel', icon: 'Upload', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
+  { match: (path) => path === '/admin/apogee-tickets/import-priorities', pageKey: 'admin_apogee_tickets_import_priorities', defaultTitle: 'Import Priorités', defaultSubtitle: 'Importer les priorités', icon: 'Upload', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
+  { match: (path) => path === '/admin/apogee-tickets/import-evaluated', pageKey: 'admin_apogee_tickets_import_evaluated', defaultTitle: 'Import Évalué', defaultSubtitle: 'Importer tickets évalués', icon: 'Upload', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
+  { match: (path) => path === '/admin/apogee-tickets/import-bugs', pageKey: 'admin_apogee_tickets_import_bugs', defaultTitle: 'Import Bugs', defaultSubtitle: 'Importer les bugs', icon: 'Bug', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
+  { match: (path) => path === '/admin/apogee-tickets/import-v1', pageKey: 'admin_apogee_tickets_import_v1', defaultTitle: 'Import V1', defaultSubtitle: 'Importer depuis V1', icon: 'Upload', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
+  { match: (path) => path === '/admin/apogee-tickets/incomplets', pageKey: 'admin_apogee_tickets_incomplete', defaultTitle: 'Tickets Incomplets', defaultSubtitle: 'Compléter les tickets', icon: 'AlertCircle', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
+  { match: (path) => path === '/admin/apogee-tickets/classifier', pageKey: 'admin_apogee_tickets_classify', defaultTitle: 'Classifier Tickets', defaultSubtitle: 'Affecter les tickets aux statuts', icon: 'Tags', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
+  { match: (path) => path === '/admin/apogee-tickets/review', pageKey: 'admin_apogee_tickets_review', defaultTitle: 'Review Tickets', defaultSubtitle: 'Réviser les tickets', icon: 'Eye', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
+  { match: (path) => path === '/admin/apogee-tickets/permissions', pageKey: 'admin_apogee_tickets_permissions', defaultTitle: 'Permissions Tickets', defaultSubtitle: 'Gérer les rôles et permissions', icon: 'Shield', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
+  { match: (path) => path === '/admin/apogee-tickets', pageKey: 'admin_apogee_tickets', defaultTitle: 'Ticketing Développement', defaultSubtitle: 'Suivi des évolutions et corrections Apogée', icon: 'ListTodo', parentRoute: '/admin', parentLabel: 'Admin' },
+  
+  // Autres pages Admin
   { match: (path) => path === '/admin/users', pageKey: 'admin_users', defaultTitle: 'Gestion Utilisateurs', defaultSubtitle: 'Comptes et permissions', icon: 'Users', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => /^\/admin\/agencies\/[^/]+$/.test(path), pageKey: 'admin_agency_profile', defaultTitle: 'Profil Agence', defaultSubtitle: 'Configuration de l\'agence', icon: 'Building', parentRoute: '/admin/agencies', parentLabel: 'Agences' },
   { match: (path) => path === '/admin/agencies', pageKey: 'admin_agencies', defaultTitle: 'Gestion Agences', defaultSubtitle: 'Configuration des agences', icon: 'Building', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/collaborateurs', pageKey: 'admin_collaborateurs', defaultTitle: 'Collaborateurs non-inscrits', defaultSubtitle: 'Collaborateurs sans compte utilisateur', icon: 'UserMinus', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/backup', pageKey: 'admin_backup', defaultTitle: 'Sauvegarde & Restauration', defaultSubtitle: 'Export et import des données', icon: 'Database', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/helpconfort-backup', pageKey: 'admin_helpconfort_backup', defaultTitle: 'Backup HelpConfort', defaultSubtitle: 'Sauvegarde base documentaire', icon: 'Database', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/cache-backup', pageKey: 'admin_cache_backup', defaultTitle: 'Cache Backup', defaultSubtitle: 'Gestion du cache local', icon: 'HardDrive', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/user-activity', pageKey: 'admin_user_activity', defaultTitle: 'Activité Utilisateurs', defaultSubtitle: 'Historique des connexions', icon: 'Activity', parentRoute: '/admin', parentLabel: 'Admin' },
-  { match: (path) => path === '/admin/support', pageKey: 'admin_support', defaultTitle: 'Console Support Admin', defaultSubtitle: 'Gestion avancée des tickets', icon: 'HeadphonesIcon', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/support-stats', pageKey: 'admin_support_stats', defaultTitle: 'Statistiques Support', defaultSubtitle: 'Métriques et performance du support', icon: 'BarChart3', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/escalation-history', pageKey: 'admin_escalation_history', defaultTitle: 'Historique Escalades', defaultSubtitle: 'Suivi des escalades de tickets', icon: 'ArrowUpCircle', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/storage-quota', pageKey: 'admin_storage_quota', defaultTitle: 'Stockage', defaultSubtitle: 'Surveillance des quotas', icon: 'HardDrive', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/page-metadata', pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu', icon: 'FileText', parentRoute: '/admin', parentLabel: 'Admin' },
-  { match: (path) => path.startsWith('/admin/apogee-tickets'), pageKey: 'admin_apogee_tickets', defaultTitle: 'TICKETING DEVELOPPEMENT', defaultSubtitle: 'Suivi des évolutions et corrections Apogée', icon: 'ListTodo', parentRoute: '/admin', parentLabel: 'Admin' },
-  { match: (path) => path === '/admin/system-health', pageKey: 'admin_system_health', defaultTitle: 'Santé Système', defaultSubtitle: 'Surveillance en temps réel des services', icon: 'Activity', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/apogee-guides', pageKey: 'admin_apogee_guides', defaultTitle: 'Guides Apogée (RAG)', defaultSubtitle: 'Édition des guides pour le chatbot', icon: 'BookOpen', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/chatbot-rag', pageKey: 'admin_chatbot_rag', defaultTitle: 'Chatbot RAG', defaultSubtitle: 'Gestion de la base de connaissances Mme MICHU', icon: 'Database', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/system-health', pageKey: 'admin_system_health', defaultTitle: 'Santé Système', defaultSubtitle: 'Surveillance en temps réel des services', icon: 'Activity', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin', pageKey: 'admin_index', defaultTitle: 'Administration', defaultSubtitle: 'Configuration du système', icon: 'Settings', parentRoute: '/', parentLabel: 'Accueil' },
   
-  // User pages
+  // ============================================
+  // USER PAGES
+  // ============================================
   { match: (path) => path === '/profile', pageKey: 'profile', defaultTitle: 'Mon Compte', defaultSubtitle: 'Gérez vos informations personnelles', icon: 'User', parentRoute: '/', parentLabel: 'Accueil' },
   { match: (path) => path === '/favorites', pageKey: 'favorites', defaultTitle: 'Mes Favoris', defaultSubtitle: 'Accès rapide à vos contenus favoris', icon: 'Star', parentRoute: '/', parentLabel: 'Accueil' },
   
-  // Home (pas de retour)
+  // ============================================
+  // HOME (pas de retour)
+  // ============================================
   { match: (path) => path === '/', pageKey: 'home', defaultTitle: 'Tableau de bord', icon: 'Home' },
 ];
 
