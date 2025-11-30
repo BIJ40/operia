@@ -102,7 +102,7 @@ import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
-import { SentryErrorBoundary } from "./components/SentryErrorBoundary";
+import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -294,10 +294,10 @@ function App() {
           <AuthProvider>
             <ImpersonationProvider>
               <EditorProvider>
-                <ApporteurEditorProvider>
-                  <SentryErrorBoundary>
+              <ApporteurEditorProvider>
+                  <GlobalErrorBoundary>
                     <AppContent />
-                  </SentryErrorBoundary>
+                  </GlobalErrorBoundary>
                   <Toaster />
                   <Sonner />
                 </ApporteurEditorProvider>
