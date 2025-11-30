@@ -544,6 +544,32 @@ export function Chatbot() {
         onCommentChange={setTicketComment}
         onConfirmClose={handleConfirmClose}
         onCancel={() => setShowCloseConfirm(false)}
+        onMinimize={() => {
+          // Just close the window without resolving - ticket stays active
+          setIsOpen(false);
+          setShowCloseConfirm(false);
+        }}
+        onConvertToTicket={activeTicket?.is_live_chat ? async () => {
+          // Convert live chat to formal ticket
+          if (!activeTicket) return;
+          const result = await safeMutation(
+            supabase
+              .from('support_tickets')
+              .update({
+                is_live_chat: false,
+                escalated_from_chat: true,
+                status: 'new',
+              })
+              .eq('id', activeTicket.id),
+            'CHATBOT_CONVERT_TO_TICKET'
+          );
+          if (result.success) {
+            setActiveTicket(null);
+            setSupportMessages([]);
+            setShowCloseConfirm(false);
+            setIsOpen(false);
+          }
+        } : undefined}
       />
     </>
   );
