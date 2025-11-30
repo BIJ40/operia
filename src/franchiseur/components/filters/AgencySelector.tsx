@@ -2,14 +2,6 @@ import { ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -19,9 +11,13 @@ import { useState } from "react";
 import { useFranchiseur } from "@/franchiseur/contexts/FranchiseurContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function AgencySelector() {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const { selectedAgencies, setSelectedAgencies, assignedAgencies, franchiseurRole } = useFranchiseur();
 
   const { data: allAgencies = [] } = useQuery({
@@ -43,12 +39,18 @@ export function AgencySelector() {
     ? allAgencies.filter(a => assignedAgencies.includes(a.id))
     : allAgencies;
 
-  const handleSelectAll = () => {
+  // Filter by search
+  const filteredAgencies = availableAgencies.filter(a =>
+    a.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleSelectAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setSelectedAgencies([]);
-    setOpen(false);
   };
 
-  const handleToggleAgency = (agencyId: string) => {
+  const handleToggleAgency = (agencyId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (selectedAgencies.includes(agencyId)) {
       setSelectedAgencies(selectedAgencies.filter(id => id !== agencyId));
     } else {
@@ -74,42 +76,68 @@ export function AgencySelector() {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[300px] justify-between border-l-4 border-l-helpconfort-blue"
+          className="w-[300px] justify-between border-l-4 border-l-helpconfort-blue bg-background hover:bg-muted"
         >
           {getDisplayText()}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0">
-        <Command>
-          <CommandInput placeholder="Rechercher une agence..." />
-          <CommandList>
-            <CommandEmpty>Aucune agence trouvée.</CommandEmpty>
-            <CommandGroup>
-              <CommandItem onSelect={handleSelectAll} className="flex items-center gap-2">
-                <Checkbox 
-                  checked={selectedAgencies.length === 0}
-                  className="pointer-events-none"
-                />
-                <span>Toutes les agences ({availableAgencies.length})</span>
-              </CommandItem>
-              {availableAgencies.map((agency) => (
-                <CommandItem
+      <PopoverContent className="w-[300px] p-0 bg-popover border border-border shadow-lg z-50" align="start">
+        <div className="p-2 border-b border-border">
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher une agence..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 h-9 bg-background"
+            />
+          </div>
+        </div>
+        <ScrollArea className="max-h-[300px]">
+          <div className="p-1">
+            {/* Select All Option */}
+            <div
+              onClick={handleSelectAll}
+              className={cn(
+                "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer transition-colors",
+                selectedAgencies.length === 0 
+                  ? "bg-helpconfort-blue/10 text-helpconfort-blue" 
+                  : "hover:bg-muted"
+              )}
+            >
+              <Checkbox 
+                checked={selectedAgencies.length === 0}
+                className="pointer-events-none border-helpconfort-blue data-[state=checked]:bg-helpconfort-blue data-[state=checked]:text-white"
+              />
+              <span className="text-sm font-medium">Toutes les agences ({availableAgencies.length})</span>
+            </div>
+
+            {/* Agency List */}
+            {filteredAgencies.length === 0 ? (
+              <p className="text-sm text-muted-foreground p-2 text-center">Aucune agence trouvée</p>
+            ) : (
+              filteredAgencies.map((agency) => (
+                <div
                   key={agency.id}
-                  value={agency.label}
-                  onSelect={() => handleToggleAgency(agency.id)}
-                  className="flex items-center gap-2"
+                  onClick={(e) => handleToggleAgency(agency.id, e)}
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer transition-colors",
+                    selectedAgencies.includes(agency.id) 
+                      ? "bg-helpconfort-blue/10 text-helpconfort-blue" 
+                      : "hover:bg-muted"
+                  )}
                 >
                   <Checkbox 
                     checked={selectedAgencies.includes(agency.id)}
-                    className="pointer-events-none"
+                    className="pointer-events-none border-helpconfort-blue data-[state=checked]:bg-helpconfort-blue data-[state=checked]:text-white"
                   />
-                  <span>{agency.label}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
+                  <span className="text-sm">{agency.label}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </ScrollArea>
       </PopoverContent>
     </Popover>
   );
