@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/react";
+import { logWarn, logInfo } from "@/lib/logger";
 
 // Sentry DSN - safe to expose in frontend code
 const SENTRY_DSN = "https://e1979a94b181809d1377b522ee77e214@o4510453309571072.ingest.de.sentry.io/4510453328183376";
@@ -14,7 +15,7 @@ function getEnvironment(): string {
 // Initialize Sentry
 export function initSentry() {
   if (!SENTRY_DSN) {
-    console.warn("[Sentry] DSN not configured - error tracking disabled");
+    logWarn('SENTRY', 'DSN not configured - error tracking disabled');
     return;
   }
 
@@ -59,7 +60,7 @@ export function initSentry() {
     sampleRate: 1.0,
   });
 
-  console.info(`[Sentry] Initialized for ${getEnvironment()}`);
+  logInfo('SENTRY', `Initialized for ${getEnvironment()}`);
 }
 
 // Set user context when authenticated

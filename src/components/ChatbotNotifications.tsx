@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { logError } from '@/lib/logger';
 
 export function ChatbotNotifications() {
   const [pendingCount, setPendingCount] = useState(0);
@@ -46,7 +47,7 @@ export function ChatbotNotifications() {
       if (error) throw error;
       setPendingCount(count || 0);
     } catch (error) {
-      console.error('Erreur chargement compteur:', error);
+      logError('CHATBOT', 'Erreur chargement compteur:', error);
     }
   };
 

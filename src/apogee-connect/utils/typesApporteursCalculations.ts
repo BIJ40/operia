@@ -1,5 +1,6 @@
 import { parseISO, isWithinInterval } from "date-fns";
 import { isApporteur } from "./dashboardCalculations";
+import { logDebug } from "@/lib/logger";
 
 export interface TypeApporteurStats {
   type: string;
@@ -90,7 +91,7 @@ export const calculateTypesApporteursStats = (
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
   if (apporteursMap.size === 0) {
-    console.log("⚠️ Aucun apporteur trouvé");
+    logDebug('TYPES_APPORTEURS', 'Aucun apporteur trouvé');
     return [];
   }
   

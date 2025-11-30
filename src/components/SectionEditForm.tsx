@@ -5,6 +5,7 @@ import { RichTextEditor } from '@/components/RichTextEditor';
 import { ColorPreset } from '@/types/block';
 import { useState, useEffect } from 'react';
 import { Save, X, Clock, Sparkles, Check, RefreshCw, Ban } from 'lucide-react';
+import { logWarn } from '@/lib/logger';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -131,7 +132,7 @@ export function SectionEditForm({
       sessionStorage.setItem(`${storageKey}-title`, title);
     } catch (e) {
       // Silently fail if quota exceeded
-      console.warn('Unable to save draft to sessionStorage:', e);
+      logWarn('EDITOR', 'Unable to save draft to sessionStorage:', e);
     }
   }, [title, storageKey]);
 
@@ -140,7 +141,7 @@ export function SectionEditForm({
       sessionStorage.setItem(`${storageKey}-content`, content);
     } catch (e) {
       // Silently fail if quota exceeded
-      console.warn('Unable to save draft to sessionStorage:', e);
+      logWarn('EDITOR', 'Unable to save draft to sessionStorage:', e);
     }
   }, [content, storageKey]);
 
@@ -149,7 +150,7 @@ export function SectionEditForm({
       sessionStorage.setItem(`${storageKey}-color`, color);
     } catch (e) {
       // Silently fail if quota exceeded
-      console.warn('Unable to save draft to sessionStorage:', e);
+      logWarn('EDITOR', 'Unable to save draft to sessionStorage:', e);
     }
   }, [color, storageKey]);
 
@@ -158,7 +159,7 @@ export function SectionEditForm({
       sessionStorage.setItem(`${storageKey}-summary`, summary);
     } catch (e) {
       // Silently fail if quota exceeded
-      console.warn('Unable to save draft to sessionStorage:', e);
+      logWarn('EDITOR', 'Unable to save draft to sessionStorage:', e);
     }
   }, [summary, storageKey]);
 
@@ -167,7 +168,7 @@ export function SectionEditForm({
       sessionStorage.setItem(`${storageKey}-showSummary`, showSummary.toString());
     } catch (e) {
       // Silently fail if quota exceeded
-      console.warn('Unable to save draft to sessionStorage:', e);
+      logWarn('EDITOR', 'Unable to save draft to sessionStorage:', e);
     }
   }, [showSummary, storageKey]);
 
@@ -176,7 +177,7 @@ export function SectionEditForm({
       sessionStorage.setItem(`${storageKey}-hideTitle`, hideTitle.toString());
     } catch (e) {
       // Silently fail if quota exceeded
-      console.warn('Unable to save draft to sessionStorage:', e);
+      logWarn('EDITOR', 'Unable to save draft to sessionStorage:', e);
     }
   }, [hideTitle, storageKey]);
 
@@ -185,7 +186,7 @@ export function SectionEditForm({
       sessionStorage.setItem(`${storageKey}-hideFromSidebar`, hideFromSidebar.toString());
     } catch (e) {
       // Silently fail if quota exceeded
-      console.warn('Unable to save draft to sessionStorage:', e);
+      logWarn('EDITOR', 'Unable to save draft to sessionStorage:', e);
     }
   }, [hideFromSidebar, storageKey]);
 

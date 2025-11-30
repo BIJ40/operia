@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Upload, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logError } from '@/lib/logger';
 
 const supabaseAny = supabase as any;
 
@@ -78,7 +79,7 @@ export const ImageUploader = ({
         description: 'Image téléchargée avec succès',
       });
     } catch (error) {
-      console.error('Error uploading image:', error);
+      logError('IMAGE_UPLOADER', 'Error uploading image:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de télécharger l\'image',

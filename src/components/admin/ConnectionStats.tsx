@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { logError } from '@/lib/logger';
 import { Clock, TrendingUp, Calendar, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -105,7 +106,7 @@ export function ConnectionStats({ userId }: ConnectionStatsProps) {
 
       setStats(enrichedStats);
     } catch (error) {
-      console.error('Erreur chargement stats:', error);
+      logError('CONNECTION_STATS', 'Erreur chargement stats:', error);
     } finally {
       setLoading(false);
     }

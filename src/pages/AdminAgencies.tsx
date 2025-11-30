@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { logError } from '@/lib/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -91,7 +92,7 @@ export default function AdminAgencies() {
       setAgencies(agenciesResult.data || []);
       setUsers(usersResult.data || []);
     } catch (error) {
-      console.error('Error loading data:', error);
+      logError('ADMIN_AGENCIES', 'Error loading data:', error);
       toast({
         title: 'Erreur',
         description: 'Erreur lors du chargement des données',
@@ -164,7 +165,7 @@ export default function AdminAgencies() {
       closeDialog();
       loadData();
     } catch (error) {
-      console.error('Error saving agency:', error);
+      logError('ADMIN_AGENCIES', 'Error saving agency:', error);
       toast({
         title: 'Erreur',
         description: "Erreur lors de l'enregistrement",
@@ -185,7 +186,7 @@ export default function AdminAgencies() {
       toast({ title: 'Agence supprimée avec succès' });
       loadData();
     } catch (error) {
-      console.error('Error deleting agency:', error);
+      logError('ADMIN_AGENCIES', 'Error deleting agency:', error);
       toast({
         title: 'Erreur',
         description: 'Erreur lors de la suppression',
@@ -205,7 +206,7 @@ export default function AdminAgencies() {
       toast({ title: 'Utilisateur assigné avec succès' });
       loadData();
     } catch (error) {
-      console.error('Error assigning user:', error);
+      logError('ADMIN_AGENCIES', 'Error assigning user:', error);
       toast({
         title: 'Erreur',
         description: "Erreur lors de l'assignation",

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Building2, Save, X } from "lucide-react";
+import { logError } from "@/lib/logger";
 import {
   Dialog,
   DialogContent,
@@ -149,7 +150,7 @@ export function AgencyProfileDialog({
       queryClient.invalidateQueries({ queryKey: ['franchiseur-agency-assignments'] });
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error saving agency:', error);
+      logError('FRANCHISEUR', 'Error saving agency:', error);
       toast.error(error.message || "Erreur lors de l'enregistrement");
     } finally {
       setIsSaving(false);

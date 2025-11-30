@@ -699,7 +699,7 @@ export const calculateNbMoyenVisitesParIntervention = (
   
   // Si aucune intervention avec visite → retour 0 (évite NaN)
   if (interventionsAvecVisites.length === 0) {
-    console.log("  ⚠️ Aucune intervention avec visite → retour 0");
+    logDebug('DASHBOARD_CALC', 'Aucune intervention avec visite → retour 0');
     return {
       nbMoyen: 0,
       totalVisites: 0,
@@ -714,7 +714,7 @@ export const calculateNbMoyenVisitesParIntervention = (
   // Arrondi à 2 décimales
   const nbMoyen = Number(nbMoyenVisites.toFixed(2));
   
-  console.log("📊 KPI 11 - Nb Moyen Visites/RDV:", {
+  logDebug('DASHBOARD_CALC', 'KPI 11 - Nb Moyen Visites/RDV:', {
     nbMoyen,
     totalVisites,
     nbInterventions: interventionsAvecVisites.length
@@ -775,7 +775,7 @@ export const calculateTauxDossiersMultiUnivers = (
     ? (projetsMultiUnivers / projetsAvecUnivers) * 100
     : 0;
   
-  console.log("📊 KPI 12 - Taux Multi-Univers:", {
+  logDebug('DASHBOARD_CALC', 'KPI 12 - Taux Multi-Univers:', {
     tauxMultiUnivers: Math.round(tauxMultiUnivers * 10) / 10,
     projetsMultiUnivers,
     projetsAvecUnivers
@@ -864,7 +864,7 @@ export const calculateTauxDossiersSansDevis = (
     ? (nbSansDevis / nbFactures) * 100
     : 0;
   
-  console.log("📊 KPI 13 - Taux Sans Devis:", {
+  logDebug('DASHBOARD_CALC', 'KPI 13 - Taux Sans Devis:', {
     tauxSansDevis: Math.round(tauxSansDevis * 10) / 10,
     nbSansDevis,
     nbFactures,
@@ -942,7 +942,7 @@ export const calculateTauxDossiersMultiTechniciens = (
 
   const tauxMultiTech = Number(tauxMultiTechniciens.toFixed(2));
   
-  console.log("📊 KPI 14 - Taux Multi-Techniciens:", {
+  logDebug('DASHBOARD_CALC', 'KPI 14 - Taux Multi-Techniciens:', {
     tauxMultiTech,
     projetsMultiTech: projetsMultiTech.length,
     projetsAvecTech: projetsAvecTech.length,
@@ -1065,7 +1065,7 @@ export const calculatePolyvalenceTechniciens = (
 
   // 7) Polyvalence moyenne globale
   if (resultParTech.length === 0) {
-    console.log("📊 KPI 15 - Polyvalence Techniciens:", {
+    logDebug('DASHBOARD_CALC', 'KPI 15 - Polyvalence Techniciens:', {
       polyvalenceMoyenne: 0,
       nbTechniciens: 0,
       top5: []
@@ -1081,7 +1081,7 @@ export const calculatePolyvalenceTechniciens = (
   const sommeUnivers = resultParTech.reduce((acc, t) => acc + t.nbUnivers, 0);
   const polyvalenceMoyenne = sommeUnivers / resultParTech.length;
 
-  console.log("📊 KPI 15 - Polyvalence Techniciens:", {
+  logDebug('DASHBOARD_CALC', 'KPI 15 - Polyvalence Techniciens:', {
     polyvalenceMoyenne: Number(polyvalenceMoyenne.toFixed(2)),
     nbTechniciens: resultParTech.length,
     top5: resultParTech.slice(0, 5)
@@ -1108,7 +1108,7 @@ export const calculatePanierMoyen = (
   let facturesRejected = 0;
   let facturesAccepted = 0;
 
-  console.log("🛒 Panier Moyen - START", {
+  logDebug('DASHBOARD_CALC', 'Panier Moyen - START', {
     totalFactures: factures.length,
     dateRange: dateRange ? {
       start: dateRange.start.toISOString(),
@@ -1134,7 +1134,7 @@ export const calculatePanierMoyen = (
         if (isNaN(factureDate.getTime())) {
           facturesRejected++;
           if (facturesRejected <= 3) {
-            console.log("🛒 Facture REJETÉE (date parse failed):", { 
+            logDebug('DASHBOARD_CALC', 'Facture REJETÉE (date parse failed):', { 
               dateEmission, 
               ref: facture.reference || facture.numeroFacture 
             });
@@ -1145,7 +1145,7 @@ export const calculatePanierMoyen = (
         if (!isWithinInterval(factureDate, dateRange)) {
           facturesRejected++;
           if (facturesRejected <= 3) {
-            console.log("🛒 Facture REJETÉE (hors période):", { 
+            logDebug('DASHBOARD_CALC', 'Facture REJETÉE (hors période):', { 
               dateEmission,
               factureDate: factureDate.toISOString(),
               dateRangeStart: dateRange.start.toISOString(),
@@ -1160,7 +1160,7 @@ export const calculatePanierMoyen = (
       } catch (error) {
         facturesRejected++;
         if (facturesRejected <= 3) {
-          console.log("🛒 Facture REJETÉE (exception):", { 
+          logDebug('DASHBOARD_CALC', 'Facture REJETÉE (exception):', { 
             dateEmission, 
             error: String(error),
             ref: facture.reference || facture.numeroFacture 
@@ -1202,7 +1202,7 @@ export const calculatePanierMoyen = (
   const nbDossiers = projectsFactures.size;
   const panierMoyen = nbDossiers > 0 ? caTotal / nbDossiers : 0;
 
-  console.log("🛒 Panier Moyen - RESULT:", {
+  logDebug('DASHBOARD_CALC', 'Panier Moyen - RESULT:', {
     panierMoyen: Math.round(panierMoyen * 100) / 100,
     caTotal: Math.round(caTotal * 100) / 100,
     nbDossiers,
@@ -1346,10 +1346,10 @@ export function calculateDelaiMoyenDossierPremierDevis(
     if (delay !== null) deltas.push(delay);
   }
 
-  console.log("📊 KPI 16 - Projets analysés:", projects.length);
-  console.log("📊 KPI 16 - Projets avec délai calculé:", deltas.length);
+  logDebug('DASHBOARD_CALC', 'KPI 16 - Projets analysés:', projects.length);
+  logDebug('DASHBOARD_CALC', 'KPI 16 - Projets avec délai calculé:', deltas.length);
   if (deltas.length > 0) {
-    console.log("📊 KPI 16 - Exemples de délais:", deltas.slice(0, 5).map(d => d.toFixed(1)));
+    logDebug('DASHBOARD_CALC', 'KPI 16 - Exemples de délais:', deltas.slice(0, 5).map(d => d.toFixed(1)));
   }
 
   if (deltas.length === 0) {
