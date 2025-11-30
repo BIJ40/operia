@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEditor } from '@/contexts/EditorContext';
-import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupportTicket } from '@/hooks/use-support-ticket';
 import type { ChatContext } from '@/components/chatbot/ChatContextSelector';
 import { getApogeeContext, getNoContentResponse } from '@/lib/rag-michu';
+import { safeQuery, safeMutation, safeInvoke } from '@/lib/safeQuery';
+import { errorToast, successToast } from '@/lib/toastHelpers';
 
 // Custom hook for chatbot functionality
 
@@ -19,7 +20,6 @@ type Message = {
 export const useChatbot = () => {
   const { user } = useAuth();
   const { blocks } = useEditor();
-  const { toast } = useToast();
   const navigate = useNavigate();
   const { createSupportTicket, isCreating } = useSupportTicket();
 
@@ -194,74 +194,72 @@ export const useChatbot = () => {
       };
     }
     
-    // For other contexts, use generic search
-    try {
-      const sourceMap: Record<ChatContext, string | null> = {
-        'apogee': 'apogee',
-        'apporteurs': null,
-        'helpconfort': null,
-        'autre': null,
-      };
-      
-      const source = sourceMap[context];
-      
-      const { data, error } = await supabase.functions.invoke('search-embeddings', {
+    // For other contexts, use generic search via Edge Function
+    const sourceMap: Record<ChatContext, string | null> = {
+      'apogee': 'apogee',
+      'apporteurs': null,
+      'helpconfort': null,
+      'autre': null,
+    };
+    
+    const source = sourceMap[context];
+    
+    const result = await safeInvoke<{ results: any[] }>(
+      supabase.functions.invoke('search-embeddings', {
         body: { 
           query: contextualQuery, 
           topK: 15,
           source: source
         },
-      });
+      }),
+      'CHAT_SEARCH_EMBEDDINGS'
+    );
 
-      if (error) throw new Error('Search failed');
-
-      const results = data?.results;
-      if (!results || results.length === 0) {
-        return { content: '', hasContent: false };
-      }
-
-      const content = results
-        .map((result: any, idx: number) => {
-          const metadata = result.metadata as Record<string, any> | null;
-          const prefix = metadata?.categorie && metadata?.section 
-            ? `[Catégorie: ${metadata.categorie} - Section: ${metadata.section}]\n`
-            : '';
-          return `[${idx + 1}] ${result.block_title}\n${prefix}${result.chunk_text}`;
-        })
-        .join('\n\n---\n\n');
-        
-      return { content, hasContent: true };
-    } catch (error) {
-      console.error('Search error:', error);
+    if (!result.success) {
+      errorToast(result.error!);
       return { content: '', hasContent: false };
     }
+
+    const results = result.data?.results;
+    if (!results || results.length === 0) {
+      return { content: '', hasContent: false };
+    }
+
+    const content = results
+      .map((item: any, idx: number) => {
+        const metadata = item.metadata as Record<string, any> | null;
+        const prefix = metadata?.categorie && metadata?.section 
+          ? `[Catégorie: ${metadata.categorie} - Section: ${metadata.section}]\n`
+          : '';
+        return `[${idx + 1}] ${item.block_title}\n${prefix}${item.chunk_text}`;
+      })
+      .join('\n\n---\n\n');
+      
+    return { content, hasContent: true };
   };
 
   // Send message
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
-    // Support mode
+    // Support mode - send message to existing ticket
     if (activeTicket) {
-      try {
-        const { error } = await supabase.from('support_messages').insert({
+      const mutationResult = await safeMutation(
+        supabase.from('support_messages').insert({
           ticket_id: activeTicket.id,
           sender_id: user!.id,
           message: input.trim(),
           is_from_support: false,
-        } as any);
+        } as any),
+        'CHAT_SUPPORT_MESSAGE_CREATE'
+      );
 
-        if (error) throw error;
-        setInput('');
-      } catch (error) {
-        console.error('Error sending support message:', error);
-        toast({
-          title: 'Erreur',
-          description: "Impossible d'envoyer le message",
-          variant: 'destructive',
-          duration: 4000,
-        });
+      if (!mutationResult.success) {
+        errorToast(mutationResult.error!);
+        return;
       }
+
+      setInput('');
       return;
     }
 
@@ -282,17 +280,22 @@ export const useChatbot = () => {
         return;
       }
 
+      // Get user name for AI context
       let userName = 'Utilisateur';
       if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('id', user.id)
-          .single();
+        const profileResult = await safeQuery<{ first_name: string | null; last_name: string | null }>(
+          supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', user.id)
+            .maybeSingle(),
+          'CHAT_PROFILE_LOAD'
+        );
         
-        if (profile?.first_name) {
-          userName = profile.first_name;
+        if (profileResult.success && profileResult.data?.first_name) {
+          userName = profileResult.data.first_name;
         }
+        // On error, keep default userName = 'Utilisateur' (no toast needed, non-critical)
       }
 
       // Get user's session token for authenticated edge function call
@@ -300,9 +303,12 @@ export const useChatbot = () => {
       const token = session?.access_token;
       
       if (!token) {
-        throw new Error('Utilisateur non authentifié');
+        errorToast('Utilisateur non authentifié');
+        setIsLoading(false);
+        return;
       }
 
+      // SSE streaming call - kept in try/catch (not safeInvoke)
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-guide`,
         {
@@ -325,12 +331,7 @@ export const useChatbot = () => {
       if (!response.ok || !response.body) {
         if (response.status === 429 || response.status === 402) {
           const error = await response.json();
-          toast({
-            title: 'Erreur',
-            description: error.error,
-            variant: 'destructive',
-            duration: 4000,
-          });
+          errorToast(error.error || 'Limite de requêtes atteinte');
           setIsLoading(false);
           return;
         }
@@ -384,12 +385,7 @@ export const useChatbot = () => {
       }
     } catch (error) {
       console.error('Chat error:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de se connecter au chatbot',
-        variant: 'destructive',
-        duration: 4000,
-      });
+      errorToast('Impossible de se connecter au chatbot');
     } finally {
       setIsLoading(false);
     }
@@ -489,26 +485,35 @@ export const useChatbot = () => {
   const createTicketFromChat = async (category: string, subject: string, description: string) => {
     if (!user) return;
 
-    try {
-      const { data: profile } = await supabase
+    // Step 1: Load profile
+    const profileResult = await safeQuery<{ first_name: string | null; last_name: string | null; agence: string | null }>(
+      supabase
         .from('profiles')
         .select('first_name, last_name, agence')
         .eq('id', user.id)
-        .single();
+        .maybeSingle(),
+      'CHAT_PROFILE_LOAD_FOR_TICKET'
+    );
 
-      const userName = profile?.first_name
-        ? `${profile.first_name} ${profile.last_name || ''}`.trim()
-        : 'Utilisateur';
+    if (!profileResult.success) {
+      errorToast(profileResult.error!);
+      return;
+    }
 
-      // Create ticket with source='chat' and escalated_from_chat=true
-      // Utiliser le nouveau statut 'new' au lieu de 'waiting'
-      const { data: ticket, error: ticketError } = await supabase
+    const profile = profileResult.data;
+    const userName = profile?.first_name
+      ? `${profile.first_name} ${profile.last_name || ''}`.trim()
+      : 'Utilisateur';
+
+    // Step 2: Create ticket
+    const ticketResult = await safeMutation<{ id: string }>(
+      supabase
         .from('support_tickets')
         .insert({
           user_id: user.id,
           subject,
           category,
-          status: 'new', // Nouveau statut initial
+          status: 'new',
           priority: 'normal',
           source: 'chat',
           agency_slug: profile?.agence || null,
@@ -516,25 +521,39 @@ export const useChatbot = () => {
           is_live_chat: false,
           escalated_from_chat: true,
           chatbot_conversation: JSON.stringify(messages),
-          support_level: 1, // Niveau initial N1
+          support_level: 1,
         } as any)
         .select()
-        .single();
+        .single(),
+      'CHAT_TICKET_CREATE'
+    );
 
-      if (ticketError) throw ticketError;
+    if (!ticketResult.success) {
+      errorToast(ticketResult.error!);
+      return;
+    }
 
-      // Create initial message with description
-      const { error: msgError } = await supabase.from('support_messages').insert({
+    const ticket = ticketResult.data!;
+
+    // Step 3: Create initial message
+    const messageResult = await safeMutation(
+      supabase.from('support_messages').insert({
         ticket_id: ticket.id,
         sender_id: user.id,
         message: description,
         is_from_support: false,
-      } as any);
+      } as any),
+      'CHAT_TICKET_INITIAL_MESSAGE'
+    );
 
-      if (msgError) throw msgError;
+    if (!messageResult.success) {
+      errorToast(messageResult.error!);
+      return;
+    }
 
-      // Notify support
-      await supabase.functions.invoke('notify-support-ticket', {
+    // Step 4: Notify support (non-blocking, but log errors)
+    const notifyResult = await safeInvoke(
+      supabase.functions.invoke('notify-support-ticket', {
         body: {
           ticketId: ticket.id,
           userName,
@@ -543,29 +562,23 @@ export const useChatbot = () => {
           category,
           source: 'chat',
         },
-      });
+      }),
+      'CHAT_NOTIFY_SUPPORT_TICKET'
+    );
 
-      toast({
-        title: 'Ticket créé',
-        description: 'Votre demande a été transmise au support. Vous serez recontacté.',
-        duration: 3000,
-      });
-
-      // Close chat and reset
-      setIsOpen(false);
-      setShowTicketCreation(false);
-      setShowChoiceMode(true);
-      setMessages([]);
-      setActiveTicket(null);
-    } catch (error) {
-      console.error('Error creating ticket from chat:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de créer le ticket',
-        variant: 'destructive',
-        duration: 3000,
-      });
+    if (!notifyResult.success) {
+      // Log but don't block - ticket is created
+      console.error('[CHAT] Notification support failed:', notifyResult.error);
     }
+
+    successToast('Votre demande a été transmise au support. Vous serez recontacté.');
+
+    // Close chat and reset
+    setIsOpen(false);
+    setShowTicketCreation(false);
+    setShowChoiceMode(true);
+    setMessages([]);
+    setActiveTicket(null);
   };
 
   return {
