@@ -73,7 +73,7 @@ export function AgencySelector() {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[300px] justify-between border-l-4 border-l-accent"
+          className="w-[300px] justify-between border-l-4 border-l-helpconfort-blue"
         >
           {getDisplayText()}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
