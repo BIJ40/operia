@@ -510,6 +510,47 @@ export type Database = {
           },
         ]
       }
+      apogee_ticket_history: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          new_value: string | null
+          old_value: string | null
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apogee_ticket_history_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apogee_ticket_statuses: {
         Row: {
           color: string | null
@@ -534,6 +575,69 @@ export type Database = {
           id?: string
           is_final?: boolean
           label?: string
+        }
+        Relationships: []
+      }
+      apogee_ticket_transitions: {
+        Row: {
+          allowed_role: Database["public"]["Enums"]["apogee_ticket_role"]
+          created_at: string
+          from_status: string
+          id: string
+          to_status: string
+        }
+        Insert: {
+          allowed_role: Database["public"]["Enums"]["apogee_ticket_role"]
+          created_at?: string
+          from_status: string
+          id?: string
+          to_status: string
+        }
+        Update: {
+          allowed_role?: Database["public"]["Enums"]["apogee_ticket_role"]
+          created_at?: string
+          from_status?: string
+          id?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apogee_ticket_transitions_from_status_fkey"
+            columns: ["from_status"]
+            isOneToOne: false
+            referencedRelation: "apogee_ticket_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apogee_ticket_transitions_to_status_fkey"
+            columns: ["to_status"]
+            isOneToOne: false
+            referencedRelation: "apogee_ticket_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apogee_ticket_user_roles: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          ticket_role: Database["public"]["Enums"]["apogee_ticket_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ticket_role: Database["public"]["Enums"]["apogee_ticket_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ticket_role?: Database["public"]["Enums"]["apogee_ticket_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -1837,10 +1941,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_transition_ticket: {
+        Args: { _from_status: string; _to_status: string; _user_id: string }
+        Returns: boolean
+      }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
       get_user_global_role_level: {
         Args: { _user_id: string }
         Returns: number
+      }
+      get_user_ticket_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["apogee_ticket_role"]
       }
       has_franchiseur_access: { Args: { _user_id: string }; Returns: boolean }
       has_franchiseur_role: {
@@ -1858,6 +1970,7 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      apogee_ticket_role: "developer" | "tester" | "franchiseur"
       collaborator_role:
         | "dirigeant"
         | "assistant"
@@ -2004,6 +2117,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      apogee_ticket_role: ["developer", "tester", "franchiseur"],
       collaborator_role: [
         "dirigeant",
         "assistant",

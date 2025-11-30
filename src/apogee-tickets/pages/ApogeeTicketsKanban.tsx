@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, EyeOff } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, EyeOff, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
@@ -202,9 +202,17 @@ export default function ApogeeTicketsKanban() {
             </TooltipContent>
           </Tooltip>
           {isAdmin && (
-            <Button variant="ghost" size="icon" onClick={() => setShowConfigDialog(true)}>
-              <Settings className="h-4 w-4" />
-            </Button>
+            <>
+              <Link to={ROUTES.admin.apogeeTicketsPermissions}>
+                <Button variant="outline" size="sm">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Permissions
+                </Button>
+              </Link>
+              <Button variant="ghost" size="icon" onClick={() => setShowConfigDialog(true)}>
+                <Settings className="h-4 w-4" />
+              </Button>
+            </>
           )}
         </div>
       </div>

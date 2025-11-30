@@ -1,5 +1,5 @@
 /**
- * Vue Kanban des tickets Apogée - Drag and drop corrigé
+ * Vue Kanban des tickets Apogée - Drag and drop avec permissions
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -20,8 +20,10 @@ import { useDraggable } from '@dnd-kit/core';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, Clock, GripVertical } from 'lucide-react';
+import { MessageSquare, Clock, GripVertical, Lock } from 'lucide-react';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
+import { toast } from 'sonner';
+import { useCanTransition, useLogTicketAction } from '../hooks/useTicketPermissions';
 import type { ApogeeTicket, ApogeeTicketStatus, ApogeeModule, ApogeeOwnerSide } from '../types';
 
 interface TicketKanbanProps {
@@ -259,6 +261,8 @@ function DroppableColumn({
 
 export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusChange, onTicketClick, columnWidth = 288, onColumnWidthChange }: TicketKanbanProps) {
   const [activeTicket, setActiveTicket] = useState<ApogeeTicket | null>(null);
+  const canTransition = useCanTransition();
+  const logAction = useLogTicketAction();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -293,6 +297,22 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
 
     const ticket = tickets.find((t) => t.id === ticketId);
     if (ticket && ticket.kanban_status !== newStatus) {
+      // Vérifier si l'utilisateur peut faire cette transition
+      const canMove = canTransition(ticket.kanban_status, newStatus);
+      
+      if (!canMove) {
+        toast.error('Vous n\'êtes pas autorisé à effectuer ce déplacement');
+        return;
+      }
+      
+      // Logger l'action avant le changement
+      logAction.mutate({
+        ticketId,
+        actionType: 'status_change',
+        oldValue: ticket.kanban_status,
+        newValue: newStatus,
+      });
+      
       onStatusChange(ticketId, newStatus);
     }
   };
