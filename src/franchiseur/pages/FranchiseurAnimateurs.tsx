@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useAnimators } from '../hooks/useAnimators';
 import { useFranchiseur } from '../contexts/FranchiseurContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,8 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ManageAgencyAssignmentsDialog } from '@/components/admin/franchiseur/ManageAgencyAssignmentsDialog';
-import { Users, Building2, MapPin, ChevronRight, Settings } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Users, Building2, MapPin, ChevronRight, Settings, Calendar, Eye } from 'lucide-react';
+import { ROUTES } from '@/config/routes';
 
 const ROLE_LABELS: Record<string, string> = {
   animateur: 'Animateur réseau',
@@ -25,8 +27,9 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export default function FranchiseurAnimateurs() {
-  const { permissions } = useFranchiseur();
-  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user, globalRole } = useAuth();
+  const { permissions, franchiseurRole } = useFranchiseur();
   const queryClient = useQueryClient();
   const [selectedAnimatorId, setSelectedAnimatorId] = useState<string | null>(null);
   
@@ -54,13 +57,31 @@ export default function FranchiseurAnimateurs() {
     return acc;
   }, {} as Record<string, typeof allAssignments>);
 
-  // Filter only animateurs (not directeurs or DG)
+  // Filter animateurs and directeurs
   const animateursOnly = animators?.filter(a => a.franchiseur_role === 'animateur') || [];
   const directeursAndDG = animators?.filter(a => a.franchiseur_role !== 'animateur') || [];
 
-  const canManage = permissions.canAssignAnimators;
+  // Check permissions
+  const canManageAssignments = permissions.canAssignAnimators;
+  const isN4Plus = franchiseurRole === 'directeur' || franchiseurRole === 'dg' || 
+    (globalRole && ['platform_admin', 'superadmin'].includes(globalRole));
 
-  const handleOpenAssignments = (animatorId: string) => {
+  // Determine if user can click on an animator tile
+  const canClickAnimator = (animatorId: string) => {
+    // N4+ can click all tiles
+    if (isN4Plus) return true;
+    // N3 can only click their own tile
+    return user?.id === animatorId;
+  };
+
+  const handleAnimatorClick = (animatorId: string) => {
+    if (canClickAnimator(animatorId)) {
+      navigate(ROUTES.reseau.animateurProfile(animatorId));
+    }
+  };
+
+  const handleOpenAssignments = (e: React.MouseEvent, animatorId: string) => {
+    e.stopPropagation();
     setSelectedAnimatorId(animatorId);
   };
 
@@ -92,7 +113,10 @@ export default function FranchiseurAnimateurs() {
           Gestion des Animateurs
         </h1>
         <p className="text-muted-foreground mt-2">
-          Assignez des agences spécifiques aux animateurs réseau
+          {isN4Plus 
+            ? 'Assignez des agences et consultez les profils des animateurs réseau'
+            : 'Accédez à votre espace animateur pour gérer vos visites'
+          }
         </p>
       </div>
 
@@ -162,9 +186,19 @@ export default function FranchiseurAnimateurs() {
             {animateursOnly.map((animator) => {
               const assignments = assignmentsByUser?.[animator.id] || [];
               const initials = `${animator.first_name?.[0] || ''}${animator.last_name?.[0] || ''}`.toUpperCase();
+              const isClickable = canClickAnimator(animator.id);
+              const isOwnProfile = user?.id === animator.id;
               
               return (
-                <Card key={animator.id} className="rounded-2xl hover:shadow-lg transition-shadow">
+                <Card 
+                  key={animator.id} 
+                  className={`rounded-2xl transition-all ${
+                    isClickable 
+                      ? 'hover:shadow-lg cursor-pointer hover:border-primary/50' 
+                      : 'opacity-75'
+                  } ${isOwnProfile ? 'ring-2 ring-primary/30' : ''}`}
+                  onClick={() => isClickable && handleAnimatorClick(animator.id)}
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -174,12 +208,18 @@ export default function FranchiseurAnimateurs() {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <CardTitle className="text-base">
+                          <CardTitle className="text-base flex items-center gap-2">
                             {animator.first_name} {animator.last_name}
+                            {isOwnProfile && (
+                              <Badge variant="secondary" className="text-xs">Vous</Badge>
+                            )}
                           </CardTitle>
                           <p className="text-sm text-muted-foreground">{animator.email}</p>
                         </div>
                       </div>
+                      {isClickable && (
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -227,17 +267,31 @@ export default function FranchiseurAnimateurs() {
                       )}
                     </div>
                     
-                    {canManage && (
-                      <Button 
-                        variant="outline" 
-                        className="w-full rounded-xl"
-                        onClick={() => handleOpenAssignments(animator.id)}
-                      >
-                        <Settings className="h-4 w-4 mr-2" />
-                        Gérer les agences
-                        <ChevronRight className="h-4 w-4 ml-auto" />
-                      </Button>
-                    )}
+                    <div className="flex gap-2">
+                      {isClickable && (
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 rounded-xl"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAnimatorClick(animator.id);
+                          }}
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          {isOwnProfile ? 'Mon espace' : 'Voir profil'}
+                        </Button>
+                      )}
+                      {canManageAssignments && (
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          className="rounded-xl"
+                          onClick={(e) => handleOpenAssignments(e, animator.id)}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -246,7 +300,7 @@ export default function FranchiseurAnimateurs() {
         )}
       </div>
 
-      {/* Directeurs & DG list (read-only) */}
+      {/* Directeurs & DG list */}
       {directeursAndDG.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -258,9 +312,17 @@ export default function FranchiseurAnimateurs() {
             {directeursAndDG.map((director) => {
               const assignments = assignmentsByUser?.[director.id] || [];
               const initials = `${director.first_name?.[0] || ''}${director.last_name?.[0] || ''}`.toUpperCase();
+              const isOwnProfile = user?.id === director.id;
+              const isClickable = isN4Plus;
               
               return (
-                <Card key={director.id} className="rounded-2xl">
+                <Card 
+                  key={director.id} 
+                  className={`rounded-2xl transition-all ${
+                    isClickable ? 'hover:shadow-lg cursor-pointer hover:border-primary/50' : ''
+                  } ${isOwnProfile ? 'ring-2 ring-primary/30' : ''}`}
+                  onClick={() => isClickable && handleAnimatorClick(director.id)}
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12">
@@ -269,8 +331,11 @@ export default function FranchiseurAnimateurs() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle className="text-base">
+                        <CardTitle className="text-base flex items-center gap-2">
                           {director.first_name} {director.last_name}
+                          {isOwnProfile && (
+                            <Badge variant="secondary" className="text-xs">Vous</Badge>
+                          )}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">{director.email}</p>
                       </div>
@@ -289,6 +354,19 @@ export default function FranchiseurAnimateurs() {
                         : `${assignments.length} agence(s) assignée(s)`
                       }
                     </p>
+                    {isClickable && (
+                      <Button 
+                        variant="outline" 
+                        className="w-full mt-4 rounded-xl"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAnimatorClick(director.id);
+                        }}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Voir profil
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );
