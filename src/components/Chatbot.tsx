@@ -484,20 +484,11 @@ export function Chatbot() {
             />
           ) : (
             <>
-              {/* Context selector + Support button - only show when not in support ticket mode */}
+              {/* Context selector - only show when not in support ticket mode */}
               {!activeTicket && (
                 <ChatContextSelector
                   selectedContext={chatContext}
                   onSelectContext={setChatContext}
-                  onContactSupport={async () => {
-                    const ticket = await createSupportTicket(messages);
-                    if (ticket) {
-                      setActiveTicket(ticket);
-                      setSupportMessages([]);
-                      setMessages([]);
-                    }
-                  }}
-                  isCreatingTicket={isCreating}
                 />
               )}
               

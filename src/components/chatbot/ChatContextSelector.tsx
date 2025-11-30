@@ -1,13 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { BookOpen, Users, Building2, HelpCircle, Headphones } from 'lucide-react';
+import { BookOpen, Users, Building2, HelpCircle } from 'lucide-react';
 
 export type ChatContext = 'apogee' | 'apporteurs' | 'helpconfort' | 'autre';
 
 interface ChatContextSelectorProps {
   selectedContext: ChatContext;
   onSelectContext: (context: ChatContext) => void;
-  onContactSupport?: () => void;
-  isCreatingTicket?: boolean;
 }
 
 const contexts = [
@@ -44,26 +42,12 @@ const contexts = [
 export function ChatContextSelector({
   selectedContext,
   onSelectContext,
-  onContactSupport,
-  isCreatingTicket,
 }: ChatContextSelectorProps) {
   return (
     <div className="px-3 py-2 border-b bg-muted/30">
-      <div className="flex items-center justify-between mb-1.5">
-        <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
-          Contexte de recherche
-        </p>
-        {onContactSupport && (
-          <button
-            onClick={onContactSupport}
-            disabled={isCreatingTicket}
-            className="flex items-center gap-1 text-[10px] text-primary hover:text-primary/80 hover:underline disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <Headphones className="w-3 h-3" />
-            <span>{isCreatingTicket ? '...' : 'Support'}</span>
-          </button>
-        )}
-      </div>
+      <p className="text-[10px] text-muted-foreground mb-1.5 font-medium uppercase tracking-wide">
+        Contexte de recherche
+      </p>
       <div className="flex gap-1">
         {contexts.map((ctx) => {
           const Icon = ctx.icon;
