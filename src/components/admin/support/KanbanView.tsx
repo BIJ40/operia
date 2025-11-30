@@ -14,7 +14,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { SupportTicket } from '@/hooks/use-admin-support';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TicketPriorityBadge } from './TicketPriorityBadge';
@@ -151,7 +151,12 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
   );
 }
 
-export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanViewProps) {
+interface ExtendedKanbanViewProps extends KanbanViewProps {
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+}
+
+export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollapsed = false, onToggleCollapse }: ExtendedKanbanViewProps) {
   const { toast } = useToast();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null);
@@ -251,53 +256,91 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
     }
   };
 
+  // Mode replié : afficher uniquement les compteurs
+  if (isCollapsed) {
+    return (
+      <div className="flex flex-col gap-2 p-2 bg-muted/30 rounded-lg w-16">
+        <button 
+          onClick={onToggleCollapse}
+          className="p-2 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
+          title="Déplier le Kanban"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+        {columns.map((column) => {
+          const count = getTicketsByStatus(column.status).length;
+          return (
+            <div 
+              key={column.id}
+              className={`p-2 rounded text-center text-xs font-medium ${column.color}`}
+              title={column.title}
+            >
+              {count}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <DndContext
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-5 gap-4 h-[calc(100vh-240px)] overflow-x-auto">
-        {columns.map((column) => {
-          const columnTickets = getTicketsByStatus(column.status);
-          
-          return (
-            <DroppableColumn key={column.id} id={column.status}>
-              <Card className={`flex flex-col ${column.color} border-2 h-full min-w-[200px]`}>
-                <CardHeader className="pb-2 px-3">
-                  <CardTitle className="flex items-center justify-between text-sm">
-                    <span>{column.title}</span>
-                    <Badge variant="secondary" className="ml-2 text-xs">
-                      {columnTickets.length}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 overflow-auto px-3 pb-3">
-                  <SortableContext
-                    id={column.status}
-                    items={columnTickets.map(t => t.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="space-y-2 min-h-[100px]">
-                      {columnTickets.map((ticket) => (
-                        <SortableTicketCard
-                          key={ticket.id}
-                          ticket={ticket}
-                          onSelect={onSelectTicket}
-                        />
-                      ))}
-                      {columnTickets.length === 0 && (
-                        <div className="text-center py-8 text-muted-foreground text-xs">
-                          Aucun ticket
-                        </div>
-                      )}
-                    </div>
-                  </SortableContext>
-                </CardContent>
-              </Card>
-            </DroppableColumn>
-          );
-        })}
+      <div className="relative">
+        {onToggleCollapse && (
+          <button 
+            onClick={onToggleCollapse}
+            className="absolute -left-3 top-2 z-10 p-1 bg-background border rounded-full shadow hover:bg-muted transition-colors"
+            title="Replier le Kanban"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
+        <div className="grid grid-cols-5 gap-4 h-[calc(100vh-240px)] overflow-x-auto">
+          {columns.map((column) => {
+            const columnTickets = getTicketsByStatus(column.status);
+            
+            return (
+              <DroppableColumn key={column.id} id={column.status}>
+                <Card className={`flex flex-col ${column.color} border-2 h-full min-w-[200px]`}>
+                  <CardHeader className="pb-2 px-3">
+                    <CardTitle className="flex items-center justify-between text-sm">
+                      <span>{column.title}</span>
+                      <Badge variant="secondary" className="ml-2 text-xs">
+                        {columnTickets.length}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-1 overflow-auto px-3 pb-3">
+                    <SortableContext
+                      id={column.status}
+                      items={columnTickets.map(t => t.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-2 min-h-[100px]">
+                        {columnTickets.map((ticket) => (
+                          <SortableTicketCard
+                            key={ticket.id}
+                            ticket={ticket}
+                            onSelect={onSelectTicket}
+                          />
+                        ))}
+                        {columnTickets.length === 0 && (
+                          <div className="text-center py-8 text-muted-foreground text-xs">
+                            Aucun ticket
+                          </div>
+                        )}
+                      </div>
+                    </SortableContext>
+                  </CardContent>
+                </Card>
+              </DroppableColumn>
+            );
+          })}
+        </div>
       </div>
 
       <DragOverlay>
