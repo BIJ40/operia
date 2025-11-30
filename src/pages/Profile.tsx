@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -78,7 +79,7 @@ export default function Profile() {
         setAvatarUrl(data.avatar_url);
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
+      logError('PROFILE', 'Error loading profile:', error);
       toast.error('Impossible de charger le profil');
     } finally {
       setIsLoading(false);
@@ -133,7 +134,7 @@ export default function Profile() {
       setAvatarUrl(publicUrl);
       toast.success('Photo de profil mise à jour');
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      logError('PROFILE', 'Error uploading avatar:', error);
       toast.error('Erreur lors du téléchargement');
     } finally {
       setIsUploading(false);

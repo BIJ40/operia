@@ -91,9 +91,9 @@ export const calculateParticuliersStats = (
   const facturesPeriode = filterFacturesPeriodeParticuliers(factures, clients, projects, dateRange);
   
   if (import.meta.env.DEV) {
-    console.log("💰 PARTICULIERS - Factures filtrées:", facturesPeriode.length);
+    logDebug('PARTICULIERS', 'Factures filtrées:', facturesPeriode.length);
     if (facturesPeriode.length > 0) {
-      console.log("📄 Première facture particulier:", facturesPeriode[0]);
+      logDebug('PARTICULIERS', 'Première facture particulier:', facturesPeriode[0]);
     }
   }
   

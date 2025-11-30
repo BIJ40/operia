@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { logError } from '@/lib/logger';
 
 export function useSupportNotifications() {
   const { isSupport, isAdmin, user } = useAuth();
@@ -32,7 +33,7 @@ export function useSupportNotifications() {
       playTone(1000, now + 0.15, 0.15);
       playTone(1200, now + 0.3, 0.2);
     } catch (error) {
-      console.error('Error playing notification sound:', error);
+      logError('SUPPORT', 'Error playing notification sound:', error);
     }
   };
 
