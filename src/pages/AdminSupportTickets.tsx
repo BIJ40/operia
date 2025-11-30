@@ -54,6 +54,14 @@ export default function AdminSupportTickets() {
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [darkMode, setDarkMode] = useState(false);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
+  const [activeTab, setActiveTab] = useState<'actifs' | 'archives'>('actifs');
+
+  // Auto-switch to archives tab when selected ticket becomes resolved
+  useEffect(() => {
+    if (selectedTicket && ['resolved', 'closed'].includes(selectedTicket.status)) {
+      setActiveTab('archives');
+    }
+  }, [selectedTicket?.status]);
 
   // Transformer supportUsers pour le format attendu par les composants
   const formattedSupportUsers = supportUsers.map(u => {
@@ -390,7 +398,7 @@ export default function AdminSupportTickets() {
             {/* Tickets List */}
             <Card className="md:col-span-2">
               <CardHeader className="pb-2">
-                <Tabs defaultValue="actifs" className="w-full">
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'actifs' | 'archives')} className="w-full">
                   <TabsList className="grid w-full grid-cols-2 mb-4">
                     <TabsTrigger value="actifs" className="gap-2">
                       🔥 Actifs
