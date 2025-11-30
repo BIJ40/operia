@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
+import { errorResponse, validationError } from '../_shared/error.ts';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -194,16 +195,13 @@ serve(async (req) => {
     const validation = validateInput(messages, guideContent);
     if (!validation.valid) {
       console.error('Validation error:', validation.error);
-      return withCors(req, new Response(JSON.stringify({ error: validation.error }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      }));
+      return withCors(req, validationError(validation.error || 'CHAT_GUIDE_INVALID_INPUT'));
     }
     
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     
     if (!OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is not configured");
+      return withCors(req, errorResponse('CHAT_GUIDE_CONFIG_ERROR', 'Service IA non configuré'));
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -238,23 +236,14 @@ serve(async (req) => {
 
     if (!response.ok) {
       if (response.status === 429) {
-        return withCors(req, new Response(JSON.stringify({ error: "Trop de requêtes, veuillez réessayer plus tard." }), {
-          status: 429,
-          headers: { "Content-Type": "application/json" },
-        }));
+        return withCors(req, errorResponse('CHAT_GUIDE_RATE_LIMITED', 'Trop de requêtes, veuillez réessayer plus tard.', null, 429));
       }
       if (response.status === 402) {
-        return withCors(req, new Response(JSON.stringify({ error: "Crédits insuffisants, veuillez contacter l'administrateur." }), {
-          status: 402,
-          headers: { "Content-Type": "application/json" },
-        }));
+        return withCors(req, errorResponse('CHAT_GUIDE_NO_CREDITS', 'Crédits insuffisants, veuillez contacter l\'administrateur.', null, 402));
       }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
-      return withCors(req, new Response(JSON.stringify({ error: "Erreur du service IA" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }));
+      return withCors(req, errorResponse('CHAT_GUIDE_AI_ERROR', 'Erreur du service IA', { status: response.status }));
     }
 
     // Stream la réponse et accumule le contenu
@@ -328,9 +317,10 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("Chat error:", e);
-    return withCors(req, new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erreur inconnue" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    }));
+    return withCors(req, errorResponse(
+      'CHAT_GUIDE_FAILED',
+      e instanceof Error ? e.message : 'Erreur inconnue',
+      { error: e instanceof Error ? e.message : String(e) }
+    ));
   }
 });
