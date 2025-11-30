@@ -4,7 +4,7 @@
  * P3#1 : Intégration SLA badges et highlight retard
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, useDroppable } from '@dnd-kit/core';
@@ -92,10 +92,28 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
   const isLate = slaStatus === 'late';
   const isWarning = slaStatus === 'warning';
 
+  // Track if we're dragging to distinguish click from drag
+  const [wasDragging, setWasDragging] = useState(false);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  // Track drag state changes
+  useEffect(() => {
+    if (isDragging) {
+      setWasDragging(true);
+    }
+  }, [isDragging]);
+
+  // Handle click only if we weren't dragging
+  const handleClick = () => {
+    if (!wasDragging) {
+      onSelect(ticket);
+    }
+    setWasDragging(false);
   };
 
   // Classes conditionnelles pour le highlight SLA
@@ -113,7 +131,7 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
       style={style}
       {...attributes}
       {...listeners}
-      onClick={() => onSelect(ticket)}
+      onClick={handleClick}
       className={cardClasses}
     >
       <div className="flex items-start justify-between mb-2">
