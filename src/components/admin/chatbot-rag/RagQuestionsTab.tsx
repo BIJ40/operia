@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, MessageSquare, RefreshCw, CheckCircle2, Clock, Eye, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logError } from '@/lib/logger';
 
 type ChatQuery = {
   id: string;
@@ -54,7 +55,7 @@ export function RagQuestionsTab() {
       if (error) throw error;
       setQueries(data || []);
     } catch (error) {
-      console.error('Error loading queries:', error);
+      logError('Error loading queries:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de charger les questions',

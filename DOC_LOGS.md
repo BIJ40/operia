@@ -4,15 +4,34 @@
 
 Le projet utilise un système de logs centralisé défini dans `src/lib/logger.ts`. Ce système permet de contrôler le niveau de verbosité des logs entre environnement de développement et production.
 
+**Intégration Sentry** : Les erreurs (`logError()`) sont automatiquement envoyées à Sentry quand `VITE_SENTRY_DSN` est défini. Les loggers catégorisés (`logApogee.error`, `logAuth.error`, etc.) en profitent automatiquement via `logError`.
+
 ## Niveaux de logs
 
-| Niveau | Fonction | Visibilité en DEV | Visibilité en PROD |
-|--------|----------|-------------------|---------------------|
-| DEBUG | `logDebug()` | ✅ Actif | ❌ Masqué (sauf si `VITE_DEBUG_LOGS=true`) |
-| INFO | `logInfo()` | ✅ Actif | ✅ Actif |
-| WARN | `logWarn()` | ✅ Actif | ✅ Actif |
-| ERROR | `logError()` | ✅ Actif | ✅ Actif |
-| DEPRECATED | `logDeprecation()` | ✅ Actif | ⚠️ Une seule fois par message |
+| Niveau | Fonction | Visibilité en DEV | Visibilité en PROD | Sentry |
+|--------|----------|-------------------|---------------------|--------|
+| DEBUG | `logDebug()` | ✅ Actif | ❌ Masqué (sauf si `VITE_DEBUG_LOGS=true`) | ❌ |
+| INFO | `logInfo()` | ✅ Actif | ✅ Actif | ❌ |
+| WARN | `logWarn()` | ✅ Actif | ✅ Actif | ❌ |
+| ERROR | `logError()` | ✅ Actif | ✅ Actif | ✅ Auto |
+| DEPRECATED | `logDeprecation()` | ✅ Actif | ⚠️ Une seule fois par message | ❌ |
+
+## Migration console.* → logger
+
+### Fichiers migrés ✅
+- `src/services/supportService.ts`
+- `src/lib/db.ts`
+- `src/lib/rag-michu.ts`
+- `src/hooks/use-user-presence.ts`
+- `src/hooks/use-admin-stats.ts`
+- `src/hooks/use-cache-backup.ts`
+- `src/pages/NotFound.tsx`
+- `src/components/admin/OnlineUsers.tsx`
+- `src/components/admin/chatbot-rag/RagQuestionsTab.tsx`
+
+### À migrer (TODO)
+Environ 80 fichiers restants avec ~1500+ console.* à migrer progressivement.
+Priorité : fichiers avec `console.error` (erreurs critiques pour Sentry).
 
 ## Activer les logs détaillés en production
 

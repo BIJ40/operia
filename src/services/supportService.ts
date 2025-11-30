@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/logger';
 
 // ============================================
 // CONSTANTES - Statuts et Priorités
@@ -140,7 +141,7 @@ export async function getAllSupportUsers(): Promise<SupportUser[]> {
     .eq('is_active', true);
 
   if (error) {
-    console.error('Error fetching support users:', error);
+    logError('Error fetching support users:', error);
     return [];
   }
 
@@ -230,7 +231,7 @@ export async function autoAssignTicket(
 
     return { success: true, assignedTo: selectedUser.id };
   } catch (error) {
-    console.error('Error auto-assigning ticket:', error);
+    logError('Error auto-assigning ticket:', error);
     return { 
       success: false, 
       assignedTo: null, 
@@ -295,7 +296,7 @@ export async function escalateTicket(
 
     return { success: true };
   } catch (error) {
-    console.error('Error escalating ticket:', error);
+    logError('Error escalating ticket:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 
@@ -441,7 +442,7 @@ export async function getTicketsForSupportUser(
 
     return filteredData;
   } catch (error) {
-    console.error('Error fetching tickets for support user:', error);
+    logError('Error fetching tickets for support user:', error);
     return [];
   }
 }
@@ -470,7 +471,7 @@ export async function updateTicketStatus(
 
     return { success: true };
   } catch (error) {
-    console.error('Error updating ticket status:', error);
+    logError('Error updating ticket status:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 
@@ -495,7 +496,7 @@ export async function updateTicketPriority(
 
     return { success: true };
   } catch (error) {
-    console.error('Error updating ticket priority:', error);
+    logError('Error updating ticket priority:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 
@@ -528,7 +529,7 @@ export async function sendTicketMessage(
 
     return { success: true };
   } catch (error) {
-    console.error('Error sending ticket message:', error);
+    logError('Error sending ticket message:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 

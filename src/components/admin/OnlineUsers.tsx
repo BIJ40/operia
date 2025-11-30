@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Circle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logError } from '@/lib/logger';
 
 interface UserPresence {
   user_id: string;
@@ -80,7 +81,7 @@ export function OnlineUsers() {
         setOnlineUsers([]);
       }
     } catch (error) {
-      console.error('Erreur chargement utilisateurs en ligne:', error);
+      logError('Erreur chargement utilisateurs en ligne:', error);
     }
   };
 

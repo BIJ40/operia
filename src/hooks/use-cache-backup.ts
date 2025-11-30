@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CacheBackup } from '@/lib/cache-backup';
 import { CacheManager } from '@/lib/cache-manager';
+import { logError } from '@/lib/logger';
 
 interface BackupInfo {
   key: string;
@@ -29,7 +30,7 @@ export function useCacheBackup() {
       setBackups(backupList);
       setMetadata(meta);
     } catch (error) {
-      console.error('Erreur chargement backups:', error);
+      logError('Erreur chargement backups:', error);
     } finally {
       setLoading(false);
     }
@@ -49,7 +50,7 @@ export function useCacheBackup() {
       }
       return false;
     } catch (error) {
-      console.error(`Erreur restauration backup ${key}:`, error);
+      logError(`Erreur restauration backup ${key}:`, error);
       return false;
     }
   }, []);
@@ -60,7 +61,7 @@ export function useCacheBackup() {
       await loadBackups();
       return count;
     } catch (error) {
-      console.error('Erreur nettoyage backups expirés:', error);
+      logError('Erreur nettoyage backups expirés:', error);
       return 0;
     }
   }, [loadBackups]);
@@ -71,7 +72,7 @@ export function useCacheBackup() {
       await loadBackups();
       return true;
     } catch (error) {
-      console.error('Erreur suppression backups:', error);
+      logError('Erreur suppression backups:', error);
       return false;
     }
   }, [loadBackups]);
