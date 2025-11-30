@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, RefreshCw, Database } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { safeInvoke } from '@/lib/safeQuery';
+import { errorToast, successToast } from '@/lib/toastHelpers';
+import { logError } from '@/lib/logger';
+
+interface GenerateEmbeddingsResponse {
+  blocks_processed: number;
+  chunks_created: number;
+}
 
 export function RAGIndexManager() {
   const [isIndexing, setIsIndexing] = useState(false);
@@ -12,35 +19,34 @@ export function RAGIndexManager() {
     blocks_processed?: number;
     chunks_created?: number;
   } | null>(null);
-  const { toast } = useToast();
 
   const handleIndex = async () => {
     setIsIndexing(true);
     setIndexStats(null);
 
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-embeddings', {
-        body: { blockIds: [] }, // Empty array means index all blocks
-      });
+    const result = await safeInvoke<GenerateEmbeddingsResponse>(
+      supabase.functions.invoke('generate-embeddings', {
+        body: { blockIds: [] },
+      }),
+      'RAG_INDEX_GENERATE'
+    );
 
-      if (error) throw error;
-
-      setIndexStats(data);
-      
-      toast({
-        title: 'Indexation terminée',
-        description: `${data.blocks_processed} blocs traités, ${data.chunks_created} chunks créés`,
-      });
-    } catch (error) {
-      console.error('Indexing error:', error);
-      toast({
-        title: 'Erreur',
-        description: error instanceof Error ? error.message : 'Erreur lors de l\'indexation',
-        variant: 'destructive',
-      });
-    } finally {
+    if (!result.success) {
+      logError('rag-index-manager', 'Error generating embeddings', result.error);
+      errorToast(result.error!);
       setIsIndexing(false);
+      return;
     }
+
+    if (result.data) {
+      setIndexStats(result.data);
+      successToast(
+        'Indexation terminée',
+        `${result.data.blocks_processed} blocs traités, ${result.data.chunks_created} chunks créés`
+      );
+    }
+
+    setIsIndexing(false);
   };
 
   const handleCheckIndex = async () => {
@@ -51,17 +57,13 @@ export function RAGIndexManager() {
 
       if (error) throw error;
 
-      toast({
-        title: 'Index vérifié',
-        description: `${count || 0} chunks indexés dans la base`,
-      });
+      successToast(
+        'Index vérifié',
+        `${count || 0} chunks indexés dans la base`
+      );
     } catch (error) {
-      console.error('Check error:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de vérifier l\'index',
-        variant: 'destructive',
-      });
+      logError('rag-index-manager', 'Error checking index status', error);
+      errorToast('Impossible de vérifier l\'index');
     }
   };
 
