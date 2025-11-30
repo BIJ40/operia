@@ -111,6 +111,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { CreateUserRequestDialog } from '@/components/admin/users/CreateUserRequestDialog';
+import { UserCreationRequestsPanel } from '@/components/admin/users/UserCreationRequestsPanel';
 
 interface UserProfile {
   id: string;
@@ -194,6 +196,9 @@ export default function AdminUsersUnified() {
   
   // Create user dialog
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  
+  // Create user REQUEST dialog (for N3+)
+  const [showCreateRequestDialog, setShowCreateRequestDialog] = useState(false);
   
   // Edit user dialog
   const [editDialog, setEditDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
@@ -692,7 +697,19 @@ export default function AdminUsersUnified() {
               Nouvel utilisateur
             </Button>
           )}
+          {/* N3+ non-admin can request user creation */}
+          {!canCreateUsers && currentUserLevel >= 2 && (
+            <Button onClick={() => setShowCreateRequestDialog(true)} variant="outline">
+              <UserPlus className="w-4 h-4 mr-2" />
+              Demander création
+            </Button>
+          )}
         </div>
+
+        {/* User Creation Requests Panel */}
+        {(isAdmin || currentUserLevel >= 2) && (
+          <UserCreationRequestsPanel />
+        )}
 
         {/* Filters Bar */}
         <Card>
@@ -1460,6 +1477,12 @@ export default function AdminUsersUnified() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* User Creation Request Dialog (for N3+) */}
+        <CreateUserRequestDialog 
+          open={showCreateRequestDialog} 
+          onOpenChange={setShowCreateRequestDialog} 
+        />
       </div>
     </TooltipProvider>
   );

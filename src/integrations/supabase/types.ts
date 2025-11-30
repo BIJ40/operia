@@ -2073,6 +2073,68 @@ export type Database = {
         }
         Relationships: []
       }
+      user_creation_requests: {
+        Row: {
+          agency_id: string
+          created_at: string
+          email: string
+          enabled_modules: Json | null
+          first_name: string
+          id: string
+          last_name: string
+          notes: string | null
+          rejection_reason: string | null
+          requested_by: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          role_agence: string
+          status: string
+          target_global_role: Database["public"]["Enums"]["global_role"]
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          email: string
+          enabled_modules?: Json | null
+          first_name: string
+          id?: string
+          last_name: string
+          notes?: string | null
+          rejection_reason?: string | null
+          requested_by: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role_agence?: string
+          status?: string
+          target_global_role?: Database["public"]["Enums"]["global_role"]
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          email?: string
+          enabled_modules?: Json | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          requested_by?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role_agence?: string
+          status?: string
+          target_global_role?: Database["public"]["Enums"]["global_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_creation_requests_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_history: {
         Row: {
           block_id: string
