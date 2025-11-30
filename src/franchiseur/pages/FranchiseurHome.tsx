@@ -76,16 +76,7 @@ export default function FranchiseurHome() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-          Tableau de bord Réseau
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Vue d'ensemble des performances du réseau
-        </p>
-      </div>
-
+    <div className="container mx-auto py-8 px-4 space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 items-start">
         <AgencySelector />
         <NetworkPeriodSelector />
