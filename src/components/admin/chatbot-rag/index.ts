@@ -3,3 +3,6 @@ export { RagDocumentsTab } from './RagDocumentsTab';
 export { RagIndexTab } from './RagIndexTab';
 export { RagQuestionsTab } from './RagQuestionsTab';
 export { RagDebugTab } from './RagDebugTab';
+export { RagCoverageTab } from './RagCoverageTab';
+export { RagGapsTab } from './RagGapsTab';
+export { RagStatsTab } from './RagStatsTab';

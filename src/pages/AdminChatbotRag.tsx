@@ -2,14 +2,19 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bot, FileText, Database, MessageSquare, Bug, FolderTree } from 'lucide-react';
+import { Bot, FileText, Database, MessageSquare, Bug, FolderTree, BarChart3, HelpCircle, Activity } from 'lucide-react';
 
 // Import tab components
-import { RagSourcesTab } from '@/components/admin/chatbot-rag/RagSourcesTab';
-import { RagDocumentsTab } from '@/components/admin/chatbot-rag/RagDocumentsTab';
-import { RagIndexTab } from '@/components/admin/chatbot-rag/RagIndexTab';
-import { RagQuestionsTab } from '@/components/admin/chatbot-rag/RagQuestionsTab';
-import { RagDebugTab } from '@/components/admin/chatbot-rag/RagDebugTab';
+import { 
+  RagSourcesTab, 
+  RagDocumentsTab, 
+  RagIndexTab, 
+  RagQuestionsTab, 
+  RagDebugTab,
+  RagCoverageTab,
+  RagGapsTab,
+  RagStatsTab,
+} from '@/components/admin/chatbot-rag';
 
 export default function AdminChatbotRag() {
   const navigate = useNavigate();
@@ -37,26 +42,38 @@ export default function AdminChatbotRag() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 mb-6">
-          <TabsTrigger value="sources" className="gap-2">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-6">
+          <TabsTrigger value="sources" className="gap-1">
             <FolderTree className="w-4 h-4" />
-            Sources
+            <span className="hidden sm:inline">Sources</span>
           </TabsTrigger>
-          <TabsTrigger value="documents" className="gap-2">
+          <TabsTrigger value="documents" className="gap-1">
             <FileText className="w-4 h-4" />
-            Documents
+            <span className="hidden sm:inline">Documents</span>
           </TabsTrigger>
-          <TabsTrigger value="index" className="gap-2">
+          <TabsTrigger value="index" className="gap-1">
             <Database className="w-4 h-4" />
-            Index
+            <span className="hidden sm:inline">Index</span>
           </TabsTrigger>
-          <TabsTrigger value="questions" className="gap-2">
+          <TabsTrigger value="coverage" className="gap-1">
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden sm:inline">Couverture</span>
+          </TabsTrigger>
+          <TabsTrigger value="gaps" className="gap-1">
+            <HelpCircle className="w-4 h-4" />
+            <span className="hidden sm:inline">Lacunes</span>
+          </TabsTrigger>
+          <TabsTrigger value="questions" className="gap-1">
             <MessageSquare className="w-4 h-4" />
-            Questions
+            <span className="hidden sm:inline">Questions</span>
           </TabsTrigger>
-          <TabsTrigger value="debug" className="gap-2">
+          <TabsTrigger value="stats" className="gap-1">
+            <Activity className="w-4 h-4" />
+            <span className="hidden sm:inline">Stats</span>
+          </TabsTrigger>
+          <TabsTrigger value="debug" className="gap-1">
             <Bug className="w-4 h-4" />
-            Debug
+            <span className="hidden sm:inline">Debug</span>
           </TabsTrigger>
         </TabsList>
 
@@ -72,8 +89,20 @@ export default function AdminChatbotRag() {
           <RagIndexTab />
         </TabsContent>
 
+        <TabsContent value="coverage">
+          <RagCoverageTab />
+        </TabsContent>
+
+        <TabsContent value="gaps">
+          <RagGapsTab />
+        </TabsContent>
+
         <TabsContent value="questions">
           <RagQuestionsTab />
+        </TabsContent>
+
+        <TabsContent value="stats">
+          <RagStatsTab />
         </TabsContent>
 
         <TabsContent value="debug">

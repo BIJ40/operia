@@ -50,6 +50,17 @@ async function generateEmbedding(text: string): Promise<number[]> {
   return data.data[0].embedding; // Returns 1536-dimensional vector
 }
 
+// Map source to block_type
+function getBlockTypeForSource(source: string | undefined): string | null {
+  const sourceMap: Record<string, string> = {
+    'apogee': 'apogee_guide',
+    'helpconfort': 'helpconfort_guide',
+    'apporteurs': 'apporteurs_guide',
+    'documents': 'document',
+  };
+  return source ? sourceMap[source] || null : null;
+}
+
 serve(async (req) => {
   // Handle CORS preflight or reject unauthorized origins
   const corsResult = handleCorsPreflightOrReject(req);
@@ -59,7 +70,17 @@ serve(async (req) => {
   const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
 
   try {
-    const { query, topK = 8, source, userId } = await req.json();
+    const { 
+      query, 
+      topK = 8, 
+      source, 
+      userId,
+      minSimilarity = 0.3,
+      // P2 Multi-context filters
+      apporteurCode,
+      universCode,
+      roleCible,
+    } = await req.json();
 
     // Rate limit: 30 req/min per user
     const rateLimitKey = `search-embeddings:${userId || 'anonymous'}`;
@@ -77,18 +98,20 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Searching for:', query);
+    console.log('[SEARCH] Query:', query.substring(0, 100));
+    console.log('[SEARCH] Source:', source, '| Filters:', { apporteurCode, universCode, roleCible });
 
     // Generate embedding for the query
     const queryEmbedding = await generateEmbedding(query);
-    console.log('Query embedding generated');
+    console.log('[SEARCH] Query embedding generated');
 
-    // Fetch chunks - filter by block_type for apogee source
+    // Build query with filters
     let chunksQuery = supabase.from('guide_chunks').select('*');
     
-    // If source is 'apogee', filter by block_type = 'apogee_guide'
-    if (source === 'apogee') {
-      chunksQuery = chunksQuery.eq('block_type', 'apogee_guide');
+    // Filter by block_type based on source
+    const blockType = getBlockTypeForSource(source);
+    if (blockType) {
+      chunksQuery = chunksQuery.eq('block_type', blockType);
     }
     
     const { data: chunks, error: chunksError } = await chunksQuery;
@@ -97,7 +120,7 @@ serve(async (req) => {
       throw chunksError;
     }
 
-    console.log(`Found ${chunks?.length || 0} chunks${source === 'apogee' ? ' with block_type=apogee_guide' : ''}`);
+    console.log(`[SEARCH] Found ${chunks?.length || 0} chunks${blockType ? ` with block_type=${blockType}` : ''}`);
 
     if (!chunks || chunks.length === 0) {
       return withCors(req, new Response(
@@ -111,10 +134,23 @@ serve(async (req) => {
       ));
     }
 
-    console.log(`Comparing against ${chunks.length} chunks`);
+    // P2: Apply metadata filters in-memory (more flexible than SQL JSONB)
+    let filteredChunks = chunks;
+    if (apporteurCode || universCode || roleCible) {
+      filteredChunks = chunks.filter(chunk => {
+        const meta = chunk.metadata as Record<string, unknown> || {};
+        if (apporteurCode && meta.apporteur_code !== apporteurCode) return false;
+        if (universCode && meta.univers_code !== universCode) return false;
+        if (roleCible && meta.role_cible !== roleCible) return false;
+        return true;
+      });
+      console.log(`[SEARCH] After P2 filters: ${filteredChunks.length} chunks`);
+    }
+
+    console.log(`[SEARCH] Comparing against ${filteredChunks.length} chunks`);
 
     // Calculate similarity for each chunk
-    const resultsWithScores = chunks.map(chunk => {
+    const resultsWithScores = filteredChunks.map(chunk => {
       // Handle embedding as string or array
       let chunkEmbedding = chunk.embedding;
       if (typeof chunkEmbedding === 'string') {
@@ -132,14 +168,15 @@ serve(async (req) => {
       };
     });
 
-    // Sort by similarity and get top K
+    // Filter by minimum similarity and sort
     const topResults = resultsWithScores
+      .filter(r => r.similarity >= minSimilarity)
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, topK);
 
-    console.log('Top results:', topResults.map(r => ({
+    console.log('[SEARCH] Top results:', topResults.map(r => ({
       title: r.block_title,
-      score: r.similarity
+      score: r.similarity?.toFixed(3)
     })));
 
     return withCors(req, new Response(
