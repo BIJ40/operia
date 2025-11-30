@@ -312,12 +312,6 @@ export function SupportChatCore({
       const firstUserMessage = messages.find(m => m.role === 'user');
       const subject = firstUserMessage?.content.slice(0, 100) || 'Demande depuis le chat';
 
-      // Construire le contenu du ticket
-      const content = messages
-        .filter(m => m.role === 'user')
-        .map(m => m.content)
-        .join('\n\n');
-
       // Construire la conversation chatbot
       const chatbotConversation = messages.map(m => ({
         role: m.role,
@@ -329,11 +323,11 @@ export function SupportChatCore({
         supabase.from('support_tickets').insert({
           user_id: user.id,
           subject,
-          content,
           status: 'new',
           priority: 'normal',
           chatbot_conversation: chatbotConversation,
           escalated_from_chat: true,
+          source: 'chat',
         }).select().single(),
         'SUPPORT_CHAT_CREATE_TICKET'
       );
@@ -384,10 +378,10 @@ export function SupportChatCore({
         supabase.from('support_tickets').insert({
           user_id: user?.id,
           subject,
-          content: messages.filter(m => m.role === 'user').map(m => m.content).join('\n\n'),
           status: 'new',
           priority: 'important',
           is_live_chat: true,
+          source: 'chat',
           chatbot_conversation: messages.map(m => ({
             role: m.role,
             content: m.content,
