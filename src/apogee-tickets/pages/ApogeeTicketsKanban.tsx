@@ -1,5 +1,6 @@
 /**
  * Page principale Kanban des tickets Apogée
+ * Avec guard d'accès basé sur les permissions utilisateur
  */
 
 import { useState } from 'react';
@@ -9,15 +10,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, EyeOff, Shield } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
@@ -27,15 +26,69 @@ import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { ActionsConfigDialog } from '../components/ActionsConfigDialog';
 import { useTicketQualification } from '../hooks/useTicketQualification';
 
-import { useMyTicketRole } from '../hooks/useTicketPermissions';
+import { useMyTicketRole, TicketRoleInfo } from '../hooks/useTicketPermissions';
 import type { ApogeeTicket, TicketFilters as Filters } from '../types';
 import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
-import { useAuth } from '@/contexts/AuthContext';
 
-export default function ApogeeTicketsKanban() {
-  const { isAdmin } = useAuth();
-  const { data: myTicketRole } = useMyTicketRole();
+export default function ApogeeTicketsKanbanPage() {
+  const { data: myTicketRole, isLoading: isLoadingRole, error: roleError } = useMyTicketRole();
+
+  // 1) Chargement des droits
+  if (isLoadingRole || !myTicketRole) {
+    return (
+      <div className="flex items-center justify-center h-full py-16">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        <span>Chargement de vos droits tickets…</span>
+      </div>
+    );
+  }
+
+  // 2) Erreur systémique (profil non trouvé, fetch_error, etc.)
+  if (roleError) {
+    return (
+      <div className="max-w-xl mx-auto py-10">
+        <Alert variant="destructive">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Erreur de chargement</AlertTitle>
+          <AlertDescription>
+            Impossible de récupérer vos droits d'accès au module tickets.
+            Les logs d'erreur ont été enregistrés. Réessayez dans quelques instants.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // 3) Cas : pas de droit ticketing (module désactivé, non auth, etc.)
+  if (!myTicketRole.canUseTicketing) {
+    return (
+      <div className="max-w-xl mx-auto py-10">
+        <Alert>
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Module tickets non disponible</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p>
+              Votre profil n'a pas accès au module <strong>Apogée Tickets</strong>.
+            </p>
+            {myTicketRole.reason && (
+              <p className="text-xs text-muted-foreground">
+                Code technique : <code>{myTicketRole.reason}</code>
+              </p>
+            )}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // 4) Cas nominal : on affiche le Kanban
+  return <ApogeeTicketsKanbanContent roleInfo={myTicketRole} />;
+}
+
+// Composant interne avec le contenu du Kanban
+function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) {
+  const { isAdmin, isSupport, ticketRole } = roleInfo;
   const navigate = useNavigate();
   const [filters, setFilters] = useState<Filters>({});
   const [selectedTicket, setSelectedTicket] = useState<ApogeeTicket | null>(null);
@@ -218,6 +271,12 @@ export default function ApogeeTicketsKanban() {
               </Button>
             </>
           )}
+          {/* Badge indicateur du rôle utilisateur */}
+          {ticketRole && (
+            <Badge variant="outline" className="text-xs">
+              Rôle : {ticketRole}
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -348,7 +407,7 @@ export default function ApogeeTicketsKanban() {
         modules={modules}
         onCreate={(ticket) => createTicket.mutate(ticket)}
         isCreating={createTicket.isPending}
-        userTicketRole={myTicketRole?.ticketRole}
+        userTicketRole={ticketRole}
       />
 
       {/* Dialog configuration (admin only) */}
