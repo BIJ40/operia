@@ -76,6 +76,22 @@ const STATUS_MAPPING: Record<string, string> = {
   'REPONSE': 'SPEC_A_FAIRE',
 };
 
+// Mapping PRIO Excel vers priority FK (apogee_priorities.id)
+// Valid IDs: A, B, V1, PLUS_TARD
+const PRIORITY_MAPPING: Record<string, string | null> = {
+  'A': 'A',
+  'B': 'B',
+  'C': 'V1', // C -> V1 (standard)
+  'NON': 'PLUS_TARD',
+  '-': null, // Non déterminé = null
+};
+
+function normalizePriority(prio: string | null): string | null {
+  if (!prio) return null;
+  const upper = prio.toUpperCase().trim();
+  return PRIORITY_MAPPING[upper] ?? null;
+}
+
 function normalizeModule(element: string | null): string | null {
   if (!element) return null;
   const upper = element.toUpperCase().trim();
@@ -258,7 +274,8 @@ function rowToTicket(row: EvaluatedRow): ApogeeTicketInsert {
     description: row.descriptif || null,
     module: normalizeModule(row.elementConcerne),
     module_area: row.elementConcerne || null,
-    priority: row.prio || null, // Stocker la prio originale (A, B, C, NON, -)
+    priority: normalizePriority(row.prio), // Mapper vers FK valide (A, B, V1, PLUS_TARD)
+    priority_normalized: row.prio || null, // Garder la prio originale pour référence
     action_type: row.apogeeStatus || null,
     kanban_status: normalizeStatus(row.apogeeStatus),
     owner_side: parseOwnerSide(row.priseEnChargeDynoco),

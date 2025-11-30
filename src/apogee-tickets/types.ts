@@ -139,6 +139,7 @@ export interface ApogeeTicketInsert {
   element_concerne: string;
   module?: string | null;
   priority?: string | null;
+  priority_normalized?: string | null;
   action_type?: string | null;
   kanban_status?: string;
   owner_side?: OwnerSide | null;
