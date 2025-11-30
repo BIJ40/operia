@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, RefreshCw, Activity, MessageSquare, CheckCircle2, AlertCircle, Clock, HelpCircle, BookPlus } from 'lucide-react';
+import { Loader2, RefreshCw, Activity, MessageSquare, CheckCircle2, AlertCircle, Clock, HelpCircle, BookPlus, FolderUp, FileText } from 'lucide-react';
 import { format, subDays, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { safeQuery } from '@/lib/safeQuery';
 import { errorToast } from '@/lib/toastHelpers';
 import { logError } from '@/lib/logger';
 import { getFaqStats, getImprovedQueriesCount, type FaqStats } from '@/lib/rag-improvement';
+import { getIngestionStats, type IngestionStats } from '@/lib/rag-ingestion';
 
 type QueryStatsRow = {
   status: string | null;
@@ -33,6 +34,7 @@ export function RagStatsTab() {
   const [contextBreakdown, setContextBreakdown] = useState<Record<string, number>>({});
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [faqStats, setFaqStats] = useState<FaqStats>({ total: 0, fromQueries: 0, byContext: {} });
+  const [ingestionStats, setIngestionStats] = useState<IngestionStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadStats = async () => {
@@ -88,13 +90,15 @@ export function RagStatsTab() {
       dailyArray.sort((a, b) => a.date.localeCompare(b.date));
       setDailyStats(dailyArray);
 
-      // Load FAQ and improvement stats
-      const [faqData, improvedData] = await Promise.all([
+      // Load FAQ, improvement, and ingestion stats
+      const [faqData, improvedData, ingestionData] = await Promise.all([
         getFaqStats(),
         getImprovedQueriesCount(),
+        getIngestionStats(),
       ]);
       setFaqStats(faqData);
       setImprovedCount(improvedData);
+      setIngestionStats(ingestionData);
 
     } catch (error) {
       logError('rag-stats', 'Error loading stats', error);
@@ -234,6 +238,56 @@ export function RagStatsTab() {
                       </Card>
                     ))}
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* Ingestion RAG Stats */}
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                <FolderUp className="w-4 h-4" />
+                Ingestion RAG
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="p-4">
+                  <div className="flex items-center gap-2">
+                    <FolderUp className="w-4 h-4 text-indigo-500" />
+                    <span className="text-sm text-muted-foreground">Jobs Total</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{ingestionStats?.totalJobs ?? '—'}</p>
+                </Card>
+                
+                <Card className="p-4">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <span className="text-sm text-muted-foreground">Complétés</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{ingestionStats?.completedJobs ?? '—'}</p>
+                </Card>
+                
+                <Card className="p-4">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-500" />
+                    <span className="text-sm text-muted-foreground">Échoués</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{ingestionStats?.failedJobs ?? '—'}</p>
+                </Card>
+                
+                <Card className="p-4">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm text-muted-foreground">Documents</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{ingestionStats?.totalDocuments ?? '—'}</p>
+                </Card>
+              </div>
+              
+              {ingestionStats && (
+                <div className="mt-3 flex gap-4 text-sm text-muted-foreground">
+                  <span>Documents ce mois: <strong>{ingestionStats.documentsThisMonth}</strong></span>
+                  {ingestionStats.avgProcessingTime > 0 && (
+                    <span>Temps moyen: <strong>{ingestionStats.avgProcessingTime}s</strong></span>
+                  )}
                 </div>
               )}
             </div>
