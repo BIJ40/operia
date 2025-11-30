@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -113,26 +112,17 @@ export default function AdminEscalationHistory() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-            Historique des Escalades
-          </h1>
-          <p className="text-muted-foreground">
-            Toutes les escalades de tickets effectuées
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => navigate('/admin/support')}
-          className="gap-2"
-        >
-          Retour aux tickets
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold">
+          Historique des Escalades
+        </h1>
+        <p className="text-muted-foreground">
+          Toutes les escalades de tickets effectuées
+        </p>
       </div>
 
-      <Card className="rounded-2xl shadow-lg border-l-4 border-l-accent">
-        <CardHeader className="bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10">
+      <Card className="rounded-2xl shadow-lg border-l-4 border-l-primary">
+        <CardHeader className="bg-muted/30">
           <CardTitle className="flex items-center gap-2">
             <ArrowRight className="w-5 h-5" />
             {escalations.length} escalade{escalations.length > 1 ? 's' : ''} enregistrée{escalations.length > 1 ? 's' : ''}
