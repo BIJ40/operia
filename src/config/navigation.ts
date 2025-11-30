@@ -281,6 +281,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.admin.chatbotRag]: 'Chatbot & RAG',
   [ROUTES.admin.storageQuota]: 'Stockage',
   [ROUTES.admin.cacheBackup]: 'Cache Backup',
+  [ROUTES.admin.apogeeTickets]: 'TICKETING DEVELOPPEMENT',
   
   // User
   [ROUTES.profile]: 'Mon Profil',
