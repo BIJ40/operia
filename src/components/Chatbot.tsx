@@ -486,28 +486,19 @@ export function Chatbot() {
             <>
               {/* Context selector + Support button - only show when not in support ticket mode */}
               {!activeTicket && (
-                <div className="flex items-center justify-between px-2 py-1 border-b bg-muted/30">
-                  <ChatContextSelector
-                    selectedContext={chatContext}
-                    onSelectContext={setChatContext}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={async () => {
-                      const ticket = await createSupportTicket(messages);
-                      if (ticket) {
-                        setActiveTicket(ticket);
-                        setSupportMessages([]);
-                        setMessages([]);
-                      }
-                    }}
-                    disabled={isCreating}
-                    className="text-xs text-primary hover:text-primary/80 h-7 px-2"
-                  >
-                    {isCreating ? 'Connexion...' : 'Contacter le support'}
-                  </Button>
-                </div>
+                <ChatContextSelector
+                  selectedContext={chatContext}
+                  onSelectContext={setChatContext}
+                  onContactSupport={async () => {
+                    const ticket = await createSupportTicket(messages);
+                    if (ticket) {
+                      setActiveTicket(ticket);
+                      setSupportMessages([]);
+                      setMessages([]);
+                    }
+                  }}
+                  isCreatingTicket={isCreating}
+                />
               )}
               
               <ChatHistory
