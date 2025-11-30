@@ -1,16 +1,12 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const appUrl = Deno.env.get("APP_URL") || "https://helpconfort.services";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 interface EscalationRequest {
   ticket_id: string;
@@ -45,19 +41,19 @@ const getHelpConfortRoleLabel = (role: string) => {
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     // Validate authorization
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       console.error("No authorization header");
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -68,10 +64,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (authError || !user) {
       console.error("Auth error:", authError);
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     const {
@@ -99,27 +95,27 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (profileError || !targetProfile) {
       console.error("Error fetching target profile:", profileError);
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "Target user not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     // Check if email notifications are enabled
     if (!targetProfile.email_notifications_enabled) {
       console.log("Email notifications disabled for user:", escalated_to_id);
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ message: "Email notifications disabled" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     if (!targetProfile.email) {
       console.error("No email for target user:", escalated_to_id);
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "Target user has no email" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     // Prepare escalation level/role labels
@@ -191,16 +187,16 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully to:", targetProfile.email, emailResponse);
 
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ success: true, email_sent: true }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    ));
   } catch (error: any) {
     console.error("Error in notify-escalation function:", error);
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    ));
   }
 };
 
