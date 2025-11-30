@@ -542,7 +542,7 @@ export function Chatbot() {
           setIsOpen(false);
           setShowCloseConfirm(false);
         }}
-        onConvertToTicket={activeTicket?.type === 'chat_ai' || activeTicket?.type === 'chat_human' ? async () => {
+        onConvertToTicket={activeTicket && activeTicket.type !== 'ticket' ? async () => {
           // Convert chat to formal ticket
           if (!activeTicket) return;
           const result = await safeMutation(
