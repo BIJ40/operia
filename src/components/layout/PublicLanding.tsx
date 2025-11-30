@@ -25,7 +25,7 @@ export function PublicLanding({ onLoginClick }: PublicLandingProps) {
           {/* Title 1: Paint effect - letters appear like being painted */}
           <PaintedTitle 
             text="Pilotez"
-            suffix={<> votre agence Help<span className="text-accent">!</span> Confort.</>}
+            suffix={<> votre agence <span className="text-primary">Help</span><span className="text-accent">!</span> <span className="text-primary">Confort</span>.</>}
             delay={0.2}
           />
           
@@ -363,19 +363,28 @@ interface FeatureCardProps {
   color: 'primary' | 'accent';
 }
 
-const colorClasses = {
-  primary: 'bg-primary/10 text-primary border-primary/20',
-  accent: 'bg-accent/10 text-accent border-accent/20',
-};
-
 function FeatureCard({ icon: Icon, title, description, color }: FeatureCardProps) {
+  const iconBg = color === 'primary' 
+    ? 'bg-gradient-to-br from-primary to-primary-dark' 
+    : 'bg-gradient-to-br from-accent to-accent-dark';
+  
   return (
-    <div className="group bg-card border rounded-2xl p-6 hover:shadow-lg hover:border-primary/30 transition-all duration-300">
-      <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${colorClasses[color]}`}>
-        <Icon className="w-7 h-7" />
+    <motion.div 
+      className="group relative bg-card border border-border/50 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 overflow-hidden"
+      whileHover={{ y: -4, scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+    >
+      {/* Subtle gradient overlay on hover */}
+      <div className={`absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-300 ${color === 'primary' ? 'bg-primary' : 'bg-accent'}`} />
+      
+      <div className={`relative w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${iconBg} shadow-lg`}>
+        <Icon className="w-7 h-7 text-white" />
       </div>
-      <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
-      <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
-    </div>
+      <h3 className="relative text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors">{title}</h3>
+      <p className="relative text-muted-foreground text-sm leading-relaxed">{description}</p>
+      
+      {/* Bottom accent line */}
+      <div className={`absolute bottom-0 left-0 right-0 h-1 ${color === 'primary' ? 'bg-primary' : 'bg-accent'} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left`} />
+    </motion.div>
   );
 }
