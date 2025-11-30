@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -157,11 +156,11 @@ export default function AdminSystemHealth() {
 
   return (
     <div className="space-y-6">
-      {/* Header with environment badge */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20">
-            <Server className="h-6 w-6 text-primary" />
+          <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50">
+            <Server className="w-5 h-5 text-helpconfort-blue" />
           </div>
           <div>
             <h2 className="text-lg font-semibold">État des services</h2>
@@ -179,13 +178,13 @@ export default function AdminSystemHealth() {
       {/* Health Check Tiles */}
       <div className="grid gap-4 md:grid-cols-3">
         {healthChecks.map((check) => (
-          <Card 
+          <div 
             key={check.name}
-            className="border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 rounded-2xl hover:shadow-lg hover:border-primary/40 transition-all duration-300"
+            className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg"
           >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold">{check.name}</CardTitle>
-              <div className={`p-2 rounded-full bg-background/50 ${getStatusColor(check.status)}`}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-foreground">{check.name}</h3>
+              <div className={`${getStatusColor(check.status)}`}>
                 {check.status === "checking" ? (
                   <Activity className="h-5 w-5 animate-pulse" />
                 ) : check.status === "healthy" ? (
@@ -194,16 +193,14 @@ export default function AdminSystemHealth() {
                   <AlertTriangle className="h-5 w-5" />
                 )}
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-accent/10">
-                  {check.icon}
-                </div>
-                <p className="text-sm text-muted-foreground">{check.message}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+                <span className="text-helpconfort-blue">{check.icon}</span>
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-sm text-muted-foreground">{check.message}</p>
+            </div>
+          </div>
         ))}
       </div>
 
@@ -214,7 +211,7 @@ export default function AdminSystemHealth() {
           size="sm" 
           onClick={runHealthChecks}
           disabled={isRefreshing}
-          className="border-primary/30 hover:bg-primary/10"
+          className="border-helpconfort-blue/30 hover:bg-helpconfort-blue/10"
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
           Actualiser
@@ -223,19 +220,17 @@ export default function AdminSystemHealth() {
 
       {/* Info Cards */}
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-2 border-primary/20 bg-gradient-to-br from-helpconfort-blue-light/5 to-transparent rounded-2xl">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent/20">
-                <Shield className="h-5 w-5 text-accent" />
-              </div>
-              <div>
-                <CardTitle className="text-base">Monitoring des erreurs</CardTitle>
-                <CardDescription>Configuration Sentry</CardDescription>
-              </div>
+        <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+              <Shield className="w-5 h-5 text-helpconfort-blue" />
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            <div>
+              <h3 className="font-semibold text-foreground">Monitoring des erreurs</h3>
+              <p className="text-sm text-muted-foreground">Configuration Sentry</p>
+            </div>
+          </div>
+          <div className="space-y-4">
             <div className="space-y-2">
               <h4 className="font-medium text-sm">Frontend (React)</h4>
               <p className="text-sm text-muted-foreground">
@@ -243,7 +238,6 @@ export default function AdminSystemHealth() {
                 capturées avec le contexte utilisateur (ID, email, rôle, agence).
               </p>
             </div>
-            
             <div className="space-y-2">
               <h4 className="font-medium text-sm">Backend (Edge Functions)</h4>
               <p className="text-sm text-muted-foreground">
@@ -251,85 +245,76 @@ export default function AdminSystemHealth() {
                 le contexte de la requête.
               </p>
             </div>
-
             <div className="pt-3 border-t border-border/50">
               <a
                 href="https://sentry.io"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-medium"
+                className="inline-flex items-center gap-2 text-sm text-helpconfort-blue hover:underline font-medium"
               >
                 Ouvrir le dashboard Sentry
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="border-2 border-primary/20 bg-gradient-to-br from-helpconfort-blue-light/5 to-transparent rounded-2xl">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent/20">
-                <Zap className="h-5 w-5 text-accent" />
-              </div>
-              <div>
-                <CardTitle className="text-base">En cas d'incident</CardTitle>
-                <CardDescription>Procédure de gestion</CardDescription>
-              </div>
+        <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+              <Zap className="w-5 h-5 text-helpconfort-blue" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {[
-                "Consulter Sentry pour identifier l'erreur",
-                "Analyser le contexte (utilisateur, agence, action)",
-                "Reproduire le problème en environnement de dev",
-                "Corriger, déployer et vérifier dans Sentry"
-              ].map((step, index) => (
-                <div key={index} className="flex gap-3 items-start">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center text-xs font-bold">
-                    {index + 1}
-                  </span>
-                  <p className="text-sm text-muted-foreground pt-0.5">{step}</p>
-                </div>
-              ))}
+            <div>
+              <h3 className="font-semibold text-foreground">En cas d'incident</h3>
+              <p className="text-sm text-muted-foreground">Procédure de gestion</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="space-y-3">
+            {[
+              "Consulter Sentry pour identifier l'erreur",
+              "Analyser le contexte (utilisateur, agence, action)",
+              "Reproduire le problème en environnement de dev",
+              "Corriger, déployer et vérifier dans Sentry"
+            ].map((step, index) => (
+              <div key={index} className="flex gap-3 items-start">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-helpconfort-blue text-white flex items-center justify-center text-xs font-bold">
+                  {index + 1}
+                </span>
+                <p className="text-sm text-muted-foreground pt-0.5">{step}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* System Info */}
-      <Card className="border-2 border-primary/20 bg-gradient-to-br from-helpconfort-blue-light/5 to-transparent rounded-2xl">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-accent/20">
-              <Database className="h-5 w-5 text-accent" />
-            </div>
-            <CardTitle className="text-base">Informations système</CardTitle>
+      <div className="group rounded-xl p-5 bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300 hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+            <Database className="w-5 h-5 text-helpconfort-blue" />
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Environnement</p>
-              <p className="font-semibold text-foreground">{environment}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Projet ID</p>
-              <p className="font-mono text-xs text-foreground truncate">
-                {import.meta.env.VITE_SUPABASE_PROJECT_ID || "N/A"}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Sentry</p>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span className="font-medium text-green-600">Configuré</span>
-              </div>
+          <h3 className="font-semibold text-foreground">Informations système</h3>
+        </div>
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Environnement</p>
+            <p className="font-semibold text-foreground">{environment}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Projet ID</p>
+            <p className="font-mono text-xs text-foreground truncate">
+              {import.meta.env.VITE_SUPABASE_PROJECT_ID || "N/A"}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Sentry</p>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span className="font-medium text-green-600">Configuré</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
