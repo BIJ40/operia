@@ -77,10 +77,16 @@ export const useAdminSupport = () => {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const loadTickets = async () => {
-    const result = await safeQuery<SupportTicket[]>(
-      supabase.from('support_tickets').select('*').order('created_at', { ascending: false }),
-      'ADMIN_SUPPORT_LOAD_TICKETS'
-    );
+    // Admins voient tous les tickets
+    // Support users voient seulement: non-assignés OU assignés à eux-mêmes
+    let query = supabase.from('support_tickets').select('*').order('created_at', { ascending: false });
+    
+    if (!isAdmin && user) {
+      // Filtrer: assigned_to IS NULL OR assigned_to = user.id
+      query = query.or(`assigned_to.is.null,assigned_to.eq.${user.id}`);
+    }
+    
+    const result = await safeQuery<SupportTicket[]>(query, 'ADMIN_SUPPORT_LOAD_TICKETS');
 
     if (!result.success || !result.data) {
       errorToast('Erreur lors du chargement des tickets');
