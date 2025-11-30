@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
+import { captureEdgeException } from '../_shared/sentry.ts';
 
 interface KpiRequest {
   period?: 'day' | '7days' | 'month' | 'year' | 'rolling12';
@@ -163,7 +164,13 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('APOGEE_API_KEY');
     const apiBaseUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
 
-    const body: KpiRequest = req.method === 'POST' ? await req.json() : {};
+    const body: KpiRequest & { forceError?: boolean } = req.method === 'POST' ? await req.json() : {};
+    
+    // Test mode: force error for Sentry testing
+    if (body.forceError === true) {
+      throw new Error('test-sentry-edge-get-kpis');
+    }
+    
     const period = body.period || 'month';
     const dates = getPeriodDates(period);
     const now = new Date();
@@ -496,8 +503,45 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[get-kpis] Error:', error);
+    
+    // Try to extract user context for better Sentry reporting
+    let userId: string | undefined;
+    let globalRole: string | undefined;
+    let agencySlug: string | undefined;
+    try {
+      const authHeader = req.headers.get('Authorization');
+      if (authHeader) {
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+          { global: { headers: { Authorization: authHeader } } }
+        );
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+          userId = user.id;
+          const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('global_role, agence')
+            .eq('id', user.id)
+            .maybeSingle();
+          globalRole = profile?.global_role ?? undefined;
+          agencySlug = profile?.agence ?? undefined;
+        }
+      }
+    } catch (_) {
+      // Best effort only
+    }
+
+    // Report to Sentry with full context
+    await captureEdgeException(error, {
+      function: 'get-kpis',
+      userId,
+      globalRole,
+      agencySlug,
+    });
+    
     return withCors(req, new Response(
-      JSON.stringify({ error: String(error) }),
+      JSON.stringify({ error: 'Internal error in get-kpis' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     ));
   }

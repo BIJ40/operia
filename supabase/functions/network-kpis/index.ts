@@ -408,6 +408,12 @@ serve(async (req) => {
 
     // Get date range from request
     const body = await req.json().catch(() => ({}));
+    
+    // Test mode: force error for Sentry testing
+    if (body.forceError === true) {
+      throw new Error('test-sentry-edge-network-kpis');
+    }
+    
     const dateRange = body.dateRange ? {
       from: new Date(body.dateRange.from),
       to: new Date(body.dateRange.to),
@@ -460,13 +466,41 @@ serve(async (req) => {
   } catch (error) {
     console.error('❌ Error in network-kpis:', error);
     
-    // Report to Sentry
+    // Try to extract user context for better Sentry reporting
+    let userId: string | undefined;
+    let globalRole: string | undefined;
+    try {
+      const authHeader = req.headers.get('Authorization');
+      if (authHeader) {
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+          { global: { headers: { Authorization: authHeader } } }
+        );
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+          userId = user.id;
+          const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('global_role')
+            .eq('id', user.id)
+            .maybeSingle();
+          globalRole = profile?.global_role ?? undefined;
+        }
+      }
+    } catch (_) {
+      // Best effort only
+    }
+
+    // Report to Sentry with full context
     await captureEdgeException(error, {
       function: 'network-kpis',
+      userId,
+      globalRole,
     });
     
     return withCors(req, new Response(
-      JSON.stringify({ error: String(error) }),
+      JSON.stringify({ error: 'Internal error in network-kpis' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     ));
   }
