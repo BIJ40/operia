@@ -59,11 +59,6 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
         throw new Error('Email ou mot de passe incorrect');
       }
 
-      toast({
-        title: 'Connexion réussie',
-        description: 'Bienvenue !',
-      });
-
       onOpenChange(false);
       setEmail('');
       setPassword('');
