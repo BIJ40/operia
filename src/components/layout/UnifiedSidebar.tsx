@@ -2,7 +2,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   Headset, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle
+  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import {
@@ -31,6 +31,7 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.academy.index]: 'academy_index',
   [ROUTES.pilotage.index]: 'pilotage_index',
   [ROUTES.support.index]: 'support_index',
+  [ROUTES.projects.index]: 'projects_index',
   [ROUTES.reseau.index]: 'reseau_index',
   [ROUTES.admin.index]: 'admin_index',
   // Academy
@@ -51,6 +52,9 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   // Support
   [ROUTES.support.userTickets]: 'support_mes_demandes',
   [ROUTES.support.console]: 'support_console',
+  // Projects
+  [ROUTES.projects.kanban]: 'projects_kanban',
+  [ROUTES.projects.incomplete]: 'projects_incomplete',
   // Réseau
   [ROUTES.reseau.dashboard]: 'reseau_dashboard',
   [ROUTES.reseau.agences]: 'reseau_agences',
@@ -119,6 +123,7 @@ export function UnifiedSidebar() {
     if (location.pathname.startsWith('/academy')) return 'help-academy';
     if (location.pathname.startsWith('/hc-agency')) return 'pilotage';
     if (location.pathname.startsWith('/support')) return 'support';
+    if (location.pathname.startsWith('/projects')) return 'projects';
     if (location.pathname.startsWith('/hc-reseau')) return 'franchiseur';
     if (location.pathname.startsWith('/admin')) return 'admin';
     return null;
@@ -223,6 +228,15 @@ export function UnifiedSidebar() {
         { title: 'Console Support', url: ROUTES.support.console, icon: Headset, description: 'Traiter les demandes de support', requiresSupportConsole: true },
       ],
       accessKey: 'canAccessSupport',
+    },
+    {
+      label: 'Gestion de Projet',
+      labelKey: 'projects',
+      indexUrl: ROUTES.projects.index,
+      items: [
+        { title: 'Kanban', url: ROUTES.projects.kanban, icon: Kanban, description: 'Tableau de bord projet' },
+        { title: 'Tickets incomplets', url: ROUTES.projects.incomplete, icon: ListTodo, description: 'Tickets à compléter' },
+      ],
     },
     {
       label: 'Réseau Franchiseur',

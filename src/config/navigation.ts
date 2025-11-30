@@ -11,7 +11,7 @@
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv, Calendar,
   Headset, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Database, Activity, LifeBuoy
+  Coins, Settings, Users, Database, Activity, LifeBuoy, Kanban
 } from 'lucide-react';
 import { ROUTES } from './routes';
 
@@ -191,12 +191,25 @@ export const NAV_GROUPS: NavGroup[] = [
         scope: 'support_tickets', 
         description: 'Traiter les demandes de support' 
       },
+    ],
+  },
+  {
+    label: 'Gestion de Projet',
+    labelKey: 'projects',
+    items: [
       { 
-        title: 'Ticketing Développement', 
-        url: ROUTES.admin.apogeeTickets, 
+        title: 'Kanban', 
+        url: ROUTES.projects.kanban, 
+        icon: Kanban, 
+        scope: 'apogee_tickets', 
+        description: 'Tableau de bord projet' 
+      },
+      { 
+        title: 'Tickets incomplets', 
+        url: ROUTES.projects.incomplete, 
         icon: ListTodo, 
         scope: 'apogee_tickets', 
-        description: 'Suivi des évolutions et corrections Apogée' 
+        description: 'Tickets à compléter' 
       },
     ],
   },
@@ -329,16 +342,21 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.admin.systemHealth]: 'Santé Système',
   [ROUTES.admin.storageQuota]: 'Stockage',
   [ROUTES.admin.pageMetadata]: 'Métadonnées Pages',
-  [ROUTES.admin.apogeeTickets]: 'Ticketing Développement',
-  [ROUTES.admin.apogeeTicketsImport]: 'Import Tickets',
-  [ROUTES.admin.apogeeTicketsImportPriorities]: 'Import Priorités',
-  [ROUTES.admin.apogeeTicketsImportEvaluated]: 'Import Évalué',
-  [ROUTES.admin.apogeeTicketsImportBugs]: 'Import Bugs',
-  [ROUTES.admin.apogeeTicketsImportV1]: 'Import V1',
-  [ROUTES.admin.apogeeTicketsIncomplete]: 'Tickets Incomplets',
-  [ROUTES.admin.apogeeTicketsClassify]: 'Classifier Tickets',
-  [ROUTES.admin.apogeeTicketsReview]: 'Review Tickets',
-  [ROUTES.admin.apogeeTicketsPermissions]: 'Permissions Tickets',
+  // Gestion de Projet (V2 routes)
+  [ROUTES.projects.index]: 'Gestion de Projet',
+  [ROUTES.projects.kanban]: 'Kanban Projet',
+  [ROUTES.projects.import]: 'Import Tickets',
+  [ROUTES.projects.importPriorities]: 'Import Priorités',
+  [ROUTES.projects.importEvaluated]: 'Import Évalué',
+  [ROUTES.projects.importBugs]: 'Import Bugs',
+  [ROUTES.projects.importV1]: 'Import V1',
+  [ROUTES.projects.incomplete]: 'Tickets Incomplets',
+  [ROUTES.projects.classify]: 'Classifier Tickets',
+  [ROUTES.projects.review]: 'Review Tickets',
+  [ROUTES.projects.permissions]: 'Permissions Tickets',
+  
+  // Legacy admin apogee-tickets (redirects)
+  [ROUTES.admin.apogeeTickets]: 'Gestion de Projet',
   
   // User
   [ROUTES.profile]: 'Mon Profil',
