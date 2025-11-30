@@ -247,22 +247,6 @@ export default function AdminSystemHealth() {
                   <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
-
-              {/* TEST BUTTON - À RETIRER APRÈS VALIDATION */}
-              <div className="pt-4 border-t mt-4">
-                <p className="text-xs text-destructive font-medium mb-2">
-                  🧪 Test Sentry (à retirer après validation)
-                </p>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    throw new Error('This is your first error!');
-                  }}
-                >
-                  Break the world
-                </Button>
-              </div>
             </CardContent>
           </Card>
 
