@@ -34,7 +34,7 @@ import {
   type UploadedFile,
 } from '@/lib/rag-ingestion';
 import { type RAGContextType } from '@/lib/rag-michu';
-import { successToast, errorToast } from '@/lib/toastHelpers';
+import { successToast, errorToast, warningToast } from '@/lib/toastHelpers';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -156,10 +156,20 @@ export function RagIngestionTab() {
     },
   });
 
-  // Dropzone - opens dialog for metadata entry
+  // Dropzone - opens dialog for metadata entry (max 10 files)
+  const MAX_FILES_PER_UPLOAD = 10;
+  
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
-    setPendingFiles(acceptedFiles.slice(0, 50)); // Max 50 files
+    
+    if (acceptedFiles.length > MAX_FILES_PER_UPLOAD) {
+      warningToast(
+        `Maximum ${MAX_FILES_PER_UPLOAD} fichiers`,
+        `Seuls les ${MAX_FILES_PER_UPLOAD} premiers fichiers ont été conservés.`
+      );
+    }
+    
+    setPendingFiles(acceptedFiles.slice(0, MAX_FILES_PER_UPLOAD));
     setShowDetailsDialog(true);
   }, []);
 
@@ -171,7 +181,7 @@ export function RagIngestionTab() {
       title: doc.title,
       description: doc.description,
     }));
-    setSelectedFiles(prev => [...prev, ...newFiles].slice(0, 50));
+    setSelectedFiles(prev => [...prev, ...newFiles].slice(0, MAX_FILES_PER_UPLOAD));
     setPendingFiles([]);
   }, []);
 
@@ -186,7 +196,7 @@ export function RagIngestionTab() {
       'text/markdown': ['.md'],
     },
     maxSize: 20 * 1024 * 1024, // 20MB
-    maxFiles: 50,
+    maxFiles: MAX_FILES_PER_UPLOAD,
   });
 
   const removeFile = (index: number) => {
@@ -208,7 +218,7 @@ export function RagIngestionTab() {
             Upload Documents
           </CardTitle>
         <CardDescription>
-            Glissez-déposez jusqu'à 50 fichiers (PDF, DOCX, PPTX, TXT, MD)
+            Glissez-déposez jusqu'à 10 fichiers (PDF, DOCX, PPTX, TXT, MD)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

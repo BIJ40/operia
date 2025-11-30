@@ -1,18 +1,47 @@
+/**
+ * RagDocumentsTab - Bibliothèque / Catalogue RAG
+ * Consultation et gestion des documents déjà indexés
+ * AUCUN UPLOAD - utiliser l'onglet Ingestion pour ajouter des documents
+ */
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { safeQuery, safeMutation, safeInvoke } from '@/lib/safeQuery';
-import { errorToast, successToast } from '@/lib/toastHelpers';
-import { logError } from '@/lib/logger';
-import { Loader2, Upload, FileText, Trash2, Download, Database, RefreshCw } from 'lucide-react';
+import { errorToast, successToast, warningToast } from '@/lib/toastHelpers';
+import { logError, logInfo } from '@/lib/logger';
+import { 
+  Loader2, 
+  FileText, 
+  Trash2, 
+  Download, 
+  Database, 
+  RefreshCw, 
+  Search,
+  Eye,
+  EyeOff,
+  Filter,
+  Info,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { type RAGContextType } from '@/lib/rag-michu';
+
+// Familles RAG valides - alignées sur le moteur
+const VALID_CONTEXTS: { value: RAGContextType | 'all'; label: string }[] = [
+  { value: 'all', label: 'Toutes familles' },
+  { value: 'apogee', label: 'Apogée' },
+  { value: 'apporteurs', label: 'Apporteurs' },
+  { value: 'helpconfort', label: 'HelpConfort' },
+  { value: 'metier', label: 'Métiers' },
+  { value: 'franchise', label: 'Franchise' },
+  { value: 'documents', label: 'Documents' },
+];
 
 type Document = {
   id: string;
@@ -23,21 +52,19 @@ type Document = {
   scope: string;
   created_at: string;
   indexed?: boolean;
+  chunk_count?: number;
 };
 
 export function RagDocumentsTab() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
   const [indexingDoc, setIndexingDoc] = useState<string | null>(null);
   const [indexingAll, setIndexingAll] = useState(false);
   
-  // Upload form
-  const [family, setFamily] = useState<string>('apogee');
-  const [module, setModule] = useState<string>('');
-  const [title, setTitle] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [file, setFile] = useState<File | null>(null);
+  // Filtres
+  const [searchQuery, setSearchQuery] = useState('');
+  const [contextFilter, setContextFilter] = useState<RAGContextType | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'indexed' | 'pending'>('all');
 
   const loadDocuments = async () => {
     setLoading(true);
@@ -57,6 +84,7 @@ export function RagDocumentsTab() {
       return;
     }
 
+    // Get chunk counts per document
     const chunksResult = await safeQuery<{ block_id: string }[]>(
       supabase
         .from('guide_chunks')
@@ -65,11 +93,15 @@ export function RagDocumentsTab() {
       'RAG_DOCS_LOAD_CHUNKS'
     );
 
-    const indexedIds = new Set(chunksResult.data?.map(c => c.block_id) || []);
+    const chunkCounts = new Map<string, number>();
+    (chunksResult.data || []).forEach(c => {
+      chunkCounts.set(c.block_id, (chunkCounts.get(c.block_id) || 0) + 1);
+    });
 
     setDocuments((docsResult.data || []).map(doc => ({
       ...doc,
-      indexed: indexedIds.has(doc.id),
+      indexed: chunkCounts.has(doc.id),
+      chunk_count: chunkCounts.get(doc.id) || 0,
     })));
     setLoading(false);
   };
@@ -78,64 +110,28 @@ export function RagDocumentsTab() {
     loadDocuments();
   }, []);
 
-  const handleUpload = async () => {
-    if (!file || !title) {
-      errorToast('Titre et fichier requis');
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const fileExt = file.name.split('.').pop();
-      const filePath = `chatbot/${Date.now()}.${fileExt}`;
-
-      // Storage upload - keep try/catch for storage operations
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        logError('rag-docs', 'Storage upload error', uploadError);
-        errorToast(uploadError.message);
-        setUploading(false);
-        return;
+  // Filtrage des documents
+  const filteredDocuments = documents.filter(doc => {
+    // Filtre texte
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (!doc.title.toLowerCase().includes(q) && 
+          !(doc.description || '').toLowerCase().includes(q)) {
+        return false;
       }
-
-      const insertResult = await safeMutation(
-        supabase
-          .from('documents')
-          .insert({
-            title,
-            description: description || null,
-            file_path: filePath,
-            file_type: file.type,
-            scope: family,
-          }),
-        'RAG_DOCS_INSERT'
-      );
-
-      if (!insertResult.success) {
-        logError('rag-docs', 'Error inserting document', insertResult.error);
-        errorToast(insertResult.error!);
-        setUploading(false);
-        return;
-      }
-
-      successToast('Document uploadé');
-
-      // Reset form
-      setTitle('');
-      setDescription('');
-      setModule('');
-      setFile(null);
-      await loadDocuments();
-    } catch (error) {
-      logError('rag-docs', 'Upload error', error);
-      errorToast(error instanceof Error ? error.message : 'Erreur lors de l\'upload');
-    } finally {
-      setUploading(false);
     }
-  };
+    
+    // Filtre contexte/famille
+    if (contextFilter !== 'all' && doc.scope !== contextFilter) {
+      return false;
+    }
+    
+    // Filtre statut
+    if (statusFilter === 'indexed' && !doc.indexed) return false;
+    if (statusFilter === 'pending' && doc.indexed) return false;
+    
+    return true;
+  });
 
   const handleIndexDocument = async (doc: Document) => {
     setIndexingDoc(doc.id);
@@ -160,11 +156,17 @@ export function RagDocumentsTab() {
   };
 
   const handleIndexAll = async () => {
+    const toIndex = filteredDocuments.filter(d => !d.indexed);
+    if (toIndex.length === 0) {
+      warningToast('Aucun document à indexer');
+      return;
+    }
+    
     setIndexingAll(true);
     let indexed = 0;
     let failed = 0;
 
-    for (const doc of documents.filter(d => !d.indexed)) {
+    for (const doc of toIndex) {
       const result = await safeInvoke(
         supabase.functions.invoke('index-document', {
           body: { documentId: doc.id, filePath: doc.file_path },
@@ -186,15 +188,16 @@ export function RagDocumentsTab() {
   };
 
   const handleDelete = async (doc: Document) => {
-    if (!confirm('Supprimer ce document ?')) return;
+    if (!confirm(`Supprimer "${doc.title}" et ses chunks RAG ?`)) return;
 
     try {
-      // Storage delete - keep try/catch for storage operations
+      // Storage delete
       await supabase.storage.from('documents').remove([doc.file_path]);
     } catch (storageError) {
       logError('rag-docs', 'Storage delete error', storageError);
     }
 
+    // Delete document record
     const deleteDocResult = await safeMutation(
       supabase.from('documents').delete().eq('id', doc.id),
       'RAG_DOCS_DELETE'
@@ -206,6 +209,7 @@ export function RagDocumentsTab() {
       return;
     }
 
+    // Delete associated chunks
     const deleteChunksResult = await safeMutation(
       supabase.from('guide_chunks').delete().eq('block_id', doc.id),
       'RAG_DOCS_DELETE_CHUNKS'
@@ -215,6 +219,7 @@ export function RagDocumentsTab() {
       logError('rag-docs', 'Error deleting chunks', deleteChunksResult.error);
     }
 
+    logInfo('rag-docs', `Document ${doc.id} deleted with chunks`);
     successToast('Document supprimé');
     await loadDocuments();
   };
@@ -224,79 +229,76 @@ export function RagDocumentsTab() {
     return data.publicUrl;
   };
 
-  const notIndexedCount = documents.filter(d => !d.indexed).length;
+  const notIndexedCount = filteredDocuments.filter(d => !d.indexed).length;
+  const indexedCount = filteredDocuments.filter(d => d.indexed).length;
 
   return (
     <div className="space-y-6">
-      {/* Upload Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            Uploader un document
-          </CardTitle>
-          <CardDescription>
-            Ajoutez des documents pour enrichir la base de connaissances du chatbot
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <div>
-                <Label>Famille</Label>
-                <Select value={family} onValueChange={setFamily}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="apogee">Apogée</SelectItem>
-                    <SelectItem value="apporteurs">Apporteurs</SelectItem>
-                    <SelectItem value="helpconfort">HelpConfort</SelectItem>
-                    <SelectItem value="metier">Métiers</SelectItem>
-                    <SelectItem value="franchise">Franchise</SelectItem>
-                    <SelectItem value="documents">Documents</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Module (optionnel)</Label>
-                <Input
-                  value={module}
-                  onChange={(e) => setModule(e.target.value)}
-                  placeholder="Ex: Facturation, RT, SAV..."
-                />
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <Label>Titre</Label>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Titre du document"
-                />
-              </div>
-              <div>
-                <Label>Description</Label>
-                <Textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Description (optionnel)"
-                  rows={2}
-                />
-              </div>
+      {/* Info Banner */}
+      <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20">
+        <CardContent className="py-3">
+          <div className="flex items-start gap-2">
+            <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium text-blue-700 dark:text-blue-400">
+                Bibliothèque RAG - Consultation uniquement
+              </p>
+              <p className="text-blue-600/80 dark:text-blue-300/70">
+                Pour ajouter de nouveaux documents, utilisez l'onglet <strong>Ingestion</strong>.
+              </p>
             </div>
           </div>
-          <div className="mt-4 flex gap-2">
-            <Input
-              type="file"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="flex-1"
-            />
-            <Button onClick={handleUpload} disabled={uploading}>
-              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              <span className="ml-2">Uploader</span>
-            </Button>
+        </CardContent>
+      </Card>
+
+      {/* Filters */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Filter className="h-5 w-5" />
+            Filtres
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par titre..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Context filter */}
+            <div className="w-[180px]">
+              <Select value={contextFilter} onValueChange={(v) => setContextFilter(v as RAGContextType | 'all')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Famille" />
+                </SelectTrigger>
+                <SelectContent>
+                  {VALID_CONTEXTS.map(ctx => (
+                    <SelectItem key={ctx.value} value={ctx.value}>{ctx.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status filter */}
+            <div className="w-[150px]">
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as 'all' | 'indexed' | 'pending')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="indexed">Indexés</SelectItem>
+                  <SelectItem value="pending">Non indexés</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -308,10 +310,17 @@ export function RagDocumentsTab() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Documents ({documents.length})
+                Documents ({filteredDocuments.length})
               </CardTitle>
-              <CardDescription>
-                {notIndexedCount > 0 && `${notIndexedCount} document(s) non indexé(s)`}
+              <CardDescription className="flex gap-4 mt-1">
+                <span className="flex items-center gap-1">
+                  <Eye className="h-3 w-3 text-green-500" />
+                  {indexedCount} indexés
+                </span>
+                <span className="flex items-center gap-1">
+                  <EyeOff className="h-3 w-3 text-muted-foreground" />
+                  {notIndexedCount} en attente
+                </span>
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -322,7 +331,7 @@ export function RagDocumentsTab() {
               {notIndexedCount > 0 && (
                 <Button size="sm" onClick={handleIndexAll} disabled={indexingAll}>
                   {indexingAll ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Database className="w-4 h-4 mr-2" />}
-                  Indexer tous ({notIndexedCount})
+                  Indexer ({notIndexedCount})
                 </Button>
               )}
             </div>
@@ -333,35 +342,50 @@ export function RagDocumentsTab() {
             <div className="flex justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin" />
             </div>
-          ) : documents.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Aucun document</p>
+          ) : filteredDocuments.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">
+                {documents.length === 0 
+                  ? 'Aucun document dans la bibliothèque' 
+                  : 'Aucun document ne correspond aux filtres'}
+              </p>
+            </div>
           ) : (
             <div className="space-y-2 max-h-[500px] overflow-y-auto">
-              {documents.map((doc) => (
+              {filteredDocuments.map((doc) => (
                 <Card key={doc.id} className="p-3">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-sm">{doc.title}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium text-sm truncate">{doc.title}</p>
                         {doc.indexed ? (
-                          <Badge variant="default" className="text-xs">Indexé</Badge>
+                          <Badge variant="default" className="text-xs bg-green-500/10 text-green-600 border-green-200">
+                            <Eye className="w-3 h-3 mr-1" />
+                            {doc.chunk_count} chunks
+                          </Badge>
                         ) : (
-                          <Badge variant="secondary" className="text-xs">Non indexé</Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            <EyeOff className="w-3 h-3 mr-1" />
+                            Non indexé
+                          </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {doc.description || 'Pas de description'}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
+                      {doc.description && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                          {doc.description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 mt-1.5">
                         <Badge variant="outline" className="text-xs">{doc.scope}</Badge>
                         <span className="text-xs text-muted-foreground">
                           {format(new Date(doc.created_at), 'dd/MM/yyyy', { locale: fr })}
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 ml-2 shrink-0">
                       <Button size="icon" variant="ghost" className="h-7 w-7" asChild>
-                        <a href={getDownloadUrl(doc.file_path)} target="_blank" rel="noopener noreferrer">
+                        <a href={getDownloadUrl(doc.file_path)} target="_blank" rel="noopener noreferrer" title="Télécharger">
                           <Download className="w-3 h-3" />
                         </a>
                       </Button>
@@ -371,6 +395,7 @@ export function RagDocumentsTab() {
                         className="h-7 w-7"
                         onClick={() => handleIndexDocument(doc)}
                         disabled={indexingDoc === doc.id}
+                        title={doc.indexed ? 'Ré-indexer' : 'Indexer'}
                       >
                         {indexingDoc === doc.id ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
@@ -381,8 +406,9 @@ export function RagDocumentsTab() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-7 w-7 text-destructive"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
                         onClick={() => handleDelete(doc)}
+                        title="Supprimer"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
