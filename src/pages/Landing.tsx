@@ -2,48 +2,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronRight, LucideIcon } from 'lucide-react';
 import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashboardTiles';
-import { useMemo, useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
 import { getRoleCapabilities, canAccessTileGroup, canAccessTile, TileGroup } from '@/config/roleMatrix';
 import { isModuleEnabled } from '@/types/modules';
+import { useSupportNotifications } from '@/hooks/use-support-notifications';
 
 export default function Landing() {
   const { agence, globalRole, canAccessSupportConsole, enabledModules } = useAuth();
-  const [pendingTicketsCount, setPendingTicketsCount] = useState<number>(0);
+  
+  // Utiliser le même hook que le header pour synchroniser les compteurs
+  const { newTicketsCount } = useSupportNotifications();
 
   // V2: Capacités basées sur ROLE_MATRIX
   const caps = getRoleCapabilities(globalRole);
-
-  // Fetch pending tickets count for support console users
-  useEffect(() => {
-    if (!canAccessSupportConsole) return;
-
-    const fetchPendingCount = async () => {
-      const { count, error } = await supabase
-        .from('support_tickets')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['new', 'in_progress', 'waiting_user']);
-
-      if (!error && count !== null) {
-        setPendingTicketsCount(count);
-      }
-    };
-
-    fetchPendingCount();
-
-    const channel = supabase
-      .channel('pending-tickets-count')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'support_tickets' },
-        () => fetchPendingCount()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [canAccessSupportConsole]);
 
   // V2: Filtrer les tuiles basé sur ROLE_MATRIX + canAccessSupportConsole de AuthContext
   const visibleTiles = useMemo(() => {
@@ -142,7 +113,7 @@ export default function Landing() {
               <DashboardTileCard 
                 key={tile.id} 
                 tile={tile} 
-                dynamicBadge={tile.id === 'CONSOLE_SUPPORT' && pendingTicketsCount > 0 ? pendingTicketsCount : undefined}
+                dynamicBadge={tile.id === 'CONSOLE_SUPPORT' && newTicketsCount > 0 ? newTicketsCount : undefined}
               />
             ))}
           </div>
