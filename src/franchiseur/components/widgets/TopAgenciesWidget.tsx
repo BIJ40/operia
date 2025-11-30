@@ -18,13 +18,13 @@ export function TopAgenciesWidget({ agencies }: TopAgenciesWidgetProps) {
     switch (rank) {
       case 1: return "text-yellow-500";
       case 2: return "text-gray-400";
-      case 3: return "text-orange-600";
+      case 3: return "text-helpconfort-blue";
       default: return "text-muted-foreground";
     }
   };
 
   return (
-    <Card className="rounded-2xl border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 shadow-lg">
+    <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm">
       <CardHeader>
         <CardTitle className="text-lg font-semibold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent flex items-center gap-2">
           <Building2 className="h-5 w-5" />

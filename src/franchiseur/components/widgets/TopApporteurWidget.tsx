@@ -14,7 +14,7 @@ interface TopApporteurWidgetProps {
 
 export function TopApporteurWidget({ apporteur }: TopApporteurWidgetProps) {
   return (
-    <Card className="rounded-2xl border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 shadow-lg">
+    <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm">
       <CardHeader>
         <CardTitle className="text-lg font-semibold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent flex items-center gap-2">
           <Users className="h-5 w-5" />

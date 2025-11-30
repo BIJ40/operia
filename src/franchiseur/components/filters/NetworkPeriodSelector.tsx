@@ -36,8 +36,8 @@ export function NetworkPeriodSelector() {
           onClick={() => handlePeriodChange(p.value)}
           variant={period === p.value ? 'default' : 'outline'}
           className={period === p.value 
-            ? 'bg-gradient-to-r from-primary to-helpconfort-blue-dark text-primary-foreground border-l-4 border-l-accent' 
-            : 'border-primary/20 hover:border-primary/40 border-l-4 border-l-accent'
+            ? 'bg-helpconfort-blue text-white' 
+            : 'border-helpconfort-blue/30 hover:border-helpconfort-blue/60 hover:bg-helpconfort-blue/10'
           }
           size="sm"
         >
@@ -50,8 +50,8 @@ export function NetworkPeriodSelector() {
           <Button
             variant={period === 'custom' ? 'default' : 'outline'}
             className={period === 'custom'
-              ? 'bg-gradient-to-r from-primary to-helpconfort-blue-dark text-primary-foreground border-l-4 border-l-accent'
-              : 'border-primary/20 hover:border-primary/40 border-l-4 border-l-accent'
+              ? 'bg-helpconfort-blue text-white'
+              : 'border-helpconfort-blue/30 hover:border-helpconfort-blue/60 hover:bg-helpconfort-blue/10'
             }
             size="sm"
             onClick={() => {

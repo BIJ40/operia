@@ -12,7 +12,7 @@ interface NetworkCAPieChartProps {
 const COLORS = [
   'hsl(var(--primary))',
   'hsl(var(--helpconfort-blue-dark))',
-  'hsl(var(--accent))',
+  'hsl(220, 70%, 30%)',
   'hsl(200, 80%, 50%)',
   'hsl(180, 70%, 45%)',
   'hsl(160, 60%, 40%)',
@@ -31,7 +31,7 @@ export const NetworkCAPieChart = ({ data }: NetworkCAPieChartProps) => {
   ];
 
   return (
-    <Card className="rounded-2xl border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 shadow-lg p-6">
+    <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm p-6">
       <div className="mb-4">
         <h3 className="text-lg font-semibold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
           Part de marché CA par agence

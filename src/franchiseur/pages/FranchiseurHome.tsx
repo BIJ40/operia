@@ -167,7 +167,7 @@ export default function FranchiseurHome() {
 
       {/* Ligne 3: SAV (intemporel) */}
       <div className="grid gap-4 md:grid-cols-1">
-        <Card className="rounded-xl border border-helpconfort-blue/20 bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm hover:to-helpconfort-blue/15 hover:shadow-lg transition-all">
+        <Card className="rounded-xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-helpconfort-blue" />
