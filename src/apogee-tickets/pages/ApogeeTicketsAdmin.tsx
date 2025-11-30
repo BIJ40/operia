@@ -83,7 +83,7 @@ function UserRolesTab() {
   const [selectedRole, setSelectedRole] = useState<TicketRole | ''>('');
   
   // Get all users with apogee_tickets module or admins
-  const { data: eligibleUsers } = useQuery({
+  const { data: eligibleUsers, refetch } = useQuery({
     queryKey: ['eligible-ticket-users'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -94,7 +94,7 @@ function UserRolesTab() {
       
       if (error) throw error;
       
-      // Filter users with apogee_tickets module enabled or admins (N5+)
+      // Filter users with apogee_tickets module enabled (any option) or admins (N5+)
       return (data || []).filter((u: any) => {
         const modules = u.enabled_modules as any;
         const hasModule = modules?.apogee_tickets?.enabled === true;
@@ -102,6 +102,7 @@ function UserRolesTab() {
         return hasModule || isAdmin;
       });
     },
+    staleTime: 0, // Always refetch to get latest user permissions
   });
   
   const handleAssign = () => {
