@@ -1,4 +1,4 @@
-import { Network, Building2, Users, PieChart, GitCompare, Coins } from 'lucide-react';
+import { Network, Building2, Users, UserCog, PieChart, GitCompare, Coins } from 'lucide-react';
 import { IndexTile, getVariantForIndex } from '@/components/ui/index-tile';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasMinimumRole } from '@/types/globalRoles';
@@ -8,6 +8,7 @@ import { useMenuLabels } from '@/hooks/use-page-metadata';
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.reseau.dashboard]: 'reseau_dashboard',
   [ROUTES.reseau.agences]: 'reseau_agences',
+  [ROUTES.reseau.users]: 'reseau_users',
   [ROUTES.reseau.animateurs]: 'reseau_animateurs',
   [ROUTES.reseau.stats]: 'reseau_stats',
   [ROUTES.reseau.comparatifs]: 'reseau_comparatifs',
@@ -35,9 +36,16 @@ export default function ReseauIndex() {
       visible: true,
     },
     {
+      title: 'Utilisateurs',
+      description: 'Gestion des utilisateurs du réseau',
+      icon: Users,
+      href: ROUTES.reseau.users,
+      visible: true,
+    },
+    {
       title: 'Animateurs',
       description: 'Gestion des animateurs réseau',
-      icon: Users,
+      icon: UserCog,
       href: ROUTES.reseau.animateurs,
       visible: isFranchisorAdmin,
     },
