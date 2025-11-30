@@ -248,12 +248,13 @@ export function RagDocumentsTab() {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                <SelectContent>
                     <SelectItem value="apogee">Apogée</SelectItem>
                     <SelectItem value="apporteurs">Apporteurs</SelectItem>
                     <SelectItem value="helpconfort">HelpConfort</SelectItem>
-                    <SelectItem value="juridique">Juridique</SelectItem>
-                    <SelectItem value="autre">Autre</SelectItem>
+                    <SelectItem value="metier">Métiers</SelectItem>
+                    <SelectItem value="franchise">Franchise</SelectItem>
+                    <SelectItem value="documents">Documents</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
