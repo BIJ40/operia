@@ -3,11 +3,18 @@
  * 
  * En production, seuls les logs d'erreur sont affichés.
  * En développement (ou avec VITE_DEBUG_LOGS=true), tous les logs sont actifs.
+ * 
+ * Les erreurs (logError) sont automatiquement envoyées à Sentry si VITE_SENTRY_DSN est défini.
  */
+
+import * as Sentry from "@sentry/react";
 
 const isDev = import.meta.env.DEV;
 const debugEnabled = import.meta.env.VITE_DEBUG_LOGS === 'true';
 const canDebug = isDev || debugEnabled;
+
+// Sentry n'envoie que si le DSN est configuré (évite le bruit en dev)
+const IS_SENTRY_ENABLED = !!import.meta.env.VITE_SENTRY_DSN;
 
 /**
  * Log de debug - n'apparaît qu'en développement ou si VITE_DEBUG_LOGS=true
@@ -42,9 +49,43 @@ export const logWarn = (...args: unknown[]): void => {
 /**
  * Log d'erreur - toujours actif (même en production)
  * Utiliser pour les erreurs et exceptions critiques
+ * Envoie automatiquement à Sentry si VITE_SENTRY_DSN est défini
  */
 export const logError = (...args: unknown[]): void => {
   console.error('[ERROR]', ...args);
+
+  if (!IS_SENTRY_ENABLED) return;
+
+  try {
+    const message = args
+      .map((a) => {
+        if (a instanceof Error) return a.message;
+        if (typeof a === 'string') return a;
+        try {
+          return JSON.stringify(a);
+        } catch {
+          return String(a);
+        }
+      })
+      .join(' ');
+
+    const errorObj = args.find((a) => a instanceof Error) as Error | undefined;
+
+    if (errorObj) {
+      Sentry.captureException(errorObj, {
+        tags: { logger: 'app' },
+        extra: { rawArgs: args },
+      });
+    } else {
+      Sentry.captureMessage(message || 'logError without message', {
+        level: 'error',
+        tags: { logger: 'app' },
+        extra: { rawArgs: args },
+      });
+    }
+  } catch {
+    // Ne jamais casser l'app si Sentry plante
+  }
 };
 
 /**

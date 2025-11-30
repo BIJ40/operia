@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { logDebug, logError } from '@/lib/logger';
 
 export interface RAGChunk {
   chunk_text: string;
@@ -30,7 +31,7 @@ export interface RAGResult {
  * Queries guide_chunks with vector search filtered on metadata.source = 'apogee'
  */
 export async function getApogeeContext(question: string): Promise<RAGResult> {
-  console.log('[RAG-MICHU] Recherche RAG Apogée pour:', question.substring(0, 100));
+  logDebug('[RAG-MICHU] Recherche RAG Apogée pour:', question.substring(0, 100));
   
   try {
     const { data, error } = await supabase.functions.invoke('search-embeddings', {
@@ -42,14 +43,14 @@ export async function getApogeeContext(question: string): Promise<RAGResult> {
     });
 
     if (error) {
-      console.error('[RAG-MICHU] Erreur search-embeddings:', error);
+      logError('[RAG-MICHU] Erreur search-embeddings:', error);
       return { chunks: [], hasContent: false, formattedDocs: '' };
     }
 
     const results = data?.results;
     
     if (!results || results.length === 0) {
-      console.log('[RAG-MICHU] Aucun chunk Apogée trouvé');
+      logDebug('[RAG-MICHU] Aucun chunk Apogée trouvé');
       return { chunks: [], hasContent: false, formattedDocs: '' };
     }
 
@@ -62,10 +63,10 @@ export async function getApogeeContext(question: string): Promise<RAGResult> {
       similarity: r.similarity,
     }));
 
-    console.log(`[RAG-MICHU] ${chunks.length} chunks Apogée trouvés`);
+    logDebug(`[RAG-MICHU] ${chunks.length} chunks Apogée trouvés`);
     chunks.forEach((chunk, idx) => {
       const meta = chunk.metadata;
-      console.log(`  [${idx + 1}] ${meta.categorie || 'N/A'} - ${meta.section || 'N/A'} (score: ${chunk.similarity?.toFixed(3) || 'N/A'})`);
+      logDebug(`  [${idx + 1}] ${meta.categorie || 'N/A'} - ${meta.section || 'N/A'} (score: ${chunk.similarity?.toFixed(3) || 'N/A'})`);
     });
 
     // Format docs for injection into prompt
@@ -85,7 +86,7 @@ export async function getApogeeContext(question: string): Promise<RAGResult> {
       formattedDocs,
     };
   } catch (error) {
-    console.error('[RAG-MICHU] Erreur RAG:', error);
+    logError('[RAG-MICHU] Erreur RAG:', error);
     return { chunks: [], hasContent: false, formattedDocs: '' };
   }
 }

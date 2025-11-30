@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { logError } from '@/lib/logger';
 
 const HEARTBEAT_INTERVAL = 30000; // 30 secondes
 const OFFLINE_THRESHOLD = 60000; // 1 minute
@@ -27,7 +28,7 @@ export const useUserPresence = () => {
             updated_at: new Date().toISOString()
           });
       } catch (error) {
-        console.error('Erreur mise à jour présence:', error);
+        logError('Erreur mise à jour présence:', error);
       }
     };
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/logger';
 
 interface AdminStats {
   totalUsers: number;
@@ -58,7 +59,7 @@ export function useAdminStats() {
           isLoading: false,
         });
       } catch (error) {
-        console.error('Erreur lors de la récupération des stats:', error);
+        logError('Erreur lors de la récupération des stats:', error);
         setStats(prev => ({ ...prev, isLoading: false }));
       }
     };

@@ -1,14 +1,15 @@
 import { AppData } from '@/types/block';
 import { supabase } from '@/integrations/supabase/client';
+import { logDebug, logWarn, logError } from '@/lib/logger';
 
 export async function saveAppData(data: AppData): Promise<void> {
   try {
     if (!data.blocks || data.blocks.length === 0) {
-      console.warn('⚠️ Tentative de sauvegarde avec 0 blocks - ANNULÉE');
+      logWarn('Tentative de sauvegarde avec 0 blocks - ANNULÉE');
       return;
     }
 
-    console.log(`💾 Sauvegarde BATCH optimisée de ${data.blocks.length} blocks...`);
+    logDebug(`Sauvegarde BATCH optimisée de ${data.blocks.length} blocks...`);
 
     // Récupérer les IDs existants
     const { data: existingBlocks } = await supabase
@@ -44,7 +45,7 @@ export async function saveAppData(data: AppData): Promise<void> {
           })) as any
         );
       if (insertError) throw insertError;
-      console.log(`✅ ${newBlocks.length} nouveaux blocks insérés`);
+      logDebug(`${newBlocks.length} nouveaux blocks insérés`);
     }
 
     // 2. Mettre à jour EN BATCH avec upsert
@@ -70,7 +71,7 @@ export async function saveAppData(data: AppData): Promise<void> {
           })) as any
         );
       if (updateError) throw updateError;
-      console.log(`✅ ${updateBlocks.length} blocks mis à jour`);
+      logDebug(`${updateBlocks.length} blocks mis à jour`);
     }
 
     // 3. Supprimer EN BATCH
@@ -81,12 +82,12 @@ export async function saveAppData(data: AppData): Promise<void> {
         .delete()
         .in('id', idsToDelete);
       if (deleteError) throw deleteError;
-      console.log(`🗑️ ${toDelete.length} blocks supprimés`);
+      logDebug(`${toDelete.length} blocks supprimés`);
     }
 
-    console.log('✅ Sauvegarde BATCH réussie');
+    logDebug('Sauvegarde BATCH réussie');
   } catch (error) {
-    console.error('❌ Erreur sauvegarde:', error);
+    logError('Erreur sauvegarde:', error);
     throw error;
   }
 }
@@ -127,10 +128,10 @@ export async function loadAppData(): Promise<AppData | null> {
       lastModified: Date.now(),
     };
 
-    console.log(`✅ ${blocks.length} blocs chargés depuis le serveur`);
+    logDebug(`${blocks.length} blocs chargés depuis le serveur`);
     return appData;
   } catch (error) {
-    console.error('❌ Erreur chargement Supabase:', error);
+    logError('Erreur chargement Supabase:', error);
     return null;
   }
 }
