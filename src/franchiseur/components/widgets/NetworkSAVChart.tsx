@@ -10,7 +10,7 @@ interface NetworkSAVChartProps {
 
 export const NetworkSAVChart = ({ data }: NetworkSAVChartProps) => {
   return (
-    <Card className="rounded-2xl border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 shadow-lg p-6">
+    <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm p-6">
       <div className="mb-4">
         <h3 className="text-lg font-semibold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
           Évolution du taux SAV
