@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
+import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -176,11 +177,20 @@ serve(async (req) => {
   if (corsResult) return corsResult;
 
   const origin = req.headers.get('origin') ?? '';
+  const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
 
   try {
     const body = await req.json();
     const { messages, guideContent, userId, userName, similarityScores, chatContext = 'apogee', hasRagContent = true } = body;
     
+    // Rate limit: 30 req/min per user
+    const rateLimitKey = `chat-guide:${userId || 'anonymous'}`;
+    const rateCheck = checkRateLimit(rateLimitKey, { limit: 30, windowMs: 60 * 1000 });
+    if (!rateCheck.allowed) {
+      console.log(`[CHAT-GUIDE] Rate limit exceeded for ${rateLimitKey}`);
+      return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
+    }
+
     const validation = validateInput(messages, guideContent);
     if (!validation.valid) {
       console.error('Validation error:', validation.error);
@@ -250,9 +260,6 @@ serve(async (req) => {
     // Stream la réponse et accumule le contenu
     let fullAnswer = '';
     const encoder = new TextEncoder();
-    
-    // Get CORS headers for streaming response
-    const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
     
     const stream = new ReadableStream({
       async start(controller) {

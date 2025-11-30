@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
+import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -45,6 +46,9 @@ const handler = async (req: Request): Promise<Response> => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
+  const origin = req.headers.get('origin') ?? '';
+  const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
+
   try {
     // Validate authorization
     const authHeader = req.headers.get("authorization");
@@ -68,6 +72,14 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       ));
+    }
+
+    // Rate limit: 10 req/min per user
+    const rateLimitKey = `notify-escalation:${user.id}`;
+    const rateCheck = checkRateLimit(rateLimitKey, { limit: 10, windowMs: 60 * 1000 });
+    if (!rateCheck.allowed) {
+      console.log(`[NOTIFY-ESCALATION] Rate limit exceeded for ${rateLimitKey}`);
+      return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
     }
 
     const {

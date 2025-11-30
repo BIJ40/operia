@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
-import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
+import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
 interface KpiRequest {
   period?: 'day' | '7days' | 'month' | 'year' | 'rolling12';
@@ -99,6 +100,9 @@ Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
+  const origin = req.headers.get('origin') ?? '';
+  const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
+
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -124,6 +128,14 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       ));
+    }
+
+    // Rate limit: 20 req/min per user
+    const rateLimitKey = `get-kpis:${user.id}`;
+    const rateCheck = checkRateLimit(rateLimitKey, { limit: 20, windowMs: 60 * 1000 });
+    if (!rateCheck.allowed) {
+      console.log(`[GET-KPIS] Rate limit exceeded for ${rateLimitKey}`);
+      return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
     }
 
     const { data: profile, error: profileError } = await supabase
@@ -476,15 +488,16 @@ Deno.serve(async (req) => {
       },
     };
 
-    return withCors(req, new Response(
-      JSON.stringify(response),
-      { headers: { 'Content-Type': 'application/json' } }
-    ));
+    console.log('[get-kpis] Response generated successfully');
+
+    return withCors(req, new Response(JSON.stringify(response), {
+      headers: { 'Content-Type': 'application/json' },
+    }));
 
   } catch (error) {
     console.error('[get-kpis] Error:', error);
     return withCors(req, new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: String(error) }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     ));
   }

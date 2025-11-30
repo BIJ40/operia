@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
-import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
+import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
 // Cache management
 interface CacheEntry {
@@ -48,8 +49,6 @@ async function loadAgencyData(agencySlug: string) {
 
       try {
         const text = await response.text();
-        // Certains serveurs Apogée renvoient du JSON mais avec un mauvais Content-Type,
-        // donc on tente toujours un parse JSON, et on log seulement si ça échoue.
         try {
           return JSON.parse(text);
         } catch (e) {
@@ -364,6 +363,9 @@ serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
+  const origin = req.headers.get('origin') ?? '';
+  const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
+
   try {
     console.log('🔄 network-kpis: Request received');
 
@@ -393,6 +395,14 @@ serve(async (req) => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
       throw new Error('Unauthorized');
+    }
+
+    // Rate limit: 20 req/min per user
+    const rateLimitKey = `network-kpis:${user.id}`;
+    const rateCheck = checkRateLimit(rateLimitKey, { limit: 20, windowMs: 60 * 1000 });
+    if (!rateCheck.allowed) {
+      console.log(`[NETWORK-KPIS] Rate limit exceeded for ${rateLimitKey}`);
+      return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
     }
 
     // Get date range from request

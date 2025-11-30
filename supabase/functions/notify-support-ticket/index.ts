@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
+import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
 // AllMySMS API configuration
 const ALLMYSMS_API_URL = "https://api.allmysms.com/http/9.0/";
@@ -24,6 +25,9 @@ serve(async (req) => {
   // Handle CORS preflight or reject unauthorized origins
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
+
+  const origin = req.headers.get('origin') ?? '';
+  const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
 
   try {
     // Security: Verify the user is authenticated and has admin or support role
@@ -50,6 +54,14 @@ serve(async (req) => {
         JSON.stringify({ error: 'Non authentifié' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       ));
+    }
+
+    // Rate limit: 10 req/min per user
+    const rateLimitKey = `notify-support-ticket:${user.id}`;
+    const rateCheck = checkRateLimit(rateLimitKey, { limit: 10, windowMs: 60 * 1000 });
+    if (!rateCheck.allowed) {
+      console.log(`[NOTIFY-SUPPORT-TICKET] Rate limit exceeded for ${rateLimitKey}`);
+      return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
     }
 
     // Create admin client for privileged operations
