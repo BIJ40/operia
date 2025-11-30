@@ -137,8 +137,18 @@ export default {
             borderColor: "hsl(var(--border))",
           },
           "50%": {
-            backgroundColor: "rgba(239, 68, 68, 0.1)",
-            borderColor: "rgba(239, 68, 68, 0.5)",
+            backgroundColor: "rgba(239, 68, 68, 0.15)",
+            borderColor: "rgba(239, 68, 68, 0.6)",
+          },
+        },
+        "pulse-yellow": {
+          "0%, 100%": {
+            backgroundColor: "hsl(var(--background))",
+            borderColor: "hsl(var(--border))",
+          },
+          "50%": {
+            backgroundColor: "rgba(234, 179, 8, 0.15)",
+            borderColor: "rgba(234, 179, 8, 0.6)",
           },
         },
         "pulse-progress": {
@@ -166,7 +176,8 @@ export default {
         "fade-in": "fade-in 0.2s ease-out",
         "fade-out": "fade-out 0.2s ease-out",
         "spin-slow": "spin-slow 3s linear infinite",
-        "pulse-red": "pulse-red 2s ease-in-out infinite",
+        "pulse-red": "pulse-red 1.5s ease-in-out infinite",
+        "pulse-yellow": "pulse-yellow 1.5s ease-in-out infinite",
         "pulse-progress": "pulse-progress 1s ease-in-out",
         "bounce-subtle": "bounce-subtle 0.4s ease-in-out",
       },

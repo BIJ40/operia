@@ -10,6 +10,10 @@ export function useSupportNotifications() {
   const [newTicketsCount, setNewTicketsCount] = useState(0);
   const [assignedToMeCount, setAssignedToMeCount] = useState(0);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  
+  // V2.5: Séparation chat humain (rouge) vs tickets (jaune)
+  const [chatHumanCount, setChatHumanCount] = useState(0);
+  const [ticketRequestCount, setTicketRequestCount] = useState(0);
 
   // Fonction pour jouer un son de notification
   const playNotificationSound = () => {
@@ -50,6 +54,22 @@ export function useSupportNotifications() {
         .in('status', ['new', 'waiting', 'waiting_user'])
         .or('viewed_by_support_at.is.null,assigned_to.is.null');
 
+      // V2.5: Compter séparément les demandes de chat humain (type = 'chat_human')
+      const { count: chatHumanPending, error: chatHumanError } = await supabase
+        .from('support_tickets')
+        .select('*', { count: 'exact', head: true })
+        .eq('type', 'chat_human')
+        .in('status', ['new', 'waiting', 'waiting_user'])
+        .or('viewed_by_support_at.is.null,assigned_to.is.null');
+
+      // V2.5: Compter les tickets classiques (type = 'ticket' ou autres)
+      const { count: ticketPending, error: ticketError } = await supabase
+        .from('support_tickets')
+        .select('*', { count: 'exact', head: true })
+        .neq('type', 'chat_human')
+        .in('status', ['new', 'waiting', 'waiting_user'])
+        .or('viewed_by_support_at.is.null,assigned_to.is.null');
+
       // Tickets assignés à moi (en cours)
       const { count: assignedCount, error: assignedError } = await supabase
         .from('support_tickets')
@@ -61,6 +81,14 @@ export function useSupportNotifications() {
         const safeCount = waitingCount ?? 0;
         setNewTicketsCount(safeCount);
         setHasNewTickets(safeCount > 0);
+      }
+
+      if (!chatHumanError) {
+        setChatHumanCount(chatHumanPending ?? 0);
+      }
+
+      if (!ticketError) {
+        setTicketRequestCount(ticketPending ?? 0);
       }
 
       if (!assignedError) {
@@ -208,5 +236,15 @@ export function useSupportNotifications() {
     };
   }, [isSupport, isAdmin, user]);
 
-  return { hasNewTickets, newTicketsCount, assignedToMeCount, unreadMessagesCount };
+  return { 
+    hasNewTickets, 
+    newTicketsCount, 
+    assignedToMeCount, 
+    unreadMessagesCount,
+    // V2.5: Indicateurs séparés pour le header clignotant
+    chatHumanCount,
+    ticketRequestCount,
+    hasChatHumanRequests: chatHumanCount > 0,
+    hasTicketRequests: ticketRequestCount > 0,
+  };
 }
