@@ -1,7 +1,8 @@
-import { BookOpen, FileText, FolderOpen } from 'lucide-react';
+import { BookOpen, FileText, FolderOpen, HelpCircle } from 'lucide-react';
 import { IndexTile, getVariantForIndex } from '@/components/ui/index-tile';
 import { ROUTES } from '@/config/routes';
 import { useMenuLabels } from '@/hooks/use-page-metadata';
+import { Badge } from '@/components/ui/badge';
 
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.academy.apogee]: 'academy_apogee',
@@ -30,6 +31,14 @@ const academyModules = [
   },
 ];
 
+// Tuile FAQ non cliquable pour le moment
+const faqModule = {
+  title: 'FAQ',
+  description: 'Questions fréquentes et réponses',
+  icon: HelpCircle,
+  disabled: true,
+};
+
 export default function AcademyIndex() {
   const menuLabels = useMenuLabels();
 
@@ -54,6 +63,26 @@ export default function AcademyIndex() {
             variant={getVariantForIndex(index)}
           />
         ))}
+        {/* FAQ Tile - non cliquable */}
+        <div className="group h-full rounded-xl p-5
+          bg-gradient-to-r from-muted/50 via-muted/30 to-transparent
+          border border-muted/40 border-l-4 border-l-muted
+          shadow-sm opacity-60 cursor-not-allowed">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-full border-2 border-muted/50 flex items-center justify-center bg-muted/30">
+              <faqModule.icon className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-muted-foreground">{faqModule.title}</h3>
+                <Badge variant="outline" className="text-xs text-muted-foreground border-muted">
+                  Bientôt
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground/70">{faqModule.description}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
