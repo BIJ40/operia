@@ -16,15 +16,15 @@ export type RAGContextType = 'apogee' | 'apporteurs' | 'helpconfort' | 'document
 
 /**
  * Get allowed RAG contexts based on user global role
- * N0 (externe/tech): apogee, documents
+ * N0 (externe/tech): apogee only
  * N1 (salarié agence): apogee, apporteurs, documents
  * N2 (direction agence): apogee, apporteurs, helpconfort, documents
  * N5+ (franchiseur): ALL
  */
 export function getFilteredContexts(globalRole: string): RAGContextType[] {
   const roleContexts: Record<string, RAGContextType[]> = {
-    // N0 - External / Technician
-    'base_user': ['apogee', 'documents'],
+    // N0 - External / Technician - Only apogee
+    'base_user': ['apogee'],
     // N1 - Agency Employee
     'franchisee_user': ['apogee', 'apporteurs', 'documents'],
     // N2 - Agency Direction
