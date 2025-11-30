@@ -1,17 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 // AllMySMS API configuration
 const ALLMYSMS_API_URL = "https://api.allmysms.com/http/9.0/";
 const ALLMYSMS_LOGIN = Deno.env.get('ALLMYSMS_LOGIN');
 const ALLMYSMS_API_KEY = Deno.env.get('ALLMYSMS_API_KEY');
 const ALLMYSMS_SUPPORT_PHONES = Deno.env.get('ALLMYSMS_SUPPORT_PHONES');
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
 interface NotificationRequest {
   ticketId: string;
@@ -25,21 +21,18 @@ interface NotificationRequest {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     // Security: Verify the user is authenticated and has admin or support role
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: 'Non autorisé' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -53,13 +46,10 @@ serve(async (req) => {
 
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: 'Non authentifié' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     // Create admin client for privileged operations
@@ -97,13 +87,10 @@ serve(async (req) => {
 
     if (!supportUserRoles || supportUserRoles.length === 0) {
       console.log('No support users found');
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ message: 'No support users to notify' }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     // Récupérer les user IDs
@@ -122,13 +109,10 @@ serve(async (req) => {
     
     if (usersWithNotificationsEnabled.length === 0) {
       console.log('No support users with email notifications enabled');
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ message: 'No support users with notifications enabled to notify' }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     const supportEmails = usersWithNotificationsEnabled
@@ -137,13 +121,10 @@ serve(async (req) => {
 
     if (supportEmails.length === 0) {
       console.log('No support emails found with notifications enabled');
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ message: 'No support emails with notifications enabled' }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     console.log(`Sending notification to ${supportEmails.length} support users (with notifications enabled)`);
@@ -361,26 +342,20 @@ serve(async (req) => {
       console.log('AllMySMS not configured, skipping SMS notifications');
     }
 
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ 
         success: true, 
         emailsSent: supportEmails.length,
         smsSent,
         emailIds: data 
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    ));
   } catch (error) {
     console.error('Error in notify-support-ticket function:', error);
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    ));
   }
 });

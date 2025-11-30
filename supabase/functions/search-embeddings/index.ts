@@ -1,11 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 // Calculate cosine similarity between two vectors
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -54,9 +50,9 @@ async function generateEmbedding(text: string): Promise<number[]> {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const { query, topK = 8, source } = await req.json();
@@ -92,17 +88,15 @@ serve(async (req) => {
     console.log(`Found ${chunks?.length || 0} chunks${source === 'apogee' ? ' with block_type=apogee_guide' : ''}`);
 
     if (!chunks || chunks.length === 0) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ 
           results: [],
           message: source 
             ? `Aucun contenu indexé trouvé pour la source "${source}".`
             : 'No indexed content found. Please index your content first.'
         }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+        { headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     console.log(`Comparing against ${chunks.length} chunks`);
@@ -136,21 +130,16 @@ serve(async (req) => {
       score: r.similarity
     })));
 
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ results: topResults }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+      { headers: { 'Content-Type': 'application/json' } }
+    ));
 
   } catch (error) {
     console.error('Search error:', error);
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    ));
   }
 });

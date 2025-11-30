@@ -5,11 +5,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 const SYSTEM_PROMPT = `Tu es l'assistant de qualification de tickets pour le projet Apogée / Help Confort.
 
@@ -167,9 +163,9 @@ const FUNCTION_SCHEMA = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -184,10 +180,10 @@ serve(async (req) => {
     const { ticket_ids, user_id } = await req.json();
 
     if (!ticket_ids || !Array.isArray(ticket_ids) || ticket_ids.length === 0) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "ticket_ids requis (array)" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     // Récupérer les tickets
@@ -198,10 +194,10 @@ serve(async (req) => {
 
     if (fetchError) throw fetchError;
     if (!tickets || tickets.length === 0) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: "Aucun ticket trouvé" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      ));
     }
 
     const results: Array<{ id: string; success: boolean; error?: string }> = [];
@@ -313,21 +309,21 @@ Analyse et retourne la qualification complète via la fonction qualify_ticket.`;
     const successCount = results.filter(r => r.success).length;
     const failCount = results.filter(r => !r.success).length;
 
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ 
         success: true, 
         qualified: successCount, 
         failed: failCount,
         results 
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      { headers: { "Content-Type": "application/json" } }
+    ));
 
   } catch (error) {
     console.error("qualify-ticket error:", error);
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    ));
   }
 });

@@ -1,11 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -175,9 +171,11 @@ Tu renvoies uniquement la réponse finale, propre, claire, conforme aux contrain
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
+
+  const origin = req.headers.get('origin') ?? '';
 
   try {
     const body = await req.json();
@@ -186,10 +184,10 @@ serve(async (req) => {
     const validation = validateInput(messages, guideContent);
     if (!validation.valid) {
       console.error('Validation error:', validation.error);
-      return new Response(JSON.stringify({ error: validation.error }), {
+      return withCors(req, new Response(JSON.stringify({ error: validation.error }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+        headers: { 'Content-Type': 'application/json' },
+      }));
     }
     
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
@@ -230,28 +228,31 @@ serve(async (req) => {
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Trop de requêtes, veuillez réessayer plus tard." }), {
+        return withCors(req, new Response(JSON.stringify({ error: "Trop de requêtes, veuillez réessayer plus tard." }), {
           status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+          headers: { "Content-Type": "application/json" },
+        }));
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Crédits insuffisants, veuillez contacter l'administrateur." }), {
+        return withCors(req, new Response(JSON.stringify({ error: "Crédits insuffisants, veuillez contacter l'administrateur." }), {
           status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+          headers: { "Content-Type": "application/json" },
+        }));
       }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
-      return new Response(JSON.stringify({ error: "Erreur du service IA" }), {
+      return withCors(req, new Response(JSON.stringify({ error: "Erreur du service IA" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+        headers: { "Content-Type": "application/json" },
+      }));
     }
 
     // Stream la réponse et accumule le contenu
     let fullAnswer = '';
     const encoder = new TextEncoder();
+    
+    // Get CORS headers for streaming response
+    const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
     
     const stream = new ReadableStream({
       async start(controller) {
@@ -320,9 +321,9 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("Chat error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erreur inconnue" }), {
+    return withCors(req, new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erreur inconnue" }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+      headers: { "Content-Type": "application/json" },
+    }));
   }
 });

@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 interface KpiRequest {
   period?: 'day' | '7days' | 'month' | 'year' | 'rolling12';
@@ -99,17 +95,17 @@ function isSameDay(d1: Date, d2: Date): boolean {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     const supabase = createClient(
@@ -124,10 +120,10 @@ Deno.serve(async (req) => {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     const { data: profile, error: profileError } = await supabase
@@ -137,10 +133,10 @@ Deno.serve(async (req) => {
       .single();
 
     if (profileError || !profile?.agence) {
-      return new Response(
+      return withCors(req, new Response(
         JSON.stringify({ error: 'User agency not configured' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     const agencySlug = profile.agence;
@@ -204,13 +200,11 @@ Deno.serve(async (req) => {
     };
 
     // ===== Tuile 1, 2, 3: CA HT, Factures, Panier Moyen =====
-    // Règle: facturesValides = exclure data.isInit === true, exclure avoirs, période [startDate, endDate] sur dateEmission
     const facturesValides = (factures || []).filter((f: any) => {
       if (f.data?.isInit === true) return false;
       if (f.type === 'Avoir' || f.type === 'avoir' || f.isCreditNote === true) return false;
       if (f.statut === 'cancelled' || f.statut === 'draft') return false;
       
-      // Date principale = dateEmission (champ exact selon factures.json)
       const factureDate = parseDate(f.dateEmission || f.date || f.dateReelle);
       if (!factureDate) return false;
       
@@ -229,9 +223,6 @@ Deno.serve(async (req) => {
     const userMap = new Map((users || []).map((u: any) => [u.id, u]));
 
     // ===== Tuile 4: Taux Apporteurs =====
-    // Règle: CA_apporteurs = Σ(montantHT) pour factures avec data.commanditaireId non null
-    
-    // Debug: Échantillon de dossiers
     const projectsSample = (projects || []).slice(0, 3);
     console.log('[get-kpis] Sample projects:', JSON.stringify(projectsSample.map((p: any) => ({
       id: p.id,
@@ -248,7 +239,6 @@ Deno.serve(async (req) => {
 
     facturesValides.forEach((invoice: any) => {
       const project = projectMap.get(invoice.projectId);
-      // Champ exact selon dossier.json: data.commanditaireId
       if (project?.data?.commanditaireId) {
         const commanditaireId = project.data.commanditaireId;
         const client = clientMap.get(commanditaireId);
@@ -256,7 +246,6 @@ Deno.serve(async (req) => {
           const invoiceCA = calculateInvoiceTotal(invoice);
           ca_apporteurs += invoiceCA;
 
-          // Pour détails apporteurs
           if (!apporteursCA[commanditaireId]) {
             apporteursCA[commanditaireId] = {
               ca: 0,
@@ -275,7 +264,6 @@ Deno.serve(async (req) => {
     console.log(`[get-kpis] CA apporteurs: ${ca_apporteurs}, CA total: ${ca_period}, Taux: ${apporteurs_rate.toFixed(2)}%`);
 
     // ===== Tuile 5: Dossiers en Cours (hors sélecteur) =====
-    // Règle: Statuts considérés comme "clos" = Terminé, Facturé, Archivé, Annulé. En cours = tous les autres.
     const closedStatuses = ['terminé', 'facturé', 'archivé', 'annulé', 'closed', 'archived', 'cancelled'];
     const projects_in_progress = (projects || []).filter((p: any) => {
       const status = (p.statut || p.status || '').toLowerCase();
@@ -283,7 +271,6 @@ Deno.serve(async (req) => {
     }).length;
 
     // ===== Tuile 6: Rendez-Vous J (hors sélecteur, toujours aujourd'hui) =====
-    // Règle: Date du jour, rendez-vous dont date = today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const interventions_today = (interventions || []).filter((i: any) => {
@@ -292,7 +279,6 @@ Deno.serve(async (req) => {
     }).length;
 
     // ===== Tuile 7: Rendez-Vous (période sélectionnée) =====
-    // Règle: date dans [startDate, endDate], status === "Terminée"
     const interventionsPeriode = (interventions || []).filter((i: any) => {
       const intDate = parseDate(i.date || i.dateDebut);
       if (!intDate || intDate < dates.start || intDate > dates.end) return false;
@@ -302,7 +288,6 @@ Deno.serve(async (req) => {
     const interventions_count = interventionsPeriode.length;
 
     // ===== Tuile 8: Devis (période sélectionnée) =====
-    // Règle: devis.dateReelle (champ exact selon devis.json) dans [startDate, endDate]
     const devisPeriode = (devis || []).filter((d: any) => {
       const rawDate = d.dateReelle || d.date || d.created_at;
       const devisDate = parseDate(rawDate);
@@ -311,7 +296,6 @@ Deno.serve(async (req) => {
     const devis_count = devisPeriode.length;
 
     // ===== Tuile 9: Dossiers (nouveaux sur la période) =====
-    // Règle: project.date (champ exact selon dossier.json) dans [startDate, endDate]
     const projetsPeriode = (projects || []).filter((p: any) => {
       const rawDate = p.date || p.created_at;
       const projectDate = parseDate(rawDate);
@@ -320,20 +304,13 @@ Deno.serve(async (req) => {
     const projects_count = projetsPeriode.length;
 
     // ===== Tuile 10: Taux Conversion (Devis → Accepté/Commandé) =====
-    // Règle: Utiliser state (champ exact selon devis.json), pas statut
-    // Devis envoyés = state différent de 'draft'
-    // Devis acceptés = state 'invoice' (facturé = commandé/accepté dans devis.json)
-    // Taux = (acceptés / envoyés) × 100
-    
     const getState = (d: any) => (d.state || '').toLowerCase();
     
-    // Devis envoyés = tous sauf draft (brouillon)
     const devisEnvoyes = devisPeriode.filter((d: any) => {
       const s = getState(d);
       return s !== 'draft';
     });
     
-    // Devis acceptés = state "invoice" (facturé selon devis.json)
     const devisAcceptes = devisEnvoyes.filter((d: any) => {
       const s = getState(d);
       return s === 'invoice';
@@ -346,7 +323,6 @@ Deno.serve(async (req) => {
     console.log(`[get-kpis] Devis: ${(devis || []).length} total, ${devisPeriode.length} dans période (dateReelle), ${devisEnvoyes.length} envoyés (hors draft), ${devisAcceptes.length} acceptés (state=invoice), Taux: ${conversion_rate.toFixed(1)}%`);
 
     // ===== Tuile 11: Techniciens (hors sélecteur) =====
-    // Règle: Filtrer users: active === true, role technicien/tech
     const technicianRoles = ['technicien', 'tech', 'intervenant'];
     const active_technicians = (users || []).filter((u: any) => {
       const isActive = u.active === true || u.isActive === true;
@@ -355,7 +331,6 @@ Deno.serve(async (req) => {
     }).length;
 
     // ===== Tuile 12: Taux SAV =====
-    // Règle: % de dossiers facturés sur la période qui ont donné lieu à au moins un rendez-vous SAV
     const projectsFactures = new Set(facturesValides.map((f: any) => f.projectId));
     
     const projectsAvecSAV = new Set();
@@ -402,11 +377,9 @@ Deno.serve(async (req) => {
       const project = projectMap.get(projectId);
       if (!project) return;
 
-      // Récupérer les factures de ce dossier dans la période
       const projectInvoices = facturesValides.filter((f: any) => f.projectId === projectId);
-      const projectCA = projectInvoices.reduce((sum, f) => sum + calculateInvoiceTotal(f), 0);
+      const projectCA = projectInvoices.reduce((sum: number, f: any) => sum + calculateInvoiceTotal(f), 0);
 
-      // Récupérer tous les techniciens du rendez-vous
       const techIds: string[] = [];
       if (interv.userId) techIds.push(interv.userId);
       if (interv.userIds && Array.isArray(interv.userIds)) techIds.push(...interv.userIds);
@@ -446,63 +419,56 @@ Deno.serve(async (req) => {
         end: dates.end.toISOString(),
       },
       kpis: {
-        ca_period: Math.round(ca_period * 100) / 100,
+        ca_period,
         invoices_count,
-        avg_invoice: Math.round(avg_invoice * 100) / 100,
-        apporteurs_rate: Math.round(apporteurs_rate * 10) / 10,
+        avg_invoice,
+        apporteurs_rate,
         projects_in_progress,
         interventions_today,
-        sav_rate: Math.round(sav_rate * 10) / 10,
+        sav_rate,
         interventions_count,
         devis_count,
         projects_count,
-        conversion_rate: Math.round(conversion_rate * 10) / 10,
+        conversion_rate,
         active_technicians,
       },
       details: {
         ca_by_universe: Object.entries(caByUniverse)
-          .map(([universe, amount]) => ({ universe, amount: Math.round(amount * 100) / 100 }))
+          .map(([universe, amount]) => ({ universe, amount }))
           .sort((a, b) => b.amount - a.amount),
-        
         ca_by_apporteur_type: Object.entries(caByApporteurType)
-          .map(([type, amount]) => ({ type, amount: Math.round(amount * 100) / 100 }))
+          .map(([type, amount]) => ({ type, amount }))
           .sort((a, b) => b.amount - a.amount),
-        
         ca_by_technician: Object.entries(caByTechnician)
-          .map(([id, stats]) => {
-            const user = userMap.get(id);
-            const name = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name || `Tech ${id}` : `Tech ${id}`;
+          .map(([techId, data]) => {
+            const techUser = userMap.get(techId);
             return {
-              name,
-              amount: Math.round(stats.ca * 100) / 100,
-              interventions: stats.interventions,
+              name: techUser?.label || techUser?.name || `Tech ${techId}`,
+              amount: data.ca,
+              interventions: data.interventions,
             };
           })
           .sort((a, b) => b.amount - a.amount),
-        
         invoices_history: [],
-        
         apporteurs: Object.entries(apporteursCA)
           .map(([id, data]) => ({
             name: data.name,
-            ca: Math.round(data.ca * 100) / 100,
+            ca: data.ca,
             projects: data.projects.size,
             type: data.type,
           }))
           .sort((a, b) => b.ca - a.ca)
-          .slice(0, 10),
-        
+          .slice(0, 20),
         technicians: Object.entries(caByTechnician)
-          .map(([id, stats]) => {
-            const user = userMap.get(id);
-            const name = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name || `Tech ${id}` : `Tech ${id}`;
+          .map(([techId, data]) => {
+            const techUser = userMap.get(techId);
             return {
-              name,
-              ca: Math.round(stats.ca * 100) / 100,
-              interventions: stats.interventions,
-              sav: stats.sav,
-              universes: Object.entries(stats.universes)
-                .map(([universe, amount]) => ({ universe, amount: Math.round(amount * 100) / 100 }))
+              name: techUser?.label || techUser?.name || `Tech ${techId}`,
+              ca: data.ca,
+              interventions: data.interventions,
+              sav: data.sav,
+              universes: Object.entries(data.universes)
+                .map(([universe, amount]) => ({ universe, amount }))
                 .sort((a, b) => b.amount - a.amount),
             };
           })
@@ -510,18 +476,16 @@ Deno.serve(async (req) => {
       },
     };
 
-    console.log(`[get-kpis] Success - CA: ${ca_period}, Factures: ${invoices_count}, Taux apporteurs: ${apporteurs_rate}%`);
+    return withCors(req, new Response(
+      JSON.stringify(response),
+      { headers: { 'Content-Type': 'application/json' } }
+    ));
 
-    return new Response(JSON.stringify(response), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
   } catch (error) {
     console.error('[get-kpis] Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return withCors(req, new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    ));
   }
 });
