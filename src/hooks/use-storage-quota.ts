@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CacheManager } from '@/lib/cache-manager';
-import { logCache } from '@/lib/logger';
+import { logCache, logError } from '@/lib/logger';
+import { safeMutation } from '@/lib/safeQuery';
 
 const QUOTA_WARNING_THRESHOLD = 80; // Alerte à 80% d'utilisation
 const CHECK_INTERVAL = 5 * 60 * 1000; // Vérifier toutes les 5 minutes
@@ -48,15 +49,22 @@ export const useStorageQuota = () => {
         if (percentageUsed >= QUOTA_WARNING_THRESHOLD) {
           logCache.warn(`Quota localStorage élevé: ${percentageUsed.toFixed(1)}%`);
           
-          await supabase.from('storage_quota_alerts').insert({
-            user_id: user.id,
-            user_email: user.email,
-            user_agence: agence || null,
-            quota_used_bytes: totalSize,
-            quota_total_bytes: quotaLimit,
-            percentage_used: parseFloat(percentageUsed.toFixed(2)),
-            cache_keys: cacheKeys
-          });
+          const alertResult = await safeMutation(
+            supabase.from('storage_quota_alerts').insert({
+              user_id: user.id,
+              user_email: user.email,
+              user_agence: agence || null,
+              quota_used_bytes: totalSize,
+              quota_total_bytes: quotaLimit,
+              percentage_used: parseFloat(percentageUsed.toFixed(2)),
+              cache_keys: cacheKeys
+            }),
+            'STORAGE_QUOTA_ALERT_CREATE'
+          );
+
+          if (!alertResult.success) {
+            logError('use-storage-quota', 'Failed to create quota alert', alertResult.error);
+          }
 
           // Si on dépasse 90%, utiliser CacheManager pour nettoyer intelligemment
           if (percentageUsed >= 90) {
