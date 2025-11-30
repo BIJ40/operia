@@ -79,7 +79,7 @@ export function CreateTicketDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.element_concerne.trim()) return;
+    if (!form.element_concerne.trim() || !form.module) return;
     onCreate(form);
     setForm({
       element_concerne: '',
@@ -129,12 +129,13 @@ export function CreateTicketDialog({
             />
           </div>
 
-          {/* Module */}
+          {/* Module (obligatoire) */}
           <div className="space-y-2">
-            <Label>Module</Label>
+            <Label htmlFor="module">Module *</Label>
             <Select
               value={form.module || ''}
               onValueChange={(v) => setForm({ ...form, module: v || undefined })}
+              required
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner un module" />
@@ -181,7 +182,7 @@ export function CreateTicketDialog({
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
             </Button>
-            <Button type="submit" disabled={isCreating || !form.element_concerne.trim()}>
+            <Button type="submit" disabled={isCreating || !form.element_concerne.trim() || !form.module}>
               {isCreating ? 'Création...' : 'Créer le ticket'}
             </Button>
           </DialogFooter>
