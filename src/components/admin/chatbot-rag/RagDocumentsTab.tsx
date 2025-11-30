@@ -7,7 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { safeQuery, safeMutation, safeInvoke } from '@/lib/safeQuery';
+import { errorToast, successToast } from '@/lib/toastHelpers';
+import { logError } from '@/lib/logger';
 import { Loader2, Upload, FileText, Trash2, Download, Database, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -36,41 +38,40 @@ export function RagDocumentsTab() {
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
-  
-  const { toast } = useToast();
 
   const loadDocuments = async () => {
     setLoading(true);
-    try {
-      const { data: docs, error } = await supabase
+    
+    const docsResult = await safeQuery<Document[]>(
+      supabase
         .from('documents')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }),
+      'RAG_DOCS_LOAD'
+    );
 
-      if (error) throw error;
+    if (!docsResult.success) {
+      logError('rag-docs', 'Error loading documents', docsResult.error);
+      errorToast(docsResult.error!);
+      setLoading(false);
+      return;
+    }
 
-      // Check which docs are indexed
-      const { data: chunks } = await supabase
+    const chunksResult = await safeQuery<{ block_id: string }[]>(
+      supabase
         .from('guide_chunks')
         .select('block_id')
-        .eq('block_type', 'document');
+        .eq('block_type', 'document'),
+      'RAG_DOCS_LOAD_CHUNKS'
+    );
 
-      const indexedIds = new Set(chunks?.map(c => c.block_id) || []);
+    const indexedIds = new Set(chunksResult.data?.map(c => c.block_id) || []);
 
-      setDocuments((docs || []).map(doc => ({
-        ...doc,
-        indexed: indexedIds.has(doc.id),
-      })));
-    } catch (error) {
-      console.error('Error loading documents:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les documents',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
+    setDocuments((docsResult.data || []).map(doc => ({
+      ...doc,
+      indexed: indexedIds.has(doc.id),
+    })));
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -79,11 +80,7 @@ export function RagDocumentsTab() {
 
   const handleUpload = async () => {
     if (!file || !title) {
-      toast({
-        title: 'Erreur',
-        description: 'Titre et fichier requis',
-        variant: 'destructive',
-      });
+      errorToast('Titre et fichier requis');
       return;
     }
 
@@ -92,28 +89,39 @@ export function RagDocumentsTab() {
       const fileExt = file.name.split('.').pop();
       const filePath = `chatbot/${Date.now()}.${fileExt}`;
 
+      // Storage upload - keep try/catch for storage operations
       const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        logError('rag-docs', 'Storage upload error', uploadError);
+        errorToast(uploadError.message);
+        setUploading(false);
+        return;
+      }
 
-      const { error: insertError } = await supabase
-        .from('documents')
-        .insert({
-          title,
-          description: description || null,
-          file_path: filePath,
-          file_type: file.type,
-          scope: family,
-        });
+      const insertResult = await safeMutation(
+        supabase
+          .from('documents')
+          .insert({
+            title,
+            description: description || null,
+            file_path: filePath,
+            file_type: file.type,
+            scope: family,
+          }),
+        'RAG_DOCS_INSERT'
+      );
 
-      if (insertError) throw insertError;
+      if (!insertResult.success) {
+        logError('rag-docs', 'Error inserting document', insertResult.error);
+        errorToast(insertResult.error!);
+        setUploading(false);
+        return;
+      }
 
-      toast({
-        title: 'Succès',
-        description: 'Document uploadé',
-      });
+      successToast('Document uploadé');
 
       // Reset form
       setTitle('');
@@ -122,12 +130,8 @@ export function RagDocumentsTab() {
       setFile(null);
       await loadDocuments();
     } catch (error) {
-      console.error('Upload error:', error);
-      toast({
-        title: 'Erreur',
-        description: error instanceof Error ? error.message : 'Erreur lors de l\'upload',
-        variant: 'destructive',
-      });
+      logError('rag-docs', 'Upload error', error);
+      errorToast(error instanceof Error ? error.message : 'Erreur lors de l\'upload');
     } finally {
       setUploading(false);
     }
@@ -135,29 +139,24 @@ export function RagDocumentsTab() {
 
   const handleIndexDocument = async (doc: Document) => {
     setIndexingDoc(doc.id);
-    try {
-      const { data, error } = await supabase.functions.invoke('index-document', {
+    
+    const result = await safeInvoke<{ chunks_created: number }>(
+      supabase.functions.invoke('index-document', {
         body: { documentId: doc.id, filePath: doc.file_path },
-      });
+      }),
+      'RAG_DOCS_INDEX'
+    );
 
-      if (error) throw error;
-
-      toast({
-        title: 'Indexation terminée',
-        description: `${data.chunks_created} chunks créés`,
-      });
-
-      await loadDocuments();
-    } catch (error) {
-      console.error('Indexing error:', error);
-      toast({
-        title: 'Erreur',
-        description: error instanceof Error ? error.message : 'Erreur lors de l\'indexation',
-        variant: 'destructive',
-      });
-    } finally {
+    if (!result.success) {
+      logError('rag-docs', 'Error indexing document', result.error);
+      errorToast(result.error!);
       setIndexingDoc(null);
+      return;
     }
+
+    successToast('Indexation terminée', `${result.data?.chunks_created || 0} chunks créés`);
+    await loadDocuments();
+    setIndexingDoc(null);
   };
 
   const handleIndexAll = async () => {
@@ -166,21 +165,22 @@ export function RagDocumentsTab() {
     let failed = 0;
 
     for (const doc of documents.filter(d => !d.indexed)) {
-      try {
-        await supabase.functions.invoke('index-document', {
+      const result = await safeInvoke(
+        supabase.functions.invoke('index-document', {
           body: { documentId: doc.id, filePath: doc.file_path },
-        });
+        }),
+        'RAG_DOCS_INDEX_ALL'
+      );
+      
+      if (result.success) {
         indexed++;
-      } catch {
+      } else {
+        logError('rag-docs', `Error indexing document ${doc.id}`, result.error);
         failed++;
       }
     }
 
-    toast({
-      title: 'Indexation terminée',
-      description: `${indexed} documents indexés, ${failed} échecs`,
-    });
-
+    successToast('Indexation terminée', `${indexed} documents indexés, ${failed} échecs`);
     await loadDocuments();
     setIndexingAll(false);
   };
@@ -189,19 +189,34 @@ export function RagDocumentsTab() {
     if (!confirm('Supprimer ce document ?')) return;
 
     try {
+      // Storage delete - keep try/catch for storage operations
       await supabase.storage.from('documents').remove([doc.file_path]);
-      await supabase.from('documents').delete().eq('id', doc.id);
-      await supabase.from('guide_chunks').delete().eq('block_id', doc.id);
-
-      toast({ title: 'Document supprimé' });
-      await loadDocuments();
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de supprimer le document',
-        variant: 'destructive',
-      });
+    } catch (storageError) {
+      logError('rag-docs', 'Storage delete error', storageError);
     }
+
+    const deleteDocResult = await safeMutation(
+      supabase.from('documents').delete().eq('id', doc.id),
+      'RAG_DOCS_DELETE'
+    );
+
+    if (!deleteDocResult.success) {
+      logError('rag-docs', 'Error deleting document', deleteDocResult.error);
+      errorToast(deleteDocResult.error!);
+      return;
+    }
+
+    const deleteChunksResult = await safeMutation(
+      supabase.from('guide_chunks').delete().eq('block_id', doc.id),
+      'RAG_DOCS_DELETE_CHUNKS'
+    );
+
+    if (!deleteChunksResult.success) {
+      logError('rag-docs', 'Error deleting chunks', deleteChunksResult.error);
+    }
+
+    successToast('Document supprimé');
+    await loadDocuments();
   };
 
   const getDownloadUrl = (path: string) => {
