@@ -12,6 +12,7 @@ import {
   FolderOpen,
   Settings,
   BookOpen,
+  Activity,
   LucideIcon
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -145,6 +146,7 @@ export function NavigationCards() {
         { to: ROUTES.admin.cacheBackup, icon: FileStack, title: 'Cache Backup', description: 'Gestion du cache' },
         { to: ROUTES.admin.storageQuota, icon: HardDrive, title: 'Stockage', description: 'Surveiller les quotas' },
         { to: ROUTES.admin.pageMetadata, icon: Settings, title: 'Métadonnées', description: 'Titres et labels des pages' },
+        { to: ROUTES.admin.systemHealth, icon: Activity, title: 'Santé Système', description: 'Surveillance des services' },
       ],
     },
   ];
