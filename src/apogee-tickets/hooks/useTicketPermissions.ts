@@ -15,9 +15,9 @@ export interface TicketRoleInfo {
   scope: 'none' | 'agency' | 'network';
   reason?: string;
   // Granular permissions from module options
-  canViewKanban: boolean;
-  canImport: boolean;
-  canManage: boolean; // Create/edit tickets
+  canViewKanban: boolean;  // View kanban + create tickets
+  canImport: boolean;      // Import from Excel
+  canManage: boolean;      // Edit existing ticket fields (not comments/attachments)
 }
 
 // Objet par défaut pour les cas d'erreur ou non-authentifié
