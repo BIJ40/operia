@@ -6,11 +6,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2, MessageSquare, RefreshCw, CheckCircle2, Clock, Eye, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { logError } from '@/lib/logger';
+import { safeQuery, safeMutation } from '@/lib/safeQuery';
+import { errorToast, successToast } from '@/lib/toastHelpers';
 
 type ChatQuery = {
   id: string;
@@ -31,39 +32,36 @@ export function RagQuestionsTab() {
   const [contextFilter, setContextFilter] = useState<string>('all');
   const [editingNotes, setEditingNotes] = useState<{ [key: string]: string }>({});
   const [selectedQuery, setSelectedQuery] = useState<ChatQuery | null>(null);
-  const { toast } = useToast();
 
   const loadQueries = async () => {
     setLoading(true);
-    try {
-      let query = supabase
-        .from('chatbot_queries')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
 
-      if (filter !== 'all') {
-        query = query.eq('status', filter);
-      }
-      
-      if (contextFilter !== 'all') {
-        query = query.eq('chat_context', contextFilter);
-      }
+    let query = supabase
+      .from('chatbot_queries')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setQueries(data || []);
-    } catch (error) {
-      logError('Error loading queries:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les questions',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
+    if (filter !== 'all') {
+      query = query.eq('status', filter);
     }
+    
+    if (contextFilter !== 'all') {
+      query = query.eq('chat_context', contextFilter);
+    }
+
+    const result = await safeQuery<ChatQuery[]>(query, 'RAG_QUESTIONS_LOAD');
+
+    if (!result.success) {
+      logError('rag-questions', 'Error loading questions', result.error);
+      errorToast(result.error!);
+      setQueries([]);
+      setLoading(false);
+      return;
+    }
+
+    setQueries(result.data || []);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -71,48 +69,46 @@ export function RagQuestionsTab() {
   }, [filter, contextFilter]);
 
   const updateStatus = async (id: string, status: string) => {
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('chatbot_queries')
         .update({ status })
-        .eq('id', id);
+        .eq('id', id),
+      'RAG_QUESTIONS_UPDATE_STATUS'
+    );
 
-      if (error) throw error;
-
-      setQueries(queries.map(q => q.id === id ? { ...q, status } : q));
-      toast({ title: 'Statut mis à jour' });
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de mettre à jour le statut',
-        variant: 'destructive',
-      });
+    if (!result.success) {
+      logError('rag-questions', 'Error updating status', result.error);
+      errorToast(result.error!);
+      return;
     }
+
+    setQueries(queries.map(q => q.id === id ? { ...q, status } : q));
+    successToast('Statut mis à jour');
   };
 
   const saveNotes = async (id: string, notes: string) => {
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('chatbot_queries')
         .update({ admin_notes: notes })
-        .eq('id', id);
+        .eq('id', id),
+      'RAG_QUESTIONS_UPDATE_NOTES'
+    );
 
-      if (error) throw error;
-
-      setQueries(queries.map(q => q.id === id ? { ...q, admin_notes: notes } : q));
-      setEditingNotes(prev => {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
-      toast({ title: 'Notes sauvegardées' });
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de sauvegarder les notes',
-        variant: 'destructive',
-      });
+    if (!result.success) {
+      logError('rag-questions', 'Error saving notes', result.error);
+      errorToast(result.error!);
+      return;
     }
+
+    setQueries(queries.map(q => q.id === id ? { ...q, admin_notes: notes } : q));
+    setEditingNotes(prev => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    successToast('Notes enregistrées');
   };
 
   const pendingCount = queries.filter(q => q.status === 'pending').length;
