@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/logger';
-import { safeQuery } from '@/lib/safeQuery';
 
 interface AdminStats {
   totalUsers: number;
@@ -44,44 +43,23 @@ export function useAdminStats() {
           queriesResult,
           agenciesResult,
         ] = await Promise.all([
-          safeQuery<{ count: number }>(
-            supabase.from('profiles').select('*', { count: 'exact', head: true }),
-            'ADMIN_STATS_USERS'
-          ),
-          safeQuery<{ count: number }>(
-            supabase.from('blocks').select('*', { count: 'exact', head: true }),
-            'ADMIN_STATS_BLOCKS'
-          ),
-          safeQuery<{ count: number }>(
-            supabase.from('documents').select('*', { count: 'exact', head: true }),
-            'ADMIN_STATS_DOCUMENTS'
-          ),
-          safeQuery<{ count: number }>(
-            supabase.from('support_tickets').select('*', { count: 'exact', head: true }),
-            'ADMIN_STATS_TICKETS'
-          ),
-          safeQuery<{ count: number }>(
-            supabase.from('support_tickets').select('*', { count: 'exact', head: true }).in('status', ['new', 'waiting', 'waiting_user']),
-            'ADMIN_STATS_WAITING_TICKETS'
-          ),
-          safeQuery<{ count: number }>(
-            supabase.from('chatbot_queries').select('*', { count: 'exact', head: true }),
-            'ADMIN_STATS_QUERIES'
-          ),
-          safeQuery<{ count: number }>(
-            supabase.from('apogee_agencies').select('*', { count: 'exact', head: true }),
-            'ADMIN_STATS_AGENCIES'
-          ),
+          supabase.from('profiles').select('*', { count: 'exact', head: true }),
+          supabase.from('blocks').select('*', { count: 'exact', head: true }),
+          supabase.from('documents').select('*', { count: 'exact', head: true }),
+          supabase.from('support_tickets').select('*', { count: 'exact', head: true }),
+          supabase.from('support_tickets').select('*', { count: 'exact', head: true }).in('status', ['new', 'waiting', 'waiting_user']),
+          supabase.from('chatbot_queries').select('*', { count: 'exact', head: true }),
+          supabase.from('apogee_agencies').select('*', { count: 'exact', head: true }),
         ]);
 
         setStats({
-          totalUsers: (usersResult.data as any)?.count || 0,
-          totalBlocks: (blocksResult.data as any)?.count || 0,
-          totalDocuments: (documentsResult.data as any)?.count || 0,
-          totalTickets: (ticketsResult.data as any)?.count || 0,
-          waitingTickets: (waitingResult.data as any)?.count || 0,
-          chatbotQueries: (queriesResult.data as any)?.count || 0,
-          agencies: (agenciesResult.data as any)?.count || 0,
+          totalUsers: usersResult.count ?? 0,
+          totalBlocks: blocksResult.count ?? 0,
+          totalDocuments: documentsResult.count ?? 0,
+          totalTickets: ticketsResult.count ?? 0,
+          waitingTickets: waitingResult.count ?? 0,
+          chatbotQueries: queriesResult.count ?? 0,
+          agencies: agenciesResult.count ?? 0,
           isLoading: false,
         });
       } catch (error) {
