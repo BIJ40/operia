@@ -844,6 +844,30 @@ export type Database = {
           },
         ]
       }
+      app_notification_settings: {
+        Row: {
+          email_enabled: boolean
+          id: string
+          sms_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          email_enabled?: boolean
+          id?: string
+          sms_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          email_enabled?: boolean
+          id?: string
+          sms_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       apporteur_blocks: {
         Row: {
           attachments: Json | null

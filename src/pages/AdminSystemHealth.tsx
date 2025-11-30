@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { 
   Activity, 
   AlertTriangle, 
@@ -13,7 +14,10 @@ import {
   RefreshCw,
   MessageSquare,
   Send,
-  Loader2
+  Loader2,
+  Bell,
+  Mail,
+  Smartphone
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +39,51 @@ export default function AdminSystemHealth() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [smsTestResult, setSmsTestResult] = useState<{ success: boolean; message: string; details?: unknown } | null>(null);
   const [isSmsTestLoading, setIsSmsTestLoading] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState<{ sms_enabled: boolean; email_enabled: boolean } | null>(null);
+  const [isNotificationLoading, setIsNotificationLoading] = useState(false);
+
+  // Load notification settings
+  useEffect(() => {
+    loadNotificationSettings();
+  }, []);
+
+  const loadNotificationSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('app_notification_settings')
+        .select('sms_enabled, email_enabled')
+        .eq('id', 'default')
+        .single();
+      
+      if (error) throw error;
+      setNotificationSettings(data);
+    } catch (err) {
+      console.error('Error loading notification settings:', err);
+    }
+  };
+
+  const updateNotificationSetting = async (type: 'sms' | 'email', enabled: boolean) => {
+    setIsNotificationLoading(true);
+    try {
+      const updateData = type === 'sms' 
+        ? { sms_enabled: enabled } 
+        : { email_enabled: enabled };
+      
+      const { error } = await supabase
+        .from('app_notification_settings')
+        .update(updateData)
+        .eq('id', 'default');
+      
+      if (error) throw error;
+      
+      setNotificationSettings(prev => prev ? { ...prev, ...updateData } : null);
+      toast.success(`Notifications ${type.toUpperCase()} ${enabled ? 'activées' : 'désactivées'}`);
+    } catch (err) {
+      toast.error(`Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+    } finally {
+      setIsNotificationLoading(false);
+    }
+  };
 
   const testSmsApi = async (simulate: boolean) => {
     setIsSmsTestLoading(true);
@@ -428,6 +477,62 @@ export default function AdminSystemHealth() {
             Le test réel envoie un SMS au numéro configuré (ALLMYSMS_TEST_PHONE).
           </p>
         </div>
+      </div>
+
+      {/* Notification Settings */}
+      <div className="group rounded-xl p-5 bg-gradient-to-r from-orange-500/10 via-orange-500/5 to-transparent border border-orange-500/20 border-l-4 border-l-orange-500 shadow-sm transition-all duration-300 hover:from-orange-500/15 hover:via-orange-500/8 hover:border-orange-500/30 hover:shadow-lg">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-11 h-11 rounded-full border-2 border-orange-500/30 flex items-center justify-center bg-white/50 group-hover:border-orange-500 group-hover:bg-white transition-all">
+            <Bell className="w-5 h-5 text-orange-500" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">Notifications Support</h3>
+            <p className="text-sm text-muted-foreground">Activer/désactiver les canaux de notification</p>
+          </div>
+        </div>
+        
+        {notificationSettings ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Smartphone className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Notifications SMS</p>
+                  <p className="text-xs text-muted-foreground">Envoi de SMS aux agents support</p>
+                </div>
+              </div>
+              <Switch
+                checked={notificationSettings.sms_enabled}
+                onCheckedChange={(checked) => updateNotificationSetting('sms', checked)}
+                disabled={isNotificationLoading}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Mail className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Notifications Email</p>
+                  <p className="text-xs text-muted-foreground">Envoi d'emails aux agents support</p>
+                </div>
+              </div>
+              <Switch
+                checked={notificationSettings.email_enabled}
+                onCheckedChange={(checked) => updateNotificationSetting('email', checked)}
+                disabled={isNotificationLoading}
+              />
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              ⚠️ Désactiver ces options empêchera l'envoi de notifications lors de la création de tickets support.
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm">Chargement des paramètres...</span>
+          </div>
+        )}
       </div>
     </div>
   );
