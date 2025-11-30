@@ -109,6 +109,7 @@ export const ROUTES = {
     apogeeTicketsPermissions: '/admin/apogee-tickets/permissions',
     apogeeGuides: '/admin/apogee-guides',
     chatbotRag: '/admin/chatbot-rag',
+    systemHealth: '/admin/system-health',
   },
 
   // ============================================
