@@ -11,9 +11,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { safeQuery, safeInvoke, safeMutation } from '@/lib/safeQuery';
-import { logError } from '@/lib/logger';
+import { logError, logDebug } from '@/lib/logger';
 import { errorToast, successToast } from '@/lib/toastHelpers';
-import { getFilteredContexts, type RAGContextType } from '@/lib/rag-michu';
+import { getFilteredContexts, getApogeeContext, getNoContentResponse, type RAGContextType } from '@/lib/rag-michu';
 import { ROUTES } from '@/config/routes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -143,43 +143,151 @@ export function SupportChatCore({
         ? selectedContext 
         : allowedContexts[0] || 'apogee';
 
-      const result = await safeInvoke<{ response: string; isIncomplete?: boolean }>(
-        supabase.functions.invoke('chat-guide', {
-          body: {
-            question: userMessage.content,
-            contextType: contextToUse,
-            history: messages.map(m => ({ role: m.role, content: m.content })),
-          },
-        }),
-        'SUPPORT_CHAT_AI_RESPONSE'
-      );
+      // Fetch RAG content first
+      const ragResult = await getApogeeContext(userMessage.content);
+      logDebug('support-chat', 'RAG result', { hasContent: ragResult.hasContent, chunksCount: ragResult.chunks.length });
 
-      if (result.success && result.data?.response) {
-        const isIncomplete = result.data.isIncomplete || 
-          result.data.response.includes("n'est pas présente dans la documentation");
-
-        const assistantMessage: ChatMessage = {
-          role: 'assistant',
-          content: result.data.response,
-          timestamp: new Date(),
-          isIncomplete,
-        };
-
-        setMessages(prev => [...prev, assistantMessage]);
-
-        if (isIncomplete) {
-          setAiIncompleteCount(prev => prev + 1);
-        }
-      } else {
-        // Fallback response
+      // If no RAG content, respond immediately without AI
+      if (!ragResult.hasContent) {
+        const noContentMessage = getNoContentResponse();
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: "Désolé, je n'ai pas pu traiter votre demande. Vous pouvez créer un ticket pour obtenir de l'aide d'un conseiller.",
+          content: noContentMessage,
           timestamp: new Date(),
           isIncomplete: true,
         }]);
         setAiIncompleteCount(prev => prev + 1);
+        setIsLoading(false);
+        return;
       }
+
+      // Get user's session token for authenticated edge function call
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      if (!token) {
+        errorToast('Utilisateur non authentifié');
+        setIsLoading(false);
+        return;
+      }
+
+      // Get user name for AI context
+      let userName = 'Utilisateur';
+      if (user) {
+        const profileResult = await safeQuery<{ first_name: string | null }>(
+          supabase
+            .from('profiles')
+            .select('first_name')
+            .eq('id', user.id)
+            .maybeSingle(),
+          'SUPPORT_CHAT_PROFILE_LOAD'
+        );
+        if (profileResult.success && profileResult.data?.first_name) {
+          userName = profileResult.data.first_name;
+        }
+      }
+
+      // Format messages for chat-guide API
+      const apiMessages = [...messages, userMessage].map(m => ({
+        role: m.role === 'system' ? 'user' : m.role,
+        content: m.content,
+      }));
+
+      // SSE streaming call to chat-guide
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-guide`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            messages: apiMessages,
+            guideContent: ragResult.formattedDocs,
+            userId: user?.id || null,
+            userName: userName,
+            chatContext: contextToUse,
+            hasRagContent: ragResult.hasContent,
+          }),
+        }
+      );
+
+      if (!response.ok || !response.body) {
+        if (response.status === 429 || response.status === 402) {
+          const error = await response.json();
+          errorToast(error.error?.message || 'Limite de requêtes atteinte');
+          setIsLoading(false);
+          return;
+        }
+        throw new Error('Erreur de connexion');
+      }
+
+      // Stream the response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+      let textBuffer = '';
+
+      // Add empty assistant message first
+      setMessages(prev => [...prev, { role: 'assistant', content: '', timestamp: new Date() }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          if (!line.startsWith('data: ')) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantContent += content;
+              setMessages(prev => {
+                const last = prev[prev.length - 1];
+                if (last?.role === 'assistant') {
+                  return prev.map((m, i) => 
+                    i === prev.length - 1 ? { ...m, content: assistantContent } : m
+                  );
+                }
+                return prev;
+              });
+            }
+          } catch {
+            // Ignore parsing errors
+          }
+        }
+      }
+
+      // Check if response indicates incomplete info
+      const isIncomplete = assistantContent.includes("n'est pas présente dans la documentation") ||
+        assistantContent.includes("n'est pas documentée");
+
+      if (isIncomplete) {
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant') {
+            return prev.map((m, i) => 
+              i === prev.length - 1 ? { ...m, isIncomplete: true } : m
+            );
+          }
+          return prev;
+        });
+        setAiIncompleteCount(prev => prev + 1);
+      }
+
     } catch (error) {
       logError('support-chat', 'AI response error', error);
       setMessages(prev => [...prev, {
