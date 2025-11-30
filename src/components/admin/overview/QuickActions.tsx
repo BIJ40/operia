@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Database, RefreshCw, FileJson, FileText } from 'lucide-react';
+import { Database, FileJson, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -8,8 +8,6 @@ export function QuickActions() {
   const { toast } = useToast();
   const [exportingJson, setExportingJson] = useState(false);
   const [exportingTxt, setExportingTxt] = useState(false);
-  const [indexing, setIndexing] = useState(false);
-  const [indexProgress, setIndexProgress] = useState({ current: 0, total: 0 });
 
   const extractPlainText = (html: string): string => {
     if (!html) return '';
@@ -215,72 +213,6 @@ export function QuickActions() {
     }
   };
 
-  const handleIndexChatbot = async () => {
-    setIndexing(true);
-    setIndexProgress({ current: 0, total: 0 });
-    
-    try {
-      const { count: totalBlocks, error: countError } = await supabase
-        .from('blocks')
-        .select('*', { count: 'exact', head: true });
-
-      if (countError) throw countError;
-
-      const total = totalBlocks || 0;
-      setIndexProgress({ current: 0, total });
-
-      toast({
-        title: 'Indexation démarrée',
-        description: `${total} blocs à indexer par batches de 50...`,
-      });
-
-      const batchSize = 50;
-      const totalBatches = Math.ceil(total / batchSize);
-      let processedBlocks = 0;
-      let totalChunks = 0;
-
-      for (let batch = 0; batch < totalBatches; batch++) {
-        const { data, error } = await supabase.functions.invoke('generate-embeddings', {
-          body: { 
-            blockIds: [], 
-            batchSize,
-            offset: batch * batchSize 
-          },
-        });
-
-        if (error) {
-          console.error(`Erreur batch ${batch + 1}:`, error);
-        } else {
-          processedBlocks += data.blocks_processed || 0;
-          totalChunks += data.chunks_created || 0;
-        }
-
-        setIndexProgress({ current: processedBlocks, total });
-
-        if (batch < totalBatches - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
-
-      toast({
-        title: 'Indexation terminée',
-        description: `${processedBlocks} blocs traités, ${totalChunks} chunks créés`,
-      });
-      
-      setIndexProgress({ current: 0, total: 0 });
-    } catch (error) {
-      console.error('Erreur indexation:', error);
-      toast({
-        title: 'Erreur',
-        description: error instanceof Error ? error.message : 'Erreur lors de l\'indexation',
-        variant: 'destructive',
-      });
-      setIndexProgress({ current: 0, total: 0 });
-    } finally {
-      setIndexing(false);
-    }
-  };
-
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4 text-foreground">Actions rapides</h2>
@@ -324,58 +256,6 @@ export function QuickActions() {
           </div>
         </div>
 
-        {/* Variant 2 - MAJ BOT */}
-        <div className="group h-full rounded-xl border border-helpconfort-blue/15 p-5
-          bg-gradient-to-b from-helpconfort-blue/5 to-white
-          shadow-sm transition-all duration-300
-          hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
-          <div className="flex items-start gap-4">
-            <div className="w-11 h-11 rounded-lg border-2 border-helpconfort-blue/25 flex items-center justify-center
-              group-hover:border-helpconfort-blue group-hover:bg-white transition-all shrink-0">
-              <RefreshCw className="w-5 h-5 text-helpconfort-blue" />
-            </div>
-            <div className="flex-1 space-y-3">
-              <div>
-                <h3 className="font-semibold text-foreground">MAJ BOT (Mme MICHU)</h3>
-                <p className="text-sm text-muted-foreground">Réindexer après modification des guides</p>
-              </div>
-              <Button
-                onClick={handleIndexChatbot}
-                disabled={indexing}
-                size="sm"
-                className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
-              >
-                <RefreshCw className={`w-4 h-4 mr-1 ${indexing ? 'animate-spin' : ''}`} />
-                {indexing ? 'Indexation...' : 'Lancer la MAJ'}
-              </Button>
-
-              {indexing && indexProgress.total > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{indexProgress.current} / {indexProgress.total} blocs</span>
-                    <span>{Math.round((indexProgress.current / indexProgress.total) * 100)}%</span>
-                  </div>
-                  <div className="grid grid-cols-20 gap-0.5">
-                    {Array.from({ length: 20 }).map((_, i) => {
-                      const blockThreshold = (indexProgress.total / 20) * (i + 1);
-                      const isFilled = indexProgress.current >= blockThreshold;
-                      return (
-                        <div
-                          key={i}
-                          className={`h-2 rounded transition-all duration-300 ${
-                            isFilled 
-                              ? 'bg-helpconfort-blue shadow-sm' 
-                              : 'bg-muted'
-                          }`}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
