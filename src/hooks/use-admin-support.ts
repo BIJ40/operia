@@ -175,7 +175,7 @@ export const useAdminSupport = () => {
 
       if (!result.success) throw new Error(result.error);
 
-      // Mettre à jour le statut automatiquement après une réponse support (pas une note interne)
+      // Mettre à jour le statut et l'assignation automatiquement après une réponse support (pas une note interne)
       if (!isInternalNote) {
         const currentStatus = selectedTicket.status;
         // Si nouveau → en cours, sinon → attente utilisateur
@@ -183,12 +183,23 @@ export const useAdminSupport = () => {
           ? TICKET_STATUSES.IN_PROGRESS 
           : TICKET_STATUSES.WAITING_USER;
         
+        // Auto-assigner au premier agent qui répond si pas encore assigné
+        const updateData: any = { status: newStatus };
+        if (!selectedTicket.assigned_to) {
+          updateData.assigned_to = user.id;
+          updateData.viewed_by_support_at = new Date().toISOString();
+        }
+        
         await safeMutation(
-          supabase.from('support_tickets').update({ status: newStatus }).eq('id', selectedTicket.id),
+          supabase.from('support_tickets').update(updateData).eq('id', selectedTicket.id),
           'ADMIN_SUPPORT_AUTO_STATUS_UPDATE'
         );
         
-        setSelectedTicket(prev => prev ? { ...prev, status: newStatus } : null);
+        setSelectedTicket(prev => prev ? { 
+          ...prev, 
+          status: newStatus,
+          assigned_to: updateData.assigned_to || prev.assigned_to 
+        } : null);
       }
 
       setNewMessage('');

@@ -95,13 +95,25 @@ export function useSupportNotifications() {
           schema: 'public',
           table: 'support_tickets',
         },
-        () => {
+        async (payload) => {
           loadTickets();
           playNotificationSound();
-          toast.success('Nouveau ticket créé', {
-            description: 'Un utilisateur vient de créer un nouveau ticket',
-            duration: 5000,
-          });
+          
+          const newTicket = payload.new as any;
+          // Distinguer demande de support en direct vs ticket classique
+          const isLiveRequest = newTicket.type === 'chat_human';
+          
+          if (isLiveRequest) {
+            toast.warning('Demande de support en direct', {
+              description: newTicket.subject || 'Un utilisateur demande une assistance immédiate',
+              duration: 8000,
+            });
+          } else {
+            toast.success('Nouveau ticket créé', {
+              description: newTicket.subject || 'Un utilisateur vient de créer un nouveau ticket',
+              duration: 5000,
+            });
+          }
         }
       )
       .on(

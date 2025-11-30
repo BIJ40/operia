@@ -624,16 +624,6 @@ export default function AdminSupportTickets() {
                     <TabsContent value="conversation" className="space-y-4">
                       {/* Controls */}
                       <div className="flex gap-2 flex-wrap items-center">
-                        {/* Prendre en charge: visible pour tout ticket non-résolu et non-assigné à soi */}
-                        {!['resolved', 'closed'].includes(selectedTicket.status) && selectedTicket.assigned_to !== user?.id && (
-                          <Button
-                            onClick={() => user && takeTicket(selectedTicket.id, user.id)}
-                            className="bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white hover:opacity-90 rounded-2xl shadow-lg border-l-4 border-l-accent"
-                          >
-                            👋 Prendre en charge
-                          </Button>
-                        )}
-
                         <EscalateTicketDialog
                           ticket={selectedTicket}
                           supportUsers={formattedSupportUsers}
