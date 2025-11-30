@@ -92,6 +92,9 @@ export function TicketDetailDrawer({
   const { user } = useAuth();
   const { data: roleInfo } = useMyTicketRole();
   const canManage = roleInfo?.canManage ?? false;
+  const isDeveloper = roleInfo?.ticketRole === 'developer';
+  // Developers can edit h_min/h_max and owner_side even without canManage
+  const canEditDevFields = canManage || isDeveloper;
   const { comments, addComment } = useApogeeTicket(ticket?.id || null);
   const { attachments, uploadAttachment, deleteAttachment, isUploading } = useTicketAttachments(ticket?.id || null);
   const { qualifyOne, isQualifying } = useTicketQualification();
@@ -397,7 +400,7 @@ export function TicketDetailDrawer({
                         className="h-9"
                         min={0}
                         step={0.5}
-                        disabled={!canManage}
+                        disabled={!canEditDevFields}
                       />
                       <Input
                         type="number"
@@ -413,7 +416,7 @@ export function TicketDetailDrawer({
                         className="h-9"
                         min={0}
                         step={0.5}
-                        disabled={!canManage}
+                        disabled={!canEditDevFields}
                       />
                     </div>
                   </div>
@@ -476,7 +479,7 @@ export function TicketDetailDrawer({
                     <OwnerSideSlider
                       value={ownerSideToSliderValue(ticket.owner_side)}
                       onChange={(v) => handleFieldUpdate('owner_side', sliderValueToOwnerSide(v))}
-                      disabled={!canManage}
+                      disabled={!canEditDevFields}
                     />
                   </div>
                 </div>
