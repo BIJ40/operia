@@ -25,6 +25,7 @@ import { FileButton } from '@/extensions/FileButton';
 import { InlineFile } from '@/extensions/InlineFile';
 import { getAllMentionSuggestions, navigateToMention, MentionSuggestion } from '@/lib/mentions';
 import { useEditor as useEditorContext } from '@/contexts/EditorContext';
+import { logError } from '@/lib/logger';
 import 'tippy.js/dist/tippy.css';
 
 interface RichTextEditorProps {
@@ -170,7 +171,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       setImageLabel('Voir');
       setShowImageDialog(false);
     } catch (error) {
-      console.error('Erreur lors de l\'insertion de l\'image:', error);
+      logError('RICH_TEXT_EDITOR', 'Erreur insertion image', { error });
       alert("Erreur lors de l'insertion de l'image. L'image est peut-être trop volumineuse.");
     }
   };

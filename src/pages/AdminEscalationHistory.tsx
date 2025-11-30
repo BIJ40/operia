@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Loader2, ArrowRight, Clock, User, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logError } from '@/lib/logger';
 
 interface EscalationRecord {
   ticket_id: string;
@@ -95,7 +96,7 @@ export default function AdminEscalationHistory() {
 
       setEscalations(allEscalations);
     } catch (error) {
-      console.error('Error loading escalations:', error);
+      logError('ADMIN_ESCALATION', 'Erreur chargement escalades', { error });
       toast.error('Impossible de charger l\'historique des escalades');
     } finally {
       setIsLoading(false);

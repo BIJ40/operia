@@ -17,6 +17,7 @@ import { MessageSquare } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TicketPriorityBadge } from './TicketPriorityBadge';
+import { logError } from '@/lib/logger';
 import {
   TICKET_STATUSES,
   TICKET_STATUS_LABELS,
@@ -211,7 +212,7 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate }: KanbanV
         .eq('id', ticketId);
 
       if (error) {
-        console.error('Erreur mise à jour statut:', error);
+        logError('SUPPORT_KANBAN', 'Erreur mise à jour statut', { error, ticketId, newStatus });
         // Rollback optimiste en cas d'erreur
         setLocalTickets(prev =>
           prev.map(t => t.id === ticketId ? ticket : t)

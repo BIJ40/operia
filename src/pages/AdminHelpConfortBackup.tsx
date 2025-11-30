@@ -10,6 +10,7 @@ import { Block } from '@/types/block';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Navigate } from 'react-router-dom';
+import { logError } from '@/lib/logger';
 
 export default function AdminHelpConfortBackup() {
   const { isAdmin } = useAuth();
@@ -32,7 +33,7 @@ export default function AdminHelpConfortBackup() {
       .order('order');
 
     if (error) {
-      console.error('Error loading categories:', error);
+      logError('BACKUP_HELPCONFORT', 'Erreur chargement catégories', { error });
       return;
     }
 
@@ -84,7 +85,7 @@ export default function AdminHelpConfortBackup() {
         description: 'Toutes les données HelpConfort ont été exportées',
       });
     } catch (error) {
-      console.error('Export error:', error);
+      logError('BACKUP_HELPCONFORT', 'Erreur export complet', { error });
       toast({
         title: 'Erreur',
         description: 'Erreur lors de l\'export des données',
@@ -139,7 +140,7 @@ export default function AdminHelpConfortBackup() {
         description: `La catégorie "${category?.title}" a été exportée`,
       });
     } catch (error) {
-      console.error('Export error:', error);
+      logError('BACKUP_HELPCONFORT', 'Erreur export catégorie', { error });
       toast({
         title: 'Erreur',
         description: 'Erreur lors de l\'export de la catégorie',
@@ -197,7 +198,7 @@ export default function AdminHelpConfortBackup() {
 
       loadCategories();
     } catch (error) {
-      console.error('Import error:', error);
+      logError('BACKUP_HELPCONFORT', 'Erreur import', { error });
       toast({
         title: 'Erreur',
         description: error instanceof Error ? error.message : 'Erreur lors de l\'import des données',

@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { logError } from "@/lib/logger";
 
 interface ManageAgencyAssignmentsDialogProps {
   open: boolean;
@@ -105,7 +106,7 @@ export function ManageAgencyAssignmentsDialog({
         description: "Impossible de mettre à jour les assignations",
         variant: "destructive",
       });
-      console.error('Error updating agency assignments:', error);
+      logError('FRANCHISEUR_ASSIGNMENTS', 'Erreur mise à jour assignations', { error });
     },
   });
 
