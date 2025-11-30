@@ -114,19 +114,33 @@ export function NavigationCards() {
       title: 'Utilisateurs & Équipes',
       description: 'Gestion des comptes, agences et collaborateurs',
       cards: [
-        { to: ROUTES.admin.users, icon: Users, title: 'Utilisateurs', description: 'Créer et gérer les comptes' },
+        { 
+          to: ROUTES.admin.users, 
+          icon: Users, 
+          title: 'Utilisateurs', 
+          description: 'Créer et gérer les comptes',
+          children: [
+            { to: ROUTES.admin.collaborateurs, icon: UsersRound, title: 'Collaborateurs non inscrits' },
+            { to: ROUTES.admin.userActivity, icon: TrendingUp, title: 'Activité connexions' },
+          ]
+        },
         { to: ROUTES.admin.agencies, icon: Building2, title: 'Agences', description: 'Configurer les agences' },
-        { to: ROUTES.admin.collaborateurs, icon: UsersRound, title: 'Collaborateurs', description: 'Collaborateurs non inscrits' },
-        { to: ROUTES.admin.userActivity, icon: TrendingUp, title: 'Activité', description: 'Suivi des connexions' },
       ],
     },
     {
       title: 'Support',
       description: 'Tickets, statistiques et escalades',
       cards: [
-        { to: ROUTES.support.console, icon: Headset, title: 'Console Support', description: 'Gérer les tickets clients' },
-        { to: ROUTES.admin.supportStats, icon: BarChart3, title: 'Statistiques Support', description: 'Métriques et indicateurs' },
-        { to: ROUTES.admin.escalationHistory, icon: History, title: 'Historique Escalades', description: 'Escalades chatbot' },
+        { 
+          to: ROUTES.support.console, 
+          icon: Headset, 
+          title: 'Console Support', 
+          description: 'Gérer les tickets clients',
+          children: [
+            { to: ROUTES.admin.supportStats, icon: BarChart3, title: 'Statistiques Support' },
+            { to: ROUTES.admin.escalationHistory, icon: History, title: 'Historique Escalades' },
+          ]
+        },
       ],
     },
     {
@@ -137,13 +151,10 @@ export function NavigationCards() {
           to: ROUTES.admin.chatbotRag, 
           icon: Bot, 
           title: 'Chatbot & RAG', 
-          description: 'Gestion complète IA' 
-        },
-        { 
-          to: ROUTES.admin.apogeeGuides, 
-          icon: BookOpen, 
-          title: 'Guides Apogée', 
-          description: 'Éditer les guides RAG' 
+          description: 'Gestion complète IA',
+          children: [
+            { to: ROUTES.admin.apogeeGuides, icon: BookOpen, title: 'Guides Apogée' },
+          ]
         },
       ],
     },
@@ -181,18 +192,32 @@ export function NavigationCards() {
       title: 'Données & Sauvegardes',
       description: 'Export, import et gestion du cache',
       cards: [
-        { to: ROUTES.admin.backup, icon: Database, title: 'Sauvegardes', description: 'Export/import données' },
-        { to: ROUTES.admin.helpconfortBackup, icon: FileStack, title: 'HelpConfort Backup', description: 'Sauvegarde HelpConfort' },
-        { to: ROUTES.admin.cacheBackup, icon: Archive, title: 'Cache Backup', description: 'Gestion du cache local' },
+        { 
+          to: ROUTES.admin.backup, 
+          icon: Database, 
+          title: 'Sauvegardes', 
+          description: 'Export/import données',
+          children: [
+            { to: ROUTES.admin.helpconfortBackup, icon: FileStack, title: 'HelpConfort Backup' },
+            { to: ROUTES.admin.cacheBackup, icon: Archive, title: 'Cache Backup' },
+          ]
+        },
       ],
     },
     {
       title: 'Système',
       description: 'Configuration et surveillance',
       cards: [
-        { to: ROUTES.admin.storageQuota, icon: HardDrive, title: 'Stockage', description: 'Surveiller les quotas' },
-        { to: ROUTES.admin.pageMetadata, icon: Settings, title: 'Métadonnées', description: 'Titres et labels pages' },
-        { to: ROUTES.admin.systemHealth, icon: Activity, title: 'Santé Système', description: 'Surveillance services' },
+        { 
+          to: ROUTES.admin.systemHealth, 
+          icon: Activity, 
+          title: 'Santé Système', 
+          description: 'Surveillance et configuration',
+          children: [
+            { to: ROUTES.admin.storageQuota, icon: HardDrive, title: 'Quotas Stockage' },
+            { to: ROUTES.admin.pageMetadata, icon: Settings, title: 'Métadonnées Pages' },
+          ]
+        },
       ],
     },
   ];
