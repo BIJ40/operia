@@ -176,22 +176,35 @@ export default function UserTickets() {
                 <h3 className="font-semibold mb-2">Conversation</h3>
                 <ScrollArea className="h-96 border rounded p-4">
                   <div className="space-y-4">
-                    {messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`p-3 rounded ${
-                          msg.is_from_support
-                            ? 'bg-blue-50 ml-8'
-                            : 'bg-muted mr-8'
-                        }`}
-                      >
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {msg.is_from_support ? 'Support' : 'Vous'} •{' '}
-                          {format(new Date(msg.created_at), 'PPp', { locale: fr })}
+                    {messages.map((msg) => {
+                      // SUPPORT_V2: Affichage distinct pour les messages système
+                      if (msg.is_system_message) {
+                        return (
+                          <div key={msg.id} className="flex justify-center my-2">
+                            <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full text-xs border border-blue-200 dark:border-blue-800">
+                              <span>ℹ️ {msg.message}</span>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`p-3 rounded ${
+                            msg.is_from_support
+                              ? 'bg-blue-50 ml-8'
+                              : 'bg-muted mr-8'
+                          }`}
+                        >
+                          <div className="text-xs text-muted-foreground mb-1">
+                            {msg.is_from_support ? 'Support' : 'Vous'} •{' '}
+                            {format(new Date(msg.created_at), 'PPp', { locale: fr })}
+                          </div>
+                          <div className="text-sm whitespace-pre-wrap">{msg.message}</div>
                         </div>
-                        <div className="text-sm whitespace-pre-wrap">{msg.message}</div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </ScrollArea>
               </div>

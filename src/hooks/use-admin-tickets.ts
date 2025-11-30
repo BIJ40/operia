@@ -605,7 +605,9 @@ export const useAdminTickets = () => {
   };
 
   // SU prend la main sur un chat_ai → devient chat_human
+  // SUPPORT_V2: Ajoute un message système visible par l'utilisateur
   const takeOverChat = async (ticketId: string, userId: string) => {
+    // 1. Mettre à jour le ticket
     const result = await safeMutation(
       supabase
         .from('support_tickets')
@@ -625,11 +627,29 @@ export const useAdminTickets = () => {
       return false;
     }
 
+    // 2. SUPPORT_V2: Ajouter le message système "Un conseiller a rejoint la conversation"
+    const systemMessageResult = await safeMutation(
+      supabase.from('support_messages').insert({
+        ticket_id: ticketId,
+        sender_id: userId,
+        message: 'Un conseiller a rejoint la conversation.',
+        is_from_support: true,
+        is_system_message: true,
+      } as any),
+      'ADMIN_TICKETS_SYSTEM_MESSAGE_JOINED'
+    );
+
+    if (!systemMessageResult.success) {
+      logWarn('[ADMIN-TICKETS] Failed to add system message for takeover', systemMessageResult.error);
+      // Continue anyway - the takeover itself succeeded
+    }
+
     successToast('Vous avez pris la main sur ce chat');
     
     await loadTickets();
     if (selectedTicket?.id === ticketId) {
       await refreshSelectedTicket(ticketId);
+      await loadTicketDetails(ticketId); // Recharger les messages
     }
     return true;
   };
