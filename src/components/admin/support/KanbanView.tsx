@@ -179,10 +179,20 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null);
   const [localTickets, setLocalTickets] = useState<SupportTicket[]>(tickets);
+  
+  // État de collapse par colonne
+  const [collapsedColumns, setCollapsedColumns] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setLocalTickets(tickets);
   }, [tickets]);
+
+  const toggleColumn = (columnId: string) => {
+    setCollapsedColumns(prev => ({
+      ...prev,
+      [columnId]: !prev[columnId]
+    }));
+  };
 
   // Mapper les anciens statuts 'waiting' vers 'waiting_user' pour compatibilité
   const normalizeStatus = (status: string) => {
@@ -317,43 +327,76 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
             <ChevronLeft className="w-4 h-4" />
           </button>
         )}
-        <div className="grid grid-cols-5 gap-4 h-[calc(100vh-240px)] overflow-x-auto">
+        <div className="flex gap-4 h-[calc(100vh-240px)] overflow-x-auto">
           {columns.map((column) => {
             const columnTickets = getTicketsByStatus(column.status);
+            const isColumnCollapsed = collapsedColumns[column.id];
             
             return (
               <DroppableColumn key={column.id} id={column.status}>
-                <Card className={`flex flex-col ${column.color} border-2 h-full min-w-[200px]`}>
-                  <CardHeader className="pb-2 px-3">
-                    <CardTitle className="flex items-center justify-between text-sm">
-                      <span>{column.title}</span>
-                      <Badge variant="secondary" className="ml-2 text-xs">
-                        {columnTickets.length}
-                      </Badge>
-                    </CardTitle>
+                <Card className={`flex flex-col ${column.color} border-2 h-full transition-all duration-200 ${
+                  isColumnCollapsed ? 'w-[60px] min-w-[60px]' : 'w-[200px] min-w-[200px]'
+                }`}>
+                  <CardHeader className="pb-2 px-2">
+                    {isColumnCollapsed ? (
+                      <button
+                        onClick={() => toggleColumn(column.id)}
+                        className="flex flex-col items-center gap-2 w-full hover:opacity-70 transition-opacity py-2"
+                        title={`Déplier ${column.title}`}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                        <Badge variant="secondary" className="text-xs">
+                          {columnTickets.length}
+                        </Badge>
+                        <span 
+                          className="text-xs font-medium text-center"
+                          style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                        >
+                          {column.title}
+                        </span>
+                      </button>
+                    ) : (
+                      <CardTitle className="flex items-center justify-between text-sm">
+                        <span className="truncate">{column.title}</span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Badge variant="secondary" className="text-xs">
+                            {columnTickets.length}
+                          </Badge>
+                          <button
+                            onClick={() => toggleColumn(column.id)}
+                            className="p-1 hover:bg-muted rounded transition-colors"
+                            title={`Replier ${column.title}`}
+                          >
+                            <ChevronLeft className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </CardTitle>
+                    )}
                   </CardHeader>
-                  <CardContent className="flex-1 overflow-auto px-3 pb-3">
-                    <SortableContext
-                      id={column.status}
-                      items={columnTickets.map(t => t.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <div className="space-y-2 min-h-[100px]">
-                        {columnTickets.map((ticket) => (
-                          <SortableTicketCard
-                            key={ticket.id}
-                            ticket={ticket}
-                            onSelect={onSelectTicket}
-                          />
-                        ))}
-                        {columnTickets.length === 0 && (
-                          <div className="text-center py-8 text-muted-foreground text-xs">
-                            Aucun ticket
-                          </div>
-                        )}
-                      </div>
-                    </SortableContext>
-                  </CardContent>
+                  {!isColumnCollapsed && (
+                    <CardContent className="flex-1 overflow-auto px-3 pb-3">
+                      <SortableContext
+                        id={column.status}
+                        items={columnTickets.map(t => t.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-2 min-h-[100px]">
+                          {columnTickets.map((ticket) => (
+                            <SortableTicketCard
+                              key={ticket.id}
+                              ticket={ticket}
+                              onSelect={onSelectTicket}
+                            />
+                          ))}
+                          {columnTickets.length === 0 && (
+                            <div className="text-center py-8 text-muted-foreground text-xs">
+                              Aucun ticket
+                            </div>
+                          )}
+                        </div>
+                      </SortableContext>
+                    </CardContent>
+                  )}
                 </Card>
               </DroppableColumn>
             );

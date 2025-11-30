@@ -311,11 +311,34 @@ export const useAdminTickets = () => {
       return;
     }
 
-    // Update ticket status to in_progress if it was new or waiting_user
-    // Compatibilité avec l'ancien statut 'waiting'
-    if (selectedTicket?.status === 'new' || selectedTicket?.status === 'waiting' || selectedTicket?.status === 'waiting_user') {
-      await updateTicketStatus(ticketId, 'in_progress');
+    // Auto-assigner + mettre à jour le statut si nécessaire
+    const updateData: any = { updated_at: new Date().toISOString() };
+    
+    // Auto-assigner au premier agent qui répond si pas encore assigné
+    if (!selectedTicket?.assigned_to) {
+      updateData.assigned_to = userId;
+      updateData.viewed_by_support_at = new Date().toISOString();
     }
+
+    // Update status: new → in_progress, waiting_user/waiting → in_progress
+    if (selectedTicket?.status === 'new' || selectedTicket?.status === 'waiting' || selectedTicket?.status === 'waiting_user') {
+      updateData.status = 'in_progress';
+    }
+
+    if (Object.keys(updateData).length > 1) {
+      await safeMutation(
+        supabase.from('support_tickets').update(updateData).eq('id', ticketId),
+        'ADMIN_TICKETS_AUTO_UPDATE'
+      );
+      
+      // Refresh local state
+      if (selectedTicket) {
+        await refreshSelectedTicket(ticketId);
+      }
+    }
+    
+    await loadTickets();
+    await loadTicketDetails(ticketId);
   };
 
   // Storage: on garde try/catch local (pas safeQuery)

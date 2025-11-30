@@ -539,8 +539,8 @@ export default function AdminSupportTickets() {
                           }
                         />
 
-                        {/* Bouton pour prendre la main sur un chat_ai - seulement si non assigné à un autre */}
-                        {selectedTicket.type === 'chat_ai' && (!selectedTicket.assigned_to || selectedTicket.assigned_to === user?.id) && (
+                        {/* Bouton pour prendre la main sur un chat_ai - seulement si non assigné */}
+                        {selectedTicket.type === 'chat_ai' && !selectedTicket.assigned_to && (
                           <Button
                             onClick={() => user && takeOverChat(selectedTicket.id, user.id)}
                             className="gap-2 bg-green-600 hover:bg-green-700 text-white"
