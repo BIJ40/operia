@@ -59,6 +59,7 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'admin_documents', defaultTitle: 'Documents RAG', defaultSubtitle: 'Base documentaire pour Mme MICHU', route: ROUTES.admin.documents },
   { pageKey: 'admin_storage_quota', defaultTitle: 'Stockage', defaultSubtitle: 'Surveillance des quotas de stockage', route: ROUTES.admin.storageQuota },
   { pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu', route: ROUTES.admin.pageMetadata },
+  { pageKey: 'admin_apogee_tickets', defaultTitle: 'TICKETING DEVELOPPEMENT', defaultSubtitle: 'Suivi des évolutions et corrections Apogée', route: ROUTES.admin.apogeeTickets },
   
   // User
   { pageKey: 'profile', defaultTitle: 'Mon Compte', defaultSubtitle: 'Gérez vos informations personnelles', route: ROUTES.profile },
@@ -159,6 +160,7 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path === '/admin/support', pageKey: 'admin_support', defaultTitle: 'Console Support Admin', defaultSubtitle: 'Gestion avancée des tickets', icon: 'HeadphonesIcon', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/escalation-history', pageKey: 'admin_escalation_history', defaultTitle: 'Historique Escalades', defaultSubtitle: 'Suivi des escalades de tickets', icon: 'ArrowUpCircle', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/page-metadata', pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu', icon: 'FileText', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path.startsWith('/admin/apogee-tickets'), pageKey: 'admin_apogee_tickets', defaultTitle: 'TICKETING DEVELOPPEMENT', defaultSubtitle: 'Suivi des évolutions et corrections Apogée', icon: 'ListTodo', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin', pageKey: 'admin_index', defaultTitle: 'Administration', defaultSubtitle: 'Configuration du système', icon: 'Settings', parentRoute: '/', parentLabel: 'Accueil' },
   
   // User pages
