@@ -1,7 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
+import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
 // Strip HTML tags and decode entities for cleaner text
 function stripHtml(html: string): string {
@@ -88,6 +89,9 @@ serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
+  const origin = req.headers.get('origin') ?? '';
+  const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
+
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -118,6 +122,14 @@ serve(async (req) => {
       throw new Error('Admin access required (N5+)');
     }
 
+    // Rate limit: 5 req/10min per user (heavy operation)
+    const rateLimitKey = `regenerate-apogee-rag:${user.id}`;
+    const rateCheck = checkRateLimit(rateLimitKey, { limit: 5, windowMs: 10 * 60 * 1000 });
+    if (!rateCheck.allowed) {
+      console.log(`[RAG] Rate limit exceeded for ${rateLimitKey}`);
+      return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
+    }
+
     console.log('[RAG] Starting regeneration from blocks table...');
 
     // Step 1: Delete existing apogee_guide chunks
@@ -133,7 +145,6 @@ serve(async (req) => {
     }
 
     // Step 2: Fetch all Apogée blocks (sections with content)
-    // Apogée blocks have parent slugs that don't start with 'helpconfort-' or 'apporteur-'
     const { data: sections, error: sectionsError } = await supabase
       .from('blocks')
       .select(`

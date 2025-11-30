@@ -1,7 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
+import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
 // Simple text chunking function
 function chunkText(text: string, maxChunkSize: number = 500): string[] {
@@ -74,6 +75,9 @@ serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
+  const origin = req.headers.get('origin') ?? '';
+  const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
+
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -102,6 +106,14 @@ serve(async (req) => {
 
     if (roleLevel < 5) {
       throw new Error('Admin access required (N5+)');
+    }
+
+    // Rate limit: 5 req/10min per user (heavy operation)
+    const rateLimitKey = `index-document:${user.id}`;
+    const rateCheck = checkRateLimit(rateLimitKey, { limit: 5, windowMs: 10 * 60 * 1000 });
+    if (!rateCheck.allowed) {
+      console.log(`[INDEX-DOCUMENT] Rate limit exceeded for ${rateLimitKey}`);
+      return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
     }
 
     const { documentId, filePath } = await req.json();
