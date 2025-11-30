@@ -4,6 +4,7 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logError } from '@/lib/logger';
 import { Block } from '@/types/block';
 
 export interface Section extends Block {}
@@ -111,7 +112,7 @@ export const useCategory = () => {
       setEditingSection(null);
       toast.success('Section mise à jour');
     } catch (error) {
-      console.error('Error updating section:', error);
+      logError('[CATEGORY] Error updating section', error);
       toast.error('Erreur lors de la mise à jour');
     }
   };
@@ -145,7 +146,7 @@ export const useCategory = () => {
       setEditingSection(null);
       toast.success('TIPS mis à jour');
     } catch (error) {
-      console.error('Error updating tips:', error);
+      logError('[CATEGORY] Error updating tips', error);
       toast.error('Erreur lors de la mise à jour');
     }
   };
@@ -185,7 +186,7 @@ export const useCategory = () => {
       setDeleteDialogOpen(false);
       setSectionToDelete(null);
     } catch (error) {
-      console.error('Error deleting section:', error);
+      logError('[CATEGORY] Error deleting section', error);
       toast.error('Erreur lors de la suppression');
     }
   };
@@ -212,7 +213,7 @@ export const useCategory = () => {
       await reloadBlocks();
       toast.success('Section ajoutée');
     } catch (error) {
-      console.error('Error adding section:', error);
+      logError('[CATEGORY] Error adding section', error);
       toast.error('Erreur lors de l\'ajout');
     }
   };
@@ -241,7 +242,7 @@ export const useCategory = () => {
       await reloadBlocks();
       toast.success('TIPS ajouté');
     } catch (error) {
-      console.error('Error adding tips:', error);
+      logError('[CATEGORY] Error adding tips', error);
       toast.error('Erreur lors de l\'ajout');
     }
   };
@@ -274,7 +275,7 @@ export const useCategory = () => {
       await reloadBlocks();
       toast.success('Section dupliquée');
     } catch (error) {
-      console.error('Error duplicating section:', error);
+      logError('[CATEGORY] Error duplicating section', error);
       toast.error('Erreur lors de la duplication');
     }
   };
@@ -291,7 +292,7 @@ export const useCategory = () => {
       await reloadBlocks();
       toast.success('Section déplacée');
     } catch (error) {
-      console.error('Error moving section:', error);
+      logError('[CATEGORY] Error moving section', error);
       toast.error('Erreur lors du déplacement');
     }
   };
@@ -326,7 +327,7 @@ export const useCategory = () => {
 
       await reloadBlocks();
     } catch (error) {
-      console.error('Error reordering sections:', error);
+      logError('[CATEGORY] Error reordering sections', error);
       toast.error('Erreur lors du réordonnancement');
     }
   };

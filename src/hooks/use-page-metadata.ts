@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/logger';
 
 export interface PageMetadata {
   id: string;
@@ -42,7 +43,7 @@ export function usePageMetadata(pageKey: string) {
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching page metadata:', error);
+        logError('[PAGE-METADATA] Error fetching page metadata', error);
         return null;
       }
 
@@ -100,7 +101,7 @@ export function useAllPageMetadata() {
         .order('page_key');
 
       if (error) {
-        console.error('Error fetching all page metadata:', error);
+        logError('[PAGE-METADATA] Error fetching all page metadata', error);
         return [];
       }
 

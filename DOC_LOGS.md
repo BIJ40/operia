@@ -25,6 +25,17 @@ Le projet utilise un système de logs centralisé défini dans `src/lib/logger.t
 - `src/hooks/use-user-presence.ts`
 - `src/hooks/use-admin-stats.ts`
 - `src/hooks/use-cache-backup.ts`
+- `src/hooks/use-diffusion-settings.ts`
+- `src/hooks/use-support-ticket.ts`
+- `src/hooks/use-admin-support.ts`
+- `src/hooks/use-admin-tickets.ts`
+- `src/hooks/use-user-tickets.ts`
+- `src/hooks/use-category.ts`
+- `src/hooks/use-page-metadata.ts`
+- `src/apogee-tickets/hooks/useTicketPermissions.ts`
+- `src/apogee-tickets/hooks/useApogeeTickets.ts`
+- `src/franchiseur/hooks/useNetworkStats.ts`
+- `src/franchiseur/hooks/usePeriodComparison.ts`
 - `src/pages/NotFound.tsx`
 - `src/components/admin/OnlineUsers.tsx`
 - `src/components/admin/chatbot-rag/RagQuestionsTab.tsx`

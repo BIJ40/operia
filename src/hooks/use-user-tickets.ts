@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { logError, logWarn } from '@/lib/logger';
 
 export interface Ticket {
   id: string;
@@ -80,7 +81,7 @@ export const useUserTickets = () => {
 
       setTickets(ticketsWithUnread);
     } catch (error) {
-      console.error('Error loading tickets:', error);
+      logError('[USER-TICKETS] Error loading tickets', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de charger les tickets',
@@ -127,7 +128,7 @@ export const useUserTickets = () => {
       // Reload tickets to update unread count
       loadTickets();
     } catch (error) {
-      console.error('Error loading ticket details:', error);
+      logError('[USER-TICKETS] Error loading ticket details', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de charger les détails du ticket',
@@ -226,7 +227,7 @@ export const useUserTickets = () => {
           },
         });
       } catch (notifyError) {
-        console.error('Error notifying support about new ticket:', notifyError);
+        logWarn('[USER-TICKETS] Error notifying support (non-blocking)', notifyError);
         // On ne bloque pas l'utilisateur si la notif email échoue
       }
 
@@ -239,8 +240,7 @@ export const useUserTickets = () => {
       loadTickets();
       return ticket;
     } catch (error) {
-      console.error('Error creating ticket:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
+      logError('[USER-TICKETS] Error creating ticket', error);
       toast({
         title: 'Erreur',
         description: error instanceof Error ? error.message : 'Impossible de créer le ticket',
@@ -281,7 +281,7 @@ export const useUserTickets = () => {
           .eq('id', ticketId);
       }
     } catch (error) {
-      console.error('Error adding message:', error);
+      logError('[USER-TICKETS] Error adding message', error);
       toast({
         title: 'Erreur',
         description: "Impossible d'envoyer le message",
@@ -308,7 +308,7 @@ export const useUserTickets = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading attachment:', error);
+      logError('[USER-TICKETS] Error downloading attachment', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de télécharger le fichier',
