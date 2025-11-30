@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserTickets } from '@/hooks/use-user-tickets';
 import { Button } from '@/components/ui/button';
@@ -10,14 +10,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TicketSourceBadge } from '@/components/tickets/TicketSourceBadge';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
-import { Plus, Send, Download, ArrowLeft, Home } from 'lucide-react';
+import { Plus, Send, Download, ArrowLeft, Home, X, Paperclip, Upload, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
+
+const CLOSE_REASONS = [
+  { value: 'resolved_self', label: 'Résolu par moi-même' },
+  { value: 'resolved_support', label: 'Résolu par le support' },
+  { value: 'resolved_other', label: 'Résolu autrement' },
+  { value: 'timeout', label: 'Délai dépassé / Plus d\'actualité' },
+];
 
 // Route protégée par RoleGuard dans App.tsx
 export default function UserTickets() {
@@ -34,6 +42,8 @@ export default function UserTickets() {
     createTicket,
     addMessage,
     downloadAttachment,
+    closeTicket,
+    uploadAttachment,
   } = useUserTickets();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -46,6 +56,15 @@ export default function UserTickets() {
   });
   const [files, setFiles] = useState<File[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  
+  // Close dialog state
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [closeReason, setCloseReason] = useState('');
+  const [isClosing, setIsClosing] = useState(false);
+  
+  // File upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleCreateTicket = async () => {
     const trimmedSubject = newTicket.subject.trim();
@@ -80,6 +99,30 @@ export default function UserTickets() {
 
     await addMessage(selectedTicket.id, newMessage);
     setNewMessage('');
+  };
+
+  const handleCloseTicket = async () => {
+    if (!selectedTicket || !closeReason) return;
+    
+    setIsClosing(true);
+    const reasonLabel = CLOSE_REASONS.find(r => r.value === closeReason)?.label || closeReason;
+    await closeTicket(selectedTicket.id, reasonLabel);
+    setIsClosing(false);
+    setShowCloseDialog(false);
+    setCloseReason('');
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedTicket || !e.target.files?.length) return;
+    
+    setIsUploading(true);
+    for (const file of Array.from(e.target.files)) {
+      await uploadAttachment(selectedTicket.id, file);
+    }
+    setIsUploading(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   // Normalise les statuts legacy
@@ -141,8 +184,22 @@ export default function UserTickets() {
                     {getStatusBadge(selectedTicket.status)}
                   </div>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Créé le {format(new Date(selectedTicket.created_at), 'PPp', { locale: fr })}
+                <div className="flex flex-col items-end gap-2">
+                  <div className="text-sm text-muted-foreground">
+                    Créé le {format(new Date(selectedTicket.created_at), 'PPp', { locale: fr })}
+                  </div>
+                  {/* Close button - only for open tickets */}
+                  {!['resolved', 'closed'].includes(selectedTicket.status) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowCloseDialog(true)}
+                      className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Fermer le ticket
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -211,22 +268,93 @@ export default function UserTickets() {
                 </ScrollArea>
               </div>
 
-              {/* New message input */}
-              {selectedTicket.status !== 'resolved' && (
-                <div className="flex gap-2">
-                  <Textarea
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Votre message..."
-                    className="flex-1"
+              {/* New message and file upload - only for open tickets */}
+              {!['resolved', 'closed'].includes(selectedTicket.status) && (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Votre message..."
+                      className="flex-1"
+                    />
+                    <div className="flex flex-col gap-2">
+                      <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                        <Send className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                      >
+                        {isUploading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Paperclip className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    multiple
                   />
-                  <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                    <Send className="w-4 h-4" />
-                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Vous pouvez ajouter des pièces jointes en cliquant sur 📎
+                  </p>
                 </div>
               )}
             </CardContent>
           </Card>
+
+          {/* Close ticket dialog */}
+          <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Fermer le ticket</DialogTitle>
+                <DialogDescription>
+                  Choisissez une raison pour fermer ce ticket. Cette action est définitive.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Label>Raison de la fermeture</Label>
+                <Select value={closeReason} onValueChange={setCloseReason}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Sélectionner une raison..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CLOSE_REASONS.map((reason) => (
+                      <SelectItem key={reason.value} value={reason.value}>
+                        {reason.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowCloseDialog(false)}>
+                  Annuler
+                </Button>
+                <Button 
+                  onClick={handleCloseTicket} 
+                  disabled={!closeReason || isClosing}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  {isClosing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Fermeture...
+                    </>
+                  ) : (
+                    'Confirmer la fermeture'
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     );

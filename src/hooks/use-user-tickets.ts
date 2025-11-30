@@ -302,6 +302,102 @@ export const useUserTickets = () => {
         'USER_TICKET_STATUS_UPDATE'
       );
     }
+    
+    // Reload ticket details to show new message
+    loadTicketDetails(ticketId);
+  };
+
+  // Close ticket with reason
+  const closeTicket = async (ticketId: string, reason: string) => {
+    if (!user) return false;
+
+    const result = await safeMutation(
+      supabase
+        .from('support_tickets')
+        .update({ 
+          status: 'closed',
+          resolved_at: new Date().toISOString(),
+        })
+        .eq('id', ticketId)
+        .eq('user_id', user.id),
+      'USER_TICKET_CLOSE'
+    );
+
+    if (!result.success) {
+      errorToast(result.error!);
+      return false;
+    }
+
+    // Add system message with close reason
+    await safeMutation(
+      supabase.from('support_messages').insert({
+        ticket_id: ticketId,
+        sender_id: user.id,
+        message: `Ticket fermé par l'utilisateur. Raison : ${reason}`,
+        is_from_support: false,
+        is_system_message: true,
+      } as any),
+      'USER_TICKET_CLOSE_MESSAGE'
+    );
+
+    successToast('Ticket fermé avec succès');
+    loadTickets();
+    setSelectedTicket(null);
+    return true;
+  };
+
+  // Upload attachment to existing ticket
+  const uploadAttachment = async (ticketId: string, file: File) => {
+    if (!user) return false;
+
+    const filePath = `${ticketId}/${Date.now()}-${file.name}`;
+    
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('support-attachments')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        logError('[USER-TICKETS] Error uploading file', uploadError);
+        errorToast('Erreur lors de l\'upload du fichier');
+        return false;
+      }
+
+      const result = await safeMutation(
+        supabase
+          .from('support_attachments')
+          .insert({
+            ticket_id: ticketId,
+            file_path: filePath,
+            file_name: file.name,
+            file_type: file.type,
+            file_size: file.size,
+          } as any),
+        'USER_TICKET_ATTACHMENT_ADD'
+      );
+
+      if (!result.success) {
+        errorToast(result.error!);
+        return false;
+      }
+
+      // Update ticket has_attachments flag
+      await safeMutation(
+        supabase
+          .from('support_tickets')
+          .update({ has_attachments: true })
+          .eq('id', ticketId),
+        'USER_TICKET_UPDATE_ATTACHMENTS_FLAG'
+      );
+
+      successToast('Fichier ajouté');
+      loadTicketDetails(ticketId);
+      return true;
+    } catch (error) {
+      logError('[USER-TICKETS] Error uploading attachment', error);
+      errorToast('Erreur lors de l\'upload');
+      return false;
+    }
   };
 
   const downloadAttachment = async (attachment: Attachment) => {
@@ -368,6 +464,8 @@ export const useUserTickets = () => {
     createTicket,
     addMessage,
     downloadAttachment,
+    closeTicket,
+    uploadAttachment,
     loadTickets,
   };
 };
