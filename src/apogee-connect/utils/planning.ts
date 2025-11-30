@@ -365,12 +365,46 @@ export function buildPlanningByTech({
 // CALCULATE WORKING TIME (with overlap handling)
 // ========================================
 
+interface TimeInterval {
+  start: number;
+  end: number;
+}
+
+/**
+ * Fusionne les intervalles qui se chevauchent ou se touchent
+ */
+function mergeIntervals(intervals: TimeInterval[]): TimeInterval[] {
+  if (intervals.length === 0) return [];
+  
+  // Trier par heure de début
+  const sorted = [...intervals].sort((a, b) => a.start - b.start);
+  
+  const merged: TimeInterval[] = [sorted[0]];
+  
+  for (let i = 1; i < sorted.length; i++) {
+    const current = sorted[i];
+    const last = merged[merged.length - 1];
+    
+    // Si chevauchement ou adjacent, fusionner
+    if (current.start <= last.end) {
+      last.end = Math.max(last.end, current.end);
+    } else {
+      // Sinon, nouvel intervalle
+      merged.push(current);
+    }
+  }
+  
+  return merged;
+}
+
 /**
  * Calcule le temps de travail effectif pour une journée
  * en gérant les chevauchements de RDV.
  * 
- * Logique: Heure début la plus tôt → Heure fin la plus tardive - Pauses
- * Les RDV qui se chevauchent ne comptent pas 2 fois.
+ * Logique: 
+ * 1. Fusionner les RDV qui se chevauchent
+ * 2. Sommer les durées des intervalles fusionnés
+ * 3. Déduire les pauses
  */
 function calculateDailyWorkingMinutes(slots: TechPlanningSlot[]): number {
   if (slots.length === 0) return 0;
@@ -381,38 +415,39 @@ function calculateDailyWorkingMinutes(slots: TechPlanningSlot[]): number {
 
   if (workSlots.length === 0) return 0;
 
-  // Trouver le début le plus tôt et la fin la plus tardive
-  let earliestStart = new Date(workSlots[0].start).getTime();
-  let latestEnd = new Date(workSlots[0].end).getTime();
+  // Convertir les slots en intervalles
+  const workIntervals: TimeInterval[] = workSlots.map(slot => ({
+    start: new Date(slot.start).getTime(),
+    end: new Date(slot.end).getTime(),
+  }));
 
-  workSlots.forEach(slot => {
-    const start = new Date(slot.start).getTime();
-    const end = new Date(slot.end).getTime();
-    if (start < earliestStart) earliestStart = start;
-    if (end > latestEnd) latestEnd = end;
+  // Fusionner les intervalles qui se chevauchent
+  const mergedWork = mergeIntervals(workIntervals);
+
+  // Calculer le temps de travail total (somme des intervalles fusionnés)
+  let workMinutes = 0;
+  mergedWork.forEach(interval => {
+    workMinutes += (interval.end - interval.start) / (1000 * 60);
   });
 
-  // Temps brut = fin - début
-  const grossMinutes = (latestEnd - earliestStart) / (1000 * 60);
-
-  // Déduire les pauses (qui sont dans la plage de travail)
+  // Déduire les pauses qui sont dans les plages de travail
   let breakMinutes = 0;
   breakSlots.forEach(breakSlot => {
     const breakStart = new Date(breakSlot.start).getTime();
     const breakEnd = new Date(breakSlot.end).getTime();
     
-    // Ne compter la pause que si elle est dans la plage de travail
-    if (breakStart >= earliestStart && breakEnd <= latestEnd) {
-      breakMinutes += breakSlot.durationMinutes || 0;
-    } else if (breakStart < latestEnd && breakEnd > earliestStart) {
-      // Pause partiellement dans la plage
-      const effectiveStart = Math.max(breakStart, earliestStart);
-      const effectiveEnd = Math.min(breakEnd, latestEnd);
-      breakMinutes += (effectiveEnd - effectiveStart) / (1000 * 60);
-    }
+    // Vérifier si la pause chevauche un intervalle de travail
+    mergedWork.forEach(workInterval => {
+      if (breakStart < workInterval.end && breakEnd > workInterval.start) {
+        // Pause partiellement ou totalement dans la plage de travail
+        const effectiveStart = Math.max(breakStart, workInterval.start);
+        const effectiveEnd = Math.min(breakEnd, workInterval.end);
+        breakMinutes += (effectiveEnd - effectiveStart) / (1000 * 60);
+      }
+    });
   });
 
-  return Math.max(0, grossMinutes - breakMinutes);
+  return Math.max(0, workMinutes - breakMinutes);
 }
 
 // ========================================
