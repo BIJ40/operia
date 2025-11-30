@@ -221,12 +221,12 @@ export function ImproveGuideDialog({
             {createFaq && (
               <div className="space-y-2">
                 <Label>Catégorie FAQ</Label>
-                <Select value={categoryId} onValueChange={setCategoryId}>
+                <Select value={categoryId || '_none'} onValueChange={(v) => setCategoryId(v === '_none' ? '' : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucune</SelectItem>
+                    <SelectItem value="_none">Aucune</SelectItem>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
                         {cat.label}
