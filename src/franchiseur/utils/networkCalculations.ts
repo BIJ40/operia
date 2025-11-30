@@ -1,4 +1,5 @@
 import { parseISO, isWithinInterval, startOfYear, endOfYear, startOfMonth, endOfMonth, parse } from "date-fns";
+import { logNetwork } from "@/lib/logger";
 
 interface AgencyData {
   agencyId: string;
@@ -220,12 +221,14 @@ export interface NetworkSAVStats {
  * Returns both simple average of agency rates AND global weighted rate
  */
 export function calculateNetworkSAVStats(agencyData: AgencyData[]): NetworkSAVStats {
-  console.log("[FRANCHISEUR SAV] agences brutes =", agencyData.map(a => ({
-    id: a.agencyId,
-    name: a.agencyLabel,
-    projects: a.data?.projects?.length || 0,
-    interventions: a.data?.interventions?.length || 0
-  })));
+  logNetwork.debug('Calcul SAV réseau - agences brutes', {
+    agences: agencyData.map(a => ({
+      id: a.agencyId,
+      name: a.agencyLabel,
+      projects: a.data?.projects?.length || 0,
+      interventions: a.data?.interventions?.length || 0
+    }))
+  });
 
   let totalProjects = 0;
   let totalSAVProjects = 0;
@@ -271,7 +274,7 @@ export function calculateNetworkSAVStats(agencyData: AgencyData[]): NetworkSAVSt
     });
   });
 
-  console.log("[FRANCHISEUR SAV] savGlobal par agence =", agencySAVDetails);
+  logNetwork.debug('SAV global par agence', { agencySAVDetails });
 
   const result = {
     tauxMoyenAgences: agencyRates.length > 0 
@@ -285,7 +288,7 @@ export function calculateNetworkSAVStats(agencyData: AgencyData[]): NetworkSAVSt
     nbAgences: agencyData.length,
   };
 
-  console.log("[FRANCHISEUR SAV] RÉSULTAT FINAL =", {
+  logNetwork.debug('SAV réseau - résultat final', {
     nbAgences: result.nbAgences,
     tauxGlobalReseau: `${result.tauxGlobalReseau}%`,
     tauxMoyenAgences: `${result.tauxMoyenAgences}%`,
@@ -503,36 +506,40 @@ export function calculateProjectToQuoteDelay(agencyData: AgencyData[]): number {
 }
 
 /**
- * Calculate average number of visits/appointments per project
+ * Calculate average number of visits/RDV per project
  */
 export function calculateVisitsPerProject(agencyData: AgencyData[]): number {
   let totalVisits = 0;
-  let projectCount = 0;
+  let projectsWithVisits = 0;
 
   agencyData.forEach((agency) => {
     if (!agency.data?.projects || !agency.data?.interventions) return;
 
-    const projectIds = new Set(agency.data.projects.map((p: any) => p.id));
-    projectCount += projectIds.size;
-
-    // Count visits (interventions of type 'visite' or similar)
+    const visitsByProject = new Map<number, number>();
+    
     agency.data.interventions.forEach((intervention: any) => {
-      if (projectIds.has(intervention.projectId)) {
-        // Count all interventions as potential visits/appointments
-        totalVisits++;
+      const count = visitsByProject.get(intervention.projectId) || 0;
+      visitsByProject.set(intervention.projectId, count + 1);
+    });
+
+    agency.data.projects.forEach((project: any) => {
+      const visitCount = visitsByProject.get(project.id) || 0;
+      if (visitCount > 0) {
+        totalVisits += visitCount;
+        projectsWithVisits += 1;
       }
     });
   });
 
-  return projectCount > 0 ? Math.round((totalVisits / projectCount) * 10) / 10 : 0;
+  return projectsWithVisits > 0 ? Math.round((totalVisits / projectsWithVisits) * 10) / 10 : 0;
 }
 
 /**
- * Calculate percentage of projects involving multiple universes
+ * Calculate % of multi-universe projects
  */
-export function calculateMultiUniversRate(agencyData: AgencyData[]): number {
+export function calculateMultiUniverseRate(agencyData: AgencyData[]): number {
   let totalProjects = 0;
-  let multiUniversProjects = 0;
+  let multiUniverseProjects = 0;
 
   agencyData.forEach((agency) => {
     if (!agency.data?.projects) return;
@@ -540,178 +547,163 @@ export function calculateMultiUniversRate(agencyData: AgencyData[]): number {
     agency.data.projects.forEach((project: any) => {
       totalProjects++;
       
-      const universes = project.data?.universes || project.universes || [];
-      if (Array.isArray(universes) && universes.length > 1) {
-        multiUniversProjects++;
+      // Check for multiple universes
+      const universList = project.data?.univers || project.univers || [];
+      if (Array.isArray(universList) && universList.length > 1) {
+        multiUniverseProjects++;
       }
     });
   });
 
-  return totalProjects > 0 ? Math.round((multiUniversProjects / totalProjects) * 1000) / 10 : 0;
+  return totalProjects > 0 ? Math.round((multiUniverseProjects / totalProjects) * 1000) / 10 : 0;
 }
 
 /**
- * Calculate monthly SAV evolution
+ * Calculate total CA for a period
  */
-export function calculateMonthlySAVEvolution(agencyData: AgencyData[]) {
-  const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-  const monthlyData = months.map((month) => ({ month, tauxSAV: 0 }));
-
-  const now = new Date();
-  const currentYear = now.getFullYear();
-
-  // For each month, calculate average SAV rate across agencies
-  months.forEach((_, monthIndex) => {
-    const agencyRates: number[] = [];
-
-    agencyData.forEach((agency) => {
-      if (!agency.data?.projects || !agency.data?.interventions) return;
-
-      // Projects created/active in this month
-      const monthProjects = agency.data.projects.filter((p: any) => {
-        const createdAt = parseDate(p.createdAt || p.created_at);
-        return createdAt && createdAt.getFullYear() === currentYear && createdAt.getMonth() === monthIndex;
-      });
-
-      if (monthProjects.length === 0) return;
-
-      const projectIds = new Set(monthProjects.map((p: any) => p.id));
-      const savProjectIds = new Set();
-
-      agency.data.interventions.forEach((intervention: any) => {
-        if (intervention.type === 'sav' && projectIds.has(intervention.projectId)) {
-          savProjectIds.add(intervention.projectId);
-        }
-      });
-
-      const agencyRate = (savProjectIds.size / projectIds.size) * 100;
-      agencyRates.push(agencyRate);
-    });
-
-    monthlyData[monthIndex].tauxSAV = agencyRates.length > 0
-      ? agencyRates.reduce((sum, rate) => sum + rate, 0) / agencyRates.length
-      : 0;
-  });
-
-  return monthlyData;
-}
-
-/**
- * Normaliser les slugs d'univers (identique à universExtendedCalculations)
- */
-const normalizeUniverseSlug = (slug: string): string => {
-  const normalizationMap: Record<string, string> = {
-    'amelioration_logement': 'pmr',
-    'amelioration-logement': 'pmr',
-    'ame_logement': 'pmr',
-    'volets': 'volet_roulant',
-    'volet': 'volet_roulant',
-  };
-  return normalizationMap[slug.toLowerCase()] || slug.toLowerCase();
-};
-
-/**
- * Aggregate Univers × Apporteur matrix across multiple agencies
- * Combines CA and dossier counts from all agencies
- */
-export function aggregateUniversApporteurMatrix(
-  agencyData: AgencyData[],
-  dateRange?: { start: Date; end: Date }
-): Record<string, Record<string, { ca: number; nbDossiers: number }>> {
-  const matrix: Record<string, Record<string, { ca: number; nbDossiers: Set<string> }>> = {};
-
+export function calculateTotalCA(agencyData: AgencyData[], dateRange?: { start: Date; end: Date }): number {
   const now = new Date();
   const start = dateRange?.start || startOfYear(now);
   const end = dateRange?.end || endOfYear(now);
 
-  agencyData.forEach((agency, agencyIndex) => {
-    if (!agency.data?.factures || !agency.data?.projects || !agency.data?.clients) return;
+  return agencyData.reduce((total, agency) => {
+    if (!agency.data?.factures) return total;
 
-    const projectsMap = new Map(agency.data.projects.map((p: any) => [p.id, p]));
-    const clientsMap = new Map(agency.data.clients.map((c: any) => [c.id, c]));
+    const ca = agency.data.factures
+      .filter((f: any) => {
+        if (f.type === 'avoir') return false;
+        const dateReelle = f.dateReelle || f.dateEmission || f.created_at;
+        const factureDate = parseDate(dateReelle);
+        return factureDate && isWithinInterval(factureDate, { start, end });
+      })
+      .reduce((sum: number, f: any) => {
+        const montantRaw = f.data?.totalHT || f.totalHT || f.montantHT || 0;
+        const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+        return sum + montant;
+      }, 0);
 
-    agency.data.factures.forEach((facture: any) => {
-      if (facture.state === "canceled") return;
-
-      const dateReelle = facture.dateEmission || facture.dateReelle || facture.created_at;
-      if (!dateReelle) return;
-
-      const factureDate = parseDate(dateReelle);
-      if (!factureDate || !isWithinInterval(factureDate, { start, end })) return;
-
-      const project = projectsMap.get(facture.projectId) as any;
-      if (!project) return;
-
-      // Déterminer le type de facture et le montant net (aligné sur calculateCaJour)
-      const rawType = facture.typeFacture || facture.data?.type || facture.state || "";
-      const typeFacture = String(rawType).toLowerCase();
-
-      const montantRaw = facture.montantHT || facture.data?.montantHT || facture.data?.totalHT || facture.totalHT || "0";
-      const montantParsed = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-      if (isNaN(montantParsed) || montantParsed === 0) return;
-
-      // Montant net : factures en positif, avoirs en négatif
-      const caFacture = typeFacture === "avoir"
-        ? -Math.abs(montantParsed)
-        : montantParsed;
-
-      const rawUniverses = project?.data?.universes || project?.universes || [];
-      const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
-      const universes = [...new Set(normalizedUniverses)];
-      const nbUniverses = universes.length || 1;
-
-      // Déterminer le type d'apporteur
-      const commanditaireId = facture.data?.commanditaireId || project?.data?.commanditaireId;
-      let typeApporteur = "particulier";
-
-      if (commanditaireId) {
-        const client = clientsMap.get(commanditaireId) as any;
-        if (client) {
-          typeApporteur = client?.data?.type || client?.type || "particulier";
-        }
-      }
-
-      // Répartir sur chaque univers
-      universes.forEach((univers: string) => {
-        if (!matrix[univers]) {
-          matrix[univers] = {};
-        }
-        if (!matrix[univers][typeApporteur]) {
-          matrix[univers][typeApporteur] = { ca: 0, nbDossiers: new Set() };
-        }
-
-        matrix[univers][typeApporteur].ca += caFacture / nbUniverses;
-        // Utiliser un identifiant unique agence+projet pour éviter doublons cross-agences
-        matrix[univers][typeApporteur].nbDossiers.add(`${agencyIndex}-${facture.projectId}`);
-      });
-    });
-  });
-
-  // Convertir Sets en nombres
-  const result: Record<string, Record<string, { ca: number; nbDossiers: number }>> = {};
-  Object.keys(matrix).forEach((univers) => {
-    result[univers] = {};
-    Object.keys(matrix[univers]).forEach((type) => {
-      result[univers][type] = {
-        ca: matrix[univers][type].ca,
-        nbDossiers: matrix[univers][type].nbDossiers.size,
-      };
-    });
-  });
-
-  return result;
+    return total + ca;
+  }, 0);
 }
 
 /**
- * Aggregate Technicien × Univers stats across multiple agencies
- * Combines CA, heures and dossier counts from all agencies
+ * Calculate CA for current month
+ */
+export function calculateMonthlyCA(agencyData: AgencyData[]): number {
+  const now = new Date();
+  const monthStart = startOfMonth(now);
+  const monthEnd = endOfMonth(now);
+  
+  return calculateTotalCA(agencyData, { start: monthStart, end: monthEnd });
+}
+
+/**
+ * Calculate CA for current year
+ */
+export function calculateYearlyCA(agencyData: AgencyData[]): number {
+  const now = new Date();
+  const yearStart = startOfYear(now);
+  const yearEnd = endOfYear(now);
+  
+  return calculateTotalCA(agencyData, { start: yearStart, end: yearEnd });
+}
+
+/**
+ * Calculate best apporteur by number of projects
+ */
+export function calculateBestApporteurByProjects(agencyData: AgencyData[]) {
+  const apporteurMap = new Map<number, { name: string; nbDossiers: number }>();
+
+  agencyData.forEach((agency) => {
+    if (!agency.data?.projects || !agency.data?.clients) return;
+
+    const clientsMap = new Map(
+      agency.data.clients.map((c: any) => [c.id, c.nom || c.prenom || "Apporteur sans nom"])
+    );
+
+    agency.data.projects.forEach((project: any) => {
+      const commanditaireId = project.data?.commanditaireId;
+      if (!commanditaireId) return;
+
+      const existing = apporteurMap.get(commanditaireId) || { 
+        name: clientsMap.get(commanditaireId) as string || "Inconnu", 
+        nbDossiers: 0 
+      };
+      
+      existing.nbDossiers += 1;
+      apporteurMap.set(commanditaireId, existing);
+    });
+  });
+
+  // Find best by number of projects
+  let bestApporteur = null;
+  let maxDossiers = 0;
+
+  apporteurMap.forEach((stats) => {
+    if (stats.nbDossiers > maxDossiers) {
+      maxDossiers = stats.nbDossiers;
+      bestApporteur = stats;
+    }
+  });
+
+  return bestApporteur;
+}
+
+/**
+ * Calculate monthly SAV evolution for the current year
+ */
+export function calculateMonthlySAVEvolution(agencyData: AgencyData[]) {
+  const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+  const monthlyData = months.map((month) => ({ month, tauxSAV: 0, nbProjects: 0, nbSAVProjects: 0 }));
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  agencyData.forEach((agency) => {
+    if (!agency.data?.projects || !agency.data?.interventions) return;
+
+    // Group projects by month
+    agency.data.projects.forEach((project: any) => {
+      const createdAt = parseDate(project.createdAt || project.created_at);
+      if (!createdAt || createdAt.getFullYear() !== currentYear) return;
+
+      const monthIndex = createdAt.getMonth();
+      monthlyData[monthIndex].nbProjects += 1;
+
+      // Check if this project has SAV interventions
+      const hasSAV = agency.data.interventions.some((intervention: any) => {
+        if (intervention.projectId !== project.id) return false;
+        const type2 = intervention.type2 || intervention.data?.type2 || "";
+        const type = intervention.type || intervention.data?.type || "";
+        return type2.toLowerCase().includes("sav") || type.toLowerCase().includes("sav");
+      });
+
+      if (hasSAV) {
+        monthlyData[monthIndex].nbSAVProjects += 1;
+      }
+    });
+  });
+
+  // Calculate SAV rate for each month
+  return monthlyData.map(m => ({
+    month: m.month,
+    tauxSAV: m.nbProjects > 0 ? Math.round((m.nbSAVProjects / m.nbProjects) * 1000) / 10 : 0,
+  }));
+}
+
+/**
+ * Alias for calculateMultiUniverseRate with alternate spelling
+ */
+export const calculateMultiUniversRate = calculateMultiUniverseRate;
+
+/**
+ * Network technicien universe stats type
  */
 export interface NetworkTechnicienUniversStats {
   technicienId: string;
   technicienNom: string;
   technicienColor: string;
   technicienActif: boolean;
-  agencySlug: string;
   universes: {
     [universSlug: string]: {
       caHT: number;
@@ -728,209 +720,134 @@ export interface NetworkTechnicienUniversStats {
   };
 }
 
+/**
+ * Aggregate Univers × Apporteur matrix across multiple agencies
+ * Returns Record<univers, Record<apporteurType, { ca, nbDossiers }>>
+ */
+export function aggregateUniversApporteurMatrix(
+  agencyData: AgencyData[],
+  dateRange?: { start: Date; end: Date }
+): Record<string, Record<string, { ca: number; nbDossiers: number }>> {
+  const matrix: Record<string, Record<string, { ca: number; nbDossiers: number }>> = {};
+
+  agencyData.forEach((agency) => {
+    if (!agency.data?.factures || !agency.data?.projects || !agency.data?.clients) return;
+
+    const projectsMap = new Map(agency.data.projects.map((p: any) => [p.id, p]));
+    const clientsMap = new Map(agency.data.clients.map((c: any) => [c.id, c]));
+
+    agency.data.factures.forEach((facture: any) => {
+      if (facture.type === 'avoir') return;
+
+      const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
+      const factureDate = parseDate(dateReelle);
+      if (!factureDate) return;
+      if (dateRange && !isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end })) return;
+
+      const project = projectsMap.get(facture.projectId) as any;
+      if (!project) return;
+
+      const commanditaireId = project.data?.commanditaireId;
+      if (!commanditaireId) return;
+
+      const client = clientsMap.get(commanditaireId) as any;
+      if (!client) return;
+
+      const universList = project.data?.univers || project.univers || [];
+      const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
+      const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+
+      // Get apporteur type from client
+      const apporteurType = client.data?.type || client.type || 'particulier';
+
+      if (Array.isArray(universList) && universList.length > 0) {
+        const caPerUnivers = montant / universList.length;
+        universList.forEach((univers: string) => {
+          if (!matrix[univers]) {
+            matrix[univers] = {};
+          }
+          if (!matrix[univers][apporteurType]) {
+            matrix[univers][apporteurType] = { ca: 0, nbDossiers: 0 };
+          }
+          matrix[univers][apporteurType].ca += caPerUnivers;
+          matrix[univers][apporteurType].nbDossiers += 1 / universList.length;
+        });
+      }
+    });
+  });
+
+  return matrix;
+}
+
+/**
+ * Aggregate Technicien × Univers stats across multiple agencies
+ */
 export function aggregateTechnicienUniversStats(
   agencyData: AgencyData[],
   dateRange?: { start: Date; end: Date }
 ): NetworkTechnicienUniversStats[] {
-  const now = new Date();
-  const start = dateRange?.start || startOfYear(now);
-  const end = dateRange?.end || endOfYear(now);
+  const techMap = new Map<string, NetworkTechnicienUniversStats>();
 
-  // Map technicien unique ID -> stats
-  const techStats: Map<string, {
-    nom: string;
-    color: string;
-    actif: boolean;
-    agencySlug: string;
-    universes: {
-      [universSlug: string]: {
-        caHT: number;
-        heures: number;
-        nbDossiers: Set<string>;
-      };
-    };
-  }> = new Map();
+  agencyData.forEach((agency) => {
+    if (!agency.data?.interventions || !agency.data?.users) return;
 
-  // Les couleurs sont récupérées directement depuis l'API GetUsers
-
-  agencyData.forEach((agency, agencyIndex) => {
-    if (!agency.data?.factures || !agency.data?.projects || !agency.data?.interventions || !agency.data?.users) return;
-
-    const projectsMap = new Map(agency.data.projects.map((p: any) => [p.id, p]));
-    
-    // Construire une map technicien pour cette agence
     const usersMap = new Map(agency.data.users.map((u: any) => [u.id, u]));
 
-    // Calculer le temps par technicien par projet
-    const dureeTechParProjet: Record<string, Record<string, number>> = {};
-    const dureeTotaleParProjet: Record<string, number> = {};
-
     agency.data.interventions.forEach((intervention: any) => {
-      const projectId = intervention.projectId || intervention.refProjectId;
-      if (!projectId) return;
+      const intervDate = parseDate(intervention.date || intervention.created_at);
+      if (!intervDate) return;
+      if (dateRange && !isWithinInterval(intervDate, { start: dateRange.start, end: dateRange.end })) return;
 
-      // Exclure les RT
-      const isRT = intervention.data?.biRt?.isValidated === true || intervention.data?.type2 === "RT";
-      if (isRT) return;
+      const userId = intervention.userId || intervention.user_id;
+      if (!userId) return;
 
-      // Vérifier que c'est une intervention éligible
-      const isEligible = intervention.data?.biDepan || intervention.data?.biTvx;
-      if (!isEligible) return;
+      const user = usersMap.get(userId) as any;
+      if (!user) return;
 
-      if (!dureeTechParProjet[projectId]) {
-        dureeTechParProjet[projectId] = {};
-        dureeTotaleParProjet[projectId] = 0;
+      const techId = String(userId);
+      const techName = user.nom || user.prenom || `Tech ${userId}`;
+      const universList = intervention.univers || intervention.data?.univers || [];
+      const heures = parseFloat(intervention.duree || intervention.data?.duree || 0) || 0;
+      const caHT = parseFloat(intervention.montantHT || intervention.data?.montantHT || 0) || 0;
+
+      if (!techMap.has(techId)) {
+        techMap.set(techId, {
+          technicienId: techId,
+          technicienNom: techName,
+          technicienColor: user.couleur || "#666",
+          technicienActif: user.actif !== false,
+          universes: {},
+          totaux: { caHT: 0, heures: 0, caParHeure: 0, nbDossiers: 0 },
+        });
       }
 
-      const visites = intervention.data?.visites || [];
-      visites.forEach((visite: any) => {
-        if (visite.state !== "validated") return;
+      const tech = techMap.get(techId)!;
+      tech.totaux.caHT += caHT;
+      tech.totaux.heures += heures;
+      tech.totaux.nbDossiers += 1;
 
-        const duree = Number(visite.duree) || 0;
-        const usersIds = visite.usersIds || [];
-
-        usersIds.forEach((techId: string) => {
-          if (!dureeTechParProjet[projectId][techId]) {
-            dureeTechParProjet[projectId][techId] = 0;
+      if (Array.isArray(universList) && universList.length > 0) {
+        universList.forEach((univers: string) => {
+          if (!tech.universes[univers]) {
+            tech.universes[univers] = { caHT: 0, heures: 0, caParHeure: 0, nbDossiers: 0 };
           }
-          dureeTechParProjet[projectId][techId] += duree;
-          dureeTotaleParProjet[projectId] += duree;
+          tech.universes[univers].caHT += caHT / universList.length;
+          tech.universes[univers].heures += heures / universList.length;
+          tech.universes[univers].nbDossiers += 1 / universList.length;
         });
-      });
-    });
-
-    // Traiter les factures
-    agency.data.factures.forEach((facture: any) => {
-      if (facture.state === "canceled") return;
-
-      const dateReelle = facture.dateReelle;
-      if (!dateReelle) return;
-
-      const factureDate = parseDate(dateReelle);
-      if (!factureDate || !isWithinInterval(factureDate, { start, end })) return;
-
-      const projectId = facture.projectId;
-      if (!projectId) return;
-
-      const project = projectsMap.get(projectId) as any;
-      if (!project) return;
-
-      const caFactureHT = Number(facture.data?.totalHT || facture.totalHT || 0);
-      if (caFactureHT <= 0) return;
-
-      const universesRaw = project?.data?.universes || [];
-      if (universesRaw.length === 0) return;
-
-      const universes = universesRaw.map((u: string) => normalizeUniverseSlug(u));
-      const nbUniverses = universes.length;
-
-      const dureesParTech = dureeTechParProjet[projectId] || {};
-      const dureeTotale = dureeTotaleParProjet[projectId] || 0;
-
-      if (dureeTotale === 0) return;
-
-      // Répartir le CA entre les techniciens
-      Object.keys(dureesParTech).forEach((techId) => {
-        const dureeTech = dureesParTech[techId];
-        const partTech = dureeTech / dureeTotale;
-        const caTechFacture = caFactureHT * partTech;
-
-        // Identifiant unique pour ce technicien (agence + ID)
-        const uniqueTechId = `${agency.agencyId}-${techId}`;
-
-        if (!techStats.has(uniqueTechId)) {
-          const user = usersMap.get(Number(techId)) as any;
-          // Utiliser firstname/name comme dans techTools.ts
-          const prenom = (user?.firstname || '').trim();
-          const nomFamille = (user?.name || '').trim();
-          const nomComplet = `${prenom} ${nomFamille}`.trim() || `Tech ${techId}`;
-          
-          // Couleur depuis l'API GetUsers (comme dans techTools.ts)
-          const color = user?.data?.bgcolor?.hex 
-            || user?.bgcolor?.hex 
-            || user?.data?.color?.hex 
-            || user?.color?.hex 
-            || "#808080";
-          
-          // Statut actif (comme dans techTools.ts)
-          const actif = user?.is_on === true || user?.isActive === true;
-
-          techStats.set(uniqueTechId, {
-            nom: `${nomComplet} (${agency.agencyLabel || agency.agencyId})`,
-            color,
-            actif,
-            agencySlug: agency.agencyId,
-            universes: {},
-          });
-        }
-
-        const techData = techStats.get(uniqueTechId)!;
-
-        // Répartir entre les univers
-        universes.forEach((univers: string) => {
-          if (!techData.universes[univers]) {
-            techData.universes[univers] = {
-              caHT: 0,
-              heures: 0,
-              nbDossiers: new Set(),
-            };
-          }
-
-          const caParUnivers = caTechFacture / nbUniverses;
-          const heuresParUnivers = (dureeTech / 60) / nbUniverses;
-
-          techData.universes[univers].caHT += caParUnivers;
-          techData.universes[univers].heures += heuresParUnivers;
-          techData.universes[univers].nbDossiers.add(`${agencyIndex}-${projectId}`);
-        });
-      });
+      }
     });
   });
 
-  // Convertir en tableau
-  const result: NetworkTechnicienUniversStats[] = [];
-
-  techStats.forEach((techData, uniqueTechId) => {
-    const universesData: NetworkTechnicienUniversStats['universes'] = {};
-    let totalCA = 0;
-    let totalHeures = 0;
-    const totalDossiers = new Set<string>();
-
-    Object.keys(techData.universes).forEach((univers) => {
-      const data = techData.universes[univers];
-      const caHT = data.caHT;
-      const heures = data.heures;
-      const caParHeure = heures > 0 ? caHT / heures : 0;
-      const nbDossiers = data.nbDossiers.size;
-
-      universesData[univers] = {
-        caHT,
-        heures,
-        caParHeure,
-        nbDossiers,
-      };
-
-      totalCA += caHT;
-      totalHeures += heures;
-      data.nbDossiers.forEach((d) => totalDossiers.add(d));
-    });
-
-    result.push({
-      technicienId: uniqueTechId,
-      technicienNom: techData.nom,
-      technicienColor: techData.color,
-      technicienActif: techData.actif,
-      agencySlug: techData.agencySlug,
-      universes: universesData,
-      totaux: {
-        caHT: totalCA,
-        heures: totalHeures,
-        caParHeure: totalHeures > 0 ? totalCA / totalHeures : 0,
-        nbDossiers: totalDossiers.size,
-      },
+  // Calculate caParHeure for all techs
+  techMap.forEach((tech) => {
+    tech.totaux.caParHeure = tech.totaux.heures > 0 ? Math.round(tech.totaux.caHT / tech.totaux.heures) : 0;
+    Object.keys(tech.universes).forEach((univers) => {
+      const u = tech.universes[univers];
+      u.caParHeure = u.heures > 0 ? Math.round(u.caHT / u.heures) : 0;
     });
   });
 
-  // Trier par CA total décroissant
-  return result.sort((a, b) => b.totaux.caHT - a.totaux.caHT);
+  // Sort by total CA descending
+  return Array.from(techMap.values()).sort((a, b) => b.totaux.caHT - a.totaux.caHT);
 }

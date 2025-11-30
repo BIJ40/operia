@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AgencyCollaborator, CreateCollaboratorPayload, UpdateCollaboratorPayload } from "./types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { logError } from "@/lib/logger";
 
 const collaboratorsKey = (agencyId?: string | null) =>
   ["agencyCollaborators", agencyId] as const;
@@ -114,7 +115,7 @@ export function useCreateAgencyCollaborator(agencyId: string | null) {
       toast.success("Collaborateur ajouté");
     },
     onError: (error: Error) => {
-      console.error("Erreur création collaborateur:", error);
+      logError('TEAM', 'Erreur création collaborateur', { error });
       toast.error(error.message || "Erreur lors de l'ajout du collaborateur");
     },
   });
@@ -145,7 +146,7 @@ export function useUpdateAgencyCollaborator(agencyId: string) {
       toast.success("Collaborateur mis à jour");
     },
     onError: (error) => {
-      console.error("Erreur mise à jour collaborateur:", error);
+      logError('TEAM', 'Erreur mise à jour collaborateur', { error });
       toast.error("Erreur lors de la mise à jour");
     },
   });
@@ -172,7 +173,7 @@ export function useDeleteAgencyCollaborator(agencyId: string) {
       toast.success("Collaborateur supprimé");
     },
     onError: (error) => {
-      console.error("Erreur suppression collaborateur:", error);
+      logError('TEAM', 'Erreur suppression collaborateur', { error });
       toast.error("Erreur lors de la suppression");
     },
   });
