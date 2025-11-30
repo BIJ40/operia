@@ -38,7 +38,7 @@ export default function FranchiseurAgencies() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto py-8 px-4">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-muted rounded w-1/4"></div>
           <div className="h-32 bg-muted rounded"></div>
@@ -48,22 +48,14 @@ export default function FranchiseurAgencies() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto py-8 px-4 space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-            Gestion des Agences
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {filteredAgencies?.length || 0} agences dans le réseau
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          {filteredAgencies?.length || 0} agence{(filteredAgencies?.length || 0) > 1 ? 's' : ''} dans le réseau
+        </p>
         
         {canManageAgencies && (
-          <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="bg-gradient-to-r from-primary to-helpconfort-blue-dark"
-          >
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nouvelle Agence
           </Button>
