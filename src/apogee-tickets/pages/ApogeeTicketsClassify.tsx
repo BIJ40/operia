@@ -66,7 +66,7 @@ export default function ApogeeTicketsClassify() {
     // Si c'est le dernier ticket, rediriger vers le Kanban
     if (currentIndex >= totalTickets - 1) {
       toast.success('Tous les tickets ont été classifiés !');
-      navigate(ROUTES.admin.apogeeTickets);
+      navigate(ROUTES.projects.kanban);
     } else {
       setCurrentIndex(currentIndex + 1);
     }
@@ -95,7 +95,7 @@ export default function ApogeeTicketsClassify() {
   if (totalTickets === 0) {
     return (
       <div className="space-y-6">
-        <Link to={ROUTES.admin.apogeeTickets}>
+        <Link to={ROUTES.projects.kanban}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour au Kanban
@@ -109,7 +109,7 @@ export default function ApogeeTicketsClassify() {
             <p className="text-muted-foreground">
               Tous les tickets "À spécifier" ont été classifiés.
             </p>
-            <Link to={ROUTES.admin.apogeeTickets}>
+            <Link to={ROUTES.projects.kanban}>
               <Button className="mt-4">Voir le Kanban</Button>
             </Link>
           </CardContent>
@@ -122,7 +122,7 @@ export default function ApogeeTicketsClassify() {
     <div className="space-y-6 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Link to={ROUTES.admin.apogeeTickets}>
+        <Link to={ROUTES.projects.kanban}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour au Kanban

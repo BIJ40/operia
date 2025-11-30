@@ -150,7 +150,7 @@ export default function ApogeeTicketsReview() {
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Link to={ROUTES.admin.apogeeTickets}>
+        <Link to={ROUTES.projects.kanban}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour au Kanban

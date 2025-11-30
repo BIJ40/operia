@@ -18,7 +18,7 @@ import { useApogeeImportEvaluated, parseEvaluatedSheet, EvaluatedRow } from '../
 import { HeatPriorityBadge } from '../components/HeatPriorityBadge';
 import { ROUTES } from '@/config/routes';
 
-const KANBAN_ROUTE = ROUTES.admin.apogeeTickets;
+const KANBAN_ROUTE = ROUTES.projects.kanban;
 
 export default function ApogeeTicketsImportEvaluated() {
   const navigate = useNavigate();

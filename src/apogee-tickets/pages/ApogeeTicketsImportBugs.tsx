@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Upload, FileSpreadsheet, ArrowLeft, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApogeeImportBugs, parseBugsSheet, BugsRow } from '../hooks/useApogeeImportBugs';
+import { ROUTES } from '@/config/routes';
 export default function ApogeeTicketsImportBugs() {
   const [parsedRows, setParsedRows] = useState<BugsRow[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -51,7 +52,7 @@ export default function ApogeeTicketsImportBugs() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/admin/apogee-tickets">
+          <Link to={ROUTES.projects.kanban}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour au Kanban
           </Link>
@@ -206,7 +207,7 @@ export default function ApogeeTicketsImportBugs() {
             )}
             
             <Button asChild className="mt-4">
-              <Link to="/admin/apogee-tickets">Voir le Kanban</Link>
+              <Link to={ROUTES.projects.kanban}>Voir le Kanban</Link>
             </Button>
           </CardContent>
         </Card>

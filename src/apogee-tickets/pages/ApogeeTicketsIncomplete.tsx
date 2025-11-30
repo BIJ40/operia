@@ -161,7 +161,7 @@ export default function ApogeeTicketsIncomplete() {
     // Si c'est le dernier ticket, rediriger vers le Kanban
     if (currentIndex >= totalTickets - 1) {
       toast.success('Tous les tickets ont été traités !');
-      navigate(ROUTES.admin.apogeeTickets);
+      navigate(ROUTES.projects.kanban);
     } else {
       setCurrentIndex(currentIndex + 1);
     }
@@ -194,7 +194,7 @@ export default function ApogeeTicketsIncomplete() {
   if (totalTickets === 0) {
     return (
       <div className="space-y-6">
-        <Link to={ROUTES.admin.apogeeTickets}>
+      <Link to={ROUTES.projects.kanban}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour au Kanban
@@ -208,7 +208,7 @@ export default function ApogeeTicketsIncomplete() {
             <p className="text-muted-foreground">
               Aucun ticket ne nécessite de complétion.
             </p>
-            <Link to={ROUTES.admin.apogeeTickets}>
+            <Link to={ROUTES.projects.kanban}>
               <Button className="mt-4">Voir le Kanban</Button>
             </Link>
           </CardContent>
@@ -223,7 +223,7 @@ export default function ApogeeTicketsIncomplete() {
     <div className="space-y-6 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Link to={ROUTES.admin.apogeeTickets}>
+        <Link to={ROUTES.projects.kanban}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour au Kanban

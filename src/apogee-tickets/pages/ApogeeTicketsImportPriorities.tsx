@@ -62,7 +62,7 @@ export default function ApogeeTicketsImportPriorities() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => navigate(ROUTES.admin.apogeeTickets)}>
+        <Button variant="ghost" onClick={() => navigate(ROUTES.projects.kanban)}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour au Kanban
         </Button>

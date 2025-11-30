@@ -69,7 +69,7 @@ export default function ApogeeTicketsKanbanPage() {
           <AlertTitle>Module tickets non disponible</AlertTitle>
           <AlertDescription className="space-y-2">
             <p>
-              Votre profil n'a pas accès au module <strong>Apogée Tickets</strong>.
+              Votre profil n'a pas accès au module <strong>Gestion de Projet</strong>.
             </p>
             {myTicketRole.reason && (
               <p className="text-xs text-muted-foreground">
@@ -176,23 +176,23 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="bg-background border shadow-lg z-50">
-                <DropdownMenuItem onClick={() => navigate(ROUTES.admin.apogeeTicketsImportPriorities)}>
+                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importPriorities)}>
                   <Flame className="h-4 w-4 mr-2 text-red-600" />
                   Priorités A / B
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/admin/apogee-tickets/import-bugs')}>
+                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importBugs)}>
                   <Bug className="h-4 w-4 mr-2 text-orange-600" />
                   Import BUGS
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/admin/apogee-tickets/import-v1')}>
+                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importV1)}>
                   <FileSpreadsheet className="h-4 w-4 mr-2 text-blue-600" />
                   Import V1
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(ROUTES.admin.apogeeTicketsImportEvaluated)}>
+                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importEvaluated)}>
                   <ListChecks className="h-4 w-4 mr-2 text-green-600" />
                   Liste évaluée / Reste à évaluer
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(ROUTES.admin.apogeeTicketsImport)}>
+                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.import)}>
                   <Files className="h-4 w-4 mr-2" />
                   Import général
                 </DropdownMenuItem>
@@ -202,7 +202,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
         </div>
 
         <div className="flex items-center gap-2">
-          <Link to={ROUTES.admin.apogeeTicketsReview}>
+          <Link to={ROUTES.projects.review}>
             <Button variant="outline">
               <ListChecks className="h-4 w-4 mr-2" />
               Revue en masse
@@ -211,7 +211,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
           {/* Bouton complétion - toujours visible avec juste le chiffre */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link to={ROUTES.admin.apogeeTicketsIncomplete}>
+              <Link to={ROUTES.projects.incomplete}>
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -229,7 +229,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
           {/* Bouton classification "À spécifier" */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link to={ROUTES.admin.apogeeTicketsClassify}>
+              <Link to={ROUTES.projects.classify}>
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -264,7 +264,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
           </Tooltip>
           {isAdmin && (
             <>
-              <Link to={ROUTES.admin.apogeeTicketsPermissions}>
+              <Link to={ROUTES.projects.permissions}>
                 <Button variant="outline" size="sm">
                   <Shield className="h-4 w-4 mr-2" />
                   Permissions

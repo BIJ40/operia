@@ -75,7 +75,7 @@ export default function ApogeeTicketsImport() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link to={ROUTES.admin.apogeeTickets}>
+        <Link to={ROUTES.projects.kanban}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour au Kanban
@@ -236,7 +236,7 @@ export default function ApogeeTicketsImport() {
               </ScrollArea>
             )}
 
-            <Link to={ROUTES.admin.apogeeTickets}>
+            <Link to={ROUTES.projects.kanban}>
               <Button>Voir le Kanban</Button>
             </Link>
           </CardContent>
