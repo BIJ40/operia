@@ -45,6 +45,8 @@ export interface IngestionDocument {
 export interface UploadedFile {
   file: File;
   contextType?: RAGContextType;
+  title?: string;
+  description?: string;
   apporteurCode?: string;
   universCode?: string;
   roleCible?: string;

@@ -20,7 +20,6 @@ import {
   RefreshCw,
   Trash2,
   FolderUp,
-  AlertCircle,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -39,6 +38,7 @@ import { successToast, errorToast } from '@/lib/toastHelpers';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { DocumentDetailsDialog, type DocumentMetadata } from './DocumentDetailsDialog';
 
 const CONTEXT_OPTIONS: { value: RAGContextType; label: string }[] = [
   { value: 'auto', label: 'Auto-détection' },
@@ -74,6 +74,10 @@ export function RagIngestionTab() {
   const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
   const [globalContext, setGlobalContext] = useState<RAGContextType>('auto');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  
+  // Dialog state for document details
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   // Fetch jobs
   const { data: jobs = [], isLoading: jobsLoading, refetch: refetchJobs } = useQuery({
@@ -152,14 +156,24 @@ export function RagIngestionTab() {
     },
   });
 
-  // Dropzone
+  // Dropzone - opens dialog for metadata entry
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles: UploadedFile[] = acceptedFiles.map(file => ({
-      file,
-      contextType: globalContext,
+    if (acceptedFiles.length === 0) return;
+    setPendingFiles(acceptedFiles.slice(0, 50)); // Max 50 files
+    setShowDetailsDialog(true);
+  }, []);
+
+  // Handle dialog confirmation
+  const handleDocumentsConfirm = useCallback((documents: DocumentMetadata[]) => {
+    const newFiles: UploadedFile[] = documents.map(doc => ({
+      file: doc.file,
+      contextType: doc.contextType,
+      title: doc.title,
+      description: doc.description,
     }));
-    setSelectedFiles(prev => [...prev, ...newFiles].slice(0, 50)); // Max 50 files
-  }, [globalContext]);
+    setSelectedFiles(prev => [...prev, ...newFiles].slice(0, 50));
+    setPendingFiles([]);
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -237,14 +251,19 @@ export function RagIngestionTab() {
           {/* Selected files list */}
           {selectedFiles.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium">{selectedFiles.length} fichier(s) sélectionné(s)</h4>
+              <h4 className="text-sm font-medium">{selectedFiles.length} fichier(s) prêt(s)</h4>
               <div className="max-h-48 overflow-y-auto space-y-1">
                 {selectedFiles.map((f, idx) => (
                   <div key={idx} className="flex items-center justify-between p-2 bg-muted/50 rounded text-sm">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-muted-foreground" />
-                      <span className="truncate max-w-xs">{f.file.name}</span>
-                      <Badge variant="outline" className="text-xs">{f.contextType}</Badge>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <span className="font-medium truncate block">{f.title || f.file.name}</span>
+                        {f.description && (
+                          <span className="text-xs text-muted-foreground truncate block">{f.description}</span>
+                        )}
+                      </div>
+                      <Badge variant="outline" className="text-xs shrink-0">{f.contextType}</Badge>
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => removeFile(idx)}>
                       <XCircle className="w-4 h-4" />
@@ -442,6 +461,15 @@ export function RagIngestionTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* Document Details Dialog */}
+      <DocumentDetailsDialog
+        open={showDetailsDialog}
+        onOpenChange={setShowDetailsDialog}
+        files={pendingFiles}
+        defaultContext={globalContext}
+        onConfirm={handleDocumentsConfirm}
+      />
     </div>
   );
 }
