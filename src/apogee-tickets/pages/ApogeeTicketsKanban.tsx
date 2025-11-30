@@ -26,7 +26,7 @@ import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
 import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { ActionsConfigDialog } from '../components/ActionsConfigDialog';
 import { useTicketQualification } from '../hooks/useTicketQualification';
-import { useRecalculateHeatPriority } from '../hooks/useRecalculateHeatPriority';
+
 import { useMyTicketRole } from '../hooks/useTicketPermissions';
 import type { ApogeeTicket, TicketFilters as Filters } from '../types';
 import { Badge } from '@/components/ui/badge';
@@ -73,7 +73,7 @@ export default function ApogeeTicketsKanban() {
   } = useApogeeTickets(filters);
 
   const { qualifyAllUnqualified, isQualifying } = useTicketQualification();
-  const { recalculateAll, isRecalculating } = useRecalculateHeatPriority();
+  
 
   // Compteurs
   const incompleteCount = tickets.filter(t => t.needs_completion).length;
@@ -145,14 +145,6 @@ export default function ApogeeTicketsKanban() {
               Revue en masse
             </Button>
           </Link>
-          <Button
-            variant="outline"
-            onClick={() => recalculateAll()}
-            disabled={isRecalculating}
-          >
-            <Flame className="h-4 w-4 mr-2" />
-            {isRecalculating ? 'Recalcul...' : 'Recalculer priorités'}
-          </Button>
           {/* Bouton complétion - toujours visible avec juste le chiffre */}
           <Tooltip>
             <TooltipTrigger asChild>
