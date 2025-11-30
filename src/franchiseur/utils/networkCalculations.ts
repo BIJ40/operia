@@ -172,6 +172,98 @@ export function calculateBestApporteur(agencyData: AgencyData[]) {
 }
 
 /**
+ * Calculate top 3 apporteurs across all agencies by CA
+ */
+export function calculateTop3Apporteurs(agencyData: AgencyData[]): Array<{ name: string; ca: number; nbDossiers: number; rank: number }> {
+  const now = new Date();
+  const yearStart = startOfYear(now);
+  const yearEnd = endOfYear(now);
+
+  const apporteurMap = new Map<number, { name: string; ca: number; nbDossiers: number }>();
+
+  agencyData.forEach((agency) => {
+    if (!agency.data?.factures || !agency.data?.clients || !agency.data?.projects) return;
+
+    interface ClientInfo {
+      name: string;
+      typeClient: string;
+    }
+
+    const clientsMap = new Map<number, ClientInfo>(
+      agency.data.clients.map((c: any) => [c.id, { 
+        name: c.nom || c.prenom || "Apporteur sans nom",
+        typeClient: c.data?.type 
+      }])
+    );
+
+    const projectsMap = new Map(
+      agency.data.projects.map((p: any) => [p.id, p])
+    );
+
+    agency.data.factures.forEach((facture: any) => {
+      if (facture.type === 'avoir') return;
+
+      const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
+      if (!dateReelle) return;
+
+      const factureDate = parseDate(dateReelle);
+      if (!factureDate) return;
+      
+      if (!isWithinInterval(factureDate, { start: yearStart, end: yearEnd })) return;
+
+      const project = projectsMap.get(facture.projectId);
+      if (!project) return;
+
+      const projectData = project as any;
+      const commanditaireId = projectData.data?.commanditaireId;
+      if (!commanditaireId) return;
+
+      const client = clientsMap.get(commanditaireId);
+      if (!client) return;
+
+      const existing = apporteurMap.get(commanditaireId) || { 
+        name: client.name, 
+        ca: 0, 
+        nbDossiers: 0 
+      };
+      
+      const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
+      const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+      existing.ca += montant;
+      
+      apporteurMap.set(commanditaireId, existing);
+    });
+  });
+
+  // Count unique projects per apporteur
+  agencyData.forEach((agency) => {
+    if (!agency.data?.projects) return;
+
+    agency.data.projects.forEach((project: any) => {
+      const projectData = project as any;
+      const commanditaireId = projectData.data?.commanditaireId;
+      if (!commanditaireId) return;
+
+      const existing = apporteurMap.get(commanditaireId);
+      if (existing) {
+        existing.nbDossiers += 1;
+      }
+    });
+  });
+
+  // Sort by CA and take top 3
+  const sortedApporteurs = Array.from(apporteurMap.values())
+    .sort((a, b) => b.ca - a.ca)
+    .slice(0, 3)
+    .map((apporteur, index) => ({
+      ...apporteur,
+      rank: index + 1
+    }));
+
+  return sortedApporteurs;
+}
+
+/**
  * Calculate total monthly royalties (placeholder - requires royalty configuration)
  */
 export function calculateMonthlyRoyalties(agencyData: AgencyData[]): number {

@@ -6,6 +6,7 @@ import { NetworkDataService } from '../services/networkDataService';
 import {
   calculateTop5Agencies,
   calculateBestApporteur,
+  calculateTop3Apporteurs,
   calculateTotalInterventions,
   calculateNetworkSAVStats,
   calculateAverageProcessingTime,
@@ -38,6 +39,7 @@ interface NetworkStats {
   multiUniversRate: number;      // % projects with multiple universes
   top5Agencies: Array<{ agencyId: string; agencyLabel: string; ca: number; rank: number }>;
   bestApporteur: { name: string; ca: number; nbDossiers: number } | null;
+  top3Apporteurs: Array<{ name: string; ca: number; nbDossiers: number; rank: number }>;
   monthlyCAEvolution: Array<{ month: string; ca: number; nbFactures: number }>;
   caByAgency: Array<{ agencyLabel: string; ca: number }>;
   monthlySAVEvolution: Array<{ month: string; tauxSAV: number }>;
@@ -71,6 +73,7 @@ export function useNetworkStats() {
         multiUniversRate: 0,
         top5Agencies: [],
         bestApporteur: null,
+        top3Apporteurs: [],
         monthlyCAEvolution: [],
         caByAgency: [],
         monthlySAVEvolution: [],
@@ -147,6 +150,7 @@ export function useNetworkStats() {
           multiUniversRate: calculateMultiUniversRate(agencyData),
           top5Agencies: calculateTop5Agencies(agencyData),
           bestApporteur: calculateBestApporteur(agencyData),
+          top3Apporteurs: calculateTop3Apporteurs(agencyData),
           monthlyCAEvolution: calculateMonthlyCAEvolution(agencyData),
           caByAgency: calculateCAByAgency(agencyData),
           monthlySAVEvolution: calculateMonthlySAVEvolution(agencyData),
