@@ -243,14 +243,8 @@ export default function AdminSupportTickets() {
 
   return (
     <div className={darkMode ? 'dark' : ''}>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-                Support & Tickets
-              </h1>
-              <p className="text-muted-foreground">Console unifiée de gestion des demandes</p>
-            </div>
+      <div className="space-y-4">
+        <div className="flex items-center justify-end">
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
