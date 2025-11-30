@@ -521,7 +521,7 @@ export const useChatbot = () => {
           agency_slug: profile?.agence || null,
           has_attachments: false,
           type: 'ticket',
-          chatbot_conversation: JSON.stringify(messages),
+          chatbot_conversation: messages.map(m => ({ role: m.role, content: m.content })),
           support_level: 1,
         } as any)
         .select()

@@ -63,7 +63,7 @@ export const useSupportTicket = () => {
             source: 'chat',
             type: ticketType,
             agency_slug: profile?.agence || null,
-            chatbot_conversation: messages as any,
+            chatbot_conversation: messages.map(m => ({ role: m.role, content: m.content })),
             support_level: 1,
           } as any)
           .select()
