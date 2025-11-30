@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { logError } from '@/lib/logger';
+import { safeQuery, safeMutation } from '@/lib/safeQuery';
+import { errorToast, successToast } from '@/lib/toastHelpers';
 
 interface CategoryBlock {
   id: string;
@@ -10,7 +12,6 @@ interface CategoryBlock {
 }
 
 export const useAdminBackup = () => {
-  const { toast } = useToast();
   const [apogeeCategories, setApogeeCategories] = useState<CategoryBlock[]>([]);
   const [apporteurCategories, setApporteurCategories] = useState<CategoryBlock[]>([]);
   const [selectedApogeeCategory, setSelectedApogeeCategory] = useState<string>('');
@@ -26,17 +27,19 @@ export const useAdminBackup = () => {
   }, []);
 
   const loadCategories = async () => {
-    try {
-      const [apogeeResult, apporteurResult] = await Promise.all([
+    const [apogeeResult, apporteurResult] = await Promise.all([
+      safeQuery<CategoryBlock[]>(
         supabase.from('blocks').select('id, title, slug, order').eq('type', 'category').order('order'),
+        'BACKUP_APOGEE_CATEGORIES_LOAD'
+      ),
+      safeQuery<CategoryBlock[]>(
         supabase.from('apporteur_blocks').select('id, title, slug, order').eq('type', 'category').order('order'),
-      ]);
+        'BACKUP_APPORTEUR_CATEGORIES_LOAD'
+      ),
+    ]);
 
-      if (apogeeResult.data) setApogeeCategories(apogeeResult.data);
-      if (apporteurResult.data) setApporteurCategories(apporteurResult.data);
-    } catch (error) {
-      console.error('Erreur chargement catégories:', error);
-    }
+    if (apogeeResult.data) setApogeeCategories(apogeeResult.data);
+    if (apporteurResult.data) setApporteurCategories(apporteurResult.data);
   };
 
   const extractPlainText = (html: string): string => {
@@ -81,11 +84,19 @@ export const useAdminBackup = () => {
   const exportApogeeData = async () => {
     setExportingApogee(true);
     try {
-      const { data: blocks, error } = await supabase.from('blocks').select('*').order('order');
-      if (error) throw error;
+      const result = await safeQuery<any[]>(
+        supabase.from('blocks').select('*').order('order'),
+        'BACKUP_EXPORT_APOGEE'
+      );
 
-      const categories = blocks?.filter(b => b.type === 'category') || [];
-      const sections = blocks?.filter(b => b.type === 'section') || [];
+      if (!result.success || !result.data) {
+        errorToast('Impossible d\'exporter les données Apogée');
+        return;
+      }
+
+      const blocks = result.data;
+      const categories = blocks.filter(b => b.type === 'category') || [];
+      const sections = blocks.filter(b => b.type === 'section') || [];
 
       const exportData = {
         version: '1.0',
@@ -107,10 +118,10 @@ export const useAdminBackup = () => {
       };
 
       downloadFile(JSON.stringify(exportData, null, 2), `export-apogee-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
-      toast({ title: 'Export Apogée réussi !', description: `${categories.length} catégories, ${sections.length} sections` });
+      successToast('Export Apogée réussi !', `${categories.length} catégories, ${sections.length} sections`);
     } catch (error) {
-      console.error('Erreur export:', error);
-      toast({ title: "Erreur d'export", description: 'Impossible d\'exporter les données Apogée', variant: 'destructive' });
+      logError('use-admin-backup', 'Erreur export Apogée', error);
+      errorToast('Impossible d\'exporter les données Apogée');
     } finally {
       setExportingApogee(false);
     }
@@ -119,11 +130,19 @@ export const useAdminBackup = () => {
   const exportApporteurData = async () => {
     setExportingApporteur(true);
     try {
-      const { data: blocks, error } = await supabase.from('apporteur_blocks').select('*').order('order');
-      if (error) throw error;
+      const result = await safeQuery<any[]>(
+        supabase.from('apporteur_blocks').select('*').order('order'),
+        'BACKUP_EXPORT_APPORTEUR'
+      );
 
-      const categories = blocks?.filter(b => b.type === 'category') || [];
-      const sections = blocks?.filter(b => b.type === 'section') || [];
+      if (!result.success || !result.data) {
+        errorToast('Impossible d\'exporter les données Apporteur');
+        return;
+      }
+
+      const blocks = result.data;
+      const categories = blocks.filter(b => b.type === 'category') || [];
+      const sections = blocks.filter(b => b.type === 'section') || [];
 
       const exportData = {
         version: '1.0',
@@ -146,10 +165,10 @@ export const useAdminBackup = () => {
       };
 
       downloadFile(JSON.stringify(exportData, null, 2), `export-apporteur-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
-      toast({ title: 'Export Apporteur réussi !', description: `${categories.length} catégories, ${sections.length} sections` });
+      successToast('Export Apporteur réussi !', `${categories.length} catégories, ${sections.length} sections`);
     } catch (error) {
-      console.error('Erreur export:', error);
-      toast({ title: "Erreur d'export", description: 'Impossible d\'exporter les données Apporteur', variant: 'destructive' });
+      logError('use-admin-backup', 'Erreur export Apporteur', error);
+      errorToast('Impossible d\'exporter les données Apporteur');
     } finally {
       setExportingApporteur(false);
     }
@@ -162,11 +181,19 @@ export const useAdminBackup = () => {
     
     setLoading(true);
     try {
-      const { data: blocks, error } = await supabase.from(tableName).select('*').order('order');
-      if (error) throw error;
+      const result = await safeQuery<any[]>(
+        supabase.from(tableName).select('*').order('order'),
+        `BACKUP_EXPORT_TEXT_${scope.toUpperCase()}`
+      );
 
-      const categories = blocks?.filter(b => b.type === 'category') || [];
-      const sections = blocks?.filter(b => b.type === 'section') || [];
+      if (!result.success || !result.data) {
+        errorToast("Erreur d'export");
+        return;
+      }
+
+      const blocks = result.data;
+      const categories = blocks.filter(b => b.type === 'category') || [];
+      const sections = blocks.filter(b => b.type === 'section') || [];
 
       let textContent = `${title} - Export du ${new Date().toLocaleDateString('fr-FR')}\n${'='.repeat(70)}\n\n`;
 
@@ -178,10 +205,10 @@ export const useAdminBackup = () => {
       });
 
       downloadFile(textContent, `export-${scope}-texte-${new Date().toISOString().split('T')[0]}.txt`, 'text/plain;charset=utf-8');
-      toast({ title: `Export texte ${scope === 'apogee' ? 'Apogée' : 'Apporteur'} réussi !`, description: `${categories.length} catégories exportées` });
+      successToast(`Export texte ${scope === 'apogee' ? 'Apogée' : 'Apporteur'} réussi !`, `${categories.length} catégories exportées`);
     } catch (error) {
-      console.error('Erreur export:', error);
-      toast({ title: "Erreur d'export", variant: 'destructive' });
+      logError('use-admin-backup', `Erreur export texte ${scope}`, error);
+      errorToast("Erreur d'export");
     } finally {
       setLoading(false);
     }
@@ -194,19 +221,30 @@ export const useAdminBackup = () => {
     const guideTitle = scope === 'apogee' ? 'MANUEL APOGÉE' : 'GUIDE APPORTEUR';
 
     if (!categoryId) {
-      toast({ title: 'Aucune catégorie sélectionnée', variant: 'destructive' });
+      errorToast('Aucune catégorie sélectionnée');
       return;
     }
 
     setLoading(true);
     try {
-      const { data: blocks, error } = await supabase.from(tableName).select('*')
-        .or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order');
-      if (error) throw error;
+      const result = await safeQuery<any[]>(
+        supabase.from(tableName).select('*').or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
+        `BACKUP_EXPORT_SINGLE_${scope.toUpperCase()}`
+      );
 
-      const category = blocks?.find(b => b.id === categoryId);
-      const sections = blocks?.filter(b => b.parent_id === categoryId) || [];
-      if (!category) throw new Error('Catégorie non trouvée');
+      if (!result.success || !result.data) {
+        errorToast("Erreur d'export");
+        return;
+      }
+
+      const blocks = result.data;
+      const category = blocks.find(b => b.id === categoryId);
+      const sections = blocks.filter(b => b.parent_id === categoryId) || [];
+      
+      if (!category) {
+        errorToast('Catégorie non trouvée');
+        return;
+      }
 
       if (format === 'txt') {
         let textContent = `${guideTitle} - ${category.title.toUpperCase()}\nExport du ${new Date().toLocaleDateString('fr-FR')}\n${'='.repeat(70)}\n\n`;
@@ -233,10 +271,10 @@ export const useAdminBackup = () => {
         downloadFile(JSON.stringify(exportData, null, 2), `export-${scope}-${category.slug}-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
       }
 
-      toast({ title: `Export ${format.toUpperCase()} réussi !`, description: `"${category.title}" avec ${sections.length} sections` });
+      successToast(`Export ${format.toUpperCase()} réussi !`, `"${category.title}" avec ${sections.length} sections`);
     } catch (error) {
-      console.error('Erreur export:', error);
-      toast({ title: "Erreur d'export", description: error instanceof Error ? error.message : 'Erreur', variant: 'destructive' });
+      logError('use-admin-backup', `Erreur export single ${scope}`, error);
+      errorToast("Erreur d'export");
     } finally {
       setLoading(false);
     }
@@ -246,15 +284,16 @@ export const useAdminBackup = () => {
     setExporting(true);
     try {
       const [blocksResult, apporteurBlocksResult, documentsResult, categoriesResult, sectionsResult] = await Promise.all([
-        supabase.from('blocks').select('*').order('order'),
-        supabase.from('apporteur_blocks').select('*').order('order'),
-        supabase.from('documents').select('*'),
-        supabase.from('categories').select('*'),
-        supabase.from('sections').select('*'),
+        safeQuery<any[]>(supabase.from('blocks').select('*').order('order'), 'BACKUP_EXPORT_ALL_BLOCKS'),
+        safeQuery<any[]>(supabase.from('apporteur_blocks').select('*').order('order'), 'BACKUP_EXPORT_ALL_APPORTEUR'),
+        safeQuery<any[]>(supabase.from('documents').select('*'), 'BACKUP_EXPORT_ALL_DOCUMENTS'),
+        safeQuery<any[]>(supabase.from('categories').select('*'), 'BACKUP_EXPORT_ALL_CATEGORIES'),
+        safeQuery<any[]>(supabase.from('sections').select('*'), 'BACKUP_EXPORT_ALL_SECTIONS'),
       ]);
 
-      if (blocksResult.error || apporteurBlocksResult.error || documentsResult.error || categoriesResult.error || sectionsResult.error) {
-        throw blocksResult.error || apporteurBlocksResult.error || documentsResult.error || categoriesResult.error || sectionsResult.error;
+      if (!blocksResult.success || !apporteurBlocksResult.success || !documentsResult.success || !categoriesResult.success || !sectionsResult.success) {
+        errorToast("Erreur d'export");
+        return;
       }
 
       const backupData = {
@@ -271,10 +310,10 @@ export const useAdminBackup = () => {
 
       downloadFile(JSON.stringify(backupData, null, 2), `backup-helpogee-complet-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
       setLastBackup(new Date());
-      toast({ title: 'Export complet réussi !', description: `${backupData.stats.totalBlocks} blocs, ${backupData.stats.totalDocuments} documents` });
+      successToast('Export complet réussi !', `${backupData.stats.totalBlocks} blocs, ${backupData.stats.totalDocuments} documents`);
     } catch (error) {
-      console.error('Erreur export:', error);
-      toast({ title: "Erreur d'export", variant: 'destructive' });
+      logError('use-admin-backup', 'Erreur export complet', error);
+      errorToast("Erreur d'export");
     } finally {
       setExporting(false);
     }
@@ -288,28 +327,47 @@ export const useAdminBackup = () => {
     try {
       const text = await file.text();
       const backupData = JSON.parse(text);
-      if (!backupData.data) throw new Error('Format de fichier invalide');
+      if (!backupData.data) {
+        errorToast('Format de fichier invalide');
+        return;
+      }
 
       if (!confirm(`⚠️ ATTENTION: Cette opération va ÉCRASER toutes les données actuelles.\n\nVoulez-vous vraiment continuer ?\n\nDonnées à importer:\n- ${backupData.stats?.totalBlocks || 0} blocs\n- ${backupData.stats?.totalDocuments || 0} documents`)) {
         setImporting(false);
         return;
       }
 
+      // Supprimer les anciennes données
       await Promise.all([
-        supabase.from('blocks').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
-        supabase.from('apporteur_blocks').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        safeMutation(
+          supabase.from('blocks').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+          'BACKUP_IMPORT_DELETE_BLOCKS'
+        ),
+        safeMutation(
+          supabase.from('apporteur_blocks').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+          'BACKUP_IMPORT_DELETE_APPORTEUR'
+        ),
       ]);
 
+      // Insérer les nouvelles données
       const insertPromises = [];
-      if (backupData.data.blocks?.length > 0) insertPromises.push(supabase.from('blocks').insert(backupData.data.blocks));
-      if (backupData.data.apporteur_blocks?.length > 0) insertPromises.push(supabase.from('apporteur_blocks').insert(backupData.data.apporteur_blocks));
+      if (backupData.data.blocks?.length > 0) {
+        insertPromises.push(
+          safeMutation(supabase.from('blocks').insert(backupData.data.blocks), 'BACKUP_IMPORT_INSERT_BLOCKS')
+        );
+      }
+      if (backupData.data.apporteur_blocks?.length > 0) {
+        insertPromises.push(
+          safeMutation(supabase.from('apporteur_blocks').insert(backupData.data.apporteur_blocks), 'BACKUP_IMPORT_INSERT_APPORTEUR')
+        );
+      }
       await Promise.all(insertPromises);
 
-      toast({ title: 'Import réussi !', description: 'Les données ont été restaurées. Rechargez la page.' });
+      successToast('Import réussi !', 'Les données ont été restaurées. Rechargez la page.');
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
-      console.error('Erreur import:', error);
-      toast({ title: "Erreur d'import", description: error instanceof Error ? error.message : 'Fichier invalide', variant: 'destructive' });
+      logError('use-admin-backup', 'Erreur import', error);
+      errorToast(error instanceof Error ? error.message : 'Fichier invalide');
     } finally {
       setImporting(false);
       event.target.value = '';

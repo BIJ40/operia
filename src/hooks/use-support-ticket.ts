@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 import { logError, logWarn } from '@/lib/logger';
+import { safeQuery, safeMutation, safeInvoke } from '@/lib/safeQuery';
+import { errorToast } from '@/lib/toastHelpers';
 
 interface Message {
   role: 'user' | 'assistant' | 'support';
@@ -21,28 +22,27 @@ interface TicketCreatedData {
 
 export const useSupportTicket = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
 
-  const createSupportTicket = async (messages: Message[], isLiveChat: boolean = true) => {
+  const createSupportTicket = async (messages: Message[], isLiveChat: boolean = true): Promise<TicketCreatedData | null> => {
     if (!user) {
-      toast({
-        title: 'Erreur',
-        description: 'Vous devez être connecté pour créer un ticket',
-        variant: 'destructive',
-      });
+      errorToast('Vous devez être connecté pour créer un ticket');
       return null;
     }
 
     setIsCreating(true);
     try {
       // Récupérer le nom de l'utilisateur
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, agence')
-        .eq('id', user.id)
-        .single();
+      const profileResult = await safeQuery<{ first_name: string | null; last_name: string | null; agence: string | null }>(
+        supabase
+          .from('profiles')
+          .select('first_name, last_name, agence')
+          .eq('id', user.id)
+          .maybeSingle(),
+        'SUPPORT_TICKET_PROFILE_LOAD'
+      );
 
+      const profile = profileResult.data;
       const userName = profile?.first_name 
         ? `${profile.first_name} ${profile.last_name || ''}`.trim()
         : 'Utilisateur';
@@ -52,54 +52,57 @@ export const useSupportTicket = () => {
       const lastQuestion = userMessages[userMessages.length - 1]?.content || 'Demande de support';
 
       // Créer la demande (support direct) ou le ticket
-      // Utiliser le nouveau statut 'new' au lieu de 'waiting'
-      const { data: ticket, error: ticketError } = await supabase
-        .from('support_tickets')
-        .insert({
-          user_id: user.id,
-          subject: lastQuestion.substring(0, 100),
-          status: 'new', // Nouveau statut initial
-          priority: 'urgent',
-          source: 'chat',
-          is_live_chat: isLiveChat,
-          escalated_from_chat: false,
-          agency_slug: profile?.agence || null,
-          chatbot_conversation: messages as any,
-          support_level: 1, // Niveau initial N1
-        } as any)
-        .select()
-        .single();
+      const ticketResult = await safeMutation<TicketCreatedData>(
+        supabase
+          .from('support_tickets')
+          .insert({
+            user_id: user.id,
+            subject: lastQuestion.substring(0, 100),
+            status: 'new',
+            priority: 'urgent',
+            source: 'chat',
+            is_live_chat: isLiveChat,
+            escalated_from_chat: false,
+            agency_slug: profile?.agence || null,
+            chatbot_conversation: messages as any,
+            support_level: 1,
+          } as any)
+          .select()
+          .single(),
+        'SUPPORT_TICKET_CREATE'
+      );
 
-      if (ticketError) throw ticketError;
+      if (!ticketResult.success || !ticketResult.data) {
+        errorToast(ticketResult.error || 'Impossible de créer le ticket support');
+        return null;
+      }
 
-      // Envoyer la notification email aux supports
+      const ticket = ticketResult.data;
+
+      // Envoyer la notification email aux supports (non-bloquant)
       const appUrl = window.location.origin;
       
-      const { error: notifyError } = await supabase.functions.invoke('notify-support-ticket', {
-        body: {
-          ticketId: ticket.id,
-          userName: userName,
-          lastQuestion: lastQuestion,
-          appUrl: appUrl,
-        },
-      });
+      const notifyResult = await safeInvoke(
+        supabase.functions.invoke('notify-support-ticket', {
+          body: {
+            ticketId: ticket.id,
+            userName: userName,
+            lastQuestion: lastQuestion,
+            appUrl: appUrl,
+          },
+        }),
+        'SUPPORT_TICKET_NOTIFY'
+      );
 
-      if (notifyError) {
-        logWarn('[SUPPORT-TICKET] Error sending notification (non-blocking)', notifyError);
+      if (!notifyResult.success) {
+        logWarn('[SUPPORT-TICKET] Error sending notification (non-blocking)', notifyResult.error);
         // On continue même si la notification échoue
       }
 
-      // NE PAS afficher de toast ici - c'est géré dans le Chatbot
-      // pour éviter de fermer le chat
-
       return ticket;
     } catch (error) {
-      logError('[SUPPORT-TICKET] Error creating ticket', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de créer le ticket support',
-        variant: 'destructive',
-      });
+      logError('[SUPPORT-TICKET] Unexpected error creating ticket', error);
+      errorToast('Impossible de créer le ticket support');
       return null;
     } finally {
       setIsCreating(false);
