@@ -30,6 +30,7 @@ export const useAdminTickets = () => {
     source: 'all',
     agency: 'all',
     priority: 'all',
+    assignment: 'all', // 'all' | 'mine' | 'unassigned'
   });
 
   const loadTickets = async () => {
@@ -81,6 +82,13 @@ export const useAdminTickets = () => {
     }
     if (filters.priority !== 'all') {
       query = query.eq('priority', filters.priority);
+    }
+    
+    // Filtre par assignation
+    if (filters.assignment === 'mine' && user?.id) {
+      query = query.eq('assigned_to', user.id);
+    } else if (filters.assignment === 'unassigned') {
+      query = query.is('assigned_to', null);
     }
 
     const filteredResult = await safeQuery<Ticket[]>(query, 'ADMIN_TICKETS_LOAD_FILTERED');
