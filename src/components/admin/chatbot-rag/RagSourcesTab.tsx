@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2, RefreshCw, FolderTree, Database } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { safeInvoke } from '@/lib/safeQuery';
+import { errorToast, successToast, warningToast } from '@/lib/toastHelpers';
+import { logError } from '@/lib/logger';
 
 type SourceStats = {
   family: string;
@@ -17,41 +19,61 @@ type SourceStats = {
   lastIndexed: string | null;
 };
 
+type RegenerateRagResponse = {
+  sections_processed: number;
+  chunks_created: number;
+};
+
 export function RagSourcesTab() {
   const [sources, setSources] = useState<SourceStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [indexingFamily, setIndexingFamily] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const loadSourceStats = async () => {
     setLoading(true);
     try {
       // Get blocks count by type
       // Apogée blocks (exclude helpconfort and apporteur)
-      const { data: apogeeBlocks } = await supabase
+      const { data: apogeeBlocks, error: apogeeError } = await supabase
         .from('blocks')
         .select('id', { count: 'exact' })
         .eq('type', 'section')
         .not('slug', 'like', 'helpconfort-%')
         .not('slug', 'like', 'apporteur-%');
 
+      if (apogeeError) {
+        logError('rag-sources', 'Error loading Apogée blocks', apogeeError);
+      }
+
       // HelpConfort blocks
-      const { data: helpconfortBlocks } = await supabase
+      const { data: helpconfortBlocks, error: helpconfortError } = await supabase
         .from('blocks')
         .select('id', { count: 'exact' })
         .eq('type', 'section')
         .like('slug', 'helpconfort-%');
 
+      if (helpconfortError) {
+        logError('rag-sources', 'Error loading HelpConfort blocks', helpconfortError);
+      }
+
       // Apporteurs blocks
-      const { data: apporteurBlocks } = await supabase
+      const { data: apporteurBlocks, error: apporteurError } = await supabase
         .from('apporteur_blocks')
         .select('id', { count: 'exact' })
         .eq('type', 'section');
 
+      if (apporteurError) {
+        logError('rag-sources', 'Error loading Apporteur blocks', apporteurError);
+      }
+
       // Get chunks count by family
-      const { data: chunks } = await supabase
+      const { data: chunks, error: chunksError } = await supabase
         .from('guide_chunks')
         .select('block_type, metadata, created_at');
+
+      if (chunksError) {
+        logError('rag-sources', 'Error loading guide chunks', chunksError);
+      }
 
       // Aggregate stats
       const apogeeChunks = chunks?.filter(c => c.block_type === 'apogee_guide') || [];
@@ -101,12 +123,9 @@ export function RagSourcesTab() {
         },
       ]);
     } catch (error) {
-      console.error('Error loading source stats:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les statistiques des sources',
-        variant: 'destructive',
-      });
+      logError('rag-sources', 'Error loading source stats', error);
+      errorToast('Impossible de charger les statistiques des sources');
+      setSources([]);
     } finally {
       setLoading(false);
     }
@@ -118,39 +137,49 @@ export function RagSourcesTab() {
 
   const handleIndexFamily = async (family: string) => {
     setIndexingFamily(family);
-    try {
-      if (family === 'Apogée') {
-        const { data, error } = await supabase.functions.invoke('regenerate-apogee-rag');
-        if (error) throw error;
-        toast({
-          title: 'Indexation terminée',
-          description: `${data.sections_processed} sections traitées, ${data.chunks_created} chunks créés`,
-        });
-      } else if (family === 'HelpConfort') {
-        const { data, error } = await supabase.functions.invoke('regenerate-helpconfort-rag');
-        if (error) throw error;
-        toast({
-          title: 'Indexation terminée',
-          description: `${data.sections_processed} sections traitées, ${data.chunks_created} chunks créés`,
-        });
-      } else {
-        toast({
-          title: 'Non implémenté',
-          description: `L'indexation pour ${family} n'est pas encore disponible`,
-          variant: 'destructive',
-        });
+
+    if (family === 'Apogée') {
+      const result = await safeInvoke<RegenerateRagResponse>(
+        supabase.functions.invoke('regenerate-apogee-rag'),
+        'RAG_SOURCES_INDEX_APOGEE'
+      );
+
+      if (!result.success) {
+        logError('rag-sources', 'Error indexing Apogée', result.error);
+        errorToast(result.error ?? 'Erreur lors de l\'indexation Apogée');
+        setIndexingFamily(null);
+        return;
       }
-      await loadSourceStats();
-    } catch (error) {
-      console.error('Indexing error:', error);
-      toast({
-        title: 'Erreur',
-        description: error instanceof Error ? error.message : 'Erreur lors de l\'indexation',
-        variant: 'destructive',
-      });
-    } finally {
+
+      successToast(
+        'Indexation terminée',
+        `${result.data?.sections_processed} sections traitées, ${result.data?.chunks_created} chunks créés`
+      );
+    } else if (family === 'HelpConfort') {
+      const result = await safeInvoke<RegenerateRagResponse>(
+        supabase.functions.invoke('regenerate-helpconfort-rag'),
+        'RAG_SOURCES_INDEX_HELPCONFORT'
+      );
+
+      if (!result.success) {
+        logError('rag-sources', 'Error indexing HelpConfort', result.error);
+        errorToast(result.error ?? 'Erreur lors de l\'indexation HelpConfort');
+        setIndexingFamily(null);
+        return;
+      }
+
+      successToast(
+        'Indexation terminée',
+        `${result.data?.sections_processed} sections traitées, ${result.data?.chunks_created} chunks créés`
+      );
+    } else {
+      warningToast(`L'indexation pour ${family} n'est pas encore disponible`);
       setIndexingFamily(null);
+      return;
     }
+
+    await loadSourceStats();
+    setIndexingFamily(null);
   };
 
   return (
