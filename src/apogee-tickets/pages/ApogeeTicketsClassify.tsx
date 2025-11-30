@@ -258,7 +258,13 @@ export default function ApogeeTicketsClassify() {
         modules={modules}
         priorities={priorities}
         statuses={statuses}
-        onUpdate={(updates) => updateTicket.mutate(updates)}
+        onUpdate={(updates) => {
+          updateTicket.mutate(updates);
+          // Mettre à jour stableTickets pour refléter les changements immédiatement
+          setStableTickets(prev => prev.map(t => 
+            t.id === updates.id ? { ...t, ...updates } : t
+          ));
+        }}
       />
     </div>
   );
