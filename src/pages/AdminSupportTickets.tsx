@@ -55,6 +55,7 @@ export default function AdminSupportTickets() {
   const [newMessage, setNewMessage] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [activeTab, setActiveTab] = useState<'actifs' | 'archives'>('actifs');
+  const [isKanbanCollapsed, setIsKanbanCollapsed] = useState(false);
 
   // Auto-switch to archives tab when selected ticket becomes resolved
   useEffect(() => {
@@ -366,6 +367,8 @@ export default function AdminSupportTickets() {
               tickets={tickets} 
               onSelectTicket={(ticket) => setSelectedTicket(ticket as any)}
               onTicketsUpdate={() => {}}
+              isCollapsed={isKanbanCollapsed}
+              onToggleCollapse={() => setIsKanbanCollapsed(!isKanbanCollapsed)}
             />
           ) : (
           <div className="grid gap-6 md:grid-cols-5">
@@ -605,7 +608,26 @@ export default function AdminSupportTickets() {
                           </SelectContent>
                         </Select>
 
-                        {(selectedTicket.status === 'resolved' || selectedTicket.status === 'unresolved') && (
+                        {selectedTicket.status === 'resolved' && (
+                          <div className="flex gap-2 ml-auto">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => reopenTicket(selectedTicket.id)}
+                            >
+                              Réouvrir
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => updateTicketStatus(selectedTicket.id, 'closed')}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Fermer définitivement
+                            </Button>
+                          </div>
+                        )}
+                        {selectedTicket.status === 'unresolved' && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -660,10 +682,41 @@ export default function AdminSupportTickets() {
                         </div>
                       )}
 
-                      {(selectedTicket.status === 'resolved' || selectedTicket.status === 'unresolved') && (
+                      {selectedTicket.status === 'resolved' && (
                         <div className="bg-muted p-4 rounded-lg text-center">
                           <p className="text-sm text-muted-foreground mb-2">
-                            Ce ticket est {selectedTicket.status === 'resolved' ? 'résolu' : 'non résolu'}.
+                            Ce ticket est résolu.
+                          </p>
+                          <div className="flex gap-2 justify-center">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => reopenTicket(selectedTicket.id)}
+                            >
+                              Réouvrir
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => updateTicketStatus(selectedTicket.id, 'closed')}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Fermer définitivement
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {selectedTicket.status === 'closed' && (
+                        <div className="bg-gray-100 p-4 rounded-lg text-center">
+                          <p className="text-sm text-muted-foreground">
+                            Ce ticket est fermé définitivement.
+                          </p>
+                        </div>
+                      )}
+                      {selectedTicket.status === 'unresolved' && (
+                        <div className="bg-muted p-4 rounded-lg text-center">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Ce ticket est non résolu.
                           </p>
                           <Button
                             variant="outline"
