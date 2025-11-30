@@ -21,22 +21,15 @@ interface NotificationRequest {
   service?: string;
 }
 
-// Notifications enabled
-const NOTIFICATIONS_DISABLED = false;
+interface NotificationSettings {
+  sms_enabled: boolean;
+  email_enabled: boolean;
+}
 
 serve(async (req) => {
   // Handle CORS preflight or reject unauthorized origins
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
-
-  // Early exit if notifications are disabled
-  if (NOTIFICATIONS_DISABLED) {
-    console.log('[NOTIFY-SUPPORT-TICKET] Notifications temporarily disabled');
-    return new Response(
-      JSON.stringify({ success: true, message: 'Notifications disabled', emailsSent: 0, smsSent: 0 }),
-      { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
-    );
-  }
 
   const origin = req.headers.get('origin') ?? '';
   const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
@@ -78,6 +71,25 @@ serve(async (req) => {
 
     // Create admin client for privileged operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Fetch notification settings from database
+    const { data: settingsData } = await supabase
+      .from('app_notification_settings')
+      .select('sms_enabled, email_enabled')
+      .eq('id', 'default')
+      .single();
+    
+    const notificationSettings: NotificationSettings = settingsData || { sms_enabled: true, email_enabled: true };
+    console.log(`[NOTIFY-SUPPORT-TICKET] Settings: SMS=${notificationSettings.sms_enabled}, Email=${notificationSettings.email_enabled}`);
+
+    // Early exit if both notifications are disabled
+    if (!notificationSettings.sms_enabled && !notificationSettings.email_enabled) {
+      console.log('[NOTIFY-SUPPORT-TICKET] All notifications disabled');
+      return withCors(req, new Response(
+        JSON.stringify({ success: true, message: 'Notifications disabled', emailsSent: 0, smsSent: 0 }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
 
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
@@ -295,23 +307,33 @@ serve(async (req) => {
       </html>
     `;
 
-    const { data, error } = await resend.emails.send({
-      from: 'HelpConfort Services <support@helpconfort.services>',
-      to: supportEmails,
-      subject: `🚨 Nouveau ticket ${sourceBadge} #${ticketId.substring(0, 8)} - ${userName}`,
-      html: emailHtml,
-    });
+    let emailsSent = 0;
+    let emailData = null;
+    
+    // Send emails only if email notifications are enabled
+    if (notificationSettings.email_enabled) {
+      const { data, error } = await resend.emails.send({
+        from: 'HelpConfort Services <support@helpconfort.services>',
+        to: supportEmails,
+        subject: `🚨 Nouveau ticket ${sourceBadge} #${ticketId.substring(0, 8)} - ${userName}`,
+        html: emailHtml,
+      });
 
-    if (error) {
-      console.error('Error sending email:', error);
-      throw error;
+      if (error) {
+        console.error('Error sending email:', error);
+        throw error;
+      }
+
+      console.log('Notification emails sent successfully:', data);
+      emailsSent = supportEmails.length;
+      emailData = data;
+    } else {
+      console.log('[NOTIFY-SUPPORT-TICKET] Email notifications disabled, skipping');
     }
-
-    console.log('Notification emails sent successfully:', data);
 
     // Envoyer les SMS aux supports via AllMySMS
     let smsSent = 0;
-    if (ALLMYSMS_LOGIN && ALLMYSMS_API_KEY && ALLMYSMS_SUPPORT_PHONES) {
+    if (notificationSettings.sms_enabled && ALLMYSMS_LOGIN && ALLMYSMS_API_KEY && ALLMYSMS_SUPPORT_PHONES) {
       try {
         const supportPhones = ALLMYSMS_SUPPORT_PHONES.split(',').map(p => p.trim());
         const smsMessage = `🚨 Nouveau ticket ${sourceBadge} de ${userName}${agencySlug ? ` (${agencySlug})` : ''}: "${lastQuestion.substring(0, 80)}${lastQuestion.length > 80 ? '...' : ''}"`;
@@ -372,6 +394,8 @@ serve(async (req) => {
         console.error('Error sending SMS notifications:', smsError);
         // Continue même si les SMS échouent
       }
+    } else if (!notificationSettings.sms_enabled) {
+      console.log('[NOTIFY-SUPPORT-TICKET] SMS notifications disabled, skipping');
     } else {
       console.log('AllMySMS not configured, skipping SMS notifications');
       console.log(`Config check: LOGIN=${!!ALLMYSMS_LOGIN}, KEY=${!!ALLMYSMS_API_KEY}, PHONES=${!!ALLMYSMS_SUPPORT_PHONES}`);
@@ -380,9 +404,9 @@ serve(async (req) => {
     return withCors(req, new Response(
       JSON.stringify({ 
         success: true, 
-        emailsSent: supportEmails.length,
+        emailsSent,
         smsSent,
-        emailIds: data 
+        emailIds: emailData 
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     ));
