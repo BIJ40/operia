@@ -1,7 +1,7 @@
 project_id = "uxcovgqhgjsuibgdvcof"
 
 [functions.chat-guide]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-embeddings]
 verify_jwt = true
@@ -10,7 +10,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.search-embeddings]
-verify_jwt = false
+verify_jwt = true
 
 [functions.parse-document]
 verify_jwt = true
@@ -43,7 +43,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.seed-test-users]
-verify_jwt = false
+verify_jwt = true
 
 [functions.regenerate-apogee-rag]
 verify_jwt = true
