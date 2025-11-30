@@ -368,20 +368,28 @@ export function TicketDetailDrawer({
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground">Origine</label>
-                    <Select
-                      value={ticket.reported_by || ''}
-                      onValueChange={(v) => handleFieldUpdate('reported_by', v || null)}
-                      disabled={!canManage}
-                    >
-                      <SelectTrigger className="h-9 mt-1">
-                        <SelectValue placeholder="—" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ORIGINE_OPTIONS.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {ticket.created_from === 'MANUAL' ? (
+                      // Ticket créé manuellement: affichage en lecture seule
+                      <div className="h-9 mt-1 px-3 py-2 rounded-md border bg-muted/50 text-sm">
+                        {ticket.reported_by || '—'}
+                      </div>
+                    ) : (
+                      // Ticket importé: sélecteur modifiable
+                      <Select
+                        value={ticket.reported_by || ''}
+                        onValueChange={(v) => handleFieldUpdate('reported_by', v || null)}
+                        disabled={!canManage}
+                      >
+                        <SelectTrigger className="h-9 mt-1">
+                          <SelectValue placeholder="—" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ORIGINE_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground">Estimation (h)</label>
