@@ -8,3 +8,4 @@ export { RagGapsTab } from './RagGapsTab';
 export { RagStatsTab } from './RagStatsTab';
 export { RagIngestionTab } from './RagIngestionTab';
 export { ImproveGuideDialog } from './ImproveGuideDialog';
+export { DocumentDetailsDialog } from './DocumentDetailsDialog';
