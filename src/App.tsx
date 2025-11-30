@@ -48,6 +48,7 @@ const TeamPage = lazy(() => import("./pages/TeamPage"));
 
 // Lazy loaded pages - Support
 const UserDemands = lazy(() => import("./pages/UserDemands"));
+const Faq = lazy(() => import("./pages/Faq"));
 
 // Lazy loaded pages - Franchiseur (Réseau)
 const FranchiseurLayout = lazy(() => import("./franchiseur/components/layout/FranchiseurLayout"));
@@ -193,6 +194,7 @@ function AppContent() {
           {/* ============================================ */}
           <Route path="/support" element={<MainLayout><RoleGuard><SupportIndex /></RoleGuard></MainLayout>} />
           <Route path="/support/mes-demandes" element={<MainLayout><RoleGuard><UserDemands /></RoleGuard></MainLayout>} />
+          <Route path="/support/faq" element={<MainLayout><Faq /></MainLayout>} />
           <Route path="/support/console" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
