@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface NetworkSAVChartProps {
@@ -10,9 +9,12 @@ interface NetworkSAVChartProps {
 
 export const NetworkSAVChart = ({ data }: NetworkSAVChartProps) => {
   return (
-    <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm p-6">
+    <div className="group relative rounded-xl border border-helpconfort-blue/15 p-6
+      bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+      shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
+      hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+        <h3 className="text-lg font-semibold text-helpconfort-blue">
           Évolution du taux SAV
         </h3>
         <p className="text-sm text-muted-foreground">Taux moyen SAV réseau par mois</p>
@@ -57,6 +59,6 @@ export const NetworkSAVChart = ({ data }: NetworkSAVChartProps) => {
           />
         </LineChart>
       </ResponsiveContainer>
-    </Card>
+    </div>
   );
 };

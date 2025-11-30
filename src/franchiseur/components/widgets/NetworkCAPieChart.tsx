@@ -1,5 +1,4 @@
-import { Card } from "@/components/ui/card";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 
 interface NetworkCAPieChartProps {
@@ -31,9 +30,12 @@ export const NetworkCAPieChart = ({ data }: NetworkCAPieChartProps) => {
   ];
 
   return (
-    <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm p-6">
+    <div className="group relative rounded-xl border border-helpconfort-blue/15 p-6
+      bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+      shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
+      hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+        <h3 className="text-lg font-semibold text-helpconfort-blue">
           Part de marché CA par agence
         </h3>
         <p className="text-sm text-muted-foreground">Répartition du chiffre d'affaires réseau</p>
@@ -74,6 +76,6 @@ export const NetworkCAPieChart = ({ data }: NetworkCAPieChartProps) => {
           />
         </PieChart>
       </ResponsiveContainer>
-    </Card>
+    </div>
   );
 };

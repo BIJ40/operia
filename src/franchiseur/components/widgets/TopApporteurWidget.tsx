@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, TrendingUp, FileText } from "lucide-react";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 
@@ -14,9 +14,12 @@ interface TopApporteurWidgetProps {
 
 export function TopApporteurWidget({ apporteur }: TopApporteurWidgetProps) {
   return (
-    <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm">
+    <div className="group relative rounded-xl border border-helpconfort-blue/15
+      bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+      shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
+      hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent flex items-center gap-2">
+        <CardTitle className="text-lg font-semibold text-helpconfort-blue flex items-center gap-2">
           <Users className="h-5 w-5" />
           Meilleur Apporteur
         </CardTitle>
@@ -51,6 +54,6 @@ export function TopApporteurWidget({ apporteur }: TopApporteurWidgetProps) {
           </div>
         )}
       </CardContent>
-    </Card>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Medal } from "lucide-react";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 
@@ -24,9 +24,12 @@ export function TopAgenciesWidget({ agencies }: TopAgenciesWidgetProps) {
   };
 
   return (
-    <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm">
+    <div className="group relative rounded-xl border border-helpconfort-blue/15
+      bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+      shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
+      hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent flex items-center gap-2">
+        <CardTitle className="text-lg font-semibold text-helpconfort-blue flex items-center gap-2">
           <Building2 className="h-5 w-5" />
           TOP 5 Agences (CA)
         </CardTitle>
@@ -56,6 +59,6 @@ export function TopAgenciesWidget({ agencies }: TopAgenciesWidgetProps) {
           </div>
         )}
       </CardContent>
-    </Card>
+    </div>
   );
 }

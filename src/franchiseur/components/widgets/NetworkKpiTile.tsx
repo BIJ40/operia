@@ -1,6 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
+import { useMemo } from "react";
 
 interface NetworkKpiTileProps {
   title: string;
@@ -10,7 +11,21 @@ interface NetworkKpiTileProps {
   subtitle?: string;
 }
 
+// 4 variantes de dégradé radial (coins différents)
+const GRADIENT_VARIANTS = [
+  "bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))]",
+  "bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))]",
+  "bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))]",
+  "bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))]",
+];
+
 export function NetworkKpiTile({ title, value, icon: Icon, format = 'number', subtitle }: NetworkKpiTileProps) {
+  // Gradient aléatoire stable par titre
+  const gradientClass = useMemo(() => {
+    const hash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return GRADIENT_VARIANTS[hash % GRADIENT_VARIANTS.length];
+  }, [title]);
+
   const formattedValue = (() => {
     if (typeof value === 'string') return value;
     
@@ -25,25 +40,24 @@ export function NetworkKpiTile({ title, value, icon: Icon, format = 'number', su
   })();
 
   return (
-    <Card className="rounded-xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm hover:shadow-lg transition-all">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <div className="w-8 h-8 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-helpconfort-blue/10">
+    <div className={`group relative rounded-xl border border-helpconfort-blue/15 p-4
+      ${gradientClass} from-helpconfort-blue/10 via-white to-white
+      shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
+      hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5`}>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium text-muted-foreground">{title}</p>
+        <div className="w-8 h-8 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-helpconfort-blue/10 group-hover:border-helpconfort-blue transition-all">
           <Icon className="h-4 w-4 text-helpconfort-blue" />
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-foreground">
-          {formattedValue}
-        </div>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {subtitle}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+      <div className="text-2xl font-bold text-foreground">
+        {formattedValue}
+      </div>
+      {subtitle && (
+        <p className="text-xs text-muted-foreground mt-1">
+          {subtitle}
+        </p>
+      )}
+    </div>
   );
 }
