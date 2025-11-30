@@ -165,9 +165,16 @@ serve(async (req) => {
       // Use parse-document edge function for complex documents
       console.log(`[INDEX-DOCUMENT] Calling parse-document for ${fileType}`);
       
-      // Convert blob to base64
+      // Convert blob to base64 - chunk to avoid stack overflow on large files
       const arrayBuffer = await fileData.arrayBuffer();
-      const base64Content = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = '';
+      const chunkSize = 8192;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+        binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
+      }
+      const base64Content = btoa(binary);
       
       // Get file extension from path
       const extension = filePath.split('.').pop()?.toLowerCase() || 'bin';
