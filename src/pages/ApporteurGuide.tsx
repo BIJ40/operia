@@ -3,6 +3,7 @@ import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import { ROUTES } from '@/config/routes';
 import * as Icons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -287,7 +288,7 @@ const SortableCategory = ({
           </div>
         </div>
       ) : (
-        <Link to={`/apporteurs/category/${category.slug}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
+        <Link to={`${ROUTES.academy.apporteursCategory(category.slug)}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
           {isCustomImage ? (
             <img src={category.icon} alt={category.title} className="w-6 h-6 object-contain flex-shrink-0" />
           ) : (

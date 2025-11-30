@@ -1,5 +1,6 @@
 // Page affichant les sous-catégories d'une catégorie (apporteur)
 import { useParams, Link } from 'react-router-dom';
+import { ROUTES } from '@/config/routes';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -160,7 +161,7 @@ function SortableSubcategory({
   return (
     <div ref={setNodeRef} style={style} className="group relative">
       <Link 
-        to={`/apporteurs/category/${categorySlug}/sub/${subcategory.slug}`}
+        to={ROUTES.academy.apporteursSubCategory(categorySlug, subcategory.slug)}
         className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-sm hover:shadow-md transition-all border ${colorClass}`}
       >
         {subcategory.icon?.startsWith('http') ? (
