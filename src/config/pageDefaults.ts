@@ -161,6 +161,8 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path === '/admin/escalation-history', pageKey: 'admin_escalation_history', defaultTitle: 'Historique Escalades', defaultSubtitle: 'Suivi des escalades de tickets', icon: 'ArrowUpCircle', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/page-metadata', pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu', icon: 'FileText', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path.startsWith('/admin/apogee-tickets'), pageKey: 'admin_apogee_tickets', defaultTitle: 'TICKETING DEVELOPPEMENT', defaultSubtitle: 'Suivi des évolutions et corrections Apogée', icon: 'ListTodo', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/system-health', pageKey: 'admin_system_health', defaultTitle: 'Santé Système', defaultSubtitle: 'Surveillance en temps réel des services', icon: 'Activity', parentRoute: '/admin', parentLabel: 'Admin' },
+  { match: (path) => path === '/admin/chatbot-rag', pageKey: 'admin_chatbot_rag', defaultTitle: 'Chatbot RAG', defaultSubtitle: 'Gestion de la base de connaissances Mme MICHU', icon: 'Database', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin', pageKey: 'admin_index', defaultTitle: 'Administration', defaultSubtitle: 'Configuration du système', icon: 'Settings', parentRoute: '/', parentLabel: 'Accueil' },
   
   // User pages
