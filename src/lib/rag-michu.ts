@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { safeInvoke } from '@/lib/safeQuery';
 import { logDebug, logError } from '@/lib/logger';
 
 export interface RAGChunk {
@@ -26,6 +27,16 @@ export interface RAGResult {
   formattedDocs: string;
 }
 
+type SearchEmbeddingsResponse = {
+  results: Array<{
+    chunk_text: string;
+    block_title: string;
+    block_slug: string;
+    metadata: Record<string, unknown>;
+    similarity?: number;
+  }>;
+};
+
 /**
  * Get Apogée RAG context for a question
  * Queries guide_chunks with vector search filtered on metadata.source = 'apogee'
@@ -33,62 +44,60 @@ export interface RAGResult {
 export async function getApogeeContext(question: string): Promise<RAGResult> {
   logDebug('[RAG-MICHU] Recherche RAG Apogée pour:', question.substring(0, 100));
   
-  try {
-    const { data, error } = await supabase.functions.invoke('search-embeddings', {
+  const result = await safeInvoke<SearchEmbeddingsResponse>(
+    supabase.functions.invoke('search-embeddings', {
       body: { 
         query: question, 
         topK: 8,
         source: 'apogee' // Filter strictly on apogee source
       },
-    });
+    }),
+    'RAG_MICHU_SEARCH_EMBEDDINGS'
+  );
 
-    if (error) {
-      logError('[RAG-MICHU] Erreur search-embeddings:', error);
-      return { chunks: [], hasContent: false, formattedDocs: '' };
-    }
-
-    const results = data?.results;
-    
-    if (!results || results.length === 0) {
-      logDebug('[RAG-MICHU] Aucun chunk Apogée trouvé');
-      return { chunks: [], hasContent: false, formattedDocs: '' };
-    }
-
-    // Map results to RAGChunk format
-    const chunks: RAGChunk[] = results.map((r: any) => ({
-      chunk_text: r.chunk_text,
-      block_title: r.block_title,
-      block_slug: r.block_slug,
-      metadata: r.metadata || {},
-      similarity: r.similarity,
-    }));
-
-    logDebug(`[RAG-MICHU] ${chunks.length} chunks Apogée trouvés`);
-    chunks.forEach((chunk, idx) => {
-      const meta = chunk.metadata;
-      logDebug(`  [${idx + 1}] ${meta.categorie || 'N/A'} - ${meta.section || 'N/A'} (score: ${chunk.similarity?.toFixed(3) || 'N/A'})`);
-    });
-
-    // Format docs for injection into prompt
-    const formattedDocs = chunks
-      .map((chunk, idx) => {
-        const meta = chunk.metadata;
-        const header = meta.categorie && meta.section 
-          ? `[Catégorie: ${meta.categorie} | Section: ${meta.section}]`
-          : `[${chunk.block_title}]`;
-        return `<doc ${idx + 1}>\n${header}\n${chunk.chunk_text}\n</doc ${idx + 1}>`;
-      })
-      .join('\n\n');
-
-    return {
-      chunks,
-      hasContent: true,
-      formattedDocs,
-    };
-  } catch (error) {
-    logError('[RAG-MICHU] Erreur RAG:', error);
+  if (!result.success) {
+    logError('rag-michu', 'Erreur search-embeddings', result.error);
     return { chunks: [], hasContent: false, formattedDocs: '' };
   }
+
+  const results = result.data?.results;
+  
+  if (!results || results.length === 0) {
+    logDebug('[RAG-MICHU] Aucun chunk Apogée trouvé');
+    return { chunks: [], hasContent: false, formattedDocs: '' };
+  }
+
+  // Map results to RAGChunk format
+  const chunks: RAGChunk[] = results.map((r) => ({
+    chunk_text: r.chunk_text,
+    block_title: r.block_title,
+    block_slug: r.block_slug,
+    metadata: (r.metadata || {}) as RAGChunk['metadata'],
+    similarity: r.similarity,
+  }));
+
+  logDebug(`[RAG-MICHU] ${chunks.length} chunks Apogée trouvés`);
+  chunks.forEach((chunk, idx) => {
+    const meta = chunk.metadata;
+    logDebug(`  [${idx + 1}] ${meta.categorie || 'N/A'} - ${meta.section || 'N/A'} (score: ${chunk.similarity?.toFixed(3) || 'N/A'})`);
+  });
+
+  // Format docs for injection into prompt
+  const formattedDocs = chunks
+    .map((chunk, idx) => {
+      const meta = chunk.metadata;
+      const header = meta.categorie && meta.section 
+        ? `[Catégorie: ${meta.categorie} | Section: ${meta.section}]`
+        : `[${chunk.block_title}]`;
+      return `<doc ${idx + 1}>\n${header}\n${chunk.chunk_text}\n</doc ${idx + 1}>`;
+    })
+    .join('\n\n');
+
+  return {
+    chunks,
+    hasContent: true,
+    formattedDocs,
+  };
 }
 
 /**

@@ -11,6 +11,8 @@ import { ChatModeSelector } from '@/components/chatbot/ChatModeSelector';
 import { ChatContextSelector } from '@/components/chatbot/ChatContextSelector';
 import { SupportTicketDialog } from '@/components/chatbot/SupportTicketDialog';
 import { TimeoutModal } from '@/components/chatbot/TimeoutModal';
+import { safeQuery, safeMutation } from '@/lib/safeQuery';
+import { logError } from '@/lib/logger';
 import chatIcon from '@/assets/logo_chat.png';
 import { MessageCircle } from 'lucide-react';
 
@@ -94,26 +96,44 @@ export function Chatbot() {
 
     const checkActiveTicket = async () => {
       // Utiliser les nouveaux statuts : new, in_progress, waiting_user
-      const { data } = await supabase
-        .from('support_tickets')
-        .select('*')
-        .eq('user_id', user.id)
-        .in('status', ['new', 'in_progress', 'waiting_user'])
-        .order('created_at', { ascending: false })
-        .limit(1);
+      const ticketResult = await safeQuery<any[]>(
+        supabase
+          .from('support_tickets')
+          .select('*')
+          .eq('user_id', user.id)
+          .in('status', ['new', 'in_progress', 'waiting_user'])
+          .order('created_at', { ascending: false })
+          .limit(1),
+        'CHATBOT_ACTIVE_TICKET_CHECK'
+      );
+
+      if (!ticketResult.success) {
+        logError('rag-chat', 'Error checking active ticket', ticketResult.error);
+        return;
+      }
+
+      const data = ticketResult.data;
 
       if (data && data.length > 0) {
         setActiveTicket(data[0]);
         setShowChoiceMode(false);
         setIsOpen(true);
 
-        const { data: msgs } = await supabase
-          .from('support_messages')
-          .select('*')
-          .eq('ticket_id', data[0].id)
-          .order('created_at', { ascending: true });
+        const messagesResult = await safeQuery<any[]>(
+          supabase
+            .from('support_messages')
+            .select('*')
+            .eq('ticket_id', data[0].id)
+            .order('created_at', { ascending: true }),
+          'CHATBOT_TICKET_MESSAGES_LOAD'
+        );
 
-        if (msgs) setSupportMessages(msgs);
+        if (!messagesResult.success) {
+          logError('rag-chat', 'Error loading ticket messages', messagesResult.error);
+          return;
+        }
+
+        if (messagesResult.data) setSupportMessages(messagesResult.data);
       }
     };
 
@@ -304,22 +324,38 @@ export function Chatbot() {
     if (!activeTicket) return;
 
     if (ticketRating > 0) {
-      await supabase
-        .from('support_tickets')
-        .update({
-          rating: ticketRating,
-          rating_comment: ticketComment || null,
-        })
-        .eq('id', activeTicket.id);
+      const ratingResult = await safeMutation(
+        supabase
+          .from('support_tickets')
+          .update({
+            rating: ticketRating,
+            rating_comment: ticketComment || null,
+          })
+          .eq('id', activeTicket.id),
+        'CHATBOT_TICKET_RATING_UPDATE'
+      );
+
+      if (!ratingResult.success) {
+        logError('rag-chat', 'Error updating ticket rating', ratingResult.error);
+        // Continue to close ticket anyway
+      }
     }
 
-    await supabase
-      .from('support_tickets')
-      .update({
-        status: 'resolved',
-        resolved_at: new Date().toISOString(),
-      })
-      .eq('id', activeTicket.id);
+    const closeResult = await safeMutation(
+      supabase
+        .from('support_tickets')
+        .update({
+          status: 'resolved',
+          resolved_at: new Date().toISOString(),
+        })
+        .eq('id', activeTicket.id),
+      'CHATBOT_TICKET_CLOSE'
+    );
+
+    if (!closeResult.success) {
+      logError('rag-chat', 'Error closing ticket', closeResult.error);
+      // Still reset UI state
+    }
 
     setShowCloseConfirm(false);
     setActiveTicket(null);
