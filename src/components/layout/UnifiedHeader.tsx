@@ -45,6 +45,7 @@ import { PAGE_TITLES } from '@/config/navigation';
 import { getPageConfigByPath, getPageDefaultByKey } from '@/config/pageDefaults';
 import { ROUTES } from '@/config/routes';
 import { logError } from '@/lib/logger';
+import { cn } from '@/lib/utils';
 
 // Mapping des noms d'icônes vers les composants
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -81,7 +82,15 @@ export function UnifiedHeader() {
   const navigate = useNavigate();
   const { isAdmin, canAccessSupportConsole, isLoggingOut, logout, globalRole } = useAuth();
   const { toggleSidebar } = useSidebar();
-  const { hasNewTickets, newTicketsCount } = useSupportNotifications();
+  const { hasNewTickets, newTicketsCount, hasChatHumanRequests, hasTicketRequests, chatHumanCount, ticketRequestCount } = useSupportNotifications();
+
+  // Déterminer la classe de clignotement du header pour SU
+  const getHeaderBlinkClass = () => {
+    if (!canAccessSupportConsole) return '';
+    if (hasChatHumanRequests) return 'animate-pulse-red';
+    if (hasTicketRequests) return 'animate-pulse-yellow';
+    return '';
+  };
 
   // Obtenir la configuration de la page actuelle
   const pageConfig = getPageConfigByPath(location.pathname);
@@ -177,7 +186,10 @@ export function UnifiedHeader() {
         </div>
       )}
 
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
+      <header className={cn(
+        "border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40",
+        getHeaderBlinkClass()
+      )}>
         <div className="h-20 px-4 flex items-center gap-3">
           {/* Left: Sidebar toggle + Back button */}
           <div className="flex items-center gap-2 shrink-0">
