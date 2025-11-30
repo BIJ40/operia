@@ -14,6 +14,7 @@ import { ChatCloseDialog } from '@/components/chatbot/ChatCloseDialog';
 import { TimeoutModal } from '@/components/chatbot/TimeoutModal';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
+import { successToast } from '@/lib/toastHelpers';
 import { ROUTES } from '@/config/routes';
 import { MessageCircle } from 'lucide-react';
 
@@ -571,10 +572,13 @@ export function Chatbot() {
           setIsOpen(false);
         }}
         onCreateTicket={async () => {
-          const ticket = await createSupportTicket(messages);
+          // Create a real ticket (type='ticket'), not a chat_ai
+          const ticket = await createSupportTicket(messages, 'ticket');
           if (ticket) {
-            setActiveTicket(ticket);
-            setSupportMessages([]);
+            // Clear conversation and close - ticket will appear in "Mes demandes"
+            resetConversation();
+            setIsOpen(false);
+            successToast('Votre demande a été créée et sera traitée par notre équipe');
           }
         }}
         onEndChat={() => {
