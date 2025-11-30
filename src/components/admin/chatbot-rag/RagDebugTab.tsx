@@ -7,8 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2, Bug, Search, FileText } from 'lucide-react';
+import { safeInvoke } from '@/lib/safeQuery';
+import { errorToast, warningToast } from '@/lib/toastHelpers';
+import { logError } from '@/lib/logger';
 
 type ChunkResult = {
   id: string;
@@ -19,6 +21,10 @@ type ChunkResult = {
   metadata: any;
 };
 
+type SearchEmbeddingsResponse = {
+  results: ChunkResult[];
+};
+
 export function RagDebugTab() {
   const [query, setQuery] = useState('');
   const [family, setFamily] = useState<string>('apogee');
@@ -26,15 +32,10 @@ export function RagDebugTab() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ChunkResult[]>([]);
   const [prompt, setPrompt] = useState<string>('');
-  const { toast } = useToast();
 
   const handleSearch = async () => {
     if (!query.trim()) {
-      toast({
-        title: 'Erreur',
-        description: 'Veuillez entrer une question',
-        variant: 'destructive',
-      });
+      warningToast('Veuillez entrer une question');
       return;
     }
 
@@ -42,44 +43,50 @@ export function RagDebugTab() {
     setResults([]);
     setPrompt('');
 
-    try {
-      const { data, error } = await supabase.functions.invoke('search-embeddings', {
+    const result = await safeInvoke<SearchEmbeddingsResponse>(
+      supabase.functions.invoke('search-embeddings', {
         body: {
           query,
           topK: 8,
           source: family === 'all' ? null : family,
         },
-      });
+      }),
+      'RAG_DEBUG_SEARCH'
+    );
 
-      if (error) {
-        throw new Error('Search failed');
-      }
+    if (!result.success) {
+      logError('rag-debug', 'Error searching embeddings', result.error);
+      errorToast(result.error!);
+      setLoading(false);
+      return;
+    }
 
-      setResults(data?.results || []);
+    const data = result.data;
+    setResults(data?.results || []);
 
-      // Build the prompt that would be sent to the AI - SCALAR methodology
-      if (data?.results && data.results.length > 0) {
-        const docsContent = data.results
-          .map((r: ChunkResult, idx: number) => {
-            const metadata = r.metadata as any;
-            const prefix = metadata?.categorie 
-              ? `[Catégorie: ${metadata.categorie}]\n`
-              : '';
-            return `[doc ${idx + 1}] ${r.block_title}\n${prefix}${r.chunk_text}`;
-          })
-          .join('\n\n---\n\n');
+    // Build the prompt that would be sent to the AI - SCALAR methodology
+    if (data?.results && data.results.length > 0) {
+      const docsContent = data.results
+        .map((r: ChunkResult, idx: number) => {
+          const metadata = r.metadata as any;
+          const prefix = metadata?.categorie 
+            ? `[Catégorie: ${metadata.categorie}]\n`
+            : '';
+          return `[doc ${idx + 1}] ${r.block_title}\n${prefix}${r.chunk_text}`;
+        })
+        .join('\n\n---\n\n');
 
-        const contextNames: Record<string, string> = {
-          apogee: "Apogée (logiciel de gestion)",
-          apporteurs: "Apporteurs d'affaires et partenaires",
-          helpconfort: "Procédures internes HelpConfort",
-          autre: "Questions générales",
-          all: "Toutes les sources"
-        };
+      const contextNames: Record<string, string> = {
+        apogee: "Apogée (logiciel de gestion)",
+        apporteurs: "Apporteurs d'affaires et partenaires",
+        helpconfort: "Procédures internes HelpConfort",
+        autre: "Questions générales",
+        all: "Toutes les sources"
+      };
 
-        const contextName = contextNames[family] || contextNames.all;
+      const contextName = contextNames[family] || contextNames.all;
 
-        const systemPrompt = `# S — Scope & Stakeholder
+      const systemPrompt = `# S — Scope & Stakeholder
 
 Tu es Mme MICHU, assistante experte du réseau Help Confort, spécialisée sur : **${contextName}**.
 
@@ -177,18 +184,10 @@ Si un critère n'est pas rempli → corrige avant d'envoyer.
 Tu t'auto-corriges silencieusement, élimines tout hors-sujet, tout contenu spéculatif, toute redondance.
 Tu renvoies uniquement la réponse finale, propre, claire, conforme aux contraintes.`;
 
-        setPrompt(systemPrompt);
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Erreur lors de la recherche',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
+      setPrompt(systemPrompt);
     }
+
+    setLoading(false);
   };
 
   return (
