@@ -152,19 +152,7 @@ export default function AdminSystemHealth() {
 
   return (
     <MainLayout>
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Santé du système & Monitoring</h1>
-            <p className="text-muted-foreground">
-              État des services et configuration du monitoring
-            </p>
-          </div>
-          <Badge variant="outline" className="text-sm">
-            Environnement: {environment}
-          </Badge>
-        </div>
-
+      <div className="space-y-6">
         {/* Overall Status */}
         <Card>
           <CardHeader className="pb-3">
