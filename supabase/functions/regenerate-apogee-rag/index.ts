@@ -1,11 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 // Strip HTML tags and decode entities for cleaner text
 function stripHtml(html: string): string {
@@ -88,9 +84,9 @@ function getRoleLevel(role: string | null): number {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     const authHeader = req.headers.get('Authorization');
@@ -242,7 +238,7 @@ serve(async (req) => {
 
     console.log(`[RAG] Regeneration complete: ${processedSections} sections processed, ${skippedSections} skipped, ${totalChunks} chunks created`);
 
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({
         success: true,
         sections_processed: processedSections,
@@ -254,22 +250,17 @@ serve(async (req) => {
           ? `Terminé avec ${errors.length} erreur(s)` 
           : 'Index RAG régénéré avec succès depuis les blocs Apogée'
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+      { headers: { 'Content-Type': 'application/json' } }
+    ));
 
   } catch (error) {
     console.error('[RAG] Error:', error);
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Unknown error',
         details: 'Check edge function logs for more information'
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    ));
   }
 });
