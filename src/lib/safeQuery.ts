@@ -4,6 +4,7 @@
  */
 
 import { logError } from "@/lib/logger";
+import type { PostgrestBuilder, PostgrestFilterBuilder, PostgrestQueryBuilder } from '@supabase/postgrest-js';
 
 export interface SafeQueryResult<T> {
   success: boolean;
@@ -16,12 +17,16 @@ export interface SafeQueryResult<T> {
   };
 }
 
+type SupabaseQueryLike = 
+  | PromiseLike<{ data: any; error: any }>
+  | { then: (onfulfilled: (value: { data: any; error: any }) => any) => any };
+
 export async function safeQuery<T>(
-  promise: Promise<{ data: T | null; error: any }>,
+  queryOrPromise: SupabaseQueryLike,
   code: string
 ): Promise<SafeQueryResult<T>> {
   try {
-    const { data, error } = await promise;
+    const { data, error } = await Promise.resolve(queryOrPromise);
     
     if (error) {
       const correlationId = crypto.randomUUID();
@@ -59,10 +64,10 @@ export async function safeQuery<T>(
  * Version pour les mutations (insert, update, delete)
  */
 export async function safeMutation<T>(
-  promise: Promise<{ data: T | null; error: any }>,
+  queryOrPromise: SupabaseQueryLike,
   code: string
 ): Promise<SafeQueryResult<T>> {
-  return safeQuery(promise, code);
+  return safeQuery<T>(queryOrPromise, code);
 }
 
 /**

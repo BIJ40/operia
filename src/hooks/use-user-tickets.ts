@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 import { logError, logWarn } from '@/lib/logger';
+import { safeMutation, safeQuery, safeInvoke } from '@/lib/safeQuery';
+import { errorToast, successToast } from '@/lib/toastHelpers';
 
 export interface Ticket {
   id: string;
@@ -41,7 +42,6 @@ export interface Attachment {
 
 export const useUserTickets = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -53,89 +53,90 @@ export const useUserTickets = () => {
     if (!user) return;
 
     setIsLoading(true);
-    try {
-      const { data, error } = await supabase
+    
+    const result = await safeQuery<Ticket[]>(
+      supabase
         .from('support_tickets')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }),
+      'USER_TICKETS_LOAD'
+    );
 
-      if (error) throw error;
-
-      // Load unread counts for each ticket
-      const ticketsWithUnread = await Promise.all(
-        (data || []).map(async (ticket) => {
-          const { count } = await supabase
-            .from('support_messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('ticket_id', ticket.id)
-            .eq('is_from_support', true)
-            .is('read_at', null);
-
-          return {
-            ...ticket,
-            unreadCount: count || 0,
-          } as Ticket;
-        })
-      );
-
-      setTickets(ticketsWithUnread);
-    } catch (error) {
-      logError('[USER-TICKETS] Error loading tickets', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les tickets',
-        variant: 'destructive',
-        duration: 3000,
-      });
-    } finally {
+    if (!result.success) {
+      errorToast(result.error!);
       setIsLoading(false);
+      return;
     }
+
+    // Load unread counts for each ticket
+    const ticketsWithUnread = await Promise.all(
+      (result.data || []).map(async (ticket) => {
+        const { count } = await supabase
+          .from('support_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('ticket_id', ticket.id)
+          .eq('is_from_support', true)
+          .is('read_at', null);
+
+        return {
+          ...ticket,
+          unreadCount: count || 0,
+        } as Ticket;
+      })
+    );
+
+    setTickets(ticketsWithUnread);
+    setIsLoading(false);
   };
 
   const loadTicketDetails = async (ticketId: string) => {
-    try {
-      // Load messages - FILTRER les notes internes (is_internal_note = false)
-      // Les notes internes ne doivent JAMAIS être visibles côté utilisateur
-      const { data: msgs, error: msgsError } = await supabase
+    // Load messages - FILTRER les notes internes (is_internal_note = false)
+    const msgsResult = await safeQuery<any[]>(
+      supabase
         .from('support_messages')
         .select('*')
         .eq('ticket_id', ticketId)
         .or('is_internal_note.is.null,is_internal_note.eq.false')
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true }),
+      'USER_TICKET_MESSAGES_LOAD'
+    );
 
-      if (msgsError) throw msgsError;
-      setMessages(msgs || []);
+    if (!msgsResult.success) {
+      errorToast(msgsResult.error!);
+      return;
+    }
+    setMessages(msgsResult.data || []);
 
-      // Mark support messages as read
-      await supabase
+    // Mark support messages as read (non-blocking)
+    await safeMutation(
+      supabase
         .from('support_messages')
         .update({ read_at: new Date().toISOString() })
         .eq('ticket_id', ticketId)
         .eq('is_from_support', true)
-        .is('read_at', null);
+        .is('read_at', null),
+      'USER_TICKET_MARK_READ'
+    );
 
-      // Load attachments
-      const { data: atts, error: attsError } = await supabase
+    // Load attachments
+    const attsResult = await safeQuery<Attachment[]>(
+      supabase
         .from('support_attachments')
         .select('*')
         .eq('ticket_id', ticketId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true }),
+      'USER_TICKET_ATTACHMENTS_LOAD'
+    );
 
-      if (attsError) throw attsError;
-      setAttachments(atts || []);
-
-      // Reload tickets to update unread count
-      loadTickets();
-    } catch (error) {
-      logError('[USER-TICKETS] Error loading ticket details', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les détails du ticket',
-        variant: 'destructive',
-        duration: 3000,
-      });
+    if (!attsResult.success) {
+      errorToast(attsResult.error!);
+      return;
     }
+    setAttachments(attsResult.data || []);
+
+    // Reload tickets to update unread count
+    loadTickets();
   };
 
   const createTicket = async (
@@ -149,59 +150,81 @@ export const useUserTickets = () => {
     if (!user) return null;
 
     setIsCreating(true);
-    try {
-      // Get user profile
-      const { data: profile } = await supabase
+    
+    // Get user profile
+    const profileResult = await safeQuery<{ first_name: string | null; last_name: string | null; agence: string | null }>(
+      supabase
         .from('profiles')
         .select('first_name, last_name, agence')
         .eq('id', user.id)
-        .single();
+        .single(),
+      'USER_PROFILE_LOAD'
+    );
 
-      const userName = profile?.first_name
-        ? `${profile.first_name} ${profile.last_name || ''}`.trim()
-        : 'Utilisateur';
+    const profile = profileResult.data;
+    const userName = profile?.first_name
+      ? `${profile.first_name} ${profile.last_name || ''}`.trim()
+      : 'Utilisateur';
 
-      // Create ticket avec statut initial = 'new'
-      const { data: ticket, error: ticketError } = await supabase
+    // Create ticket
+    const ticketResult = await safeMutation<Ticket>(
+      supabase
         .from('support_tickets')
         .insert({
           user_id: user.id,
           subject,
           service,
           category,
-          status: 'new', // Nouveau statut : 'new' au lieu de 'waiting'
+          status: 'new',
           priority,
           source: 'portal',
           agency_slug: profile?.agence || null,
           has_attachments: files.length > 0,
-          support_level: 1, // Niveau initial N1
+          support_level: 1,
         } as any)
         .select()
-        .single();
+        .single(),
+      'USER_TICKET_CREATE'
+    );
 
-      if (ticketError) throw ticketError;
+    if (!ticketResult.success) {
+      errorToast(ticketResult.error!);
+      setIsCreating(false);
+      return null;
+    }
 
-      // Create initial message with description
-      const { error: msgError } = await supabase.from('support_messages').insert({
+    const ticket = ticketResult.data!;
+
+    // Create initial message with description
+    const msgResult = await safeMutation(
+      supabase.from('support_messages').insert({
         ticket_id: ticket.id,
         sender_id: user.id,
         message: description,
         is_from_support: false,
-      } as any);
+      } as any),
+      'USER_TICKET_INITIAL_MESSAGE'
+    );
 
-      if (msgError) throw msgError;
+    if (!msgResult.success) {
+      logError('[USER-TICKETS] Error creating initial message', msgResult.error);
+    }
 
-      // Upload files if any
-      if (files.length > 0) {
-        for (const file of files) {
-          const filePath = `${ticket.id}/${Date.now()}-${file.name}`;
-          const { error: uploadError } = await supabase.storage
-            .from('support-attachments')
-            .upload(filePath, file);
+    // Upload files if any
+    if (files.length > 0) {
+      for (const file of files) {
+        const filePath = `${ticket.id}/${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('support-attachments')
+          .upload(filePath, file);
 
-          if (uploadError) throw uploadError;
+        if (uploadError) {
+          logError('[USER-TICKETS] Error uploading file', uploadError);
+          continue;
+        }
 
-          const { error: attError } = await supabase
+        await safeMutation(
+          supabase
             .from('support_attachments')
             .insert({
               ticket_id: ticket.id,
@@ -209,85 +232,72 @@ export const useUserTickets = () => {
               file_name: file.name,
               file_type: file.type,
               file_size: file.size,
-            } as any);
-
-          if (attError) throw attError;
-        }
+            } as any),
+          'USER_TICKET_ATTACHMENT_CREATE'
+        );
       }
-
-      // Notify support (non bloquant pour la création du ticket)
-      try {
-        await supabase.functions.invoke('notify-support-ticket', {
-          body: {
-            ticketId: ticket.id,
-            userName,
-            lastQuestion: subject,
-            appUrl: window.location.origin,
-            service,
-          },
-        });
-      } catch (notifyError) {
-        logWarn('[USER-TICKETS] Error notifying support (non-blocking)', notifyError);
-        // On ne bloque pas l'utilisateur si la notif email échoue
-      }
-
-      toast({
-        title: 'Succès',
-        description: 'Ticket créé avec succès',
-        duration: 3000,
-      });
-
-      loadTickets();
-      return ticket;
-    } catch (error) {
-      logError('[USER-TICKETS] Error creating ticket', error);
-      toast({
-        title: 'Erreur',
-        description: error instanceof Error ? error.message : 'Impossible de créer le ticket',
-        variant: 'destructive',
-        duration: 5000,
-      });
-      return null;
-    } finally {
-      setIsCreating(false);
     }
+
+    // Notify support (non bloquant)
+    const notifyResult = await safeInvoke(
+      supabase.functions.invoke('notify-support-ticket', {
+        body: {
+          ticketId: ticket.id,
+          userName,
+          lastQuestion: subject,
+          appUrl: window.location.origin,
+          service,
+        },
+      }),
+      'NOTIFY_SUPPORT_TICKET'
+    );
+
+    if (!notifyResult.success) {
+      logWarn('[USER-TICKETS] Error notifying support (non-blocking)', notifyResult.error);
+    }
+
+    successToast('Ticket créé avec succès');
+    loadTickets();
+    setIsCreating(false);
+    return ticket;
   };
 
   const addMessage = async (ticketId: string, message: string) => {
     if (!user) return;
 
-    try {
-      const { error } = await supabase.from('support_messages').insert({
+    const result = await safeMutation(
+      supabase.from('support_messages').insert({
         ticket_id: ticketId,
         sender_id: user.id,
         message,
         is_from_support: false,
-      } as any);
+      } as any),
+      'USER_MESSAGE_CREATE'
+    );
 
-      if (error) throw error;
-      
-      // Transition automatique : si le ticket était en 'waiting_user', le passer en 'in_progress'
-      // Car l'utilisateur vient de répondre
-      const { data: currentTicket } = await supabase
+    if (!result.success) {
+      errorToast(result.error!);
+      return;
+    }
+    
+    // Transition automatique : si le ticket était en 'waiting_user', le passer en 'in_progress'
+    const currentResult = await safeQuery<{ status: string }>(
+      supabase
         .from('support_tickets')
         .select('status')
         .eq('id', ticketId)
-        .single();
-      
-      if (currentTicket?.status === 'waiting_user') {
-        await supabase
+        .single(),
+      'USER_TICKET_STATUS_CHECK'
+    );
+    
+    if (currentResult.success && currentResult.data?.status === 'waiting_user') {
+      await safeMutation(
+        supabase
           .from('support_tickets')
           .update({ status: 'in_progress' })
-          .eq('id', ticketId);
-      }
-    } catch (error) {
-      logError('[USER-TICKETS] Error adding message', error);
-      toast({
-        title: 'Erreur',
-        description: "Impossible d'envoyer le message",
-        variant: 'destructive',
-        duration: 3000,
-      });
+          .eq('id', ticketId),
+        'USER_TICKET_STATUS_UPDATE'
+      );
     }
   };
 
@@ -309,12 +319,7 @@ export const useUserTickets = () => {
       URL.revokeObjectURL(url);
     } catch (error) {
       logError('[USER-TICKETS] Error downloading attachment', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de télécharger le fichier',
-        variant: 'destructive',
-        duration: 3000,
-      });
+      errorToast('Impossible de télécharger le fichier');
     }
   };
 
@@ -333,7 +338,7 @@ export const useUserTickets = () => {
           filter: `is_from_support=eq.true`,
         },
         () => {
-          loadTickets(); // Reload tickets to update unread counts
+          loadTickets();
         }
       )
       .subscribe();
