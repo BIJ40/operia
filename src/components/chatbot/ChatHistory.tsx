@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 type Message = {
@@ -17,6 +18,21 @@ interface ChatHistoryProps {
   onRenderMessageWithLinks: (content: string) => React.ReactNode;
 }
 
+// Parse chatbot_conversation safely (can be array or JSON string)
+function parseConversation(data: unknown): Message[] {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (typeof data === 'string') {
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 export function ChatHistory({
   messages,
   supportMessages,
@@ -27,17 +43,19 @@ export function ChatHistory({
   isUserTyping,
   onRenderMessageWithLinks,
 }: ChatHistoryProps) {
+  // Parse conversation safely
+  const conversation = useMemo(() => parseConversation(activeTicket?.chatbot_conversation), [activeTicket?.chatbot_conversation]);
+
   if (activeTicket) {
     return (
       <ScrollArea className="flex-1 p-4">
         {/* Historique Mme Michu */}
-        {activeTicket.chatbot_conversation &&
-          activeTicket.chatbot_conversation.length > 0 && (
+        {conversation.length > 0 && (
             <div className="mb-6">
               <div className="text-xs text-muted-foreground text-center mb-3 py-2 border-b">
                 Conversation avec Mme MICHU
               </div>
-              {activeTicket.chatbot_conversation.map((msg: any, idx: number) => (
+              {conversation.map((msg: any, idx: number) => (
                 <div
                   key={`history-${idx}`}
                   className={`mb-4 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}
