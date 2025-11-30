@@ -2,7 +2,7 @@
  * Vue Kanban des tickets Apogée - Drag and drop avec permissions
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -26,6 +26,9 @@ import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { toast } from 'sonner';
 import { useCanTransition, useLogTicketAction } from '../hooks/useTicketPermissions';
 import type { ApogeeTicket, ApogeeTicketStatus, ApogeeModule, ApogeeOwnerSide } from '../types';
+
+const COLLAPSED_COLUMNS_STORAGE_KEY = 'apogee-kanban-collapsed-columns';
+const DEFAULT_EXPANDED_COUNT = 3;
 
 interface TicketKanbanProps {
   tickets: ApogeeTicket[];
@@ -307,10 +310,41 @@ function DroppableColumn({
 
 export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusChange, onTicketClick, columnWidth = 288, onColumnWidthChange }: TicketKanbanProps) {
   const [activeTicket, setActiveTicket] = useState<ApogeeTicket | null>(null);
-  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const canTransition = useCanTransition();
   const logAction = useLogTicketAction();
 
+  // Initialize collapsed columns from localStorage or default (first 3 expanded)
+  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem(COLLAPSED_COLUMNS_STORAGE_KEY);
+      if (saved) {
+        return new Set(JSON.parse(saved));
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
+    // Default: collapse all except first 3
+    return new Set();
+  });
+
+  // Apply default collapse on first render when statuses are loaded
+  const [hasInitialized, setHasInitialized] = useState(false);
+  useEffect(() => {
+    if (statuses.length > 0 && !hasInitialized) {
+      const saved = localStorage.getItem(COLLAPSED_COLUMNS_STORAGE_KEY);
+      if (!saved) {
+        // No saved preference - apply default: collapse all except first 3
+        const defaultCollapsed = new Set(
+          statuses.slice(DEFAULT_EXPANDED_COUNT).map(s => s.id)
+        );
+        setCollapsedColumns(defaultCollapsed);
+        localStorage.setItem(COLLAPSED_COLUMNS_STORAGE_KEY, JSON.stringify([...defaultCollapsed]));
+      }
+      setHasInitialized(true);
+    }
+  }, [statuses, hasInitialized]);
+
+  // Persist collapsed columns to localStorage
   const toggleColumnCollapse = useCallback((statusId: string) => {
     setCollapsedColumns(prev => {
       const next = new Set(prev);
@@ -319,6 +353,8 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
       } else {
         next.add(statusId);
       }
+      // Save to localStorage
+      localStorage.setItem(COLLAPSED_COLUMNS_STORAGE_KEY, JSON.stringify([...next]));
       return next;
     });
   }, []);
