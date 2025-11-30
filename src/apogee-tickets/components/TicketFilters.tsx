@@ -58,9 +58,15 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
 
   const hasActiveFilters = Object.values(filters).some(v => v !== undefined && v !== '');
   
-  // Vérifie si on a des filtres actifs en plus de la recherche
-  const hasSearchAndFilters = filters.search && filters.search.length > 0 && 
-    Object.entries(filters).some(([key, v]) => key !== 'search' && v !== undefined && v !== '');
+  // Compte les filtres actifs en plus de la recherche
+  const activeFiltersCount = Object.entries(filters).filter(([key, v]) => 
+    key !== 'search' && v !== undefined && v !== ''
+  ).length;
+  
+  const hasSearchAndFilters = filters.search && filters.search.length > 0 && activeFiltersCount > 0;
+  const filterWarningText = activeFiltersCount === 1 
+    ? "Attention, un filtre est activé" 
+    : `Attention, ${activeFiltersCount} filtres sont activés`;
 
   // Valeurs du slider range (min et max)
   const heatMin = filters.heat_priority_min ?? 0;
@@ -122,7 +128,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
           />
           {hasSearchAndFilters && (
             <p className="absolute -bottom-5 left-0 text-[11px] text-destructive">
-              ⚠ Attention : tu filtres en même temps
+              ⚠ {filterWarningText}
             </p>
           )}
         </div>
