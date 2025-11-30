@@ -589,12 +589,22 @@ export const useChatbot = () => {
 
     successToast('Votre demande a été transmise au support. Vous serez recontacté.');
 
-    // Close chat and reset
+    // Full reset: close chat and clear ALL state
     setIsOpen(false);
     setShowTicketCreation(false);
     setShowChoiceMode(true);
     setMessages([]);
     setActiveTicket(null);
+    setSupportMessages([]);
+    setHasSentFirstSupportMessage(false);
+    setInput('');
+    if (supportTimeout) {
+      clearTimeout(supportTimeout);
+      setSupportTimeout(null);
+    }
+    // Clear localStorage
+    localStorage.removeItem('chatMessages');
+    localStorage.removeItem('chatContext');
   };
 
   return {

@@ -18,8 +18,17 @@ export function CreateTicketFromChat({ messages, onCreateTicket, isCreating }: C
 
   // Auto-generate subject and description from chat history
   const generateDefaults = () => {
-    const firstUserMessage = messages.find(m => m.role === 'user')?.content || '';
-    const defaultSubject = firstUserMessage.substring(0, 100);
+    // Skip trivial greetings for subject (bonjour, salut, hello, hi, etc.)
+    const trivialGreetings = ['bonjour', 'salut', 'hello', 'hi', 'coucou', 'bonsoir', 'hey'];
+    const userMessages = messages.filter(m => m.role === 'user');
+    
+    // Find first meaningful user message (not just a greeting)
+    const meaningfulMessage = userMessages.find(m => {
+      const normalized = m.content.toLowerCase().trim();
+      return !trivialGreetings.includes(normalized) && normalized.length > 10;
+    }) || userMessages[1] || userMessages[0];
+    
+    const defaultSubject = meaningfulMessage?.content?.substring(0, 100) || 'Support demandé';
     const defaultDescription = messages
       .map(m => `${m.role === 'user' ? 'Vous' : 'Mme MICHU'}: ${m.content}`)
       .join('\n\n');
