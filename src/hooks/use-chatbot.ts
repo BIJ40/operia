@@ -261,6 +261,13 @@ export const useChatbot = () => {
         return;
       }
 
+      // Mark that user has sent their first message - start timeout
+      if (!hasSentFirstSupportMessage) {
+        setHasSentFirstSupportMessage(true);
+        // Start the 60s timeout now
+        startSupportTimeout();
+      }
+
       setInput('');
       return;
     }
@@ -425,10 +432,18 @@ export const useChatbot = () => {
     setIsOpen(false);
   };
 
-  // Start support timeout - recurring every minute
+  // Track if user has sent first message to support
+  const [hasSentFirstSupportMessage, setHasSentFirstSupportMessage] = useState(false);
+
+  // Start support timeout - recurring every minute AFTER first message sent
   const startSupportTimeout = () => {
     if (supportTimeout) {
       clearTimeout(supportTimeout);
+    }
+
+    // Only start timeout if user has sent their first message
+    if (!hasSentFirstSupportMessage) {
+      return;
     }
 
     const timeout = setTimeout(() => {
@@ -452,9 +467,9 @@ export const useChatbot = () => {
     startSupportTimeout(); // Restart the timeout cycle
   };
 
-  // Start timeout when ticket is created
+  // Start timeout only after first user message is sent
   useEffect(() => {
-    if (activeTicket && !showTicketCreation) {
+    if (activeTicket && hasSentFirstSupportMessage && !showTicketCreation) {
       lastSupportMessageTimeRef.current = new Date();
       startSupportTimeout();
       
@@ -462,7 +477,7 @@ export const useChatbot = () => {
         if (supportTimeout) clearTimeout(supportTimeout);
       };
     }
-  }, [activeTicket]);
+  }, [activeTicket, hasSentFirstSupportMessage]);
 
   // Reset timeout when support responds
   useEffect(() => {
