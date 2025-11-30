@@ -9,7 +9,6 @@ import { useChatbot } from '@/hooks/use-chatbot';
 import { ChatHistory } from '@/components/chatbot/ChatHistory';
 import { ChatInput } from '@/components/chatbot/ChatInput';
 import { ChatModeSelector } from '@/components/chatbot/ChatModeSelector';
-import { ChatContextSelector } from '@/components/chatbot/ChatContextSelector';
 import { SupportTicketDialog } from '@/components/chatbot/SupportTicketDialog';
 import { TimeoutModal } from '@/components/chatbot/TimeoutModal';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
@@ -472,26 +471,13 @@ export function Chatbot() {
           {showChoiceMode && !activeTicket && messages.length === 0 ? (
             <ChatModeSelector
               isCreating={isCreating}
-              onSelectAI={() => setShowChoiceMode(false)}
-              onSelectSupport={async () => {
+              onSelectTheme={(theme) => {
+                setChatContext(theme);
                 setShowChoiceMode(false);
-                const ticket = await createSupportTicket([]);
-                if (ticket) {
-                  setActiveTicket(ticket);
-                  setSupportMessages([]);
-                }
               }}
             />
           ) : (
             <>
-              {/* Context selector - only show when not in support ticket mode */}
-              {!activeTicket && (
-                <ChatContextSelector
-                  selectedContext={chatContext}
-                  onSelectContext={setChatContext}
-                />
-              )}
-              
               <ChatHistory
                 messages={messages}
                 supportMessages={supportMessages}
