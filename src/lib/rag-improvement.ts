@@ -55,6 +55,8 @@ export async function createBlockFromQuery(params: CreateBlockParams): Promise<I
     apogee: 'apogee_guide',
     apporteurs: 'apporteur_guide',
     helpconfort: 'helpconfort_guide',
+    metier: 'metier_guide',
+    franchise: 'franchise_guide',
     documents: 'document',
     auto: 'apogee_guide',
   };

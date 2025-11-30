@@ -1,15 +1,16 @@
 /**
  * RAG utilities for Mme MICHU chatbot
  * Pipeline RAG unifié - P2 Multi-contextes
+ * + P2#4 Ingestion avancée
  */
 
 import { supabase } from '@/integrations/supabase/client';
 import { safeInvoke } from '@/lib/safeQuery';
-import { logDebug, logError } from '@/lib/logger';
+import { logDebug, logError, logInfo } from '@/lib/logger';
 
 // ============ TYPES ============
 
-export type RAGContextType = 'apogee' | 'apporteurs' | 'helpconfort' | 'documents' | 'auto';
+export type RAGContextType = 'apogee' | 'apporteurs' | 'helpconfort' | 'documents' | 'metier' | 'franchise' | 'auto';
 
 export interface RAGSearchParams {
   query: string;
@@ -78,10 +79,23 @@ const CONTEXT_PATTERNS: Record<RAGContextType, RegExp[]> = {
   ],
   helpconfort: [
     /help\s*confort/i,
-    /franchise/i,
     /r[eé]seau/i,
     /agence/i,
     /proc[eé]dure/i,
+  ],
+  metier: [
+    /menuiserie/i,
+    /plomberie/i,
+    /[eé]lectricit[eé]/i,
+    /chauffage/i,
+    /climatisation/i,
+    /serrurerie/i,
+  ],
+  franchise: [
+    /franchise/i,
+    /redevance/i,
+    /franchis[eé]/i,
+    /t[eê]te de r[eé]seau/i,
   ],
   documents: [
     /document/i,
@@ -100,6 +114,8 @@ export function detectContext(question: string): RAGContextType {
     apogee: 0,
     apporteurs: 0,
     helpconfort: 0,
+    metier: 0,
+    franchise: 0,
     documents: 0,
     auto: 0,
   };
@@ -125,6 +141,71 @@ export function detectContext(question: string): RAGContextType {
 
   logDebug(`[RAG-MICHU] Auto-detect context: ${bestCtx} (score: ${bestScore})`);
   return bestCtx;
+}
+
+/**
+ * Detect context from document text (alias for detectContext)
+ * Used by ingestion pipeline
+ */
+export function detectContextFromText(text: string): RAGContextType {
+  return detectContext(text);
+}
+
+// ============ CHUNKING ============
+
+export interface ChunkOptions {
+  maxChunkSize?: number;
+  overlap?: number;
+}
+
+/**
+ * Split text into chunks for embedding
+ */
+export function chunkText(text: string, options: ChunkOptions = {}): string[] {
+  const { maxChunkSize = 1500, overlap = 200 } = options;
+  
+  if (!text || text.trim().length === 0) {
+    return [];
+  }
+
+  const chunks: string[] = [];
+  const paragraphs = text.split(/\n\n+/);
+  let currentChunk = '';
+
+  for (const para of paragraphs) {
+    const trimmedPara = para.trim();
+    if (!trimmedPara) continue;
+
+    if (currentChunk.length + trimmedPara.length + 2 <= maxChunkSize) {
+      currentChunk += (currentChunk ? '\n\n' : '') + trimmedPara;
+    } else {
+      if (currentChunk) {
+        chunks.push(currentChunk);
+        // Keep overlap
+        const words = currentChunk.split(/\s+/);
+        const overlapWords = words.slice(-Math.floor(overlap / 5));
+        currentChunk = overlapWords.join(' ') + '\n\n' + trimmedPara;
+      } else {
+        // Single paragraph too long - split by sentences
+        const sentences = trimmedPara.split(/(?<=[.!?])\s+/);
+        for (const sentence of sentences) {
+          if (currentChunk.length + sentence.length + 1 <= maxChunkSize) {
+            currentChunk += (currentChunk ? ' ' : '') + sentence;
+          } else {
+            if (currentChunk) chunks.push(currentChunk);
+            currentChunk = sentence;
+          }
+        }
+      }
+    }
+  }
+
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+
+  logInfo('rag-michu', `Chunked text into ${chunks.length} chunks`);
+  return chunks;
 }
 
 // ============ MAIN SEARCH FUNCTION ============
@@ -226,6 +307,8 @@ const CONTEXT_NAMES: Record<RAGContextType, string> = {
   apogee: 'Apogée',
   apporteurs: 'Apporteurs',
   helpconfort: 'HelpConfort',
+  metier: 'Métiers',
+  franchise: 'Franchise',
   documents: 'Documents',
   auto: 'Auto',
 };
@@ -291,6 +374,14 @@ export const CONTEXT_SUGGESTIONS: Record<RAGContextType, string[]> = {
     "Quelles sont les procédures réseau Help Confort ?",
     "Comment fonctionne le système de franchise ?",
     "Quels sont les standards qualité de l'agence ?",
+  ],
+  metier: [
+    "Quelles sont les compétences requises en plomberie ?",
+    "Comment intervenir sur une menuiserie PVC ?",
+  ],
+  franchise: [
+    "Comment fonctionne le calcul des redevances ?",
+    "Quelles sont les obligations du franchisé ?",
   ],
   documents: [
     "Où trouver les modèles de contrat ?",

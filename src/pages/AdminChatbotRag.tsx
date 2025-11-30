@@ -14,6 +14,7 @@ import {
   RagCoverageTab,
   RagGapsTab,
   RagStatsTab,
+  RagIngestionTab,
 } from '@/components/admin/chatbot-rag';
 
 export default function AdminChatbotRag() {
@@ -42,7 +43,7 @@ export default function AdminChatbotRag() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-6">
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-9 mb-6">
           <TabsTrigger value="sources" className="gap-1">
             <FolderTree className="w-4 h-4" />
             <span className="hidden sm:inline">Sources</span>
@@ -54,6 +55,10 @@ export default function AdminChatbotRag() {
           <TabsTrigger value="index" className="gap-1">
             <Database className="w-4 h-4" />
             <span className="hidden sm:inline">Index</span>
+          </TabsTrigger>
+          <TabsTrigger value="ingestion" className="gap-1">
+            <Database className="w-4 h-4" />
+            <span className="hidden sm:inline">Ingestion</span>
           </TabsTrigger>
           <TabsTrigger value="coverage" className="gap-1">
             <BarChart3 className="w-4 h-4" />
@@ -87,6 +92,10 @@ export default function AdminChatbotRag() {
 
         <TabsContent value="index">
           <RagIndexTab />
+        </TabsContent>
+
+        <TabsContent value="ingestion">
+          <RagIngestionTab />
         </TabsContent>
 
         <TabsContent value="coverage">
