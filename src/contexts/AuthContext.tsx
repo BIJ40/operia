@@ -119,9 +119,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isSupportAgent = isSuperAdmin || supportModule.agent === true;
   const isSupportAdmin = isSuperAdmin || supportModule.admin === true;
   
-  // Aliases pour compatibilité
-  const canAccessSupportConsole = isSupportAgent;
-  const canManageTickets = isSupportAgent;
+  // canAccessSupportConsole: nécessite global_role >= N1 (franchisee_user) + agent activé
+  const isAtLeastN1 = globalRoleLevel >= GLOBAL_ROLES.franchisee_user; // N1+
+  const canAccessSupportConsole = isSuperAdmin || (isAtLeastN1 && isSupportAgent);
+  const canManageTickets = canAccessSupportConsole;
 
   // Contexte d'accès V2.0
   const accessContext: AccessControlContext = {
