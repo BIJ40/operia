@@ -62,7 +62,7 @@ export default function FranchiseurAgencies() {
         )}
       </div>
 
-      <Card className="rounded-2xl border-l-4 border-l-accent bg-gradient-to-br from-helpconfort-blue-light/10 to-helpconfort-blue-dark/10 shadow-lg">
+      <Card className="rounded-xl border border-helpconfort-blue/20 bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm hover:to-helpconfort-blue/15 hover:shadow-lg transition-all">
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 relative">
