@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
-import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, Moon, Sun, Bell, BellOff } from 'lucide-react';
+import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, Moon, Sun, Bell, BellOff, TicketPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
@@ -46,6 +46,7 @@ export default function AdminSupportTickets() {
     downloadAttachment,
     reopenTicket,
     escalateTicket,
+    convertChatToTicket,
     getStats,
   } = useAdminTickets();
 
@@ -544,6 +545,18 @@ export default function AdminSupportTickets() {
                             escalateTicket(selectedTicket.id, targetLevel, targetUserId, reason)
                           }
                         />
+
+                        {/* Bouton pour convertir un chat en ticket */}
+                        {selectedTicket.is_live_chat && (
+                          <Button
+                            variant="outline"
+                            onClick={() => convertChatToTicket(selectedTicket.id)}
+                            className="gap-2 text-purple-600 border-purple-300 hover:bg-purple-50"
+                          >
+                            <TicketPlus className="w-4 h-4" />
+                            Convertir en ticket
+                          </Button>
+                        )}
 
                         <Select
                           value={selectedTicket.assigned_to || 'none'}

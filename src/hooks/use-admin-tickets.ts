@@ -568,6 +568,35 @@ export const useAdminTickets = () => {
     return { total, newTickets, waitingUser, inProgress, resolved, closed };
   };
 
+  // Convertir un chat en ticket formel (quand le SU ne peut pas résoudre)
+  const convertChatToTicket = async (ticketId: string) => {
+    const result = await safeMutation(
+      supabase
+        .from('support_tickets')
+        .update({
+          is_live_chat: false,
+          escalated_from_chat: true,
+          status: 'new',
+          updated_at: new Date().toISOString()
+        } as any)
+        .eq('id', ticketId),
+      'ADMIN_TICKETS_CONVERT_CHAT'
+    );
+
+    if (!result.success) {
+      errorToast(result.error!);
+      return false;
+    }
+
+    successToast('Chat converti en ticket');
+    
+    await loadTickets();
+    if (selectedTicket?.id === ticketId) {
+      await refreshSelectedTicket(ticketId);
+    }
+    return true;
+  };
+
   useEffect(() => {
     loadTickets();
     loadSupportUsers();
@@ -598,6 +627,7 @@ export const useAdminTickets = () => {
     downloadAttachment,
     reopenTicket,
     escalateTicket,
+    convertChatToTicket,
     getStats,
   };
 };
