@@ -46,14 +46,14 @@ const ACTION_MAPPING: Record<string, string> = {
   'À FAIRE': 'SPEC_A_FAIRE',
   'A ECHANGER': 'SPEC_A_FAIRE',
   'À ÉCHANGER': 'SPEC_A_FAIRE',
-  'A CLASSIFIER': 'BACKLOG',
-  'À CLASSIFIER': 'BACKLOG',
+  'A CLASSIFIER': 'IMPORT',
+  'À CLASSIFIER': 'IMPORT',
   'DEMANDE INFO': 'SPEC_A_FAIRE',
   'EN COURS': 'EN_DEV_APOGEE',
   'ATT MAJ': 'EN_DEV_APOGEE',
   'PRIO 1': 'SPEC_A_FAIRE',
   'PRIO 2': 'SPEC_A_FAIRE',
-  'PLUS TARD': 'BACKLOG',
+  'PLUS TARD': 'IMPORT',
 };
 
 // Mapping PRISE EN CHARGE → owner_side
@@ -113,7 +113,7 @@ function normalizePriority(prio: string | null): string | null {
 }
 
 function normalizeStatus(action: string | null): string {
-  if (!action) return 'BACKLOG';
+  if (!action) return 'IMPORT';
   const upper = action.toUpperCase().trim();
   return ACTION_MAPPING[upper] || 'BACKLOG';
 }

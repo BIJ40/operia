@@ -118,11 +118,11 @@ function determineInitialStatus(data: Record<string, any>): string {
 
   if (action.includes('ATT MAJ')) return 'EN_DEV_APOGEE';
   if (apogee.includes('ATT MAJ') || apogee.includes('QUESTION')) return 'SPEC_A_FAIRE';
-  if (hc.includes('A FAIRE')) return 'BACKLOG';
+  if (hc.includes('A FAIRE')) return 'IMPORT';
   if (hc.includes('A TESTER')) return 'EN_TEST_HC';
   if (hc.includes('OK') || apogee.includes('OK')) return 'EN_PROD';
   
-  return 'BACKLOG';
+  return 'IMPORT';
 }
 
 // Parser le fichier XLSX avec debug des colonnes

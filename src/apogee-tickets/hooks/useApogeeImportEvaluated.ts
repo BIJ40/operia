@@ -89,7 +89,7 @@ function normalizeModule(element: string | null): string | null {
 }
 
 function normalizeStatus(apogeeStatus: string | null): string {
-  if (!apogeeStatus) return 'BACKLOG';
+  if (!apogeeStatus) return 'IMPORT';
   const upper = apogeeStatus.toUpperCase().trim();
   return STATUS_MAPPING[upper] || 'BACKLOG';
 }

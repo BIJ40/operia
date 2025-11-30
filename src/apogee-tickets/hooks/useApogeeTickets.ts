@@ -121,8 +121,8 @@ export function useApogeeTickets(filters?: TicketFilters) {
         query = query.eq('reported_by', filters.reported_by);
       }
       if (filters?.needs_completion) {
-        // Include tickets needing completion OR in BACKLOG (IMPORT) status
-        query = query.or('needs_completion.eq.true,kanban_status.eq.BACKLOG');
+        // Include tickets needing completion OR in IMPORT status
+        query = query.or('needs_completion.eq.true,kanban_status.eq.IMPORT');
       }
       if (filters?.search) {
         query = query.or(`element_concerne.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);

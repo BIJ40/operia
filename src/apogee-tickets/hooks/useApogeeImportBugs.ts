@@ -68,7 +68,7 @@ function normalizeModule(module: string | null): string | null {
 }
 
 function normalizeStatus(statut: string | null): string {
-  if (!statut) return 'BACKLOG';
+  if (!statut) return 'IMPORT';
   const upper = statut.toUpperCase().trim();
   return STATUS_MAPPING[upper] || 'BACKLOG';
 }
