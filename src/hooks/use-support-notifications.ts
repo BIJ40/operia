@@ -54,21 +54,23 @@ export function useSupportNotifications() {
         .in('status', ['new', 'waiting', 'waiting_user'])
         .or('viewed_by_support_at.is.null,assigned_to.is.null');
 
-      // V2.5: Compter séparément les demandes de chat humain (type = 'chat_human')
-      const { count: chatHumanPending, error: chatHumanError } = await supabase
+      // V2.5: Compter séparément les demandes de chat humain (channel_type = 'chat_human')
+      const chatHumanQuery = supabase
         .from('support_tickets')
-        .select('*', { count: 'exact', head: true })
-        .eq('type', 'chat_human')
+        .select('id', { count: 'exact', head: true })
         .in('status', ['new', 'waiting', 'waiting_user'])
         .or('viewed_by_support_at.is.null,assigned_to.is.null');
+      
+      const { count: chatHumanPending, error: chatHumanError } = await chatHumanQuery.filter('channel_type', 'eq', 'chat_human');
 
-      // V2.5: Compter les tickets classiques (type = 'ticket' ou autres)
-      const { count: ticketPending, error: ticketError } = await supabase
+      // V2.5: Compter les tickets classiques (channel_type != 'chat_human')
+      const ticketQuery = supabase
         .from('support_tickets')
-        .select('*', { count: 'exact', head: true })
-        .neq('type', 'chat_human')
+        .select('id', { count: 'exact', head: true })
         .in('status', ['new', 'waiting', 'waiting_user'])
         .or('viewed_by_support_at.is.null,assigned_to.is.null');
+      
+      const { count: ticketPending, error: ticketError } = await ticketQuery.filter('channel_type', 'neq', 'chat_human');
 
       // Tickets assignés à moi (en cours)
       const { count: assignedCount, error: assignedError } = await supabase
