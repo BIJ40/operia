@@ -21,10 +21,22 @@ interface NotificationRequest {
   service?: string;
 }
 
+// TEMPORARY: Disable all email/SMS notifications
+const NOTIFICATIONS_DISABLED = true;
+
 serve(async (req) => {
   // Handle CORS preflight or reject unauthorized origins
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
+
+  // Early exit if notifications are disabled
+  if (NOTIFICATIONS_DISABLED) {
+    console.log('[NOTIFY-SUPPORT-TICKET] Notifications temporarily disabled');
+    return new Response(
+      JSON.stringify({ success: true, message: 'Notifications disabled', emailsSent: 0, smsSent: 0 }),
+      { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+    );
+  }
 
   const origin = req.headers.get('origin') ?? '';
   const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
