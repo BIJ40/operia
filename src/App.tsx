@@ -86,6 +86,7 @@ const ApogeeTicketsImportV1 = lazy(() => import("./apogee-tickets/pages/ApogeeTi
 const ApogeeTicketsIncomplete = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsIncomplete"));
 const ApogeeTicketsClassify = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsClassify"));
 const ApogeeTicketsReview = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsReview"));
+const ApogeeTicketsAdmin = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsAdmin"));
 
 // Lazy loaded pages - User
 const Profile = lazy(() => import("./pages/Profile"));
@@ -247,6 +248,7 @@ function AppContent() {
           <Route path="/admin/apogee-tickets/incomplets" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsIncomplete /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-tickets/classifier" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsClassify /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-tickets/review" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsReview /></RoleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/permissions" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsAdmin /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* USER PAGES - Accessible à tous les connectés */}

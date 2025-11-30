@@ -105,6 +105,7 @@ export const ROUTES = {
     apogeeTicketsIncomplete: '/admin/apogee-tickets/incomplets',
     apogeeTicketsClassify: '/admin/apogee-tickets/classifier',
     apogeeTicketsReview: '/admin/apogee-tickets/review',
+    apogeeTicketsPermissions: '/admin/apogee-tickets/permissions',
     apogeeGuides: '/admin/apogee-guides',
     chatbotRag: '/admin/chatbot-rag',
   },
