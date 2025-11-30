@@ -493,11 +493,13 @@ serve(async (req) => {
     }
 
     // Report to Sentry with full context
-    await captureEdgeException(error, {
+    console.log('[SENTRY] captureEdgeException called for network-kpis');
+    const sentryEventId = await captureEdgeException(error, {
       function: 'network-kpis',
       userId,
       globalRole,
     });
+    console.log('[SENTRY] captureEdgeException result:', sentryEventId ? `Event ID: ${sentryEventId}` : 'Failed to send');
     
     return withCors(req, new Response(
       JSON.stringify({ error: 'Internal error in network-kpis' }),

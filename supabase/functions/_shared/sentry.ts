@@ -48,12 +48,15 @@ function generateEventId(): string {
 
 function parseDSN(dsn: string): { publicKey: string; projectId: string; host: string } | null {
   try {
+    console.log('[Sentry Edge] Parsing DSN:', dsn ? `${dsn.substring(0, 30)}...` : 'undefined');
     const url = new URL(dsn);
     const publicKey = url.username;
     const projectId = url.pathname.replace('/', '');
     const host = url.host;
+    console.log('[Sentry Edge] DSN parsed successfully:', { publicKey: publicKey.substring(0, 10) + '...', projectId, host });
     return { publicKey, projectId, host };
-  } catch {
+  } catch (err) {
+    console.error('[Sentry Edge] DSN parse error:', err);
     return null;
   }
 }
@@ -78,6 +81,8 @@ function parseStackTrace(error: Error): Array<{ filename: string; function: stri
 }
 
 async function sendToSentry(event: SentryEvent): Promise<boolean> {
+  console.log('[Sentry Edge] sendToSentry called, DSN exists:', !!SENTRY_DSN);
+  
   if (!SENTRY_DSN) {
     console.warn('[Sentry Edge] DSN not configured - error not reported');
     return false;
@@ -85,9 +90,11 @@ async function sendToSentry(event: SentryEvent): Promise<boolean> {
 
   const parsed = parseDSN(SENTRY_DSN);
   if (!parsed) {
-    console.error('[Sentry Edge] Invalid DSN format');
+    console.error('[Sentry Edge] Invalid DSN format, raw DSN length:', SENTRY_DSN?.length);
     return false;
   }
+  
+  console.log('[Sentry Edge] DSN parsed, sending to Sentry...');
 
   const { publicKey, projectId, host } = parsed;
   const sentryUrl = `https://${host}/api/${projectId}/store/`;
