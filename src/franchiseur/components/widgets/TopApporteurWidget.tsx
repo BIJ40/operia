@@ -1,56 +1,87 @@
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, TrendingUp, FileText } from "lucide-react";
+import { Users, Medal, TrendingUp, FileText } from "lucide-react";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 
 interface TopApporteurData {
   name: string;
   ca: number;
   nbDossiers: number;
+  rank: number;
 }
 
 interface TopApporteurWidgetProps {
-  apporteur: TopApporteurData | null;
+  apporteurs: TopApporteurData[];
 }
 
-export function TopApporteurWidget({ apporteur }: TopApporteurWidgetProps) {
+export function TopApporteurWidget({ apporteurs }: TopApporteurWidgetProps) {
+  const getMedalColor = (rank: number) => {
+    switch (rank) {
+      case 1: return "text-yellow-500"; // Or
+      case 2: return "text-gray-400";   // Argent
+      case 3: return "text-amber-700";  // Bronze
+      default: return "text-muted-foreground";
+    }
+  };
+
+  const getMedalBg = (rank: number) => {
+    switch (rank) {
+      case 1: return "bg-yellow-500/10 border-yellow-500/30";
+      case 2: return "bg-gray-400/10 border-gray-400/30";
+      case 3: return "bg-amber-700/10 border-amber-700/30";
+      default: return "bg-muted/50 border-border";
+    }
+  };
+
+  const getRankLabel = (rank: number) => {
+    switch (rank) {
+      case 1: return "🥇";
+      case 2: return "🥈";
+      case 3: return "🥉";
+      default: return `#${rank}`;
+    }
+  };
+
   return (
     <div className="group relative rounded-xl border border-helpconfort-blue/15
       bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
       shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
       hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
-      <CardHeader>
+      <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold text-helpconfort-blue flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Meilleur Apporteur
+          Top 3 Apporteurs
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {!apporteur ? (
+        {apporteurs.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aucune donnée disponible</p>
         ) : (
-          <div className="space-y-4">
-            <div className="text-center p-4 rounded-lg bg-background/50">
-              <p className="text-lg font-bold text-primary mb-1">{apporteur.name}</p>
-              <p className="text-xs text-muted-foreground">Top performer du réseau</p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-lg bg-background/50">
-                <div className="flex items-center gap-2 mb-1">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  <p className="text-xs text-muted-foreground">CA Total</p>
+          <div className="space-y-3">
+            {apporteurs.map((apporteur) => (
+              <div
+                key={apporteur.rank}
+                className={`p-3 rounded-lg border transition-all ${getMedalBg(apporteur.rank)} hover:scale-[1.02]`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-background/80">
+                    <span className="text-xl">{getRankLabel(apporteur.rank)}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground truncate">{apporteur.name}</p>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                      <span className="flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" />
+                        {formatEuros(apporteur.ca)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <FileText className="h-3 w-3" />
+                        {apporteur.nbDossiers} dossiers
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <p className="font-semibold text-primary">{formatEuros(apporteur.ca)}</p>
               </div>
-              
-              <div className="p-3 rounded-lg bg-background/50">
-                <div className="flex items-center gap-2 mb-1">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <p className="text-xs text-muted-foreground">Dossiers</p>
-                </div>
-                <p className="font-semibold text-primary">{apporteur.nbDossiers}</p>
-              </div>
-            </div>
+            ))}
           </div>
         )}
       </CardContent>

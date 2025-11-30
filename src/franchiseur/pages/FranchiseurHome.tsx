@@ -205,7 +205,7 @@ export default function FranchiseurHome() {
         <NetworkSAVChart data={stats?.monthlySAVEvolution || []} />
         <div className="grid gap-4 md:grid-cols-2">
           <TopAgenciesWidget agencies={stats?.top5Agencies || []} />
-          <TopApporteurWidget apporteur={stats?.bestApporteur || null} />
+          <TopApporteurWidget apporteurs={stats?.top3Apporteurs || []} />
         </div>
       </div>
     </div>
