@@ -2,6 +2,7 @@
  * Liste des tickets support
  * Mise à jour Phase 3 : utilise les constantes centralisées de supportService.ts
  * P3#1 : Intégration SLA badges
+ * P3#2 : Intégration AI badges
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,8 @@ import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { TicketStatusBadge } from './TicketStatusBadge';
 import { TicketPriorityBadge } from './TicketPriorityBadge';
 import { SLABadge, calculateSLAStatus } from '@/components/tickets/SLABadge';
+import { AIClassificationBadge } from '@/components/support/AIClassificationBadge';
+import { AIIncompleteBadge } from '@/components/support/AIIncompleteBadge';
 
 interface TicketListProps {
   tickets: SupportTicket[];
@@ -94,6 +97,14 @@ export function TicketList({ tickets, selectedTicket, onSelectTicket, showResolv
                   {ticket.service && <ServiceBadge service={ticket.service} />}
                   {/* Badge SLA */}
                   <SLABadge dueAt={ticket.due_at} status={ticket.status} size="sm" />
+                  {/* Badge AI P3#2 */}
+                  <AIClassificationBadge 
+                    isAutoClassified={ticket.auto_classified || false}
+                    category={ticket.ai_category}
+                    confidence={ticket.ai_confidence}
+                    size="sm"
+                  />
+                  <AIIncompleteBadge isIncomplete={ticket.ai_is_incomplete || false} size="sm" />
                 </CardDescription>
                 {ticket.subject && (
                   <p className="text-xs text-muted-foreground truncate">{ticket.subject}</p>

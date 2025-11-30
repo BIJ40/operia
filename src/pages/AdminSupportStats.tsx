@@ -4,7 +4,8 @@
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, Clock, MessageSquare, Star, TrendingUp, Users, CheckCircle, AlertCircle, Timer, Target } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { BarChart3, Clock, MessageSquare, Star, TrendingUp, Users, CheckCircle, AlertCircle, Timer, Target, Sparkles, Brain, FileQuestion, Edit } from 'lucide-react';
 import { useSupportStats } from '@/hooks/use-support-stats';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -467,6 +468,132 @@ export default function AdminSupportStats() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Fifth Row - AI Classification Stats (P3#2) */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Auto-classifiés IA</CardTitle>
+            <Sparkles className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            {stats.isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats.autoClassifiedRate}%</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.autoClassifiedCount} tickets classifiés
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Confiance IA moyenne</CardTitle>
+            <Brain className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {stats.isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className={`text-2xl font-bold ${
+                  stats.avgAIConfidence >= 70 ? 'text-green-600' :
+                  stats.avgAIConfidence >= 40 ? 'text-yellow-600' : 'text-gray-600'
+                }`}>
+                  {stats.avgAIConfidence}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Score de confiance moyen
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tickets incomplets</CardTitle>
+            <FileQuestion className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            {stats.isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className={`text-2xl font-bold ${
+                  stats.incompleteRate > 20 ? 'text-orange-600' : 'text-green-600'
+                }`}>
+                  {stats.incompleteCount}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.incompleteRate}% des tickets
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Corrections IA</CardTitle>
+            <Edit className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {stats.isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className={`text-2xl font-bold ${
+                  stats.aiCorrectionRate > 30 ? 'text-yellow-600' : 'text-green-600'
+                }`}>
+                  {stats.aiCorrectionRate}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Taux de correction manuelle
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* AI Category Distribution */}
+      {Object.keys(stats.ticketsByAICategory).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Catégories IA détectées
+            </CardTitle>
+            <CardDescription>
+              Distribution des catégories auto-classifiées
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {stats.isLoading ? (
+              <Skeleton className="h-[200px] w-full" />
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {Object.entries(stats.ticketsByAICategory)
+                  .sort(([, a], [, b]) => b - a)
+                  .map(([category, count]) => (
+                    <div
+                      key={category}
+                      className="flex items-center gap-2 bg-primary/10 rounded-lg px-3 py-2"
+                    >
+                      <span className="text-sm font-medium capitalize">{category}</span>
+                      <Badge variant="secondary">{count}</Badge>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -1872,7 +1872,15 @@ export type Database = {
       support_tickets: {
         Row: {
           agency_slug: string | null
+          ai_category: string | null
+          ai_classified_at: string | null
+          ai_confidence: number | null
+          ai_is_incomplete: boolean | null
+          ai_priority: string | null
+          ai_suggested_answer: string | null
+          ai_tags: string[] | null
           assigned_to: string | null
+          auto_classified: boolean | null
           category: string | null
           chatbot_conversation: Json | null
           created_at: string
@@ -1898,7 +1906,15 @@ export type Database = {
         }
         Insert: {
           agency_slug?: string | null
+          ai_category?: string | null
+          ai_classified_at?: string | null
+          ai_confidence?: number | null
+          ai_is_incomplete?: boolean | null
+          ai_priority?: string | null
+          ai_suggested_answer?: string | null
+          ai_tags?: string[] | null
           assigned_to?: string | null
+          auto_classified?: boolean | null
           category?: string | null
           chatbot_conversation?: Json | null
           created_at?: string
@@ -1924,7 +1940,15 @@ export type Database = {
         }
         Update: {
           agency_slug?: string | null
+          ai_category?: string | null
+          ai_classified_at?: string | null
+          ai_confidence?: number | null
+          ai_is_incomplete?: boolean | null
+          ai_priority?: string | null
+          ai_suggested_answer?: string | null
+          ai_tags?: string[] | null
           assigned_to?: string | null
+          auto_classified?: boolean | null
           category?: string | null
           chatbot_conversation?: Json | null
           created_at?: string

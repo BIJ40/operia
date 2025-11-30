@@ -16,11 +16,19 @@ interface SupportStats {
   ticketsBySLA: Record<string, number>;
   slaComplianceRate: number;
   monthlyEvolution: { month: string; count: number }[];
+  // P3#2 AI Classification stats
+  autoClassifiedCount: number;
+  autoClassifiedRate: number;
+  incompleteCount: number;
+  incompleteRate: number;
+  ticketsByAICategory: Record<string, number>;
+  avgAIConfidence: number;
+  aiCorrectionRate: number;
   isLoading: boolean;
 }
 
 export function useSupportStats(): SupportStats {
-  const [stats, setStats] = useState<SupportStats>({
+const [stats, setStats] = useState<SupportStats>({
     ticketsThisMonth: 0,
     ticketsLastMonth: 0,
     avgResolutionTimeHours: 0,
@@ -33,6 +41,14 @@ export function useSupportStats(): SupportStats {
     ticketsBySLA: {},
     slaComplianceRate: 0,
     monthlyEvolution: [],
+    // P3#2 AI stats
+    autoClassifiedCount: 0,
+    autoClassifiedRate: 0,
+    incompleteCount: 0,
+    incompleteRate: 0,
+    ticketsByAICategory: {},
+    avgAIConfidence: 0,
+    aiCorrectionRate: 0,
     isLoading: true,
   });
 
@@ -124,6 +140,40 @@ export function useSupportStats(): SupportStats {
           ? Math.round((compliantTickets.length / resolvedWithSLA.length) * 100)
           : 100;
 
+        // P3#2 AI Classification stats
+        const autoClassifiedTickets = tickets.filter(t => t.auto_classified === true);
+        const autoClassifiedCount = autoClassifiedTickets.length;
+        const autoClassifiedRate = tickets.length > 0
+          ? Math.round((autoClassifiedCount / tickets.length) * 100)
+          : 0;
+
+        const incompleteTickets = tickets.filter(t => t.ai_is_incomplete === true);
+        const incompleteCount = incompleteTickets.length;
+        const incompleteRate = tickets.length > 0
+          ? Math.round((incompleteCount / tickets.length) * 100)
+          : 0;
+
+        // Tickets by AI category
+        const ticketsByAICategory: Record<string, number> = {};
+        autoClassifiedTickets.forEach(t => {
+          const cat = t.ai_category || 'autre';
+          ticketsByAICategory[cat] = (ticketsByAICategory[cat] || 0) + 1;
+        });
+
+        // Average AI confidence
+        const ticketsWithConfidence = autoClassifiedTickets.filter(t => t.ai_confidence != null);
+        const avgAIConfidence = ticketsWithConfidence.length > 0
+          ? ticketsWithConfidence.reduce((sum, t) => sum + (t.ai_confidence || 0), 0) / ticketsWithConfidence.length
+          : 0;
+
+        // AI correction rate (tickets where manual category differs from AI category)
+        const ticketsWithBothCategories = autoClassifiedTickets.filter(t => 
+          t.ai_category && t.category && t.ai_category !== t.category
+        );
+        const aiCorrectionRate = autoClassifiedCount > 0
+          ? Math.round((ticketsWithBothCategories.length / autoClassifiedCount) * 100)
+          : 0;
+
         // Monthly evolution (last 6 months)
         const monthlyEvolution: { month: string; count: number }[] = [];
         for (let i = 5; i >= 0; i--) {
@@ -153,6 +203,14 @@ export function useSupportStats(): SupportStats {
           ticketsBySLA,
           slaComplianceRate,
           monthlyEvolution,
+          // P3#2 AI stats
+          autoClassifiedCount,
+          autoClassifiedRate,
+          incompleteCount,
+          incompleteRate,
+          ticketsByAICategory,
+          avgAIConfidence: Math.round(avgAIConfidence * 100),
+          aiCorrectionRate,
           isLoading: false,
         });
       } catch (error) {
