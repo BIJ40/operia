@@ -108,16 +108,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================================================
   const isSuperAdmin = globalRole === 'superadmin';
   
-  // Parser le module support depuis enabled_modules
-  const supportModule: SupportModuleOptions = 
-    (typeof enabledModules?.support === 'object' && enabledModules?.support !== null)
-      ? (enabledModules.support as SupportModuleOptions)
+  // Parser le module support depuis enabled_modules (structure: support.options.agent)
+  const supportModuleConfig = enabledModules?.support;
+  const supportOptions: SupportModuleOptions = 
+    (typeof supportModuleConfig === 'object' && supportModuleConfig !== null && 'options' in supportModuleConfig)
+      ? (supportModuleConfig.options as SupportModuleOptions)
       : {};
   
   // Flags support - superadmin a toujours tous les accès
   const canAccessSupportUser = true; // Tous les utilisateurs peuvent accéder au portail
-  const isSupportAgent = isSuperAdmin || supportModule.agent === true;
-  const isSupportAdmin = isSuperAdmin || supportModule.admin === true;
+  const isSupportAgent = isSuperAdmin || supportOptions.agent === true;
+  const isSupportAdmin = isSuperAdmin || supportOptions.admin === true;
   
   // canAccessSupportConsole: nécessite global_role >= N1 (franchisee_user) + agent activé
   const isAtLeastN1 = globalRoleLevel >= GLOBAL_ROLES.franchisee_user; // N1+
