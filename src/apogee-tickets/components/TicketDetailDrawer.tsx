@@ -5,6 +5,17 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader } from '@/components/ui/sheet';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -48,6 +59,7 @@ interface TicketDetailDrawerProps {
   priorities: ApogeePriority[];
   statuses: ApogeeTicketStatus[];
   onUpdate: (updates: Partial<ApogeeTicket> & { id: string }) => void;
+  onDelete?: (id: string) => void;
 }
 
 const AUTHOR_COLORS: Record<AuthorType, string> = {
@@ -74,6 +86,7 @@ export function TicketDetailDrawer({
   priorities,
   statuses,
   onUpdate,
+  onDelete,
 }: TicketDetailDrawerProps) {
   const { user } = useAuth();
   const { comments, addComment } = useApogeeTicket(ticket?.id || null);
@@ -154,7 +167,7 @@ export function TicketDetailDrawer({
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
               {/* Badges de statut */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Select
                   value={ticket.kanban_status}
                   onValueChange={(v) => handleFieldUpdate('kanban_status', v)}
@@ -228,6 +241,42 @@ export function TicketDetailDrawer({
                 )}
               </div>
             </div>
+            
+            {/* Bouton supprimer */}
+            {onDelete && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    title="Supprimer le ticket"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Supprimer ce ticket ?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Cette action est irréversible. Le ticket "{ticket.element_concerne.slice(0, 50)}..." sera définitivement supprimé.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => {
+                        onDelete(ticket.id);
+                        onClose();
+                      }}
+                    >
+                      Supprimer
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </SheetHeader>
 

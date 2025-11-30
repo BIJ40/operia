@@ -70,6 +70,7 @@ export default function ApogeeTicketsKanban() {
     createTicket,
     updateTicket,
     updateKanbanStatus,
+    deleteTicket,
   } = useApogeeTickets(filters);
 
   const { qualifyAllUnqualified, isQualifying } = useTicketQualification();
@@ -94,6 +95,11 @@ export default function ApogeeTicketsKanban() {
     if (selectedTicket && selectedTicket.id === updates.id) {
       setSelectedTicket({ ...selectedTicket, ...updates });
     }
+  };
+
+  const handleTicketDelete = (id: string) => {
+    deleteTicket.mutate(id);
+    setSelectedTicket(null);
   };
 
   return (
@@ -332,6 +338,7 @@ export default function ApogeeTicketsKanban() {
         priorities={priorities}
         statuses={statuses}
         onUpdate={handleTicketUpdate}
+        onDelete={handleTicketDelete}
       />
 
       {/* Dialog création */}
