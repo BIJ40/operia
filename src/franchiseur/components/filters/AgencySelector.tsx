@@ -7,7 +7,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFranchiseur } from "@/franchiseur/contexts/FranchiseurContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,25 @@ export function AgencySelector() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const { selectedAgencies, setSelectedAgencies, assignedAgencies, franchiseurRole } = useFranchiseur();
+  
+  // Local state pour les sélections en cours (appliquées seulement à la fermeture)
+  const [localSelection, setLocalSelection] = useState<string[]>(selectedAgencies);
+  
+  // Sync local state when popover opens
+  useEffect(() => {
+    if (open) {
+      setLocalSelection(selectedAgencies);
+    }
+  }, [open, selectedAgencies]);
+  
+  // Appliquer les changements uniquement à la fermeture du popover
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && open) {
+      // Fermeture: appliquer la sélection
+      setSelectedAgencies(localSelection);
+    }
+    setOpen(newOpen);
+  };
 
   const { data: allAgencies = [] } = useQuery({
     queryKey: ['apogee-agencies-list'],
@@ -46,15 +65,17 @@ export function AgencySelector() {
 
   const handleSelectAll = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedAgencies([]);
+    e.preventDefault();
+    setLocalSelection([]);
   };
 
   const handleToggleAgency = (agencyId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (selectedAgencies.includes(agencyId)) {
-      setSelectedAgencies(selectedAgencies.filter(id => id !== agencyId));
+    e.preventDefault();
+    if (localSelection.includes(agencyId)) {
+      setLocalSelection(localSelection.filter(id => id !== agencyId));
     } else {
-      setSelectedAgencies([...selectedAgencies, agencyId]);
+      setLocalSelection([...localSelection, agencyId]);
     }
   };
 
@@ -70,7 +91,7 @@ export function AgencySelector() {
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={false}>
+    <Popover open={open} onOpenChange={handleOpenChange} modal={false}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -101,13 +122,13 @@ export function AgencySelector() {
               onClick={handleSelectAll}
               className={cn(
                 "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer transition-colors",
-                selectedAgencies.length === 0 
+                localSelection.length === 0 
                   ? "bg-helpconfort-blue/10 text-helpconfort-blue" 
                   : "hover:bg-muted"
               )}
             >
               <Checkbox 
-                checked={selectedAgencies.length === 0}
+                checked={localSelection.length === 0}
                 className="pointer-events-none border-helpconfort-blue data-[state=checked]:bg-helpconfort-blue data-[state=checked]:text-white"
               />
               <span className="text-sm font-medium">Toutes les agences ({availableAgencies.length})</span>
@@ -123,13 +144,13 @@ export function AgencySelector() {
                   onClick={(e) => handleToggleAgency(agency.id, e)}
                   className={cn(
                     "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer transition-colors",
-                    selectedAgencies.includes(agency.id) 
+                    localSelection.includes(agency.id) 
                       ? "bg-helpconfort-blue/10 text-helpconfort-blue" 
                       : "hover:bg-muted"
                   )}
                 >
                   <Checkbox 
-                    checked={selectedAgencies.includes(agency.id)}
+                    checked={localSelection.includes(agency.id)}
                     className="pointer-events-none border-helpconfort-blue data-[state=checked]:bg-helpconfort-blue data-[state=checked]:text-white"
                   />
                   <span className="text-sm">{agency.label}</span>
