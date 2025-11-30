@@ -345,7 +345,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.legacy.actionsAMener]: 'Actions à Mener',
   [ROUTES.legacy.diffusion]: 'Mode Diffusion',
   [ROUTES.legacy.rhTech]: 'RH Tech - Planning',
-  [ROUTES.legacy.mesDemandes]: 'Mes Demandes',
+  // mesDemandes removed - now active route at ROUTES.support.userTickets
   [ROUTES.legacy.tetDeReseau]: 'Dashboard Réseau',
 };
 

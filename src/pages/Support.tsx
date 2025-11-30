@@ -1,3 +1,11 @@
+/**
+ * @deprecated LEGACY_SUPPORT_V1_NOT_USED
+ * This file has been replaced by:
+ * - SupportUser.tsx for user interface (/support)
+ * - AdminSupportTickets.tsx for SU console (/support/console)
+ * DO NOT USE - Kept for reference only
+ */
+
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminTickets } from '@/hooks/use-admin-tickets';
@@ -21,6 +29,7 @@ import { toast } from 'sonner';
 import { EscalateTicketDialog } from '@/components/admin/support/EscalateTicketDialog';
 import { SupportLevelBadge } from '@/components/SupportLevelBadge';
 
+// LEGACY_SUPPORT_V1_NOT_USED - replaced by SupportUser.tsx and AdminSupportTickets.tsx
 export default function Support() {
   const { isSupport, isAdmin, user } = useAuth();
   const navigate = useNavigate();

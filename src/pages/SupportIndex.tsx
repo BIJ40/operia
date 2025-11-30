@@ -1,3 +1,9 @@
+/**
+ * @deprecated LEGACY_SUPPORT_V1_NOT_USED
+ * This file has been replaced by SupportUser.tsx
+ * DO NOT USE - Kept for reference only
+ */
+
 import { LifeBuoy, Headset } from 'lucide-react';
 import { IndexTile, getVariantForIndex } from '@/components/ui/index-tile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +15,7 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.support.console]: 'support_console',
 };
 
+// LEGACY_SUPPORT_V1_NOT_USED - replaced by SupportUser.tsx
 export default function SupportIndex() {
   const { canAccessSupportConsole } = useAuth();
   const menuLabels = useMenuLabels();

@@ -1,3 +1,9 @@
+/**
+ * @deprecated LEGACY_SUPPORT_V1_NOT_USED
+ * This file has been replaced by UserTickets.tsx
+ * DO NOT USE - Kept for reference only
+ */
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserTickets } from '@/hooks/use-user-tickets';
@@ -18,6 +24,7 @@ import { Plus, Send, Download, ArrowLeft, MessageSquare, History } from 'lucide-
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+// LEGACY_SUPPORT_V1_NOT_USED - replaced by UserTickets.tsx
 export default function UserDemands() {
   const { user } = useAuth();
   const {
