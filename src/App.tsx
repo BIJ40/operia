@@ -81,7 +81,8 @@ const AdminApogeeGuides = lazy(() => import("./pages/AdminApogeeGuides"));
 const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
 const AdminSystemHealth = lazy(() => import("./pages/AdminSystemHealth"));
 
-// Lazy loaded pages - Apogée Tickets
+// Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
+const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
 const ApogeeTicketsKanban = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsKanban"));
 const ApogeeTicketsImport = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImport"));
 const ApogeeTicketsImportPriorities = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportPriorities"));
@@ -256,17 +257,33 @@ function AppContent() {
           <Route path="/admin/page-metadata" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminPageMetadata /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-guides" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminApogeeGuides /></RoleGuard></MainLayout>} />
           <Route path="/admin/chatbot-rag" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminChatbotRag /></RoleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsKanban /></ModuleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/import" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImport /></ModuleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/import-priorities" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportPriorities /></ModuleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/import-evaluated" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportEvaluated /></ModuleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/import-bugs" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportBugs /></ModuleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/import-v1" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportV1 /></ModuleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/incomplets" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsIncomplete /></ModuleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/classifier" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsClassify /></ModuleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/review" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsReview /></ModuleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/permissions" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsAdmin /></ModuleGuard></MainLayout>} />
+          {/* Legacy admin/apogee-tickets - Redirect to /projects */}
+          <Route path="/admin/apogee-tickets" element={<Navigate to="/projects/kanban" replace />} />
+          <Route path="/admin/apogee-tickets/import" element={<Navigate to="/projects/import" replace />} />
+          <Route path="/admin/apogee-tickets/import-priorities" element={<Navigate to="/projects/import-priorities" replace />} />
+          <Route path="/admin/apogee-tickets/import-evaluated" element={<Navigate to="/projects/import-evaluated" replace />} />
+          <Route path="/admin/apogee-tickets/import-bugs" element={<Navigate to="/projects/import-bugs" replace />} />
+          <Route path="/admin/apogee-tickets/import-v1" element={<Navigate to="/projects/import-v1" replace />} />
+          <Route path="/admin/apogee-tickets/incomplets" element={<Navigate to="/projects/incomplets" replace />} />
+          <Route path="/admin/apogee-tickets/classifier" element={<Navigate to="/projects/classifier" replace />} />
+          <Route path="/admin/apogee-tickets/review" element={<Navigate to="/projects/review" replace />} />
+          <Route path="/admin/apogee-tickets/permissions" element={<Navigate to="/projects/permissions" replace />} />
           <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminSystemHealth /></RoleGuard></MainLayout>} />
+          
+          {/* ============================================ */}
+          {/* GESTION DE PROJET (ex Apogée Tickets) */}
+          {/* ============================================ */}
+          <Route path="/projects" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ProjectsIndex /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/kanban" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsKanban /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/import" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImport /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/import-priorities" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportPriorities /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/import-evaluated" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportEvaluated /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/import-bugs" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportBugs /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/import-v1" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportV1 /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/incomplets" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsIncomplete /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/classifier" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsClassify /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/review" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsReview /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/permissions" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsAdmin /></ModuleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* USER PAGES - Accessible à tous les connectés */}

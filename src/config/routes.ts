@@ -83,6 +83,23 @@ export const ROUTES = {
   },
 
   // ============================================
+  // GESTION DE PROJET (ex apogee-tickets)
+  // ============================================
+  projects: {
+    index: '/projects',
+    kanban: '/projects/kanban',
+    import: '/projects/import',
+    importPriorities: '/projects/import-priorities',
+    importEvaluated: '/projects/import-evaluated',
+    importBugs: '/projects/import-bugs',
+    importV1: '/projects/import-v1',
+    incomplete: '/projects/incomplets',
+    classify: '/projects/classifier',
+    review: '/projects/review',
+    permissions: '/projects/permissions',
+  },
+
+  // ============================================
   // ADMINISTRATION
   // ============================================
   admin: {
@@ -101,7 +118,10 @@ export const ROUTES = {
     documents: '/admin/documents',
     storageQuota: '/admin/storage-quota',
     pageMetadata: '/admin/page-metadata',
-    // Apogée Tickets
+    apogeeGuides: '/admin/apogee-guides',
+    chatbotRag: '/admin/chatbot-rag',
+    systemHealth: '/admin/system-health',
+    // Legacy redirects (kept for backward compatibility)
     apogeeTickets: '/admin/apogee-tickets',
     apogeeTicketsImport: '/admin/apogee-tickets/import',
     apogeeTicketsImportPriorities: '/admin/apogee-tickets/import-priorities',
@@ -112,9 +132,6 @@ export const ROUTES = {
     apogeeTicketsClassify: '/admin/apogee-tickets/classifier',
     apogeeTicketsReview: '/admin/apogee-tickets/review',
     apogeeTicketsPermissions: '/admin/apogee-tickets/permissions',
-    apogeeGuides: '/admin/apogee-guides',
-    chatbotRag: '/admin/chatbot-rag',
-    systemHealth: '/admin/system-health',
   },
 
   // ============================================
