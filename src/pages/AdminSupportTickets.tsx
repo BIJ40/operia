@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
-import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, TicketPlus } from 'lucide-react';
+import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, TicketPlus, MessageSquare, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
@@ -133,16 +133,17 @@ export default function AdminSupportTickets() {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants = {
-      waiting: { label: 'En attente', variant: 'secondary', icon: Clock },
-      in_progress: { label: 'En cours', variant: 'default', icon: AlertCircle },
-      resolved: { label: 'Résolu', variant: 'outline', icon: CheckCircle2 },
-      unresolved: { label: 'Non résolu', variant: 'destructive', icon: AlertCircle },
+    const variants: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive'; icon: typeof Clock; className?: string }> = {
+      new: { label: 'Nouveau', variant: 'default', icon: Clock, className: 'bg-blue-500 text-white' },
+      in_progress: { label: 'En cours', variant: 'secondary', icon: AlertCircle, className: 'bg-orange-500 text-white' },
+      waiting_user: { label: 'Att. user', variant: 'outline', icon: MessageSquare, className: 'bg-yellow-500 text-white' },
+      resolved: { label: 'Résolu', variant: 'outline', icon: CheckCircle2, className: 'bg-green-500 text-white' },
+      closed: { label: 'Fermé', variant: 'outline', icon: XCircle, className: 'bg-gray-500 text-white' },
     };
-    const config = variants[status as keyof typeof variants] || variants.waiting;
+    const config = variants[status] || variants.new;
     const Icon = config.icon;
     return (
-      <Badge variant={config.variant as any} className="flex items-center gap-1">
+      <Badge className={`flex items-center gap-1 ${config.className}`}>
         <Icon className="w-3 h-3" />
         {config.label}
       </Badge>
@@ -410,11 +411,12 @@ export default function AdminSupportTickets() {
                             })
                             .map((ticket) => {
                               const isWaiting = ticket.status === 'new' && !ticket.assigned_to;
+                              const isSelected = selectedTicket?.id === ticket.id;
                               return (
                               <Card
                                 key={ticket.id}
                                 className={`cursor-pointer transition-all hover:shadow-md ${
-                                  selectedTicket?.id === ticket.id ? 'border-primary border-2' : ''
+                                  isSelected ? 'ring-2 ring-primary ring-offset-2' : ''
                                 } ${isWaiting ? 'animate-pulse-urgent' : ''}`}
                                 onClick={() => setSelectedTicket(ticket)}
                               >
