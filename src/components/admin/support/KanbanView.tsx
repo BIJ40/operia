@@ -19,7 +19,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TicketPriorityBadge } from './TicketPriorityBadge';
 import { logError } from '@/lib/logger';
-import { SLAIndicator, calculateSLAStatus } from '@/components/tickets/SLABadge';
 import {
   TICKET_STATUSES,
   TICKET_STATUS_LABELS,
@@ -88,12 +87,11 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
     data: { type: 'ticket', ticket, status: ticket.status }
   });
 
-  const slaStatus = calculateSLAStatus(ticket.due_at, ticket.status);
-  const isLate = slaStatus === 'late';
-  const isWarning = slaStatus === 'warning';
-
   // Track if we're dragging to distinguish click from drag
   const [wasDragging, setWasDragging] = useState(false);
+
+  // Priority-based highlighting (replacing SLA)
+  const isUrgent = ticket.priority === 'urgent' || ticket.priority === 'bloquant';
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -116,12 +114,10 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
     setWasDragging(false);
   };
 
-  // Classes conditionnelles pour le highlight SLA
+  // Classes conditionnelles basées sur la priorité (plus de SLA)
   const cardClasses = `rounded-xl p-4 mb-3 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] ${
-    isLate 
+    isUrgent 
       ? 'bg-red-50 border-2 border-red-400 ring-1 ring-red-300' 
-      : isWarning 
-      ? 'bg-yellow-50 border-2 border-yellow-400' 
       : 'bg-white border-2 border-border'
   }`;
 
@@ -137,8 +133,6 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-foreground text-sm">#{ticket.id.slice(0, 8)}</span>
-          {/* Indicateur SLA compact */}
-          <SLAIndicator dueAt={ticket.due_at} status={ticket.status} />
         </div>
         {/* Badge de priorité */}
         <TicketPriorityBadge priority={ticket.priority} size="sm" />

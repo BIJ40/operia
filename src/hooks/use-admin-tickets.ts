@@ -682,6 +682,48 @@ export const useAdminTickets = () => {
     loadSupportUsers();
   }, [filters]);
 
+  // Real-time subscriptions for live updates (SUPPORT_V2)
+  useEffect(() => {
+    if (!canManageTickets) return;
+
+    // Subscribe to ticket changes
+    const ticketsChannel = supabase
+      .channel('admin-tickets-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'support_tickets' },
+        (payload) => {
+          // Reload tickets on any change
+          loadTickets();
+          // If the changed ticket is the selected one, refresh it
+          if (selectedTicket && payload.new && (payload.new as any).id === selectedTicket.id) {
+            refreshSelectedTicket(selectedTicket.id);
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to message changes for the selected ticket
+    const messagesChannel = supabase
+      .channel('admin-messages-changes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'support_messages' },
+        (payload) => {
+          // If new message is for selected ticket, reload messages
+          if (selectedTicket && (payload.new as any).ticket_id === selectedTicket.id) {
+            loadTicketDetails(selectedTicket.id);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ticketsChannel);
+      supabase.removeChannel(messagesChannel);
+    };
+  }, [canManageTickets, selectedTicket?.id]);
+
   useEffect(() => {
     if (selectedTicket) {
       loadTicketDetails(selectedTicket.id);

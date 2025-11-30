@@ -15,7 +15,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { safeQuery } from '@/lib/safeQuery';
 import { getFilteredContexts } from '@/lib/rag-michu';
 import { SupportChatCore } from '@/components/support/SupportChatCore';
-import { SLABadge } from '@/components/tickets/SLABadge';
 import { 
   MessageSquare, 
   HelpCircle, 
@@ -268,9 +267,6 @@ export default function SupportUser() {
                         <p className="text-xs text-muted-foreground">
                           {format(new Date(ticket.created_at), 'dd MMM yyyy', { locale: fr })}
                         </p>
-                        {ticket.due_at && (
-                          <SLABadge dueAt={ticket.due_at} status={ticket.status} size="sm" />
-                        )}
                       </div>
                       {ticket.unreadCount && ticket.unreadCount > 0 && (
                         <Badge className="mt-2 bg-red-500 text-white">

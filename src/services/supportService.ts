@@ -100,41 +100,10 @@ export const TICKET_CATEGORY_LABELS: Record<string, string> = {
 };
 
 // ============================================
-// SLA - Service Level Agreements
+// SLA - DEPRECATED (Support V2 sans SLA)
 // ============================================
-
-/**
- * Règles SLA par catégorie + priorité (en heures)
- * Ces règles sont également implémentées côté DB via calculate_ticket_due_at()
- */
-export const SLA_RULES: Record<string, Record<string, number>> = {
-  blocage: { bloquant: 4, urgent: 4, important: 4, normal: 4, mineur: 8 },
-  bug: { bloquant: 4, urgent: 8, important: 24, normal: 24, mineur: 48 },
-  question: { bloquant: 8, urgent: 12, important: 24, normal: 24, mineur: 48 },
-  amelioration: { bloquant: 24, urgent: 48, important: 72, normal: 72, mineur: 168 },
-  autre: { bloquant: 8, urgent: 8, important: 24, normal: 48, mineur: 72 },
-};
-
-export const SLA_STATUS_LABELS: Record<string, string> = {
-  ok: 'Dans les délais',
-  warning: 'Échéance proche',
-  late: 'En retard',
-};
-
-export const SLA_STATUS_COLORS: Record<string, string> = {
-  ok: 'bg-green-500',
-  warning: 'bg-yellow-500',
-  late: 'bg-red-500',
-};
-
-/**
- * Calcule le nombre d'heures SLA pour un ticket
- */
-export function getSLAHours(category: string | null, priority: string | null): number {
-  const cat = category || 'autre';
-  const prio = priority || 'normal';
-  return SLA_RULES[cat]?.[prio] ?? SLA_RULES.autre.normal;
-}
+// Les champs due_at et sla_status existent en DB mais ne sont plus utilisés.
+// La priorisation se fait via priority (dont 'urgent') et channel_type.
 
 // ============================================
 // TYPES
