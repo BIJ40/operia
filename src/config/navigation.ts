@@ -185,6 +185,13 @@ export const NAV_GROUPS: NavGroup[] = [
         scope: 'support_tickets', 
         description: 'Traiter les demandes de support' 
       },
+      { 
+        title: 'Ticketing Développement', 
+        url: ROUTES.admin.apogeeTickets, 
+        icon: ListTodo, 
+        scope: 'apogee_tickets', 
+        description: 'Suivi des évolutions et corrections Apogée' 
+      },
     ],
   },
   {

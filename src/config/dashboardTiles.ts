@@ -109,9 +109,9 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     requiresSupport: true,
   },
   {
-    id: 'SUIVI_DEV',
-    title: 'Suivi Dev',
-    description: 'Suivi du développement Apogée (Kanban)',
+    id: 'TICKETING_DEV',
+    title: 'Ticketing Développement',
+    description: 'Suivi des évolutions et corrections Apogée',
     icon: Kanban,
     route: ROUTES.admin.apogeeTickets,
     scopeSlug: 'apogee_tickets',
