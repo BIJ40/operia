@@ -10,6 +10,7 @@ import { ChatHistory } from '@/components/chatbot/ChatHistory';
 import { ChatInput } from '@/components/chatbot/ChatInput';
 import { ChatModeSelector } from '@/components/chatbot/ChatModeSelector';
 import { SupportTicketDialog } from '@/components/chatbot/SupportTicketDialog';
+import { ChatCloseDialog } from '@/components/chatbot/ChatCloseDialog';
 import { TimeoutModal } from '@/components/chatbot/TimeoutModal';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
@@ -43,6 +44,8 @@ export function Chatbot() {
   const navigate = useNavigate();
   const { isAdmin, canAccessSupportConsole } = useAuth();
   const { isTestMode } = useChatbotTest();
+
+  const [showChatCloseDialog, setShowChatCloseDialog] = useState(false);
 
   const {
     user,
@@ -455,6 +458,9 @@ export function Chatbot() {
                 onClick={() => {
                   if (activeTicket) {
                     setShowCloseConfirm(true);
+                  } else if (messages.length > 0) {
+                    // AI conversation with messages - show close options
+                    setShowChatCloseDialog(true);
                   } else {
                     setIsOpen(false);
                   }
@@ -555,6 +561,26 @@ export function Chatbot() {
             setIsOpen(false);
           }
         } : undefined}
+      />
+
+      {/* Dialog for closing AI conversation (no active ticket) */}
+      <ChatCloseDialog
+        open={showChatCloseDialog}
+        onClose={() => setShowChatCloseDialog(false)}
+        onMinimize={() => {
+          setIsOpen(false);
+        }}
+        onCreateTicket={async () => {
+          const ticket = await createSupportTicket(messages);
+          if (ticket) {
+            setActiveTicket(ticket);
+            setSupportMessages([]);
+          }
+        }}
+        onEndChat={() => {
+          resetConversation();
+          setIsOpen(false);
+        }}
       />
     </>
   );
