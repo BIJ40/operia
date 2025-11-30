@@ -1,6 +1,7 @@
 /**
  * Support User V2 - Page principale support utilisateur
  * Interface 3 colonnes : FAQ | Chat | Mes demandes
+ * Utilise SupportChatCore pour le chat unifié
  */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -10,27 +11,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { safeQuery, safeInvoke } from '@/lib/safeQuery';
-import { logError } from '@/lib/logger';
+import { safeQuery } from '@/lib/safeQuery';
+import { getFilteredContexts } from '@/lib/rag-michu';
+import { SupportChatCore } from '@/components/support/SupportChatCore';
+import { SLABadge } from '@/components/tickets/SLABadge';
 import { 
   MessageSquare, 
   HelpCircle, 
   FileText, 
-  Send, 
   Plus, 
   Loader2,
   ExternalLink,
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  ChevronRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ROUTES } from '@/config/routes';
-import { getFilteredContexts, type RAGContextType } from '@/lib/rag-michu';
 
 interface FAQItem {
   id: string;
@@ -43,13 +43,10 @@ interface FAQItem {
 export default function SupportUser() {
   const { user, globalRole } = useAuth();
   const navigate = useNavigate();
-  const { tickets, isLoading: ticketsLoading, createTicket, isCreating } = useUserTickets();
+  const { tickets, isLoading: ticketsLoading, loadTickets } = useUserTickets();
   
   const [faqItems, setFaqItems] = useState<FAQItem[]>([]);
   const [faqLoading, setFaqLoading] = useState(true);
-  const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
-  const [isChatLoading, setIsChatLoading] = useState(false);
   const [selectedFAQ, setSelectedFAQ] = useState<FAQItem | null>(null);
 
   // Get allowed RAG contexts based on user role
@@ -60,7 +57,6 @@ export default function SupportUser() {
     const loadFAQ = async () => {
       setFaqLoading(true);
       
-      // Map global_role to role_cible filter
       const roleLevel = getRoleLevel(globalRole);
       
       const result = await safeQuery<FAQItem[]>(
@@ -88,7 +84,6 @@ export default function SupportUser() {
     loadFAQ();
   }, [globalRole]);
 
-  // Get role level for filtering
   function getRoleLevel(role: string | null): number {
     const levels: Record<string, number> = {
       'base_user': 0,
@@ -102,56 +97,13 @@ export default function SupportUser() {
     return levels[role || 'base_user'] || 0;
   }
 
-  // Handle chat message send
-  const handleSendChat = async () => {
-    if (!chatInput.trim() || isChatLoading) return;
-
-    const userMessage = chatInput.trim();
-    setChatInput('');
-    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-    setIsChatLoading(true);
-
-    try {
-      // Determine context based on allowed contexts
-      const defaultContext: RAGContextType = allowedContexts.includes('apogee') ? 'apogee' : allowedContexts[0] || 'apogee';
-
-      const result = await safeInvoke<{ response: string }>(
-        supabase.functions.invoke('chat-guide', {
-          body: {
-            question: userMessage,
-            contextType: defaultContext,
-            history: chatMessages,
-          },
-        }),
-        'SUPPORT_USER_CHAT'
-      );
-
-      if (result.success && result.data?.response) {
-        setChatMessages(prev => [...prev, { role: 'assistant', content: result.data!.response }]);
-      } else {
-        setChatMessages(prev => [...prev, { 
-          role: 'assistant', 
-          content: "Désolé, je n'ai pas pu traiter votre demande. Vous pouvez créer un ticket pour obtenir de l'aide." 
-        }]);
-      }
-    } catch (error) {
-      logError('support-user', 'Chat error', error);
-      setChatMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: "Une erreur est survenue. Veuillez réessayer ou créer un ticket." 
-      }]);
-    } finally {
-      setIsChatLoading(false);
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     const config: Record<string, { label: string; icon: typeof Clock; className: string }> = {
-      new: { label: 'Nouveau', icon: Clock, className: 'bg-blue-100 text-blue-800' },
-      in_progress: { label: 'En cours', icon: AlertCircle, className: 'bg-yellow-100 text-yellow-800' },
-      waiting_user: { label: 'Attente réponse', icon: Clock, className: 'bg-orange-100 text-orange-800' },
-      resolved: { label: 'Résolu', icon: CheckCircle2, className: 'bg-green-100 text-green-800' },
-      closed: { label: 'Fermé', icon: CheckCircle2, className: 'bg-gray-100 text-gray-800' },
+      new: { label: 'Nouveau', icon: Clock, className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
+      in_progress: { label: 'En cours', icon: AlertCircle, className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
+      waiting_user: { label: 'Attente réponse', icon: Clock, className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' },
+      resolved: { label: 'Résolu', icon: CheckCircle2, className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
+      closed: { label: 'Fermé', icon: CheckCircle2, className: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400' },
     };
     const { label, icon: Icon, className } = config[status] || config.new;
     return (
@@ -164,6 +116,12 @@ export default function SupportUser() {
 
   // Recent tickets (max 5)
   const recentTickets = tickets.slice(0, 5);
+  const hasUnreadTickets = tickets.some(t => t.unreadCount && t.unreadCount > 0);
+
+  const handleTicketCreated = (ticketId: string) => {
+    // Reload tickets after creation
+    loadTickets();
+  };
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -208,9 +166,14 @@ export default function SupportUser() {
                           : 'border-border hover:border-primary/50 hover:bg-muted/50'
                       }`}
                     >
-                      <p className="font-medium text-sm">{item.question}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium text-sm flex-1">{item.question}</p>
+                        <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${
+                          selectedFAQ?.id === item.id ? 'rotate-90' : ''
+                        }`} />
+                      </div>
                       {selectedFAQ?.id === item.id && (
-                        <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">
+                        <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap border-t pt-2">
                           {item.answer}
                         </p>
                       )}
@@ -222,8 +185,8 @@ export default function SupportUser() {
           </CardContent>
         </Card>
 
-        {/* Column 2: Chat */}
-        <Card className="lg:col-span-1">
+        {/* Column 2: Chat (using SupportChatCore) */}
+        <Card className="lg:col-span-1 flex flex-col">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <MessageSquare className="w-5 h-5 text-primary" />
@@ -233,70 +196,13 @@ export default function SupportUser() {
               Contextes disponibles: {allowedContexts.join(', ')}
             </p>
           </CardHeader>
-          <CardContent className="flex flex-col h-[500px]">
-            <ScrollArea className="flex-1 pr-4 mb-4">
-              <div className="space-y-4">
-                {chatMessages.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-8">
-                    <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">Posez votre question à l'assistant</p>
-                  </div>
-                ) : (
-                  chatMessages.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-3 rounded-lg ${
-                        msg.role === 'user'
-                          ? 'bg-primary/10 ml-4'
-                          : 'bg-muted mr-4'
-                      }`}
-                    >
-                      <p className="text-xs font-medium mb-1">
-                        {msg.role === 'user' ? 'Vous' : 'Assistant'}
-                      </p>
-                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                    </div>
-                  ))
-                )}
-                {isChatLoading && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">Réponse en cours...</span>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-            
-            <div className="flex gap-2">
-              <Input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendChat()}
-                placeholder="Posez votre question..."
-                disabled={isChatLoading}
-              />
-              <Button 
-                onClick={handleSendChat} 
-                disabled={!chatInput.trim() || isChatLoading}
-                size="icon"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <Separator className="my-4" />
-
-            {/* Quick actions */}
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-2"
-                onClick={() => navigate(ROUTES.support.userTickets)}
-              >
-                <Plus className="w-4 h-4" />
-                Créer un ticket
-              </Button>
-            </div>
+          <CardContent className="flex-1 p-0">
+            <SupportChatCore
+              initialContext={allowedContexts[0] || 'apogee'}
+              onTicketCreated={handleTicketCreated}
+              showFAQSuggestions={false}
+              className="h-[500px]"
+            />
           </CardContent>
         </Card>
 
@@ -307,6 +213,11 @@ export default function SupportUser() {
               <CardTitle className="flex items-center gap-2 text-lg">
                 <FileText className="w-5 h-5 text-primary" />
                 Mes demandes
+                {hasUnreadTickets && (
+                  <Badge className="bg-red-500 text-white text-xs">
+                    Nouveau
+                  </Badge>
+                )}
               </CardTitle>
               <Button
                 variant="ghost"
@@ -353,9 +264,14 @@ export default function SupportUser() {
                         </p>
                         {getStatusBadge(ticket.status)}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(ticket.created_at), 'dd MMM yyyy', { locale: fr })}
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(ticket.created_at), 'dd MMM yyyy', { locale: fr })}
+                        </p>
+                        {ticket.due_at && (
+                          <SLABadge dueAt={ticket.due_at} status={ticket.status} size="sm" />
+                        )}
+                      </div>
                       {ticket.unreadCount && ticket.unreadCount > 0 && (
                         <Badge className="mt-2 bg-red-500 text-white">
                           {ticket.unreadCount} nouveau{ticket.unreadCount > 1 ? 'x' : ''}

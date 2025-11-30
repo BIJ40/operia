@@ -17,7 +17,6 @@ import NotFound from "./pages/NotFound";
 // Lazy loaded pages - Section Index Pages
 const AcademyIndex = lazy(() => import("./pages/AcademyIndex"));
 const PilotageIndex = lazy(() => import("./pages/PilotageIndex"));
-const SupportIndex = lazy(() => import("./pages/SupportIndex"));
 const ReseauIndex = lazy(() => import("./pages/ReseauIndex"));
 
 // Lazy loaded pages - Help Academy (Guides)
