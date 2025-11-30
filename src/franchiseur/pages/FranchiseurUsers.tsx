@@ -438,31 +438,25 @@ export default function FranchiseurUsers() {
   
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
+      <div className="container mx-auto py-8 px-4 flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
   
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
+    <div className="container mx-auto py-8 px-4 space-y-6">
+      {/* Actions bar */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
-            Gestion des Utilisateurs
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {filteredUsers.length} utilisateurs
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
+        </p>
         
         <Button 
           onClick={() => {
             resetForm();
             setIsCreateDialogOpen(true);
           }}
-          className="bg-gradient-to-r from-primary to-helpconfort-blue-dark"
         >
           <UserPlus className="h-4 w-4 mr-2" />
           Nouvel Utilisateur
