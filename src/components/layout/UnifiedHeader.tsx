@@ -42,6 +42,7 @@ import {
 import { toast } from 'sonner';
 import { PAGE_TITLES } from '@/config/navigation';
 import { getPageConfigByPath, getPageDefaultByKey } from '@/config/pageDefaults';
+import { ROUTES } from '@/config/routes';
 import { logError } from '@/lib/logger';
 
 // Mapping des noms d'icônes vers les composants
@@ -253,7 +254,7 @@ export function UnifiedHeader() {
 
             {/* Support button for support staff */}
             {(isSupport || isAdmin) && (
-              <Link to="/admin/support">
+              <Link to={ROUTES.support.console}>
                 <Button 
                   variant="ghost" 
                   size="icon" 
