@@ -1,5 +1,4 @@
 import { StatsOverview } from '@/components/admin/overview/StatsOverview';
-import { QuickActions } from '@/components/admin/overview/QuickActions';
 import { NavigationCards } from '@/components/admin/overview/NavigationCards';
 import { Settings } from 'lucide-react';
 
@@ -19,8 +18,6 @@ export default function AdminIndex() {
       </div>
 
       <StatsOverview />
-
-      <QuickActions />
 
       <NavigationCards />
     </div>
