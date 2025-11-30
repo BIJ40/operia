@@ -211,6 +211,41 @@ export const NAV_GROUPS: NavGroup[] = [
         scope: 'apogee_tickets', 
         description: 'Tickets à compléter' 
       },
+      { 
+        title: 'Classifier', 
+        url: ROUTES.projects.classify, 
+        icon: ListTodo, 
+        scope: 'apogee_tickets', 
+        description: 'Classification des tickets' 
+      },
+      { 
+        title: 'Review', 
+        url: ROUTES.projects.review, 
+        icon: FileText, 
+        scope: 'apogee_tickets', 
+        description: 'Revue des tickets' 
+      },
+      { 
+        title: 'Permissions', 
+        url: ROUTES.projects.permissions, 
+        icon: Users, 
+        scope: 'apogee_tickets', 
+        description: 'Gestion des droits' 
+      },
+      { 
+        title: 'Import', 
+        url: ROUTES.projects.import, 
+        icon: Database, 
+        scope: 'apogee_tickets', 
+        description: 'Import de tickets',
+        children: [
+          { title: 'Import Standard', url: ROUTES.projects.import, icon: Database, scope: 'apogee_tickets' },
+          { title: 'Import Priorités', url: ROUTES.projects.importPriorities, icon: Database, scope: 'apogee_tickets' },
+          { title: 'Import Évalué', url: ROUTES.projects.importEvaluated, icon: Database, scope: 'apogee_tickets' },
+          { title: 'Import Bugs', url: ROUTES.projects.importBugs, icon: Database, scope: 'apogee_tickets' },
+          { title: 'Import V1', url: ROUTES.projects.importV1, icon: Database, scope: 'apogee_tickets' },
+        ]
+      },
     ],
   },
   {
@@ -224,6 +259,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: 'Statistiques', url: ROUTES.reseau.stats, icon: PieChart, scope: 'franchiseur_kpi' },
       { title: 'Comparatifs', url: ROUTES.reseau.comparatifs, icon: GitCompare, scope: 'franchiseur_kpi' },
       { title: 'Redevances', url: ROUTES.reseau.redevances, icon: Coins, scope: 'franchiseur_royalties' },
+      { title: 'Paramètres', url: ROUTES.reseau.parametres, icon: Settings, scope: 'franchiseur_dashboard' },
     ],
   },
   {
@@ -236,7 +272,12 @@ export const NAV_GROUPS: NavGroup[] = [
         url: ROUTES.admin.users, 
         icon: Users, 
         scope: 'admin_users', 
-        description: 'Gestion des comptes' 
+        description: 'Gestion des comptes',
+        children: [
+          { title: 'Liste utilisateurs', url: ROUTES.admin.users, icon: Users, scope: 'admin_users' },
+          { title: 'Collaborateurs', url: ROUTES.admin.collaborateurs, icon: Users, scope: 'admin_users' },
+          { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity, scope: 'admin_users' },
+        ]
       },
       { 
         title: 'Agences', 
@@ -246,39 +287,51 @@ export const NAV_GROUPS: NavGroup[] = [
         description: 'Configurer les agences'
       },
       { 
-        title: 'Tickets Support', 
+        title: 'Support', 
         url: ROUTES.admin.supportTickets, 
         icon: LifeBuoy, 
         scope: 'support_tickets',
-        description: 'Gérer les tickets support'
-      },
-      { 
-        title: 'Stats Support', 
-        url: ROUTES.admin.supportStats, 
-        icon: BarChart3, 
-        scope: 'support_tickets',
-        description: 'Statistiques support'
+        description: 'Gérer les tickets support',
+        children: [
+          { title: 'Tickets', url: ROUTES.admin.supportTickets, icon: LifeBuoy, scope: 'support_tickets' },
+          { title: 'Statistiques', url: ROUTES.admin.supportStats, icon: BarChart3, scope: 'support_tickets' },
+          { title: 'Historique Escalades', url: ROUTES.admin.escalationHistory, icon: FileText, scope: 'support_tickets' },
+        ]
       },
       { 
         title: 'Chatbot & RAG', 
         url: ROUTES.admin.chatbotRag, 
         icon: Database, 
         scope: 'admin_settings',
-        description: 'Intelligence artificielle'
+        description: 'Intelligence artificielle',
+        children: [
+          { title: 'Configuration RAG', url: ROUTES.admin.chatbotRag, icon: Database, scope: 'admin_settings' },
+          { title: 'Guides Apogée', url: ROUTES.admin.apogeeGuides, icon: BookOpen, scope: 'admin_settings' },
+        ]
       },
       { 
-        title: 'Sauvegardes', 
+        title: 'Données', 
         url: ROUTES.admin.backup, 
         icon: Database, 
         scope: 'admin_backup',
-        description: 'Export/import données'
+        description: 'Sauvegardes et stockage',
+        children: [
+          { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database, scope: 'admin_backup' },
+          { title: 'HelpConfort Backup', url: ROUTES.admin.helpconfortBackup, icon: Database, scope: 'admin_backup' },
+          { title: 'Cache', url: ROUTES.admin.cacheBackup, icon: Database, scope: 'admin_backup' },
+          { title: 'Stockage', url: ROUTES.admin.storageQuota, icon: Database, scope: 'admin_backup' },
+        ]
       },
       { 
-        title: 'Santé Système', 
+        title: 'Système', 
         url: ROUTES.admin.systemHealth, 
         icon: Activity, 
         scope: 'admin_settings',
-        description: 'Surveillance'
+        description: 'Surveillance système',
+        children: [
+          { title: 'Santé Système', url: ROUTES.admin.systemHealth, icon: Activity, scope: 'admin_settings' },
+          { title: 'Métadonnées Pages', url: ROUTES.admin.pageMetadata, icon: Settings, scope: 'admin_settings' },
+        ]
       },
     ],
   },
@@ -324,6 +377,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.reseau.stats]: 'Statistiques Réseau',
   [ROUTES.reseau.comparatifs]: 'Comparatifs',
   [ROUTES.reseau.redevances]: 'Redevances',
+  [ROUTES.reseau.parametres]: 'Paramètres Réseau',
   
   // Admin (V2 routes)
   [ROUTES.admin.index]: 'Administration',
