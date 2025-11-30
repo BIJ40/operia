@@ -8,6 +8,7 @@ import { CacheBackupNotification } from "./components/CacheBackupNotification";
 import { MainLayout } from "./components/layout";
 import { Loader2 } from "lucide-react";
 import { RoleGuard } from "./components/auth/RoleGuard";
+import { ModuleGuard } from "./components/auth/ModuleGuard";
 
 // Critical pages - loaded immediately
 import Landing from "./pages/Landing";
@@ -243,16 +244,16 @@ function AppContent() {
           <Route path="/admin/page-metadata" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminPageMetadata /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-guides" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminApogeeGuides /></RoleGuard></MainLayout>} />
           <Route path="/admin/chatbot-rag" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminChatbotRag /></RoleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsKanban /></RoleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/import" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImport /></RoleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/import-priorities" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImportPriorities /></RoleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/import-evaluated" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImportEvaluated /></RoleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/import-bugs" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImportBugs /></RoleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/import-v1" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImportV1 /></RoleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/incomplets" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsIncomplete /></RoleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/classifier" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsClassify /></RoleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/review" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsReview /></RoleGuard></MainLayout>} />
-          <Route path="/admin/apogee-tickets/permissions" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsAdmin /></RoleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsKanban /></ModuleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/import" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImport /></ModuleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/import-priorities" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportPriorities /></ModuleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/import-evaluated" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportEvaluated /></ModuleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/import-bugs" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportBugs /></ModuleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/import-v1" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportV1 /></ModuleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/incomplets" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsIncomplete /></ModuleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/classifier" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsClassify /></ModuleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/review" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsReview /></ModuleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/permissions" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsAdmin /></ModuleGuard></MainLayout>} />
           <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminSystemHealth /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
