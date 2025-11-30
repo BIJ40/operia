@@ -14,7 +14,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
 // Définition des KPI disponibles
@@ -216,12 +215,6 @@ function PilotageStatsHubContent() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        pageKey="pilotage_statistiques"
-        backTo={ROUTES.pilotage.index}
-        backLabel="Retour Pilotage Agence"
-      />
-
       {/* Widgets favoris */}
       {isAgencyReady && isApiEnabled && (
         <Card className="p-4 border-2 border-primary/20 bg-gradient-to-br from-background to-muted/20">

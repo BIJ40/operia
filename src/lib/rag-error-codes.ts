@@ -7,7 +7,6 @@
  * Namespaces logError utilisés :
  * - rag-chat      : Chatbot et interactions utilisateur
  * - rag-michu     : Recherche RAG pour Mme Michu
- * - rag-apogee    : Régénération index Apogée (LEGACY)
  * - rag-index     : Administration de l'index RAG
  * - rag-sources   : Gestion des sources RAG
  * - rag-questions : Historique des questions
@@ -53,10 +52,6 @@ export const RAG_ERROR_CODES = {
 
   // === RAG Debug Admin (RagDebugTab.tsx) ===
   RAG_DEBUG_SEARCH: 'RAG_DEBUG_SEARCH',
-
-  // === RAG Apogee Legacy (rag-apogee.ts) ===
-  RAG_APOGEE_REGENERATE: 'RAG_APOGEE_REGENERATE',
-  RAG_APOGEE_STATS: 'RAG_APOGEE_STATS',
 } as const;
 
 export type RagErrorCode = typeof RAG_ERROR_CODES[keyof typeof RAG_ERROR_CODES];
@@ -67,7 +62,6 @@ export type RagErrorCode = typeof RAG_ERROR_CODES[keyof typeof RAG_ERROR_CODES];
 export const RAG_LOG_NAMESPACES = [
   'rag-chat',
   'rag-michu',
-  'rag-apogee',
   'rag-index',
   'rag-sources',
   'rag-questions',

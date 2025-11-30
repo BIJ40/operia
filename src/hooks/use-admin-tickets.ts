@@ -320,8 +320,8 @@ export const useAdminTickets = () => {
       updateData.viewed_by_support_at = new Date().toISOString();
     }
 
-    // Update status: new → in_progress, waiting_user/waiting → in_progress
-    if (selectedTicket?.status === 'new' || selectedTicket?.status === 'waiting' || selectedTicket?.status === 'waiting_user') {
+    // Update status: new/waiting/waiting_user → in_progress
+    if (['new', 'waiting', 'waiting_user'].includes(selectedTicket?.status || '')) {
       updateData.status = 'in_progress';
     }
 
@@ -585,13 +585,12 @@ export const useAdminTickets = () => {
     }
   };
 
-  // Statistiques utilisant les nouveaux statuts
+  // Statistiques
   const getStats = () => {
     const total = allTickets.length;
-    // 'new' = nouveaux tickets non pris en charge
     const newTickets = allTickets.filter((t) => t.status === 'new').length;
-    // Compatibilité : compter 'waiting' et 'waiting_user' ensemble
-    const waitingUser = allTickets.filter((t) => t.status === 'waiting_user' || t.status === 'waiting').length;
+    // Inclut 'waiting' legacy pour données DB existantes
+    const waitingUser = allTickets.filter((t) => ['waiting_user', 'waiting'].includes(t.status)).length;
     const inProgress = allTickets.filter((t) => t.status === 'in_progress').length;
     const resolved = allTickets.filter((t) => t.status === 'resolved').length;
     const closed = allTickets.filter((t) => t.status === 'closed').length;
