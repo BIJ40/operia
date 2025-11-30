@@ -160,7 +160,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
       {/* Header actions */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          {canManage && (
+          {canViewKanban && (
             <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Nouveau ticket

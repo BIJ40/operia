@@ -49,6 +49,7 @@ import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
 import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMyTicketRole } from '../hooks/useTicketPermissions';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType, ReportedBy } from '../types';
 
 interface TicketDetailDrawerProps {
@@ -89,6 +90,8 @@ export function TicketDetailDrawer({
   onDelete,
 }: TicketDetailDrawerProps) {
   const { user } = useAuth();
+  const { data: roleInfo } = useMyTicketRole();
+  const canManage = roleInfo?.canManage ?? false;
   const { comments, addComment } = useApogeeTicket(ticket?.id || null);
   const { attachments, uploadAttachment, deleteAttachment, isUploading } = useTicketAttachments(ticket?.id || null);
   const { qualifyOne, isQualifying } = useTicketQualification();
@@ -167,20 +170,21 @@ export function TicketDetailDrawer({
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
               {/* Badges de statut */}
-              <div className="flex flex-wrap items-center gap-2">
-                <Select
-                  value={ticket.kanban_status}
-                  onValueChange={(v) => handleFieldUpdate('kanban_status', v)}
-                >
-                  <SelectTrigger className="h-7 w-auto text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statuses.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select
+                    value={ticket.kanban_status}
+                    onValueChange={(v) => handleFieldUpdate('kanban_status', v)}
+                    disabled={!canManage}
+                  >
+                    <SelectTrigger className="h-7 w-auto text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statuses.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 {ticket.module && (
                   <Badge className="bg-blue-500 text-white">
                     {ticket.apogee_modules?.label || ticket.module}
@@ -228,22 +232,24 @@ export function TicketDetailDrawer({
                     )}
                   </>
                 ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-purple-600 border-purple-300 hover:bg-purple-50"
-                    onClick={() => qualifyOne(ticket.id)}
-                    disabled={isQualifying}
-                  >
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    {isQualifying ? 'Qualification...' : 'Qualifier avec IA'}
-                  </Button>
+                  canManage && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-purple-600 border-purple-300 hover:bg-purple-50"
+                      onClick={() => qualifyOne(ticket.id)}
+                      disabled={isQualifying}
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      {isQualifying ? 'Qualification...' : 'Qualifier avec IA'}
+                    </Button>
+                  )
                 )}
               </div>
             </div>
             
             {/* Bouton supprimer */}
-            {onDelete && (
+            {onDelete && canManage && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -314,6 +320,7 @@ export function TicketDetailDrawer({
                     }}
                     rows={2}
                     className="mt-1 text-lg font-semibold resize-none"
+                    disabled={!canManage}
                   />
                 </div>
 
@@ -333,6 +340,7 @@ export function TicketDetailDrawer({
                     rows={6}
                     placeholder="Décrivez le ticket en détail..."
                     className="mt-1 resize-none"
+                    disabled={!canManage}
                   />
                 </div>
 
@@ -343,6 +351,7 @@ export function TicketDetailDrawer({
                     <Select
                       value={ticket.module || ''}
                       onValueChange={(v) => handleFieldUpdate('module', v || null)}
+                      disabled={!canManage}
                     >
                       <SelectTrigger className="h-9 mt-1">
                         <SelectValue placeholder="—" />
@@ -359,6 +368,7 @@ export function TicketDetailDrawer({
                     <Select
                       value={ticket.reported_by || ''}
                       onValueChange={(v) => handleFieldUpdate('reported_by', v || null)}
+                      disabled={!canManage}
                     >
                       <SelectTrigger className="h-9 mt-1">
                         <SelectValue placeholder="—" />
@@ -387,6 +397,7 @@ export function TicketDetailDrawer({
                         className="h-9"
                         min={0}
                         step={0.5}
+                        disabled={!canManage}
                       />
                       <Input
                         type="number"
@@ -402,6 +413,7 @@ export function TicketDetailDrawer({
                         className="h-9"
                         min={0}
                         step={0.5}
+                        disabled={!canManage}
                       />
                     </div>
                   </div>
@@ -421,8 +433,9 @@ export function TicketDetailDrawer({
                         const newValue = Math.max(0, (ticket.heat_priority ?? 3) - 1);
                         onUpdate({ id: ticket.id, heat_priority: newValue });
                       }}
-                      className="p-1 hover:bg-blue-100 rounded transition-colors"
+                      className="p-1 hover:bg-blue-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Diminuer la priorité"
+                      disabled={!canManage}
                     >
                       <Snowflake className="h-5 w-5 text-blue-400" />
                     </button>
@@ -436,6 +449,7 @@ export function TicketDetailDrawer({
                         className="w-full"
                         trackClassName="bg-gradient-to-r from-blue-400 via-yellow-400 to-red-500"
                         rangeClassName="bg-transparent"
+                        disabled={!canManage}
                       />
                     </div>
                     <button
@@ -444,8 +458,9 @@ export function TicketDetailDrawer({
                         const newValue = Math.min(12, (ticket.heat_priority ?? 3) + 1);
                         onUpdate({ id: ticket.id, heat_priority: newValue });
                       }}
-                      className="p-1 hover:bg-red-100 rounded transition-colors"
+                      className="p-1 hover:bg-red-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Augmenter la priorité"
+                      disabled={!canManage}
                     >
                       <Flame className="h-5 w-5 text-red-500" />
                     </button>
@@ -461,6 +476,7 @@ export function TicketDetailDrawer({
                     <OwnerSideSlider
                       value={ownerSideToSliderValue(ticket.owner_side)}
                       onChange={(v) => handleFieldUpdate('owner_side', sliderValueToOwnerSide(v))}
+                      disabled={!canManage}
                     />
                   </div>
                 </div>
