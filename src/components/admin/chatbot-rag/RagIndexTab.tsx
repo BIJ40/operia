@@ -5,7 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { safeQuery, safeMutation, safeInvoke } from '@/lib/safeQuery';
+import { errorToast, successToast } from '@/lib/toastHelpers';
+import { logError } from '@/lib/logger';
 import { Loader2, Database, RefreshCw, Trash2, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -18,67 +20,81 @@ type IndexStats = {
   lastUpdated: string | null;
 };
 
+type ChunkRow = {
+  block_type: string;
+  block_title: string;
+  metadata: unknown;
+  created_at: string;
+};
+
+type DocumentRow = {
+  id: string;
+  file_path: string;
+};
+
 export function RagIndexTab() {
   const [stats, setStats] = useState<IndexStats[]>([]);
   const [totalChunks, setTotalChunks] = useState(0);
   const [loading, setLoading] = useState(true);
   const [rebuilding, setRebuilding] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const loadIndexStats = async () => {
     setLoading(true);
-    try {
-      const { data: chunks, error } = await supabase
+    
+    const result = await safeQuery<ChunkRow[]>(
+      supabase
         .from('guide_chunks')
-        .select('block_type, block_title, metadata, created_at');
+        .select('block_type, block_title, metadata, created_at'),
+      'RAG_INDEX_LOAD_CHUNKS'
+    );
 
-      if (error) throw error;
-
-      // Aggregate by family and source_type
-      const statsMap = new Map<string, IndexStats>();
-
-      (chunks || []).forEach(chunk => {
-        const metadata = chunk.metadata as any;
-        const family = metadata?.source || metadata?.family || 'autre';
-        const sourceType = chunk.block_type || 'unknown';
-        const key = `${family}-${sourceType}`;
-
-        if (!statsMap.has(key)) {
-          statsMap.set(key, {
-            family,
-            sourceType,
-            chunkCount: 0,
-            exampleTitles: [],
-            lastUpdated: null,
-          });
-        }
-
-        const stat = statsMap.get(key)!;
-        stat.chunkCount++;
-        
-        if (stat.exampleTitles.length < 3 && chunk.block_title) {
-          if (!stat.exampleTitles.includes(chunk.block_title)) {
-            stat.exampleTitles.push(chunk.block_title);
-          }
-        }
-
-        if (!stat.lastUpdated || chunk.created_at > stat.lastUpdated) {
-          stat.lastUpdated = chunk.created_at;
-        }
-      });
-
-      setStats(Array.from(statsMap.values()).sort((a, b) => b.chunkCount - a.chunkCount));
-      setTotalChunks(chunks?.length || 0);
-    } catch (error) {
-      console.error('Error loading index stats:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les statistiques de l\'index',
-        variant: 'destructive',
-      });
-    } finally {
+    if (!result.success) {
+      logError('rag-index', 'Error loading index stats', result.error);
+      errorToast(result.error ?? 'Impossible de charger les statistiques de l\'index');
+      setStats([]);
+      setTotalChunks(0);
       setLoading(false);
+      return;
     }
+
+    const chunks = result.data || [];
+
+    // Aggregate by family and source_type
+    const statsMap = new Map<string, IndexStats>();
+
+    chunks.forEach(chunk => {
+      const metadata = chunk.metadata as Record<string, unknown> | null;
+      const family = (metadata?.source as string) || (metadata?.family as string) || 'autre';
+      const sourceType = chunk.block_type || 'unknown';
+      const key = `${family}-${sourceType}`;
+
+      if (!statsMap.has(key)) {
+        statsMap.set(key, {
+          family,
+          sourceType,
+          chunkCount: 0,
+          exampleTitles: [],
+          lastUpdated: null,
+        });
+      }
+
+      const stat = statsMap.get(key)!;
+      stat.chunkCount++;
+      
+      if (stat.exampleTitles.length < 3 && chunk.block_title) {
+        if (!stat.exampleTitles.includes(chunk.block_title)) {
+          stat.exampleTitles.push(chunk.block_title);
+        }
+      }
+
+      if (!stat.lastUpdated || chunk.created_at > stat.lastUpdated) {
+        stat.lastUpdated = chunk.created_at;
+      }
+    });
+
+    setStats(Array.from(statsMap.values()).sort((a, b) => b.chunkCount - a.chunkCount));
+    setTotalChunks(chunks.length);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -87,42 +103,64 @@ export function RagIndexTab() {
 
   const handleRebuild = async (target: 'apogee' | 'documents' | 'all') => {
     setRebuilding(target);
+    
     try {
       if (target === 'apogee' || target === 'all') {
-        const { error } = await supabase.functions.invoke('regenerate-apogee-rag');
-        if (error) throw error;
+        const result = await safeInvoke(
+          supabase.functions.invoke('regenerate-apogee-rag'),
+          'RAG_INDEX_INVOKE_REBUILD_APOGEE'
+        );
+        
+        if (!result.success) {
+          logError('rag-index', 'Error rebuilding Apogée index', result.error);
+          errorToast(result.error ?? 'Erreur lors de la reconstruction Apogée');
+          setRebuilding(null);
+          return;
+        }
       }
 
       if (target === 'documents' || target === 'all') {
         // Rebuild all document chunks
-        const { data: docs } = await supabase
-          .from('documents')
-          .select('id, file_path');
+        const docsResult = await safeQuery<DocumentRow[]>(
+          supabase
+            .from('documents')
+            .select('id, file_path'),
+          'RAG_INDEX_LOAD_DOCUMENTS'
+        );
 
-        for (const doc of docs || []) {
-          try {
-            await supabase.functions.invoke('index-document', {
+        if (!docsResult.success) {
+          logError('rag-index', 'Error loading documents for rebuild', docsResult.error);
+          errorToast(docsResult.error ?? 'Erreur lors du chargement des documents');
+          setRebuilding(null);
+          return;
+        }
+
+        const docs = docsResult.data || [];
+
+        for (const doc of docs) {
+          const indexResult = await safeInvoke(
+            supabase.functions.invoke('index-document', {
               body: { documentId: doc.id, filePath: doc.file_path },
-            });
-          } catch (e) {
-            console.error(`Error indexing doc ${doc.id}:`, e);
+            }),
+            'RAG_INDEX_INVOKE_INDEX_DOCUMENT'
+          );
+
+          if (!indexResult.success) {
+            logError('rag-index', `Error indexing document ${doc.id}`, indexResult.error);
+            // Continue with other documents even if one fails
           }
         }
       }
 
-      toast({
-        title: 'Reconstruction terminée',
-        description: `Index ${target === 'all' ? 'complet' : target} reconstruit`,
-      });
+      successToast(
+        'Reconstruction terminée',
+        `Index ${target === 'all' ? 'complet' : target} reconstruit`
+      );
 
       await loadIndexStats();
     } catch (error) {
-      console.error('Rebuild error:', error);
-      toast({
-        title: 'Erreur',
-        description: error instanceof Error ? error.message : 'Erreur lors de la reconstruction',
-        variant: 'destructive',
-      });
+      logError('rag-index', 'Unexpected rebuild error', error);
+      errorToast(error instanceof Error ? error.message : 'Erreur lors de la reconstruction');
     } finally {
       setRebuilding(null);
     }
@@ -131,27 +169,22 @@ export function RagIndexTab() {
   const handleClearIndex = async () => {
     if (!confirm('Supprimer TOUT l\'index RAG ? Cette action est irréversible.')) return;
 
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('guide_chunks')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+        .neq('id', '00000000-0000-0000-0000-000000000000'), // Delete all
+      'RAG_INDEX_PURGE'
+    );
 
-      if (error) throw error;
-
-      toast({
-        title: 'Index vidé',
-        description: 'Tous les chunks ont été supprimés',
-      });
-
-      await loadIndexStats();
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de vider l\'index',
-        variant: 'destructive',
-      });
+    if (!result.success) {
+      logError('rag-index', 'Error clearing index', result.error);
+      errorToast(result.error ?? 'Impossible de vider l\'index');
+      return;
     }
+
+    successToast('Index vidé', 'Tous les chunks ont été supprimés');
+    await loadIndexStats();
   };
 
   return (
