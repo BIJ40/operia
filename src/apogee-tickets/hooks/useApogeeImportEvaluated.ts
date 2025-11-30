@@ -32,7 +32,8 @@ export interface EvaluatedRow {
   commentaireJerome: string | null;
 }
 
-// Mapping MODULE depuis element_concerne
+// Mapping MODULE depuis element_concerne vers IDs valides dans apogee_modules
+// Valid IDs: RDV, DEVIS, FACTURES, PLANNING, DOSSIERS, CLIENTS, APPORTEURS, STATS, AUTRE, ARTICLES, ALL, APP_TECH, REGLEMENT, ORDER, COMPTA
 const MODULE_MAPPING: Record<string, string> = {
   'RDV': 'RDV',
   'DEVIS': 'DEVIS',
@@ -49,31 +50,34 @@ const MODULE_MAPPING: Record<string, string> = {
   'APPORTEUR': 'APPORTEURS',
   'STATS': 'STATS',
   'STATISTIQUES': 'STATS',
-  'APPLI TECH': 'APPLI_TECH',
-  'APPLICATION TECH': 'APPLI_TECH',
-  'APPLICATION TECK': 'APPLI_TECH',
-  'REGLEMENT': 'REGLEMENTS',
-  'GENERAL': 'GENERAL',
-  'COMMANDE': 'COMMANDES',
-  'COMMANDES': 'COMMANDES',
-  'BI': 'BI',
-  'BASE ARTICLE': 'BASE_ARTICLE',
-  'WORKFLOW': 'WORKFLOW',
-  'MEDIATEQUE': 'MEDIATHEQUE',
-  'TABLEAU D\'ACTIVITE': 'TABLEAU_ACTIVITE',
+  'APPLI TECH': 'APP_TECH',
+  'APPLICATION TECH': 'APP_TECH',
+  'APPLICATION TECK': 'APP_TECH',
+  'REGLEMENT': 'REGLEMENT',
+  'REGLEMENTS': 'REGLEMENT',
+  'GENERAL': 'ALL',
+  'COMMANDE': 'ORDER',
+  'COMMANDES': 'ORDER',
+  'BI': 'STATS',
+  'BASE ARTICLE': 'ARTICLES',
+  'ARTICLES': 'ARTICLES',
+  'COMPTABILITE': 'COMPTA',
+  'COMPTA': 'COMPTA',
 };
 
 // Mapping statut APOGEE vers kanban_status
+// Valid IDs: IMPORT, BACKLOG, TO_DO, ANALYSE, EN_DEV_APOGEE, REVIEW, EN_TEST_HC, UAT, READY_TO_DEPLOY, EN_PROD, STAND-BY
 const STATUS_MAPPING: Record<string, string> = {
-  'QUESTION': 'SPEC_A_FAIRE',
-  'REPONDU JEROME': 'SPEC_A_FAIRE',
-  'REPONDU FLORIAN': 'SPEC_A_FAIRE',
+  'QUESTION': 'ANALYSE',
+  'REPONDU JEROME': 'ANALYSE',
+  'REPONDU FLORIAN': 'ANALYSE',
   'EN COURS': 'EN_DEV_APOGEE',
-  'A DEVELOPPER': 'SPEC_A_FAIRE',
+  'A DEVELOPPER': 'TO_DO',
   'A TESTER': 'EN_TEST_HC',
   'OK': 'EN_PROD',
   'RESOLU': 'EN_PROD',
-  'REPONSE': 'SPEC_A_FAIRE',
+  'REPONSE': 'ANALYSE',
+  'EN ATTENTE': 'STAND-BY',
 };
 
 // Mapping PRIO Excel vers priority FK (apogee_priorities.id)
@@ -107,7 +111,7 @@ function normalizeModule(element: string | null): string | null {
 function normalizeStatus(apogeeStatus: string | null): string {
   if (!apogeeStatus) return 'IMPORT';
   const upper = apogeeStatus.toUpperCase().trim();
-  return STATUS_MAPPING[upper] || 'BACKLOG';
+  return STATUS_MAPPING[upper] || 'IMPORT'; // Default to IMPORT (valid status ID)
 }
 
 function parseOwnerSide(percentage: string | null): OwnerSide | null {
