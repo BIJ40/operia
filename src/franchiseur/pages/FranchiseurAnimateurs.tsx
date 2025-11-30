@@ -268,19 +268,19 @@ export default function FranchiseurAnimateurs() {
                     </div>
                     
                     <div className="flex gap-2">
-                      {isClickable && (
-                        <Button 
-                          variant="outline" 
-                          className="flex-1 rounded-xl"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAnimatorClick(animator.id);
-                          }}
-                        >
-                          <Calendar className="h-4 w-4 mr-2" />
-                          {isOwnProfile ? 'Mon espace' : 'Voir profil'}
-                        </Button>
-                      )}
+                                      {isClickable && (
+                                        <Button 
+                                          variant="outline" 
+                                          className="flex-1 rounded-xl"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleAnimatorClick(animator.id);
+                                          }}
+                                        >
+                                          <Eye className="h-4 w-4 mr-2" />
+                                          {isOwnProfile ? 'Mon espace' : 'Voir profil'}
+                                        </Button>
+                                      )}
                       {canManageAssignments && (
                         <Button 
                           variant="outline" 
