@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { useAllPageMetadata, useUpsertPageMetadata } from '@/hooks/use-page-metadata';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { ROUTES } from '@/config/routes';
 import { PAGE_DEFAULTS } from '@/config/pageDefaults';
 import { Button } from '@/components/ui/button';
@@ -176,12 +175,6 @@ export default function AdminPageMetadata() {
 
   return (
     <div className="container max-w-6xl mx-auto p-6 space-y-6">
-      <PageHeader
-        pageKey="admin_page_metadata"
-        backTo={ROUTES.admin.index}
-        backLabel="Retour Administration"
-      />
-
       {/* Stats et filtres */}
       <div className="flex flex-col sm:flex-row gap-4">
         <Card className="flex-1">

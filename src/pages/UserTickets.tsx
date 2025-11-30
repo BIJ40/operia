@@ -82,18 +82,20 @@ export default function UserTickets() {
     setNewMessage('');
   };
 
-  // Utiliser les nouveaux statuts cohérents avec supportService.ts
+  // Normalise les statuts legacy
+  const normalizeStatus = (status: string) => status === 'waiting' ? 'waiting_user' : status;
+  
   const getStatusBadge = (status: string) => {
+    const normalized = normalizeStatus(status);
     const config: Record<string, { label: string; className: string }> = {
       new: { label: 'Nouveau', className: 'bg-blue-100 text-blue-800 border-blue-300' },
       in_progress: { label: 'En cours', className: 'bg-orange-100 text-orange-800 border-orange-300' },
       waiting_user: { label: 'Attente réponse', className: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
-      waiting: { label: 'En attente', className: 'bg-yellow-100 text-yellow-800 border-yellow-300' }, // Legacy
       resolved: { label: 'Résolu', className: 'bg-green-100 text-green-800 border-green-300' },
       closed: { label: 'Fermé', className: 'bg-gray-100 text-gray-800 border-gray-300' },
     };
 
-    const { label, className } = config[status] || config.new;
+    const { label, className } = config[normalized] || config.new;
     return <Badge variant="outline" className={className}>{label}</Badge>;
   };
 

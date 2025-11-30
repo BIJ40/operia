@@ -29,14 +29,19 @@ const STATUS_ICONS: Record<string, React.ElementType> = {
   waiting_user: MessageSquare,
   resolved: CheckCircle2,
   closed: XCircle,
-  // Fallback pour l'ancien statut 'waiting'
-  waiting: AlertCircle,
+};
+
+// Normalise les anciens statuts vers les nouveaux
+const normalizeStatus = (status: string): string => {
+  if (status === 'waiting') return 'waiting_user';
+  return status;
 };
 
 export function TicketStatusBadge({ status, size = 'default' }: TicketStatusBadgeProps) {
-  const Icon = STATUS_ICONS[status] || AlertCircle;
-  const label = TICKET_STATUS_LABELS[status] || status;
-  const colorClass = TICKET_STATUS_COLORS[status] || 'bg-gray-500';
+  const normalized = normalizeStatus(status);
+  const Icon = STATUS_ICONS[normalized] || AlertCircle;
+  const label = TICKET_STATUS_LABELS[normalized] || normalized;
+  const colorClass = TICKET_STATUS_COLORS[normalized] || 'bg-gray-500';
 
   const sizeClasses = size === 'sm' 
     ? 'text-xs px-1.5 py-0.5' 

@@ -14,7 +14,6 @@ import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
 import { IconPicker } from '@/components/IconPicker';
 import { ImageUploader } from '@/components/ImageUploader';
 import { Block } from '@/types/block';
-import { PageHeader } from '@/components/layout/PageHeader';
 import {
   DndContext,
   closestCenter,
@@ -434,12 +433,6 @@ export default function ApogeeGuide() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container max-w-6xl mx-auto px-4 py-8">
-        <PageHeader
-          pageKey="academy_apogee"
-          backTo={ROUTES.academy.index}
-          backLabel="Retour Help! Academy"
-        />
-
         {!isEditMode && (
           <div className="mb-6 max-w-md mx-auto">
             <div className="relative">
