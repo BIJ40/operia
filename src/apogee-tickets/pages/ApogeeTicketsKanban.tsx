@@ -16,6 +16,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
@@ -147,38 +148,59 @@ export default function ApogeeTicketsKanban() {
             {isRecalculating ? 'Recalcul...' : 'Recalculer priorités'}
           </Button>
           {/* Bouton complétion - toujours visible avec juste le chiffre */}
-          <Link to={ROUTES.admin.apogeeTicketsIncomplete}>
-            <Button 
-              variant="outline" 
-              size="sm"
-              className={incompleteCount > 0 ? "text-orange-600 border-orange-300 hover:bg-orange-50" : ""}
-            >
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {incompleteCount}
-            </Button>
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to={ROUTES.admin.apogeeTicketsIncomplete}>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className={incompleteCount > 0 ? "text-orange-600 border-orange-300 hover:bg-orange-50" : ""}
+                >
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {incompleteCount}
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{incompleteCount} ticket{incompleteCount > 1 ? 's' : ''} à compléter</p>
+            </TooltipContent>
+          </Tooltip>
           {/* Bouton classification "À spécifier" */}
-          <Link to={ROUTES.admin.apogeeTicketsClassify}>
-            <Button 
-              variant="outline" 
-              size="sm"
-              className={toClassifyCount > 0 ? "text-amber-600 border-amber-300 hover:bg-amber-50" : ""}
-            >
-              <FolderOpen className="h-4 w-4 mr-1" />
-              {toClassifyCount}
-            </Button>
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to={ROUTES.admin.apogeeTicketsClassify}>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className={toClassifyCount > 0 ? "text-amber-600 border-amber-300 hover:bg-amber-50" : ""}
+                >
+                  <FolderOpen className="h-4 w-4 mr-1" />
+                  {toClassifyCount}
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{toClassifyCount} ticket{toClassifyCount > 1 ? 's' : ''} à classifier</p>
+            </TooltipContent>
+          </Tooltip>
           {/* Bouton qualification IA - toujours visible */}
-          <Button 
-            variant="outline" 
-            size="sm"
-            className={unqualifiedCount > 0 ? "text-purple-600 border-purple-300 hover:bg-purple-50" : ""}
-            onClick={qualifyAllUnqualified}
-            disabled={isQualifying || unqualifiedCount === 0}
-          >
-            <Sparkles className="h-4 w-4 mr-1" />
-            IA {unqualifiedCount > 0 && `(${unqualifiedCount})`}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className={unqualifiedCount > 0 ? "text-purple-600 border-purple-300 hover:bg-purple-50" : ""}
+                onClick={qualifyAllUnqualified}
+                disabled={isQualifying || unqualifiedCount === 0}
+              >
+                <Sparkles className="h-4 w-4 mr-1" />
+                IA {unqualifiedCount > 0 && `(${unqualifiedCount})`}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{unqualifiedCount} ticket{unqualifiedCount > 1 ? 's' : ''} non qualifié{unqualifiedCount > 1 ? 's' : ''}</p>
+            </TooltipContent>
+          </Tooltip>
           {isAdmin && (
             <Button variant="ghost" size="icon" onClick={() => setShowConfigDialog(true)}>
               <Settings className="h-4 w-4" />
