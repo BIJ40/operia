@@ -49,8 +49,11 @@ export function initSentry() {
       return event;
     },
     
-    // Don't send errors in development unless explicitly enabled
-    enabled: !import.meta.env.DEV || import.meta.env.VITE_SENTRY_DEBUG === "true",
+    // Enable in preview and production, disable in local dev unless debug flag is set
+    enabled: !import.meta.env.DEV || 
+             window.location.hostname.includes("lovableproject.com") ||
+             window.location.hostname.includes("lovable.app") ||
+             import.meta.env.VITE_SENTRY_DEBUG === "true",
     
     // Sample rate for error events (100% by default)
     sampleRate: 1.0,
