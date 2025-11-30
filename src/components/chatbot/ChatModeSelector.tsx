@@ -43,9 +43,9 @@ export function ChatModeSelector({
         </div>
         <div className="flex-1 text-left">
           <div className="font-bold text-sm text-foreground">
-            {isCreating ? 'Connexion...' : 'Conseiller humain'}
+            {isCreating ? 'Connexion...' : 'Contacter le support'}
           </div>
-          <div className="text-xs text-muted-foreground">Support en direct</div>
+          <div className="text-xs text-muted-foreground">Parler à un conseiller</div>
         </div>
       </button>
     </div>

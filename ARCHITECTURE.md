@@ -196,19 +196,47 @@ Documents uploadés par les admins (PDF, images).
 - `block_id`, `apporteur_block_id`
 
 #### `support_tickets`
-Tickets de support.  
-- `user_id`, `status` (waiting/in_progress/resolved), `priority`, `assigned_to`
+Tickets de support (SUPPORT_V2).  
+- `user_id`, `status` (new/in_progress/waiting_user/resolved/closed), `priority` (mineur/normal/important/urgent/bloquant)
+- `type` (chat_ai/chat_human/ticket) - **SUPPORT_V2: channel_type unique**
 - `service` (apogee/helpconfort/apporteurs/conseil/autre), `category`
 - `chatbot_conversation` (JSON), `escalation_history` (JSON)
-- `rating`, `rating_comment`, `support_level`, `is_live_chat`
+- `rating`, `rating_comment`, `support_level`, `assigned_to`
+
+**SUPPORT_V2 - Ticket urgent** : Un ticket urgent = `type: 'ticket'` + `priority: 'urgent'` (pas de type distinct)
 
 #### `support_messages`
 Messages échangés dans les tickets.  
 - `ticket_id`, `sender_id`, `message`, `is_from_support`, `read_at`
+- `is_internal_note` - Note interne visible uniquement par support
+- `is_system_message` - **SUPPORT_V2: Message système automatique** (ex: "Un conseiller a rejoint la conversation")
 
 #### `support_presence`
 Présence temps réel des agents support.  
 - `user_id`, `status` (online/offline/typing), `last_seen`
+
+### Support V2 - Architecture
+
+**Fichier de règles** : `src/services/support-transitions.ts`
+
+**channel_type (type)** :
+- `chat_ai` : Conversation initiée avec IA (Mme MICHU)
+- `chat_human` : Chat direct avec conseiller humain
+- `ticket` : Ticket formel (créé manuellement ou converti)
+
+**Transitions autorisées** :
+- `chat_ai` → `chat_human` (SU prend la main)
+- `chat_ai` → `ticket` (conversion en ticket)
+- `chat_human` → `ticket` (conversion en ticket)
+
+**Transitions interdites** :
+- `ticket` → `chat_ai` / `chat_human` (un ticket reste un ticket)
+- `chat_human` → `chat_ai` (pas de retour à l'IA)
+
+**Messages système** :
+- "Un conseiller a rejoint la conversation." (SU prend la main)
+- Stockés avec `is_system_message = true`
+- Affichés centrés avec style distinct (fond bleu, pill)
 
 #### `chatbot_queries`
 Questions posées au chatbot pour tracking.  
