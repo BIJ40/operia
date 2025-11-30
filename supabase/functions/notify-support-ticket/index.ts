@@ -21,8 +21,8 @@ interface NotificationRequest {
   service?: string;
 }
 
-// TEMPORARY: Disable all email/SMS notifications
-const NOTIFICATIONS_DISABLED = true;
+// Notifications enabled
+const NOTIFICATIONS_DISABLED = false;
 
 serve(async (req) => {
   // Handle CORS preflight or reject unauthorized origins
@@ -314,41 +314,55 @@ serve(async (req) => {
     if (ALLMYSMS_LOGIN && ALLMYSMS_API_KEY && ALLMYSMS_SUPPORT_PHONES) {
       try {
         const supportPhones = ALLMYSMS_SUPPORT_PHONES.split(',').map(p => p.trim());
-        const smsMessage = `🚨 Nouveau ticket ${sourceBadge} de ${userName}${agencySlug ? ` (${agencySlug})` : ''}: "${lastQuestion.substring(0, 80)}${lastQuestion.length > 80 ? '...' : ''}"\n\nRépondre: ${appUrl}/admin/tickets`;
+        const smsMessage = `🚨 Nouveau ticket ${sourceBadge} de ${userName}${agencySlug ? ` (${agencySlug})` : ''}: "${lastQuestion.substring(0, 80)}${lastQuestion.length > 80 ? '...' : ''}"`;
         
         console.log(`Sending SMS to ${supportPhones.length} support phone(s)`);
         
         // Envoyer un SMS à chaque numéro de support
         const smsPromises = supportPhones.map(async (phone) => {
+          const smsData = {
+            DATA: {
+              MESSAGE: smsMessage,
+              TPOA: "Helpogee",
+              SMS: [{
+                MOBILEPHONE: phone
+              }]
+            }
+          };
+
           const params = new URLSearchParams({
             login: ALLMYSMS_LOGIN!,
             apiKey: ALLMYSMS_API_KEY!,
-            smsData: JSON.stringify({
-              DATA: {
-                MESSAGE: smsMessage,
-                TPOA: "Helpogee",
-                SMS: [{
-                  MOBILEPHONE: phone
-                }]
-              }
-            })
+            smsData: JSON.stringify(smsData),
+            returnformat: 'json'
           });
 
-          const response = await fetch(`${ALLMYSMS_API_URL}?${params.toString()}`, {
+          console.log(`[AllMySMS] Sending to ${phone.substring(0, 4)}***`);
+          
+          const response = await fetch(`${ALLMYSMS_API_URL}sendSms?${params.toString()}`, {
             method: 'GET',
             headers: {
               'Accept': 'application/json'
             }
           });
 
+          const responseText = await response.text();
+          console.log(`[AllMySMS] Response for ${phone.substring(0, 4)}***:`, responseText);
+
           if (!response.ok) {
-            console.error(`Failed to send SMS to ${phone}:`, await response.text());
+            console.error(`Failed to send SMS to ${phone}:`, responseText);
             return false;
           }
 
-          const result = await response.json();
-          console.log(`SMS sent to ${phone}:`, result);
-          return true;
+          try {
+            const result = JSON.parse(responseText);
+            console.log(`SMS sent to ${phone}:`, result);
+            // AllMySMS returns status code in response
+            return result.status === 100 || result.status === '100' || response.ok;
+          } catch {
+            // Si la réponse n'est pas JSON, considérer comme succès si HTTP ok
+            return response.ok;
+          }
         });
 
         const results = await Promise.all(smsPromises);
@@ -360,6 +374,7 @@ serve(async (req) => {
       }
     } else {
       console.log('AllMySMS not configured, skipping SMS notifications');
+      console.log(`Config check: LOGIN=${!!ALLMYSMS_LOGIN}, KEY=${!!ALLMYSMS_API_KEY}, PHONES=${!!ALLMYSMS_SUPPORT_PHONES}`);
     }
 
     return withCors(req, new Response(
