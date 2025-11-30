@@ -30,7 +30,7 @@ serve(async (req) => {
   const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
 
   try {
-    // Security: Verify the user is authenticated and has admin or support role
+    // Security: Verify the user is authenticated
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return withCors(req, new Response(
@@ -71,33 +71,35 @@ serve(async (req) => {
 
     const { ticketId, userName, lastQuestion, appUrl, category, source, agencySlug, service }: NotificationRequest = await req.json();
 
-    // Déterminer les rôles cibles en fonction du service
-    let targetRoles = ['admin']; // Admin toujours notifié
+    console.log(`Processing ticket notification for service: ${service || 'autre'}`);
 
-    switch (service) {
-      case 'apogee':
-        targetRoles.push('support');
-        break;
-      case 'helpconfort':
-      case 'apporteurs':
-      case 'conseil':
-        targetRoles.push('franchiseur');
-        break;
-      default: // 'autre' ou non défini
-        targetRoles.push('support', 'franchiseur');
+    // V2: Get support users based on global_role and enabled_modules
+    // platform_admin (N5) and superadmin (N6) always receive notifications
+    // Users with enabled_modules.support.enabled = true also receive notifications
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, email, email_notifications_enabled, global_role, enabled_modules')
+      .eq('is_active', true);
+
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+      throw profilesError;
     }
 
-    console.log(`Routing ticket to roles: ${targetRoles.join(', ')} based on service: ${service || 'autre'}`);
+    // Filter users who should receive support notifications:
+    // 1. platform_admin or superadmin (always)
+    // 2. Users with support module enabled
+    const supportUsers = profiles?.filter(p => {
+      // Check admin roles
+      const isAdmin = p.global_role === 'platform_admin' || p.global_role === 'superadmin';
+      
+      // Check support module enabled
+      const hasSupportModule = p.enabled_modules?.support?.enabled === true;
+      
+      return isAdmin || hasSupportModule;
+    }) || [];
 
-    // Récupérer les utilisateurs avec les rôles cibles
-    const { data: supportUserRoles, error: usersError } = await supabase
-      .from('user_roles')
-      .select('user_id')
-      .in('role', targetRoles);
-
-    if (usersError) throw usersError;
-
-    if (!supportUserRoles || supportUserRoles.length === 0) {
+    if (supportUsers.length === 0) {
       console.log('No support users found');
       return withCors(req, new Response(
         JSON.stringify({ message: 'No support users to notify' }),
@@ -105,19 +107,10 @@ serve(async (req) => {
       ));
     }
 
-    // Récupérer les user IDs
-    const userIds = supportUserRoles.map(ur => ur.user_id);
+    console.log(`Found ${supportUsers.length} support users`);
 
-    // Récupérer les préférences de notifications des utilisateurs support
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, email, email_notifications_enabled')
-      .in('id', userIds);
-
-    if (profilesError) throw profilesError;
-
-    // Filtrer uniquement les utilisateurs qui ont activé les notifications email
-    const usersWithNotificationsEnabled = profiles?.filter(p => p.email_notifications_enabled !== false) || [];
+    // Filter only users with email notifications enabled
+    const usersWithNotificationsEnabled = supportUsers.filter(p => p.email_notifications_enabled !== false);
     
     if (usersWithNotificationsEnabled.length === 0) {
       console.log('No support users with email notifications enabled');
@@ -158,6 +151,16 @@ serve(async (req) => {
       other: '📝 Autre',
     };
     const categoryLabel = category ? categoryLabels[category as keyof typeof categoryLabels] : '';
+
+    // Service label
+    const serviceLabels: Record<string, string> = {
+      apogee: 'Apogée',
+      helpconfort: 'HelpConfort',
+      apporteurs: 'Apporteurs',
+      conseil: 'Conseil',
+      autre: 'Autre',
+    };
+    const serviceLabel = service ? serviceLabels[service] || service : '';
 
     // Envoyer l'email avec un template HTML personnalisé
     const emailHtml = `
@@ -258,6 +261,7 @@ serve(async (req) => {
               <p><strong>Utilisateur :</strong> ${userName}</p>
               <p><strong>Ticket :</strong> #${ticketId.substring(0, 8)}</p>
               <p><strong>Source :</strong> ${sourceBadge}</p>
+              ${serviceLabel ? `<p><strong>Service :</strong> ${serviceLabel}</p>` : ''}
               ${categoryLabel ? `<p><strong>Catégorie :</strong> ${categoryLabel}</p>` : ''}
               ${agencySlug ? `<p><strong>Agence :</strong> ${agencySlug}</p>` : ''}
               <p><strong>Date :</strong> ${new Date().toLocaleString('fr-FR')}</p>
