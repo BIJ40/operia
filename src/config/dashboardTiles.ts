@@ -1,7 +1,7 @@
 import { 
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
-  PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban
+  PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -180,6 +180,17 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Configuration du système',
     icon: Settings,
     route: ROUTES.admin.index,
+    scopeSlug: 'admin_settings',
+    color: 'primary',
+    group: 'admin',
+    requiresAdmin: true,
+  },
+  {
+    id: 'ADMIN_SYSTEM_HEALTH',
+    title: 'Santé Système',
+    description: 'Monitoring et état des services',
+    icon: Activity,
+    route: ROUTES.admin.systemHealth,
     scopeSlug: 'admin_settings',
     color: 'primary',
     group: 'admin',
