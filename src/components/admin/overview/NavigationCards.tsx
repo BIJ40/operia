@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { 
   Users, 
   Headset, 
@@ -9,172 +10,221 @@ import {
   HardDrive,
   Database,
   BarChart3,
-  FolderOpen,
   Settings,
   BookOpen,
   Activity,
-  LucideIcon
+  LucideIcon,
+  Bot,
+  Ticket,
+  Upload,
+  ListChecks,
+  Tags,
+  Eye,
+  Shield,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  History,
+  Bug,
+  Archive
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
+import { cn } from '@/lib/utils';
 
 interface AdminTileProps {
   to: string;
   icon: LucideIcon;
   title: string;
   description: string;
-  variant: 1 | 2 | 4 | 7;
+  children?: { to: string; icon: LucideIcon; title: string }[];
 }
 
-function AdminTile({ to, icon: Icon, title, description, variant }: AdminTileProps) {
-  if (variant === 1) {
-    return (
-      <Link to={to}>
-        <div className="group h-full rounded-xl border border-helpconfort-blue/20 p-5
-          bg-gradient-to-br from-white to-helpconfort-blue/5
-          shadow-sm transition-all duration-300
-          hover:to-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
-              group-hover:border-helpconfort-blue group-hover:bg-white/50 transition-all">
-              <Icon className="w-5 h-5 text-helpconfort-blue" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground mb-1">{title}</h3>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-          </div>
-        </div>
-      </Link>
-    );
-  }
+function AdminTile({ to, icon: Icon, title, description, children }: AdminTileProps) {
+  const [expanded, setExpanded] = useState(false);
+  const hasChildren = children && children.length > 0;
 
-  if (variant === 2) {
-    return (
-      <Link to={to}>
-        <div className="group h-full rounded-xl border border-helpconfort-blue/15 p-5
-          bg-gradient-to-b from-helpconfort-blue/5 to-white
-          shadow-sm transition-all duration-300
-          hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-lg border-2 border-helpconfort-blue/25 flex items-center justify-center
-              group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
-              <Icon className="w-5 h-5 text-helpconfort-blue" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground mb-1">{title}</h3>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-          </div>
-        </div>
-      </Link>
-    );
-  }
-
-  if (variant === 4) {
-    return (
-      <Link to={to}>
-        <div className="group h-full rounded-xl border border-helpconfort-blue/15 p-5
-          border-l-4 border-l-helpconfort-blue/40
-          bg-gradient-to-r from-helpconfort-blue/5 to-white
-          shadow-sm transition-all duration-300
-          hover:from-helpconfort-blue/15 hover:border-l-helpconfort-blue hover:shadow-lg hover:-translate-y-1">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
-              group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
-              <Icon className="w-5 h-5 text-helpconfort-blue" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground mb-1">{title}</h3>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-          </div>
-        </div>
-      </Link>
-    );
-  }
-
-  // variant === 7
   return (
-    <Link to={to}>
-      <div className="group h-full rounded-xl border border-helpconfort-blue/15 p-5
-        bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+    <div className="h-full">
+      <div className="group h-full rounded-xl border border-helpconfort-blue/20 
+        bg-gradient-to-br from-white to-helpconfort-blue/5
         shadow-sm transition-all duration-300
-        hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-1">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
-            group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
-            <Icon className="w-5 h-5 text-helpconfort-blue" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground mb-1">{title}</h3>
-            <p className="text-sm text-muted-foreground">{description}</p>
-          </div>
+        hover:to-helpconfort-blue/15 hover:shadow-lg">
+        <div className="flex items-center gap-3 p-4">
+          <Link to={to} className="flex-1 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
+              group-hover:border-helpconfort-blue group-hover:bg-white/50 transition-all shrink-0">
+              <Icon className="w-5 h-5 text-helpconfort-blue" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-foreground text-sm truncate">{title}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-2">{description}</p>
+            </div>
+          </Link>
+          {hasChildren && (
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                setExpanded(!expanded);
+              }}
+              className="p-1 rounded hover:bg-helpconfort-blue/10 transition-colors"
+            >
+              {expanded ? (
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              )}
+            </button>
+          )}
         </div>
+        
+        {hasChildren && expanded && (
+          <div className="border-t border-helpconfort-blue/10 bg-helpconfort-blue/5 rounded-b-xl">
+            {children.map((child) => (
+              <Link 
+                key={child.to} 
+                to={child.to}
+                className="flex items-center gap-2 px-4 py-2 text-xs hover:bg-helpconfort-blue/10 transition-colors"
+              >
+                <child.icon className="w-3.5 h-3.5 text-helpconfort-blue/70" />
+                <span className="text-muted-foreground hover:text-foreground">{child.title}</span>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
-    </Link>
+    </div>
   );
 }
 
-const VARIANT_CYCLE: (1 | 2 | 4 | 7)[] = [1, 2, 4, 7];
+interface Section {
+  title: string;
+  description?: string;
+  cards: {
+    to: string;
+    icon: LucideIcon;
+    title: string;
+    description: string;
+    children?: { to: string; icon: LucideIcon; title: string }[];
+  }[];
+}
 
 export function NavigationCards() {
-  const sections = [
+  const sections: Section[] = [
     {
-      title: 'Gestion des utilisateurs',
+      title: 'Utilisateurs & Équipes',
+      description: 'Gestion des comptes, agences et collaborateurs',
       cards: [
         { to: ROUTES.admin.users, icon: Users, title: 'Utilisateurs', description: 'Créer et gérer les comptes' },
-        { to: ROUTES.admin.collaborateurs, icon: UsersRound, title: 'Collaborateurs', description: 'Collaborateurs non inscrits' },
         { to: ROUTES.admin.agencies, icon: Building2, title: 'Agences', description: 'Configurer les agences' },
+        { to: ROUTES.admin.collaborateurs, icon: UsersRound, title: 'Collaborateurs', description: 'Collaborateurs non inscrits' },
         { to: ROUTES.admin.userActivity, icon: TrendingUp, title: 'Activité', description: 'Suivi des connexions' },
       ],
     },
     {
-      title: 'Support & Communication',
+      title: 'Support',
+      description: 'Tickets, statistiques et escalades',
       cards: [
+        { to: ROUTES.support.console, icon: Headset, title: 'Console Support', description: 'Gérer les tickets clients' },
         { to: ROUTES.admin.supportStats, icon: BarChart3, title: 'Statistiques Support', description: 'Métriques et indicateurs' },
-        { to: ROUTES.support.console, icon: Headset, title: 'Console Support', description: 'Gérer les tickets' },
-        { to: ROUTES.admin.escalationHistory, icon: FileStack, title: 'Historique Escalades', description: 'Voir toutes les escalades' },
-        { to: ROUTES.admin.documents, icon: FolderOpen, title: 'Documents RAG', description: 'Base documentaire Mme MICHU' },
-        { to: ROUTES.admin.apogeeGuides, icon: BookOpen, title: 'Apogée Guides (RAG)', description: 'Gérer les guides Apogée' },
+        { to: ROUTES.admin.escalationHistory, icon: History, title: 'Historique Escalades', description: 'Escalades chatbot' },
+      ],
+    },
+    {
+      title: 'Intelligence Artificielle & RAG',
+      description: 'Chatbot Mme MICHU et base de connaissances',
+      cards: [
+        { 
+          to: ROUTES.admin.chatbotRag, 
+          icon: Bot, 
+          title: 'Chatbot & RAG', 
+          description: 'Gestion complète IA' 
+        },
+        { 
+          to: ROUTES.admin.apogeeGuides, 
+          icon: BookOpen, 
+          title: 'Guides Apogée', 
+          description: 'Éditer les guides RAG' 
+        },
+      ],
+    },
+    {
+      title: 'Ticketing Développement',
+      description: 'Suivi des évolutions et bugs Apogée',
+      cards: [
+        { 
+          to: ROUTES.admin.apogeeTickets, 
+          icon: Ticket, 
+          title: 'Kanban Tickets', 
+          description: 'Vue kanban principale',
+          children: [
+            { to: ROUTES.admin.apogeeTicketsIncomplete, icon: ListChecks, title: 'Tickets incomplets' },
+            { to: ROUTES.admin.apogeeTicketsClassify, icon: Tags, title: 'Classifier tickets' },
+            { to: ROUTES.admin.apogeeTicketsReview, icon: Eye, title: 'Review tickets' },
+            { to: ROUTES.admin.apogeeTicketsPermissions, icon: Shield, title: 'Permissions' },
+          ]
+        },
+        { 
+          to: ROUTES.admin.apogeeTicketsImport, 
+          icon: Upload, 
+          title: 'Import Tickets', 
+          description: 'Importer depuis Excel',
+          children: [
+            { to: ROUTES.admin.apogeeTicketsImportPriorities, icon: FileText, title: 'Import Priorités' },
+            { to: ROUTES.admin.apogeeTicketsImportEvaluated, icon: FileText, title: 'Import Évalué' },
+            { to: ROUTES.admin.apogeeTicketsImportBugs, icon: Bug, title: 'Import Bugs' },
+            { to: ROUTES.admin.apogeeTicketsImportV1, icon: Archive, title: 'Import V1' },
+          ]
+        },
+      ],
+    },
+    {
+      title: 'Données & Sauvegardes',
+      description: 'Export, import et gestion du cache',
+      cards: [
+        { to: ROUTES.admin.backup, icon: Database, title: 'Sauvegardes', description: 'Export/import données' },
+        { to: ROUTES.admin.helpconfortBackup, icon: FileStack, title: 'HelpConfort Backup', description: 'Sauvegarde HelpConfort' },
+        { to: ROUTES.admin.cacheBackup, icon: Archive, title: 'Cache Backup', description: 'Gestion du cache local' },
       ],
     },
     {
       title: 'Système',
+      description: 'Configuration et surveillance',
       cards: [
-        { to: ROUTES.admin.backup, icon: Database, title: 'Sauvegardes', description: 'Export et import données' },
-        { to: ROUTES.admin.cacheBackup, icon: FileStack, title: 'Cache Backup', description: 'Gestion du cache' },
         { to: ROUTES.admin.storageQuota, icon: HardDrive, title: 'Stockage', description: 'Surveiller les quotas' },
-        { to: ROUTES.admin.pageMetadata, icon: Settings, title: 'Métadonnées', description: 'Titres et labels des pages' },
-        { to: ROUTES.admin.systemHealth, icon: Activity, title: 'Santé Système', description: 'Surveillance des services' },
+        { to: ROUTES.admin.pageMetadata, icon: Settings, title: 'Métadonnées', description: 'Titres et labels pages' },
+        { to: ROUTES.admin.systemHealth, icon: Activity, title: 'Santé Système', description: 'Surveillance services' },
       ],
     },
   ];
-
-  let globalIndex = 0;
 
   return (
     <div className="space-y-8">
       {sections.map((section) => (
         <div key={section.title}>
-          <h2 className="text-xl font-semibold mb-4 text-foreground">
-            {section.title}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {section.cards.map((card) => {
-              const variant = VARIANT_CYCLE[globalIndex % VARIANT_CYCLE.length];
-              globalIndex++;
-              return (
-                <AdminTile
-                  key={card.to}
-                  to={card.to}
-                  icon={card.icon}
-                  title={card.title}
-                  description={card.description}
-                  variant={variant}
-                />
-              );
-            })}
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-foreground">
+              {section.title}
+            </h2>
+            {section.description && (
+              <p className="text-sm text-muted-foreground">{section.description}</p>
+            )}
+          </div>
+          <div className={cn(
+            "grid gap-4",
+            section.cards.length <= 3 
+              ? "grid-cols-1 md:grid-cols-3" 
+              : "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+          )}>
+            {section.cards.map((card) => (
+              <AdminTile
+                key={card.to}
+                to={card.to}
+                icon={card.icon}
+                title={card.title}
+                description={card.description}
+                children={card.children}
+              />
+            ))}
           </div>
         </div>
       ))}

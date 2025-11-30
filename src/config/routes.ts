@@ -104,6 +104,8 @@ export const ROUTES = {
     apogeeTicketsImport: '/admin/apogee-tickets/import',
     apogeeTicketsImportPriorities: '/admin/apogee-tickets/import-priorities',
     apogeeTicketsImportEvaluated: '/admin/apogee-tickets/import-evaluated',
+    apogeeTicketsImportBugs: '/admin/apogee-tickets/import-bugs',
+    apogeeTicketsImportV1: '/admin/apogee-tickets/import-v1',
     apogeeTicketsIncomplete: '/admin/apogee-tickets/incomplets',
     apogeeTicketsClassify: '/admin/apogee-tickets/classifier',
     apogeeTicketsReview: '/admin/apogee-tickets/review',

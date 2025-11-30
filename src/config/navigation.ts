@@ -217,21 +217,42 @@ export const NAV_GROUPS: NavGroup[] = [
         url: ROUTES.admin.users, 
         icon: Users, 
         scope: 'admin_users', 
-        description: 'Gestion des comptes utilisateurs' 
+        description: 'Gestion des comptes' 
       },
-      { title: 'Agences', url: ROUTES.admin.agencies, icon: Building2, scope: 'admin_settings' },
-      { title: 'Collaborateurs', url: ROUTES.admin.collaborateurs, icon: Users, scope: 'admin_users' },
-      { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database, scope: 'admin_backup' },
-      { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity, scope: 'admin_settings' },
-      { title: 'Métadonnées pages', url: ROUTES.admin.pageMetadata, icon: FileText, scope: 'admin_settings' },
-      { title: 'Chatbot & RAG', url: ROUTES.admin.chatbotRag, icon: Database, scope: 'admin_settings' },
-      { title: 'Santé Système', url: ROUTES.admin.systemHealth, icon: Activity, scope: 'admin_settings' },
       { 
-        title: 'Paramètres', 
-        url: ROUTES.admin.index, 
-        icon: Settings, 
-        scope: 'admin_settings', 
-        description: 'Configuration du système' 
+        title: 'Agences', 
+        url: ROUTES.admin.agencies, 
+        icon: Building2, 
+        scope: 'admin_settings',
+        description: 'Configurer les agences'
+      },
+      { 
+        title: 'Console Support', 
+        url: ROUTES.support.console, 
+        icon: LifeBuoy, 
+        scope: 'support_tickets',
+        description: 'Gérer les tickets'
+      },
+      { 
+        title: 'Chatbot & RAG', 
+        url: ROUTES.admin.chatbotRag, 
+        icon: Database, 
+        scope: 'admin_settings',
+        description: 'Intelligence artificielle'
+      },
+      { 
+        title: 'Sauvegardes', 
+        url: ROUTES.admin.backup, 
+        icon: Database, 
+        scope: 'admin_backup',
+        description: 'Export/import données'
+      },
+      { 
+        title: 'Santé Système', 
+        url: ROUTES.admin.systemHealth, 
+        icon: Activity, 
+        scope: 'admin_settings',
+        description: 'Surveillance'
       },
     ],
   },
@@ -283,14 +304,26 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.admin.users]: 'Gestion Utilisateurs',
   [ROUTES.admin.agencies]: 'Gestion Agences',
   [ROUTES.admin.backup]: 'Sauvegardes',
+  [ROUTES.admin.helpconfortBackup]: 'HelpConfort Backup',
+  [ROUTES.admin.cacheBackup]: 'Cache Backup',
   [ROUTES.admin.collaborateurs]: 'Collaborateurs non inscrits',
   [ROUTES.admin.userActivity]: 'Activité Utilisateurs',
   [ROUTES.admin.escalationHistory]: 'Historique Escalades',
   [ROUTES.admin.chatbotRag]: 'Chatbot & RAG',
+  [ROUTES.admin.apogeeGuides]: 'Guides Apogée (RAG)',
   [ROUTES.admin.systemHealth]: 'Santé Système',
   [ROUTES.admin.storageQuota]: 'Stockage',
-  [ROUTES.admin.cacheBackup]: 'Cache Backup',
-  [ROUTES.admin.apogeeTickets]: 'TICKETING DEVELOPPEMENT',
+  [ROUTES.admin.pageMetadata]: 'Métadonnées Pages',
+  [ROUTES.admin.apogeeTickets]: 'Ticketing Développement',
+  [ROUTES.admin.apogeeTicketsImport]: 'Import Tickets',
+  [ROUTES.admin.apogeeTicketsImportPriorities]: 'Import Priorités',
+  [ROUTES.admin.apogeeTicketsImportEvaluated]: 'Import Évalué',
+  [ROUTES.admin.apogeeTicketsImportBugs]: 'Import Bugs',
+  [ROUTES.admin.apogeeTicketsImportV1]: 'Import V1',
+  [ROUTES.admin.apogeeTicketsIncomplete]: 'Tickets Incomplets',
+  [ROUTES.admin.apogeeTicketsClassify]: 'Classifier Tickets',
+  [ROUTES.admin.apogeeTicketsReview]: 'Review Tickets',
+  [ROUTES.admin.apogeeTicketsPermissions]: 'Permissions Tickets',
   
   // User
   [ROUTES.profile]: 'Mon Profil',
