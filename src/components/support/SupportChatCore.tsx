@@ -326,7 +326,7 @@ export function SupportChatCore({
           status: 'new',
           priority: 'normal',
           chatbot_conversation: chatbotConversation,
-          escalated_from_chat: true,
+          type: 'ticket',
           source: 'chat',
         }).select().single(),
         'SUPPORT_CHAT_CREATE_TICKET'
@@ -380,7 +380,7 @@ export function SupportChatCore({
           subject,
           status: 'new',
           priority: 'important',
-          is_live_chat: true,
+          type: 'chat_ai',
           source: 'chat',
           chatbot_conversation: messages.map(m => ({
             role: m.role,

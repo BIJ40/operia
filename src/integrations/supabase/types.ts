@@ -1885,11 +1885,9 @@ export type Database = {
           chatbot_conversation: Json | null
           created_at: string
           due_at: string | null
-          escalated_from_chat: boolean | null
           escalation_history: Json | null
           has_attachments: boolean
           id: string
-          is_live_chat: boolean | null
           priority: string
           rating: number | null
           rating_comment: string | null
@@ -1900,6 +1898,7 @@ export type Database = {
           status: string
           subject: string
           support_level: number | null
+          type: string | null
           updated_at: string
           user_id: string
           viewed_by_support_at: string | null
@@ -1919,11 +1918,9 @@ export type Database = {
           chatbot_conversation?: Json | null
           created_at?: string
           due_at?: string | null
-          escalated_from_chat?: boolean | null
           escalation_history?: Json | null
           has_attachments?: boolean
           id?: string
-          is_live_chat?: boolean | null
           priority?: string
           rating?: number | null
           rating_comment?: string | null
@@ -1934,6 +1931,7 @@ export type Database = {
           status?: string
           subject?: string
           support_level?: number | null
+          type?: string | null
           updated_at?: string
           user_id: string
           viewed_by_support_at?: string | null
@@ -1953,11 +1951,9 @@ export type Database = {
           chatbot_conversation?: Json | null
           created_at?: string
           due_at?: string | null
-          escalated_from_chat?: boolean | null
           escalation_history?: Json | null
           has_attachments?: boolean
           id?: string
-          is_live_chat?: boolean | null
           priority?: string
           rating?: number | null
           rating_comment?: string | null
@@ -1968,6 +1964,7 @@ export type Database = {
           status?: string
           subject?: string
           support_level?: number | null
+          type?: string | null
           updated_at?: string
           user_id?: string
           viewed_by_support_at?: string | null
