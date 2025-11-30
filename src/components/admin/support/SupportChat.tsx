@@ -35,8 +35,8 @@ export function SupportChat({
   };
 
   return (
-    <div className="flex flex-col h-[600px]">
-      <ScrollArea className="flex-1 p-4">
+    <div className="flex flex-col h-full min-h-[400px] max-h-[calc(100vh-350px)]">
+      <ScrollArea className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-4">
           {messages.map((msg) => (
             <TicketMessageItem
