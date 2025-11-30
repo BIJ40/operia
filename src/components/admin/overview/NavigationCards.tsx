@@ -100,15 +100,15 @@ function AdminTile({ to, icon: Icon, title, description, variant }: AdminTilePro
         bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
         shadow-sm transition-all duration-300
         hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-1">
-        <div className="flex flex-col">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
-              group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
-              <Icon className="w-5 h-5 text-helpconfort-blue" />
-            </div>
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
+            group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+            <Icon className="w-5 h-5 text-helpconfort-blue" />
           </div>
-          <h3 className="font-semibold text-foreground mb-1">{title}</h3>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <div className="flex-1">
+            <h3 className="font-semibold text-foreground mb-1">{title}</h3>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
         </div>
       </div>
     </Link>
@@ -158,7 +158,7 @@ export function NavigationCards() {
           <h2 className="text-xl font-semibold mb-4 text-foreground">
             {section.title}
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {section.cards.map((card) => {
               const variant = VARIANT_CYCLE[globalIndex % VARIANT_CYCLE.length];
               globalIndex++;
