@@ -362,6 +362,60 @@ export function buildPlanningByTech({
 }
 
 // ========================================
+// CALCULATE WORKING TIME (with overlap handling)
+// ========================================
+
+/**
+ * Calcule le temps de travail effectif pour une journée
+ * en gérant les chevauchements de RDV.
+ * 
+ * Logique: Heure début la plus tôt → Heure fin la plus tardive - Pauses
+ * Les RDV qui se chevauchent ne comptent pas 2 fois.
+ */
+function calculateDailyWorkingMinutes(slots: TechPlanningSlot[]): number {
+  if (slots.length === 0) return 0;
+
+  // Séparer pauses et RDV de travail
+  const workSlots = slots.filter(s => !s.isBreak);
+  const breakSlots = slots.filter(s => s.isBreak);
+
+  if (workSlots.length === 0) return 0;
+
+  // Trouver le début le plus tôt et la fin la plus tardive
+  let earliestStart = new Date(workSlots[0].start).getTime();
+  let latestEnd = new Date(workSlots[0].end).getTime();
+
+  workSlots.forEach(slot => {
+    const start = new Date(slot.start).getTime();
+    const end = new Date(slot.end).getTime();
+    if (start < earliestStart) earliestStart = start;
+    if (end > latestEnd) latestEnd = end;
+  });
+
+  // Temps brut = fin - début
+  const grossMinutes = (latestEnd - earliestStart) / (1000 * 60);
+
+  // Déduire les pauses (qui sont dans la plage de travail)
+  let breakMinutes = 0;
+  breakSlots.forEach(breakSlot => {
+    const breakStart = new Date(breakSlot.start).getTime();
+    const breakEnd = new Date(breakSlot.end).getTime();
+    
+    // Ne compter la pause que si elle est dans la plage de travail
+    if (breakStart >= earliestStart && breakEnd <= latestEnd) {
+      breakMinutes += breakSlot.durationMinutes || 0;
+    } else if (breakStart < latestEnd && breakEnd > earliestStart) {
+      // Pause partiellement dans la plage
+      const effectiveStart = Math.max(breakStart, earliestStart);
+      const effectiveEnd = Math.min(breakEnd, latestEnd);
+      breakMinutes += (effectiveEnd - effectiveStart) / (1000 * 60);
+    }
+  });
+
+  return Math.max(0, grossMinutes - breakMinutes);
+}
+
+// ========================================
 // BUILD WEEKLY TECH PLANNING
 // ========================================
 
@@ -384,10 +438,8 @@ export function buildWeeklyTechPlanning(
         isSameDay(new Date(slot.start), day)
       );
 
-      const totalMinutes = slotsOfDay.reduce(
-        (acc, s) => acc + (s.durationMinutes || 0),
-        0
-      );
+      // Nouveau calcul: début le plus tôt → fin la plus tardive - pauses
+      const totalMinutes = calculateDailyWorkingMinutes(slotsOfDay);
 
       weeklyTotal += totalMinutes;
 
