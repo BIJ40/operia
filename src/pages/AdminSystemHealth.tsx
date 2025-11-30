@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import * as Sentry from '@sentry/react';
-import { MainLayout } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -151,8 +150,7 @@ export default function AdminSystemHealth() {
       : "degraded";
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Overall Status */}
         <Card>
           <CardHeader className="pb-3">
@@ -317,7 +315,6 @@ export default function AdminSystemHealth() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </MainLayout>
+    </div>
   );
 }
