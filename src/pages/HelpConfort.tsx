@@ -571,7 +571,7 @@ export default function HelpConfort() {
               return (
                 <Link
                   key={category.id}
-                  to={`/helpconfort/category/${category.slug}`}
+                  to={ROUTES.academy.documentsCategory(category.slug)}
                   className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 overflow-visible ${getColorClass(category.colorPreset)}`}
                 >
                   {/* Badge New en écharpe diagonale verte - décalé aux 3/4 */}
