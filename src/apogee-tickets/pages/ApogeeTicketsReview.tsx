@@ -285,11 +285,6 @@ export default function ApogeeTicketsReview() {
                       Heures
                     </Badge>
                   )}
-                  {!currentTicket.severity && (
-                    <Badge variant="outline" className="text-orange-500 border-orange-300 line-through">
-                      Sévérité
-                    </Badge>
-                  )}
                   {!currentTicket.description && (
                     <Badge variant="outline" className="text-orange-500 border-orange-300 line-through">
                       Description
@@ -397,39 +392,6 @@ export default function ApogeeTicketsReview() {
                 </Select>
               </div>
 
-              <div>
-                <label className="text-xs text-muted-foreground">Priorité</label>
-                <Select
-                  value={formValues.priority || ''}
-                  onValueChange={(v) => updateField('priority', v || null)}
-                >
-                  <SelectTrigger className="h-9 mt-1">
-                    <SelectValue placeholder="—" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priorities.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-xs text-muted-foreground">Sévérité</label>
-                <Select
-                  value={formValues.severity || ''}
-                  onValueChange={(v) => updateField('severity', v || null)}
-                >
-                  <SelectTrigger className="h-9 mt-1">
-                    <SelectValue placeholder="—" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CRITIQUE">Critique</SelectItem>
-                    <SelectItem value="MAJEUR">Majeur</SelectItem>
-                    <SelectItem value="CONFORT">Confort</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               <div>
                 <label className="text-xs text-muted-foreground">Estimation (h)</label>
@@ -452,10 +414,10 @@ export default function ApogeeTicketsReview() {
               </div>
             </div>
 
-            {/* Priorité Thermique */}
+            {/* Priorité */}
             <div>
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Priorité Thermique (0-12)
+                Priorité (0-12)
               </label>
               <div className="mt-2 flex items-center gap-4">
                 <HeatPriorityBadge priority={formValues.heat_priority as number | undefined} size="default" showLabel />
