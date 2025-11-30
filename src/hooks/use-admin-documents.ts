@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { safeQuery, safeMutation, safeInvoke } from '@/lib/safeQuery';
+import { errorToast, successToast, warningToast } from '@/lib/toastHelpers';
+import { logError } from '@/lib/logger';
 
 interface Block {
   id: string;
@@ -56,55 +58,68 @@ export const useAdminDocuments = () => {
   }, [selectedScope]);
 
   const loadBlocks = async () => {
-    try {
-      const table = selectedScope === 'apporteur' ? 'apporteur_blocks' : 'blocks';
-      const { data, error } = await supabase
+    const table = selectedScope === 'apporteur' ? 'apporteur_blocks' : 'blocks';
+    
+    const result = await safeQuery<Block[]>(
+      supabase
         .from(table)
         .select('id, title, parent_id, type')
-        .order('order', { ascending: true });
+        .order('order', { ascending: true }),
+      'ADMIN_DOCS_BLOCKS_LOAD'
+    );
 
-      if (error) throw error;
-      setBlocks(data || []);
-    } catch (error) {
-      console.error('Error loading blocks:', error);
-      toast.error('Erreur lors du chargement des blocs');
+    if (!result.success) {
+      logError('admin-documents', 'Error loading blocks', result.error);
+      errorToast(result.error!);
+      setBlocks([]);
+      return;
     }
+
+    setBlocks(result.data ?? []);
   };
 
   const loadDocuments = async () => {
-    try {
-      const { data, error } = await supabase
+    const result = await safeQuery<AdminDocument[]>(
+      supabase
         .from('documents')
         .select('*')
         .eq('scope', selectedScope)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }),
+      'ADMIN_DOCS_LIST'
+    );
 
-      if (error) throw error;
-      setDocuments(data || []);
-    } catch (error) {
-      console.error('Error loading documents:', error);
-      toast.error('Erreur lors du chargement des documents');
+    if (!result.success) {
+      logError('admin-documents', 'Error loading documents', result.error);
+      errorToast(result.error!);
+      setDocuments([]);
+      return;
     }
+
+    setDocuments(result.data ?? []);
   };
 
   const loadQueries = async () => {
-    try {
-      const { data, error } = await supabase
+    const result = await safeQuery<ChatbotQuery[]>(
+      supabase
         .from('chatbot_queries')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }),
+      'ADMIN_DOCS_QUERIES_LOAD'
+    );
 
-      if (error) throw error;
-      setQueries(data || []);
-    } catch (error) {
-      console.error('Error loading queries:', error);
-      toast.error('Erreur lors du chargement des questions');
+    if (!result.success) {
+      logError('admin-documents', 'Error loading queries', result.error);
+      errorToast(result.error!);
+      setQueries([]);
+      return;
     }
+
+    setQueries(result.data ?? []);
   };
 
   const handleUpload = async () => {
     if (!file || !title || !selectedBlock) {
-      toast.error('Veuillez remplir tous les champs requis');
+      warningToast('Veuillez remplir tous les champs requis');
       return;
     }
 
@@ -114,45 +129,68 @@ export const useAdminDocuments = () => {
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${selectedScope}/${fileName}`;
 
+      // Storage upload - keep try/catch for storage operations
       const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        logError('admin-documents', 'Storage upload error', uploadError);
+        errorToast('Erreur lors de l\'upload du fichier');
+        return;
+      }
 
       const blockIdField = selectedScope === 'apporteur' ? 'apporteur_block_id' : 'block_id';
 
-      const { error: insertError } = await supabase.from('documents').insert([
-        {
-          title,
-          description: description || null,
-          file_path: filePath,
-          file_type: file.type,
-          file_size: file.size,
-          [blockIdField]: selectedBlock,
-          scope: selectedScope,
-        },
-      ]);
+      // DB insert via safeMutation
+      const insertResult = await safeMutation(
+        supabase.from('documents').insert([
+          {
+            title,
+            description: description || null,
+            file_path: filePath,
+            file_type: file.type,
+            file_size: file.size,
+            [blockIdField]: selectedBlock,
+            scope: selectedScope,
+          },
+        ]),
+        'ADMIN_DOCS_UPLOAD'
+      );
 
-      if (insertError) throw insertError;
+      if (!insertResult.success) {
+        logError('admin-documents', 'Error inserting document', insertResult.error);
+        errorToast(insertResult.error!);
+        return;
+      }
 
       await loadDocuments();
       setTitle('');
       setDescription('');
       setFile(null);
       setSelectedBlock('');
-      toast.success('Document uploadé avec succès');
+      successToast('Document uploadé avec succès');
 
-      const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(filePath);
-      
+      // Index PDF documents via Edge Function
       if (file.type === 'application/pdf') {
-        await supabase.functions.invoke('index-document', {
-          body: { documentUrl: publicUrl, documentId: filePath },
-        });
+        const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(filePath);
+        
+        const indexResult = await safeInvoke(
+          supabase.functions.invoke('index-document', {
+            body: { documentUrl: publicUrl, documentId: filePath },
+          }),
+          'ADMIN_DOCS_INDEX_RAG'
+        );
+
+        if (!indexResult.success) {
+          logError('admin-documents', 'Error indexing document', indexResult.error);
+          // Non-blocking: document uploaded but indexing failed
+          warningToast('Document uploadé mais indexation échouée');
+        }
       }
     } catch (error) {
-      console.error('Error uploading document:', error);
-      toast.error('Erreur lors de l\'upload');
+      logError('admin-documents', 'Unexpected error during upload', error);
+      errorToast('Erreur inattendue lors de l\'upload');
     } finally {
       setIsUploading(false);
     }
@@ -162,24 +200,37 @@ export const useAdminDocuments = () => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) return;
 
     try {
+      // Storage delete - keep try/catch for storage operations
       const { error: storageError } = await supabase.storage
         .from('documents')
         .remove([filePath]);
 
-      if (storageError) throw storageError;
+      if (storageError) {
+        logError('admin-documents', 'Storage delete error', storageError);
+        errorToast('Erreur lors de la suppression du fichier');
+        return;
+      }
 
-      const { error: dbError } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', docId);
+      // DB delete via safeMutation
+      const deleteResult = await safeMutation(
+        supabase
+          .from('documents')
+          .delete()
+          .eq('id', docId),
+        'ADMIN_DOCS_DELETE'
+      );
 
-      if (dbError) throw dbError;
+      if (!deleteResult.success) {
+        logError('admin-documents', 'Error deleting document from DB', deleteResult.error);
+        errorToast(deleteResult.error!);
+        return;
+      }
 
       await loadDocuments();
-      toast.success('Document supprimé');
+      successToast('Document supprimé');
     } catch (error) {
-      console.error('Error deleting document:', error);
-      toast.error('Erreur lors de la suppression');
+      logError('admin-documents', 'Unexpected error during delete', error);
+      errorToast('Erreur inattendue lors de la suppression');
     }
   };
 
@@ -196,21 +247,23 @@ export const useAdminDocuments = () => {
   };
 
   const saveEditing = async (docId: string) => {
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('documents')
         .update({ title: editTitle, description: editDescription })
-        .eq('id', docId);
+        .eq('id', docId),
+      'ADMIN_DOCS_UPDATE_META'
+    );
 
-      if (error) throw error;
-
-      await loadDocuments();
-      setEditingDoc(null);
-      toast.success('Document mis à jour');
-    } catch (error) {
-      console.error('Error updating document:', error);
-      toast.error('Erreur lors de la mise à jour');
+    if (!result.success) {
+      logError('admin-documents', 'Error updating document', result.error);
+      errorToast(result.error!);
+      return;
     }
+
+    await loadDocuments();
+    setEditingDoc(null);
+    successToast('Document mis à jour');
   };
 
   const getDownloadUrl = (filePath: string) => {
@@ -223,15 +276,23 @@ export const useAdminDocuments = () => {
     try {
       const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(filePath);
       
-      const { error } = await supabase.functions.invoke('index-document', {
-        body: { documentUrl: publicUrl, documentId: filePath },
-      });
+      const result = await safeInvoke(
+        supabase.functions.invoke('index-document', {
+          body: { documentUrl: publicUrl, documentId: filePath },
+        }),
+        'ADMIN_DOCS_INDEX_MANUAL'
+      );
 
-      if (error) throw error;
-      toast.success('Document indexé avec succès');
+      if (!result.success) {
+        logError('admin-documents', 'Error indexing document', result.error);
+        errorToast(result.error!);
+        return;
+      }
+
+      successToast('Document indexé avec succès');
     } catch (error) {
-      console.error('Error indexing document:', error);
-      toast.error('Erreur lors de l\'indexation');
+      logError('admin-documents', 'Unexpected error during indexing', error);
+      errorToast('Erreur inattendue lors de l\'indexation');
     } finally {
       setIsIndexing(false);
     }
@@ -244,35 +305,41 @@ export const useAdminDocuments = () => {
   };
 
   const updateQueryStatus = async (queryId: string, status: string) => {
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('chatbot_queries')
         .update({ status })
-        .eq('id', queryId);
+        .eq('id', queryId),
+      'ADMIN_DOCS_QUERY_STATUS_UPDATE'
+    );
 
-      if (error) throw error;
-      await loadQueries();
-      toast.success('Statut mis à jour');
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Erreur lors de la mise à jour');
+    if (!result.success) {
+      logError('admin-documents', 'Error updating query status', result.error);
+      errorToast(result.error!);
+      return;
     }
+
+    await loadQueries();
+    successToast('Statut mis à jour');
   };
 
   const saveAdminNotes = async (queryId: string, notes: string) => {
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('chatbot_queries')
         .update({ admin_notes: notes })
-        .eq('id', queryId);
+        .eq('id', queryId),
+      'ADMIN_DOCS_QUERY_NOTES_SAVE'
+    );
 
-      if (error) throw error;
-      await loadQueries();
-      toast.success('Notes enregistrées');
-    } catch (error) {
-      console.error('Error saving notes:', error);
-      toast.error('Erreur lors de la sauvegarde');
+    if (!result.success) {
+      logError('admin-documents', 'Error saving admin notes', result.error);
+      errorToast(result.error!);
+      return;
     }
+
+    await loadQueries();
+    successToast('Notes enregistrées');
   };
 
   const filteredQueries = queries.filter((q) => {
