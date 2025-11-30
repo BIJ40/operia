@@ -167,14 +167,15 @@ export default function FranchiseurHome() {
 
       {/* Ligne 3: SAV (intemporel) */}
       <div className="grid gap-4 md:grid-cols-1">
-        <Card className="rounded-xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-helpconfort-blue" />
-              Taux SAV
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="group relative rounded-xl border border-helpconfort-blue/15 p-4
+          bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+          shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
+          hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertCircle className="h-4 w-4 text-helpconfort-blue" />
+            <span className="text-sm font-medium text-muted-foreground">Taux SAV</span>
+          </div>
+          <div className="space-y-3">
             <div>
               <p className="text-xs text-muted-foreground">Global Réseau</p>
               <p className="text-2xl font-bold text-foreground">
@@ -191,8 +192,8 @@ export default function FranchiseurHome() {
                 {stats?.savRateMoyenne?.toFixed(1) || 0}%
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

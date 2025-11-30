@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 
@@ -12,9 +11,12 @@ interface NetworkMonthlyCAChartProps {
 
 export const NetworkMonthlyCAChart = ({ data }: NetworkMonthlyCAChartProps) => {
   return (
-    <Card className="rounded-2xl border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-white to-helpconfort-blue/5 shadow-sm p-6">
+    <div className="group relative rounded-xl border border-helpconfort-blue/15 p-6
+      bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+      shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
+      hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+        <h3 className="text-lg font-semibold text-helpconfort-blue">
           Évolution du CA sur l'année
         </h3>
         <p className="text-sm text-muted-foreground">Répartition mensuelle du chiffre d'affaires réseau</p>
@@ -59,6 +61,6 @@ export const NetworkMonthlyCAChart = ({ data }: NetworkMonthlyCAChartProps) => {
           />
         </BarChart>
       </ResponsiveContainer>
-    </Card>
+    </div>
   );
 };
