@@ -1,4 +1,5 @@
 import { useEffect, useState, createContext, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, RotateCcw, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -13,7 +14,7 @@ import { SupportTicketDialog } from '@/components/chatbot/SupportTicketDialog';
 import { TimeoutModal } from '@/components/chatbot/TimeoutModal';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
-import chatIcon from '@/assets/logo_chat.png';
+import { ROUTES } from '@/config/routes';
 import { MessageCircle } from 'lucide-react';
 
 // Context for admin test mode
@@ -40,6 +41,7 @@ export function ChatbotTestProvider({ children }: { children: React.ReactNode })
 }
 
 export function Chatbot() {
+  const navigate = useNavigate();
   const { isAdmin, canAccessSupportConsole } = useAuth();
   const { isTestMode } = useChatbotTest();
 
@@ -423,7 +425,7 @@ export function Chatbot() {
                   <Button
                     onClick={() => {
                       setIsOpen(false);
-                      window.location.href = '/support';
+                      navigate(ROUTES.support.index);
                     }}
                     variant="ghost"
                     size="icon"
