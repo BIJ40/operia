@@ -2,8 +2,29 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { logError } from '@/lib/logger';
 
 export type TicketRole = 'developer' | 'tester' | 'franchiseur';
+
+// Type unifié pour le rôle ticketing utilisateur
+export interface TicketRoleInfo {
+  canUseTicketing: boolean;
+  isAdmin: boolean;
+  isSupport: boolean;
+  ticketRole: TicketRole | null;
+  scope: 'none' | 'agency' | 'network';
+  reason?: string;
+}
+
+// Objet par défaut pour les cas d'erreur ou non-authentifié
+const DEFAULT_TICKET_ROLE_INFO: TicketRoleInfo = {
+  canUseTicketing: false,
+  isAdmin: false,
+  isSupport: false,
+  ticketRole: null,
+  scope: 'none',
+  reason: 'not_authenticated',
+};
 
 export interface TicketUserRole {
   id: string;
@@ -44,25 +65,87 @@ export const TICKET_ROLE_LABELS: Record<TicketRole, string> = {
   franchiseur: 'Franchiseur',
 };
 
-// Hook to get current user's ticket role
+// Hook to get current user's ticket role - NEVER returns undefined
 export function useMyTicketRole() {
-  const { user } = useAuth();
+  const { user, globalRole } = useAuth();
   
-  return useQuery({
+  return useQuery<TicketRoleInfo>({
     queryKey: ['my-ticket-role', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
+    queryFn: async (): Promise<TicketRoleInfo> => {
+      // Cas 1: Pas d'utilisateur connecté
+      if (!user?.id) {
+        return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'not_authenticated' };
+      }
       
-      const { data, error } = await supabase
-        .from('apogee_ticket_user_roles')
-        .select('ticket_role')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data?.ticket_role as TicketRole | null;
+      try {
+        // Récupérer le profil pour vérifier enabled_modules
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('enabled_modules, global_role')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (profileError) {
+          logError('[MY-TICKET-ROLE] Error fetching profile', profileError);
+          return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'fetch_error' };
+        }
+        
+        if (!profile) {
+          return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'profile_not_found' };
+        }
+        
+        // Vérifier si le module apogee_tickets est activé
+        const enabledModules = profile.enabled_modules as Record<string, { enabled?: boolean }> | null;
+        const isModuleEnabled = enabledModules?.apogee_tickets?.enabled === true;
+        
+        // Vérifier le niveau de rôle global (N5+ = admin)
+        const isN5Plus = ['platform_admin', 'superadmin'].includes(profile.global_role || '');
+        
+        // Cas 2: Module non activé et pas admin
+        if (!isModuleEnabled && !isN5Plus) {
+          return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'module_disabled' };
+        }
+        
+        // Récupérer le rôle ticket spécifique de l'utilisateur
+        const { data: roleData, error: roleError } = await supabase
+          .from('apogee_ticket_user_roles')
+          .select('ticket_role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (roleError) {
+          logError('[MY-TICKET-ROLE] Error fetching ticket role', roleError);
+          return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'fetch_error' };
+        }
+        
+        const ticketRole = (roleData?.ticket_role as TicketRole) || null;
+        
+        // Cas 3: Admin (N5+)
+        if (isN5Plus) {
+          return {
+            canUseTicketing: true,
+            isAdmin: true,
+            isSupport: true,
+            ticketRole,
+            scope: 'network',
+          };
+        }
+        
+        // Cas 4: Module activé, utilisateur standard
+        return {
+          canUseTicketing: true,
+          isAdmin: false,
+          isSupport: ticketRole === 'franchiseur',
+          ticketRole,
+          scope: 'agency',
+        };
+        
+      } catch (error) {
+        logError('[MY-TICKET-ROLE] Unexpected error', error);
+        return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'fetch_error' };
+      }
     },
-    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
@@ -123,10 +206,10 @@ export function useTicketTransitions() {
 // Hook to get allowed transitions for current user
 export function useAllowedTransitions(fromStatus: string) {
   const { user, isAdmin } = useAuth();
-  const { data: myRole } = useMyTicketRole();
+  const { data: roleInfo } = useMyTicketRole();
   
   return useQuery({
-    queryKey: ['allowed-transitions', fromStatus, myRole, isAdmin],
+    queryKey: ['allowed-transitions', fromStatus, roleInfo?.ticketRole, isAdmin],
     queryFn: async () => {
       // Admin can do everything
       if (isAdmin) {
@@ -137,18 +220,18 @@ export function useAllowedTransitions(fromStatus: string) {
         return data?.map(s => s.id) || [];
       }
       
-      if (!myRole) return [];
+      if (!roleInfo?.ticketRole) return [];
       
       const { data, error } = await supabase
         .from('apogee_ticket_transitions')
         .select('to_status')
         .eq('from_status', fromStatus)
-        .eq('allowed_role', myRole);
+        .eq('allowed_role', roleInfo.ticketRole);
       
       if (error) throw error;
       return data?.map(t => t.to_status) || [];
     },
-    enabled: !!fromStatus && (isAdmin || !!myRole),
+    enabled: !!fromStatus && (isAdmin || !!roleInfo?.ticketRole),
   });
 }
 
@@ -156,16 +239,16 @@ export function useAllowedTransitions(fromStatus: string) {
 export function useCanTransition() {
   const { isAdmin } = useAuth();
   const { data: transitions } = useTicketTransitions();
-  const { data: myRole } = useMyTicketRole();
+  const { data: roleInfo } = useMyTicketRole();
   
   return (fromStatus: string, toStatus: string): boolean => {
     if (isAdmin) return true;
-    if (!myRole || !transitions) return false;
+    if (!roleInfo?.ticketRole || !transitions) return false;
     
     return transitions.some(
       t => t.from_status === fromStatus && 
            t.to_status === toStatus && 
-           t.allowed_role === myRole
+           t.allowed_role === roleInfo.ticketRole
     );
   };
 }

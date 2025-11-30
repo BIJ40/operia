@@ -348,7 +348,7 @@ export default function ApogeeTicketsKanban() {
         modules={modules}
         onCreate={(ticket) => createTicket.mutate(ticket)}
         isCreating={createTicket.isPending}
-        userTicketRole={myTicketRole}
+        userTicketRole={myTicketRole?.ticketRole}
       />
 
       {/* Dialog configuration (admin only) */}
