@@ -317,85 +317,121 @@ export default function AdminSupportTickets() {
             </div>
           </div>
 
-          {/* Stats Dashboard */}
-          {hasActiveFilters() && (
-            <div className="flex justify-end mb-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={resetFilters}
-                className="gap-2"
-              >
-                <AlertCircle className="w-4 h-4" />
-                Réinitialiser les filtres
+          {/* Barre de filtres horizontale */}
+          <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg">
+            <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
+              <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectValue placeholder="Catégorie" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes catégories</SelectItem>
+                <SelectItem value="bug">Bug</SelectItem>
+                <SelectItem value="improvement">Amélioration</SelectItem>
+                <SelectItem value="blocking">Blocage</SelectItem>
+                <SelectItem value="question">Question</SelectItem>
+                <SelectItem value="other">Autre</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.source} onValueChange={(v) => setFilters({ ...filters, source: v })}>
+              <SelectTrigger className="w-[130px] h-8 text-xs">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="all">Tous types</SelectItem>
+                <SelectItem value="chat_ai">🟦 Chat IA</SelectItem>
+                <SelectItem value="chat_human">🟩 Chat Humain</SelectItem>
+                <SelectItem value="ticket">🟧 Ticket</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.priority} onValueChange={(v) => setFilters({ ...filters, priority: v })}>
+              <SelectTrigger className="w-[130px] h-8 text-xs">
+                <SelectValue placeholder="Urgence" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="all">Tous niveaux</SelectItem>
+                <SelectItem value="mineur">🟢 Mineur</SelectItem>
+                <SelectItem value="normal">🔵 Normal</SelectItem>
+                <SelectItem value="important">🟠 Important</SelectItem>
+                <SelectItem value="urgent">🔴 Urgent</SelectItem>
+                <SelectItem value="bloquant">⛔ Bloquant</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.assignment} onValueChange={(v) => setFilters({ ...filters, assignment: v })}>
+              <SelectTrigger className="w-[130px] h-8 text-xs">
+                <SelectValue placeholder="Assignation" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="mine">📌 Mes tickets</SelectItem>
+                <SelectItem value="unassigned">⏳ Non assignés</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {hasActiveFilters() && (
+              <Button variant="ghost" size="sm" onClick={resetFilters} className="h-8 text-xs gap-1">
+                <AlertCircle className="w-3 h-3" />
+                Réinitialiser
               </Button>
-            </div>
-          )}
-          <div className="grid gap-4 md:grid-cols-5">
+            )}
+          </div>
+
+          {/* Stats Dashboard - ligne unique compacte */}
+          <div className="grid grid-cols-6 gap-2">
             <Card 
-              className={getCardClassName('all')}
+              className={`${getCardClassName('all')} py-2`}
               onClick={() => setFilters({ ...filters, status: 'all' })}
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total}</div>
+              <CardContent className="p-2 text-center">
+                <div className="text-xs text-muted-foreground">Total</div>
+                <div className="text-xl font-bold">{stats.total}</div>
               </CardContent>
             </Card>
             <Card 
-              className={getCardClassName('new')}
+              className={`${getCardClassName('new')} py-2`}
               onClick={() => setFilters({ ...filters, status: 'new' })}
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Nouveaux</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{stats.newTickets}</div>
+              <CardContent className="p-2 text-center">
+                <div className="text-xs text-muted-foreground">Nouveaux</div>
+                <div className="text-xl font-bold text-blue-600">{stats.newTickets}</div>
               </CardContent>
             </Card>
             <Card 
-              className={getCardClassName('waiting_user')}
+              className={`${getCardClassName('waiting_user')} py-2`}
               onClick={() => setFilters({ ...filters, status: 'waiting_user' })}
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Attente utilisateur</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{stats.waitingUser}</div>
+              <CardContent className="p-2 text-center">
+                <div className="text-xs text-muted-foreground">Att. user</div>
+                <div className="text-xl font-bold text-orange-600">{stats.waitingUser}</div>
               </CardContent>
             </Card>
             <Card 
-              className={getCardClassName('in_progress')}
+              className={`${getCardClassName('in_progress')} py-2`}
               onClick={() => setFilters({ ...filters, status: 'in_progress' })}
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">En cours</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{stats.inProgress}</div>
+              <CardContent className="p-2 text-center">
+                <div className="text-xs text-muted-foreground">En cours</div>
+                <div className="text-xl font-bold text-yellow-600">{stats.inProgress}</div>
               </CardContent>
             </Card>
             <Card 
-              className={getCardClassName('resolved')}
+              className={`${getCardClassName('resolved')} py-2`}
               onClick={() => setFilters({ ...filters, status: 'resolved' })}
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Résolus</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
+              <CardContent className="p-2 text-center">
+                <div className="text-xs text-muted-foreground">Résolus</div>
+                <div className="text-xl font-bold text-green-600">{stats.resolved}</div>
               </CardContent>
             </Card>
             <Card 
-              className={getCardClassName('closed')}
+              className={`${getCardClassName('closed')} py-2`}
               onClick={() => setFilters({ ...filters, status: 'closed' })}
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Fermés</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-600">{stats.closed}</div>
+              <CardContent className="p-2 text-center">
+                <div className="text-xs text-muted-foreground">Fermés</div>
+                <div className="text-xl font-bold text-gray-600">{stats.closed}</div>
               </CardContent>
             </Card>
           </div>
@@ -405,7 +441,7 @@ export default function AdminSupportTickets() {
             <Card className="md:col-span-2">
               <CardHeader className="pb-2">
               <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'actifs' | 'archives')} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsList className="grid w-full grid-cols-2 mb-2">
                     <TabsTrigger value="actifs" className="gap-2">
                       🔥 Actifs
                       <Badge variant="secondary" className="ml-1">
@@ -419,76 +455,8 @@ export default function AdminSupportTickets() {
                       </Badge>
                     </TabsTrigger>
                   </TabsList>
-                
-                  {/* Filters - 2 lignes */}
-                  <div className="grid grid-cols-2 gap-2 pt-2">
-                    <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Catégorie" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Toutes les catégories</SelectItem>
-                        <SelectItem value="bug">Bug</SelectItem>
-                        <SelectItem value="improvement">Amélioration</SelectItem>
-                        <SelectItem value="blocking">Blocage</SelectItem>
-                        <SelectItem value="question">Question</SelectItem>
-                        <SelectItem value="other">Autre</SelectItem>
-                      </SelectContent>
-                    </Select>
 
-                    <Select value={filters.source} onValueChange={(v) => setFilters({ ...filters, source: v })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Type de demande" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background z-50">
-                        <SelectItem value="all">Tous les types</SelectItem>
-                        <SelectItem value="chat_ai">🟦 Chat IA</SelectItem>
-                        <SelectItem value="chat_human">🟩 Chat Humain</SelectItem>
-                        <SelectItem value="ticket">🟧 Ticket</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={filters.priority} onValueChange={(v) => setFilters({ ...filters, priority: v })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Degré d'urgence" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background z-50">
-                        <SelectItem value="all">Tous les niveaux</SelectItem>
-                        <SelectItem value="mineur">🟢 Mineur</SelectItem>
-                        <SelectItem value="normal">🔵 Normal</SelectItem>
-                        <SelectItem value="important">🟠 Important</SelectItem>
-                        <SelectItem value="urgent">🔴 Urgent</SelectItem>
-                        <SelectItem value="bloquant">⛔ Bloquant</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Statut" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tous les statuts</SelectItem>
-                        <SelectItem value="new">Nouveau</SelectItem>
-                        <SelectItem value="in_progress">En cours</SelectItem>
-                        <SelectItem value="waiting_user">Attente utilisateur</SelectItem>
-                        <SelectItem value="resolved">Résolu</SelectItem>
-                        <SelectItem value="closed">Fermé</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={filters.assignment} onValueChange={(v) => setFilters({ ...filters, assignment: v })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Assignation" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background z-50">
-                        <SelectItem value="all">Tous</SelectItem>
-                        <SelectItem value="mine">📌 Mes tickets</SelectItem>
-                        <SelectItem value="unassigned">⏳ Non assignés</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <TabsContent value="actifs" className="mt-4">
+                  <TabsContent value="actifs" className="mt-2">
                     <ScrollArea className="h-[550px]">
                       {isLoading ? (
                         <div className="flex items-center justify-center py-8">
