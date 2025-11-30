@@ -46,6 +46,7 @@ const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"))
 const TeamPage = lazy(() => import("./pages/TeamPage"));
 
 // Lazy loaded pages - Support
+const SupportIndex = lazy(() => import("./pages/SupportIndex"));
 const SupportUser = lazy(() => import("./pages/SupportUser"));
 const UserTickets = lazy(() => import("./pages/UserTickets"));
 const Faq = lazy(() => import("./pages/Faq"));
@@ -192,12 +193,14 @@ function AppContent() {
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
           {/* ============================================ */}
-          {/* User Support - 3 columns (FAQ | Chat | Demands) */}
-          <Route path="/support" element={<MainLayout><RoleGuard><SupportUser /></RoleGuard></MainLayout>} />
+          {/* Support HUB */}
+          <Route path="/support" element={<MainLayout><RoleGuard><SupportIndex /></RoleGuard></MainLayout>} />
+          {/* Help Center - 3 columns (FAQ | Chat | Demands) */}
+          <Route path="/support/helpcenter" element={<MainLayout><RoleGuard><SupportUser /></RoleGuard></MainLayout>} />
           {/* User Tickets - Full ticket management */}
-          <Route path="/mes-demandes" element={<MainLayout><RoleGuard><UserTickets /></RoleGuard></MainLayout>} />
-          {/* Legacy routes - redirect */}
-          <Route path="/support/mes-demandes" element={<Navigate to="/mes-demandes" replace />} />
+          <Route path="/support/mes-demandes" element={<MainLayout><RoleGuard><UserTickets /></RoleGuard></MainLayout>} />
+          {/* Legacy route - redirect */}
+          <Route path="/mes-demandes" element={<Navigate to="/support/mes-demandes" replace />} />
           {/* FAQ */}
           <Route path="/support/faq" element={<MainLayout><Faq /></MainLayout>} />
           {/* SU Console - Support agents (N1/N2/N5) */}
