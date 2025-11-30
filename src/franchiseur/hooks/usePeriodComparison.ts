@@ -7,7 +7,7 @@ import {
   calculateTotalInterventions,
   calculateProjectsOnPeriod,
 } from '../utils/networkCalculations';
-import { logNetwork } from '@/lib/logger';
+import { logNetwork, logError } from '@/lib/logger';
 
 interface PeriodKPIs {
   ca: number;
@@ -59,21 +59,28 @@ export function usePeriodComparison(
     period2.month,
   ];
 
+  const DEFAULT_KPIS: PeriodKPIs = { ca: 0, projects: 0, interventions: 0, savRate: 0 };
+
   const { data, isLoading, error } = useQuery({
     queryKey,
-    queryFn: async () => {
+    queryFn: async (): Promise<{ period1: PeriodKPIs; period2: PeriodKPIs }> => {
       logNetwork.info('Chargement comparaison de périodes...');
 
-      // Get all active agencies
-      const { data: agencies, error: agenciesError } = await supabase
-        .from('apogee_agencies')
-        .select('id, slug, label')
-        .eq('is_active', true);
+      try {
+        // Get all active agencies
+        const { data: agencies, error: agenciesError } = await supabase
+          .from('apogee_agencies')
+          .select('id, slug, label')
+          .eq('is_active', true);
 
-      if (agenciesError) throw agenciesError;
-      if (!agencies || agencies.length === 0) {
-        throw new Error('No active agencies found');
-      }
+        if (agenciesError) {
+          logError('[PERIOD-COMPARISON] Error fetching agencies', agenciesError);
+          return { period1: DEFAULT_KPIS, period2: DEFAULT_KPIS };
+        }
+        if (!agencies || agencies.length === 0) {
+          logNetwork.warn('Aucune agence active trouvée');
+          return { period1: DEFAULT_KPIS, period2: DEFAULT_KPIS };
+        }
 
       logNetwork.debug(`Chargement de ${agencies.length} agences...`);
 
@@ -106,20 +113,24 @@ export function usePeriodComparison(
       const interventions2 = calculateTotalInterventions(agencyData, range2);
       const savStats2 = calculateNetworkSAVStats(agencyData);
 
-      return {
-        period1: {
-          ca: ca1,
-          projects: projects1,
-          interventions: interventions1,
-          savRate: savStats1.tauxGlobalReseau,
-        },
-        period2: {
-          ca: ca2,
-          projects: projects2,
-          interventions: interventions2,
-          savRate: savStats2.tauxGlobalReseau,
-        },
-      };
+        return {
+          period1: {
+            ca: ca1,
+            projects: projects1,
+            interventions: interventions1,
+            savRate: savStats1.tauxGlobalReseau,
+          },
+          period2: {
+            ca: ca2,
+            projects: projects2,
+            interventions: interventions2,
+            savRate: savStats2.tauxGlobalReseau,
+          },
+        };
+      } catch (error) {
+        logError('[PERIOD-COMPARISON] Unexpected error', error);
+        return { period1: DEFAULT_KPIS, period2: DEFAULT_KPIS };
+      }
     },
     enabled: !!franchiseurRole,
     staleTime: 5 * 60 * 1000,
@@ -127,8 +138,8 @@ export function usePeriodComparison(
   });
 
   return {
-    period1: data?.period1 ?? { ca: 0, projects: 0, interventions: 0, savRate: 0 },
-    period2: data?.period2 ?? { ca: 0, projects: 0, interventions: 0, savRate: 0 },
+    period1: data?.period1 ?? DEFAULT_KPIS,
+    period2: data?.period2 ?? DEFAULT_KPIS,
     isLoading,
     error: error as Error | null,
   };

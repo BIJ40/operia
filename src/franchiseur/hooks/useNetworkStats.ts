@@ -49,19 +49,48 @@ export function useNetworkStats() {
 
   return useQuery<NetworkStats>({
     queryKey: ['network-stats', dateRange],
-    queryFn: async () => {
+    queryFn: async (): Promise<NetworkStats> => {
       logNetwork.info('Chargement des données réseau...');
 
-      // Get all active agencies
-      const { data: agencies, error: agenciesError } = await supabase
-        .from('apogee_agencies')
-        .select('id, slug, label')
-        .eq('is_active', true);
+      // Default stats to return in case of error
+      const DEFAULT_STATS: NetworkStats = {
+        totalCAYear: 0,
+        totalCAPeriod: 0,
+        totalProjects: 0,
+        totalProjectsPeriod: 0,
+        agencyCount: 0,
+        totalInterventions: 0,
+        savRateMoyenne: 0,
+        savRateGlobal: 0,
+        nbTotalSAVProjects: 0,
+        monthlyRoyalties: 0,
+        averageProcessingTime: 0,
+        oneShotRate: 0,
+        projectToQuoteDelay: 0,
+        visitsPerProject: 0,
+        multiUniversRate: 0,
+        top5Agencies: [],
+        bestApporteur: null,
+        monthlyCAEvolution: [],
+        caByAgency: [],
+        monthlySAVEvolution: [],
+      };
 
-      if (agenciesError) throw agenciesError;
-      if (!agencies || agencies.length === 0) {
-        throw new Error('No active agencies found');
-      }
+      try {
+        // Get all active agencies
+        const { data: agencies, error: agenciesError } = await supabase
+          .from('apogee_agencies')
+          .select('id, slug, label')
+          .eq('is_active', true);
+
+        if (agenciesError) {
+          logNetwork.error('Erreur chargement agences', agenciesError);
+          return DEFAULT_STATS;
+        }
+        if (!agencies || agencies.length === 0) {
+          logNetwork.warn('Aucune agence active trouvée');
+          return DEFAULT_STATS;
+        }
 
       logNetwork.debug(`Chargement de ${agencies.length} agences...`);
 
@@ -95,28 +124,32 @@ export function useNetworkStats() {
       const totalCAPeriod = NetworkDataService.aggregateCA(agencyData, calcRange);
       const savStats = calculateNetworkSAVStats(agencyData);
 
-      return {
-        totalCAYear,
-        totalCAPeriod,
-        totalProjects: agencyData.reduce((sum, a) => sum + (a.data?.projects?.length || 0), 0),
-        totalProjectsPeriod: calculateProjectsOnPeriod(agencyData, calcRange),
-        agencyCount: agencyData.length,
-        totalInterventions: calculateTotalInterventions(agencyData, calcRange),
-        savRateMoyenne: savStats.tauxMoyenAgences,
-        savRateGlobal: savStats.tauxGlobalReseau,
-        nbTotalSAVProjects: savStats.nbTotalSAVProjects,
-        monthlyRoyalties: 0, // Placeholder (redevances calculées ailleurs)
-        averageProcessingTime: calculateAverageProcessingTime(agencyData),
-        oneShotRate: calculateOneShotRate(agencyData),
-        projectToQuoteDelay: calculateProjectToQuoteDelay(agencyData),
-        visitsPerProject: calculateVisitsPerProject(agencyData),
-        multiUniversRate: calculateMultiUniversRate(agencyData),
-        top5Agencies: calculateTop5Agencies(agencyData),
-        bestApporteur: calculateBestApporteur(agencyData),
-        monthlyCAEvolution: calculateMonthlyCAEvolution(agencyData),
-        caByAgency: calculateCAByAgency(agencyData),
-        monthlySAVEvolution: calculateMonthlySAVEvolution(agencyData),
-      };
+        return {
+          totalCAYear,
+          totalCAPeriod,
+          totalProjects: agencyData.reduce((sum, a) => sum + (a.data?.projects?.length || 0), 0),
+          totalProjectsPeriod: calculateProjectsOnPeriod(agencyData, calcRange),
+          agencyCount: agencyData.length,
+          totalInterventions: calculateTotalInterventions(agencyData, calcRange),
+          savRateMoyenne: savStats.tauxMoyenAgences,
+          savRateGlobal: savStats.tauxGlobalReseau,
+          nbTotalSAVProjects: savStats.nbTotalSAVProjects,
+          monthlyRoyalties: 0, // Placeholder (redevances calculées ailleurs)
+          averageProcessingTime: calculateAverageProcessingTime(agencyData),
+          oneShotRate: calculateOneShotRate(agencyData),
+          projectToQuoteDelay: calculateProjectToQuoteDelay(agencyData),
+          visitsPerProject: calculateVisitsPerProject(agencyData),
+          multiUniversRate: calculateMultiUniversRate(agencyData),
+          top5Agencies: calculateTop5Agencies(agencyData),
+          bestApporteur: calculateBestApporteur(agencyData),
+          monthlyCAEvolution: calculateMonthlyCAEvolution(agencyData),
+          caByAgency: calculateCAByAgency(agencyData),
+          monthlySAVEvolution: calculateMonthlySAVEvolution(agencyData),
+        };
+      } catch (error) {
+        logNetwork.error('Erreur chargement données réseau', error);
+        return DEFAULT_STATS;
+      }
     },
     enabled: !!franchiseurRole,
     staleTime: 5 * 60 * 1000, // 5 minutes

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logError } from '@/lib/logger';
 
 export interface DiffusionSettings {
   id: string;
@@ -32,7 +33,7 @@ export const useDiffusionSettings = () => {
       if (error) throw error;
       setSettings(data);
     } catch (error) {
-      console.error('Error loading diffusion settings:', error);
+      logError('[DIFFUSION-SETTINGS] Error loading settings', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de charger les paramètres de diffusion',
@@ -62,7 +63,7 @@ export const useDiffusionSettings = () => {
       
       return data;
     } catch (error) {
-      console.error('Error updating diffusion settings:', error);
+      logError('[DIFFUSION-SETTINGS] Error updating settings', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de mettre à jour les paramètres',

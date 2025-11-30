@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { logError } from '@/lib/logger';
 import type {
   ApogeeTicket,
   ApogeeTicketStatus,
@@ -27,65 +28,80 @@ export function useApogeeTickets(filters?: TicketFilters) {
   // Fetch statuses
   const { data: statuses = [] } = useQuery({
     queryKey: ['apogee-ticket-statuses'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ApogeeTicketStatus[]> => {
       const { data, error } = await supabase
         .from('apogee_ticket_statuses')
         .select('*')
         .order('display_order');
-      if (error) throw error;
-      return data as ApogeeTicketStatus[];
+      if (error) {
+        logError('[APOGEE-TICKETS] Error fetching statuses', error);
+        return [];
+      }
+      return data ?? [];
     },
   });
 
   // Fetch modules
   const { data: modules = [] } = useQuery({
     queryKey: ['apogee-modules'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ApogeeModule[]> => {
       const { data, error } = await supabase
         .from('apogee_modules')
         .select('*')
         .order('display_order');
-      if (error) throw error;
-      return data as ApogeeModule[];
+      if (error) {
+        logError('[APOGEE-TICKETS] Error fetching modules', error);
+        return [];
+      }
+      return data ?? [];
     },
   });
 
   // Fetch priorities
   const { data: priorities = [] } = useQuery({
     queryKey: ['apogee-priorities'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ApogeePriority[]> => {
       const { data, error } = await supabase
         .from('apogee_priorities')
         .select('*')
         .order('display_order');
-      if (error) throw error;
-      return data as ApogeePriority[];
+      if (error) {
+        logError('[APOGEE-TICKETS] Error fetching priorities', error);
+        return [];
+      }
+      return data ?? [];
     },
   });
 
   // Fetch impact tags
   const { data: impactTags = [] } = useQuery({
     queryKey: ['apogee-impact-tags'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ApogeeImpactTag[]> => {
       const { data, error } = await supabase
         .from('apogee_impact_tags')
         .select('*')
         .order('display_order');
-      if (error) throw error;
-      return data as ApogeeImpactTag[];
+      if (error) {
+        logError('[APOGEE-TICKETS] Error fetching impact tags', error);
+        return [];
+      }
+      return data ?? [];
     },
   });
 
   // Fetch owner sides (Porté par)
   const { data: ownerSides = [] } = useQuery({
     queryKey: ['apogee-owner-sides'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ApogeeOwnerSide[]> => {
       const { data, error } = await supabase
         .from('apogee_owner_sides')
         .select('*')
         .order('display_order');
-      if (error) throw error;
-      return data as ApogeeOwnerSide[];
+      if (error) {
+        logError('[APOGEE-TICKETS] Error fetching owner sides', error);
+        return [];
+      }
+      return data ?? [];
     },
   });
 
@@ -96,7 +112,7 @@ export function useApogeeTickets(filters?: TicketFilters) {
     refetch,
   } = useQuery({
     queryKey: ['apogee-tickets', filters],
-    queryFn: async () => {
+    queryFn: async (): Promise<ApogeeTicket[]> => {
       let query = supabase
         .from('apogee_tickets')
         .select(`
@@ -148,7 +164,10 @@ export function useApogeeTickets(filters?: TicketFilters) {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        logError('[APOGEE-TICKETS] Error fetching tickets', error);
+        return [];
+      }
       
       // Map comment count to _count field
       let result = (data || []).map((ticket: any) => ({
@@ -324,7 +343,7 @@ export function useApogeeTicket(ticketId: string | null) {
 
   const { data: ticket, isLoading } = useQuery({
     queryKey: ['apogee-ticket', ticketId],
-    queryFn: async () => {
+    queryFn: async (): Promise<ApogeeTicket | null> => {
       if (!ticketId) return null;
       const { data, error } = await supabase
         .from('apogee_tickets')
@@ -335,16 +354,19 @@ export function useApogeeTicket(ticketId: string | null) {
           apogee_ticket_statuses(*)
         `)
         .eq('id', ticketId)
-        .single();
-      if (error) throw error;
-      return data as ApogeeTicket;
+        .maybeSingle();
+      if (error) {
+        logError('[APOGEE-TICKET] Error fetching ticket', error);
+        return null;
+      }
+      return data as ApogeeTicket | null;
     },
     enabled: !!ticketId,
   });
 
   const { data: comments = [] } = useQuery({
     queryKey: ['apogee-ticket-comments', ticketId],
-    queryFn: async () => {
+    queryFn: async (): Promise<ApogeeTicketComment[]> => {
       if (!ticketId) return [];
       const { data, error } = await supabase
         .from('apogee_ticket_comments')
@@ -354,8 +376,11 @@ export function useApogeeTicket(ticketId: string | null) {
         `)
         .eq('ticket_id', ticketId)
         .order('created_at', { ascending: true });
-      if (error) throw error;
-      return data as ApogeeTicketComment[];
+      if (error) {
+        logError('[APOGEE-TICKET] Error fetching comments', error);
+        return [];
+      }
+      return (data ?? []) as ApogeeTicketComment[];
     },
     enabled: !!ticketId,
   });

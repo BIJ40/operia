@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { logError, logWarn } from '@/lib/logger';
 import { Ticket, Attachment } from './use-user-tickets';
 
 interface SupportUser {
@@ -80,7 +81,7 @@ export const useAdminTickets = () => {
       if (error) throw error;
       setTickets((data || []) as Ticket[]);
     } catch (error) {
-      console.error('Error loading tickets:', error);
+      logError('[ADMIN-TICKETS] Error loading tickets', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de charger les tickets',
@@ -102,7 +103,7 @@ export const useAdminTickets = () => {
         .is('viewed_by_support_at', null);
 
       if (viewedError) {
-        console.error('Error marking ticket as viewed:', viewedError);
+        logWarn('[ADMIN-TICKETS] Error marking ticket as viewed', viewedError);
       }
 
       // Load messages
@@ -127,7 +128,7 @@ export const useAdminTickets = () => {
           .in('id', unreadUserMessages.map((msg: any) => msg.id));
 
         if (updateError) {
-          console.error('Error marking messages as read:', updateError);
+          logWarn('[ADMIN-TICKETS] Error marking messages as read', updateError);
         }
       }
 
@@ -141,7 +142,7 @@ export const useAdminTickets = () => {
       if (attsError) throw attsError;
       setAttachments(atts || []);
     } catch (error) {
-      console.error('Error loading ticket details:', error);
+      logError('[ADMIN-TICKETS] Error loading ticket details', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de charger les détails du ticket',
@@ -181,7 +182,7 @@ export const useAdminTickets = () => {
         if (data) setSelectedTicket(data as Ticket);
       }
     } catch (error) {
-      console.error('Error updating status:', error);
+      logError('[ADMIN-TICKETS] Error updating status', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de mettre à jour le statut',
@@ -220,7 +221,7 @@ export const useAdminTickets = () => {
         if (data) setSelectedTicket(data as Ticket);
       }
     } catch (error) {
-      console.error('Error updating priority:', error);
+      logError('[ADMIN-TICKETS] Error updating priority', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de mettre à jour la priorité',
@@ -258,7 +259,7 @@ export const useAdminTickets = () => {
         if (data) setSelectedTicket(data as Ticket);
       }
     } catch (error) {
-      console.error('Error assigning ticket:', error);
+      logError('[ADMIN-TICKETS] Error assigning ticket', error);
       toast({
         title: 'Erreur',
         description: "Impossible d'assigner le ticket",
@@ -298,7 +299,7 @@ export const useAdminTickets = () => {
         if (data) setSelectedTicket(data as Ticket);
       }
     } catch (error) {
-      console.error('Error taking ticket:', error);
+      logError('[ADMIN-TICKETS] Error taking ticket', error);
       toast({
         title: 'Erreur',
         description: "Impossible de prendre en charge le ticket",
@@ -325,7 +326,7 @@ export const useAdminTickets = () => {
         await updateTicketStatus(ticketId, 'in_progress');
       }
     } catch (error) {
-      console.error('Error adding message:', error);
+      logError('[ADMIN-TICKETS] Error adding message', error);
       toast({
         title: 'Erreur',
         description: "Impossible d'envoyer le message",
@@ -352,7 +353,7 @@ export const useAdminTickets = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading attachment:', error);
+      logError('[ADMIN-TICKETS] Error downloading attachment', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de télécharger le fichier',
@@ -393,7 +394,7 @@ export const useAdminTickets = () => {
         if (data) setSelectedTicket(data as Ticket);
       }
     } catch (error) {
-      console.error('Error reopening ticket:', error);
+      logError('[ADMIN-TICKETS] Error reopening ticket', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de réouvrir le ticket',
@@ -442,7 +443,7 @@ export const useAdminTickets = () => {
 
       setSupportUsers(usersWithRoles as SupportUser[]);
     } catch (error) {
-      console.error('Error loading support users:', error);
+      logError('[ADMIN-TICKETS] Error loading support users', error);
     }
   };
 

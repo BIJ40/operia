@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { logError, logWarn } from '@/lib/logger';
 
 interface Message {
   role: 'user' | 'assistant' | 'support';
@@ -84,7 +85,7 @@ export const useSupportTicket = () => {
       });
 
       if (notifyError) {
-        console.error('Error sending notification:', notifyError);
+        logWarn('[SUPPORT-TICKET] Error sending notification (non-blocking)', notifyError);
         // On continue même si la notification échoue
       }
 
@@ -93,7 +94,7 @@ export const useSupportTicket = () => {
 
       return ticket;
     } catch (error) {
-      console.error('Error creating support ticket:', error);
+      logError('[SUPPORT-TICKET] Error creating ticket', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de créer le ticket support',

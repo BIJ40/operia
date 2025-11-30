@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logError, logWarn } from '@/lib/logger';
 import {
   TICKET_STATUSES,
   type TicketStatus,
@@ -97,7 +98,7 @@ export const useAdminSupport = () => {
       
       setTickets(ticketsWithUnreadStatus);
     } catch (error) {
-      console.error('Error loading tickets:', error);
+      logError('[ADMIN-SUPPORT] Error loading tickets', error);
       toast.error('Erreur lors du chargement des tickets');
     }
   };
@@ -133,7 +134,7 @@ export const useAdminSupport = () => {
           .eq('id', msg.id);
       }
     } catch (error) {
-      console.error('Error loading messages:', error);
+      logError('[ADMIN-SUPPORT] Error loading messages', error);
       toast.error('Erreur lors du chargement des messages');
     }
   };
@@ -153,7 +154,7 @@ export const useAdminSupport = () => {
       if (error) throw error;
       await loadTickets();
     } catch (error) {
-      console.error('Error assigning ticket:', error);
+      logWarn('[ADMIN-SUPPORT] Error assigning ticket', error);
     }
   };
 
@@ -176,7 +177,7 @@ export const useAdminSupport = () => {
       setIsInternalNote(false); // Reset après envoi
       await loadMessages(selectedTicket.id);
     } catch (error) {
-      console.error('Error sending message:', error);
+      logError('[ADMIN-SUPPORT] Error sending message', error);
       toast.error('Erreur lors de l\'envoi du message');
     }
   };
@@ -204,7 +205,7 @@ export const useAdminSupport = () => {
         setSelectedTicket(prev => prev ? { ...prev, status: newStatus } : null);
       }
     } catch (error) {
-      console.error('Error updating status:', error);
+      logError('[ADMIN-SUPPORT] Error updating status', error);
       toast.error('Erreur lors de la mise à jour du statut');
     }
   };
@@ -226,7 +227,7 @@ export const useAdminSupport = () => {
         setSelectedTicket(prev => prev ? { ...prev, priority: newPriority } : null);
       }
     } catch (error) {
-      console.error('Error updating priority:', error);
+      logError('[ADMIN-SUPPORT] Error updating priority', error);
       toast.error('Erreur lors de la mise à jour de la priorité');
     }
   };
@@ -257,7 +258,7 @@ export const useAdminSupport = () => {
       setSelectedTicket(null);
       await loadTickets();
     } catch (error) {
-      console.error('Error resolving ticket:', error);
+      logError('[ADMIN-SUPPORT] Error resolving ticket', error);
       toast.error('Erreur lors de la résolution du ticket');
     }
   };
@@ -279,7 +280,7 @@ export const useAdminSupport = () => {
       toast.success('Ticket réouvert');
       await loadTickets();
     } catch (error) {
-      console.error('Error reopening ticket:', error);
+      logError('[ADMIN-SUPPORT] Error reopening ticket', error);
       toast.error('Erreur lors de la réouverture du ticket');
     }
   };
