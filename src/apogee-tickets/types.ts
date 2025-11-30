@@ -156,6 +156,7 @@ export interface ApogeeTicketInsert {
   created_from?: CreatedFrom;
   needs_completion?: boolean;
   heat_priority?: number | null;
+  reported_by?: string | null;
 }
 
 export interface ApogeeTicketCommentInsert {

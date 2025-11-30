@@ -7,7 +7,7 @@
  * - Retiré de la création : Priorité, Porteur (définis plus tard par les gestionnaires)
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus } from 'lucide-react';
 import type { ApogeeModule, ApogeeTicketInsert } from '../types';
 import type { TicketRole } from '../hooks/useTicketPermissions';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CreateTicketDialogProps {
   open: boolean;
@@ -42,6 +44,9 @@ export function CreateTicketDialog({
   isCreating,
   userTicketRole,
 }: CreateTicketDialogProps) {
+  const { user } = useAuth();
+  const [userFirstName, setUserFirstName] = useState<string>('');
+  
   const [form, setForm] = useState<ApogeeTicketInsert>({
     element_concerne: '',
     description: '',
@@ -50,7 +55,25 @@ export function CreateTicketDialog({
     h_max: undefined,
     kanban_status: 'BACKLOG',
     created_from: 'MANUAL',
+    reported_by: '',
   });
+
+  // Charger le prénom de l'utilisateur
+  useEffect(() => {
+    async function loadUserName() {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('first_name')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (data?.first_name) {
+        setUserFirstName(data.first_name);
+        setForm(prev => ({ ...prev, reported_by: data.first_name }));
+      }
+    }
+    loadUserName();
+  }, [user?.id]);
 
   const isDeveloper = userTicketRole === 'developer';
 
@@ -66,6 +89,7 @@ export function CreateTicketDialog({
       h_max: undefined,
       kanban_status: 'BACKLOG',
       created_from: 'MANUAL',
+      reported_by: userFirstName,
     });
     onClose();
   };
