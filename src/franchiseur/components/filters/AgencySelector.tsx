@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { useFranchiseur } from "@/franchiseur/contexts/FranchiseurContext";
 import { useQuery } from "@tanstack/react-query";
@@ -85,28 +86,25 @@ export function AgencySelector() {
           <CommandList>
             <CommandEmpty>Aucune agence trouvée.</CommandEmpty>
             <CommandGroup>
-              <CommandItem onSelect={handleSelectAll}>
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    selectedAgencies.length === 0 ? "opacity-100" : "opacity-0"
-                  )}
+              <CommandItem onSelect={handleSelectAll} className="flex items-center gap-2">
+                <Checkbox 
+                  checked={selectedAgencies.length === 0}
+                  className="pointer-events-none"
                 />
-                Toutes les agences ({availableAgencies.length})
+                <span>Toutes les agences ({availableAgencies.length})</span>
               </CommandItem>
               {availableAgencies.map((agency) => (
                 <CommandItem
                   key={agency.id}
                   value={agency.label}
                   onSelect={() => handleToggleAgency(agency.id)}
+                  className="flex items-center gap-2"
                 >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      selectedAgencies.includes(agency.id) ? "opacity-100" : "opacity-0"
-                    )}
+                  <Checkbox 
+                    checked={selectedAgencies.includes(agency.id)}
+                    className="pointer-events-none"
                   />
-                  {agency.label}
+                  <span>{agency.label}</span>
                 </CommandItem>
               ))}
             </CommandGroup>
