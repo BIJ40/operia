@@ -1,6 +1,7 @@
 /**
  * Vue Kanban des tickets support
  * Mise à jour Phase 3 : utilise les nouveaux statuts (new, in_progress, waiting_user, resolved, closed)
+ * P3#1 : Intégration SLA badges et highlight retard
  */
 
 import { useEffect, useState } from 'react';
@@ -18,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TicketPriorityBadge } from './TicketPriorityBadge';
 import { logError } from '@/lib/logger';
+import { SLAIndicator, calculateSLAStatus } from '@/components/tickets/SLABadge';
 import {
   TICKET_STATUSES,
   TICKET_STATUS_LABELS,
@@ -86,11 +88,24 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
     data: { type: 'ticket', ticket, status: ticket.status }
   });
 
+  const slaStatus = calculateSLAStatus(ticket.due_at, ticket.status);
+  const isLate = slaStatus === 'late';
+  const isWarning = slaStatus === 'warning';
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  // Classes conditionnelles pour le highlight SLA
+  const cardClasses = `rounded-xl p-4 mb-3 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02] ${
+    isLate 
+      ? 'bg-red-50 border-2 border-red-400 ring-1 ring-red-300' 
+      : isWarning 
+      ? 'bg-yellow-50 border-2 border-yellow-400' 
+      : 'bg-white border-2 border-border'
+  }`;
 
   return (
     <div
@@ -99,11 +114,15 @@ function SortableTicketCard({ ticket, onSelect }: { ticket: SupportTicket; onSel
       {...attributes}
       {...listeners}
       onClick={() => onSelect(ticket)}
-      className="bg-white border-2 border-border rounded-xl p-4 mb-3 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
+      className={cardClasses}
     >
       <div className="flex items-start justify-between mb-2">
-        <span className="font-semibold text-foreground text-sm">#{ticket.id.slice(0, 8)}</span>
-        {/* Utiliser le badge de priorité centralisé */}
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-foreground text-sm">#{ticket.id.slice(0, 8)}</span>
+          {/* Indicateur SLA compact */}
+          <SLAIndicator dueAt={ticket.due_at} status={ticket.status} />
+        </div>
+        {/* Badge de priorité */}
         <TicketPriorityBadge priority={ticket.priority} size="sm" />
       </div>
       {ticket.subject && (
