@@ -39,11 +39,13 @@ const SUPPORT_MODULES: SupportModule[] = [
 ];
 
 export default function SupportIndex() {
-  const { enabledModules } = useAuth();
+  const { enabledModules, globalRole } = useAuth();
   
-  // Check if user has support agent access
+  // Check if user has support agent access (agent flag OR admin roles)
   const supportModule = enabledModules?.support;
-  const hasSupportAccess = typeof supportModule === 'object' && supportModule !== null && 'agent' in supportModule && supportModule.agent === true;
+  const isAgent = typeof supportModule === 'object' && supportModule !== null && 'agent' in supportModule && supportModule.agent === true;
+  const isAdmin = globalRole === 'platform_admin' || globalRole === 'superadmin';
+  const hasSupportAccess = isAgent || isAdmin;
 
   // Filter modules based on user access
   const visibleModules = SUPPORT_MODULES.filter(module => {
