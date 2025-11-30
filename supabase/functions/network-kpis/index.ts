@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 // Cache management
 interface CacheEntry {
@@ -364,9 +360,9 @@ function calculateNetworkKPIs(agencyData: any[], dateRange?: { from: Date; to: D
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
 
   try {
     console.log('🔄 network-kpis: Request received');
@@ -375,9 +371,9 @@ serve(async (req) => {
     const now = Date.now();
     if (cache && (now - cache.timestamp) < CACHE_DURATION) {
       console.log('✅ Returning cached data');
-      return new Response(JSON.stringify(cache.data), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return withCors(req, new Response(JSON.stringify(cache.data), {
+        headers: { 'Content-Type': 'application/json' },
+      }));
     }
 
     console.log('🔄 Cache expired or empty, loading fresh data');
@@ -446,18 +442,15 @@ serve(async (req) => {
 
     console.log('✅ KPIs calculated and cached');
 
-    return new Response(JSON.stringify(kpis), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return withCors(req, new Response(JSON.stringify(kpis), {
+      headers: { 'Content-Type': 'application/json' },
+    }));
 
   } catch (error) {
     console.error('❌ Error in network-kpis:', error);
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ error: String(error) }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    ));
   }
 });

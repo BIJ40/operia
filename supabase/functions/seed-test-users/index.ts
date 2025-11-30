@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 
 const testUsers = [
   {
@@ -45,8 +41,18 @@ const testUsers = [
 ]
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+  // Handle CORS preflight or reject unauthorized origins
+  const corsResult = handleCorsPreflightOrReject(req);
+  if (corsResult) return corsResult;
+
+  // ⚠️ Production guard: block this function in production
+  const env = Deno.env.get('DENO_ENV') || Deno.env.get('ENVIRONMENT') || 'production';
+  if (env !== 'development' && env !== 'local') {
+    console.warn(`[SEED-TEST-USERS] Blocked: ENV=${env} is not development`);
+    return withCors(req, new Response(
+      JSON.stringify({ error: 'This function is disabled in production' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    ));
   }
 
   try {
@@ -128,7 +134,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ 
         success: true, 
         results,
@@ -137,15 +143,15 @@ Deno.serve(async (req) => {
           note: 'Tous les utilisateurs de test utilisent ce mot de passe'
         }
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      { headers: { 'Content-Type': 'application/json' } }
+    ))
 
   } catch (error) {
     console.error('Seed test users error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    return new Response(
+    return withCors(req, new Response(
       JSON.stringify({ success: false, error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    ))
   }
 })
