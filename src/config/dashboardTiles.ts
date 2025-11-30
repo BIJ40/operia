@@ -119,17 +119,6 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     group: 'support',
     requiresSupport: true,
   },
-  {
-    id: 'TICKETING_DEV',
-    title: 'Ticketing Développement',
-    description: 'Suivi des évolutions et corrections Apogée',
-    icon: Kanban,
-    route: ROUTES.admin.apogeeTickets,
-    scopeSlug: 'apogee_tickets',
-    color: 'accent',
-    group: 'support',
-    requiresModule: 'apogee_tickets',
-  },
   // Franchiseur
   {
     id: 'RESEAU_FRANCHISEUR',
