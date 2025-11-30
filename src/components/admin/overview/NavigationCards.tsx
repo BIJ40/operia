@@ -125,6 +125,8 @@ export function NavigationCards() {
           ]
         },
         { to: ROUTES.admin.agencies, icon: Building2, title: 'Agences', description: 'Configurer les agences' },
+        { to: ROUTES.admin.collaborateurs, icon: UsersRound, title: 'Collaborateurs', description: 'Collaborateurs non inscrits' },
+        { to: ROUTES.admin.userActivity, icon: TrendingUp, title: 'Activité', description: 'Suivi des connexions' },
       ],
     },
     {
@@ -141,6 +143,8 @@ export function NavigationCards() {
             { to: ROUTES.admin.escalationHistory, icon: History, title: 'Historique Escalades' },
           ]
         },
+        { to: ROUTES.admin.supportStats, icon: BarChart3, title: 'Statistiques Support', description: 'Métriques et indicateurs' },
+        { to: ROUTES.admin.escalationHistory, icon: History, title: 'Historique Escalades', description: 'Escalades chatbot' },
       ],
     },
     {
@@ -155,6 +159,12 @@ export function NavigationCards() {
           children: [
             { to: ROUTES.admin.apogeeGuides, icon: BookOpen, title: 'Guides Apogée' },
           ]
+        },
+        { 
+          to: ROUTES.admin.apogeeGuides, 
+          icon: BookOpen, 
+          title: 'Guides Apogée', 
+          description: 'Éditer les guides RAG' 
         },
       ],
     },
@@ -202,6 +212,8 @@ export function NavigationCards() {
             { to: ROUTES.admin.cacheBackup, icon: Archive, title: 'Cache Backup' },
           ]
         },
+        { to: ROUTES.admin.helpconfortBackup, icon: FileStack, title: 'HelpConfort Backup', description: 'Sauvegarde HelpConfort' },
+        { to: ROUTES.admin.cacheBackup, icon: Archive, title: 'Cache Backup', description: 'Gestion du cache local' },
       ],
     },
     {
@@ -212,12 +224,14 @@ export function NavigationCards() {
           to: ROUTES.admin.systemHealth, 
           icon: Activity, 
           title: 'Santé Système', 
-          description: 'Surveillance et configuration',
+          description: 'Surveillance services',
           children: [
             { to: ROUTES.admin.storageQuota, icon: HardDrive, title: 'Quotas Stockage' },
             { to: ROUTES.admin.pageMetadata, icon: Settings, title: 'Métadonnées Pages' },
           ]
         },
+        { to: ROUTES.admin.storageQuota, icon: HardDrive, title: 'Stockage', description: 'Surveiller les quotas' },
+        { to: ROUTES.admin.pageMetadata, icon: Settings, title: 'Métadonnées', description: 'Titres et labels pages' },
       ],
     },
   ];
