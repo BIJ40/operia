@@ -81,6 +81,7 @@ const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
 const ApogeeTicketsKanban = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsKanban"));
 const ApogeeTicketsImport = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImport"));
 const ApogeeTicketsImportPriorities = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportPriorities"));
+const ApogeeTicketsImportEvaluated = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportEvaluated"));
 const ApogeeTicketsImportBugs = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportBugs"));
 const ApogeeTicketsImportV1 = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportV1"));
 const ApogeeTicketsIncomplete = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsIncomplete"));
@@ -243,6 +244,7 @@ function AppContent() {
           <Route path="/admin/apogee-tickets" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsKanban /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-tickets/import" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImport /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-tickets/import-priorities" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImportPriorities /></RoleGuard></MainLayout>} />
+          <Route path="/admin/apogee-tickets/import-evaluated" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImportEvaluated /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-tickets/import-bugs" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImportBugs /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-tickets/import-v1" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsImportV1 /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-tickets/incomplets" element={<MainLayout><RoleGuard minRole="platform_admin"><ApogeeTicketsIncomplete /></RoleGuard></MainLayout>} />
