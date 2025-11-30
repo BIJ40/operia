@@ -79,7 +79,7 @@ function formatHelpTitle(title: string): React.ReactNode {
 export function UnifiedHeader() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdmin, isSupport, isLoggingOut, logout, globalRole } = useAuth();
+  const { isAdmin, canAccessSupportConsole, isLoggingOut, logout, globalRole } = useAuth();
   const { toggleSidebar } = useSidebar();
   const { hasNewTickets, newTicketsCount } = useSupportNotifications();
 
@@ -255,7 +255,7 @@ export function UnifiedHeader() {
             )}
 
             {/* Support button for support staff */}
-            {(isSupport || isAdmin) && (
+            {canAccessSupportConsole && (
               <Link to={ROUTES.support.console}>
                 <Button 
                   variant="ghost" 
