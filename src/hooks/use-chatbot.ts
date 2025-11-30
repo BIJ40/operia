@@ -66,9 +66,10 @@ export const useChatbot = () => {
     localStorage.setItem('chatbot-context', chatContext);
   }, [chatContext]);
 
-  // Reset conversation function
+  // Reset conversation function - returns to mode selection
   const resetConversation = () => {
     setMessages([]);
+    setShowChoiceMode(true);
     localStorage.removeItem('chatbot-messages');
   };
   const [buttonPosition, setButtonPosition] = useState(() => {
