@@ -43,31 +43,22 @@ export function RagDebugTab() {
     setPrompt('');
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-embeddings`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            query,
-            topK: 8,
-            source: family === 'all' ? null : family,
-          }),
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('search-embeddings', {
+        body: {
+          query,
+          topK: 8,
+          source: family === 'all' ? null : family,
+        },
+      });
 
-      if (!response.ok) {
+      if (error) {
         throw new Error('Search failed');
       }
 
-      const data = await response.json();
-      setResults(data.results || []);
+      setResults(data?.results || []);
 
       // Build the prompt that would be sent to the AI - SCALAR methodology
-      if (data.results && data.results.length > 0) {
+      if (data?.results && data.results.length > 0) {
         const docsContent = data.results
           .map((r: ChunkResult, idx: number) => {
             const metadata = r.metadata as any;

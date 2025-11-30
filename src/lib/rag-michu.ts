@@ -33,28 +33,20 @@ export async function getApogeeContext(question: string): Promise<RAGResult> {
   console.log('[RAG-MICHU] Recherche RAG Apogée pour:', question.substring(0, 100));
   
   try {
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-embeddings`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ 
-          query: question, 
-          topK: 8,
-          source: 'apogee' // Filter strictly on apogee source
-        }),
-      }
-    );
+    const { data, error } = await supabase.functions.invoke('search-embeddings', {
+      body: { 
+        query: question, 
+        topK: 8,
+        source: 'apogee' // Filter strictly on apogee source
+      },
+    });
 
-    if (!response.ok) {
-      console.error('[RAG-MICHU] Erreur search-embeddings:', response.status);
+    if (error) {
+      console.error('[RAG-MICHU] Erreur search-embeddings:', error);
       return { chunks: [], hasContent: false, formattedDocs: '' };
     }
 
-    const { results } = await response.json();
+    const results = data?.results;
     
     if (!results || results.length === 0) {
       console.log('[RAG-MICHU] Aucun chunk Apogée trouvé');
