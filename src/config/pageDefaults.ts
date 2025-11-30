@@ -59,7 +59,15 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'admin_documents', defaultTitle: 'Documents RAG', defaultSubtitle: 'Base documentaire pour Mme MICHU', route: ROUTES.admin.documents },
   { pageKey: 'admin_storage_quota', defaultTitle: 'Stockage', defaultSubtitle: 'Surveillance des quotas de stockage', route: ROUTES.admin.storageQuota },
   { pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu', route: ROUTES.admin.pageMetadata },
-  { pageKey: 'admin_apogee_tickets', defaultTitle: 'TICKETING DEVELOPPEMENT', defaultSubtitle: 'Suivi des évolutions et corrections Apogée', route: ROUTES.admin.apogeeTickets },
+  
+  // Gestion de Projet
+  { pageKey: 'projects_index', defaultTitle: 'Gestion de Projet', defaultSubtitle: 'Gérez le backlog et le suivi de développement', route: ROUTES.projects.index },
+  { pageKey: 'projects_kanban', defaultTitle: 'Kanban Projet', defaultSubtitle: 'Vue Kanban des tickets projet', route: ROUTES.projects.kanban },
+  { pageKey: 'projects_incomplete', defaultTitle: 'Tickets Incomplets', defaultSubtitle: 'Tickets nécessitant des informations', route: ROUTES.projects.incomplete },
+  { pageKey: 'projects_classify', defaultTitle: 'Classifier', defaultSubtitle: 'Classifier et qualifier les tickets', route: ROUTES.projects.classify },
+  { pageKey: 'projects_review', defaultTitle: 'Review', defaultSubtitle: 'Revue des tickets qualifiés', route: ROUTES.projects.review },
+  { pageKey: 'projects_import', defaultTitle: 'Import', defaultSubtitle: 'Importer des tickets depuis Excel', route: ROUTES.projects.import },
+  { pageKey: 'projects_permissions', defaultTitle: 'Permissions', defaultSubtitle: 'Gérer les rôles et permissions projet', route: ROUTES.projects.permissions },
   
   // User
   { pageKey: 'profile', defaultTitle: 'Mon Compte', defaultSubtitle: 'Gérez vos informations personnelles', route: ROUTES.profile },
@@ -173,17 +181,19 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   // ============================================
   // ADMINISTRATION
   // ============================================
-  // Apogée Tickets (sous-pages spécifiques d'abord)
-  { match: (path) => path === '/admin/apogee-tickets/import', pageKey: 'admin_apogee_tickets_import', defaultTitle: 'Import Tickets', defaultSubtitle: 'Importer des tickets depuis Excel', icon: 'Upload', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
-  { match: (path) => path === '/admin/apogee-tickets/import-priorities', pageKey: 'admin_apogee_tickets_import_priorities', defaultTitle: 'Import Priorités', defaultSubtitle: 'Importer les priorités', icon: 'Upload', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
-  { match: (path) => path === '/admin/apogee-tickets/import-evaluated', pageKey: 'admin_apogee_tickets_import_evaluated', defaultTitle: 'Import Évalué', defaultSubtitle: 'Importer tickets évalués', icon: 'Upload', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
-  { match: (path) => path === '/admin/apogee-tickets/import-bugs', pageKey: 'admin_apogee_tickets_import_bugs', defaultTitle: 'Import Bugs', defaultSubtitle: 'Importer les bugs', icon: 'Bug', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
-  { match: (path) => path === '/admin/apogee-tickets/import-v1', pageKey: 'admin_apogee_tickets_import_v1', defaultTitle: 'Import V1', defaultSubtitle: 'Importer depuis V1', icon: 'Upload', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
-  { match: (path) => path === '/admin/apogee-tickets/incomplets', pageKey: 'admin_apogee_tickets_incomplete', defaultTitle: 'Tickets Incomplets', defaultSubtitle: 'Compléter les tickets', icon: 'AlertCircle', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
-  { match: (path) => path === '/admin/apogee-tickets/classifier', pageKey: 'admin_apogee_tickets_classify', defaultTitle: 'Classifier Tickets', defaultSubtitle: 'Affecter les tickets aux statuts', icon: 'Tags', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
-  { match: (path) => path === '/admin/apogee-tickets/review', pageKey: 'admin_apogee_tickets_review', defaultTitle: 'Review Tickets', defaultSubtitle: 'Réviser les tickets', icon: 'Eye', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
-  { match: (path) => path === '/admin/apogee-tickets/permissions', pageKey: 'admin_apogee_tickets_permissions', defaultTitle: 'Permissions Tickets', defaultSubtitle: 'Gérer les rôles et permissions', icon: 'Shield', parentRoute: '/admin/apogee-tickets', parentLabel: 'Ticketing' },
-  { match: (path) => path === '/admin/apogee-tickets', pageKey: 'admin_apogee_tickets', defaultTitle: 'Ticketing Développement', defaultSubtitle: 'Suivi des évolutions et corrections Apogée', icon: 'ListTodo', parentRoute: '/admin', parentLabel: 'Admin' },
+  // GESTION DE PROJET
+  // ============================================
+  { match: (path) => path === '/projects/import', pageKey: 'projects_import', defaultTitle: 'Import Tickets', defaultSubtitle: 'Importer des tickets depuis Excel', icon: 'Upload', parentRoute: '/projects', parentLabel: 'Projet' },
+  { match: (path) => path === '/projects/import-priorities', pageKey: 'projects_import_priorities', defaultTitle: 'Import Priorités', defaultSubtitle: 'Importer les priorités', icon: 'Upload', parentRoute: '/projects', parentLabel: 'Projet' },
+  { match: (path) => path === '/projects/import-evaluated', pageKey: 'projects_import_evaluated', defaultTitle: 'Import Évalué', defaultSubtitle: 'Importer tickets évalués', icon: 'Upload', parentRoute: '/projects', parentLabel: 'Projet' },
+  { match: (path) => path === '/projects/import-bugs', pageKey: 'projects_import_bugs', defaultTitle: 'Import Bugs', defaultSubtitle: 'Importer les bugs', icon: 'Bug', parentRoute: '/projects', parentLabel: 'Projet' },
+  { match: (path) => path === '/projects/import-v1', pageKey: 'projects_import_v1', defaultTitle: 'Import V1', defaultSubtitle: 'Importer depuis V1', icon: 'Upload', parentRoute: '/projects', parentLabel: 'Projet' },
+  { match: (path) => path === '/projects/incomplets', pageKey: 'projects_incomplete', defaultTitle: 'Tickets Incomplets', defaultSubtitle: 'Compléter les tickets', icon: 'AlertCircle', parentRoute: '/projects', parentLabel: 'Projet' },
+  { match: (path) => path === '/projects/classifier', pageKey: 'projects_classify', defaultTitle: 'Classifier', defaultSubtitle: 'Classifier et qualifier les tickets', icon: 'Tags', parentRoute: '/projects', parentLabel: 'Projet' },
+  { match: (path) => path === '/projects/review', pageKey: 'projects_review', defaultTitle: 'Review', defaultSubtitle: 'Réviser les tickets', icon: 'Eye', parentRoute: '/projects', parentLabel: 'Projet' },
+  { match: (path) => path === '/projects/permissions', pageKey: 'projects_permissions', defaultTitle: 'Permissions', defaultSubtitle: 'Gérer les rôles et permissions', icon: 'Shield', parentRoute: '/projects', parentLabel: 'Projet' },
+  { match: (path) => path === '/projects/kanban', pageKey: 'projects_kanban', defaultTitle: 'Kanban Projet', defaultSubtitle: 'Vue Kanban des tickets projet', icon: 'Kanban', parentRoute: '/projects', parentLabel: 'Projet' },
+  { match: (path) => path === '/projects', pageKey: 'projects_index', defaultTitle: 'Gestion de Projet', defaultSubtitle: 'Gérez le backlog et le suivi de développement', icon: 'FolderKanban', parentRoute: '/', parentLabel: 'Accueil' },
   
   // Autres pages Admin
   { match: (path) => path === '/admin/users', pageKey: 'admin_users', defaultTitle: 'Gestion Utilisateurs', defaultSubtitle: 'Comptes et permissions', icon: 'Users', parentRoute: '/admin', parentLabel: 'Admin' },
