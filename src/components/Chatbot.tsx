@@ -549,15 +549,14 @@ export function Chatbot() {
           setIsOpen(false);
           setShowCloseConfirm(false);
         }}
-        onConvertToTicket={activeTicket?.is_live_chat ? async () => {
-          // Convert live chat to formal ticket
+        onConvertToTicket={activeTicket?.type === 'chat_ai' || activeTicket?.type === 'chat_human' ? async () => {
+          // Convert chat to formal ticket
           if (!activeTicket) return;
           const result = await safeMutation(
             supabase
               .from('support_tickets')
               .update({
-                is_live_chat: false,
-                escalated_from_chat: true,
+                type: 'ticket',
                 status: 'new',
               })
               .eq('id', activeTicket.id),

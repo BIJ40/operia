@@ -506,7 +506,7 @@ export const useChatbot = () => {
       ? `${profile.first_name} ${profile.last_name || ''}`.trim()
       : 'Utilisateur';
 
-    // Step 2: Create ticket
+    // Step 2: Create ticket (type = 'ticket' pour demande formelle)
     const ticketResult = await safeMutation<{ id: string }>(
       supabase
         .from('support_tickets')
@@ -519,8 +519,7 @@ export const useChatbot = () => {
           source: 'chat',
           agency_slug: profile?.agence || null,
           has_attachments: false,
-          is_live_chat: false,
-          escalated_from_chat: true,
+          type: 'ticket',
           chatbot_conversation: JSON.stringify(messages),
           support_level: 1,
         } as any)

@@ -22,8 +22,8 @@ export interface Ticket {
   rating: number | null;
   rating_comment: string | null;
   unreadCount?: number;
-  is_live_chat: boolean;
-  escalated_from_chat: boolean;
+  // V2.5: type unique remplace is_live_chat + escalated_from_chat
+  type: 'chat_ai' | 'chat_human' | 'ticket';
   assigned_to: string | null;
   viewed_by_support_at: string | null;
   support_level: number;

@@ -47,6 +47,7 @@ export default function AdminSupportTickets() {
     reopenTicket,
     escalateTicket,
     convertChatToTicket,
+    takeOverChat,
     getStats,
   } = useAdminTickets();
 
@@ -209,29 +210,29 @@ export default function AdminSupportTickets() {
     );
   };
 
+  // V2.5: Badges basés sur le champ type unique
   const getDemandTypeBadge = (ticket: Ticket) => {
-    // Chat en cours = is_live_chat true et pas résolu
-    if (ticket.is_live_chat && !['resolved', 'closed'].includes(ticket.status)) {
-      return (
-        <Badge className="bg-green-500 text-white animate-pulse">
-          🟢 Chat en cours
-        </Badge>
-      );
+    switch (ticket.type) {
+      case 'chat_ai':
+        return (
+          <Badge className="bg-blue-500 text-white">
+            🟦 Chat IA
+          </Badge>
+        );
+      case 'chat_human':
+        return (
+          <Badge className="bg-green-500 text-white animate-pulse">
+            🟩 Chat Humain
+          </Badge>
+        );
+      case 'ticket':
+      default:
+        return (
+          <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300">
+            🟧 Ticket
+          </Badge>
+        );
     }
-    // Ex-demande = anciennement un chat, maintenant converti en ticket
-    if (ticket.escalated_from_chat) {
-      return (
-        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">
-          🔄 Ex-Demande
-        </Badge>
-      );
-    }
-    // Ticket standard = créé via le portail
-    return (
-      <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
-        🎫 Ticket
-      </Badge>
-    );
   };
 
   if (!canManageTickets) {
@@ -439,9 +440,9 @@ export default function AdminSupportTickets() {
                       </SelectTrigger>
                       <SelectContent className="bg-background z-50">
                         <SelectItem value="all">Tous les types</SelectItem>
-                        <SelectItem value="live_chat">🟢 Chats en cours</SelectItem>
-                        <SelectItem value="escalated">🔄 Ex-Demandes</SelectItem>
-                        <SelectItem value="portal">🎫 Tickets</SelectItem>
+                        <SelectItem value="chat_ai">🟦 Chat IA</SelectItem>
+                        <SelectItem value="chat_human">🟩 Chat Humain</SelectItem>
+                        <SelectItem value="ticket">🟧 Ticket</SelectItem>
                       </SelectContent>
                     </Select>
 
@@ -487,9 +488,11 @@ export default function AdminSupportTickets() {
                           {tickets
                             .filter(t => !['resolved', 'closed'].includes(t.status))
                             .sort((a, b) => {
-                              // Chats en cours en premier
-                              if (a.is_live_chat && !b.is_live_chat) return -1;
-                              if (!a.is_live_chat && b.is_live_chat) return 1;
+                              // Chat humain en premier, puis chat IA, puis tickets
+                              const typeOrder = { chat_human: 0, chat_ai: 1, ticket: 2 };
+                              const aOrder = typeOrder[a.type as keyof typeof typeOrder] ?? 2;
+                              const bOrder = typeOrder[b.type as keyof typeof typeOrder] ?? 2;
+                              if (aOrder !== bOrder) return aOrder - bOrder;
                               // Puis par date de création (plus récent en premier)
                               return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
                             })
@@ -625,12 +628,22 @@ export default function AdminSupportTickets() {
                           }
                         />
 
+                        {/* Bouton pour prendre la main sur un chat_ai */}
+                        {selectedTicket.type === 'chat_ai' && (
+                          <Button
+                            onClick={() => user && takeOverChat(selectedTicket.id, user.id)}
+                            className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            👋 Prendre la main
+                          </Button>
+                        )}
+
                         {/* Bouton pour convertir un chat en ticket */}
-                        {selectedTicket.is_live_chat && (
+                        {(selectedTicket.type === 'chat_ai' || selectedTicket.type === 'chat_human') && (
                           <Button
                             variant="outline"
                             onClick={() => convertChatToTicket(selectedTicket.id)}
-                            className="gap-2 text-purple-600 border-purple-300 hover:bg-purple-50"
+                            className="gap-2 text-orange-600 border-orange-300 hover:bg-orange-50"
                           >
                             <TicketPlus className="w-4 h-4" />
                             Convertir en ticket

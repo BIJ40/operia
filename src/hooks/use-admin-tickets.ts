@@ -67,13 +67,13 @@ export const useAdminTickets = () => {
       query = query.eq('category', filters.category);
     }
     if (filters.source !== 'all') {
-      // Filter by demand type
-      if (filters.source === 'live_chat') {
-        query = query.eq('is_live_chat', true);
-      } else if (filters.source === 'escalated') {
-        query = query.eq('escalated_from_chat', true);
-      } else if (filters.source === 'portal') {
-        query = query.eq('is_live_chat', false).eq('escalated_from_chat', false);
+      // Filter by demand type (V2.5)
+      if (filters.source === 'chat_ai') {
+        query = query.eq('type', 'chat_ai');
+      } else if (filters.source === 'chat_human') {
+        query = query.eq('type', 'chat_human');
+      } else if (filters.source === 'ticket') {
+        query = query.eq('type', 'ticket');
       }
     }
     if (filters.agency !== 'all') {
@@ -568,14 +568,13 @@ export const useAdminTickets = () => {
     return { total, newTickets, waitingUser, inProgress, resolved, closed };
   };
 
-  // Convertir un chat en ticket formel (quand le SU ne peut pas résoudre)
+  // Convertir un chat (AI ou humain) en ticket formel
   const convertChatToTicket = async (ticketId: string) => {
     const result = await safeMutation(
       supabase
         .from('support_tickets')
         .update({
-          is_live_chat: false,
-          escalated_from_chat: true,
+          type: 'ticket',
           status: 'new',
           updated_at: new Date().toISOString()
         } as any)
@@ -588,7 +587,37 @@ export const useAdminTickets = () => {
       return false;
     }
 
-    successToast('Chat converti en ticket');
+    successToast('Converti en ticket');
+    
+    await loadTickets();
+    if (selectedTicket?.id === ticketId) {
+      await refreshSelectedTicket(ticketId);
+    }
+    return true;
+  };
+
+  // SU prend la main sur un chat_ai → devient chat_human
+  const takeOverChat = async (ticketId: string, userId: string) => {
+    const result = await safeMutation(
+      supabase
+        .from('support_tickets')
+        .update({
+          type: 'chat_human',
+          assigned_to: userId,
+          status: 'in_progress',
+          viewed_by_support_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as any)
+        .eq('id', ticketId),
+      'ADMIN_TICKETS_TAKE_OVER_CHAT'
+    );
+
+    if (!result.success) {
+      errorToast(result.error!);
+      return false;
+    }
+
+    successToast('Vous avez pris la main sur ce chat');
     
     await loadTickets();
     if (selectedTicket?.id === ticketId) {
@@ -628,6 +657,7 @@ export const useAdminTickets = () => {
     reopenTicket,
     escalateTicket,
     convertChatToTicket,
+    takeOverChat,
     getStats,
   };
 };

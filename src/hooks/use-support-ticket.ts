@@ -24,7 +24,7 @@ export const useSupportTicket = () => {
   const { user } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
 
-  const createSupportTicket = async (messages: Message[], isLiveChat: boolean = true): Promise<TicketCreatedData | null> => {
+  const createSupportTicket = async (messages: Message[], ticketType: 'chat_ai' | 'chat_human' | 'ticket' = 'chat_ai'): Promise<TicketCreatedData | null> => {
     if (!user) {
       errorToast('Vous devez être connecté pour créer un ticket');
       return null;
@@ -51,7 +51,7 @@ export const useSupportTicket = () => {
       const userMessages = messages.filter(m => m.role === 'user');
       const lastQuestion = userMessages[userMessages.length - 1]?.content || 'Demande de support';
 
-      // Créer la demande (support direct) ou le ticket
+      // Créer la demande avec le type V2.5
       const ticketResult = await safeMutation<TicketCreatedData>(
         supabase
           .from('support_tickets')
@@ -59,10 +59,9 @@ export const useSupportTicket = () => {
             user_id: user.id,
             subject: lastQuestion.substring(0, 100),
             status: 'new',
-            priority: 'urgent',
+            priority: ticketType === 'chat_ai' ? 'urgent' : 'normal',
             source: 'chat',
-            is_live_chat: isLiveChat,
-            escalated_from_chat: false,
+            type: ticketType,
             agency_slug: profile?.agence || null,
             chatbot_conversation: messages as any,
             support_level: 1,
