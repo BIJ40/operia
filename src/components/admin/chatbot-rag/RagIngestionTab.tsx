@@ -166,6 +166,7 @@ export function RagIngestionTab() {
     accept: {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
       'application/msword': ['.doc'],
       'text/plain': ['.txt'],
       'text/markdown': ['.md'],
@@ -192,8 +193,8 @@ export function RagIngestionTab() {
             <FolderUp className="h-5 w-5" />
             Upload Documents
           </CardTitle>
-          <CardDescription>
-            Glissez-déposez jusqu'à 50 fichiers (PDF, DOCX, TXT, MD)
+        <CardDescription>
+            Glissez-déposez jusqu'à 50 fichiers (PDF, DOCX, PPTX, TXT, MD)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
