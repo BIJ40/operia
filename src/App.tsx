@@ -230,6 +230,7 @@ function AppContent() {
           {/* ============================================ */}
           <Route path="/admin" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminIndex /></RoleGuard></MainLayout>} />
           <Route path="/admin/documents" element={<Navigate to="/admin/chatbot-rag" replace />} />
+          <Route path="/admin/support-tickets" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
           <Route path="/admin/support-stats" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminSupportStats /></RoleGuard></MainLayout>} />
           <Route path="/admin/escalation-history" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminEscalationHistory /></RoleGuard></MainLayout>} />
           <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminBackup /></RoleGuard></MainLayout>} />
