@@ -2,12 +2,12 @@
  * Hook principal pour la gestion des tickets Apogée
  */
 
-import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
 import { logError } from '@/lib/logger';
+import { safeMutation, safeQuery } from '@/lib/safeQuery';
+import { errorToast, successToast } from '@/lib/toastHelpers';
 import type {
   ApogeeTicket,
   ApogeeTicketStatus,
@@ -29,15 +29,14 @@ export function useApogeeTickets(filters?: TicketFilters) {
   const { data: statuses = [] } = useQuery({
     queryKey: ['apogee-ticket-statuses'],
     queryFn: async (): Promise<ApogeeTicketStatus[]> => {
-      const { data, error } = await supabase
-        .from('apogee_ticket_statuses')
-        .select('*')
-        .order('display_order');
-      if (error) {
-        logError('[APOGEE-TICKETS] Error fetching statuses', error);
-        return [];
-      }
-      return data ?? [];
+      const result = await safeQuery<ApogeeTicketStatus[]>(
+        supabase
+          .from('apogee_ticket_statuses')
+          .select('*')
+          .order('display_order'),
+        'APOGEE_STATUSES_LOAD'
+      );
+      return result.success ? (result.data ?? []) : [];
     },
   });
 
@@ -45,15 +44,14 @@ export function useApogeeTickets(filters?: TicketFilters) {
   const { data: modules = [] } = useQuery({
     queryKey: ['apogee-modules'],
     queryFn: async (): Promise<ApogeeModule[]> => {
-      const { data, error } = await supabase
-        .from('apogee_modules')
-        .select('*')
-        .order('display_order');
-      if (error) {
-        logError('[APOGEE-TICKETS] Error fetching modules', error);
-        return [];
-      }
-      return data ?? [];
+      const result = await safeQuery<ApogeeModule[]>(
+        supabase
+          .from('apogee_modules')
+          .select('*')
+          .order('display_order'),
+        'APOGEE_MODULES_LOAD'
+      );
+      return result.success ? (result.data ?? []) : [];
     },
   });
 
@@ -61,15 +59,14 @@ export function useApogeeTickets(filters?: TicketFilters) {
   const { data: priorities = [] } = useQuery({
     queryKey: ['apogee-priorities'],
     queryFn: async (): Promise<ApogeePriority[]> => {
-      const { data, error } = await supabase
-        .from('apogee_priorities')
-        .select('*')
-        .order('display_order');
-      if (error) {
-        logError('[APOGEE-TICKETS] Error fetching priorities', error);
-        return [];
-      }
-      return data ?? [];
+      const result = await safeQuery<ApogeePriority[]>(
+        supabase
+          .from('apogee_priorities')
+          .select('*')
+          .order('display_order'),
+        'APOGEE_PRIORITIES_LOAD'
+      );
+      return result.success ? (result.data ?? []) : [];
     },
   });
 
@@ -77,15 +74,14 @@ export function useApogeeTickets(filters?: TicketFilters) {
   const { data: impactTags = [] } = useQuery({
     queryKey: ['apogee-impact-tags'],
     queryFn: async (): Promise<ApogeeImpactTag[]> => {
-      const { data, error } = await supabase
-        .from('apogee_impact_tags')
-        .select('*')
-        .order('display_order');
-      if (error) {
-        logError('[APOGEE-TICKETS] Error fetching impact tags', error);
-        return [];
-      }
-      return data ?? [];
+      const result = await safeQuery<ApogeeImpactTag[]>(
+        supabase
+          .from('apogee_impact_tags')
+          .select('*')
+          .order('display_order'),
+        'APOGEE_IMPACT_TAGS_LOAD'
+      );
+      return result.success ? (result.data ?? []) : [];
     },
   });
 
@@ -93,15 +89,14 @@ export function useApogeeTickets(filters?: TicketFilters) {
   const { data: ownerSides = [] } = useQuery({
     queryKey: ['apogee-owner-sides'],
     queryFn: async (): Promise<ApogeeOwnerSide[]> => {
-      const { data, error } = await supabase
-        .from('apogee_owner_sides')
-        .select('*')
-        .order('display_order');
-      if (error) {
-        logError('[APOGEE-TICKETS] Error fetching owner sides', error);
-        return [];
-      }
-      return data ?? [];
+      const result = await safeQuery<ApogeeOwnerSide[]>(
+        supabase
+          .from('apogee_owner_sides')
+          .select('*')
+          .order('display_order'),
+        'APOGEE_OWNER_SIDES_LOAD'
+      );
+      return result.success ? (result.data ?? []) : [];
     },
   });
 
@@ -137,7 +132,6 @@ export function useApogeeTickets(filters?: TicketFilters) {
         query = query.eq('reported_by', filters.reported_by);
       }
       if (filters?.needs_completion) {
-        // Include tickets needing completion OR in IMPORT status
         query = query.or('needs_completion.eq.true,kanban_status.eq.IMPORT');
       }
       if (filters?.search) {
@@ -149,12 +143,9 @@ export function useApogeeTickets(filters?: TicketFilters) {
       if (filters?.impact_tag) {
         query = query.contains('impact_tags', [filters.impact_tag]);
       }
-      // Priority range filter
       if (filters?.heat_priority_exact !== undefined) {
-        // Exact priority filter (clicking on a dot)
         query = query.eq('heat_priority', filters.heat_priority_exact);
       } else {
-        // Range filter (dual slider)
         if (filters?.heat_priority_min !== undefined && filters.heat_priority_min > 0) {
           query = query.gte('heat_priority', filters.heat_priority_min);
         }
@@ -163,25 +154,25 @@ export function useApogeeTickets(filters?: TicketFilters) {
         }
       }
 
-      const { data, error } = await query;
-      if (error) {
-        logError('[APOGEE-TICKETS] Error fetching tickets', error);
+      const result = await safeQuery<any[]>(query, 'APOGEE_TICKETS_LOAD');
+      
+      if (!result.success) {
         return [];
       }
       
       // Map comment count to _count field
-      let result = (data || []).map((ticket: any) => ({
+      let data = (result.data || []).map((ticket: any) => ({
         ...ticket,
         _count: {
           comments: ticket.apogee_ticket_comments?.[0]?.count || 0
         }
       })) as ApogeeTicket[];
 
-      // Filtrage client-side pour missing_field (logique complexe avec null)
+      // Filtrage client-side pour missing_field
       if (filters?.missing_field) {
         switch (filters.missing_field) {
           case 'complete':
-            result = result.filter(t => 
+            data = data.filter(t => 
               t.module && 
               t.heat_priority !== null && t.heat_priority !== undefined &&
               (t.h_min !== null || t.h_max !== null) &&
@@ -189,7 +180,7 @@ export function useApogeeTickets(filters?: TicketFilters) {
             );
             break;
           case 'incomplete':
-            result = result.filter(t => 
+            data = data.filter(t => 
               !t.module || 
               t.heat_priority === null || t.heat_priority === undefined ||
               (t.h_min === null && t.h_max === null) ||
@@ -197,126 +188,148 @@ export function useApogeeTickets(filters?: TicketFilters) {
             );
             break;
           case 'no_module':
-            result = result.filter(t => !t.module);
+            data = data.filter(t => !t.module);
             break;
           case 'no_heat':
-            result = result.filter(t => t.heat_priority === null || t.heat_priority === undefined);
+            data = data.filter(t => t.heat_priority === null || t.heat_priority === undefined);
             break;
           case 'no_hours':
-            result = result.filter(t => t.h_min === null && t.h_max === null);
+            data = data.filter(t => t.h_min === null && t.h_max === null);
             break;
           case 'no_description':
-            result = result.filter(t => !t.description);
+            data = data.filter(t => !t.description);
             break;
         }
       }
 
-      return result;
+      return data;
     },
   });
 
   // Create ticket
   const createTicket = useMutation({
     mutationFn: async (ticket: ApogeeTicketInsert) => {
-      const { data, error } = await supabase
-        .from('apogee_tickets')
-        .insert({
-          ...ticket,
-          created_by_user_id: user?.id,
-          needs_completion: !ticket.module || ticket.heat_priority === null || ticket.heat_priority === undefined,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const result = await safeMutation<ApogeeTicket>(
+        supabase
+          .from('apogee_tickets')
+          .insert({
+            ...ticket,
+            created_by_user_id: user?.id,
+            needs_completion: !ticket.module || ticket.heat_priority === null || ticket.heat_priority === undefined,
+          })
+          .select()
+          .single(),
+        'APOGEE_TICKET_CREATE'
+      );
+      
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Erreur création ticket');
+      }
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
-      toast.success('Ticket créé');
+      successToast('Ticket créé');
     },
-    onError: (error) => {
-      toast.error(`Erreur: ${error.message}`);
+    onError: (error: Error) => {
+      errorToast(error.message);
     },
   });
 
   // Update ticket
   const updateTicket = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<ApogeeTicket> & { id: string }) => {
-      // Only recalculate needs_completion if relevant fields are being updated
       const updatePayload: Record<string, any> = { ...updates };
       
-      // Check if we're updating fields that affect completion status (using heat_priority instead of priority)
       const hasCompletionFields = 'module' in updates || 'heat_priority' in updates || 'owner_side' in updates;
       
       if (hasCompletionFields) {
-        // Fetch current values to check completion
-        const { data: current } = await supabase
-          .from('apogee_tickets')
-          .select('module, heat_priority')
-          .eq('id', id)
-          .maybeSingle();
+        const currentResult = await safeQuery<{ module: string | null; heat_priority: number | null }>(
+          supabase
+            .from('apogee_tickets')
+            .select('module, heat_priority')
+            .eq('id', id)
+            .maybeSingle(),
+          'APOGEE_TICKET_CHECK_COMPLETION'
+        );
         
-        if (current) {
-          const finalModule = 'module' in updates ? updates.module : current.module;
-          const finalHeatPriority = 'heat_priority' in updates ? updates.heat_priority : current.heat_priority;
-          
-          // needs_completion = false only if module and heat_priority are filled
+        if (currentResult.success && currentResult.data) {
+          const finalModule = 'module' in updates ? updates.module : currentResult.data.module;
+          const finalHeatPriority = 'heat_priority' in updates ? updates.heat_priority : currentResult.data.heat_priority;
           updatePayload.needs_completion = !finalModule || finalHeatPriority === null || finalHeatPriority === undefined;
         }
       }
 
-      const { data, error } = await supabase
-        .from('apogee_tickets')
-        .update(updatePayload)
-        .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const result = await safeMutation<ApogeeTicket>(
+        supabase
+          .from('apogee_tickets')
+          .update(updatePayload)
+          .eq('id', id)
+          .select()
+          .single(),
+        'APOGEE_TICKET_UPDATE'
+      );
+      
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Erreur mise à jour ticket');
+      }
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
     },
-    onError: (error) => {
-      toast.error(`Erreur: ${error.message}`);
+    onError: (error: Error) => {
+      errorToast(error.message);
     },
   });
 
   // Update kanban status (drag & drop)
   const updateKanbanStatus = useMutation({
     mutationFn: async ({ ticketId, newStatus }: { ticketId: string; newStatus: string }) => {
-      const { data, error } = await supabase
-        .from('apogee_tickets')
-        .update({ kanban_status: newStatus })
-        .eq('id', ticketId)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const result = await safeMutation<ApogeeTicket>(
+        supabase
+          .from('apogee_tickets')
+          .update({ kanban_status: newStatus })
+          .eq('id', ticketId)
+          .select()
+          .single(),
+        'APOGEE_TICKET_KANBAN_UPDATE'
+      );
+      
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Erreur mise à jour statut');
+      }
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
     },
-    onError: (error) => {
-      toast.error(`Erreur: ${error.message}`);
+    onError: (error: Error) => {
+      errorToast(error.message);
     },
   });
 
   // Delete ticket
   const deleteTicket = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('apogee_tickets')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
+      const result = await safeMutation<null>(
+        supabase
+          .from('apogee_tickets')
+          .delete()
+          .eq('id', id),
+        'APOGEE_TICKET_DELETE'
+      );
+      
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Erreur suppression ticket');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
-      toast.success('Ticket supprimé');
+      successToast('Ticket supprimé');
     },
-    onError: (error) => {
-      toast.error(`Erreur: ${error.message}`);
+    onError: (error: Error) => {
+      errorToast(error.message);
     },
   });
 
@@ -345,21 +358,22 @@ export function useApogeeTicket(ticketId: string | null) {
     queryKey: ['apogee-ticket', ticketId],
     queryFn: async (): Promise<ApogeeTicket | null> => {
       if (!ticketId) return null;
-      const { data, error } = await supabase
-        .from('apogee_tickets')
-        .select(`
-          *,
-          apogee_modules(*),
-          apogee_priorities(*),
-          apogee_ticket_statuses(*)
-        `)
-        .eq('id', ticketId)
-        .maybeSingle();
-      if (error) {
-        logError('[APOGEE-TICKET] Error fetching ticket', error);
-        return null;
-      }
-      return data as ApogeeTicket | null;
+      
+      const result = await safeQuery<ApogeeTicket>(
+        supabase
+          .from('apogee_tickets')
+          .select(`
+            *,
+            apogee_modules(*),
+            apogee_priorities(*),
+            apogee_ticket_statuses(*)
+          `)
+          .eq('id', ticketId)
+          .maybeSingle(),
+        'APOGEE_TICKET_SINGLE_LOAD'
+      );
+      
+      return result.success ? result.data ?? null : null;
     },
     enabled: !!ticketId,
   });
@@ -368,42 +382,49 @@ export function useApogeeTicket(ticketId: string | null) {
     queryKey: ['apogee-ticket-comments', ticketId],
     queryFn: async (): Promise<ApogeeTicketComment[]> => {
       if (!ticketId) return [];
-      const { data, error } = await supabase
-        .from('apogee_ticket_comments')
-        .select(`
-          *,
-          profiles:created_by_user_id(first_name, last_name)
-        `)
-        .eq('ticket_id', ticketId)
-        .order('created_at', { ascending: true });
-      if (error) {
-        logError('[APOGEE-TICKET] Error fetching comments', error);
-        return [];
-      }
-      return (data ?? []) as ApogeeTicketComment[];
+      
+      const result = await safeQuery<ApogeeTicketComment[]>(
+        supabase
+          .from('apogee_ticket_comments')
+          .select(`
+            *,
+            profiles:created_by_user_id(first_name, last_name)
+          `)
+          .eq('ticket_id', ticketId)
+          .order('created_at', { ascending: true }),
+        'APOGEE_TICKET_COMMENTS_LOAD'
+      );
+      
+      return result.success ? (result.data ?? []) : [];
     },
     enabled: !!ticketId,
   });
 
   const addComment = useMutation({
     mutationFn: async (comment: ApogeeTicketCommentInsert) => {
-      const { data, error } = await supabase
-        .from('apogee_ticket_comments')
-        .insert({
-          ...comment,
-          created_by_user_id: user?.id,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const result = await safeMutation<ApogeeTicketComment>(
+        supabase
+          .from('apogee_ticket_comments')
+          .insert({
+            ...comment,
+            created_by_user_id: user?.id,
+          })
+          .select()
+          .single(),
+        'APOGEE_TICKET_COMMENT_CREATE'
+      );
+      
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Erreur ajout commentaire');
+      }
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apogee-ticket-comments', ticketId] });
-      toast.success('Commentaire ajouté');
+      successToast('Commentaire ajouté');
     },
-    onError: (error) => {
-      toast.error(`Erreur: ${error.message}`);
+    onError: (error: Error) => {
+      errorToast(error.message);
     },
   });
 

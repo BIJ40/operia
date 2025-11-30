@@ -4,7 +4,8 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { safeQuery, safeInvoke } from '@/lib/safeQuery';
+import { errorToast, successToast, warningToast, infoToast } from '@/lib/toastHelpers';
 
 interface QualificationResult {
   success: boolean;
@@ -20,37 +21,40 @@ export function useTicketQualification() {
     mutationFn: async (ticketIds: string[]): Promise<QualificationResult> => {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { data, error } = await supabase.functions.invoke('qualify-ticket', {
-        body: { 
-          ticket_ids: ticketIds,
-          user_id: user?.id 
-        }
-      });
+      const result = await safeInvoke<QualificationResult>(
+        supabase.functions.invoke('qualify-ticket', {
+          body: { 
+            ticket_ids: ticketIds,
+            user_id: user?.id 
+          }
+        }),
+        'TICKET_QUALIFY'
+      );
 
-      if (error) {
-        // Handle rate limit and payment errors
-        if (error.message?.includes('429')) {
+      if (!result.success) {
+        const errorMsg = result.error?.message || '';
+        if (errorMsg.includes('429')) {
           throw new Error('Limite de requêtes atteinte. Réessayez dans quelques instants.');
         }
-        if (error.message?.includes('402')) {
+        if (errorMsg.includes('402')) {
           throw new Error('Crédits IA insuffisants. Veuillez recharger votre compte.');
         }
-        throw error;
+        throw new Error(result.error?.message || 'Erreur qualification');
       }
 
-      return data as QualificationResult;
+      return result.data!;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
       
       if (data.failed === 0) {
-        toast.success(`${data.qualified} ticket(s) qualifié(s) avec succès`);
+        successToast(`${data.qualified} ticket(s) qualifié(s) avec succès`);
       } else {
-        toast.warning(`${data.qualified} qualifié(s), ${data.failed} échec(s)`);
+        warningToast(`${data.qualified} qualifié(s), ${data.failed} échec(s)`);
       }
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Erreur lors de la qualification');
+      errorToast(error.message || 'Erreur lors de la qualification');
     },
   });
 
@@ -66,17 +70,20 @@ export function useTicketQualification() {
 
   // Qualifier tous les tickets non qualifiés
   const qualifyAllUnqualified = async () => {
-    const { data: unqualified } = await supabase
-      .from('apogee_tickets')
-      .select('id')
-      .eq('is_qualified', false);
+    const result = await safeQuery<{ id: string }[]>(
+      supabase
+        .from('apogee_tickets')
+        .select('id')
+        .eq('is_qualified', false),
+      'TICKETS_UNQUALIFIED_LOAD'
+    );
 
-    if (!unqualified || unqualified.length === 0) {
-      toast.info('Aucun ticket à qualifier');
+    if (!result.success || !result.data || result.data.length === 0) {
+      infoToast('Aucun ticket à qualifier');
       return;
     }
 
-    const ids = unqualified.map(t => t.id);
+    const ids = result.data.map(t => t.id);
     
     // Traiter par lots de 5 pour éviter les timeouts
     const BATCH_SIZE = 5;
@@ -86,15 +93,15 @@ export function useTicketQualification() {
     for (let i = 0; i < ids.length; i += BATCH_SIZE) {
       const batch = ids.slice(i, i + BATCH_SIZE);
       try {
-        const result = await qualifyMutation.mutateAsync(batch);
-        totalQualified += result.qualified;
-        totalFailed += result.failed;
-      } catch (error) {
+        const batchResult = await qualifyMutation.mutateAsync(batch);
+        totalQualified += batchResult.qualified;
+        totalFailed += batchResult.failed;
+      } catch {
         totalFailed += batch.length;
       }
     }
 
-    toast.success(`Qualification terminée: ${totalQualified} OK, ${totalFailed} échecs`);
+    successToast(`Qualification terminée: ${totalQualified} OK, ${totalFailed} échecs`);
   };
 
   return {
