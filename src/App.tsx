@@ -47,7 +47,8 @@ const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"))
 const TeamPage = lazy(() => import("./pages/TeamPage"));
 
 // Lazy loaded pages - Support
-const UserDemands = lazy(() => import("./pages/UserDemands"));
+const SupportUser = lazy(() => import("./pages/SupportUser"));
+const UserTickets = lazy(() => import("./pages/UserTickets"));
 const Faq = lazy(() => import("./pages/Faq"));
 
 // Lazy loaded pages - Franchiseur (Réseau)
@@ -190,12 +191,18 @@ function AppContent() {
           <Route path="/hc-agency/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><TeamPage /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
-          {/* SUPPORT - Section Index + Sous-pages */}
+          {/* SUPPORT V2 - Unified Support System */}
           {/* ============================================ */}
-          <Route path="/support" element={<MainLayout><RoleGuard><SupportIndex /></RoleGuard></MainLayout>} />
-          <Route path="/support/mes-demandes" element={<MainLayout><RoleGuard><UserDemands /></RoleGuard></MainLayout>} />
+          {/* User Support - 3 columns (FAQ | Chat | Demands) */}
+          <Route path="/support" element={<MainLayout><RoleGuard><SupportUser /></RoleGuard></MainLayout>} />
+          {/* User Tickets - Full ticket management */}
+          <Route path="/mes-demandes" element={<MainLayout><RoleGuard><UserTickets /></RoleGuard></MainLayout>} />
+          {/* Legacy routes - redirect */}
+          <Route path="/support/mes-demandes" element={<Navigate to="/mes-demandes" replace />} />
+          {/* FAQ */}
           <Route path="/support/faq" element={<MainLayout><Faq /></MainLayout>} />
-          <Route path="/support/console" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
+          {/* SU Console - Support agents (N1/N2/N5) */}
+          <Route path="/support/console" element={<MainLayout><RoleGuard minRole="franchisee_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* RÉSEAU FRANCHISEUR - Section Index + Sous-pages */}

@@ -1,5 +1,5 @@
 import { useEffect, useState, createContext, useContext } from 'react';
-import { X, RotateCcw } from 'lucide-react';
+import { X, RotateCcw, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -399,7 +399,7 @@ export function Chatbot() {
         </button>
       )}
 
-      {/* Chat window */}
+          {/* Chat window */}
       {isOpen && (
         <div
           style={{
@@ -417,6 +417,23 @@ export function Chatbot() {
               <h3 className="font-semibold text-sm">Helpbox!</h3>
             </div>
             <div className="flex items-center gap-1">
+              {/* Expand button - navigate to /support */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => {
+                      setIsOpen(false);
+                      window.location.href = '/support';
+                    }}
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                  >
+                    <Maximize2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Ouvrir le centre d'aide</TooltipContent>
+              </Tooltip>
               {/* Reset conversation button - only show when there are messages and no active ticket */}
               {messages.length > 0 && !activeTicket && (
                 <Tooltip>

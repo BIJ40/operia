@@ -58,12 +58,12 @@ export const ROUTES = {
   },
 
   // ============================================
-  // SUPPORT
+  // SUPPORT V2
   // ============================================
   support: {
-    index: '/support',
-    userTickets: '/support/mes-demandes',
-    console: '/support/console',
+    index: '/support',           // SupportUser.tsx - 3 columns (FAQ | Chat | Demands)
+    userTickets: '/mes-demandes', // UserTickets.tsx - Full ticket management
+    console: '/support/console',  // AdminSupportTickets.tsx - SU Console (N1/N2/N5)
     faq: '/support/faq',
   },
 

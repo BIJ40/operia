@@ -1,3 +1,9 @@
+/**
+ * @deprecated LEGACY_SUPPORT_V1_NOT_USED
+ * This file has been replaced by AdminSupportTickets.tsx
+ * DO NOT USE - Kept for reference only
+ */
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +22,7 @@ import { TicketFilters } from '@/components/admin/support/TicketFilters';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { TICKET_STATUS_LABELS, type TicketStatus, type TicketPriority, type TicketService } from '@/services/supportService';
 
+// LEGACY_SUPPORT_V1_NOT_USED - replaced by AdminSupportTickets.tsx
 export default function AdminSupport() {
   const {
     isAdmin,

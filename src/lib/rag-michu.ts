@@ -12,6 +12,64 @@ import { logDebug, logError, logInfo } from '@/lib/logger';
 
 export type RAGContextType = 'apogee' | 'apporteurs' | 'helpconfort' | 'documents' | 'metier' | 'franchise' | 'auto';
 
+// ============ ROLE-BASED CONTEXT FILTERING ============
+
+/**
+ * Get allowed RAG contexts based on user global role
+ * N0 (externe/tech): apogee, documents
+ * N1 (salarié agence): apogee, apporteurs, documents
+ * N2 (direction agence): apogee, apporteurs, helpconfort, documents
+ * N5+ (franchiseur): ALL
+ */
+export function getFilteredContexts(globalRole: string): RAGContextType[] {
+  const roleContexts: Record<string, RAGContextType[]> = {
+    // N0 - External / Technician
+    'base_user': ['apogee', 'documents'],
+    // N1 - Agency Employee
+    'franchisee_user': ['apogee', 'apporteurs', 'documents'],
+    // N2 - Agency Direction
+    'franchisee_admin': ['apogee', 'apporteurs', 'helpconfort', 'documents'],
+    // N3 - Franchisor User
+    'franchisor_user': ['apogee', 'apporteurs', 'helpconfort', 'documents', 'metier', 'franchise'],
+    // N4+ - Franchisor Admin / Platform Admin
+    'franchisor_admin': ['apogee', 'apporteurs', 'helpconfort', 'documents', 'metier', 'franchise'],
+    'platform_admin': ['apogee', 'apporteurs', 'helpconfort', 'documents', 'metier', 'franchise'],
+    'superadmin': ['apogee', 'apporteurs', 'helpconfort', 'documents', 'metier', 'franchise'],
+  };
+
+  return roleContexts[globalRole] || roleContexts['base_user'];
+}
+
+/**
+ * Check if user can access a specific RAG context
+ */
+export function canAccessContext(globalRole: string, context: RAGContextType): boolean {
+  if (context === 'auto') return true; // Auto-detect always allowed
+  const allowed = getFilteredContexts(globalRole);
+  return allowed.includes(context);
+}
+
+/**
+ * Filter contexts for UI display
+ */
+export function getContextOptionsForRole(globalRole: string): { value: RAGContextType; label: string }[] {
+  const allowed = getFilteredContexts(globalRole);
+  const labels: Record<RAGContextType, string> = {
+    apogee: 'Apogée',
+    apporteurs: 'Apporteurs',
+    helpconfort: 'HelpConfort',
+    documents: 'Documents',
+    metier: 'Métiers',
+    franchise: 'Franchise',
+    auto: 'Auto-détection',
+  };
+  
+  const options = allowed.map(ctx => ({ value: ctx, label: labels[ctx] }));
+  // Always add auto option at the end
+  options.push({ value: 'auto', label: labels.auto });
+  return options;
+}
+
 export interface RAGSearchParams {
   query: string;
   contextType?: RAGContextType;
