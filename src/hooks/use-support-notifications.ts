@@ -54,23 +54,25 @@ export function useSupportNotifications() {
         .in('status', ['new', 'waiting', 'waiting_user'])
         .or('viewed_by_support_at.is.null,assigned_to.is.null');
 
-      // V2.5: Compter séparément les demandes de chat humain (channel_type = 'chat_human')
+      // V2.5: Compter séparément les demandes de chat humain (type = 'chat_human')
       const chatHumanQuery = supabase
         .from('support_tickets')
         .select('id', { count: 'exact', head: true })
+        .eq('type', 'chat_human')
         .in('status', ['new', 'waiting', 'waiting_user'])
         .or('viewed_by_support_at.is.null,assigned_to.is.null');
       
-      const { count: chatHumanPending, error: chatHumanError } = await chatHumanQuery.filter('channel_type', 'eq', 'chat_human');
+      const { count: chatHumanPending, error: chatHumanError } = await chatHumanQuery;
 
-      // V2.5: Compter les tickets classiques (channel_type != 'chat_human')
+      // V2.5: Compter les tickets classiques (type != 'chat_human')
       const ticketQuery = supabase
         .from('support_tickets')
         .select('id', { count: 'exact', head: true })
+        .or('type.is.null,type.neq.chat_human')
         .in('status', ['new', 'waiting', 'waiting_user'])
         .or('viewed_by_support_at.is.null,assigned_to.is.null');
       
-      const { count: ticketPending, error: ticketError } = await ticketQuery.filter('channel_type', 'neq', 'chat_human');
+      const { count: ticketPending, error: ticketError } = await ticketQuery;
 
       // Tickets assignés à moi (en cours)
       const { count: assignedCount, error: assignedError } = await supabase
