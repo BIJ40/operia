@@ -6,12 +6,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, MessageSquare, RefreshCw, CheckCircle2, Clock, Eye, AlertCircle } from 'lucide-react';
+import { Loader2, MessageSquare, RefreshCw, CheckCircle2, Clock, Eye, AlertCircle, BookPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { logError } from '@/lib/logger';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
+import { ImproveGuideDialog } from './ImproveGuideDialog';
 
 type ChatQuery = {
   id: string;
@@ -23,6 +24,12 @@ type ChatQuery = {
   context_found: string | null;
   chat_context: string | null;
   is_incomplete: boolean | null;
+  answer_raw?: string | null;
+  context_type_used?: string | null;
+  apporteur_code_used?: string | null;
+  univers_code_used?: string | null;
+  role_cible_used?: string | null;
+  improvement_block_id?: string | null;
 };
 
 export function RagQuestionsTab() {
@@ -32,6 +39,8 @@ export function RagQuestionsTab() {
   const [contextFilter, setContextFilter] = useState<string>('all');
   const [editingNotes, setEditingNotes] = useState<{ [key: string]: string }>({});
   const [selectedQuery, setSelectedQuery] = useState<ChatQuery | null>(null);
+  const [improveDialogOpen, setImproveDialogOpen] = useState(false);
+  const [queryToImprove, setQueryToImprove] = useState<ChatQuery | null>(null);
 
   const loadQueries = async () => {
     setLoading(true);
@@ -246,7 +255,23 @@ export function RagQuestionsTab() {
                   <span className="text-xs text-muted-foreground">
                     {query.created_at && format(new Date(query.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
                   </span>
+                  {query.improvement_block_id && (
+                    <Badge variant="secondary" className="text-xs">
+                      <CheckCircle2 className="w-3 h-3 mr-1" /> Amélioré
+                    </Badge>
+                  )}
                   <div className="flex gap-1 ml-auto">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7"
+                      onClick={() => {
+                        setQueryToImprove(query);
+                        setImproveDialogOpen(true);
+                      }}
+                    >
+                      <BookPlus className="w-3 h-3 mr-1" /> Améliorer
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
@@ -290,6 +315,14 @@ export function RagQuestionsTab() {
           </div>
         )}
       </CardContent>
+
+      {/* Improve Guide Dialog */}
+      <ImproveGuideDialog
+        open={improveDialogOpen}
+        onOpenChange={setImproveDialogOpen}
+        query={queryToImprove}
+        onSuccess={loadQueries}
+      />
     </Card>
   );
 }

@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, RefreshCw, Activity, MessageSquare, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { Loader2, RefreshCw, Activity, MessageSquare, CheckCircle2, AlertCircle, Clock, HelpCircle, BookPlus } from 'lucide-react';
 import { format, subDays, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { safeQuery } from '@/lib/safeQuery';
 import { errorToast } from '@/lib/toastHelpers';
 import { logError } from '@/lib/logger';
+import { getFaqStats, getImprovedQueriesCount, type FaqStats } from '@/lib/rag-improvement';
 
 type QueryStatsRow = {
   status: string | null;
@@ -28,8 +29,10 @@ export function RagStatsTab() {
   const [resolvedCount, setResolvedCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [incompleteCount, setIncompleteCount] = useState(0);
+  const [improvedCount, setImprovedCount] = useState(0);
   const [contextBreakdown, setContextBreakdown] = useState<Record<string, number>>({});
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
+  const [faqStats, setFaqStats] = useState<FaqStats>({ total: 0, fromQueries: 0, byContext: {} });
   const [loading, setLoading] = useState(true);
 
   const loadStats = async () => {
@@ -37,6 +40,7 @@ export function RagStatsTab() {
     try {
       const sevenDaysAgo = startOfDay(subDays(new Date(), 7)).toISOString();
       
+      // Load queries stats
       const result = await safeQuery<QueryStatsRow[]>(
         supabase
           .from('chatbot_queries')
@@ -83,6 +87,14 @@ export function RagStatsTab() {
       }
       dailyArray.sort((a, b) => a.date.localeCompare(b.date));
       setDailyStats(dailyArray);
+
+      // Load FAQ and improvement stats
+      const [faqData, improvedData] = await Promise.all([
+        getFaqStats(),
+        getImprovedQueriesCount(),
+      ]);
+      setFaqStats(faqData);
+      setImprovedCount(improvedData);
 
     } catch (error) {
       logError('rag-stats', 'Error loading stats', error);
@@ -179,6 +191,51 @@ export function RagStatsTab() {
                   </Card>
                 ))}
               </div>
+            </div>
+
+            {/* FAQ & Improvement Stats */}
+            <div>
+              <h4 className="text-sm font-medium mb-2">Améliorations & FAQ</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="p-4">
+                  <div className="flex items-center gap-2">
+                    <BookPlus className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm text-muted-foreground">Questions améliorées</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{improvedCount}</p>
+                </Card>
+                
+                <Card className="p-4">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm text-muted-foreground">FAQ Total</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{faqStats.total}</p>
+                </Card>
+                
+                <Card className="p-4">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-green-500" />
+                    <span className="text-sm text-muted-foreground">FAQ depuis queries</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{faqStats.fromQueries}</p>
+                </Card>
+              </div>
+              
+              {/* FAQ by context */}
+              {Object.keys(faqStats.byContext).length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs text-muted-foreground mb-2">FAQ par contexte:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(faqStats.byContext).map(([ctx, count]) => (
+                      <Card key={ctx} className="px-3 py-2">
+                        <span className="text-xs text-muted-foreground capitalize">{ctx}</span>
+                        <p className="font-medium">{count}</p>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Daily Activity */}

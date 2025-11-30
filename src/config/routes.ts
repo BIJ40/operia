@@ -64,6 +64,7 @@ export const ROUTES = {
     index: '/support',
     userTickets: '/support/mes-demandes',
     console: '/support/console',
+    faq: '/support/faq',
   },
 
   // ============================================

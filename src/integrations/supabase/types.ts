@@ -985,46 +985,70 @@ export type Database = {
         Row: {
           admin_notes: string | null
           answer: string | null
+          answer_quality: number | null
+          answer_raw: string | null
+          apporteur_code_used: string | null
           chat_context: string | null
           context_found: string | null
+          context_type_used: string | null
           created_at: string | null
           id: string
+          improvement_block_id: string | null
           is_incomplete: boolean | null
           question: string
           reviewed_at: string | null
           reviewed_by: string | null
+          role_cible_used: string | null
           similarity_scores: Json | null
+          source_block_ids: string[] | null
           status: string | null
+          univers_code_used: string | null
           user_id: string | null
         }
         Insert: {
           admin_notes?: string | null
           answer?: string | null
+          answer_quality?: number | null
+          answer_raw?: string | null
+          apporteur_code_used?: string | null
           chat_context?: string | null
           context_found?: string | null
+          context_type_used?: string | null
           created_at?: string | null
           id?: string
+          improvement_block_id?: string | null
           is_incomplete?: boolean | null
           question: string
           reviewed_at?: string | null
           reviewed_by?: string | null
+          role_cible_used?: string | null
           similarity_scores?: Json | null
+          source_block_ids?: string[] | null
           status?: string | null
+          univers_code_used?: string | null
           user_id?: string | null
         }
         Update: {
           admin_notes?: string | null
           answer?: string | null
+          answer_quality?: number | null
+          answer_raw?: string | null
+          apporteur_code_used?: string | null
           chat_context?: string | null
           context_found?: string | null
+          context_type_used?: string | null
           created_at?: string | null
           id?: string
+          improvement_block_id?: string | null
           is_incomplete?: boolean | null
           question?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
+          role_cible_used?: string | null
           similarity_scores?: Json | null
+          source_block_ids?: string[] | null
           status?: string | null
+          univers_code_used?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -1118,6 +1142,99 @@ export type Database = {
             columns: ["block_id"]
             isOneToOne: false
             referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faq_categories: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          label: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          label: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          label?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      faq_items: {
+        Row: {
+          answer: string
+          apporteur_code: string | null
+          category_id: string | null
+          context_type: string
+          created_at: string
+          created_from_query_id: string | null
+          display_order: number
+          id: string
+          is_published: boolean
+          linked_block_ids: string[] | null
+          question: string
+          role_cible: string | null
+          univers_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          apporteur_code?: string | null
+          category_id?: string | null
+          context_type?: string
+          created_at?: string
+          created_from_query_id?: string | null
+          display_order?: number
+          id?: string
+          is_published?: boolean
+          linked_block_ids?: string[] | null
+          question: string
+          role_cible?: string | null
+          univers_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          apporteur_code?: string | null
+          category_id?: string | null
+          context_type?: string
+          created_at?: string
+          created_from_query_id?: string | null
+          display_order?: number
+          id?: string
+          is_published?: boolean
+          linked_block_ids?: string[] | null
+          question?: string
+          role_cible?: string | null
+          univers_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "faq_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faq_items_created_from_query_id_fkey"
+            columns: ["created_from_query_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_queries"
             referencedColumns: ["id"]
           },
         ]
