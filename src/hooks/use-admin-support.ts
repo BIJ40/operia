@@ -34,6 +34,15 @@ export interface SupportTicket {
   // P3#1 SLA fields
   due_at?: string | null;
   sla_status?: string | null;
+  // P3#2 AI Classification fields
+  ai_category?: string | null;
+  ai_priority?: string | null;
+  ai_confidence?: number | null;
+  ai_suggested_answer?: string | null;
+  ai_is_incomplete?: boolean;
+  ai_tags?: string[] | null;
+  auto_classified?: boolean;
+  ai_classified_at?: string | null;
 }
 
 export interface SupportMessage {

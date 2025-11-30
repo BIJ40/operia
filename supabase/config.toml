@@ -53,3 +53,6 @@ verify_jwt = true
 
 [functions.qualify-ticket]
 verify_jwt = true
+
+[functions.support-auto-classify]
+verify_jwt = true
