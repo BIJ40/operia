@@ -4,7 +4,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import { MainLayout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -79,17 +78,7 @@ export default function Faq() {
   }, {} as Record<string, FaqItem[]>);
 
   return (
-    <MainLayout>
-      <div className="container max-w-4xl mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <HelpCircle className="w-8 h-8 text-helpconfort-blue" />
-            Questions Fréquentes
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Retrouvez les réponses aux questions les plus courantes
-          </p>
-        </div>
+    <div className="container max-w-4xl mx-auto px-4 py-6">
 
         {/* Filters */}
         <Card className="mb-6">
@@ -204,6 +193,5 @@ export default function Faq() {
           </div>
         )}
       </div>
-    </MainLayout>
   );
 }
