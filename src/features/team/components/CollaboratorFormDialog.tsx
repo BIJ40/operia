@@ -96,7 +96,7 @@ export function CollaboratorFormDialog({
         last_name: "",
         email: "",
         phone: "",
-        role: "autre",
+        role: "technicien",
         notes: "",
       });
     }
