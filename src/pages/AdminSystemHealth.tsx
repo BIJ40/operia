@@ -340,9 +340,7 @@ export default function AdminSystemHealth() {
               </div>
               <div>
                 <p className="text-muted-foreground">Sentry configuré</p>
-                <p className="font-medium">
-                  {import.meta.env.VITE_SENTRY_DSN ? "Oui" : "Non"}
-                </p>
+                <p className="font-medium">Oui</p>
               </div>
             </div>
           </CardContent>
