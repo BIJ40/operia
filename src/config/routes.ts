@@ -61,9 +61,10 @@ export const ROUTES = {
   // SUPPORT V2
   // ============================================
   support: {
-    index: '/support',           // SupportUser.tsx - 3 columns (FAQ | Chat | Demands)
-    userTickets: '/mes-demandes', // UserTickets.tsx - Full ticket management
-    console: '/support/console',  // AdminSupportTickets.tsx - SU Console (N1/N2/N5)
+    index: '/support',                // SupportIndex.tsx - HUB page
+    helpcenter: '/support/helpcenter', // SupportUser.tsx - 3 columns (FAQ | Chat | Demands)
+    userTickets: '/support/mes-demandes', // UserTickets.tsx - Full ticket management
+    console: '/support/console',      // AdminSupportTickets.tsx - SU Console (N1/N2/N5)
     faq: '/support/faq',
   },
 
