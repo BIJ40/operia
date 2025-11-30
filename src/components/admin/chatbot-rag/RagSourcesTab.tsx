@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, RefreshCw, FolderTree, Database } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { safeInvoke } from '@/lib/safeQuery';
+import { safeQuery, safeInvoke } from '@/lib/safeQuery';
 import { errorToast, successToast, warningToast } from '@/lib/toastHelpers';
 import { logError } from '@/lib/logger';
 
@@ -34,46 +34,62 @@ export function RagSourcesTab() {
     try {
       // Get blocks count by type
       // Apogée blocks (exclude helpconfort and apporteur)
-      const { data: apogeeBlocks, error: apogeeError } = await supabase
-        .from('blocks')
-        .select('id', { count: 'exact' })
-        .eq('type', 'section')
-        .not('slug', 'like', 'helpconfort-%')
-        .not('slug', 'like', 'apporteur-%');
+      const apogeeResult = await safeQuery<{ id: string }[]>(
+        supabase
+          .from('blocks')
+          .select('id', { count: 'exact' })
+          .eq('type', 'section')
+          .not('slug', 'like', 'helpconfort-%')
+          .not('slug', 'like', 'apporteur-%'),
+        'RAG_SOURCES_LOAD_APOGEE_BLOCKS'
+      );
 
-      if (apogeeError) {
-        logError('rag-sources', 'Error loading Apogée blocks', apogeeError);
+      if (!apogeeResult.success) {
+        logError('rag-sources', 'Error loading Apogée blocks', apogeeResult.error);
       }
+      const apogeeBlocks = apogeeResult.data || [];
 
       // HelpConfort blocks
-      const { data: helpconfortBlocks, error: helpconfortError } = await supabase
-        .from('blocks')
-        .select('id', { count: 'exact' })
-        .eq('type', 'section')
-        .like('slug', 'helpconfort-%');
+      const helpconfortResult = await safeQuery<{ id: string }[]>(
+        supabase
+          .from('blocks')
+          .select('id', { count: 'exact' })
+          .eq('type', 'section')
+          .like('slug', 'helpconfort-%'),
+        'RAG_SOURCES_LOAD_HELPCONFORT_BLOCKS'
+      );
 
-      if (helpconfortError) {
-        logError('rag-sources', 'Error loading HelpConfort blocks', helpconfortError);
+      if (!helpconfortResult.success) {
+        logError('rag-sources', 'Error loading HelpConfort blocks', helpconfortResult.error);
       }
+      const helpconfortBlocks = helpconfortResult.data || [];
 
       // Apporteurs blocks
-      const { data: apporteurBlocks, error: apporteurError } = await supabase
-        .from('apporteur_blocks')
-        .select('id', { count: 'exact' })
-        .eq('type', 'section');
+      const apporteurResult = await safeQuery<{ id: string }[]>(
+        supabase
+          .from('apporteur_blocks')
+          .select('id', { count: 'exact' })
+          .eq('type', 'section'),
+        'RAG_SOURCES_LOAD_APPORTEUR_BLOCKS'
+      );
 
-      if (apporteurError) {
-        logError('rag-sources', 'Error loading Apporteur blocks', apporteurError);
+      if (!apporteurResult.success) {
+        logError('rag-sources', 'Error loading Apporteur blocks', apporteurResult.error);
       }
+      const apporteurBlocks = apporteurResult.data || [];
 
       // Get chunks count by family
-      const { data: chunks, error: chunksError } = await supabase
-        .from('guide_chunks')
-        .select('block_type, metadata, created_at');
+      const chunksResult = await safeQuery<{ block_type: string; metadata: unknown; created_at: string }[]>(
+        supabase
+          .from('guide_chunks')
+          .select('block_type, metadata, created_at'),
+        'RAG_SOURCES_LOAD_CHUNKS'
+      );
 
-      if (chunksError) {
-        logError('rag-sources', 'Error loading guide chunks', chunksError);
+      if (!chunksResult.success) {
+        logError('rag-sources', 'Error loading guide chunks', chunksResult.error);
       }
+      const chunks = chunksResult.data || [];
 
       // Aggregate stats
       const apogeeChunks = chunks?.filter(c => c.block_type === 'apogee_guide') || [];
