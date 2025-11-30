@@ -1,5 +1,10 @@
 /**
  * Dialog de création d'un nouveau ticket Apogée
+ * 
+ * Permissions:
+ * - Tous : Élément concerné, Description, Module
+ * - Développeur uniquement : H min / H max
+ * - Retiré de la création : Priorité, Porteur (définis plus tard par les gestionnaires)
  */
 
 import { useState } from 'react';
@@ -16,36 +21,38 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
-import type { ApogeeModule, ApogeePriority, ApogeeTicketInsert, OwnerSide } from '../types';
+import type { ApogeeModule, ApogeeTicketInsert } from '../types';
+import type { TicketRole } from '../hooks/useTicketPermissions';
 
 interface CreateTicketDialogProps {
   open: boolean;
   onClose: () => void;
   modules: ApogeeModule[];
-  priorities: ApogeePriority[];
   onCreate: (ticket: ApogeeTicketInsert) => void;
   isCreating?: boolean;
+  /** Rôle ticket de l'utilisateur - seul developer peut renseigner h_min/h_max */
+  userTicketRole?: TicketRole | null;
 }
 
 export function CreateTicketDialog({
   open,
   onClose,
   modules,
-  priorities,
   onCreate,
   isCreating,
+  userTicketRole,
 }: CreateTicketDialogProps) {
   const [form, setForm] = useState<ApogeeTicketInsert>({
     element_concerne: '',
     description: '',
     module: undefined,
-    priority: undefined,
-    owner_side: undefined,
     h_min: undefined,
     h_max: undefined,
     kanban_status: 'BACKLOG',
     created_from: 'MANUAL',
   });
+
+  const isDeveloper = userTicketRole === 'developer';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,8 +62,6 @@ export function CreateTicketDialog({
       element_concerne: '',
       description: '',
       module: undefined,
-      priority: undefined,
-      owner_side: undefined,
       h_min: undefined,
       h_max: undefined,
       kanban_status: 'BACKLOG',
@@ -71,7 +76,7 @@ export function CreateTicketDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
-            Nouveau ticket Apogée
+            Nouveau ticket
           </DialogTitle>
         </DialogHeader>
 
@@ -100,85 +105,53 @@ export function CreateTicketDialog({
             />
           </div>
 
-          {/* Ligne module + priorité */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Module</Label>
-              <Select
-                value={form.module || ''}
-                onValueChange={(v) => setForm({ ...form, module: v || undefined })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner" />
-                </SelectTrigger>
-                <SelectContent>
-                  {modules.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Priorité</Label>
-              <Select
-                value={form.priority || ''}
-                onValueChange={(v) => setForm({ ...form, priority: v || undefined })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner" />
-                </SelectTrigger>
-                <SelectContent>
-                  {priorities.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Propriétaire */}
+          {/* Module */}
           <div className="space-y-2">
-            <Label>Propriétaire</Label>
+            <Label>Module</Label>
             <Select
-              value={form.owner_side || ''}
-              onValueChange={(v) => setForm({ ...form, owner_side: (v || undefined) as OwnerSide })}
+              value={form.module || ''}
+              onValueChange={(v) => setForm({ ...form, module: v || undefined })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Qui porte le sujet ?" />
+                <SelectValue placeholder="Sélectionner un module" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="HC">Help Confort</SelectItem>
-                <SelectItem value="APOGEE">Apogée</SelectItem>
-                <SelectItem value="PARTAGE">Partagé (HC + Apogée)</SelectItem>
+                {modules.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Estimations */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="h_min">H Min (heures)</Label>
-              <Input
-                id="h_min"
-                type="number"
-                value={form.h_min || ''}
-                onChange={(e) => setForm({ ...form, h_min: e.target.value ? Number(e.target.value) : undefined })}
-                placeholder="0"
-                min={0}
-              />
+          {/* Estimations - uniquement pour les développeurs */}
+          {isDeveloper && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="h_min">Estimation min (h)</Label>
+                <Input
+                  id="h_min"
+                  type="number"
+                  value={form.h_min || ''}
+                  onChange={(e) => setForm({ ...form, h_min: e.target.value ? Number(e.target.value) : undefined })}
+                  placeholder="0"
+                  min={0}
+                  step={0.5}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="h_max">Estimation max (h)</Label>
+                <Input
+                  id="h_max"
+                  type="number"
+                  value={form.h_max || ''}
+                  onChange={(e) => setForm({ ...form, h_max: e.target.value ? Number(e.target.value) : undefined })}
+                  placeholder="0"
+                  min={0}
+                  step={0.5}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="h_max">H Max (heures)</Label>
-              <Input
-                id="h_max"
-                type="number"
-                value={form.h_max || ''}
-                onChange={(e) => setForm({ ...form, h_max: e.target.value ? Number(e.target.value) : undefined })}
-                placeholder="0"
-                min={0}
-              />
-            </div>
-          </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

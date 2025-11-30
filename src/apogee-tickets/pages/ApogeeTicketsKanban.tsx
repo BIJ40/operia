@@ -27,6 +27,7 @@ import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { ActionsConfigDialog } from '../components/ActionsConfigDialog';
 import { useTicketQualification } from '../hooks/useTicketQualification';
 import { useRecalculateHeatPriority } from '../hooks/useRecalculateHeatPriority';
+import { useMyTicketRole } from '../hooks/useTicketPermissions';
 import type { ApogeeTicket, TicketFilters as Filters } from '../types';
 import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
@@ -34,6 +35,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function ApogeeTicketsKanban() {
   const { isAdmin } = useAuth();
+  const { data: myTicketRole } = useMyTicketRole();
   const navigate = useNavigate();
   const [filters, setFilters] = useState<Filters>({});
   const [selectedTicket, setSelectedTicket] = useState<ApogeeTicket | null>(null);
@@ -341,9 +343,9 @@ export default function ApogeeTicketsKanban() {
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
         modules={modules}
-        priorities={priorities}
         onCreate={(ticket) => createTicket.mutate(ticket)}
         isCreating={createTicket.isPending}
+        userTicketRole={myTicketRole}
       />
 
       {/* Dialog configuration (admin only) */}
