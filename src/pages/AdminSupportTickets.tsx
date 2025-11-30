@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 import { EscalateTicketDialog } from '@/components/admin/support/EscalateTicketDialog';
+import { KanbanView } from '@/components/admin/support/KanbanView';
 import { SupportLevelBadge } from '@/components/SupportLevelBadge';
 import { ROUTES } from '@/config/routes';
 
@@ -359,6 +360,13 @@ export default function AdminSupportTickets() {
             </Card>
           </div>
 
+          {viewMode === 'kanban' ? (
+            <KanbanView 
+              tickets={tickets} 
+              onSelectTicket={(ticket) => setSelectedTicket(ticket as any)}
+              onTicketsUpdate={() => {}}
+            />
+          ) : (
           <div className="grid gap-6 md:grid-cols-5">
             {/* Tickets List */}
             <Card className="md:col-span-2">
@@ -400,12 +408,14 @@ export default function AdminSupportTickets() {
                               // Puis par date de création (plus récent en premier)
                               return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
                             })
-                            .map((ticket) => (
+                            .map((ticket) => {
+                              const isWaiting = ticket.status === 'new' && !ticket.assigned_to;
+                              return (
                               <Card
                                 key={ticket.id}
                                 className={`cursor-pointer transition-all hover:shadow-md ${
                                   selectedTicket?.id === ticket.id ? 'border-primary border-2' : ''
-                                }`}
+                                } ${isWaiting ? 'animate-pulse-urgent' : ''}`}
                                 onClick={() => setSelectedTicket(ticket)}
                               >
                                 <CardContent className="p-4">
@@ -437,7 +447,8 @@ export default function AdminSupportTickets() {
                                   )}
                                 </CardContent>
                               </Card>
-                            ))}
+                              );
+                            })}
                         </div>
                       )}
                     </ScrollArea>
@@ -760,6 +771,7 @@ export default function AdminSupportTickets() {
               </CardContent>
             </Card>
           </div>
+          )}
         </div>
       </div>
   );
