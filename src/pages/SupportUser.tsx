@@ -64,9 +64,9 @@ export default function SupportUser() {
           .from('faq_items')
           .select('id, question, answer, category_id, role_cible')
           .eq('is_published', true)
-          .order('display_order', { ascending: true })
-          .limit(10),
-        'SUPPORT_USER_FAQ_LOAD'
+        .order('display_order', { ascending: true })
+        .limit(3),
+      'SUPPORT_USER_FAQ_LOAD'
       );
 
       if (result.success && result.data) {
