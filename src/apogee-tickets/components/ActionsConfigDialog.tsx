@@ -30,7 +30,9 @@ import {
   Users
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { safeMutation } from '@/lib/safeQuery';
+import { errorToast, successToast } from '@/lib/toastHelpers';
+import { logError } from '@/lib/logger';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import type { ApogeeTicketStatus, ApogeeModule, ApogeePriority, ApogeeImpactTag, ApogeeOwnerSide } from '../types';
 import {
@@ -334,139 +336,199 @@ export function ActionsConfigDialog({
 
   // Save handlers
   const saveStatuses = async () => {
-    try {
-      const existingIds = statuses.map(s => s.id);
-      const currentIds = editedStatuses.map(s => s.id);
-      const toDelete = existingIds.filter(id => !currentIds.includes(id));
-      
-      if (toDelete.length > 0) {
-        await supabase.from('apogee_ticket_statuses').delete().in('id', toDelete);
+    const existingIds = statuses.map(s => s.id);
+    const currentIds = editedStatuses.map(s => s.id);
+    const toDelete = existingIds.filter(id => !currentIds.includes(id));
+    
+    if (toDelete.length > 0) {
+      const deleteResult = await safeMutation(
+        supabase.from('apogee_ticket_statuses').delete().in('id', toDelete),
+        'APOGEE_CONFIG_DELETE_STATUSES'
+      );
+      if (!deleteResult.success) {
+        logError('apogee-config', 'Error deleting statuses', deleteResult.error);
+        errorToast(deleteResult.error!);
+        return;
       }
+    }
 
-      for (let i = 0; i < editedStatuses.length; i++) {
-        const status = editedStatuses[i];
-        await supabase.from('apogee_ticket_statuses').upsert({
+    for (let i = 0; i < editedStatuses.length; i++) {
+      const status = editedStatuses[i];
+      const upsertResult = await safeMutation(
+        supabase.from('apogee_ticket_statuses').upsert({
           id: status.id,
           label: status.label,
           display_order: i,
           is_final: status.is_final,
           color: status.color,
-        });
+        }),
+        'APOGEE_CONFIG_UPSERT_STATUS'
+      );
+      if (!upsertResult.success) {
+        logError('apogee-config', 'Error upserting status', upsertResult.error);
+        errorToast(upsertResult.error!);
+        return;
       }
-
-      queryClient.invalidateQueries({ queryKey: ['apogee-ticket-statuses'] });
-      toast.success('Statuts Kanban sauvegardés');
-    } catch (error: any) {
-      toast.error(`Erreur: ${error.message}`);
     }
+
+    queryClient.invalidateQueries({ queryKey: ['apogee-ticket-statuses'] });
+    successToast('Statuts Kanban sauvegardés');
   };
 
   const saveModules = async () => {
-    try {
-      const existingIds = modules.map(m => m.id);
-      const currentIds = editedModules.map(m => m.id);
-      const toDelete = existingIds.filter(id => !currentIds.includes(id));
-      
-      if (toDelete.length > 0) {
-        await supabase.from('apogee_modules').delete().in('id', toDelete);
+    const existingIds = modules.map(m => m.id);
+    const currentIds = editedModules.map(m => m.id);
+    const toDelete = existingIds.filter(id => !currentIds.includes(id));
+    
+    if (toDelete.length > 0) {
+      const deleteResult = await safeMutation(
+        supabase.from('apogee_modules').delete().in('id', toDelete),
+        'APOGEE_CONFIG_DELETE_MODULES'
+      );
+      if (!deleteResult.success) {
+        logError('apogee-config', 'Error deleting modules', deleteResult.error);
+        errorToast(deleteResult.error!);
+        return;
       }
+    }
 
-      for (let i = 0; i < editedModules.length; i++) {
-        const mod = editedModules[i];
-        await supabase.from('apogee_modules').upsert({
+    for (let i = 0; i < editedModules.length; i++) {
+      const mod = editedModules[i];
+      const upsertResult = await safeMutation(
+        supabase.from('apogee_modules').upsert({
           id: mod.id,
           label: mod.label,
           display_order: i,
           color: mod.color,
-        });
+        }),
+        'APOGEE_CONFIG_UPSERT_MODULE'
+      );
+      if (!upsertResult.success) {
+        logError('apogee-config', 'Error upserting module', upsertResult.error);
+        errorToast(upsertResult.error!);
+        return;
       }
-
-      queryClient.invalidateQueries({ queryKey: ['apogee-modules'] });
-      toast.success('Modules sauvegardés');
-    } catch (error: any) {
-      toast.error(`Erreur: ${error.message}`);
     }
+
+    queryClient.invalidateQueries({ queryKey: ['apogee-modules'] });
+    successToast('Modules sauvegardés');
   };
 
   const savePriorities = async () => {
-    try {
-      const existingIds = priorities.map(p => p.id);
-      const currentIds = editedPriorities.map(p => p.id);
-      const toDelete = existingIds.filter(id => !currentIds.includes(id));
-      
-      if (toDelete.length > 0) {
-        await supabase.from('apogee_priorities').delete().in('id', toDelete);
+    const existingIds = priorities.map(p => p.id);
+    const currentIds = editedPriorities.map(p => p.id);
+    const toDelete = existingIds.filter(id => !currentIds.includes(id));
+    
+    if (toDelete.length > 0) {
+      const deleteResult = await safeMutation(
+        supabase.from('apogee_priorities').delete().in('id', toDelete),
+        'APOGEE_CONFIG_DELETE_PRIORITIES'
+      );
+      if (!deleteResult.success) {
+        logError('apogee-config', 'Error deleting priorities', deleteResult.error);
+        errorToast(deleteResult.error!);
+        return;
       }
+    }
 
-      for (let i = 0; i < editedPriorities.length; i++) {
-        const prio = editedPriorities[i];
-        await supabase.from('apogee_priorities').upsert({
+    for (let i = 0; i < editedPriorities.length; i++) {
+      const prio = editedPriorities[i];
+      const upsertResult = await safeMutation(
+        supabase.from('apogee_priorities').upsert({
           id: prio.id,
           label: prio.label,
           display_order: i,
           color: prio.color,
-        });
+        }),
+        'APOGEE_CONFIG_UPSERT_PRIORITY'
+      );
+      if (!upsertResult.success) {
+        logError('apogee-config', 'Error upserting priority', upsertResult.error);
+        errorToast(upsertResult.error!);
+        return;
       }
-
-      queryClient.invalidateQueries({ queryKey: ['apogee-priorities'] });
-      toast.success('Priorités sauvegardées');
-    } catch (error: any) {
-      toast.error(`Erreur: ${error.message}`);
     }
+
+    queryClient.invalidateQueries({ queryKey: ['apogee-priorities'] });
+    successToast('Priorités sauvegardées');
   };
 
   const saveTags = async () => {
-    try {
-      const existingIds = tags.map(t => t.id);
-      const currentIds = editedTags.map(t => t.id);
-      const toDelete = existingIds.filter(id => !currentIds.includes(id));
-      
-      if (toDelete.length > 0) {
-        await supabase.from('apogee_impact_tags').delete().in('id', toDelete);
+    const existingIds = tags.map(t => t.id);
+    const currentIds = editedTags.map(t => t.id);
+    const toDelete = existingIds.filter(id => !currentIds.includes(id));
+    
+    if (toDelete.length > 0) {
+      const deleteResult = await safeMutation(
+        supabase.from('apogee_impact_tags').delete().in('id', toDelete),
+        'APOGEE_CONFIG_DELETE_TAGS'
+      );
+      if (!deleteResult.success) {
+        logError('apogee-config', 'Error deleting tags', deleteResult.error);
+        errorToast(deleteResult.error!);
+        return;
       }
+    }
 
-      for (let i = 0; i < editedTags.length; i++) {
-        const tag = editedTags[i];
-        await supabase.from('apogee_impact_tags').upsert({
+    for (let i = 0; i < editedTags.length; i++) {
+      const tag = editedTags[i];
+      const upsertResult = await safeMutation(
+        supabase.from('apogee_impact_tags').upsert({
           id: tag.id,
           label: tag.label,
           display_order: i,
           color: tag.color,
-        });
+        }),
+        'APOGEE_CONFIG_UPSERT_TAG'
+      );
+      if (!upsertResult.success) {
+        logError('apogee-config', 'Error upserting tag', upsertResult.error);
+        errorToast(upsertResult.error!);
+        return;
       }
-
-      queryClient.invalidateQueries({ queryKey: ['apogee-impact-tags'] });
-      toast.success('Tags sauvegardés');
-    } catch (error: any) {
-      toast.error(`Erreur: ${error.message}`);
     }
+
+    queryClient.invalidateQueries({ queryKey: ['apogee-impact-tags'] });
+    successToast('Tags sauvegardés');
   };
 
   const saveOwnerSides = async () => {
-    try {
-      const existingIds = ownerSides.map(o => o.id);
-      const currentIds = editedOwnerSides.map(o => o.id);
-      const toDelete = existingIds.filter(id => !currentIds.includes(id));
-      
-      if (toDelete.length > 0) {
-        await supabase.from('apogee_owner_sides').delete().in('id', toDelete);
+    const existingIds = ownerSides.map(o => o.id);
+    const currentIds = editedOwnerSides.map(o => o.id);
+    const toDelete = existingIds.filter(id => !currentIds.includes(id));
+    
+    if (toDelete.length > 0) {
+      const deleteResult = await safeMutation(
+        supabase.from('apogee_owner_sides').delete().in('id', toDelete),
+        'APOGEE_CONFIG_DELETE_OWNERS'
+      );
+      if (!deleteResult.success) {
+        logError('apogee-config', 'Error deleting owner sides', deleteResult.error);
+        errorToast(deleteResult.error!);
+        return;
       }
+    }
 
-      for (let i = 0; i < editedOwnerSides.length; i++) {
-        const owner = editedOwnerSides[i];
-        await supabase.from('apogee_owner_sides').upsert({
+    for (let i = 0; i < editedOwnerSides.length; i++) {
+      const owner = editedOwnerSides[i];
+      const upsertResult = await safeMutation(
+        supabase.from('apogee_owner_sides').upsert({
           id: owner.id,
           label: owner.label,
           display_order: i,
           color: owner.color,
-        });
+        }),
+        'APOGEE_CONFIG_UPSERT_OWNER'
+      );
+      if (!upsertResult.success) {
+        logError('apogee-config', 'Error upserting owner side', upsertResult.error);
+        errorToast(upsertResult.error!);
+        return;
       }
-
-      queryClient.invalidateQueries({ queryKey: ['apogee-owner-sides'] });
-      toast.success('Porteurs sauvegardés');
-    } catch (error: any) {
-      toast.error(`Erreur: ${error.message}`);
     }
+
+    queryClient.invalidateQueries({ queryKey: ['apogee-owner-sides'] });
+    successToast('Porteurs sauvegardés');
   };
 
   // Add new item

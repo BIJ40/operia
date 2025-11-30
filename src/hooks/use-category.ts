@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { safeMutation } from '@/lib/safeQuery';
+import { errorToast, successToast } from '@/lib/toastHelpers';
 import { logError } from '@/lib/logger';
 import { Block } from '@/types/block';
 
@@ -85,8 +86,8 @@ export const useCategory = () => {
   const handleSave = async (updatedSection: Section) => {
     if (!updatedSection.id) return;
 
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('blocks')
         .update({
           title: updatedSection.title,
@@ -103,25 +104,27 @@ export const useCategory = () => {
           content_updated_at: updatedSection.contentUpdatedAt || null,
           is_empty: updatedSection.isEmpty || false,
         })
-        .eq('id', updatedSection.id);
+        .eq('id', updatedSection.id),
+      'CATEGORY_UPDATE_SECTION'
+    );
 
-      if (error) throw error;
-
-      await reloadBlocks();
-      setEditDialogOpen(false);
-      setEditingSection(null);
-      toast.success('Section mise à jour');
-    } catch (error) {
-      logError('[CATEGORY] Error updating section', error);
-      toast.error('Erreur lors de la mise à jour');
+    if (!result.success) {
+      logError('category', 'Error updating section', result.error);
+      errorToast(result.error!);
+      return;
     }
+
+    await reloadBlocks();
+    setEditDialogOpen(false);
+    setEditingSection(null);
+    successToast('Section mise à jour');
   };
 
   const handleSaveTips = async (updatedSection: Section) => {
     if (!updatedSection.id) return;
 
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('blocks')
         .update({
           title: updatedSection.title,
@@ -137,18 +140,20 @@ export const useCategory = () => {
           content_updated_at: updatedSection.contentUpdatedAt || null,
           is_empty: updatedSection.isEmpty || false,
         })
-        .eq('id', updatedSection.id);
+        .eq('id', updatedSection.id),
+      'CATEGORY_UPDATE_TIPS'
+    );
 
-      if (error) throw error;
-
-      await reloadBlocks();
-      setTipsEditDialogOpen(false);
-      setEditingSection(null);
-      toast.success('TIPS mis à jour');
-    } catch (error) {
-      logError('[CATEGORY] Error updating tips', error);
-      toast.error('Erreur lors de la mise à jour');
+    if (!result.success) {
+      logError('category', 'Error updating tips', result.error);
+      errorToast(result.error!);
+      return;
     }
+
+    await reloadBlocks();
+    setTipsEditDialogOpen(false);
+    setEditingSection(null);
+    successToast('TIPS mis à jour');
   };
 
   const handleDeleteClick = (section: Section) => {
@@ -159,36 +164,43 @@ export const useCategory = () => {
   const confirmDelete = async () => {
     if (!sectionToDelete) return;
 
-    try {
-      const contentLength = sectionToDelete.content?.length || 0;
+    const contentLength = sectionToDelete.content?.length || 0;
 
-      if (contentLength < 50) {
-        // Suppression définitive pour les sections vides ou quasi-vides
-        const { error } = await supabase
+    if (contentLength < 50) {
+      const result = await safeMutation(
+        supabase
           .from('blocks')
           .delete()
-          .eq('id', sectionToDelete.id);
+          .eq('id', sectionToDelete.id),
+        'CATEGORY_DELETE_SECTION'
+      );
 
-        if (error) throw error;
-        toast.success('Section supprimée définitivement');
-      } else {
-        // Archivage pour les sections avec contenu
-        const { error } = await supabase
+      if (!result.success) {
+        logError('category', 'Error deleting section', result.error);
+        errorToast(result.error!);
+        return;
+      }
+      successToast('Section supprimée définitivement');
+    } else {
+      const result = await safeMutation(
+        supabase
           .from('blocks')
           .update({ hide_from_sidebar: true })
-          .eq('id', sectionToDelete.id);
+          .eq('id', sectionToDelete.id),
+        'CATEGORY_ARCHIVE_SECTION'
+      );
 
-        if (error) throw error;
-        toast.success('Section archivée (contenu conservé en base)');
+      if (!result.success) {
+        logError('category', 'Error archiving section', result.error);
+        errorToast(result.error!);
+        return;
       }
-
-      await reloadBlocks();
-      setDeleteDialogOpen(false);
-      setSectionToDelete(null);
-    } catch (error) {
-      logError('[CATEGORY] Error deleting section', error);
-      toast.error('Erreur lors de la suppression');
+      successToast('Section archivée (contenu conservé en base)');
     }
+
+    await reloadBlocks();
+    setDeleteDialogOpen(false);
+    setSectionToDelete(null);
   };
 
   const handleAddSection = async () => {
@@ -206,16 +218,19 @@ export const useCategory = () => {
       content_type: 'section',
     };
 
-    try {
-      const { error } = await supabase.from('blocks').insert([newSection]);
-      if (error) throw error;
+    const result = await safeMutation(
+      supabase.from('blocks').insert([newSection]),
+      'CATEGORY_ADD_SECTION'
+    );
 
-      await reloadBlocks();
-      toast.success('Section ajoutée');
-    } catch (error) {
-      logError('[CATEGORY] Error adding section', error);
-      toast.error('Erreur lors de l\'ajout');
+    if (!result.success) {
+      logError('category', 'Error adding section', result.error);
+      errorToast(result.error!);
+      return;
     }
+
+    await reloadBlocks();
+    successToast('Section ajoutée');
   };
 
   const handleAddTips = async () => {
@@ -235,16 +250,19 @@ export const useCategory = () => {
       hide_title: true,
     };
 
-    try {
-      const { error } = await supabase.from('blocks').insert([newTips]);
-      if (error) throw error;
+    const result = await safeMutation(
+      supabase.from('blocks').insert([newTips]),
+      'CATEGORY_ADD_TIPS'
+    );
 
-      await reloadBlocks();
-      toast.success('TIPS ajouté');
-    } catch (error) {
-      logError('[CATEGORY] Error adding tips', error);
-      toast.error('Erreur lors de l\'ajout');
+    if (!result.success) {
+      logError('category', 'Error adding tips', result.error);
+      errorToast(result.error!);
+      return;
     }
+
+    await reloadBlocks();
+    successToast('TIPS ajouté');
   };
 
   const handleDuplicate = async (section: Section) => {
@@ -268,33 +286,38 @@ export const useCategory = () => {
       attachments: section.attachments as any || [],
     };
 
-    try {
-      const { error } = await supabase.from('blocks').insert([duplicatedSection]);
-      if (error) throw error;
+    const result = await safeMutation(
+      supabase.from('blocks').insert([duplicatedSection]),
+      'CATEGORY_DUPLICATE_SECTION'
+    );
 
-      await reloadBlocks();
-      toast.success('Section dupliquée');
-    } catch (error) {
-      logError('[CATEGORY] Error duplicating section', error);
-      toast.error('Erreur lors de la duplication');
+    if (!result.success) {
+      logError('category', 'Error duplicating section', result.error);
+      errorToast(result.error!);
+      return;
     }
+
+    await reloadBlocks();
+    successToast('Section dupliquée');
   };
 
   const handleMoveToCategory = async (sectionId: string, targetCategoryId: string) => {
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('blocks')
         .update({ parent_id: targetCategoryId })
-        .eq('id', sectionId);
+        .eq('id', sectionId),
+      'CATEGORY_MOVE_SECTION'
+    );
 
-      if (error) throw error;
-
-      await reloadBlocks();
-      toast.success('Section déplacée');
-    } catch (error) {
-      logError('[CATEGORY] Error moving section', error);
-      toast.error('Erreur lors du déplacement');
+    if (!result.success) {
+      logError('category', 'Error moving section', result.error);
+      errorToast(result.error!);
+      return;
     }
+
+    await reloadBlocks();
+    successToast('Section déplacée');
   };
 
   const handleDragEnd = async (event: any) => {
@@ -315,21 +338,23 @@ export const useCategory = () => {
       order: index,
     }));
 
-    try {
-      for (const update of updates) {
-        const { error } = await supabase
+    for (const update of updates) {
+      const result = await safeMutation(
+        supabase
           .from('blocks')
           .update({ order: update.order })
-          .eq('id', update.id);
+          .eq('id', update.id),
+        'CATEGORY_REORDER_SECTION'
+      );
 
-        if (error) throw error;
+      if (!result.success) {
+        logError('category', 'Error reordering sections', result.error);
+        errorToast(result.error!);
+        return;
       }
-
-      await reloadBlocks();
-    } catch (error) {
-      logError('[CATEGORY] Error reordering sections', error);
-      toast.error('Erreur lors du réordonnancement');
     }
+
+    await reloadBlocks();
   };
 
   return {

@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { safeQuery, safeMutation } from '@/lib/safeQuery';
+import { errorToast, successToast } from '@/lib/toastHelpers';
+import { logError } from '@/lib/logger';
 import { FileText, Search, Trash2, Edit, Save, X } from 'lucide-react';
 
 interface Document {
@@ -23,7 +25,6 @@ interface Document {
 // Route protégée par RoleGuard dans App.tsx
 export default function Documents() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -37,135 +38,115 @@ export default function Documents() {
   }, []);
 
   const loadDocuments = async () => {
-    try {
-      // Charger seulement les métadonnées, pas le contenu complet
-      const { data, error } = await supabase
+    const result = await safeQuery<Document[]>(
+      supabase
         .from('knowledge_base')
         .select('id, title, category, created_at, metadata')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      if (data) {
-        // Ajouter une propriété content vide pour la compatibilité
-        const docsWithEmptyContent = data.map(doc => ({
-          ...doc,
-          content: '' // Le contenu sera chargé à la demande lors de l'édition
-        }));
-        setDocuments(docsWithEmptyContent);
-        const uniqueCategories = Array.from(new Set(data.map(d => d.category)));
-        setCategories(uniqueCategories);
-      }
-    } catch (error) {
-      console.error('Erreur chargement documents:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les documents',
-        variant: 'destructive',
-      });
+        .order('created_at', { ascending: false }),
+      'DOCS_LOAD'
+    );
+    
+    if (!result.success) {
+      logError('documents', 'Error loading documents', result.error);
+      errorToast(result.error!);
+      return;
     }
+    
+    const data = result.data || [];
+    const docsWithEmptyContent = data.map(doc => ({
+      ...doc,
+      content: ''
+    }));
+    setDocuments(docsWithEmptyContent);
+    const uniqueCategories = Array.from(new Set(data.map(d => d.category)));
+    setCategories(uniqueCategories);
   };
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Supprimer "${title}" ?`)) return;
     
-    try {
-      const { error } = await supabase
+    const result = await safeMutation(
+      supabase
         .from('knowledge_base')
         .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Mettre à jour immédiatement la liste locale
-      setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== id));
-      
-      toast({
-        title: 'Document supprimé',
-        description: `"${title}" a été supprimé.`,
-      });
-    } catch (error) {
-      console.error('Erreur suppression:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de supprimer le document',
-        variant: 'destructive',
-      });
+        .eq('id', id),
+      'DOCS_DELETE'
+    );
+    
+    if (!result.success) {
+      logError('documents', 'Error deleting document', result.error);
+      errorToast(result.error!);
+      return;
     }
+    
+    setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== id));
+    successToast('Document supprimé', `"${title}" a été supprimé.`);
   };
 
   const handleDeleteDuplicates = async () => {
     if (!confirm('Supprimer tous les documents en double ? Seule la version la plus récente sera conservée.')) return;
     
     setIsLoading(true);
-    try {
-      console.log('Suppression des doublons...');
-      
-      // Récupérer tous les documents avec leur date
-      const { data: allDocs, error: fetchError } = await supabase
+    
+    const fetchResult = await safeQuery<{ id: string; title: string; created_at: string }[]>(
+      supabase
         .from('knowledge_base')
         .select('id, title, created_at')
-        .order('created_at', { ascending: false });
-      
-      if (fetchError) throw fetchError;
-      
-      if (allDocs) {
-        // Grouper par titre et garder seulement le premier (le plus récent) de chaque groupe
-        const seenTitles = new Set<string>();
-        const idsToKeep = new Set<string>();
-        
-        allDocs.forEach(doc => {
-          if (!seenTitles.has(doc.title)) {
-            seenTitles.add(doc.title);
-            idsToKeep.add(doc.id);
-          }
-        });
-        
-        // Identifier les IDs à supprimer
-        const idsToDelete = allDocs.filter(doc => !idsToKeep.has(doc.id)).map(doc => doc.id);
-        
-        console.log(`Suppression de ${idsToDelete.length} doublons...`);
-        
-        // Supprimer les doublons
-        for (const id of idsToDelete) {
-          await supabase.from('knowledge_base').delete().eq('id', id);
-        }
-        
-        toast({
-          title: 'Nettoyage terminé',
-          description: `${idsToDelete.length} doublon(s) supprimé(s)`,
-        });
-      }
-      
-      // Recharger la liste
-      await loadDocuments();
-    } catch (error) {
-      console.error('Erreur nettoyage doublons:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de nettoyer les doublons',
-        variant: 'destructive',
-      });
-    } finally {
+        .order('created_at', { ascending: false }),
+      'DOCS_LOAD_DUPLICATES'
+    );
+    
+    if (!fetchResult.success) {
+      logError('documents', 'Error fetching documents for duplicate cleanup', fetchResult.error);
+      errorToast(fetchResult.error!);
       setIsLoading(false);
+      return;
     }
+    
+    const allDocs = fetchResult.data || [];
+    const seenTitles = new Set<string>();
+    const idsToKeep = new Set<string>();
+    
+    allDocs.forEach(doc => {
+      if (!seenTitles.has(doc.title)) {
+        seenTitles.add(doc.title);
+        idsToKeep.add(doc.id);
+      }
+    });
+    
+    const idsToDelete = allDocs.filter(doc => !idsToKeep.has(doc.id)).map(doc => doc.id);
+    
+    let deletedCount = 0;
+    for (const id of idsToDelete) {
+      const delResult = await safeMutation(
+        supabase.from('knowledge_base').delete().eq('id', id),
+        'DOCS_DELETE_DUPLICATE'
+      );
+      if (delResult.success) {
+        deletedCount++;
+      } else {
+        logError('documents', 'Error deleting duplicate', delResult.error);
+      }
+    }
+    
+    successToast('Nettoyage terminé', `${deletedCount} doublon(s) supprimé(s)`);
+    await loadDocuments();
+    setIsLoading(false);
   };
 
   const startEditing = async (doc: Document) => {
-    // Charger le contenu complet seulement maintenant
-    const { data, error } = await supabase
-      .from('knowledge_base')
-      .select('content')
-      .eq('id', doc.id)
-      .single();
+    const result = await safeQuery<{ content: string }>(
+      supabase
+        .from('knowledge_base')
+        .select('content')
+        .eq('id', doc.id)
+        .maybeSingle(),
+      'DOCS_LOAD_CONTENT'
+    );
     
-    if (error) {
-      console.error('Erreur chargement contenu:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger le contenu du document',
-        variant: 'destructive',
-      });
+    if (!result.success) {
+      logError('documents', 'Error loading document content', result.error);
+      errorToast(result.error!);
       return;
     }
     
@@ -173,7 +154,7 @@ export default function Documents() {
     setEditForm({
       title: doc.title,
       category: doc.category,
-      content: data?.content || '',
+      content: result.data?.content || '',
     });
   };
 
@@ -184,35 +165,30 @@ export default function Documents() {
 
   const saveEditing = async (id: string) => {
     setIsLoading(true);
-    try {
-      const { error } = await supabase
+    
+    const result = await safeMutation(
+      supabase
         .from('knowledge_base')
         .update({
           title: editForm.title,
           category: editForm.category,
           content: editForm.content,
         })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Document mis à jour',
-        description: 'Les modifications ont été enregistrées.',
-      });
-      
-      setEditingDoc(null);
-      loadDocuments();
-    } catch (error) {
-      console.error('Erreur mise à jour:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de mettre à jour le document',
-        variant: 'destructive',
-      });
-    } finally {
+        .eq('id', id),
+      'DOCS_UPDATE'
+    );
+    
+    if (!result.success) {
+      logError('documents', 'Error updating document', result.error);
+      errorToast(result.error!);
       setIsLoading(false);
+      return;
     }
+    
+    successToast('Document mis à jour', 'Les modifications ont été enregistrées.');
+    setEditingDoc(null);
+    await loadDocuments();
+    setIsLoading(false);
   };
 
   const filteredDocuments = documents.filter(doc => {

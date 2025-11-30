@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
 
 // ============================================
@@ -135,18 +136,21 @@ export interface TicketFilters {
  * Utilise enabled_modules.support au lieu des anciennes colonnes
  */
 export async function getAllSupportUsers(): Promise<SupportUser[]> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, email, first_name, last_name, enabled_modules')
-    .eq('is_active', true);
+  const result = await safeQuery<any[]>(
+    supabase
+      .from('profiles')
+      .select('id, email, first_name, last_name, enabled_modules')
+      .eq('is_active', true),
+    'SUPPORT_GET_ALL_USERS'
+  );
 
-  if (error) {
-    logError('Error fetching support users:', error);
+  if (!result.success) {
+    logError('support', 'Error fetching support users', result.error);
     return [];
   }
 
   // Filtrer les profils avec support activé
-  return (data || [])
+  return (result.data || [])
     .filter(profile => {
       const modules = profile.enabled_modules as any;
       if (!modules?.support?.enabled) return false;
@@ -206,38 +210,39 @@ export async function autoAssignTicket(
   ticketService: string | null,
   targetLevel: number = 1
 ): Promise<{ success: boolean; assignedTo: string | null; error?: string }> {
-  try {
-    const eligibleUsers = await getEligibleSupportUsersForTicket(ticketService, targetLevel);
+  const eligibleUsers = await getEligibleSupportUsersForTicket(ticketService, targetLevel);
 
-    if (eligibleUsers.length === 0) {
-      // Aucun SU éligible trouvé, laisser non assigné
-      return { success: true, assignedTo: null };
-    }
+  if (eligibleUsers.length === 0) {
+    // Aucun SU éligible trouvé, laisser non assigné
+    return { success: true, assignedTo: null };
+  }
 
-    // Stratégie round-robin simple : choisir un SU aléatoirement
-    const randomIndex = Math.floor(Math.random() * eligibleUsers.length);
-    const selectedUser = eligibleUsers[randomIndex];
+  // Stratégie round-robin simple : choisir un SU aléatoirement
+  const randomIndex = Math.floor(Math.random() * eligibleUsers.length);
+  const selectedUser = eligibleUsers[randomIndex];
 
-    // Mettre à jour le ticket avec l'assignation
-    const { error } = await supabase
+  // Mettre à jour le ticket avec l'assignation
+  const result = await safeMutation(
+    supabase
       .from('support_tickets')
       .update({
         assigned_to: selectedUser.id,
         support_level: targetLevel,
       })
-      .eq('id', ticketId);
+      .eq('id', ticketId),
+    'SUPPORT_AUTO_ASSIGN_TICKET'
+  );
 
-    if (error) throw error;
-
-    return { success: true, assignedTo: selectedUser.id };
-  } catch (error) {
-    logError('Error auto-assigning ticket:', error);
+  if (!result.success) {
+    logError('support', 'Error auto-assigning ticket', result.error);
     return { 
       success: false, 
       assignedTo: null, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+      error: result.error?.message || 'Unknown error' 
     };
   }
+
+  return { success: true, assignedTo: selectedUser.id };
 }
 
 /**
@@ -250,39 +255,42 @@ export async function escalateTicket(
   targetUserId?: string,
   reason?: string
 ): Promise<{ success: boolean; error?: string }> {
-  try {
-    const newLevel = Math.min(currentLevel + 1, 3);
+  const newLevel = Math.min(currentLevel + 1, 3);
 
-    // Si un utilisateur cible est spécifié, l'utiliser directement
-    let assignedTo = targetUserId;
+  // Si un utilisateur cible est spécifié, l'utiliser directement
+  let assignedTo = targetUserId;
 
-    // Sinon, chercher un SU éligible au nouveau niveau
-    if (!assignedTo) {
-      const eligibleUsers = await getEligibleSupportUsersForTicket(ticketService, newLevel);
-      if (eligibleUsers.length > 0) {
-        const randomIndex = Math.floor(Math.random() * eligibleUsers.length);
-        assignedTo = eligibleUsers[randomIndex].id;
-      }
+  // Sinon, chercher un SU éligible au nouveau niveau
+  if (!assignedTo) {
+    const eligibleUsers = await getEligibleSupportUsersForTicket(ticketService, newLevel);
+    if (eligibleUsers.length > 0) {
+      const randomIndex = Math.floor(Math.random() * eligibleUsers.length);
+      assignedTo = eligibleUsers[randomIndex].id;
     }
+  }
 
-    // Récupérer l'historique d'escalade existant
-    const { data: ticket } = await supabase
+  // Récupérer l'historique d'escalade existant
+  const ticketResult = await safeQuery<{ escalation_history: any }>(
+    supabase
       .from('support_tickets')
       .select('escalation_history')
       .eq('id', ticketId)
-      .single();
+      .maybeSingle(),
+    'SUPPORT_GET_TICKET_HISTORY'
+  );
 
-    const existingHistory = (ticket?.escalation_history as any[]) || [];
-    const newHistoryEntry = {
-      from_level: currentLevel,
-      to_level: newLevel,
-      assigned_to: assignedTo,
-      reason: reason || 'Escalade manuelle',
-      timestamp: new Date().toISOString(),
-    };
+  const existingHistory = (ticketResult.data?.escalation_history as any[]) || [];
+  const newHistoryEntry = {
+    from_level: currentLevel,
+    to_level: newLevel,
+    assigned_to: assignedTo,
+    reason: reason || 'Escalade manuelle',
+    timestamp: new Date().toISOString(),
+  };
 
-    // Mettre à jour le ticket
-    const { error } = await supabase
+  // Mettre à jour le ticket
+  const result = await safeMutation(
+    supabase
       .from('support_tickets')
       .update({
         support_level: newLevel,
@@ -290,22 +298,24 @@ export async function escalateTicket(
         escalation_history: [...existingHistory, newHistoryEntry],
         status: TICKET_STATUSES.IN_PROGRESS,
       })
-      .eq('id', ticketId);
+      .eq('id', ticketId),
+    'SUPPORT_ESCALATE_TICKET'
+  );
 
-    if (error) throw error;
-
-    return { success: true };
-  } catch (error) {
-    logError('Error escalating ticket:', error);
+  if (!result.success) {
+    logError('support', 'Error escalating ticket', result.error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+      error: result.error?.message || 'Unknown error' 
     };
   }
+
+  return { success: true };
 }
 
 /**
  * Construit une requête filtrée pour les tickets selon les critères SU
+ * Note: Cette fonction retourne une query builder, pas de safeQuery applicable ici
  */
 export function buildTicketFilterQuery(
   filters: TicketFilters,
@@ -369,82 +379,83 @@ export async function getTicketsForSupportUser(
   userId: string,
   filters: TicketFilters = {}
 ): Promise<any[]> {
-  try {
-    // Récupérer le profil du SU avec enabled_modules
-    const { data: profile } = await supabase
+  // Récupérer le profil du SU avec enabled_modules
+  const profileResult = await safeQuery<{ enabled_modules: any }>(
+    supabase
       .from('profiles')
       .select('enabled_modules')
       .eq('id', userId)
-      .single();
+      .maybeSingle(),
+    'SUPPORT_GET_USER_PROFILE'
+  );
 
-    if (!profile) {
-      return [];
-    }
-
-    const modules = profile.enabled_modules as any;
-    const options = modules?.support?.options || {};
-    const supportLevel = options.level || 1;
-    // Support les deux formats de clés
-    const skills = options.skills || options.service_competencies || [];
-    const competencies = skills.reduce((acc: any, skill: string) => ({ ...acc, [skill]: true }), {});
-
-    // Construire la requête de base
-    let query = supabase.from('support_tickets').select('*');
-
-    // Appliquer les filtres
-    if (filters.status) {
-      if (Array.isArray(filters.status)) {
-        query = query.in('status', filters.status);
-      } else {
-        query = query.eq('status', filters.status);
-      }
-    }
-
-    if (filters.priority) {
-      if (Array.isArray(filters.priority)) {
-        query = query.in('priority', filters.priority);
-      } else {
-        query = query.eq('priority', filters.priority);
-      }
-    }
-
-    if (filters.service) {
-      if (Array.isArray(filters.service)) {
-        query = query.in('service', filters.service);
-      } else {
-        query = query.eq('service', filters.service);
-      }
-    }
-
-    // Filtre par niveau : le SU voit les tickets de son niveau ou inférieurs
-    query = query.lte('support_level', supportLevel);
-
-    query = query.order('created_at', { ascending: false });
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    // Filtrer côté client par compétences de service si nécessaire
-    let filteredData = data || [];
-    
-    if (competencies && Object.keys(competencies).length > 0) {
-      const enabledServices = Object.entries(competencies)
-        .filter(([_, enabled]) => enabled)
-        .map(([service, _]) => service);
-
-      if (enabledServices.length > 0) {
-        filteredData = filteredData.filter(ticket => 
-          !ticket.service || enabledServices.includes(ticket.service)
-        );
-      }
-    }
-
-    return filteredData;
-  } catch (error) {
-    logError('Error fetching tickets for support user:', error);
+  if (!profileResult.success || !profileResult.data) {
+    logError('support', 'Error fetching user profile for tickets', profileResult.error);
     return [];
   }
+
+  const modules = profileResult.data.enabled_modules as any;
+  const options = modules?.support?.options || {};
+  const supportLevel = options.level || 1;
+  // Support les deux formats de clés
+  const skills = options.skills || options.service_competencies || [];
+  const competencies = skills.reduce((acc: any, skill: string) => ({ ...acc, [skill]: true }), {});
+
+  // Construire la requête de base
+  let query = supabase.from('support_tickets').select('*');
+
+  // Appliquer les filtres
+  if (filters.status) {
+    if (Array.isArray(filters.status)) {
+      query = query.in('status', filters.status);
+    } else {
+      query = query.eq('status', filters.status);
+    }
+  }
+
+  if (filters.priority) {
+    if (Array.isArray(filters.priority)) {
+      query = query.in('priority', filters.priority);
+    } else {
+      query = query.eq('priority', filters.priority);
+    }
+  }
+
+  if (filters.service) {
+    if (Array.isArray(filters.service)) {
+      query = query.in('service', filters.service);
+    } else {
+      query = query.eq('service', filters.service);
+    }
+  }
+
+  // Filtre par niveau : le SU voit les tickets de son niveau ou inférieurs
+  query = query.lte('support_level', supportLevel);
+  query = query.order('created_at', { ascending: false });
+
+  const result = await safeQuery<any[]>(query, 'SUPPORT_GET_TICKETS_FOR_USER');
+
+  if (!result.success) {
+    logError('support', 'Error fetching tickets for support user', result.error);
+    return [];
+  }
+
+  // Filtrer côté client par compétences de service si nécessaire
+  let filteredData = result.data || [];
+  
+  if (competencies && Object.keys(competencies).length > 0) {
+    const enabledServices = Object.entries(competencies)
+      .filter(([_, enabled]) => enabled)
+      .map(([service, _]) => service);
+
+    if (enabledServices.length > 0) {
+      filteredData = filteredData.filter(ticket => 
+        !ticket.service || enabledServices.includes(ticket.service)
+      );
+    }
+  }
+
+  return filteredData;
 }
 
 /**
@@ -454,29 +465,30 @@ export async function updateTicketStatus(
   ticketId: string,
   newStatus: TicketStatus
 ): Promise<{ success: boolean; error?: string }> {
-  try {
-    const updateData: any = { status: newStatus };
+  const updateData: any = { status: newStatus };
 
-    // Si résolu ou fermé, ajouter la date de résolution
-    if (newStatus === TICKET_STATUSES.RESOLVED || newStatus === TICKET_STATUSES.CLOSED) {
-      updateData.resolved_at = new Date().toISOString();
-    }
+  // Si résolu ou fermé, ajouter la date de résolution
+  if (newStatus === TICKET_STATUSES.RESOLVED || newStatus === TICKET_STATUSES.CLOSED) {
+    updateData.resolved_at = new Date().toISOString();
+  }
 
-    const { error } = await supabase
+  const result = await safeMutation(
+    supabase
       .from('support_tickets')
       .update(updateData)
-      .eq('id', ticketId);
+      .eq('id', ticketId),
+    'SUPPORT_UPDATE_TICKET_STATUS'
+  );
 
-    if (error) throw error;
-
-    return { success: true };
-  } catch (error) {
-    logError('Error updating ticket status:', error);
+  if (!result.success) {
+    logError('support', 'Error updating ticket status', result.error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+      error: result.error?.message || 'Unknown error' 
     };
   }
+
+  return { success: true };
 }
 
 /**
@@ -486,53 +498,135 @@ export async function updateTicketPriority(
   ticketId: string,
   newPriority: TicketPriority
 ): Promise<{ success: boolean; error?: string }> {
-  try {
-    const { error } = await supabase
+  const result = await safeMutation(
+    supabase
       .from('support_tickets')
       .update({ priority: newPriority })
-      .eq('id', ticketId);
+      .eq('id', ticketId),
+    'SUPPORT_UPDATE_TICKET_PRIORITY'
+  );
 
-    if (error) throw error;
-
-    return { success: true };
-  } catch (error) {
-    logError('Error updating ticket priority:', error);
+  if (!result.success) {
+    logError('support', 'Error updating ticket priority', result.error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+      error: result.error?.message || 'Unknown error' 
     };
   }
+
+  return { success: true };
 }
 
 /**
- * Envoie un message sur un ticket (avec support des notes internes)
+ * Met à jour l'assignation d'un ticket
+ */
+export async function assignTicket(
+  ticketId: string,
+  userId: string | null
+): Promise<{ success: boolean; error?: string }> {
+  const result = await safeMutation(
+    supabase
+      .from('support_tickets')
+      .update({ assigned_to: userId })
+      .eq('id', ticketId),
+    'SUPPORT_ASSIGN_TICKET'
+  );
+
+  if (!result.success) {
+    logError('support', 'Error assigning ticket', result.error);
+    return { 
+      success: false, 
+      error: result.error?.message || 'Unknown error' 
+    };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Met à jour le service d'un ticket
+ */
+export async function updateTicketService(
+  ticketId: string,
+  newService: TicketService
+): Promise<{ success: boolean; error?: string }> {
+  const result = await safeMutation(
+    supabase
+      .from('support_tickets')
+      .update({ service: newService })
+      .eq('id', ticketId),
+    'SUPPORT_UPDATE_TICKET_SERVICE'
+  );
+
+  if (!result.success) {
+    logError('support', 'Error updating ticket service', result.error);
+    return { 
+      success: false, 
+      error: result.error?.message || 'Unknown error' 
+    };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Met à jour la catégorie d'un ticket
+ */
+export async function updateTicketCategory(
+  ticketId: string,
+  newCategory: TicketCategory
+): Promise<{ success: boolean; error?: string }> {
+  const result = await safeMutation(
+    supabase
+      .from('support_tickets')
+      .update({ category: newCategory })
+      .eq('id', ticketId),
+    'SUPPORT_UPDATE_TICKET_CATEGORY'
+  );
+
+  if (!result.success) {
+    logError('support', 'Error updating ticket category', result.error);
+    return { 
+      success: false, 
+      error: result.error?.message || 'Unknown error' 
+    };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Envoie un message sur un ticket
  */
 export async function sendTicketMessage(
   ticketId: string,
   senderId: string,
-  message: string,
-  isFromSupport: boolean,
-  isInternalNote: boolean = false
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const { error } = await supabase
+  content: string,
+  isInternal: boolean = false,
+  isFromSupport: boolean = false
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  const result = await safeMutation(
+    supabase
       .from('support_messages')
       .insert({
         ticket_id: ticketId,
         sender_id: senderId,
-        message: message,
+        message: content,
+        is_internal_note: isInternal,
         is_from_support: isFromSupport,
-        is_internal_note: isInternalNote,
-      });
+      })
+      .select()
+      .single(),
+    'SUPPORT_SEND_MESSAGE'
+  );
 
-    if (error) throw error;
-
-    return { success: true };
-  } catch (error) {
-    logError('Error sending ticket message:', error);
+  if (!result.success) {
+    logError('support', 'Error sending ticket message', result.error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+      error: result.error?.message || 'Unknown error' 
     };
   }
+
+  return { success: true, data: result.data };
 }
