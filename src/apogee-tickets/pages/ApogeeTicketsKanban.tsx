@@ -126,6 +126,10 @@ export default function ApogeeTicketsKanban() {
                 <FileSpreadsheet className="h-4 w-4 mr-2 text-blue-600" />
                 Import V1
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(ROUTES.admin.apogeeTicketsImportEvaluated)}>
+                <ListChecks className="h-4 w-4 mr-2 text-green-600" />
+                Liste évaluée / Reste à évaluer
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate(ROUTES.admin.apogeeTicketsImport)}>
                 <Files className="h-4 w-4 mr-2" />
                 Import général
