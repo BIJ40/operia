@@ -389,119 +389,187 @@ export default function AdminSupportTickets() {
           <div className="grid gap-6 md:grid-cols-5">
             {/* Tickets List */}
             <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Demandes</CardTitle>
-                <CardDescription>Chats en cours et tickets</CardDescription>
+              <CardHeader className="pb-2">
+                <Tabs defaultValue="actifs" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="actifs" className="gap-2">
+                      🔥 Actifs
+                      <Badge variant="secondary" className="ml-1">
+                        {tickets.filter(t => !['resolved', 'closed'].includes(t.status)).length}
+                      </Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="archives" className="gap-2">
+                      📁 Archives
+                      <Badge variant="outline" className="ml-1">
+                        {tickets.filter(t => ['resolved', 'closed'].includes(t.status)).length}
+                      </Badge>
+                    </TabsTrigger>
+                  </TabsList>
                 
-                {/* Filters - 2 lignes */}
-                <div className="grid grid-cols-2 gap-2 pt-4">
-                  <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Statut" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tous les statuts</SelectItem>
-                      <SelectItem value="new">Nouveau</SelectItem>
-                      <SelectItem value="in_progress">En cours</SelectItem>
-                      <SelectItem value="waiting_user">Attente utilisateur</SelectItem>
-                      <SelectItem value="resolved">Résolu</SelectItem>
-                      <SelectItem value="closed">Fermé</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {/* Filters - 2 lignes */}
+                  <div className="grid grid-cols-2 gap-2 pt-2">
+                    <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Catégorie" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Toutes les catégories</SelectItem>
+                        <SelectItem value="bug">Bug</SelectItem>
+                        <SelectItem value="improvement">Amélioration</SelectItem>
+                        <SelectItem value="blocking">Blocage</SelectItem>
+                        <SelectItem value="question">Question</SelectItem>
+                        <SelectItem value="other">Autre</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                  <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Catégorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Toutes les catégories</SelectItem>
-                      <SelectItem value="bug">Bug</SelectItem>
-                      <SelectItem value="improvement">Amélioration</SelectItem>
-                      <SelectItem value="blocking">Blocage</SelectItem>
-                      <SelectItem value="question">Question</SelectItem>
-                      <SelectItem value="other">Autre</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <Select value={filters.source} onValueChange={(v) => setFilters({ ...filters, source: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Type de demande" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        <SelectItem value="all">Tous les types</SelectItem>
+                        <SelectItem value="live_chat">🟢 Chats en cours</SelectItem>
+                        <SelectItem value="escalated">🔄 Ex-Demandes</SelectItem>
+                        <SelectItem value="portal">🎫 Tickets</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                   <Select value={filters.source} onValueChange={(v) => setFilters({ ...filters, source: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Type de demande" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      <SelectItem value="all">Tous les types</SelectItem>
-                      <SelectItem value="live_chat">🟢 Chats en cours</SelectItem>
-                      <SelectItem value="escalated">🔄 Ex-Demandes</SelectItem>
-                      <SelectItem value="portal">🎫 Tickets</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <Select value={filters.priority} onValueChange={(v) => setFilters({ ...filters, priority: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Degré d'urgence" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        <SelectItem value="all">Tous les niveaux</SelectItem>
+                        <SelectItem value="mineur">🟢 Mineur</SelectItem>
+                        <SelectItem value="normal">🔵 Normal</SelectItem>
+                        <SelectItem value="important">🟠 Important</SelectItem>
+                        <SelectItem value="urgent">🔴 Urgent</SelectItem>
+                        <SelectItem value="bloquant">⛔ Bloquant</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                  <Select value={filters.priority} onValueChange={(v) => setFilters({ ...filters, priority: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Degré d'urgence" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      <SelectItem value="all">Tous les niveaux</SelectItem>
-                      <SelectItem value="mineur">🟢 Mineur</SelectItem>
-                      <SelectItem value="normal">🔵 Normal</SelectItem>
-                      <SelectItem value="important">🟠 Important</SelectItem>
-                      <SelectItem value="urgent">🔴 Urgent</SelectItem>
-                      <SelectItem value="bloquant">⛔ Bloquant</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[600px]">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    </div>
-                  ) : tickets.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">Aucune demande</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {tickets.map((ticket) => (
-                        <Card
-                          key={ticket.id}
-                          className={`cursor-pointer transition-all hover:shadow-md ${
-                            selectedTicket?.id === ticket.id ? 'border-primary border-2' : ''
-                          }`}
-                          onClick={() => setSelectedTicket(ticket)}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="font-semibold truncate">{ticket.subject || 'Sans sujet'}</p>
-                                {ticket.assigned_to && (
-                                  <p className="text-xs text-primary font-medium mt-1">
-                                    👤 {formattedSupportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Assigné'}
+                    <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Statut" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tous les statuts</SelectItem>
+                        <SelectItem value="new">Nouveau</SelectItem>
+                        <SelectItem value="in_progress">En cours</SelectItem>
+                        <SelectItem value="waiting_user">Attente utilisateur</SelectItem>
+                        <SelectItem value="resolved">Résolu</SelectItem>
+                        <SelectItem value="closed">Fermé</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <TabsContent value="actifs" className="mt-4">
+                    <ScrollArea className="h-[550px]">
+                      {isLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        </div>
+                      ) : tickets.filter(t => !['resolved', 'closed'].includes(t.status)).length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">Aucune demande active</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {tickets
+                            .filter(t => !['resolved', 'closed'].includes(t.status))
+                            .sort((a, b) => {
+                              // Chats en cours en premier
+                              if (a.is_live_chat && !b.is_live_chat) return -1;
+                              if (!a.is_live_chat && b.is_live_chat) return 1;
+                              // Puis par date de création (plus récent en premier)
+                              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                            })
+                            .map((ticket) => (
+                              <Card
+                                key={ticket.id}
+                                className={`cursor-pointer transition-all hover:shadow-md ${
+                                  selectedTicket?.id === ticket.id ? 'border-primary border-2' : ''
+                                }`}
+                                onClick={() => setSelectedTicket(ticket)}
+                              >
+                                <CardContent className="p-4">
+                                  <div className="flex items-start justify-between gap-2 mb-2">
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-semibold truncate">{ticket.subject || 'Sans sujet'}</p>
+                                      {ticket.assigned_to && (
+                                        <p className="text-xs text-primary font-medium mt-1">
+                                          👤 {formattedSupportUsers.find(u => u.id === ticket.assigned_to)?.name || 'Assigné'}
+                                        </p>
+                                      )}
+                                    </div>
+                                    {getStatusBadge(ticket.status)}
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    {getDemandTypeBadge(ticket)}
+                                    <SupportLevelBadge level={ticket.support_level || 1} />
+                                    <ServiceBadge service={ticket.service} />
+                                    {ticket.category && <TicketCategoryBadge category={ticket.category} />}
+                                    {getPriorityBadge(ticket.priority)}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    {format(new Date(ticket.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
                                   </p>
-                                )}
-                              </div>
-                              {getStatusBadge(ticket.status)}
-                            </div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {getDemandTypeBadge(ticket)}
-                              <SupportLevelBadge level={ticket.support_level || 1} />
-                              <ServiceBadge service={ticket.service} />
-                              {ticket.category && <TicketCategoryBadge category={ticket.category} />}
-                              {getPriorityBadge(ticket.priority)}
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              {format(new Date(ticket.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
-                            </p>
-                            {ticket.agency_slug && (
-                              <Badge variant="outline" className="mt-2">
-                                {ticket.agency_slug}
-                              </Badge>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </CardContent>
+                                  {ticket.agency_slug && (
+                                    <Badge variant="outline" className="mt-2">
+                                      {ticket.agency_slug}
+                                    </Badge>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </TabsContent>
+
+                  <TabsContent value="archives" className="mt-4">
+                    <ScrollArea className="h-[550px]">
+                      {isLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        </div>
+                      ) : tickets.filter(t => ['resolved', 'closed'].includes(t.status)).length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">Aucune demande archivée</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {tickets
+                            .filter(t => ['resolved', 'closed'].includes(t.status))
+                            .sort((a, b) => new Date(b.resolved_at || b.created_at).getTime() - new Date(a.resolved_at || a.created_at).getTime())
+                            .map((ticket) => (
+                              <Card
+                                key={ticket.id}
+                                className={`cursor-pointer transition-all hover:shadow-md opacity-75 ${
+                                  selectedTicket?.id === ticket.id ? 'border-primary border-2 opacity-100' : ''
+                                }`}
+                                onClick={() => setSelectedTicket(ticket)}
+                              >
+                                <CardContent className="p-4">
+                                  <div className="flex items-start justify-between gap-2 mb-2">
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-semibold truncate">{ticket.subject || 'Sans sujet'}</p>
+                                    </div>
+                                    {getStatusBadge(ticket.status)}
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    {getDemandTypeBadge(ticket)}
+                                    <ServiceBadge service={ticket.service} />
+                                    {ticket.category && <TicketCategoryBadge category={ticket.category} />}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    Clos le {format(new Date(ticket.resolved_at || ticket.created_at), 'dd MMM yyyy', { locale: fr })}
+                                  </p>
+                                </CardContent>
+                              </Card>
+                            ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </TabsContent>
+                </Tabs>
+              </CardHeader>
             </Card>
 
             {/* Ticket Detail */}
