@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
-import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, Moon, Sun, Bell, BellOff, TicketPlus } from 'lucide-react';
+import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, TicketPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
@@ -53,8 +53,6 @@ export default function AdminSupportTickets() {
 
   const [newMessage, setNewMessage] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
-  const [darkMode, setDarkMode] = useState(false);
-  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(true);
   const [activeTab, setActiveTab] = useState<'actifs' | 'archives'>('actifs');
 
   // Auto-switch to archives tab when selected ticket becomes resolved
@@ -117,48 +115,6 @@ export default function AdminSupportTickets() {
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state]);
-
-  useEffect(() => {
-    const loadEmailPreference = async () => {
-      if (!user?.id) return;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('email_notifications_enabled')
-        .eq('id', user.id)
-        .single();
-
-      if (!error && data) {
-        setEmailNotificationsEnabled(data.email_notifications_enabled ?? true);
-      }
-    };
-
-    loadEmailPreference();
-  }, [user?.id]);
-
-  const toggleEmailNotifications = async () => {
-    if (!user?.id) return;
-
-    const newValue = !emailNotificationsEnabled;
-    
-    const { error } = await supabase
-      .from('profiles')
-      .update({ email_notifications_enabled: newValue })
-      .eq('id', user.id);
-
-    if (error) {
-      toast.error("Erreur lors de la mise à jour des préférences");
-      return;
-    }
-
-    setEmailNotificationsEnabled(newValue);
-    toast.success(
-      newValue 
-        ? "Notifications email activées" 
-        : "Notifications email désactivées",
-      { duration: 4000 }
-    );
-  };
 
   useEffect(() => {
     if (!canManageTickets) {
@@ -242,80 +198,19 @@ export default function AdminSupportTickets() {
   }
 
   return (
-    <div className={darkMode ? 'dark' : ''}>
+    <div>
       <div className="space-y-4">
-        <div className="flex items-center justify-end">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate(ROUTES.admin.escalationHistory)}
-                className="gap-2"
-              >
-                📊 Historique escalades
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDarkMode(!darkMode)}
-                className="gap-2"
-              >
-                {darkMode ? (
-                  <>
-                    <Sun className="w-4 h-4" />
-                    Clair
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-4 h-4" />
-                    Sombre
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleEmailNotifications}
-                className="gap-2"
-              >
-                {emailNotificationsEnabled ? (
-                  <>
-                    <Bell className="w-4 h-4" />
-                    Emails ON
-                  </>
-                ) : (
-                  <>
-                    <BellOff className="w-4 h-4" />
-                    Emails OFF
-                  </>
-                )}
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className="gap-2"
-              >
-                <List className="w-4 h-4" />
-                Liste
-              </Button>
-              <Button
-                variant={viewMode === 'kanban' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('kanban')}
-                className="gap-2"
-              >
-                <LayoutGrid className="w-4 h-4" />
-                Kanban
-              </Button>
-            </div>
-          </div>
-
-          {/* Barre de filtres horizontale */}
+          {/* Barre de filtres horizontale avec boutons vue */}
           <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg">
             <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
               <SelectTrigger className="w-[140px] h-8 text-xs">
-                <SelectValue placeholder="Catégorie" />
+                <SelectValue>
+                  {filters.category === 'all' ? 'Catégorie' : 
+                   filters.category === 'bug' ? 'Bug' :
+                   filters.category === 'improvement' ? 'Amélioration' :
+                   filters.category === 'blocking' ? 'Blocage' :
+                   filters.category === 'question' ? 'Question' : 'Autre'}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes catégories</SelectItem>
@@ -329,7 +224,11 @@ export default function AdminSupportTickets() {
 
             <Select value={filters.source} onValueChange={(v) => setFilters({ ...filters, source: v })}>
               <SelectTrigger className="w-[130px] h-8 text-xs">
-                <SelectValue placeholder="Type" />
+                <SelectValue>
+                  {filters.source === 'all' ? 'Type' : 
+                   filters.source === 'chat_ai' ? '🟦 Chat IA' :
+                   filters.source === 'chat_human' ? '🟩 Chat Humain' : '🟧 Ticket'}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent className="bg-background z-50">
                 <SelectItem value="all">Tous types</SelectItem>
@@ -341,7 +240,13 @@ export default function AdminSupportTickets() {
 
             <Select value={filters.priority} onValueChange={(v) => setFilters({ ...filters, priority: v })}>
               <SelectTrigger className="w-[130px] h-8 text-xs">
-                <SelectValue placeholder="Urgence" />
+                <SelectValue>
+                  {filters.priority === 'all' ? 'Urgence' : 
+                   filters.priority === 'mineur' ? '🟢 Mineur' :
+                   filters.priority === 'normal' ? '🔵 Normal' :
+                   filters.priority === 'important' ? '🟠 Important' :
+                   filters.priority === 'urgent' ? '🔴 Urgent' : '⛔ Bloquant'}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent className="bg-background z-50">
                 <SelectItem value="all">Tous niveaux</SelectItem>
@@ -355,7 +260,10 @@ export default function AdminSupportTickets() {
 
             <Select value={filters.assignment} onValueChange={(v) => setFilters({ ...filters, assignment: v })}>
               <SelectTrigger className="w-[130px] h-8 text-xs">
-                <SelectValue placeholder="Assignation" />
+                <SelectValue>
+                  {filters.assignment === 'all' ? 'Assignation' : 
+                   filters.assignment === 'mine' ? '📌 Mes tickets' : '⏳ Non assignés'}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent className="bg-background z-50">
                 <SelectItem value="all">Tous</SelectItem>
@@ -370,6 +278,27 @@ export default function AdminSupportTickets() {
                 Réinitialiser
               </Button>
             )}
+
+            <div className="flex-1" />
+
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="gap-1 h-8"
+            >
+              <List className="w-4 h-4" />
+              Liste
+            </Button>
+            <Button
+              variant={viewMode === 'kanban' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('kanban')}
+              className="gap-1 h-8"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Kanban
+            </Button>
           </div>
 
           {/* Stats Dashboard - ligne unique compacte */}
