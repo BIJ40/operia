@@ -395,7 +395,12 @@ export default function ApogeeTicketsIncomplete() {
         modules={modules}
         priorities={priorities}
         statuses={statuses}
-        onUpdate={(updates) => updateTicket.mutate(updates)}
+        onUpdate={(updates) => {
+          updateTicket.mutate(updates);
+          setStableTickets(prev => prev.map(t =>
+            t.id === updates.id ? { ...t, ...updates } : t
+          ));
+        }}
       />
     </div>
   );
