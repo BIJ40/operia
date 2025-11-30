@@ -94,20 +94,20 @@ function StatCard({ title, value, icon: Icon, description, isLoading, variant }:
       bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
       shadow-sm transition-all duration-300
       hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-1">
-      <div className="flex flex-col">
-        <div className="flex items-center justify-between mb-3">
-          <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
-            group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
-            <Icon className="w-5 h-5 text-helpconfort-blue" />
-          </div>
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
+          group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+          <Icon className="w-5 h-5 text-helpconfort-blue" />
         </div>
-        <p className="text-sm text-muted-foreground mb-1">{title}</p>
-        {isLoading ? (
-          <Skeleton className="h-8 w-16" />
-        ) : (
-          <p className="text-2xl font-bold text-helpconfort-blue">{value}</p>
-        )}
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <div className="flex-1">
+          <p className="text-sm text-muted-foreground mb-1">{title}</p>
+          {isLoading ? (
+            <Skeleton className="h-8 w-16" />
+          ) : (
+            <p className="text-2xl font-bold text-helpconfort-blue">{value}</p>
+          )}
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
       </div>
     </div>
   );
@@ -130,7 +130,7 @@ export function StatsOverview() {
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4 text-foreground">Vue d'ensemble</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {statCards.map((stat, index) => (
           <StatCard
             key={stat.title}
