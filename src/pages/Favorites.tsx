@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { createSanitizedHtml } from '@/lib/sanitize';
 import { ROUTES } from '@/config/routes';
+import { logError } from '@/lib/logger';
 import {
   Accordion,
   AccordionContent,
@@ -145,7 +146,7 @@ export default function Favorites() {
         setOpenCategories([groups[0].categorySlug]);
       }
     } catch (error) {
-      console.error('Error loading favorites:', error);
+      logError('FAVORITES', 'Erreur chargement favoris', { error });
       toast({
         title: 'Erreur',
         description: 'Impossible de charger les favoris',
@@ -171,7 +172,7 @@ export default function Favorites() {
         description: 'La section a été retirée de vos favoris',
       });
     } catch (error) {
-      console.error('Error removing favorite:', error);
+      logError('FAVORITES', 'Erreur suppression favori', { error });
       toast({
         title: 'Erreur',
         description: 'Impossible de supprimer le favori',

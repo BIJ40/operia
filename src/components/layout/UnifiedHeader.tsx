@@ -42,6 +42,7 @@ import {
 import { toast } from 'sonner';
 import { PAGE_TITLES } from '@/config/navigation';
 import { getPageConfigByPath, getPageDefaultByKey } from '@/config/pageDefaults';
+import { logError } from '@/lib/logger';
 
 // Mapping des noms d'icônes vers les composants
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -135,7 +136,7 @@ export function UnifiedHeader() {
       toast.success('Métadonnées de page mises à jour');
       setIsMetadataDialogOpen(false);
     } catch (error) {
-      console.error('Error updating page metadata:', error);
+      logError('HEADER', 'Erreur mise à jour métadonnées page', { error });
       toast.error('Erreur lors de la mise à jour');
     }
   };

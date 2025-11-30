@@ -1,4 +1,5 @@
 import { isToday, parseISO, differenceInDays, startOfDay, endOfDay, subDays, isWithinInterval } from "date-fns";
+import { logDebug, logWarn } from "@/lib/logger";
 
 // ====================================================================
 // FONCTIONS UTILITAIRES
@@ -162,7 +163,7 @@ export const calculateDelaiMoyenDossierFacture = (
   const delaiMoyen = delais.reduce((sum, d) => sum + d, 0) / delais.length;
 
   if (import.meta.env.DEV) {
-    console.log("⏱️ Délai moyen Dossier → Facture:", {
+    logDebug('DASHBOARD_CALC', 'Délai moyen Dossier → Facture', {
       delaiMoyen: Math.round(delaiMoyen),
       nbFactures: delais.length,
       min: Math.min(...delais),
@@ -257,13 +258,13 @@ export const calculateCaJour = (factures: any[], clients: any[], projects: any[]
   
   if (!dateRange) {
     if (import.meta.env.DEV) {
-      console.warn("💶 calculateCaJour - dateRange undefined, retour 0 pour sécurité");
+      logWarn('DASHBOARD_CALC', 'calculateCaJour - dateRange undefined, retour 0 pour sécurité');
     }
     return { caTotal: 0, nbFactures: 0 };
   }
   
   if (import.meta.env.DEV) {
-    console.log("💶 calculateCaJour - entrée", {
+    logDebug('DASHBOARD_CALC', 'calculateCaJour - entrée', {
       nbFactures: factures.length,
       dateRange,
     });
@@ -296,7 +297,7 @@ export const calculateCaJour = (factures: any[], clients: any[], projects: any[]
       
       if (isNaN(montant)) {
         facturesAvecMontantInvalide++;
-        console.warn("⚠️ Facture avec montant invalide:", {
+        logWarn('DASHBOARD_CALC', 'Facture avec montant invalide', {
           ref: facture.reference || facture.numeroFacture,
           totalHT: facture.totalHT,
           dataTotalHT: facture.data?.totalHT,
@@ -326,14 +327,14 @@ export const calculateCaJour = (factures: any[], clients: any[], projects: any[]
         caTotal += montant;
       }
     } catch (e) {
-      console.warn("Erreur parsing date facture:", e, facture);
+      logWarn('DASHBOARD_CALC', 'Erreur parsing date facture', { error: e, facture });
     }
   });
   
   const nbFacturesComptabilisees = facturesDansPeriode - facturesAvecMontantInvalide;
   
   if (import.meta.env.DEV) {
-    console.log("💶 calculateCaJour - résultat", { 
+    logDebug('DASHBOARD_CALC', 'calculateCaJour - résultat', { 
       caTotal, 
       facturesDansPeriode,
       facturesAvecMontantInvalide,
@@ -482,7 +483,7 @@ export const calculateTauxDossiersComplexes = (
   dateRange?: { start: Date; end: Date }
 ): { tauxComplexite: number; nbComplexes: number; nbTotal: number } => {
   
-  console.log("📊 Dossiers Complexes - START:", {
+  logDebug('DASHBOARD_CALC', 'Dossiers Complexes - START', {
     nbInterventions: interventions.length,
     typesUniques: [...new Set(interventions.map(i => i.type || i.data?.type))],
     statesUniques: [...new Set(interventions.map(i => i.state || i.data?.state))],
@@ -509,7 +510,7 @@ export const calculateTauxDossiersComplexes = (
     });
   }
   
-  console.log("📊 Interventions filtrées par période:", interventionsFiltrees.length);
+  logDebug('DASHBOARD_CALC', `Interventions filtrées par période: ${interventionsFiltrees.length}`);
   
   // 2) Compter les interventions par projectId et par type
   const interventionsParProjet: Record<string, { 
@@ -534,8 +535,8 @@ export const calculateTauxDossiersComplexes = (
     }
   }
   
-  console.log("📊 Projets avec interventions:", Object.keys(interventionsParProjet).length);
-  console.log("📊 Exemples interventions par projet:", 
+  logDebug('DASHBOARD_CALC', `Projets avec interventions: ${Object.keys(interventionsParProjet).length}`);
+  logDebug('DASHBOARD_CALC', 'Exemples interventions par projet', 
     Object.entries(interventionsParProjet)
       .slice(0, 3)
       .map(([projectId, counts]) => ({ projectId, ...counts }))
@@ -556,7 +557,7 @@ export const calculateTauxDossiersComplexes = (
     ? (projetsComplexes / projetsAvecIntervention) * 100
     : 0;
   
-  console.log("📊 Dossiers Complexes - RESULT:", {
+  logDebug('DASHBOARD_CALC', 'Dossiers Complexes - RESULT', {
     tauxComplexite: Math.round(tauxComplexite * 10) / 10,
     projetsComplexes,
     projetsAvecIntervention,
@@ -627,7 +628,7 @@ export const calculateNbMoyenInterventionsParDossier = (
     ? totalInterventions / nbProjetsAvecIntervention
     : 0;
   
-  console.log("📊 KPI 10 - Nb Moyen Interventions/Dossier:", {
+  logDebug('DASHBOARD_CALC', 'KPI 10 - Nb Moyen Interventions/Dossier', {
     nbMoyen: Math.round(nbMoyen * 10) / 10,
     totalInterventions,
     nbProjets: nbProjetsAvecIntervention,
@@ -690,10 +691,11 @@ export const calculateNbMoyenVisitesParIntervention = (
   const interventionsAvecVisites = visitesCounts.filter(n => n > 0);
   
   // Debug express
-  console.log("🔍 Debug Nb visites/RDV:");
-  console.log("  - nb interventions total:", interventionsFiltrees.length);
-  console.log("  - nb interventions avec visites:", interventionsAvecVisites.length);
-  console.log("  - ex avec visites:", interventionsFiltrees.find(it => extractVisites(it).length > 0));
+  logDebug('DASHBOARD_CALC', 'Debug Nb visites/RDV', {
+    nbInterventionsTotal: interventionsFiltrees.length,
+    nbInterventionsAvecVisites: interventionsAvecVisites.length,
+    exempleAvecVisites: interventionsFiltrees.find(it => extractVisites(it).length > 0)
+  });
   
   // Si aucune intervention avec visite → retour 0 (évite NaN)
   if (interventionsAvecVisites.length === 0) {

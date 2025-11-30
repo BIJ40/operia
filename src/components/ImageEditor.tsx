@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { RotateCw, ZoomIn, ZoomOut, Save, X, Move, Maximize2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logError } from '@/lib/logger';
 
 interface ImageEditorProps {
   open: boolean;
@@ -63,7 +64,7 @@ export const ImageEditor = ({ open, onClose, imageUrl, onSave }: ImageEditorProp
       canvas.renderAll();
       setScale(initialScale);
     }).catch((error) => {
-      console.error('Error loading image:', error);
+      logError('IMAGE_EDITOR', 'Erreur chargement image', { error });
       toast.error('Erreur lors du chargement de l\'image');
     });
 
@@ -117,7 +118,7 @@ export const ImageEditor = ({ open, onClose, imageUrl, onSave }: ImageEditorProp
       toast.success('Image sauvegardée');
       onClose();
     } catch (error) {
-      console.error('Error saving image:', error);
+      logError('IMAGE_EDITOR', 'Erreur sauvegarde image', { error });
       toast.error('Erreur lors de la sauvegarde');
     }
   };

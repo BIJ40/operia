@@ -26,6 +26,7 @@ import { Pencil, Loader2, FileText, Check, Search, Filter, BookOpen, BarChart3, 
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { logError } from '@/lib/logger';
 
 // Définition des sections pour regrouper les pages
 const PAGE_SECTIONS = [
@@ -163,7 +164,7 @@ export default function AdminPageMetadata() {
       toast.success('Métadonnées mises à jour');
       setIsDialogOpen(false);
     } catch (error) {
-      console.error('Error saving page metadata:', error);
+      logError('ADMIN_PAGE_METADATA', 'Erreur sauvegarde métadonnées', { error });
       toast.error('Erreur lors de la sauvegarde');
     }
   };

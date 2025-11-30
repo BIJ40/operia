@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logError } from '@/lib/logger';
 
 interface ConnectionEvolution {
   date: string;
@@ -120,7 +121,7 @@ export default function AdminUserActivity() {
 
       setAgencyData(agencies);
     } catch (error) {
-      console.error('Erreur chargement activité:', error);
+      logError('ADMIN_ACTIVITY', 'Erreur chargement activité utilisateurs', { error });
     } finally {
       setLoading(false);
     }

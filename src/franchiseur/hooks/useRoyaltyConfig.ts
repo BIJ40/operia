@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logError } from '@/lib/logger';
 
 export interface RoyaltyTier {
   id: string;
@@ -110,7 +111,7 @@ export function useSaveRoyaltyConfig() {
       toast.success('Configuration des redevances enregistrée');
     },
     onError: (error: any) => {
-      console.error('Error saving royalty config:', error);
+      logError('ROYALTY_CONFIG', 'Erreur sauvegarde config redevances', { error });
       toast.error(error.message || 'Erreur lors de l\'enregistrement');
     },
   });
