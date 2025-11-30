@@ -227,11 +227,18 @@ export const NAV_GROUPS: NavGroup[] = [
         description: 'Configurer les agences'
       },
       { 
-        title: 'Console Support', 
-        url: ROUTES.support.console, 
+        title: 'Tickets Support', 
+        url: ROUTES.admin.supportTickets, 
         icon: LifeBuoy, 
         scope: 'support_tickets',
-        description: 'Gérer les tickets'
+        description: 'Gérer les tickets support'
+      },
+      { 
+        title: 'Stats Support', 
+        url: ROUTES.admin.supportStats, 
+        icon: BarChart3, 
+        scope: 'support_tickets',
+        description: 'Statistiques support'
       },
       { 
         title: 'Chatbot & RAG', 
@@ -300,6 +307,7 @@ export const PAGE_TITLES: Record<string, string> = {
   
   // Admin (V2 routes)
   [ROUTES.admin.index]: 'Administration',
+  [ROUTES.admin.supportTickets]: 'Tickets Support',
   [ROUTES.admin.supportStats]: 'Statistiques Support',
   [ROUTES.admin.users]: 'Gestion Utilisateurs',
   [ROUTES.admin.agencies]: 'Gestion Agences',

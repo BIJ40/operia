@@ -86,6 +86,8 @@ export const ROUTES = {
   // ============================================
   admin: {
     index: '/admin',
+    supportTickets: '/admin/support-tickets',
+    supportStats: '/admin/support-stats',
     users: '/admin/users',
     agencies: '/admin/agencies',
     agencyProfile: (agencyId: string) => `/admin/agencies/${agencyId}`,
@@ -94,7 +96,6 @@ export const ROUTES = {
     cacheBackup: '/admin/cache-backup',
     helpconfortBackup: '/admin/helpconfort-backup',
     userActivity: '/admin/user-activity',
-    supportStats: '/admin/support-stats',
     escalationHistory: '/admin/escalation-history',
     documents: '/admin/documents',
     storageQuota: '/admin/storage-quota',
