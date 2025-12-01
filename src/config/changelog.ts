@@ -52,6 +52,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'fix', description: 'AUDIT F-MISC-1/F-MISC-2: Correction scopeSlug tiles (base_documentaire, rh_tech, mon_equipe)' },
       { type: 'security', description: 'AUDIT F-EDIT-2: Agences dropdown filtrées selon manageScope (N2=ownAgency, N3=assignedAgencies, N4+=all)' },
       { type: 'security', description: 'AUDIT F-EDIT-4: Validation minRole pour activation modules - Switch désactivé si rôle utilisateur insuffisant' },
+      { type: 'improvement', description: 'AUDIT FONCTIONNEL: Analyse complète 6 modules - 3 critiques identifiés (terminologie Apogée-Tickets, priorités support/apogée, statuts), 14h corrections pré-prod recommandées' },
       { type: 'improvement', description: 'AUDIT F-PERF-1: Parallélisation chargement agences (network-kpis) - Promise.all au lieu de boucle séquentielle' },
       { type: 'improvement', description: 'AUDIT F-TABLE-3: 14 index créés (chatbot_queries, support_tickets, apogee_tickets, profiles, franchiseur_assignments)' },
       { type: 'security', description: 'AUDIT PERMISSIONS: 12 findings identifiés - 2 critiques (Support Console Bypass, EditUserDialog incomplet), 4 élevés (module minRole, agence scope), 6 moyens (guards routes, scopeSlug)' },
