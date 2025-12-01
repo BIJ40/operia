@@ -1,4 +1,4 @@
-import { Network, Building2, Users, UserCog, PieChart, GitCompare, Coins } from 'lucide-react';
+import { Network, Building2, Users, UserCog, PieChart, GitCompare, Coins, Bell } from 'lucide-react';
 import { IndexTile, getVariantForIndex } from '@/components/ui/index-tile';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasMinimumRole } from '@/types/globalRoles';
@@ -70,6 +70,13 @@ export default function ReseauIndex() {
       href: ROUTES.reseau.redevances,
       visible: isFranchisorAdmin,
       badge: 'En cours',
+    },
+    {
+      title: 'Annonces Prioritaires',
+      description: 'Diffuser des informations importantes',
+      icon: Bell,
+      href: ROUTES.admin.announcements,
+      visible: true,
     },
   ];
 
