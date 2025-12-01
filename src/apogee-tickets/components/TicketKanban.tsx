@@ -137,7 +137,7 @@ function DraggableTicketCard({
       onClick={handleClick}
     >
       <CardContent className="p-3 space-y-2">
-        {/* Handle de drag + badges */}
+        {/* Ticket # + Handle de drag + badges */}
         <div className="flex items-start gap-2">
           <div
             {...attributes}
@@ -147,7 +147,10 @@ function DraggableTicketCard({
           >
             <GripVertical className="h-4 w-4" />
           </div>
-          <div className="flex-1 flex flex-wrap gap-1">
+          <div className="flex-1 flex flex-wrap gap-1 items-center">
+            <span className="text-xs font-mono text-muted-foreground">
+              #{ticket.id.slice(0, 6).toUpperCase()}
+            </span>
             {ticket.module && moduleColor && (
               <Badge style={{ backgroundColor: moduleColor }} className="text-white text-xs">
                 {ticket.apogee_modules?.label || ticket.module}
