@@ -40,12 +40,29 @@ export function useCategoryLogic({
   const { toast } = useToast();
 
   // Memoized sections
-  const sections = useMemo(() => 
-    blocks
-      .filter(b => b.type === 'section' && b.parentId === categoryId)
-      .sort((a, b) => a.order - b.order) as Section[],
-    [blocks, categoryId]
-  );
+  const sections = useMemo(() => {
+    if (!categoryId || !blocks || blocks.length === 0) {
+      console.log('[CategoryLogic] Empty sections - categoryId:', categoryId, 'blocks length:', blocks?.length);
+      return [];
+    }
+    
+    const filtered = blocks.filter(b => {
+      const isSection = b.type === 'section';
+      const hasParent = b.parentId === categoryId;
+      const notHidden = !b.hideFromSidebar;
+      
+      if (isSection && !hasParent) {
+        console.log('[CategoryLogic] Section without matching parent:', b.id, b.title, 'parentId:', b.parentId, 'categoryId:', categoryId);
+      }
+      
+      return isSection && hasParent && notHidden;
+    });
+    
+    const sorted = filtered.sort((a, b) => a.order - b.order) as Section[];
+    console.log('[CategoryLogic] Sections loaded:', sorted.length, 'for category:', categoryId);
+    
+    return sorted;
+  }, [blocks, categoryId]);
 
   // State
   const [editingId, setEditingId] = useState<string | null>(null);
