@@ -2,11 +2,11 @@
 
 ## 🔴 CRITIQUES (2)
 
-### F-PERM-1 – Support Console Bypass via Module Options
-**Impact**: N2 peut accéder console support si admin active `enabled_modules.support.options.agent`  
+### F-PERM-1 – Support Console Bypass via Module Options ✅ CORRIGÉ
+**Impact**: N2 pouvait accéder console support si admin activait `enabled_modules.support.options.agent`  
 **Fichiers**: `roleMatrix.ts`, `AuthContext.tsx`  
-**Cause**: ROLE_MATRIX dit N5+ mais AuthContext calcule via module option  
-**Fix**: Décision archi (capacité modulaire OU rôle strict N5+)
+**Cause**: ROLE_MATRIX définissait N5+ mais AuthContext calculait via module option  
+**Fix appliqué**: `canAccessSupportConsole` respecte strictement ROLE_MATRIX (N5+ seulement), pas de bypass via module option
 
 ### F-EDIT-1 – EditUserDialog ne modifie PAS global_role/modules
 **Impact**: Workflow fragmenté, admin doit utiliser 2 interfaces pour éditer 1 user  
@@ -83,7 +83,7 @@
 ## ⚡ ACTIONS IMMÉDIATES RECOMMANDÉES
 
 ### Phase 1 – Sécurité (4h)
-1. ✅ Décider architecture Support Console (modulaire vs strict N5+)
+1. ✅ **CORRIGÉ** - Décider architecture Support Console (modulaire vs strict N5+) → **Strict N5+ imposé**
 2. ✅ Implémenter validation minRole dans module activation (F-EDIT-4)
 3. ✅ Filtrer agences selon manageScope dans EditUserDialog (F-EDIT-2)
 
