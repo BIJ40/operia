@@ -260,16 +260,16 @@ export default function Category() {
           </div>
         </div>
         
-        <div className="flex items-center justify-end gap-2 mt-2">
+        <div className="flex items-center justify-end gap-1 sm:gap-2 mt-2 flex-wrap">
             {hasTips && (
               <Button
                 variant={showTips ? "default" : "outline"}
                 size="sm"
                 onClick={() => setShowTips(!showTips)}
-                className="gap-2"
+                className="gap-1 sm:gap-2"
               >
                 <Lightbulb className="h-4 w-4" />
-                TIPS
+                <span className="hidden sm:inline">TIPS</span>
               </Button>
             )}
             {hasSections && (
@@ -277,30 +277,31 @@ export default function Category() {
                 variant={showSections ? "default" : "outline"}
                 size="sm"
                 onClick={() => setShowSections(!showSections)}
-                className="gap-2"
+                className="gap-1 sm:gap-2"
               >
-                Sections
+                <span className="hidden sm:inline">Sections</span>
+                <span className="sm:hidden">Sec.</span>
               </Button>
             )}
             <Button
               variant="outline"
               size="sm"
               onClick={() => setOpenAccordions(openAccordions.length > 0 ? [] : sections.map(s => s.id))}
-              className="gap-2"
+              className="gap-1 sm:gap-2"
             >
               {openAccordions.length > 0 ? (
-                <><ChevronsDownUp className="h-4 w-4" /> Tout fermer</>
+                <><ChevronsDownUp className="h-4 w-4" /><span className="hidden sm:inline">Tout fermer</span></>
               ) : (
-                <><ChevronsUpDown className="h-4 w-4" /> Tout ouvrir</>
+                <><ChevronsUpDown className="h-4 w-4" /><span className="hidden sm:inline">Tout ouvrir</span></>
               )}
             </Button>
             {isEditMode && isAdmin && (
               <>
-                <Button variant="outline" size="sm" onClick={() => handleAddSection()} className="gap-2">
-                  <Plus className="h-4 w-4" /> Section
+                <Button variant="outline" size="sm" onClick={() => handleAddSection()} className="gap-1 sm:gap-2">
+                  <Plus className="h-4 w-4" /><span className="hidden sm:inline">Section</span>
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => handleAddTips()} className="gap-2">
-                  <Lightbulb className="h-4 w-4" /> TIPS
+                <Button variant="outline" size="sm" onClick={() => handleAddTips()} className="gap-1 sm:gap-2">
+                  <Lightbulb className="h-4 w-4" /><span className="hidden sm:inline">TIPS</span>
                 </Button>
               </>
             )}

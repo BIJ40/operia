@@ -123,9 +123,9 @@ export default function SupportUser() {
   };
 
   return (
-    <div className="container mx-auto py-6 px-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+    <div className="container mx-auto py-4 sm:py-6 px-3 sm:px-4">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
           Centre d'aide
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -134,7 +134,7 @@ export default function SupportUser() {
       </div>
 
       {/* 3 Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Column 1: FAQ */}
         <Card className="lg:col-span-1">
           <CardHeader className="pb-3">

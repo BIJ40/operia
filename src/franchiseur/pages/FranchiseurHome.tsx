@@ -117,7 +117,7 @@ export default function FranchiseurHome() {
       </div>
 
       {/* Ligne 2: 6 KPIs intemporels (NON liés au sélecteur de période) */}
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         {permissions.canViewRoyalties && (
           <NetworkKpiTile
             title="Redevances Mois"
