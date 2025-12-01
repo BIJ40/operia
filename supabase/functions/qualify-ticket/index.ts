@@ -1,6 +1,8 @@
 /**
  * Edge function pour qualifier les tickets Apogée avec l'IA
  * Utilise Lovable AI Gateway pour analyser et enrichir les tickets
+ * 
+ * Système de priorité UNIFIÉ : heat_priority (0-12) uniquement
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -30,30 +32,39 @@ TYPES DE TICKET :
 - data : donnée incohérente, mauvais calcul, doublon
 - process : workflow, statut, transition, règle métier
 
-PRIORITÉ THERMIQUE (0-12) - Calcul basé sur l'onglet source et urgence:
-- 12: Urgence absolue (production bloquée)
-- 11: Critique (blocage majeur)
-- 10: Brûlant (Priorité A x1)
-- 9: Chaud+ (Priorité A x2)
-- 8: Chaud (Priorité A x3)
-- 7: Chaud- (Priorité B x1)
-- 6: Tiède+ (Priorité B x2)
-- 5: Tiède (Priorité B x3)
-- 4: Tiède- (Priorité C)
-- 3: Frais (sans priorité)
-- 2: Froid
-- 1: Glacial
-- 0: Gelé (backlog lointain)
+PRIORITÉ THERMIQUE (0-12) - Échelle unique de priorisation :
+- 0-3 : Froid - Confort, mineur, backlog lointain
+  - 0: Gelé (backlog très lointain)
+  - 1: Glacial
+  - 2: Froid
+  - 3: Frais
+- 4-7 : Tiède à chaud - Important, planifié
+  - 4: Tiède- (améliorations prévues)
+  - 5: Tiède (priorité moyenne)
+  - 6: Tiède+ (priorité normale)
+  - 7: Chaud- (à traiter prochainement)
+- 8-10 : Brûlant - Urgent, à traiter rapidement
+  - 8: Chaud (priorité haute)
+  - 9: Chaud+ (très prioritaire)
+  - 10: Brûlant (urgent)
+- 11-12 : Critique - Blocage
+  - 11: Critique (blocage majeur)
+  - 12: Urgence absolue (production bloquée)
 
 TAGS D'IMPACT (plusieurs possibles) :
-- impact_facturation
-- impact_terrain
-- impact_rel_client
-- impact_pilotage
-- impact_process
+- impact_facturation : Impacte la facturation, paiements
+- impact_terrain : Impacte les techniciens sur le terrain
+- impact_rel_client : Impacte la relation client
+- impact_pilotage : Impacte le pilotage, statistiques
+- impact_process : Impacte un workflow métier
 
 STATUTS QUALIF :
-- a_qualifier, reproduit, spec_ok, pret_dev, en_dev, en_test, deploye, obsolete`;
+- a_qualifier, reproduit, spec_ok, pret_dev, en_dev, en_test, deploye, obsolete
+
+IMPORTANT : Propose une priorité thermique (heat_priority_suggested) entre 0 et 12 basée sur :
+- L'urgence opérationnelle décrite
+- L'impact métier estimé
+- La gêne pour les utilisateurs`;
 
 // Fonction de calcul de priorité thermique basée sur les règles métier
 function calculateHeatPriority(sourceSheet: string | null, priority: string | null): number {
@@ -93,6 +104,9 @@ function calculateHeatPriority(sourceSheet: string | null, priority: string | nu
     return 5;
   }
 
+  // Manuel sans info
+  if (sheet.includes('manual') || !sheet) return 5;
+
   return 3;
 }
 
@@ -100,7 +114,7 @@ const FUNCTION_SCHEMA = {
   type: "function",
   function: {
     name: "qualify_ticket",
-    description: "Qualifie un ticket avec thème, type, priorité et tags",
+    description: "Qualifie un ticket avec thème, type, priorité thermique et tags",
     parameters: {
       type: "object",
       properties: {
@@ -125,10 +139,9 @@ const FUNCTION_SCHEMA = {
           enum: ["bug", "evolution", "ergonomie", "data", "process"],
           description: "Type principal du ticket"
         },
-        priority_normalized: {
-          type: "string",
-          enum: ["P0", "P1", "P2", "P3", "P4"],
-          description: "Priorité normalisée"
+        heat_priority_suggested: {
+          type: "number",
+          description: "Proposition de priorité thermique 0-12 (0=gelé/backlog, 12=critique/bloquant)"
         },
         impact_tags: {
           type: "array",
@@ -156,7 +169,7 @@ const FUNCTION_SCHEMA = {
           description: "Description structurée et lisible pour un développeur"
         }
       },
-      required: ["theme", "ticket_type", "priority_normalized", "impact_tags", "qualif_status", "notes_internes", "titre_ameliore", "description_amelioree"],
+      required: ["theme", "ticket_type", "impact_tags", "qualif_status", "notes_internes", "titre_ameliore", "description_amelioree"],
       additionalProperties: false
     }
   }
@@ -220,7 +233,8 @@ SEVERITY: ${ticket.severity || "N/A"}
 H_MIN: ${ticket.h_min || "N/A"}
 H_MAX: ${ticket.h_max || "N/A"}
 
-Analyse et retourne la qualification complète via la fonction qualify_ticket.`;
+Analyse et retourne la qualification complète via la fonction qualify_ticket.
+Propose également une priorité thermique (heat_priority_suggested) entre 0 et 12.`;
 
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
@@ -262,20 +276,23 @@ Analyse et retourne la qualification complète via la fonction qualify_ticket.`;
 
         const qualification = JSON.parse(toolCall.function.arguments);
 
-        // Calculer la priorité thermique
-        const heatPriority = calculateHeatPriority(ticket.source_sheet, ticket.priority);
+        // Calculer la priorité thermique : IA si valide, sinon algorithme
+        const baseHeat = calculateHeatPriority(ticket.source_sheet, ticket.priority);
+        const heatFromIa = typeof qualification.heat_priority_suggested === 'number'
+          ? Math.max(0, Math.min(12, Math.round(qualification.heat_priority_suggested)))
+          : null;
+        const heatPriority = heatFromIa ?? baseHeat;
 
         // Sauvegarder les textes originaux avant modification (seulement si pas déjà qualifié)
         const originalTitle = ticket.original_title || ticket.element_concerne;
         const originalDescription = ticket.original_description || ticket.description;
 
-        // Mettre à jour le ticket
+        // Mettre à jour le ticket (sans priority_normalized)
         const { error: updateError } = await supabase
           .from("apogee_tickets")
           .update({
             theme: qualification.theme,
             ticket_type: qualification.ticket_type,
-            priority_normalized: qualification.priority_normalized,
             impact_tags: qualification.impact_tags,
             qualif_status: qualification.qualif_status,
             notes_internes: qualification.notes_internes,
@@ -284,6 +301,7 @@ Analyse et retourne la qualification complète via la fonction qualify_ticket.`;
             // Sauvegarder les textes originaux
             original_title: originalTitle,
             original_description: originalDescription,
+            // Priorité thermique unifiée
             heat_priority: heatPriority,
             is_qualified: true,
             qualified_at: new Date().toISOString(),

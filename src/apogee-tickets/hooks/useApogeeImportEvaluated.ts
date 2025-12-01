@@ -274,7 +274,6 @@ function rowToTicket(row: EvaluatedRow): ApogeeTicketInsert {
     module: normalizeModule(row.elementConcerne),
     module_area: row.elementConcerne || null,
     priority: normalizePriority(row.prio), // Mapper vers FK valide (A, B, V1, PLUS_TARD)
-    priority_normalized: row.prio || null, // Garder la prio originale pour référence
     action_type: row.apogeeStatus || null,
     kanban_status: normalizeStatus(row.apogeeStatus),
     owner_side: parseOwnerSide(row.priseEnChargeDynoco),

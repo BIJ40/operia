@@ -725,7 +725,6 @@ export type Database = {
           original_title: string | null
           owner_side: string | null
           priority: string | null
-          priority_normalized: string | null
           qualif_status: string | null
           qualified_at: string | null
           qualified_by: string | null
@@ -764,7 +763,6 @@ export type Database = {
           original_title?: string | null
           owner_side?: string | null
           priority?: string | null
-          priority_normalized?: string | null
           qualif_status?: string | null
           qualified_at?: string | null
           qualified_by?: string | null
@@ -803,7 +801,6 @@ export type Database = {
           original_title?: string | null
           owner_side?: string | null
           priority?: string | null
-          priority_normalized?: string | null
           qualif_status?: string | null
           qualified_at?: string | null
           qualified_by?: string | null
