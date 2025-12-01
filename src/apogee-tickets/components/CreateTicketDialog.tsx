@@ -25,6 +25,7 @@ import type { ApogeeModule, ApogeeTicketInsert } from '../types';
 import type { TicketRole } from '../hooks/useTicketPermissions';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { TagSelector } from './TagSelector';
 
 interface CreateTicketDialogProps {
   open: boolean;
@@ -56,6 +57,7 @@ export function CreateTicketDialog({
     kanban_status: 'BACKLOG',
     created_from: 'MANUAL',
     reported_by: '',
+    impact_tags: [],
   });
 
   // Charger le prénom de l'utilisateur
@@ -90,6 +92,7 @@ export function CreateTicketDialog({
       kanban_status: 'BACKLOG',
       created_from: 'MANUAL',
       reported_by: userFirstName,
+      impact_tags: [],
     });
     onClose();
   };
@@ -177,6 +180,15 @@ export function CreateTicketDialog({
               </div>
             </div>
           )}
+
+          {/* Tags */}
+          <div className="space-y-2">
+            <Label>Tags</Label>
+            <TagSelector
+              selectedTags={form.impact_tags || []}
+              onTagsChange={(tags) => setForm({ ...form, impact_tags: tags })}
+            />
+          </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

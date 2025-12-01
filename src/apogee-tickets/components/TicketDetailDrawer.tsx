@@ -53,6 +53,7 @@ import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMyTicketRole, useAllowedTransitions, useLogTicketAction } from '../hooks/useTicketPermissions';
 import { errorToast } from '@/lib/toastHelpers';
+import { TagSelector } from './TagSelector';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType, ReportedBy } from '../types';
 
 interface TicketDetailDrawerProps {
@@ -563,6 +564,20 @@ export function TicketDetailDrawer({
                       value={ownerSideToSliderValue(ticket.owner_side)}
                       onChange={(v) => handleFieldUpdate('owner_side', sliderValueToOwnerSide(v))}
                       disabled={!canEditDevFields}
+                    />
+                  </div>
+                </div>
+
+                {/* TAGS */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Tags
+                  </label>
+                  <div className="mt-2">
+                    <TagSelector
+                      selectedTags={ticket.impact_tags || []}
+                      onTagsChange={(tags) => handleFieldUpdate('impact_tags', tags)}
+                      disabled={!canManage}
                     />
                   </div>
                 </div>

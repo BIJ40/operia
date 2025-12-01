@@ -123,8 +123,25 @@ export function TicketTableRow({
         </div>
       </TableCell>
 
+      {/* Tags */}
+      <TableCell className="overflow-hidden" style={cellStyle(3)}>
+        <div className="flex flex-wrap gap-1">
+          {ticket.impact_tags?.map(tag => {
+            const tagColor = tag === 'BUG' ? 'bg-red-100 text-red-800' :
+                             tag === 'EVO' ? 'bg-blue-100 text-blue-800' :
+                             tag === 'NTH' ? 'bg-gray-100 text-gray-800' :
+                             'bg-purple-100 text-purple-800';
+            return (
+              <Badge key={tag} variant="secondary" className={`${tagColor} text-xs whitespace-nowrap`}>
+                {tag}
+              </Badge>
+            );
+          })}
+        </div>
+      </TableCell>
+
       {/* Module */}
-      <TableCell className={cn("overflow-hidden", !canEditModule && disabledCellClass)} style={cellStyle(3)}>
+      <TableCell className={cn("overflow-hidden", !canEditModule && disabledCellClass)} style={cellStyle(4)}>
         {canEditModule ? (
           <Select
             value={ticket.module || 'none'}
@@ -151,7 +168,7 @@ export function TicketTableRow({
       </TableCell>
 
       {/* Statut */}
-      <TableCell className={cn("overflow-hidden", !canEditStatus && disabledCellClass)} style={cellStyle(4)}>
+      <TableCell className={cn("overflow-hidden", !canEditStatus && disabledCellClass)} style={cellStyle(5)}>
         {canEditStatus ? (
           <Select
             value={ticket.kanban_status}
@@ -188,7 +205,7 @@ export function TicketTableRow({
       </TableCell>
 
       {/* PEC */}
-      <TableCell className={cn("overflow-hidden", !canEditOwnerSide && disabledCellClass)} style={cellStyle(5)}>
+      <TableCell className={cn("overflow-hidden", !canEditOwnerSide && disabledCellClass)} style={cellStyle(6)}>
         {canEditOwnerSide ? (
           <Select
             value={ticket.owner_side || 'none'}
@@ -215,7 +232,7 @@ export function TicketTableRow({
       </TableCell>
 
       {/* Origine */}
-      <TableCell className={cn("overflow-hidden", !canEditReportedBy && disabledCellClass)} style={cellStyle(6)}>
+      <TableCell className={cn("overflow-hidden", !canEditReportedBy && disabledCellClass)} style={cellStyle(7)}>
         {canEditReportedBy ? (
           <Select
             value={ticket.reported_by || 'none'}
@@ -242,7 +259,7 @@ export function TicketTableRow({
       </TableCell>
 
       {/* Estimation */}
-      <TableCell className={cn("text-center overflow-hidden", !canEditEstimation && disabledCellClass)} style={cellStyle(7)}>
+      <TableCell className={cn("text-center overflow-hidden", !canEditEstimation && disabledCellClass)} style={cellStyle(8)}>
         {ticket.h_min !== null || ticket.h_max !== null ? (
           <span className="text-xs">
             {ticket.h_min ?? '?'}-{ticket.h_max ?? '?'}h
@@ -253,7 +270,7 @@ export function TicketTableRow({
       </TableCell>
 
       {/* Qualifié */}
-      <TableCell className="text-center overflow-hidden" style={cellStyle(8)}>
+      <TableCell className="text-center overflow-hidden" style={cellStyle(9)}>
         {ticket.is_qualified ? (
           <Tooltip>
             <TooltipTrigger>
@@ -274,12 +291,12 @@ export function TicketTableRow({
       </TableCell>
 
       {/* Créé le */}
-      <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(9)}>
+      <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(10)}>
         {format(new Date(ticket.created_at), 'dd/MM/yy', { locale: fr })}
       </TableCell>
 
       {/* Actions */}
-      <TableCell style={cellStyle(10)}>
+      <TableCell style={cellStyle(11)}>
         <div className="flex items-center gap-1">
           <Tooltip>
             <TooltipTrigger asChild>
