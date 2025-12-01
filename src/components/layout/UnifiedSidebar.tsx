@@ -559,9 +559,12 @@ export function UnifiedSidebar() {
       </SidebarContent>
       
       <SidebarFooter className="border-t p-2">
-        <div className={`text-xs font-semibold text-muted-foreground ${collapsed ? 'text-center' : 'text-left'}`}>
+        <Link 
+          to="/changelog"
+          className={`text-xs font-semibold text-muted-foreground hover:text-primary transition-colors block ${collapsed ? 'text-center' : 'text-left'}`}
+        >
           {APP_VERSION}
-        </div>
+        </Link>
       </SidebarFooter>
     </Sidebar>
   );
