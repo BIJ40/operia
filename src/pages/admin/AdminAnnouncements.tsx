@@ -45,7 +45,7 @@ export default function AdminAnnouncements() {
   const [formOpen, setFormOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [announcementToDelete, setAnnouncementToDelete] = useState<string | null>(null);
+  const [announcementToDelete, setAnnouncementToDelete] = useState<{ id: string; imagePath?: string | null } | null>(null);
 
   const handleEdit = (announcement: Announcement) => {
     setSelectedAnnouncement(announcement);
@@ -64,8 +64,8 @@ export default function AdminAnnouncements() {
     setAnnouncementToDelete(null);
   };
 
-  const openDeleteDialog = (id: string) => {
-    setAnnouncementToDelete(id);
+  const openDeleteDialog = (announcement: Announcement) => {
+    setAnnouncementToDelete({ id: announcement.id, imagePath: announcement.image_path });
     setDeleteDialogOpen(true);
   };
 
@@ -146,7 +146,7 @@ export default function AdminAnnouncements() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => openDeleteDialog(announcement.id)}
+                      onClick={() => openDeleteDialog(announcement)}
                       className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />

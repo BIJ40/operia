@@ -110,10 +110,35 @@ export function useCreateAnnouncement() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (announcement: AnnouncementInsert) => {
+    mutationFn: async ({ 
+      imageFile, 
+      ...announcement 
+    }: AnnouncementInsert & { imageFile?: File | null }) => {
+      let image_path = announcement.image_path;
+
+      // Upload image if provided
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('announcement-images')
+          .upload(filePath, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('announcement-images')
+          .getPublicUrl(filePath);
+
+        image_path = publicUrl;
+      }
+
       const { data, error } = await supabase
         .from('priority_announcements')
-        .insert(announcement)
+        .insert({ ...announcement, image_path })
         .select()
         .single();
 
@@ -140,14 +165,50 @@ export function useUpdateAnnouncement() {
   return useMutation({
     mutationFn: async ({ 
       id, 
-      updates 
+      updates,
+      imageFile,
+      oldImagePath,
     }: { 
       id: string; 
-      updates: Partial<Announcement> 
+      updates: Partial<Announcement>;
+      imageFile?: File | null;
+      oldImagePath?: string | null;
     }) => {
+      let image_path = updates.image_path;
+
+      // Upload new image if provided
+      if (imageFile) {
+        // Delete old image if exists
+        if (oldImagePath) {
+          const oldFileName = oldImagePath.split('/').pop();
+          if (oldFileName) {
+            await supabase.storage
+              .from('announcement-images')
+              .remove([oldFileName]);
+          }
+        }
+
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('announcement-images')
+          .upload(filePath, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('announcement-images')
+          .getPublicUrl(filePath);
+
+        image_path = publicUrl;
+      }
+
       const { data, error } = await supabase
         .from('priority_announcements')
-        .update(updates)
+        .update({ ...updates, image_path })
         .eq('id', id)
         .select()
         .single();
@@ -173,7 +234,17 @@ export function useDeleteAnnouncement() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, imagePath }: { id: string; imagePath?: string | null }) => {
+      // Delete image from storage if exists
+      if (imagePath) {
+        const fileName = imagePath.split('/').pop();
+        if (fileName) {
+          await supabase.storage
+            .from('announcement-images')
+            .remove([fileName]);
+        }
+      }
+
       const { error } = await supabase
         .from('priority_announcements')
         .delete()
