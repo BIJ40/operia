@@ -24,6 +24,7 @@ export default function AdminBackup() {
     importing,
     lastBackup,
     exportApogeeData,
+    exportHelpconfortData,
     exportApporteurData,
     exportTextOnly,
     exportSingleCategory,
@@ -64,13 +65,20 @@ export default function AdminBackup() {
             </AlertDescription>
           </Alert>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             <ExportCard
               title="Manuel Apogée"
               description="Export des catégories et sections du guide Apogée"
               onExportJson={exportApogeeData}
               onExportText={() => exportTextOnly('apogee')}
               isLoading={exportingApogee}
+            />
+            <ExportCard
+              title="Guide HelpConfort"
+              description="Export des catégories et sections du guide HelpConfort"
+              onExportJson={exportHelpconfortData}
+              onExportText={() => exportTextOnly('helpconfort')}
+              isLoading={exportingHelpconfort}
             />
             <ExportCard
               title="Guide Apporteur"

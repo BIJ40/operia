@@ -136,6 +136,52 @@ export const useAdminBackup = () => {
     }
   };
 
+  const exportHelpconfortData = async () => {
+    setExportingHelpconfort(true);
+    try {
+      const result = await safeQuery<any[]>(
+        supabase.from('blocks').select('*').like('slug', 'helpconfort-%').order('order'),
+        'BACKUP_EXPORT_HELPCONFORT'
+      );
+
+      if (!result.success || !result.data) {
+        errorToast('Impossible d\'exporter les données HelpConfort');
+        return;
+      }
+
+      const blocks = result.data;
+      const categories = blocks.filter(b => b.type === 'category') || [];
+      const sections = blocks.filter(b => b.type === 'section') || [];
+
+      const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        type: 'helpconfort',
+        categories: categories.map(cat => ({
+          id: cat.id, title: cat.title, slug: cat.slug, icon: cat.icon,
+          colorPreset: cat.color_preset, order: cat.order,
+          sections: sections.filter(s => s.parent_id === cat.id).map(s => ({
+            id: s.id, title: s.title, slug: s.slug,
+            contentText: extractPlainText(s.content),
+            contentHtml: cleanHtmlForExport(s.content),
+            contentRaw: s.content, summary: s.summary, showSummary: s.show_summary,
+            icon: s.icon, colorPreset: s.color_preset, order: s.order,
+            contentType: s.content_type, tipsType: s.tips_type, hideFromSidebar: s.hide_from_sidebar,
+          })).sort((a, b) => a.order - b.order)
+        })).sort((a, b) => a.order - b.order),
+        stats: { totalCategories: categories.length, totalSections: sections.length }
+      };
+
+      downloadFile(JSON.stringify(exportData, null, 2), `export-helpconfort-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
+      successToast('Export HelpConfort réussi !', `${categories.length} catégories, ${sections.length} sections`);
+    } catch (error) {
+      logError('use-admin-backup', 'Erreur export HelpConfort', error);
+      errorToast('Impossible d\'exporter les données HelpConfort');
+    } finally {
+      setExportingHelpconfort(false);
+    }
+  };
+
   const exportApporteurData = async () => {
     setExportingApporteur(true);
     try {
@@ -857,6 +903,6 @@ export const useAdminBackup = () => {
     selectedApogeeCategories, selectedHelpconfortCategories, selectedApporteurCategories,
     setSelectedApogeeCategories, setSelectedHelpconfortCategories, setSelectedApporteurCategories,
     exportingApogee, exportingHelpconfort, exportingApporteur, exporting, importing, lastBackup,
-    exportApogeeData, exportApporteurData, exportTextOnly, exportSingleCategory, exportSingleCategoryPdf, exportMultipleCategoriesPdf, exportAllData, importData,
+    exportApogeeData, exportHelpconfortData, exportApporteurData, exportTextOnly, exportSingleCategory, exportSingleCategoryPdf, exportMultipleCategoriesPdf, exportAllData, importData,
   };
 };
