@@ -97,7 +97,6 @@ export function useApogeeTickets(filters?: TicketFilters) {
         .select(`
           *,
           apogee_modules(*),
-          apogee_priorities(*),
           apogee_ticket_statuses(*),
           apogee_ticket_comments(count)
         `)
@@ -352,7 +351,6 @@ export function useApogeeTicket(ticketId: string | null) {
           .select(`
             *,
             apogee_modules(*),
-            apogee_priorities(*),
             apogee_ticket_statuses(*)
           `)
           .eq('id', ticketId)
