@@ -66,6 +66,7 @@ export type QualifStatus = 'a_qualifier' | 'reproduit' | 'spec_ok' | 'pret_dev' 
 
 export interface ApogeeTicket {
   id: string;
+  ticket_number: number;
   source_sheet: string | null;
   source_row_index: number | null;
   external_key: string | null;
