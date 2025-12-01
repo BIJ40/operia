@@ -24,11 +24,11 @@
 **Cause**: Groupe projects sans accessKey ni requiresModule check  
 **Fix appliqué**: Filtrage du groupe projects basé sur hasModule('apogee_tickets')
 
-### F-EDIT-2 – Agence modifiable sans vérification scope
-**Impact**: Admin N2 voit TOUTES agences dans dropdown, peut choisir hors scope  
-**Fichiers**: `UserDialogs.tsx`  
+### F-EDIT-2 – Agence modifiable sans vérification scope ✅ CORRIGÉ
+**Impact**: Admin N2 voyait TOUTES agences dans dropdown, pouvait choisir hors scope  
+**Fichiers**: `AdminUsersUnified.tsx`  
 **Cause**: Dropdown non filtré selon manageScope (ownAgency/assignedAgencies)  
-**Fix**: Filtrer agencies selon getUserManagementCapabilities
+**Fix appliqué**: Agences filtrées selon getUserManagementCapabilities - N2 voit sa propre agence, N3 voit agences assignées, N4+ voit tout
 
 ### F-EDIT-4 – Module activation sans vérification minRole
 **Impact**: Admin peut activer module N3+ pour user N1 (incohérence DB/runtime)  
@@ -84,8 +84,8 @@
 
 ### Phase 1 – Sécurité (4h)
 1. ✅ **CORRIGÉ** - Décider architecture Support Console (modulaire vs strict N5+) → **Strict N5+ imposé**
-2. ✅ Implémenter validation minRole dans module activation (F-EDIT-4)
-3. ✅ Filtrer agences selon manageScope dans EditUserDialog (F-EDIT-2)
+2. ✅ **CORRIGÉ** - Implémenter validation minRole dans module activation (F-EDIT-4)
+3. ✅ **CORRIGÉ** - Filtrer agences selon manageScope dans EditUserDialog (F-EDIT-2)
 
 ### Phase 2 – Cohérence Navigation (3h)
 4. ✅ **CORRIGÉ** - Ajouter requiresModule check pour groupe Projects (F-PERM-2, F-NAV-3)
