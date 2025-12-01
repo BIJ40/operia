@@ -89,14 +89,14 @@ export function TeamUserDialog({
 
   const createUserMutation = useMutation({
     mutationFn: async () => {
-      const { data: result, error } = await supabase.functions.invoke("admin-create-user", {
+      const { data: result, error } = await supabase.functions.invoke("create-user", {
         body: {
           email: formData.email,
           password: formData.password,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
           agence: agencyLabel,
-          global_role: formData.globalRole,
+          globalRole: formData.globalRole,
           sendEmail: formData.sendEmail,
         },
       });
