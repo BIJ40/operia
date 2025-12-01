@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logError } from '@/lib/logger';
 
 type Announcement = Database['public']['Tables']['priority_announcements']['Row'];
 
@@ -113,7 +114,7 @@ export function AnnouncementForm({
       setImageFile(null);
       setImagePreview(null);
     } catch (error) {
-      console.error('Error saving announcement:', error);
+      logError('AnnouncementForm', 'Error saving announcement', error);
     }
   };
 

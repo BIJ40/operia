@@ -33,7 +33,22 @@ export function useAgencies() {
   return useQuery({
     queryKey: ['franchiseur-agencies'],
     queryFn: async (): Promise<Agency[]> => {
-      const agenciesResult = await safeQuery<any[]>(
+      interface AgencyRow {
+        id: string;
+        slug: string;
+        label: string;
+        is_active: boolean;
+        date_ouverture: string | null;
+        contact_email: string | null;
+        contact_phone: string | null;
+        adresse: string | null;
+        ville: string | null;
+        code_postal: string | null;
+        created_at: string;
+        updated_at: string;
+      }
+      
+      const agenciesResult = await safeQuery<AgencyRow[]>(
         supabase
           .from('apogee_agencies')
           .select('*')
@@ -56,26 +71,38 @@ export function useAgencies() {
         'FRANCHISEUR_ASSIGNMENTS_LOAD'
       );
 
+      interface ProfileRow {
+        id: string;
+        first_name: string | null;
+        last_name: string | null;
+        email: string | null;
+      }
+      
+      interface RoleRow {
+        user_id: string;
+        franchiseur_role: string;
+      }
+      
       const assignments = assignmentsResult.data || [];
       const userIds = [...new Set(assignments.map(a => a.user_id))];
       
-      let animatorProfiles: any[] = [];
-      let franchiseurRoles: any[] = [];
+      let animatorProfiles: ProfileRow[] = [];
+      let franchiseurRoles: RoleRow[] = [];
       
       if (userIds.length > 0) {
         const [profilesResult, rolesResult] = await Promise.all([
-          safeQuery<any[]>(
+          safeQuery<ProfileRow[]>(
             supabase
               .from('profiles')
               .select('id, first_name, last_name, email')
               .in('id', userIds),
             'FRANCHISEUR_ANIMATOR_PROFILES_LOAD'
           ),
-          safeQuery<any[]>(
+          safeQuery<RoleRow[]>(
             supabase
               .from('franchiseur_roles')
               .select('user_id, franchiseur_role')
-              .in('id', userIds),
+              .in('user_id', userIds),
             'FRANCHISEUR_ANIMATOR_ROLES_LOAD'
           )
         ]);
@@ -114,7 +141,22 @@ export function useAgency(agencyId: string | null) {
     queryFn: async (): Promise<Agency | null> => {
       if (!agencyId) return null;
       
-      const agencyResult = await safeQuery<any>(
+      interface AgencyRow {
+        id: string;
+        slug: string;
+        label: string;
+        is_active: boolean;
+        date_ouverture: string | null;
+        contact_email: string | null;
+        contact_phone: string | null;
+        adresse: string | null;
+        ville: string | null;
+        code_postal: string | null;
+        created_at: string;
+        updated_at: string;
+      }
+      
+      const agencyResult = await safeQuery<AgencyRow>(
         supabase
           .from('apogee_agencies')
           .select('*')
@@ -143,16 +185,28 @@ export function useAgency(agencyId: string | null) {
       
       let animateurs: AgencyAnimator[] = [];
       
+      interface ProfileRow {
+        id: string;
+        first_name: string | null;
+        last_name: string | null;
+        email: string | null;
+      }
+      
+      interface RoleRow {
+        user_id: string;
+        franchiseur_role: string;
+      }
+      
       if (userIds.length > 0) {
         const [profilesResult, rolesResult] = await Promise.all([
-          safeQuery<any[]>(
+          safeQuery<ProfileRow[]>(
             supabase
               .from('profiles')
               .select('id, first_name, last_name, email')
               .in('id', userIds),
             'FRANCHISEUR_AGENCY_ANIMATOR_PROFILES_LOAD'
           ),
-          safeQuery<any[]>(
+          safeQuery<RoleRow[]>(
             supabase
               .from('franchiseur_roles')
               .select('user_id, franchiseur_role')

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
+import { logError } from '@/lib/logger';
 
 type Announcement = Database['public']['Tables']['priority_announcements']['Row'];
 type AnnouncementInsert = Database['public']['Tables']['priority_announcements']['Insert'];
@@ -194,7 +195,7 @@ export function useCreateAnnouncement() {
     },
     onError: (error) => {
       toast.error('Erreur lors de la création de l\'annonce');
-      console.error(error);
+      logError('useCreateAnnouncement', 'Failed to create announcement', error);
     },
   });
 }
@@ -265,7 +266,7 @@ export function useUpdateAnnouncement() {
     },
     onError: (error) => {
       toast.error('Erreur lors de la mise à jour');
-      console.error(error);
+      logError('useUpdateAnnouncement', 'Failed to update announcement', error);
     },
   });
 }
@@ -301,7 +302,7 @@ export function useDeleteAnnouncement() {
     },
     onError: (error) => {
       toast.error('Erreur lors de la suppression');
-      console.error(error);
+      logError('useDeleteAnnouncement', 'Failed to delete announcement', error);
     },
   });
 }
