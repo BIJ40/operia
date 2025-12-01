@@ -82,13 +82,13 @@ export const canEditTarget = (
     return { allowed: false, reason: 'Niveau insuffisant pour gérer des utilisateurs' }
   }
   
-  // N2 (franchisee_admin): uniquement même agence, max N2
+  // N2 (franchisee_admin): uniquement même agence, max N1
   if (callerLevel === GLOBAL_ROLES.franchisee_admin) {
     if (callerAgency !== targetAgency) {
       return { allowed: false, reason: 'Vous ne pouvez gérer que les utilisateurs de votre agence' }
     }
-    if (targetLevel > GLOBAL_ROLES.franchisee_admin) {
-      return { allowed: false, reason: 'Vous ne pouvez pas attribuer un rôle supérieur à N2 (Admin agence)' }
+    if (targetLevel >= GLOBAL_ROLES.franchisee_admin) {
+      return { allowed: false, reason: 'Vous ne pouvez pas attribuer un rôle supérieur ou égal à N2 (Admin agence)' }
     }
     return { allowed: true }
   }

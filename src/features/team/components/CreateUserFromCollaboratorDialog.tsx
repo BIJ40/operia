@@ -65,9 +65,9 @@ export function CreateUserFromCollaboratorDialog({
 
   // Rôles assignables par l'utilisateur courant
   const assignableRoles = getAssignableRoles(globalRole);
-  // Filtrer pour ne montrer que N1-N2 pour les créations depuis collaborateurs
+  // N2 depuis /equipe ne peut créer que N0 et N1 maximum
   const availableRoles = assignableRoles.filter(
-    (r) => r === "franchisee_user" || r === "franchisee_admin"
+    (r) => r === "base_user" || r === "franchisee_user"
   );
 
   // Email final (du formulaire ou du collaborateur)
