@@ -3,7 +3,7 @@ import { useEditor } from '@/contexts/EditorContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ROUTES } from '@/config/routes';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronsDownUp, ChevronsUpDown, Lightbulb, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, ChevronsDownUp, ChevronsUpDown, Lightbulb, ArrowLeft, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -50,7 +50,7 @@ export default function Category() {
     return <Navigate to={ROUTES.academy.apogee} replace />;
   }
 
-  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
+  const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks, reloadBlocks, loading } = useEditor();
   const { isAuthenticated, isAdmin, hasAccessToScope } = useAuth();
   
   // Helper to preserve edit mode in navigation
@@ -261,6 +261,17 @@ export default function Category() {
         </div>
         
         <div className="flex items-center justify-end gap-1 sm:gap-2 mt-2 flex-wrap">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => reloadBlocks()}
+              disabled={loading}
+              className="gap-1 sm:gap-2"
+              title="Rafraîchir les données"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Rafraîchir</span>
+            </Button>
             {hasTips && (
               <Button
                 variant={showTips ? "default" : "outline"}
