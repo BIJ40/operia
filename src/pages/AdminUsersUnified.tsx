@@ -24,8 +24,6 @@ import {
   UserFilters,
   UserAccordionItem,
 } from '@/components/admin/users';
-import { CreateUserRequestDialog } from '@/components/admin/users/CreateUserRequestDialog';
-import { UserCreationRequestsPanel } from '@/components/admin/users/UserCreationRequestsPanel';
 
 export default function AdminUsersUnified() {
   const { isAdmin, globalRole, user: currentUser } = useAuth();
@@ -130,7 +128,6 @@ export default function AdminUsersUnified() {
 
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showCreateRequestDialog, setShowCreateRequestDialog] = useState(false);
   const [editDialog, setEditDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   const [deactivateDialog, setDeactivateDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   const [reactivateDialog, setReactivateDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
@@ -174,16 +171,7 @@ export default function AdminUsersUnified() {
               Nouvel utilisateur
             </Button>
           )}
-          {!canCreateUsers && currentUserLevel >= 2 && (
-            <Button onClick={() => setShowCreateRequestDialog(true)} variant="outline">
-              <UserPlus className="w-4 h-4 mr-2" />
-              Demander création
-            </Button>
-          )}
         </div>
-
-        {/* User Creation Requests Panel */}
-        {(isAdmin || currentUserLevel >= 2) && <UserCreationRequestsPanel />}
 
         {/* Filters */}
         <UserFilters
@@ -258,11 +246,6 @@ export default function AdminUsersUnified() {
           agencies={manageableAgencies}
           currentUserLevel={currentUserLevel}
           currentUserAgency={currentUserAgency}
-        />
-
-        <CreateUserRequestDialog
-          open={showCreateRequestDialog}
-          onOpenChange={setShowCreateRequestDialog}
         />
 
         <EditUserDialog
