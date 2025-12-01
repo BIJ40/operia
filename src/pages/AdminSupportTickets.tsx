@@ -306,60 +306,72 @@ export default function AdminSupportTickets() {
 
           {/* Stats Dashboard - ligne unique compacte */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-            <Card 
-              className={`${getCardClassName('all')} py-2`}
+            <div 
+              className={`group rounded-xl p-3 cursor-pointer transition-all duration-300
+                bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent
+                border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue
+                hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:shadow-lg hover:-translate-y-0.5
+                ${filters.status === 'all' ? 'ring-2 ring-primary shadow-xl scale-105' : ''}`}
               onClick={() => setFilters({ ...filters, status: 'all' })}
             >
-              <CardContent className="p-2 text-center">
-                <div className="text-xs text-muted-foreground">Total</div>
-                <div className="text-xl font-bold">{stats.total}</div>
-              </CardContent>
-            </Card>
-            <Card 
-              className={`${getCardClassName('new')} py-2`}
+              <div className="text-xs text-muted-foreground">Total</div>
+              <div className="text-xl font-bold">{stats.total}</div>
+            </div>
+            <div 
+              className={`group rounded-xl p-3 cursor-pointer transition-all duration-300
+                bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent
+                border border-blue-500/20 border-l-4 border-l-blue-500
+                hover:from-blue-500/15 hover:via-blue-500/8 hover:shadow-lg hover:-translate-y-0.5
+                ${filters.status === 'new' ? 'ring-2 ring-primary shadow-xl scale-105' : ''}`}
               onClick={() => setFilters({ ...filters, status: 'new' })}
             >
-              <CardContent className="p-2 text-center">
-                <div className="text-xs text-muted-foreground">Nouveaux</div>
-                <div className="text-xl font-bold text-blue-600">{stats.newTickets}</div>
-              </CardContent>
-            </Card>
-            <Card 
-              className={`${getCardClassName('waiting_user')} py-2`}
+              <div className="text-xs text-muted-foreground">Nouveaux</div>
+              <div className="text-xl font-bold text-blue-600">{stats.newTickets}</div>
+            </div>
+            <div 
+              className={`group rounded-xl p-3 cursor-pointer transition-all duration-300
+                bg-gradient-to-r from-orange-500/10 via-orange-500/5 to-transparent
+                border border-orange-500/20 border-l-4 border-l-orange-500
+                hover:from-orange-500/15 hover:via-orange-500/8 hover:shadow-lg hover:-translate-y-0.5
+                ${filters.status === 'waiting_user' ? 'ring-2 ring-primary shadow-xl scale-105' : ''}`}
               onClick={() => setFilters({ ...filters, status: 'waiting_user' })}
             >
-              <CardContent className="p-2 text-center">
-                <div className="text-xs text-muted-foreground">Att. user</div>
-                <div className="text-xl font-bold text-orange-600">{stats.waitingUser}</div>
-              </CardContent>
-            </Card>
-            <Card 
-              className={`${getCardClassName('in_progress')} py-2`}
+              <div className="text-xs text-muted-foreground">Att. user</div>
+              <div className="text-xl font-bold text-orange-600">{stats.waitingUser}</div>
+            </div>
+            <div 
+              className={`group rounded-xl p-3 cursor-pointer transition-all duration-300
+                bg-gradient-to-r from-yellow-500/10 via-yellow-500/5 to-transparent
+                border border-yellow-500/20 border-l-4 border-l-yellow-500
+                hover:from-yellow-500/15 hover:via-yellow-500/8 hover:shadow-lg hover:-translate-y-0.5
+                ${filters.status === 'in_progress' ? 'ring-2 ring-primary shadow-xl scale-105' : ''}`}
               onClick={() => setFilters({ ...filters, status: 'in_progress' })}
             >
-              <CardContent className="p-2 text-center">
-                <div className="text-xs text-muted-foreground">En cours</div>
-                <div className="text-xl font-bold text-yellow-600">{stats.inProgress}</div>
-              </CardContent>
-            </Card>
-            <Card 
-              className={`${getCardClassName('resolved')} py-2`}
+              <div className="text-xs text-muted-foreground">En cours</div>
+              <div className="text-xl font-bold text-yellow-600">{stats.inProgress}</div>
+            </div>
+            <div 
+              className={`group rounded-xl p-3 cursor-pointer transition-all duration-300
+                bg-gradient-to-r from-green-500/10 via-green-500/5 to-transparent
+                border border-green-500/20 border-l-4 border-l-green-500
+                hover:from-green-500/15 hover:via-green-500/8 hover:shadow-lg hover:-translate-y-0.5
+                ${filters.status === 'resolved' ? 'ring-2 ring-primary shadow-xl scale-105' : ''}`}
               onClick={() => setFilters({ ...filters, status: 'resolved' })}
             >
-              <CardContent className="p-2 text-center">
-                <div className="text-xs text-muted-foreground">Résolus</div>
-                <div className="text-xl font-bold text-green-600">{stats.resolved}</div>
-              </CardContent>
-            </Card>
-            <Card 
-              className={`${getCardClassName('closed')} py-2`}
+              <div className="text-xs text-muted-foreground">Résolus</div>
+              <div className="text-xl font-bold text-green-600">{stats.resolved}</div>
+            </div>
+            <div 
+              className={`group rounded-xl p-3 cursor-pointer transition-all duration-300
+                bg-gradient-to-r from-gray-500/10 via-gray-500/5 to-transparent
+                border border-gray-500/20 border-l-4 border-l-gray-500
+                hover:from-gray-500/15 hover:via-gray-500/8 hover:shadow-lg hover:-translate-y-0.5
+                ${filters.status === 'closed' ? 'ring-2 ring-primary shadow-xl scale-105' : ''}`}
               onClick={() => setFilters({ ...filters, status: 'closed' })}
             >
-              <CardContent className="p-2 text-center">
-                <div className="text-xs text-muted-foreground">Fermés</div>
-                <div className="text-xl font-bold text-gray-600">{stats.closed}</div>
-              </CardContent>
-            </Card>
+              <div className="text-xs text-muted-foreground">Fermés</div>
+              <div className="text-xl font-bold text-gray-600">{stats.closed}</div>
+            </div>
           </div>
 
           {viewMode === 'kanban' ? (

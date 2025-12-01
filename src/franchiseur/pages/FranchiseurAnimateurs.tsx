@@ -122,49 +122,55 @@ export default function FranchiseurAnimateurs() {
 
       {/* Stats summary */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="rounded-2xl border-l-4 border-l-blue-500">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-blue-500/10">
-                <Users className="h-6 w-6 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{animateursOnly.length}</p>
-                <p className="text-sm text-muted-foreground">Animateurs</p>
-              </div>
+        <div className="group rounded-xl p-5
+          bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent
+          border border-blue-500/20 border-l-4 border-l-blue-500
+          shadow-sm transition-all duration-300
+          hover:from-blue-500/15 hover:via-blue-500/8 hover:shadow-lg hover:-translate-y-0.5">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/30">
+              <Users className="h-6 w-6 text-blue-500" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-2xl font-bold">{animateursOnly.length}</p>
+              <p className="text-sm text-muted-foreground">Animateurs</p>
+            </div>
+          </div>
+        </div>
         
-        <Card className="rounded-2xl border-l-4 border-l-purple-500">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-purple-500/10">
-                <Users className="h-6 w-6 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{directeursAndDG.length}</p>
-                <p className="text-sm text-muted-foreground">Directeurs / DG</p>
-              </div>
+        <div className="group rounded-xl p-5
+          bg-gradient-to-r from-purple-500/10 via-purple-500/5 to-transparent
+          border border-purple-500/20 border-l-4 border-l-purple-500
+          shadow-sm transition-all duration-300
+          hover:from-purple-500/15 hover:via-purple-500/8 hover:shadow-lg hover:-translate-y-0.5">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30">
+              <Users className="h-6 w-6 text-purple-500" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-2xl font-bold">{directeursAndDG.length}</p>
+              <p className="text-sm text-muted-foreground">Directeurs / DG</p>
+            </div>
+          </div>
+        </div>
         
-        <Card className="rounded-2xl border-l-4 border-l-green-500">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-green-500/10">
-                <Building2 className="h-6 w-6 text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {new Set(allAssignments?.map(a => a.agency_id)).size}
-                </p>
-                <p className="text-sm text-muted-foreground">Agences assignées</p>
-              </div>
+        <div className="group rounded-xl p-5
+          bg-gradient-to-r from-green-500/10 via-green-500/5 to-transparent
+          border border-green-500/20 border-l-4 border-l-green-500
+          shadow-sm transition-all duration-300
+          hover:from-green-500/15 hover:via-green-500/8 hover:shadow-lg hover:-translate-y-0.5">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30">
+              <Building2 className="h-6 w-6 text-green-500" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-2xl font-bold">
+                {new Set(allAssignments?.map(a => a.agency_id)).size}
+              </p>
+              <p className="text-sm text-muted-foreground">Agences assignées</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Animateurs list */}
