@@ -14,11 +14,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { TicketSourceBadge } from '@/components/tickets/TicketSourceBadge';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
-import { Plus, Send, Download, ArrowLeft, Home, X, Paperclip, Upload, Loader2 } from 'lucide-react';
+import { Plus, Send, Download, ArrowLeft, X, Paperclip, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/config/routes';
 
 const CLOSE_REASONS = [
   { value: 'resolved_self', label: 'Résolu par moi-même' },
@@ -29,7 +27,6 @@ const CLOSE_REASONS = [
 
 // Route protégée par RoleGuard dans App.tsx
 export default function UserTickets() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const {
     tickets,
@@ -161,18 +158,17 @@ export default function UserTickets() {
 
   if (selectedTicket) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-          <Button
-            variant="ghost"
-            onClick={() => setSelectedTicket(null)}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Retour à la liste</span>
-          </Button>
+      <div className="container mx-auto py-8 px-4 space-y-6">
+        <Button
+          variant="ghost"
+          onClick={() => setSelectedTicket(null)}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Retour à la liste</span>
+        </Button>
 
-          <Card>
+        <Card className="border-l-4 border-l-helpconfort-blue bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background">
             <CardHeader className="p-3 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="space-y-2">
@@ -355,51 +351,41 @@ export default function UserTickets() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        {showCreateForm ? (
+    <div className="container mx-auto py-8 px-4 space-y-6">
+      {/* Header with action button */}
+      <div className="flex items-center justify-between">
+        {showCreateForm && (
           <Button
             variant="ghost"
             onClick={() => setShowCreateForm(false)}
-            className="mb-4"
           >
-            <ArrowLeft className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Retour aux tickets</span>
-          </Button>
-        ) : (
-          <Button
-            variant="ghost"
-            onClick={() => navigate(ROUTES.home)}
-            className="mb-4"
-          >
-            <Home className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Retour à l'accueil</span>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour aux tickets
           </Button>
         )}
-        
-        <div className="mb-4 sm:mb-6 flex items-center justify-between gap-2">
-          <h1 className="text-xl sm:text-3xl font-bold">Support / Tickets</h1>
-          <Button onClick={() => setShowCreateForm(!showCreateForm)} size="sm" className="sm:size-default">
-            <Plus className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Nouveau ticket</span>
-          </Button>
-        </div>
+        {!showCreateForm && (
+          <div /> 
+        )}
+        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nouveau ticket
+        </Button>
+      </div>
 
-        {showCreateForm && (
-          <Card className="mb-4 sm:mb-6">
-            <CardHeader className="p-3 sm:p-6">
-              <CardTitle className="text-lg sm:text-xl">Créer un nouveau ticket</CardTitle>
-              <CardDescription>
-                Décrivez votre problème ou votre question
-              </CardDescription>
+      {showCreateForm && (
+        <Card className="border-l-4 border-l-helpconfort-blue bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background">
+          <CardHeader>
+            <CardTitle>Créer un nouveau ticket</CardTitle>
+            <CardDescription>
+              Décrivez votre problème ou votre question
+            </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 p-3 sm:p-6 pt-0 sm:pt-0">
+            <CardContent className="space-y-4">
               <div>
                 <Label>Service concerné *</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mt-2">
@@ -612,20 +598,20 @@ export default function UserTickets() {
         {isLoading ? (
           <div className="text-center py-12">Chargement...</div>
         ) : tickets.length === 0 ? (
-          <Card>
+          <Card className="border-l-4 border-l-helpconfort-blue bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background">
             <CardContent className="py-12 text-center text-muted-foreground">
               Aucun ticket. Créez-en un pour commencer.
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-3 sm:gap-4">
+          <div className="grid gap-4">
             {tickets.map((ticket) => (
               <Card
                 key={ticket.id}
-                className="cursor-pointer hover:shadow-lg transition-shadow"
+                className="cursor-pointer border-l-4 border-l-helpconfort-blue bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background hover:from-helpconfort-blue/20 hover:shadow-lg transition-all"
                 onClick={() => setSelectedTicket(ticket)}
               >
-                <CardHeader className="p-3 sm:p-6">
+                <CardHeader>
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                     <div className="space-y-2 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -653,7 +639,6 @@ export default function UserTickets() {
             ))}
           </div>
         )}
-      </div>
     </div>
   );
 }
