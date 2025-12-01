@@ -7,6 +7,13 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Search, UserPlus, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 
+interface Agency {
+  id: string;
+  slug: string;
+  label: string;
+  is_active: boolean;
+}
+
 interface UserFiltersProps {
   searchQuery: string;
   setSearchQuery: (value: string) => void;
@@ -18,7 +25,7 @@ interface UserFiltersProps {
   setModuleFilter: (value: string) => void;
   showDeactivated: boolean;
   setShowDeactivated: (value: boolean) => void;
-  agencies: string[];
+  agencies: Agency[];
   canCreateUsers: boolean;
   onCreateUser: () => void;
   onCreateRequest?: () => void;
@@ -97,7 +104,7 @@ export function UserFilters({
           <SelectContent className="bg-background z-50">
             <SelectItem value="all">Toutes agences</SelectItem>
             <SelectItem value="none">Sans agence</SelectItem>
-            {agencies.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+            {agencies.map(a => <SelectItem key={a.id} value={a.slug}>{a.label}</SelectItem>)}
           </SelectContent>
         </Select>
         

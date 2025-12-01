@@ -246,6 +246,7 @@ export default function AdminUsersUnified() {
           isPending={updateUserMutation.isPending}
           isEmailPending={updateEmailMutation.isPending}
           isPasswordPending={resetPasswordMutation.isPending}
+          agencies={agencies}
         />
 
         <DeactivateDialog
