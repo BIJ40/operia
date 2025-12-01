@@ -35,8 +35,8 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   
   // Support
   { pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Assistance et demandes', route: ROUTES.support.index },
-  { pageKey: 'support_mes_demandes', defaultTitle: 'Mes Demandes', defaultSubtitle: 'Créer et suivre vos demandes de support', route: ROUTES.support.userTickets },
-  { pageKey: 'support_console', defaultTitle: 'Console Support', defaultSubtitle: 'Traiter les demandes de support', route: ROUTES.support.console },
+  { pageKey: 'support_mes_demandes', defaultTitle: 'Mes demandes', defaultSubtitle: 'Créer et suivre vos demandes de support', route: ROUTES.support.userTickets },
+  { pageKey: 'support_console', defaultTitle: 'Console support', defaultSubtitle: 'Traiter les demandes de support', route: ROUTES.support.console },
   
   // Réseau Franchiseur
   { pageKey: 'reseau_index', defaultTitle: 'Réseau Franchiseur', defaultSubtitle: 'Pilotage du réseau HelpConfort', route: ROUTES.reseau.index },
@@ -51,7 +51,7 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'admin_index', defaultTitle: 'Administration', defaultSubtitle: 'Configuration du système', route: ROUTES.admin.index },
   { pageKey: 'admin_users', defaultTitle: 'Gestion Utilisateurs', defaultSubtitle: 'Comptes et permissions', route: ROUTES.admin.users },
   { pageKey: 'admin_agencies', defaultTitle: 'Gestion Agences', defaultSubtitle: 'Configuration des agences', route: ROUTES.admin.agencies },
-  { pageKey: 'admin_collaborateurs', defaultTitle: 'Collaborateurs non-inscrits', defaultSubtitle: 'Collaborateurs sans compte utilisateur', route: ROUTES.admin.collaborateurs },
+  { pageKey: 'admin_collaborateurs', defaultTitle: 'Collaborateurs non inscrits', defaultSubtitle: 'Collaborateurs sans compte utilisateur', route: ROUTES.admin.collaborateurs },
   { pageKey: 'admin_backup', defaultTitle: 'Sauvegardes', defaultSubtitle: 'Export et import des données', route: ROUTES.admin.backup },
   { pageKey: 'admin_user_activity', defaultTitle: 'Activité Utilisateurs', defaultSubtitle: 'Historique des connexions', route: ROUTES.admin.userActivity },
   { pageKey: 'admin_support_stats', defaultTitle: 'Statistiques Support', defaultSubtitle: 'Métriques et indicateurs du support', route: ROUTES.admin.supportStats },

@@ -28,7 +28,7 @@ export default function Error403() {
             Retour à l'accueil
           </Button>
           <p className="text-xs text-center text-muted-foreground">
-            Code erreur: 403 - Forbidden
+            Code erreur : 403 - Forbidden
           </p>
         </CardContent>
       </Card>

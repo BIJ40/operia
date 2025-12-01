@@ -77,7 +77,7 @@ export const NAV_GROUPS: NavGroup[] = [
         url: ROUTES.academy.apporteurs, 
         icon: FileText, 
         scope: 'apporteurs', 
-        description: 'Ressources pour les apporteurs d\'affaires' 
+        description: 'Ressources pour les apporteurs d\'affaires'
       },
       { 
         title: 'Base Documentaire', 
@@ -162,7 +162,7 @@ export const NAV_GROUPS: NavGroup[] = [
         url: ROUTES.pilotage.equipe, 
         icon: Users, 
         scope: 'mes_indicateurs', 
-        description: 'Gestion des collaborateurs de l\'agence' 
+        description: 'Gestion des collaborateurs de l\'agence'
       },
     ],
   },
@@ -175,7 +175,7 @@ export const NAV_GROUPS: NavGroup[] = [
         url: ROUTES.support.helpcenter, 
         icon: LifeBuoy, 
         scope: 'mes_demandes', 
-        description: 'Chat IA, FAQ et accès rapide' 
+        description: 'Chat IA, FAQ et accès rapide'
       },
       { 
         title: 'Mes Demandes', 
@@ -367,8 +367,8 @@ export const PAGE_TITLES: Record<string, string> = {
   // Support (V2 routes)
   [ROUTES.support.index]: 'Support',
   [ROUTES.support.helpcenter]: 'Centre d\'aide',
-  [ROUTES.support.userTickets]: 'Mes Demandes',
-  [ROUTES.support.console]: 'Console Support',
+  [ROUTES.support.userTickets]: 'Mes demandes',
+  [ROUTES.support.console]: 'Console support',
   
   // Réseau Franchiseur (V2 routes)
   [ROUTES.reseau.index]: 'Réseau Franchiseur',
