@@ -54,10 +54,10 @@ export default function Landing() {
   }, [visibleTiles]);
 
   return (
-    <div className="container mx-auto px-6 py-8 space-y-10">
+    <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8 sm:space-y-10">
       {/* Welcome section */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
           Bienvenue sur <span className="text-primary">Help<span className="text-helpconfort-orange">!</span> Confort Services</span>
         </h1>
         <p className="text-muted-foreground">

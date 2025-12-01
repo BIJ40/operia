@@ -122,8 +122,8 @@ export function UnifiedHeader() {
   const [editMenuLabel, setEditMenuLabel] = useState('');
 
   // Styles forcés : titre ÉNORME (3xl), icône MAXIMUM (3xl), description GRANDE sur fond BLANC
-  const titleSizeClass = 'text-3xl';
-  const iconSizeClass = 'w-10 h-10';
+  const titleSizeClass = 'text-xl sm:text-2xl md:text-3xl';
+  const iconSizeClass = 'w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10';
   const subtitleTextSizeClass = 'text-base';
   const subtitleBgClass = 'bg-white dark:bg-card';
 
@@ -190,7 +190,7 @@ export function UnifiedHeader() {
         "border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40",
         getHeaderBlinkClass()
       )}>
-        <div className="h-20 px-4 flex items-center gap-3">
+        <div className="h-14 sm:h-16 md:h-20 px-3 sm:px-4 flex items-center gap-2 sm:gap-3">
           {/* Left: Sidebar toggle + Back button */}
           <div className="flex items-center gap-2 shrink-0">
             <Button 
