@@ -416,7 +416,7 @@ export function TicketDetailDrawer({
                       }
                     }}
                     rows={6}
-                    placeholder="Décrivez le ticket en détail..."
+                    placeholder="Décrivez le ticket en détail."
                     className="mt-1 resize-none"
                     disabled={!canManage}
                   />

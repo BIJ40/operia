@@ -85,7 +85,7 @@ export function CreateTicketFromChat({ messages, onCreateTicket, isCreating }: C
             className="w-full px-3 py-2 border rounded-md text-sm"
           />
           <p className="text-xs text-muted-foreground mt-1">
-            Si vide, votre première question sera utilisée
+            Si vide, votre première question sera utilisée.
           </p>
         </div>
 
@@ -94,7 +94,7 @@ export function CreateTicketFromChat({ messages, onCreateTicket, isCreating }: C
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Toute la conversation sera incluse automatiquement"
+            placeholder="Toute la conversation sera incluse automatiquement."
             className="min-h-[80px]"
           />
         </div>

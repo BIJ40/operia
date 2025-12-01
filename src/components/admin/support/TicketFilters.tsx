@@ -88,7 +88,7 @@ export function TicketFilters({
             onValueChange={(v) => onStatusChange(v as TicketStatus | 'all')}
           >
             <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Tous" />
+              <SelectValue placeholder="Tous." />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous les statuts</SelectItem>
@@ -127,7 +127,7 @@ export function TicketFilters({
             onValueChange={(v) => onServiceChange(v as TicketService | 'all')}
           >
             <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Tous" />
+              <SelectValue placeholder="Tous." />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous les services</SelectItem>
@@ -148,7 +148,7 @@ export function TicketFilters({
             onValueChange={(v) => onAssignmentChange(v as 'all' | 'mine' | 'unassigned')}
           >
             <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Tous" />
+              <SelectValue placeholder="Tous." />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous</SelectItem>

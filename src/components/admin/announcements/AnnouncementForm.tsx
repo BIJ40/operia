@@ -187,13 +187,13 @@ export function AnnouncementForm({
           {/* Contenu */}
           <div>
             <Label htmlFor="content">Contenu *</Label>
-            <Textarea
-              id="content"
-              {...register('content')}
-              placeholder="Texte de l'annonce (HTML simple supporté)"
-              rows={8}
-              className="font-mono text-sm"
-            />
+          <Textarea
+            id="content"
+            {...register('content')}
+            placeholder="Texte de l'annonce (HTML simple supporté)."
+            rows={8}
+            className="font-mono text-sm"
+          />
             {errors.content && (
               <p className="text-sm text-destructive mt-1">{errors.content.message}</p>
             )}
