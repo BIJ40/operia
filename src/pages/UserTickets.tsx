@@ -162,30 +162,30 @@ export default function UserTickets() {
   if (selectedTicket) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
           <Button
             variant="ghost"
             onClick={() => setSelectedTicket(null)}
             className="mb-4"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour à la liste
+            <ArrowLeft className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Retour à la liste</span>
           </Button>
 
           <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between">
+            <CardHeader className="p-3 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="space-y-2">
-                  <CardTitle className="text-2xl">{selectedTicket.subject}</CardTitle>
-                  <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg sm:text-2xl">{selectedTicket.subject}</CardTitle>
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                     <ServiceBadge service={selectedTicket.service} />
                     <TicketSourceBadge source={selectedTicket.source} />
                     <TicketCategoryBadge category={selectedTicket.category} />
                     {getStatusBadge(selectedTicket.status)}
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="text-sm text-muted-foreground">
+                <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2">
+                  <div className="text-xs sm:text-sm text-muted-foreground">
                     Créé le {format(new Date(selectedTicket.created_at), 'PPp', { locale: fr })}
                   </div>
                   {/* Close button - only for open tickets */}
@@ -196,8 +196,8 @@ export default function UserTickets() {
                       onClick={() => setShowCloseDialog(true)}
                       className="text-orange-600 border-orange-300 hover:bg-orange-50"
                     >
-                      <X className="w-4 h-4 mr-1" />
-                      Fermer le ticket
+                      <X className="w-4 h-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Fermer le ticket</span>
                     </Button>
                   )}
                 </div>
@@ -362,15 +362,15 @@ export default function UserTickets() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {showCreateForm ? (
           <Button
             variant="ghost"
             onClick={() => setShowCreateForm(false)}
             className="mb-4"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour aux tickets
+            <ArrowLeft className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Retour aux tickets</span>
           </Button>
         ) : (
           <Button
@@ -378,31 +378,31 @@ export default function UserTickets() {
             onClick={() => navigate(ROUTES.home)}
             className="mb-4"
           >
-            <Home className="w-4 h-4 mr-2" />
-            Retour à l'accueil
+            <Home className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Retour à l'accueil</span>
           </Button>
         )}
         
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Support / Tickets</h1>
-          <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau ticket
+        <div className="mb-4 sm:mb-6 flex items-center justify-between gap-2">
+          <h1 className="text-xl sm:text-3xl font-bold">Support / Tickets</h1>
+          <Button onClick={() => setShowCreateForm(!showCreateForm)} size="sm" className="sm:size-default">
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Nouveau ticket</span>
           </Button>
         </div>
 
         {showCreateForm && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Créer un nouveau ticket</CardTitle>
+          <Card className="mb-4 sm:mb-6">
+            <CardHeader className="p-3 sm:p-6">
+              <CardTitle className="text-lg sm:text-xl">Créer un nouveau ticket</CardTitle>
               <CardDescription>
                 Décrivez votre problème ou votre question
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-3 sm:p-6 pt-0 sm:pt-0">
               <div>
                 <Label>Service concerné *</Label>
-                <div className="grid grid-cols-5 gap-2 mt-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mt-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -489,7 +489,7 @@ export default function UserTickets() {
               <div>
                 <Label>Niveau d'urgence *</Label>
                 {/* Utiliser les nouvelles priorités : mineur, normal, important, urgent, bloquant */}
-                <div className="grid grid-cols-5 gap-2 mt-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mt-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -618,25 +618,25 @@ export default function UserTickets() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-3 sm:gap-4">
             {tickets.map((ticket) => (
               <Card
                 key={ticket.id}
                 className="cursor-pointer hover:shadow-lg transition-shadow"
                 onClick={() => setSelectedTicket(ticket)}
               >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
+                <CardHeader className="p-3 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                     <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-2">
-                        <CardTitle>{ticket.subject}</CardTitle>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <CardTitle className="text-base sm:text-lg">{ticket.subject}</CardTitle>
                         {ticket.unreadCount && ticket.unreadCount > 0 && (
-                          <Badge className="bg-red-500 text-white hover:bg-red-600">
+                          <Badge className="bg-red-500 text-white hover:bg-red-600 text-xs">
                             {ticket.unreadCount} nouveau{ticket.unreadCount > 1 ? 'x' : ''}
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                         <ServiceBadge service={ticket.service} />
                         <TicketSourceBadge source={ticket.source} />
                         <TicketCategoryBadge category={ticket.category} />
@@ -644,7 +644,7 @@ export default function UserTickets() {
                         {getPriorityBadge(ticket.priority)}
                       </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs sm:text-sm text-muted-foreground">
                       {format(new Date(ticket.created_at), 'PPp', { locale: fr })}
                     </div>
                   </div>
