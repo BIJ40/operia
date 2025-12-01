@@ -301,7 +301,7 @@ serve(async (req) => {
   }
 })
 
-// Génère un mot de passe sécurisé si non fourni
+// Génère un mot de passe sécurisé de 18 caractères si non fourni
 function generateSecurePassword(): string {
   const lowercase = 'abcdefghijklmnopqrstuvwxyz'
   const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -310,12 +310,18 @@ function generateSecurePassword(): string {
   const all = lowercase + uppercase + numbers + symbols
   
   let password = ''
+  // Garantir au moins 2 de chaque type pour 18 caractères
+  password += lowercase[Math.floor(Math.random() * lowercase.length)]
   password += lowercase[Math.floor(Math.random() * lowercase.length)]
   password += uppercase[Math.floor(Math.random() * uppercase.length)]
+  password += uppercase[Math.floor(Math.random() * uppercase.length)]
+  password += numbers[Math.floor(Math.random() * numbers.length)]
   password += numbers[Math.floor(Math.random() * numbers.length)]
   password += symbols[Math.floor(Math.random() * symbols.length)]
+  password += symbols[Math.floor(Math.random() * symbols.length)]
   
-  for (let i = 4; i < 12; i++) {
+  // Compléter jusqu'à 18 caractères
+  for (let i = 8; i < 18; i++) {
     password += all[Math.floor(Math.random() * all.length)]
   }
   
