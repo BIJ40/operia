@@ -501,16 +501,6 @@ export function TicketDetailDrawer({
                         Qualification IA
                       </label>
                       <div className="mt-2 space-y-3">
-                        {/* Impact tags */}
-                        {ticket.impact_tags && ticket.impact_tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {ticket.impact_tags.map((tag) => (
-                              <Badge key={tag} variant="outline" className="text-xs">
-                                {tag.replace('impact_', '').replace('_', ' ')}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
                         {/* Notes internes */}
                         {ticket.notes_internes && (
                           <div className="bg-muted/30 rounded-lg p-3">

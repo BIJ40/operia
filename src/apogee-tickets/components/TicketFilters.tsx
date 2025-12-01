@@ -1,6 +1,6 @@
 /**
  * Filtres pour les tickets Apogée
- * Inclut: recherche, module, TAG, origine, qualification IA, et slider priorité avec pastilles
+ * Inclut: recherche, module, origine, qualification IA, et slider priorité avec pastilles
  */
 
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Search, X, Snowflake, Flame } from 'lucide-react';
-import type { ApogeeModule, ApogeePriority, ApogeeImpactTag, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
+import type { ApogeeModule, ApogeePriority, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
 import { cn } from '@/lib/utils';
 
 interface TicketFiltersProps {
@@ -16,7 +16,6 @@ interface TicketFiltersProps {
   onFiltersChange: (filters: Filters) => void;
   modules: ApogeeModule[];
   priorities: ApogeePriority[];
-  impactTags: ApogeeImpactTag[];
 }
 
 // Couleurs pour le gradient du slider (bleu glacé -> rouge feu)
@@ -47,7 +46,7 @@ const ORIGINE_OPTIONS: { value: ReportedBy; label: string }[] = [
   { value: 'JEROME', label: 'Jérôme' },
 ];
 
-export function TicketFilters({ filters, onFiltersChange, modules, priorities, impactTags }: TicketFiltersProps) {
+export function TicketFilters({ filters, onFiltersChange, modules, priorities }: TicketFiltersProps) {
   const updateFilter = (key: keyof Filters, value: any) => {
     onFiltersChange({ ...filters, [key]: value || undefined });
   };
@@ -146,24 +145,6 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
             {[...modules].filter(m => m.id).sort((a, b) => a.label.localeCompare(b.label, 'fr')).map((m) => (
               <SelectItem key={m.id} value={m.id}>
                 {m.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* TAG d'impact */}
-        <Select
-          value={filters.impact_tag || 'all'}
-          onValueChange={(v) => updateFilter('impact_tag', v === 'all' ? undefined : v)}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Tag impact" />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="all">Tous tags</SelectItem>
-            {[...impactTags].filter(tag => tag.id).sort((a, b) => a.label.localeCompare(b.label, 'fr')).map((tag) => (
-              <SelectItem key={tag.id} value={tag.id}>
-                {tag.label}
               </SelectItem>
             ))}
           </SelectContent>

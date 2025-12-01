@@ -13,7 +13,6 @@ import type {
   ApogeeTicketStatus,
   ApogeeModule,
   ApogeePriority,
-  ApogeeImpactTag,
   ApogeeOwnerSide,
   ApogeeTicketInsert,
   ApogeeTicketComment,
@@ -65,21 +64,6 @@ export function useApogeeTickets(filters?: TicketFilters) {
           .select('*')
           .order('display_order'),
         'APOGEE_PRIORITIES_LOAD'
-      );
-      return result.success ? (result.data ?? []) : [];
-    },
-  });
-
-  // Fetch impact tags
-  const { data: impactTags = [] } = useQuery({
-    queryKey: ['apogee-impact-tags'],
-    queryFn: async (): Promise<ApogeeImpactTag[]> => {
-      const result = await safeQuery<ApogeeImpactTag[]>(
-        supabase
-          .from('apogee_impact_tags')
-          .select('*')
-          .order('display_order'),
-        'APOGEE_IMPACT_TAGS_LOAD'
       );
       return result.success ? (result.data ?? []) : [];
     },
@@ -139,9 +123,6 @@ export function useApogeeTickets(filters?: TicketFilters) {
       }
       if (filters?.is_qualified !== undefined) {
         query = query.eq('is_qualified', filters.is_qualified);
-      }
-      if (filters?.impact_tag) {
-        query = query.contains('impact_tags', [filters.impact_tag]);
       }
       if (filters?.heat_priority_exact !== undefined) {
         query = query.eq('heat_priority', filters.heat_priority_exact);
@@ -338,7 +319,6 @@ export function useApogeeTickets(filters?: TicketFilters) {
     statuses,
     modules,
     priorities,
-    impactTags,
     ownerSides,
     isLoading,
     refetch,
