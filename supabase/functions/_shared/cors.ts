@@ -6,6 +6,7 @@ const ENV_ORIGINS = Deno.env.get('ALLOWED_ORIGINS')?.split(',').filter(Boolean) 
 const ALLOWED_ORIGINS = [
   ...ENV_ORIGINS,
   'https://helpconfort.services',
+  'https://www.helpconfort.services',
   'http://localhost:5173',
   'http://localhost:8080',
 ];
