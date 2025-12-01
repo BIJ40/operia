@@ -467,43 +467,72 @@ export const useAdminBackup = () => {
               const imgSrc = element.getAttribute('src');
               if (imgSrc) {
                 try {
-                  // Fetch image and convert to base64
-                  const response = await fetch(imgSrc);
-                  const blob = await response.blob();
-                  const base64 = await new Promise<string>((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result as string);
-                    reader.readAsDataURL(blob);
-                  });
-
-                  // Calculate image dimensions
-                  const img = new Image();
-                  await new Promise<void>((resolve) => {
-                    img.onload = () => resolve();
-                    img.onerror = () => resolve();
-                    img.src = base64;
-                  });
-
-                  if (img.width > 0 && img.height > 0) {
-                    const maxWidth = contentWidth;
-                    const maxHeight = 100;
-                    let imgWidth = img.width * 0.264583; // px to mm
-                    let imgHeight = img.height * 0.264583;
-
-                    if (imgWidth > maxWidth) {
-                      const ratio = maxWidth / imgWidth;
-                      imgWidth = maxWidth;
-                      imgHeight *= ratio;
+                  let base64: string | null = null;
+                  
+                  // Check if it's a Supabase storage URL
+                  const supabaseStorageMatch = imgSrc.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+)/);
+                  
+                  if (supabaseStorageMatch) {
+                    const bucketName = supabaseStorageMatch[1];
+                    const filePath = decodeURIComponent(supabaseStorageMatch[2].split('?')[0]);
+                    
+                    const { data: blobData, error } = await supabase.storage
+                      .from(bucketName)
+                      .download(filePath);
+                    
+                    if (!error && blobData) {
+                      base64 = await new Promise<string>((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result as string);
+                        reader.readAsDataURL(blobData);
+                      });
                     }
-                    if (imgHeight > maxHeight) {
-                      const ratio = maxHeight / imgHeight;
-                      imgHeight = maxHeight;
-                      imgWidth *= ratio;
+                  } else {
+                    try {
+                      const response = await fetch(imgSrc, { mode: 'cors' });
+                      if (response.ok) {
+                        const blob = await response.blob();
+                        base64 = await new Promise<string>((resolve) => {
+                          const reader = new FileReader();
+                          reader.onloadend = () => resolve(reader.result as string);
+                          reader.readAsDataURL(blob);
+                        });
+                      }
+                    } catch {
+                      // Silent fail for CORS issues
                     }
+                  }
 
-                    checkPageBreak(imgHeight + 10);
-                    pdf.addImage(base64, 'JPEG', margin, yPosition, imgWidth, imgHeight);
-                    yPosition += imgHeight + 8;
+                  if (base64) {
+                    const img = new Image();
+                    await new Promise<void>((resolve) => {
+                      img.onload = () => resolve();
+                      img.onerror = () => resolve();
+                      img.src = base64!;
+                    });
+
+                    if (img.width > 0 && img.height > 0) {
+                      const maxWidth = contentWidth;
+                      const maxHeight = 100;
+                      let imgWidth = img.width * 0.264583;
+                      let imgHeight = img.height * 0.264583;
+
+                      if (imgWidth > maxWidth) {
+                        const ratio = maxWidth / imgWidth;
+                        imgWidth = maxWidth;
+                        imgHeight *= ratio;
+                      }
+                      if (imgHeight > maxHeight) {
+                        const ratio = maxHeight / imgHeight;
+                        imgHeight = maxHeight;
+                        imgWidth *= ratio;
+                      }
+
+                      checkPageBreak(imgHeight + 10);
+                      const format = base64.includes('image/png') ? 'PNG' : 'JPEG';
+                      pdf.addImage(base64, format, margin, yPosition, imgWidth, imgHeight);
+                      yPosition += imgHeight + 8;
+                    }
                   }
                 } catch (imgError) {
                   logError('use-admin-backup', 'Erreur chargement image PDF', imgError);
@@ -776,41 +805,71 @@ export const useAdminBackup = () => {
                 const imgSrc = element.getAttribute('src');
                 if (imgSrc) {
                   try {
-                    const response = await fetch(imgSrc);
-                    const blob = await response.blob();
-                    const base64 = await new Promise<string>((resolve) => {
-                      const reader = new FileReader();
-                      reader.onloadend = () => resolve(reader.result as string);
-                      reader.readAsDataURL(blob);
-                    });
-
-                    const img = new Image();
-                    await new Promise<void>((resolve) => {
-                      img.onload = () => resolve();
-                      img.onerror = () => resolve();
-                      img.src = base64;
-                    });
-
-                    if (img.width > 0 && img.height > 0) {
-                      const maxWidth = contentWidth;
-                      const maxHeight = 100;
-                      let imgWidth = img.width * 0.264583;
-                      let imgHeight = img.height * 0.264583;
-
-                      if (imgWidth > maxWidth) {
-                        const ratio = maxWidth / imgWidth;
-                        imgWidth = maxWidth;
-                        imgHeight *= ratio;
+                    let base64: string | null = null;
+                    
+                    const supabaseStorageMatch = imgSrc.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+)/);
+                    
+                    if (supabaseStorageMatch) {
+                      const bucketName = supabaseStorageMatch[1];
+                      const filePath = decodeURIComponent(supabaseStorageMatch[2].split('?')[0]);
+                      
+                      const { data: blobData, error } = await supabase.storage
+                        .from(bucketName)
+                        .download(filePath);
+                      
+                      if (!error && blobData) {
+                        base64 = await new Promise<string>((resolve) => {
+                          const reader = new FileReader();
+                          reader.onloadend = () => resolve(reader.result as string);
+                          reader.readAsDataURL(blobData);
+                        });
                       }
-                      if (imgHeight > maxHeight) {
-                        const ratio = maxHeight / imgHeight;
-                        imgHeight = maxHeight;
-                        imgWidth *= ratio;
+                    } else {
+                      try {
+                        const response = await fetch(imgSrc, { mode: 'cors' });
+                        if (response.ok) {
+                          const blob = await response.blob();
+                          base64 = await new Promise<string>((resolve) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result as string);
+                            reader.readAsDataURL(blob);
+                          });
+                        }
+                      } catch {
+                        // Silent fail for CORS issues
                       }
+                    }
 
-                      checkPageBreak(imgHeight + 10);
-                      pdf.addImage(base64, 'JPEG', margin, yPosition, imgWidth, imgHeight);
-                      yPosition += imgHeight + 8;
+                    if (base64) {
+                      const img = new Image();
+                      await new Promise<void>((resolve) => {
+                        img.onload = () => resolve();
+                        img.onerror = () => resolve();
+                        img.src = base64!;
+                      });
+
+                      if (img.width > 0 && img.height > 0) {
+                        const maxWidth = contentWidth;
+                        const maxHeight = 100;
+                        let imgWidth = img.width * 0.264583;
+                        let imgHeight = img.height * 0.264583;
+
+                        if (imgWidth > maxWidth) {
+                          const ratio = maxWidth / imgWidth;
+                          imgWidth = maxWidth;
+                          imgHeight *= ratio;
+                        }
+                        if (imgHeight > maxHeight) {
+                          const ratio = maxHeight / imgHeight;
+                          imgHeight = maxHeight;
+                          imgWidth *= ratio;
+                        }
+
+                        checkPageBreak(imgHeight + 10);
+                        const format = base64.includes('image/png') ? 'PNG' : 'JPEG';
+                        pdf.addImage(base64, format, margin, yPosition, imgWidth, imgHeight);
+                        yPosition += imgHeight + 8;
+                      }
                     }
                   } catch (imgError) {
                     logError('use-admin-backup', 'Erreur chargement image PDF', imgError);
