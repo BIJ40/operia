@@ -79,7 +79,9 @@ import {
   UserCheck,
   Pencil,
   KeyRound,
+  RefreshCw,
 } from 'lucide-react';
+import { generateSecurePassword } from '@/lib/passwordUtils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -139,6 +141,7 @@ export default function FranchiseurUsers() {
     first_name: '',
     last_name: '',
     email: '',
+    password: '',
     agence: '',
     global_role: 'franchisee_user' as GlobalRole,
     role_agence: 'assistante',
@@ -357,6 +360,7 @@ export default function FranchiseurUsers() {
       first_name: '',
       last_name: '',
       email: '',
+      password: '',
       agence: '',
       global_role: 'franchisee_user',
       role_agence: 'assistante',
@@ -370,6 +374,7 @@ export default function FranchiseurUsers() {
       first_name: u.first_name || '',
       last_name: u.last_name || '',
       email: u.email || '',
+      password: '', // Not needed for edit
       agence: u.agence || '',
       global_role: u.global_role || 'franchisee_user',
       role_agence: u.role_agence || 'assistante',
@@ -389,6 +394,10 @@ export default function FranchiseurUsers() {
   const handleCreateUser = () => {
     if (!formData.email || !formData.first_name || !formData.last_name || !formData.agence) {
       toast.error('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+    if (!formData.password) {
+      toast.error('Veuillez générer ou saisir un mot de passe temporaire.');
       return;
     }
     createUserMutation.mutate(formData);
@@ -797,6 +806,33 @@ export default function FranchiseurUsers() {
                 value={formData.email} 
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Mot de passe temporaire *</Label>
+              <div className="flex gap-2">
+                <Input 
+                  type="text"
+                  value={formData.password} 
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="Générer un mot de passe sécurisé"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    const pwd = generateSecurePassword();
+                    setFormData(prev => ({ ...prev, password: pwd }));
+                    toast.success('Mot de passe généré (18 caractères)');
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                18 caractères avec majuscules, minuscules, chiffres et symboles
+              </p>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
