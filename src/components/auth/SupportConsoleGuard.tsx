@@ -1,8 +1,8 @@
 /**
  * SupportConsoleGuard - Protection spécifique pour la console de support
- * Utilise canAccessSupportConsole (strict N5+ via ROLE_MATRIX)
  * 
- * FIX F-PERM-3: Garde dédié pour /support/console au lieu de RoleGuard générique
+ * P1.2 - Option B: Accessible aux utilisateurs avec support.agent=true + N5+
+ * Logique: canAccessSupportConsole = hasSupportAgentRole || isPlatformAdmin
  */
 
 import { ReactNode } from 'react';
@@ -23,7 +23,8 @@ interface SupportConsoleGuardProps {
 
 /**
  * Guard de route pour la console de support
- * Vérifie canAccessSupportConsole (N5+ strictement via ROLE_MATRIX)
+ * 
+ * P1.2 - Vérifie canAccessSupportConsole (support.agent=true OU N5+)
  * 
  * @example
  * <SupportConsoleGuard>
@@ -34,7 +35,7 @@ export function SupportConsoleGuard({
   children, 
   redirectTo = '/',
   showError = false,
-  errorMessage = "L'accès à la console de support est réservé aux administrateurs plateforme (N5+)."
+  errorMessage = "L'accès à la console de support est réservé aux agents support et administrateurs plateforme."
 }: SupportConsoleGuardProps) {
   const { user, isAuthLoading, canAccessSupportConsole } = useAuth();
 

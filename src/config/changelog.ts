@@ -14,6 +14,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: 'V0.5.0',
+    date: '2025-12-01',
+    title: 'Sprint 1 - Sécurité RLS et cohérence permissions',
+    changes: [
+      { 
+        type: 'security', 
+        description: 'P1.1 - RLS Franchiseur: Remplacement has_franchiseur_role() par global_role + franchiseur_agency_assignments. Création fonctions can_access_agency() et get_user_assigned_agencies(). Policies réécrites sur animator_visits, expense_requests, royalty_*.'
+      },
+      { 
+        type: 'security', 
+        description: 'P1.2 - RLS Support Console (Option B): Console accessible aux utilisateurs avec support.agent=true + N5+. Création fonction is_support_agent(). Policies support_tickets réécrites (SELECT/INSERT/UPDATE/DELETE).'
+      },
+      { 
+        type: 'security', 
+        description: 'P1.3 - Migration agency_id: Établissement profiles.agency_id (UUID) comme source unique. Migration données depuis agence slug. Création fonction get_user_agency_id(). Policies réécrites sur apogee_agencies et agency_collaborators.'
+      },
+    ]
+  },
+  {
     version: 'V0.4.2',
     date: '2025-12-02',
     title: 'Audits de sécurité, permissions et fonctionnalités',
