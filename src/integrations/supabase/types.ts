@@ -762,7 +762,6 @@ export type Database = {
       apogee_tickets: {
         Row: {
           action_type: string | null
-          apogee_status_raw: string | null
           created_at: string
           created_by_user_id: string | null
           created_from: string
@@ -771,7 +770,6 @@ export type Database = {
           external_key: string | null
           h_max: number | null
           h_min: number | null
-          hc_status_raw: string | null
           hca_code: string | null
           heat_priority: number | null
           id: string
@@ -788,7 +786,6 @@ export type Database = {
           original_title: string | null
           owner_side: string | null
           priority: string | null
-          qualif_status: string | null
           qualified_at: string | null
           qualified_by: string | null
           reported_by: string | null
@@ -802,7 +799,6 @@ export type Database = {
         }
         Insert: {
           action_type?: string | null
-          apogee_status_raw?: string | null
           created_at?: string
           created_by_user_id?: string | null
           created_from?: string
@@ -811,7 +807,6 @@ export type Database = {
           external_key?: string | null
           h_max?: number | null
           h_min?: number | null
-          hc_status_raw?: string | null
           hca_code?: string | null
           heat_priority?: number | null
           id?: string
@@ -828,7 +823,6 @@ export type Database = {
           original_title?: string | null
           owner_side?: string | null
           priority?: string | null
-          qualif_status?: string | null
           qualified_at?: string | null
           qualified_by?: string | null
           reported_by?: string | null
@@ -842,7 +836,6 @@ export type Database = {
         }
         Update: {
           action_type?: string | null
-          apogee_status_raw?: string | null
           created_at?: string
           created_by_user_id?: string | null
           created_from?: string
@@ -851,7 +844,6 @@ export type Database = {
           external_key?: string | null
           h_max?: number | null
           h_min?: number | null
-          hc_status_raw?: string | null
           hca_code?: string | null
           heat_priority?: number | null
           id?: string
@@ -868,7 +860,6 @@ export type Database = {
           original_title?: string | null
           owner_side?: string | null
           priority?: string | null
-          qualif_status?: string | null
           qualified_at?: string | null
           qualified_by?: string | null
           reported_by?: string | null
@@ -2162,6 +2153,7 @@ export type Database = {
           due_at: string | null
           escalation_history: Json | null
           has_attachments: boolean
+          heat_priority: number | null
           id: string
           priority: string
           rating: number | null
@@ -2195,6 +2187,7 @@ export type Database = {
           due_at?: string | null
           escalation_history?: Json | null
           has_attachments?: boolean
+          heat_priority?: number | null
           id?: string
           priority?: string
           rating?: number | null
@@ -2228,6 +2221,7 @@ export type Database = {
           due_at?: string | null
           escalation_history?: Json | null
           has_attachments?: boolean
+          heat_priority?: number | null
           id?: string
           priority?: string
           rating?: number | null
@@ -2532,6 +2526,14 @@ export type Database = {
       }
       calculate_ticket_due_at: {
         Args: { p_category: string; p_created_at?: string; p_priority: string }
+        Returns: string
+      }
+      calculate_ticket_due_at_v2: {
+        Args: {
+          p_category: string
+          p_created_at?: string
+          p_heat_priority: number
+        }
         Returns: string
       }
       can_transition_ticket: {
