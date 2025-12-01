@@ -72,6 +72,7 @@ export const TICKET_SERVICES = {
   HELPCONFORT: 'helpconfort',
   APPORTEUR: 'apporteur',
   CONSEIL: 'conseil',
+  BUG_APP: 'bug_app',
   AUTRE: 'autre',
 } as const;
 
@@ -80,6 +81,7 @@ export const TICKET_SERVICE_LABELS: Record<string, string> = {
   helpconfort: 'HelpConfort',
   apporteur: 'Apporteurs',
   conseil: 'Conseil / Formation',
+  bug_app: 'Bug Application',
   autre: 'Autre',
 };
 

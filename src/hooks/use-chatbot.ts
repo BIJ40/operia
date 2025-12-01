@@ -201,6 +201,7 @@ export const useChatbot = () => {
       'apogee': 'apogee',
       'apporteurs': null,
       'helpconfort': null,
+      'bug_app': null,
       'autre': null,
     };
     

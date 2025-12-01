@@ -26,6 +26,11 @@ export function ServiceBadge({ service }: ServiceBadgeProps) {
       emoji: '💡',
       className: 'bg-purple-100 text-purple-800 border-purple-300',
     },
+    bug_app: {
+      label: 'Bug Application',
+      emoji: '🐛',
+      className: 'bg-red-100 text-red-800 border-red-300',
+    },
     autre: {
       label: 'Autre',
       emoji: '❓',

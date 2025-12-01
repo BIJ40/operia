@@ -388,7 +388,7 @@ export default function UserTickets() {
             <CardContent className="space-y-4">
               <div>
                 <Label>Service concerné *</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mt-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 mt-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -436,6 +436,18 @@ export default function UserTickets() {
                     }`}
                   >
                     💡 Conseil
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setNewTicket({ ...newTicket, service: 'bug_app' })}
+                    className={`rounded-2xl border-l-4 transition-all ${
+                      newTicket.service === 'bug_app'
+                        ? 'border-l-red-500 bg-gradient-to-r from-red-500 to-red-700 text-white shadow-lg hover:shadow-xl'
+                        : 'border-l-border hover:border-l-red-500 hover:shadow-md'
+                    }`}
+                  >
+                    🐛 Bug Application
                   </Button>
                   <Button
                     type="button"

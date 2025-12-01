@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { BookOpen, Users, Building2, HelpCircle } from 'lucide-react';
+import { BookOpen, Users, Building2, HelpCircle, Bug } from 'lucide-react';
 
-export type ChatContext = 'apogee' | 'apporteurs' | 'helpconfort' | 'autre';
+export type ChatContext = 'apogee' | 'apporteurs' | 'helpconfort' | 'bug_app' | 'autre';
 
 interface ChatContextSelectorProps {
   selectedContext: ChatContext;
@@ -29,6 +29,13 @@ const contexts = [
     description: 'Réseau & procédures',
     icon: Building2,
     color: 'text-orange-500'
+  },
+  { 
+    id: 'bug_app' as ChatContext, 
+    label: 'Bug', 
+    description: 'Problème technique application',
+    icon: Bug,
+    color: 'text-red-500'
   },
   { 
     id: 'autre' as ChatContext, 
