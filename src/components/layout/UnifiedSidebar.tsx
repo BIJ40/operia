@@ -14,6 +14,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarHeader,
+  SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
@@ -24,6 +25,7 @@ import { useMenuLabels } from '@/hooks/use-page-metadata';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { useState, useEffect, ReactNode } from 'react';
 import { useChatbotTest } from '@/components/Chatbot';
+import { APP_VERSION } from '@/config/version';
 
 // Mapping route → pageKey pour récupérer le menu_label
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
@@ -555,6 +557,12 @@ export function UnifiedSidebar() {
           );
         })}
       </SidebarContent>
+      
+      <SidebarFooter className="border-t p-2">
+        <div className={`text-[10px] text-muted-foreground/60 ${collapsed ? 'text-center' : 'text-left'}`}>
+          {APP_VERSION}
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }
