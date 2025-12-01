@@ -60,7 +60,6 @@ export type TicketTheme =
   | 'Paramétrage / Infra / Divers';
 
 export type TicketType = 'bug' | 'evolution' | 'ergonomie' | 'data' | 'process';
-export type PriorityNormalized = 'P0' | 'P1' | 'P2' | 'P3' | 'P4';
 export type QualifStatus = 'a_qualifier' | 'reproduit' | 'spec_ok' | 'pret_dev' | 'en_dev' | 'en_test' | 'deploye' | 'obsolete';
 // ImpactTag supprimé - non utilisé
 
@@ -92,7 +91,6 @@ export interface ApogeeTicket {
   // Champs qualification IA
   theme: TicketTheme | null;
   ticket_type: TicketType | null;
-  priority_normalized: PriorityNormalized | null;
   qualif_status: QualifStatus | null;
   notes_internes: string | null;
   is_qualified: boolean;
@@ -133,7 +131,6 @@ export interface ApogeeTicketInsert {
   element_concerne: string;
   module?: string | null;
   priority?: string | null;
-  priority_normalized?: string | null;
   action_type?: string | null;
   kanban_status?: string;
   owner_side?: OwnerSide | null;

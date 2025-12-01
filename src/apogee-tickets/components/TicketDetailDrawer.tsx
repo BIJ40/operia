@@ -285,17 +285,6 @@ export function TicketDetailDrawer({
                       <CheckCircle2 className="h-3 w-3" />
                       Qualifié
                     </Badge>
-                    {ticket.priority_normalized && (
-                      <Badge className={`text-white ${
-                        ticket.priority_normalized === 'P0' ? 'bg-red-700' :
-                        ticket.priority_normalized === 'P1' ? 'bg-red-500' :
-                        ticket.priority_normalized === 'P2' ? 'bg-orange-500' :
-                        ticket.priority_normalized === 'P3' ? 'bg-yellow-500' :
-                        'bg-gray-400'
-                      }`}>
-                        {ticket.priority_normalized}
-                      </Badge>
-                    )}
                     {ticket.ticket_type && (
                       <Badge variant="outline" className="capitalize">
                         {ticket.ticket_type}
