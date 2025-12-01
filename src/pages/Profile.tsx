@@ -34,12 +34,14 @@ interface ProfileData {
   avatar_url: string | null;
   global_role: GlobalRole | null;
   enabled_modules: EnabledModules | null;
+  phone: string | null;
 }
 
 const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
   'assistante': 'Assistante',
   'commercial': 'Commercial',
+  'technicien': 'Technicien',
   'tete_de_reseau': 'Tête de réseau',
   'externe': 'Externe',
 };
@@ -51,7 +53,13 @@ export default function Profile() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [editableData, setEditableData] = useState({
+    first_name: '',
+    last_name: '',
+    phone: ''
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -68,7 +76,7 @@ export default function Profile() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, agence, role_agence, avatar_url, global_role, enabled_modules')
+        .select('id, email, first_name, last_name, agence, role_agence, avatar_url, global_role, enabled_modules, phone')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -77,6 +85,11 @@ export default function Profile() {
       if (data) {
         setProfile(data as ProfileData);
         setAvatarUrl(data.avatar_url);
+        setEditableData({
+          first_name: data.first_name || '',
+          last_name: data.last_name || '',
+          phone: data.phone || ''
+        });
       }
     } catch (error) {
       logError('PROFILE', 'Error loading profile:', error);
@@ -138,6 +151,38 @@ export default function Profile() {
       toast.error('Erreur lors du téléchargement');
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+
+    // Validation
+    if (!editableData.first_name.trim() || !editableData.last_name.trim()) {
+      toast.error('Le prénom et le nom sont obligatoires');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: editableData.first_name.trim(),
+          last_name: editableData.last_name.trim(),
+          phone: editableData.phone.trim() || null
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast.success('Profil mis à jour avec succès');
+      loadProfile();
+    } catch (error) {
+      logError('PROFILE', 'Error saving profile:', error);
+      toast.error('Erreur lors de la mise à jour du profil');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -229,7 +274,60 @@ export default function Profile() {
           </CardHeader>
         </Card>
 
-        {/* Informations utilisateur (lecture seule) */}
+        {/* Informations modifiables */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" />
+              Mes informations personnelles
+            </CardTitle>
+            <CardDescription>
+              Vous pouvez modifier ces informations
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Prénom *</Label>
+                <Input
+                  value={editableData.first_name}
+                  onChange={(e) => setEditableData(prev => ({ ...prev, first_name: e.target.value }))}
+                  placeholder="Votre prénom"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Nom *</Label>
+                <Input
+                  value={editableData.last_name}
+                  onChange={(e) => setEditableData(prev => ({ ...prev, last_name: e.target.value }))}
+                  placeholder="Votre nom"
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label>Téléphone</Label>
+                <Input
+                  type="tel"
+                  value={editableData.phone}
+                  onChange={(e) => setEditableData(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Votre numéro de téléphone"
+                />
+              </div>
+            </div>
+
+            <Button 
+              onClick={handleSaveProfile} 
+              disabled={isSaving || !editableData.first_name.trim() || !editableData.last_name.trim()}
+              className="w-full"
+            >
+              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Enregistrer mes informations
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Informations compte (lecture seule) */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -251,26 +349,6 @@ export default function Profile() {
                   value={profile?.email || ''}
                   disabled
                   className="bg-muted cursor-not-allowed"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">Prénom</Label>
-                <Input
-                  value={profile?.first_name || ''}
-                  disabled
-                  className="bg-muted cursor-not-allowed"
-                  placeholder="Non renseigné"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">Nom</Label>
-                <Input
-                  value={profile?.last_name || ''}
-                  disabled
-                  className="bg-muted cursor-not-allowed"
-                  placeholder="Non renseigné"
                 />
               </div>
 
@@ -336,8 +414,7 @@ export default function Profile() {
         </div>
 
         <p className="text-sm text-center text-muted-foreground">
-          Pour modifier vos informations de compte (email, nom, agence, rôle), 
-          contactez votre administrateur.
+          Pour modifier votre email, agence ou rôle, contactez votre administrateur.
         </p>
       </div>
     </div>
