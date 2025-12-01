@@ -40,8 +40,8 @@ export const useChatbot = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
-  const [activeTicket, setActiveTicket] = useState<any>(null);
-  const [supportMessages, setSupportMessages] = useState<any[]>([]);
+  const [activeTicket, setActiveTicket] = useState<{ id: string; status: string; subject?: string; type?: string } | null>(null);
+  const [supportMessages, setSupportMessages] = useState<{ id: string; message: string; is_from_support: boolean; created_at: string; sender_id: string }[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isUserTyping, setIsUserTyping] = useState(false);
   const [ticketRating, setTicketRating] = useState(0);
@@ -54,11 +54,15 @@ export const useChatbot = () => {
     return (saved as ChatContext) || 'apogee';
   });
 
-  // Persist messages to localStorage
+  // Debounced localStorage persistence for messages
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length === 0) return;
+    
+    const timeoutId = setTimeout(() => {
       localStorage.setItem('chatbot-messages', JSON.stringify(messages));
-    }
+    }, 500); // 500ms debounce
+    
+    return () => clearTimeout(timeoutId);
   }, [messages]);
 
   // Persist context to localStorage
@@ -107,7 +111,9 @@ export const useChatbot = () => {
 
   // Play notification sound
   const playNotificationSound = () => {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const audioContext = new AudioContextClass();
     const playTone = (frequency: number, startTime: number, duration: number) => {
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
