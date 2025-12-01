@@ -13,6 +13,7 @@ import {
   GLOBAL_ROLE_LABELS, 
   GLOBAL_ROLE_COLORS,
   GlobalRole,
+  getAssignableRoles,
 } from '@/types/globalRoles';
 import {
   getUserManagementCapabilities,
@@ -150,6 +151,9 @@ export default function FranchiseurUsers() {
   
   const capabilities = getUserManagementCapabilities(globalRole);
   const { data: agencies } = useAgencies();
+  
+  // ✅ SÉCURITÉ CRITIQUE : Utiliser getAssignableRoles() pour éviter escalade de privilèges
+  const assignableRoles = useMemo(() => getAssignableRoles(globalRole), [globalRole]);
   
   // Get agencies this user can manage
   const manageableAgencies = useMemo(() => {
@@ -684,7 +688,7 @@ export default function FranchiseurUsers() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {capabilities.canEditRoles.map((role) => (
+                    {assignableRoles.map((role) => (
                       <SelectItem key={role} value={role}>
                         {GLOBAL_ROLE_LABELS[role]}
                       </SelectItem>
@@ -863,7 +867,7 @@ export default function FranchiseurUsers() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {capabilities.canCreateRoles.map((role) => (
+                    {assignableRoles.map((role) => (
                       <SelectItem key={role} value={role}>
                         {GLOBAL_ROLE_LABELS[role]}
                       </SelectItem>

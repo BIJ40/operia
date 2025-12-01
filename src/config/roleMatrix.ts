@@ -95,7 +95,7 @@ export function getUserManagementCapabilities(role: GlobalRole | null): UserMana
       return {
         viewScope: 'ownAgency',
         manageScope: 'ownAgency',
-        canCreateRoles: ['base_user', 'franchisee_user'],
+        canCreateRoles: ['base_user', 'franchisee_user'], // Max N1
         canEditRoles: ['base_user', 'franchisee_user'],
         canDeactivateRoles: ['base_user', 'franchisee_user'],
         canDeleteUsers: false,
@@ -105,7 +105,7 @@ export function getUserManagementCapabilities(role: GlobalRole | null): UserMana
       return {
         viewScope: 'allAgencies',
         manageScope: 'assignedAgencies',
-        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],
+        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin'], // Max N2
         canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],
         canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],
         canDeleteUsers: false,
@@ -115,7 +115,7 @@ export function getUserManagementCapabilities(role: GlobalRole | null): UserMana
       return {
         viewScope: 'allAgencies',
         manageScope: 'allAgencies',
-        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user'],
+        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user'], // Max N3
         canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user'],
         canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user'],
         canDeleteUsers: false,
@@ -125,9 +125,9 @@ export function getUserManagementCapabilities(role: GlobalRole | null): UserMana
       return {
         viewScope: 'allAgencies',
         manageScope: 'allAgencies',
-        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin'],
-        canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin'],
-        canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin'],
+        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin'], // Max N4
+        canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin'],
+        canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin'],
         canDeleteUsers: true,
       };
 
@@ -135,9 +135,9 @@ export function getUserManagementCapabilities(role: GlobalRole | null): UserMana
       return {
         viewScope: 'allAgencies',
         manageScope: 'allAgencies',
-        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
-        canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
-        canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+        canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin'], // Max N5
+        canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin'],
+        canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin'],
         canDeleteUsers: true,
       };
 
