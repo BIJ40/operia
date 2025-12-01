@@ -22,8 +22,15 @@ export function hasGlobalRole(ctx: AccessControlContext, requiredRole: GlobalRol
 
 /**
  * Vérifie si l'utilisateur a accès à un module
+ * RÈGLE ABSOLUE: superadmin et platform_admin ont TOUS les modules, toujours
  */
 export function hasModule(ctx: AccessControlContext, moduleKey: ModuleKey): boolean {
+  // RÈGLE ABSOLUE: N5+ (platform_admin, superadmin) ont accès à TOUS les modules
+  const roleLevel = ctx.globalRole ? GLOBAL_ROLES[ctx.globalRole] : 0;
+  if (roleLevel >= GLOBAL_ROLES.platform_admin) {
+    return true; // Bypass complet pour N5+
+  }
+  
   // 1. Vérifier que le rôle permet l'accès au module
   if (!canAccessModule(ctx.globalRole, moduleKey)) return false;
   
@@ -33,8 +40,15 @@ export function hasModule(ctx: AccessControlContext, moduleKey: ModuleKey): bool
 
 /**
  * Vérifie si l'utilisateur a accès à une option de module
+ * RÈGLE ABSOLUE: superadmin et platform_admin ont TOUTES les options, toujours
  */
 export function hasModuleOption(ctx: AccessControlContext, moduleKey: ModuleKey, optionKey: string): boolean {
+  // RÈGLE ABSOLUE: N5+ (platform_admin, superadmin) ont accès à TOUTES les options
+  const roleLevel = ctx.globalRole ? GLOBAL_ROLES[ctx.globalRole] : 0;
+  if (roleLevel >= GLOBAL_ROLES.platform_admin) {
+    return true; // Bypass complet pour N5+
+  }
+  
   // 1. Vérifier l'accès au module parent
   if (!hasModule(ctx, moduleKey)) return false;
   

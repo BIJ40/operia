@@ -14,6 +14,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: 'V0.5.1',
+    date: '2025-12-02',
+    title: 'Correction critique - Droits superadmin absolus',
+    changes: [
+      { 
+        type: 'security', 
+        description: 'RÈGLE ABSOLUE: Superadmin (N6) et Platform Admin (N5+) ont TOUS les modules et options activés automatiquement, sans dépendre de enabled_modules'
+      },
+      { 
+        type: 'fix', 
+        description: 'Correction hasModule() et hasModuleOption() dans accessControl.ts - bypass complet pour N5+, élimine lecture seule involontaire sur les droits'
+      },
+    ]
+  },
+  {
     version: 'V0.5.0',
     date: '2025-12-01',
     title: 'Sprint 1 & 2 - Sécurité RLS et cohérence permissions',
