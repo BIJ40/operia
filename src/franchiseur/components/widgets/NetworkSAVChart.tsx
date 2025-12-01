@@ -10,7 +10,7 @@ interface NetworkSAVChartProps {
 export const NetworkSAVChart = ({ data }: NetworkSAVChartProps) => {
   return (
     <div className="group relative rounded-xl border border-helpconfort-blue/15 p-6
-      bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+      bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white dark:via-background dark:to-background
       shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
       hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
       <div className="mb-4">
