@@ -11,7 +11,7 @@
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv, Calendar,
   Headset, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Database, Activity, LifeBuoy, Kanban
+  Coins, Settings, Users, Database, Activity, LifeBuoy, Kanban, HelpCircle
 } from 'lucide-react';
 import { ROUTES } from './routes';
 
@@ -22,6 +22,8 @@ export interface NavItem {
   scope?: string;
   description?: string;
   children?: NavItem[];
+  isDisabled?: boolean; // Lien désactivé (tuile "Bientôt")
+  badge?: string;
 }
 
 export interface NavGroup {
@@ -77,7 +79,9 @@ export const NAV_GROUPS: NavGroup[] = [
         url: ROUTES.academy.apporteurs, 
         icon: FileText, 
         scope: 'apporteurs', 
-        description: 'Ressources pour les apporteurs d\'affaires'
+        description: 'Ressources pour les apporteurs d\'affaires',
+        badge: 'Bientôt',
+        isDisabled: true,
       },
       { 
         title: 'Base Documentaire', 
@@ -151,11 +155,13 @@ export const NAV_GROUPS: NavGroup[] = [
         description: 'Mode affichage TV agence' 
       },
       { 
-        title: 'RH Tech', 
+        title: 'Validation plannings', 
         url: ROUTES.pilotage.rhTech, 
         icon: Calendar, 
         scope: 'mes_indicateurs', 
-        description: 'Planning hebdomadaire techniciens' 
+        description: 'Validation des plannings hebdomadaires',
+        badge: 'Bientôt',
+        isDisabled: true,
       },
       { 
         title: 'Mon équipe', 
@@ -173,16 +179,16 @@ export const NAV_GROUPS: NavGroup[] = [
       { 
         title: 'Centre d\'aide', 
         url: ROUTES.support.helpcenter, 
-        icon: LifeBuoy, 
+        icon: HelpCircle, 
         scope: 'mes_demandes', 
         description: 'Chat IA, FAQ et accès rapide'
       },
       { 
-        title: 'Mes Demandes', 
+        title: 'Ouvrir un ticket', 
         url: ROUTES.support.userTickets, 
-        icon: FileText, 
+        icon: LifeBuoy, 
         scope: 'mes_demandes', 
-        description: 'Créer et suivre vos demandes de support' 
+        description: 'Créer une nouvelle demande de support' 
       },
       { 
         title: 'Console Support', 

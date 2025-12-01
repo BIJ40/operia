@@ -2,7 +2,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   Headset, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban
+  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, HelpCircle
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import {
@@ -81,6 +81,7 @@ interface NavItem {
   badge?: string;
   minRole?: GlobalRole;
   requiresSupportConsoleUI?: boolean;
+  isDisabled?: boolean; // Lien désactivé (tuile "Bientôt")
 }
 
 interface NavGroup {
@@ -192,7 +193,7 @@ export function UnifiedSidebar() {
       indexUrl: ROUTES.academy.index,
       items: [
         { title: 'Guide Apogée', url: ROUTES.academy.apogee, icon: BookOpen, description: 'Guide complet pour maîtriser le logiciel Apogée' },
-        { title: 'Guide Apporteurs', url: ROUTES.academy.apporteurs, icon: FileText, description: 'Ressources pour les apporteurs d\'affaires' },
+        { title: 'Guide Apporteurs', url: ROUTES.academy.apporteurs, icon: FileText, description: 'Ressources pour les apporteurs d\'affaires', badge: 'Bientôt', isDisabled: true },
         { title: 'Base Documentaire', url: ROUTES.academy.documents, icon: FolderOpen, description: 'Documents et ressources HelpConfort' },
       ],
       accessKey: 'canAccessHelpAcademy',
@@ -216,7 +217,7 @@ export function UnifiedSidebar() {
         },
         { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
         { title: 'Diffusion', url: ROUTES.pilotage.diffusion, icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
-        { title: 'RH Tech', url: ROUTES.pilotage.rhTech, icon: Calendar, description: 'Planning hebdomadaire techniciens' },
+        { title: 'Validation plannings', url: ROUTES.pilotage.rhTech, icon: Calendar, description: 'Validation des plannings hebdomadaires', badge: 'Bientôt', isDisabled: true },
         { title: 'Mon équipe', url: ROUTES.pilotage.equipe, icon: Users, description: 'Gestion des collaborateurs de l\'agence' },
       ],
       accessKey: 'canAccessPilotageAgence',
@@ -226,7 +227,8 @@ export function UnifiedSidebar() {
       labelKey: 'support',
       indexUrl: ROUTES.support.index,
       items: [
-        { title: 'Mes Demandes', url: ROUTES.support.userTickets, icon: LifeBuoy, description: 'Créer et suivre vos demandes de support' },
+        { title: 'Centre d\'aide', url: ROUTES.support.helpcenter, icon: HelpCircle, description: 'FAQ, chat et assistance en ligne' },
+        { title: 'Ouvrir un ticket', url: ROUTES.support.userTickets, icon: LifeBuoy, description: 'Créer une nouvelle demande de support' },
         { title: 'Console Support', url: ROUTES.support.console, icon: Headset, description: 'Traiter les demandes de support', requiresSupportConsoleUI: true },
       ],
       accessKey: 'canAccessSupport',
@@ -525,33 +527,53 @@ export function UnifiedSidebar() {
                         }
                         
                         const active = isActive(item.url);
+                        const isItemDisabled = item.isDisabled;
                         
                         return (
                           <SidebarMenuItem key={item.url}>
                             <SidebarMenuButton 
-                              asChild 
+                              asChild={!isItemDisabled}
+                              disabled={isItemDisabled}
                               className={`
                                 transition-all duration-300 ease-out py-2 rounded-xl
-                                ${active 
-                                  ? 'bg-helpconfort-blue/10 text-helpconfort-blue border-l-2 border-helpconfort-blue' 
-                                  : 'hover:bg-helpconfort-blue/5 hover:translate-x-0.5 hover:scale-[1.01]'
+                                ${isItemDisabled 
+                                  ? 'opacity-50 cursor-not-allowed' 
+                                  : active 
+                                    ? 'bg-helpconfort-blue/10 text-helpconfort-blue border-l-2 border-helpconfort-blue' 
+                                    : 'hover:bg-helpconfort-blue/5 hover:translate-x-0.5 hover:scale-[1.01]'
                                 }
                               `}
                               title={item.description}
                             >
-                              <Link to={getUrlWithEditMode(item.url!)} className="group/item flex items-center gap-2">
-                                <Icon className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/item:animate-bounce-subtle" />
-                                {!collapsed && (
-                                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <span className="truncate text-sm">{getItemLabel(item)}</span>
-                                    {item.badge && (
-                                      <span className="text-[10px] bg-helpconfort-orange text-white px-1.5 py-0.5 rounded-full font-medium shrink-0">
-                                        {item.badge}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-                              </Link>
+                              {isItemDisabled ? (
+                                <div className="group/item flex items-center gap-2">
+                                  <Icon className="w-4 h-4 shrink-0" />
+                                  {!collapsed && (
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                      <span className="truncate text-sm">{getItemLabel(item)}</span>
+                                      {item.badge && (
+                                        <span className="text-[10px] bg-helpconfort-blue text-white px-1.5 py-0.5 rounded-full font-medium shrink-0">
+                                          {item.badge}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <Link to={getUrlWithEditMode(item.url!)} className="group/item flex items-center gap-2">
+                                  <Icon className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/item:animate-bounce-subtle" />
+                                  {!collapsed && (
+                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                      <span className="truncate text-sm">{getItemLabel(item)}</span>
+                                      {item.badge && (
+                                        <span className="text-[10px] bg-helpconfort-orange text-white px-1.5 py-0.5 rounded-full font-medium shrink-0">
+                                          {item.badge}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </Link>
+                              )}
                             </SidebarMenuButton>
                           </SidebarMenuItem>
                         );
