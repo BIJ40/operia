@@ -100,6 +100,7 @@ const ApogeeTicketsAdmin = lazy(() => import("./apogee-tickets/pages/ApogeeTicke
 // Lazy loaded pages - User
 const Profile = lazy(() => import("./pages/Profile"));
 const Favorites = lazy(() => import("./pages/Favorites"));
+const Changelog = lazy(() => import("./pages/Changelog"));
 
 // Providers
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -298,6 +299,7 @@ function AppContent() {
           {/* ============================================ */}
           <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
           <Route path="/favorites" element={<MainLayout><RoleGuard><Favorites /></RoleGuard></MainLayout>} />
+          <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
           
           {/* 404 */}
           <Route path="*" element={<NotFound />} />

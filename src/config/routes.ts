@@ -143,6 +143,7 @@ export const ROUTES = {
   // ============================================
   profile: '/profile',
   favorites: '/favorites',
+  changelog: '/changelog',
 
   // ============================================
   // LEGACY ROUTES (SUPPRIMÉES)

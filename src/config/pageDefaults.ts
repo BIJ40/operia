@@ -72,6 +72,7 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   // User
   { pageKey: 'profile', defaultTitle: 'Mon Compte', defaultSubtitle: 'Gérez vos informations personnelles', route: ROUTES.profile },
   { pageKey: 'favorites', defaultTitle: 'Mes Favoris', defaultSubtitle: 'Accès rapide à vos contenus favoris', route: ROUTES.favorites },
+  { pageKey: 'changelog', defaultTitle: 'Historique des versions', defaultSubtitle: 'Nouveautés et améliorations de l\'application', route: ROUTES.changelog },
 ];
 
 /**
@@ -221,6 +222,7 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   // ============================================
   { match: (path) => path === '/profile', pageKey: 'profile', defaultTitle: 'Mon Compte', defaultSubtitle: 'Gérez vos informations personnelles', icon: 'User', parentRoute: '/', parentLabel: 'Accueil' },
   { match: (path) => path === '/favorites', pageKey: 'favorites', defaultTitle: 'Mes Favoris', defaultSubtitle: 'Accès rapide à vos contenus favoris', icon: 'Star', parentRoute: '/', parentLabel: 'Accueil' },
+  { match: (path) => path === '/changelog', pageKey: 'changelog', defaultTitle: 'Historique des versions', defaultSubtitle: 'Nouveautés et améliorations de l\'application', icon: 'History', parentRoute: '/', parentLabel: 'Accueil' },
   
   // ============================================
   // HOME (pas de retour)
