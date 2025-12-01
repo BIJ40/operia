@@ -57,13 +57,13 @@ interface AuthContextType {
   isFranchiseur: boolean;
   
   // ============================================================================
-  // MODULE SUPPORT - Flags granulaires
+  // MODULE SUPPORT - Flags granulaires (P1.2 - Option B)
   // ============================================================================
   canAccessSupportUser: boolean;    // Portail Mes Demandes (toujours true)
-  isSupportAgent: boolean;          // Accès console support
-  isSupportAdmin: boolean;          // Admin support
-  canAccessSupportConsole: boolean; // Alias de isSupportAgent pour compatibilité
-  canManageTickets: boolean;        // Alias de isSupportAgent
+  isSupportAgent: boolean;          // Module support.agent activé (ex-hasSupportAgentRole)
+  isSupportAdmin: boolean;          // Module support.admin activé
+  canAccessSupportConsole: boolean; // Console Support = support.agent OU N5+
+  canManageTickets: boolean;        // Alias de canAccessSupportConsole
   
   // Auth actions
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -104,10 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isSupport = checkModuleEnabled(enabledModules, 'support');
 
   // ============================================================================
-  // MODULE SUPPORT - Logique granulaire
+  // MODULE SUPPORT - Logique granulaire (P1.2 - Option B)
   // ============================================================================
-  const isSuperAdmin = globalRole === 'superadmin';
-  
   // Parser le module support depuis enabled_modules (structure: support.options.agent)
   const supportModuleConfig = enabledModules?.support;
   const supportOptions: SupportModuleOptions = 
@@ -115,16 +113,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ? (supportModuleConfig.options as SupportModuleOptions)
       : {};
   
-  // Flags support - superadmin a toujours tous les accès
-  const canAccessSupportUser = true; // Tous les utilisateurs peuvent accéder au portail
-  const isSupportAgent = isSuperAdmin || supportOptions.agent === true;
-  const isSupportAdmin = isSuperAdmin || supportOptions.admin === true;
+  // P1.2 - Option B: Console Support accessible à support.agent=true + N5+
+  const canAccessSupportUser = true; // Tous les utilisateurs peuvent accéder au portail Mes Demandes
+  const hasSupportAgentRole = supportOptions.agent === true; // Module support.agent activé
+  const isSupportAgent = hasSupportAgentRole; // Alias sémantique
+  const isSupportAdmin = supportOptions.admin === true; // Admin support (non utilisé pour console)
   
-  // ✅ FIX F-PERM-1: canAccessSupportConsole doit respecter ROLE_MATRIX (N5+ seulement)
-  // La matrice de rôles définit strictement N5+ pour la console support
-  const baselineCanAccessConsole = globalRole ? getRoleCapabilities(globalRole).canAccessSupportConsole : false;
-  const canAccessSupportConsole = baselineCanAccessConsole; // Respecte strictement la matrice (N5+)
-  const canManageTickets = canAccessSupportConsole;
+  // Console Support = support.agent OU N5+
+  const canAccessSupportConsole = hasSupportAgentRole || isAdmin;
+  const canManageTickets = canAccessSupportConsole; // Alias pour compatibilité
 
   // Contexte d'accès V2.0
   const accessContext: AccessControlContext = {

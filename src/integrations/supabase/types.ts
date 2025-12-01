@@ -2536,11 +2536,22 @@ export type Database = {
         }
         Returns: string
       }
+      can_access_agency: {
+        Args: { _agency_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_transition_ticket: {
         Args: { _from_status: string; _to_status: string; _user_id: string }
         Returns: boolean
       }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
+      get_user_agency_id: { Args: { _user_id: string }; Returns: string }
+      get_user_assigned_agencies: {
+        Args: { _user_id: string }
+        Returns: {
+          agency_id: string
+        }[]
+      }
       get_user_global_role_level: {
         Args: { _user_id: string }
         Returns: number
@@ -2563,6 +2574,7 @@ export type Database = {
       }
       has_support_access: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_support_agent: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       apogee_ticket_role: "developer" | "tester" | "franchiseur"
