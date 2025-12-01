@@ -8,7 +8,7 @@ import { isModuleEnabled } from '@/types/modules';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
 
 export default function Landing() {
-  const { agence, globalRole, canAccessSupportConsole, enabledModules } = useAuth();
+  const { agence, globalRole, canAccessSupportConsoleUI, enabledModules } = useAuth();
   
   // Utiliser le même hook que le header pour synchroniser les compteurs
   const { newTicketsCount } = useSupportNotifications();
@@ -31,10 +31,10 @@ export default function Landing() {
         }
       }
       
-      // 3. Vérifier l'accès à la tuile spécifique (passer canAccessSupportConsole pour CONSOLE_SUPPORT)
-      return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsole });
+      // 3. Vérifier l'accès à la tuile spécifique (passer canAccessSupportConsoleUI pour CONSOLE_SUPPORT)
+      return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsole: canAccessSupportConsoleUI });
     });
-  }, [globalRole, agence, canAccessSupportConsole, enabledModules]);
+  }, [globalRole, agence, canAccessSupportConsoleUI, enabledModules]);
 
   // Grouper les tuiles visibles par catégorie
   const tilesByGroup = useMemo(() => {

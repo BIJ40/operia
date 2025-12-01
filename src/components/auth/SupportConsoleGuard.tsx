@@ -1,8 +1,9 @@
 /**
  * SupportConsoleGuard - Protection spécifique pour la console de support
  * 
- * P1.2 - Option B: Accessible aux utilisateurs avec support.agent=true + N5+
- * Logique: canAccessSupportConsole = hasSupportAgentRole || isPlatformAdmin
+ * P1.2 - Option B, P2.1 - Sémantique clarifiée
+ * Accessible aux utilisateurs avec support.agent=true + N5+
+ * Logique: canAccessSupportConsoleUI = hasSupportAgentRole || isPlatformAdmin
  */
 
 import { ReactNode } from 'react';
@@ -37,7 +38,7 @@ export function SupportConsoleGuard({
   showError = false,
   errorMessage = "L'accès à la console de support est réservé aux agents support et administrateurs plateforme."
 }: SupportConsoleGuardProps) {
-  const { user, isAuthLoading, canAccessSupportConsole } = useAuth();
+  const { user, isAuthLoading, canAccessSupportConsoleUI } = useAuth();
 
   // Afficher un loader pendant le chargement
   if (isAuthLoading) {
@@ -55,7 +56,7 @@ export function SupportConsoleGuard({
   }
 
   // Vérifier l'accès à la console de support
-  if (!canAccessSupportConsole) {
+  if (!canAccessSupportConsoleUI) {
     if (showError) {
       return <AccessDeniedPage message={errorMessage} />;
     }

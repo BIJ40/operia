@@ -57,13 +57,13 @@ interface AuthContextType {
   isFranchiseur: boolean;
   
   // ============================================================================
-  // MODULE SUPPORT - Flags granulaires (P1.2 - Option B)
+  // MODULE SUPPORT - Flags granulaires (P1.2 - Option B, P2.1 - Sémantique)
   // ============================================================================
-  canAccessSupportUser: boolean;    // Portail Mes Demandes (toujours true)
-  isSupportAgent: boolean;          // Module support.agent activé (ex-hasSupportAgentRole)
-  isSupportAdmin: boolean;          // Module support.admin activé
-  canAccessSupportConsole: boolean; // Console Support = support.agent OU N5+
-  canManageTickets: boolean;        // Alias de canAccessSupportConsole
+  canAccessSupportUser: boolean;       // Portail Mes Demandes (toujours true)
+  hasSupportAgentRole: boolean;        // Module support.agent activé
+  isSupportAdmin: boolean;             // Module support.admin activé
+  canAccessSupportConsoleUI: boolean;  // Console Support = support.agent OU N5+
+  canManageTickets: boolean;           // Alias de canAccessSupportConsoleUI
   
   // Auth actions
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -113,15 +113,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ? (supportModuleConfig.options as SupportModuleOptions)
       : {};
   
-  // P1.2 - Option B: Console Support accessible à support.agent=true + N5+
+  // P1.2 - Option B, P2.1 - Sémantique clarifiée
   const canAccessSupportUser = true; // Tous les utilisateurs peuvent accéder au portail Mes Demandes
   const hasSupportAgentRole = supportOptions.agent === true; // Module support.agent activé
-  const isSupportAgent = hasSupportAgentRole; // Alias sémantique
   const isSupportAdmin = supportOptions.admin === true; // Admin support (non utilisé pour console)
   
   // Console Support = support.agent OU N5+
-  const canAccessSupportConsole = hasSupportAgentRole || isAdmin;
-  const canManageTickets = canAccessSupportConsole; // Alias pour compatibilité
+  const canAccessSupportConsoleUI = hasSupportAgentRole || isAdmin;
+  const canManageTickets = canAccessSupportConsoleUI; // Alias pour compatibilité
 
   // Contexte d'accès V2.0
   const accessContext: AccessControlContext = {
@@ -374,9 +373,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isFranchiseur,
       // Support module flags
       canAccessSupportUser,
-      isSupportAgent,
+      hasSupportAgentRole,
       isSupportAdmin,
-      canAccessSupportConsole,
+      canAccessSupportConsoleUI,
       canManageTickets,
       // Auth actions
       login, 

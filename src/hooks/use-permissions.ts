@@ -18,11 +18,11 @@ import { useMemo } from 'react';
  */
 export function usePermissions() {
   const auth = useAuth();
-  const { isAdmin, isSupport, isFranchiseur, isSupportAgent, isSupportAdmin, canManageTickets } = auth;
+  const { isAdmin, isSupport, isFranchiseur, hasSupportAgentRole, isSupportAdmin, canManageTickets } = auth;
 
   const canManageSupport = useMemo(() => {
-    return isSupportAgent || isSupportAdmin;
-  }, [isSupportAgent, isSupportAdmin]);
+    return hasSupportAgentRole || isSupportAdmin;
+  }, [hasSupportAgentRole, isSupportAdmin]);
 
   const canEditContent = useMemo(() => {
     return isAdmin || auth.hasGlobalRole('franchisee_admin');
@@ -35,7 +35,7 @@ export function usePermissions() {
     hasModuleOption: auth.hasModuleOption,
     
     // Support module flags
-    isSupportAgent,
+    hasSupportAgentRole,
     isSupportAdmin,
     canManageTickets,
     canManageSupport,

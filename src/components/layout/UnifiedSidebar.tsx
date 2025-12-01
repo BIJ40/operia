@@ -94,7 +94,7 @@ interface NavGroup {
 export function UnifiedSidebar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { globalRole, agence, canAccessSupportConsole, isAdmin, hasModule } = useAuth();
+  const { globalRole, agence, canAccessSupportConsoleUI, isAdmin, hasModule } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const menuLabels = useMenuLabels();
@@ -285,7 +285,7 @@ export function UnifiedSidebar() {
 
   const getFilteredItems = (items: NavItem[]): NavItem[] => {
     return items.filter(item => {
-      if (item.requiresSupportConsole && !canAccessSupportConsole) return false;
+      if (item.requiresSupportConsole && !canAccessSupportConsoleUI) return false;
       if (!item.minRole) return true;
       const userLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
       const requiredLevel = GLOBAL_ROLES[item.minRole];
