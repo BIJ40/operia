@@ -280,8 +280,6 @@ function rowToTicket(row: EvaluatedRow): ApogeeTicketInsert {
     h_min: parseNumber(row.hMin),
     h_max: parseNumber(row.hMax),
     hca_code: row.codeHCA || null,
-    apogee_status_raw: row.apogeeStatus || null,
-    hc_status_raw: row.hcStatus || null,
     source_sheet: row.sheetName,
     source_row_index: row.rowIndex,
     external_key: `${row.sheetName}#${row.rowIndex}`,
