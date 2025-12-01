@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Accordion } from '@/components/ui/accordion';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Users, UserPlus, Loader2 } from 'lucide-react';
+import { Users, UserPlus } from 'lucide-react';
+import { UserListSkeleton } from '@/components/admin/users/UserListSkeleton';
 
 import {
   CreateUserDialog,
@@ -101,11 +102,7 @@ export default function AdminUsersUnified() {
   }
 
   if (usersLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <UserListSkeleton />;
   }
 
   return (

@@ -29,9 +29,15 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'fix', description: 'Affichage automatique de l\'annonce suivante après avoir cliqué "J\'ai lu"' },
       { type: 'security', description: 'Permissions de suppression : N3+ peuvent supprimer uniquement leurs propres annonces, N5+ toutes les annonces' },
       { type: 'security', description: 'Restriction modification role_agence : uniquement Admin et N+1 peuvent modifier ce champ' },
-      { type: 'improvement', description: 'Élimination de 50% des types `any` dans les composants critiques (chart.tsx, use-chatbot.ts)' },
-      { type: 'improvement', description: 'Ajout de React.memo aux composants lourds (UserAccordionItem, Landing)' },
-      { type: 'improvement', description: 'Optimisation persistence localStorage chatbot avec debounce 500ms' },
+      { type: 'improvement', description: 'Phase 1 - Élimination console.error (AnnouncementForm, use-announcements remplacés par logError)' },
+      { type: 'improvement', description: 'Phase 1 - Types `any` éliminés dans useAgencies.ts (AgencyRow, ProfileRow, RoleRow)' },
+      { type: 'improvement', description: 'Phase 1 - LocalErrorBoundary créé et intégré au Dashboard Apogée' },
+      { type: 'improvement', description: 'Phase 2 - Élimination de 50% des types `any` (chart.tsx, use-chatbot.ts)' },
+      { type: 'improvement', description: 'Phase 2 - React.memo ajouté sur composants lourds (UserAccordionItem, Landing)' },
+      { type: 'improvement', description: 'Phase 2 - Debounce localStorage persistence chatbot (500ms)' },
+      { type: 'improvement', description: 'Phase 3 - Skeleton loaders remplacent spinner générique (UserListSkeleton)' },
+      { type: 'improvement', description: 'Phase 3 - React.memo ajouté sur 6 composants (ChartCard, MetricCard, UniversKpiCard, SortableCard)' },
+      { type: 'improvement', description: 'Phase 3 - Bibliothèque react-window installée (préparation virtualisation listes longues)' },
     ]
   },
   {
