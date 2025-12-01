@@ -103,6 +103,9 @@ export interface ApogeeTicket {
   original_description: string | null;
   // Qui a rapporté le ticket
   reported_by: ReportedBy | null;
+  // Tracking des modifications (pour clignotement)
+  last_modified_by_user_id: string | null;
+  last_modified_at: string | null;
   // Relations
   apogee_modules?: ApogeeModule;
   apogee_priorities?: ApogeePriority;

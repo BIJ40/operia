@@ -46,6 +46,7 @@ import { fr } from 'date-fns/locale';
 import { useApogeeTicket } from '../hooks/useApogeeTickets';
 import { useTicketAttachments } from '../hooks/useTicketAttachments';
 import { useTicketQualification } from '../hooks/useTicketQualification';
+import { useMarkTicketAsViewed } from '../hooks/useTicketViews';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
 import { Slider } from '@/components/ui/slider';
@@ -101,12 +102,23 @@ export function TicketDetailDrawer({
   // Transitions autorisées selon le rôle
   const { data: allowedTransitions = [] } = useAllowedTransitions(ticket?.kanban_status || '');
   const logAction = useLogTicketAction();
+  const markAsViewed = useMarkTicketAsViewed();
   const { comments, addComment } = useApogeeTicket(ticket?.id || null);
   const { attachments, uploadAttachment, deleteAttachment, isUploading } = useTicketAttachments(ticket?.id || null);
   const { qualifyOne, isQualifying } = useTicketQualification();
   const [newComment, setNewComment] = useState('');
-  const [commentType, setCommentType] = useState<AuthorType>('HC');
   const [showAllComments, setShowAllComments] = useState(false);
+
+  // Auto-déterminer le type d'auteur selon le rôle
+  // Developer = APOGEE, Tester/Franchiseur = HC
+  const autoCommentType: AuthorType = isDeveloper ? 'APOGEE' : 'HC';
+
+  // Marquer le ticket comme vu à l'ouverture
+  useEffect(() => {
+    if (open && ticket?.id) {
+      markAsViewed.mutate(ticket.id);
+    }
+  }, [open, ticket?.id]);
 
   // États locaux pour les champs éditables (évite les re-render à chaque frappe)
   const [localTitle, setLocalTitle] = useState(ticket?.element_concerne || '');
@@ -149,7 +161,7 @@ export function TicketDetailDrawer({
     
     await addComment.mutateAsync({
       ticket_id: ticket.id,
-      author_type: commentType,
+      author_type: autoCommentType,
       author_name: authorName,
       body: newComment.trim(),
       is_internal: false,
@@ -592,26 +604,9 @@ export function TicketDetailDrawer({
                   {/* Formulaire nouveau commentaire */}
                   <div className="bg-muted/30 rounded-lg p-3 mb-4 space-y-2">
                     <div className="flex gap-2 items-start">
-                      <div className="flex gap-1">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={commentType === 'HC' ? 'default' : 'outline'}
-                          className={commentType === 'HC' ? 'bg-helpconfort-blue hover:bg-helpconfort-blue/90' : ''}
-                          onClick={() => setCommentType('HC')}
-                        >
-                          HC
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={commentType === 'APOGEE' ? 'default' : 'outline'}
-                          className={commentType === 'APOGEE' ? 'bg-purple-600 hover:bg-purple-700' : ''}
-                          onClick={() => setCommentType('APOGEE')}
-                        >
-                          Apogée
-                        </Button>
-                      </div>
+                      <Badge className={autoCommentType === 'HC' ? 'bg-helpconfort-blue text-white' : 'bg-purple-600 text-white'}>
+                        {autoCommentType === 'HC' ? 'HC' : 'Apogée'}
+                      </Badge>
                       <Textarea
                         placeholder="Ajouter un commentaire..."
                         value={newComment}

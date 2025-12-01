@@ -698,6 +698,35 @@ export type Database = {
         }
         Relationships: []
       }
+      apogee_ticket_views: {
+        Row: {
+          id: string
+          ticket_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          ticket_id: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          ticket_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apogee_ticket_views_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apogee_tickets: {
         Row: {
           action_type: string | null
@@ -717,6 +746,8 @@ export type Database = {
           impact_tags: string[] | null
           is_qualified: boolean | null
           kanban_status: string
+          last_modified_at: string | null
+          last_modified_by_user_id: string | null
           module: string | null
           module_area: string | null
           needs_completion: boolean | null
@@ -755,6 +786,8 @@ export type Database = {
           impact_tags?: string[] | null
           is_qualified?: boolean | null
           kanban_status?: string
+          last_modified_at?: string | null
+          last_modified_by_user_id?: string | null
           module?: string | null
           module_area?: string | null
           needs_completion?: boolean | null
@@ -793,6 +826,8 @@ export type Database = {
           impact_tags?: string[] | null
           is_qualified?: boolean | null
           kanban_status?: string
+          last_modified_at?: string | null
+          last_modified_by_user_id?: string | null
           module?: string | null
           module_area?: string | null
           needs_completion?: boolean | null
