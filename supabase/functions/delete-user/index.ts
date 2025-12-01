@@ -104,7 +104,62 @@ serve(async (req) => {
       throw new Error(deleteCheck.reason || 'Action non autorisée')
     }
 
-    // Supprimer l'utilisateur
+    // Supprimer toutes les dépendances avant de supprimer l'utilisateur
+    console.log(`[delete-user] Suppression des dépendances pour ${userId}`)
+    
+    // 1. Supprimer les assignments d'agences
+    await supabaseAdmin.from('franchiseur_agency_assignments').delete().eq('user_id', userId)
+    
+    // 2. Supprimer les rôles franchiseur
+    await supabaseAdmin.from('franchiseur_roles').delete().eq('user_id', userId)
+    
+    // 3. Supprimer les collaborateurs créés par cet utilisateur
+    await supabaseAdmin.from('agency_collaborators').update({ created_by: null }).eq('created_by', userId)
+    await supabaseAdmin.from('agency_collaborators').delete().eq('user_id', userId)
+    
+    // 4. Supprimer les tickets support et dépendances
+    const { data: supportTickets } = await supabaseAdmin
+      .from('support_tickets')
+      .select('id')
+      .eq('user_id', userId)
+    
+    if (supportTickets && supportTickets.length > 0) {
+      const ticketIds = supportTickets.map(t => t.id)
+      await supabaseAdmin.from('support_messages').delete().in('ticket_id', ticketIds)
+      await supabaseAdmin.from('support_attachments').delete().in('ticket_id', ticketIds)
+    }
+    
+    await supabaseAdmin.from('support_tickets').delete().eq('user_id', userId)
+    await supabaseAdmin.from('support_tickets').update({ assigned_to: null }).eq('assigned_to', userId)
+    
+    // 5. Supprimer les tickets Apogée
+    await supabaseAdmin.from('apogee_ticket_comments').delete().eq('created_by_user_id', userId)
+    await supabaseAdmin.from('apogee_ticket_history').delete().eq('user_id', userId)
+    await supabaseAdmin.from('apogee_ticket_attachments').delete().eq('uploaded_by', userId)
+    await supabaseAdmin.from('apogee_ticket_views').delete().eq('user_id', userId)
+    await supabaseAdmin.from('apogee_tickets').update({ 
+      created_by_user_id: null,
+      last_modified_by_user_id: null,
+      qualified_by: null
+    }).or(`created_by_user_id.eq.${userId},last_modified_by_user_id.eq.${userId},qualified_by.eq.${userId}`)
+    
+    // 6. Supprimer les autres données
+    await supabaseAdmin.from('chatbot_queries').delete().eq('user_id', userId)
+    await supabaseAdmin.from('favorites').delete().eq('user_id', userId)
+    await supabaseAdmin.from('announcement_reads').delete().eq('user_id', userId)
+    await supabaseAdmin.from('animator_visits').update({ animator_id: null }).eq('animator_id', userId)
+    await supabaseAdmin.from('expense_requests').update({ 
+      requester_id: null,
+      approver_id: null 
+    }).or(`requester_id.eq.${userId},approver_id.eq.${userId}`)
+    await supabaseAdmin.from('planning_signatures').update({ signed_by_user_id: null }).eq('signed_by_user_id', userId)
+    
+    // 7. Supprimer le profil (cascade devrait gérer mais on force)
+    await supabaseAdmin.from('profiles').delete().eq('id', userId)
+
+    console.log(`[delete-user] Dépendances supprimées, suppression de l'utilisateur`)
+
+    // 8. Supprimer l'utilisateur de auth.users
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
     if (deleteError) {
