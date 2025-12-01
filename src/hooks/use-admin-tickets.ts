@@ -212,7 +212,7 @@ export const useAdminTickets = () => {
       return;
     }
 
-    successToast('Statut mis à jour');
+    successToast('Statut mis à jour.');
     
     // Reload tickets and refresh selected ticket if it matches
     await loadTickets();
@@ -238,7 +238,7 @@ export const useAdminTickets = () => {
       return;
     }
 
-    successToast('Priorité mise à jour');
+    successToast('Priorité mise à jour.');
     
     // Reload tickets and refresh selected ticket if it matches
     await loadTickets();
@@ -264,7 +264,7 @@ export const useAdminTickets = () => {
       return;
     }
 
-    successToast(userId ? 'Ticket assigné' : 'Ticket désassigné');
+    successToast(userId ? 'Ticket assigné.' : 'Ticket désassigné.');
     
     await loadTickets();
     if (selectedTicket?.id === ticketId) {
@@ -291,7 +291,7 @@ export const useAdminTickets = () => {
       return;
     }
 
-    successToast('Vous avez pris en charge ce ticket');
+    successToast('Vous avez pris en charge ce ticket.');
     
     await loadTickets();
     if (selectedTicket?.id === ticketId) {
@@ -391,7 +391,7 @@ export const useAdminTickets = () => {
       return;
     }
 
-    successToast('Ticket réouvert');
+    successToast('Ticket réouvert.');
     
     // Reload tickets and refresh selected ticket if it matches
     await loadTickets();
