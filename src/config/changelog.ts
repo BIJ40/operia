@@ -26,6 +26,10 @@ export const CHANGELOG: ChangelogEntry[] = [
         type: 'fix', 
         description: 'Correction hasModule() et hasModuleOption() dans accessControl.ts - bypass complet pour N5+, élimine lecture seule involontaire sur les droits'
       },
+      { 
+        type: 'fix', 
+        description: 'Correction des politiques RLS sur apogee_tickets - N5+ ont accès complet à tous les tickets sans dépendre du module enabled_modules'
+      },
     ]
   },
   {
