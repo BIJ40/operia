@@ -141,7 +141,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Module" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background z-50">
             <SelectItem value="all">Tous modules</SelectItem>
             {[...modules].filter(m => m.id).sort((a, b) => a.label.localeCompare(b.label, 'fr')).map((m) => (
               <SelectItem key={m.id} value={m.id}>
@@ -159,7 +159,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Tag impact" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background z-50">
             <SelectItem value="all">Tous tags</SelectItem>
             {[...impactTags].filter(tag => tag.id).sort((a, b) => a.label.localeCompare(b.label, 'fr')).map((tag) => (
               <SelectItem key={tag.id} value={tag.id}>
@@ -177,7 +177,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Origine" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background z-50">
             <SelectItem value="all">Toutes origines</SelectItem>
             {ORIGINE_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
@@ -195,7 +195,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Qualification IA" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background z-50">
             <SelectItem value="all">Toutes qualifications</SelectItem>
             <SelectItem value="qualified">✓ Qualifiés IA</SelectItem>
             <SelectItem value="unqualified">À qualifier</SelectItem>
@@ -210,7 +210,7 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities, i
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Complétude" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background z-50">
             <SelectItem value="all">Toute complétude</SelectItem>
             <SelectItem value="complete">✓ Complets</SelectItem>
             <SelectItem value="incomplete">⚠ Incomplets (tous)</SelectItem>

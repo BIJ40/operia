@@ -328,7 +328,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-56">
+            <PopoverContent align="end" className="w-56 bg-background z-50">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Colonnes visibles</span>
