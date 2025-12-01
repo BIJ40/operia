@@ -221,12 +221,12 @@ export const useAdminTickets = () => {
     }
   };
 
-  const updateTicketPriority = async (ticketId: string, priority: string) => {
+  const updateTicketPriority = async (ticketId: string, heatPriority: number) => {
     const result = await safeMutation(
       supabase
         .from('support_tickets')
         .update({ 
-          priority,
+          heat_priority: heatPriority,
           updated_at: new Date().toISOString()
         })
         .eq('id', ticketId),

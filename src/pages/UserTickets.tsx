@@ -151,22 +151,7 @@ export default function UserTickets() {
     return <Badge variant="outline" className={className}>{label}</Badge>;
   };
 
-  // Utiliser les nouvelles priorités cohérentes avec supportService.ts
-  const getPriorityBadge = (priority: string) => {
-    const config: Record<string, { label: string; className: string }> = {
-      mineur: { label: '🟢 Mineur', className: 'bg-gray-100 text-gray-800 border-gray-300' },
-      normal: { label: '⚪ Normal', className: 'bg-blue-100 text-blue-800 border-blue-300' },
-      important: { label: '🟠 Important', className: 'bg-orange-100 text-orange-800 border-orange-300' },
-      urgent: { label: '🔴 Urgent', className: 'bg-red-100 text-red-800 border-red-300' },
-      bloquant: { label: '⛔ Bloquant', className: 'bg-red-200 text-red-900 border-red-400' },
-      // Legacy values mapping
-      low: { label: '🟢 Mineur', className: 'bg-gray-100 text-gray-800 border-gray-300' },
-      high: { label: '🟠 Important', className: 'bg-orange-100 text-orange-800 border-orange-300' },
-    };
-
-    const { label, className } = config[priority] || config.normal;
-    return <Badge variant="outline" className={className}>{label}</Badge>;
-  };
+  // Removed getPriorityBadge - now using HeatPriorityBadge component
 
   if (selectedTicket) {
     return (

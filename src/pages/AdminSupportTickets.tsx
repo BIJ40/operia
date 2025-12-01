@@ -574,20 +574,7 @@ export default function AdminSupportTickets() {
                           </SelectContent>
                         </Select>
 
-                        <Select
-                          value={selectedTicket.priority}
-                          onValueChange={(v) => updateTicketPriority(selectedTicket.id, v)}
-                        >
-                          <SelectTrigger className="w-[150px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">Faible</SelectItem>
-                            <SelectItem value="normal">Normal</SelectItem>
-                            <SelectItem value="high">Élevée</SelectItem>
-                            <SelectItem value="urgent">Urgente</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <HeatPriorityBadge priority={selectedTicket.heat_priority} />
 
                         {selectedTicket.status === 'resolved' && (
                           <div className="flex gap-2 ml-auto">
