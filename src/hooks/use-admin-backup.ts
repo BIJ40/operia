@@ -14,10 +14,13 @@ interface CategoryBlock {
 
 export const useAdminBackup = () => {
   const [apogeeCategories, setApogeeCategories] = useState<CategoryBlock[]>([]);
+  const [helpconfortCategories, setHelpconfortCategories] = useState<CategoryBlock[]>([]);
   const [apporteurCategories, setApporteurCategories] = useState<CategoryBlock[]>([]);
   const [selectedApogeeCategories, setSelectedApogeeCategories] = useState<string[]>([]);
+  const [selectedHelpconfortCategories, setSelectedHelpconfortCategories] = useState<string[]>([]);
   const [selectedApporteurCategories, setSelectedApporteurCategories] = useState<string[]>([]);
   const [exportingApogee, setExportingApogee] = useState(false);
+  const [exportingHelpconfort, setExportingHelpconfort] = useState(false);
   const [exportingApporteur, setExportingApporteur] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -28,10 +31,14 @@ export const useAdminBackup = () => {
   }, []);
 
   const loadCategories = async () => {
-    const [apogeeResult, apporteurResult] = await Promise.all([
+    const [apogeeResult, helpconfortResult, apporteurResult] = await Promise.all([
       safeQuery<CategoryBlock[]>(
-        supabase.from('blocks').select('id, title, slug, order').eq('type', 'category').order('order'),
+        supabase.from('blocks').select('id, title, slug, order').eq('type', 'category').not('slug', 'like', 'helpconfort-%').order('order'),
         'BACKUP_APOGEE_CATEGORIES_LOAD'
+      ),
+      safeQuery<CategoryBlock[]>(
+        supabase.from('blocks').select('id, title, slug, order').eq('type', 'category').like('slug', 'helpconfort-%').order('order'),
+        'BACKUP_HELPCONFORT_CATEGORIES_LOAD'
       ),
       safeQuery<CategoryBlock[]>(
         supabase.from('apporteur_blocks').select('id, title, slug, order').eq('type', 'category').order('order'),
@@ -40,6 +47,7 @@ export const useAdminBackup = () => {
     ]);
 
     if (apogeeResult.data) setApogeeCategories(apogeeResult.data);
+    if (helpconfortResult.data) setHelpconfortCategories(helpconfortResult.data);
     if (apporteurResult.data) setApporteurCategories(apporteurResult.data);
   };
 
@@ -175,15 +183,48 @@ export const useAdminBackup = () => {
     }
   };
 
-  const exportTextOnly = async (scope: 'apogee' | 'apporteur') => {
-    const setLoading = scope === 'apogee' ? setExportingApogee : setExportingApporteur;
-    const tableName = scope === 'apogee' ? 'blocks' : 'apporteur_blocks';
-    const title = scope === 'apogee' ? 'MANUEL APOGÉE' : 'GUIDE APPORTEUR';
+  type ExportScope = 'apogee' | 'apporteur' | 'helpconfort';
+  
+  const getScopeConfig = (scope: ExportScope) => {
+    switch (scope) {
+      case 'apogee':
+        return { 
+          setLoading: setExportingApogee, 
+          tableName: 'blocks' as const, 
+          title: 'MANUEL APOGÉE', 
+          guideTitle: 'Manuel Apogée',
+          selectedCategories: selectedApogeeCategories,
+          slugFilter: (query: any) => query.not('slug', 'like', 'helpconfort-%')
+        };
+      case 'helpconfort':
+        return { 
+          setLoading: setExportingHelpconfort, 
+          tableName: 'blocks' as const, 
+          title: 'GUIDE HELPCONFORT', 
+          guideTitle: 'Guide HelpConfort',
+          selectedCategories: selectedHelpconfortCategories,
+          slugFilter: (query: any) => query.like('slug', 'helpconfort-%')
+        };
+      case 'apporteur':
+        return { 
+          setLoading: setExportingApporteur, 
+          tableName: 'apporteur_blocks' as const, 
+          title: 'GUIDE APPORTEUR', 
+          guideTitle: 'Guide Apporteur',
+          selectedCategories: selectedApporteurCategories,
+          slugFilter: (query: any) => query
+        };
+    }
+  };
+
+  const exportTextOnly = async (scope: ExportScope) => {
+    const config = getScopeConfig(scope);
     
-    setLoading(true);
+    config.setLoading(true);
     try {
+      const baseQuery = supabase.from(config.tableName).select('*').order('order');
       const result = await safeQuery<any[]>(
-        supabase.from(tableName).select('*').order('order'),
+        config.slugFilter(baseQuery),
         `BACKUP_EXPORT_TEXT_${scope.toUpperCase()}`
       );
 
@@ -196,7 +237,7 @@ export const useAdminBackup = () => {
       const categories = blocks.filter(b => b.type === 'category') || [];
       const sections = blocks.filter(b => b.type === 'section') || [];
 
-      let textContent = `${title} - Export du ${new Date().toLocaleDateString('fr-FR')}\n${'='.repeat(70)}\n\n`;
+      let textContent = `${config.title} - Export du ${new Date().toLocaleDateString('fr-FR')}\n${'='.repeat(70)}\n\n`;
 
       categories.forEach(cat => {
         textContent += `\n${'#'.repeat(70)}\nCATÉGORIE: ${cat.title.toUpperCase()}\n${'#'.repeat(70)}\n\n`;
@@ -206,31 +247,28 @@ export const useAdminBackup = () => {
       });
 
       downloadFile(textContent, `export-${scope}-texte-${new Date().toISOString().split('T')[0]}.txt`, 'text/plain;charset=utf-8');
-      successToast(`Export texte ${scope === 'apogee' ? 'Apogée' : 'Apporteur'} réussi !`, `${categories.length} catégories exportées`);
+      successToast(`Export texte ${config.guideTitle} réussi !`, `${categories.length} catégories exportées`);
     } catch (error) {
       logError('use-admin-backup', `Erreur export texte ${scope}`, error);
       errorToast("Erreur d'export");
     } finally {
-      setLoading(false);
+      config.setLoading(false);
     }
   };
 
-  const exportSingleCategory = async (scope: 'apogee' | 'apporteur', format: 'json' | 'txt') => {
-    const selectedCategories = scope === 'apogee' ? selectedApogeeCategories : selectedApporteurCategories;
-    const categoryId = selectedCategories[0];
-    const setLoading = scope === 'apogee' ? setExportingApogee : setExportingApporteur;
-    const tableName = scope === 'apogee' ? 'blocks' : 'apporteur_blocks';
-    const guideTitle = scope === 'apogee' ? 'MANUEL APOGÉE' : 'GUIDE APPORTEUR';
+  const exportSingleCategory = async (scope: ExportScope, format: 'json' | 'txt') => {
+    const config = getScopeConfig(scope);
+    const categoryId = config.selectedCategories[0];
 
     if (!categoryId) {
       errorToast('Aucune catégorie sélectionnée');
       return;
     }
 
-    setLoading(true);
+    config.setLoading(true);
     try {
       const result = await safeQuery<any[]>(
-        supabase.from(tableName).select('*').or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
+        supabase.from(config.tableName).select('*').or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
         `BACKUP_EXPORT_SINGLE_${scope.toUpperCase()}`
       );
 
@@ -249,7 +287,7 @@ export const useAdminBackup = () => {
       }
 
       if (format === 'txt') {
-        let textContent = `${guideTitle} - ${category.title.toUpperCase()}\nExport du ${new Date().toLocaleDateString('fr-FR')}\n${'='.repeat(70)}\n\n`;
+        let textContent = `${config.title} - ${category.title.toUpperCase()}\nExport du ${new Date().toLocaleDateString('fr-FR')}\n${'='.repeat(70)}\n\n`;
         sections.sort((a, b) => a.order - b.order).forEach(section => {
           textContent += `\n${'-'.repeat(60)}\nSECTION: ${section.title}\n${'-'.repeat(60)}\n\n${extractPlainText(section.content)}\n\n`;
         });
@@ -278,26 +316,23 @@ export const useAdminBackup = () => {
       logError('use-admin-backup', `Erreur export single ${scope}`, error);
       errorToast("Erreur d'export");
     } finally {
-      setLoading(false);
+      config.setLoading(false);
     }
   };
 
-  const exportSingleCategoryPdf = async (scope: 'apogee' | 'apporteur') => {
-    const selectedCategories = scope === 'apogee' ? selectedApogeeCategories : selectedApporteurCategories;
-    const categoryId = selectedCategories[0];
-    const setLoading = scope === 'apogee' ? setExportingApogee : setExportingApporteur;
-    const tableName = scope === 'apogee' ? 'blocks' : 'apporteur_blocks';
-    const guideTitle = scope === 'apogee' ? 'Manuel Apogée' : 'Guide Apporteur';
+  const exportSingleCategoryPdf = async (scope: ExportScope) => {
+    const config = getScopeConfig(scope);
+    const categoryId = config.selectedCategories[0];
 
     if (!categoryId) {
       errorToast('Aucune catégorie sélectionnée');
       return;
     }
 
-    setLoading(true);
+    config.setLoading(true);
     try {
       const result = await safeQuery<any[]>(
-        supabase.from(tableName).select('*').or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
+        supabase.from(config.tableName).select('*').or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
         `BACKUP_EXPORT_PDF_${scope.toUpperCase()}`
       );
 
@@ -335,7 +370,7 @@ export const useAdminBackup = () => {
       // Title page
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(guideTitle, pageWidth / 2, 50, { align: 'center' });
+      pdf.text(config.guideTitle, pageWidth / 2, 50, { align: 'center' });
       
       pdf.setFontSize(18);
       pdf.text(category.title, pageWidth / 2, 70, { align: 'center' });
@@ -504,7 +539,7 @@ export const useAdminBackup = () => {
       logError('use-admin-backup', `Erreur export PDF ${scope}`, error);
       errorToast("Erreur d'export PDF");
     } finally {
-      setLoading(false);
+      config.setLoading(false);
     }
   };
 
@@ -603,24 +638,21 @@ export const useAdminBackup = () => {
   };
 
   // Export multiple categories as separate PDFs
-  const exportMultipleCategoriesPdf = async (scope: 'apogee' | 'apporteur') => {
-    const selectedCategories = scope === 'apogee' ? selectedApogeeCategories : selectedApporteurCategories;
-    const setLoading = scope === 'apogee' ? setExportingApogee : setExportingApporteur;
-    const tableName = scope === 'apogee' ? 'blocks' : 'apporteur_blocks';
-    const guideTitle = scope === 'apogee' ? 'Manuel Apogée' : 'Guide Apporteur';
+  const exportMultipleCategoriesPdf = async (scope: ExportScope) => {
+    const config = getScopeConfig(scope);
 
-    if (selectedCategories.length === 0) {
+    if (config.selectedCategories.length === 0) {
       errorToast('Aucune catégorie sélectionnée');
       return;
     }
 
-    setLoading(true);
+    config.setLoading(true);
     let exportedCount = 0;
 
     try {
-      for (const categoryId of selectedCategories) {
+      for (const categoryId of config.selectedCategories) {
         const result = await safeQuery<any[]>(
-          supabase.from(tableName).select('*').or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
+          supabase.from(config.tableName).select('*').or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
           `BACKUP_EXPORT_MULTI_PDF_${scope.toUpperCase()}`
         );
 
@@ -651,7 +683,7 @@ export const useAdminBackup = () => {
         // Title page
         pdf.setFontSize(24);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(guideTitle, pageWidth / 2, 50, { align: 'center' });
+        pdf.text(config.guideTitle, pageWidth / 2, 50, { align: 'center' });
         
         pdf.setFontSize(18);
         pdf.text(category.title, pageWidth / 2, 70, { align: 'center' });
@@ -816,15 +848,15 @@ export const useAdminBackup = () => {
       logError('use-admin-backup', `Erreur export multi PDF ${scope}`, error);
       errorToast("Erreur d'export PDF");
     } finally {
-      setLoading(false);
+      config.setLoading(false);
     }
   };
 
   return {
-    apogeeCategories, apporteurCategories,
-    selectedApogeeCategories, selectedApporteurCategories,
-    setSelectedApogeeCategories, setSelectedApporteurCategories,
-    exportingApogee, exportingApporteur, exporting, importing, lastBackup,
+    apogeeCategories, helpconfortCategories, apporteurCategories,
+    selectedApogeeCategories, selectedHelpconfortCategories, selectedApporteurCategories,
+    setSelectedApogeeCategories, setSelectedHelpconfortCategories, setSelectedApporteurCategories,
+    exportingApogee, exportingHelpconfort, exportingApporteur, exporting, importing, lastBackup,
     exportApogeeData, exportApporteurData, exportTextOnly, exportSingleCategory, exportSingleCategoryPdf, exportMultipleCategoriesPdf, exportAllData, importData,
   };
 };

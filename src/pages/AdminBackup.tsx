@@ -9,12 +9,16 @@ import { ExportCard, CategoryExportCard, CompleteBackupCard } from '@/components
 export default function AdminBackup() {
   const {
     apogeeCategories,
+    helpconfortCategories,
     apporteurCategories,
     selectedApogeeCategories,
+    selectedHelpconfortCategories,
     selectedApporteurCategories,
     setSelectedApogeeCategories,
+    setSelectedHelpconfortCategories,
     setSelectedApporteurCategories,
     exportingApogee,
+    exportingHelpconfort,
     exportingApporteur,
     exporting,
     importing,
@@ -86,7 +90,7 @@ export default function AdminBackup() {
             </AlertDescription>
           </Alert>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             <CategoryExportCard
               title="Catégorie Apogée"
               description="Sélectionnez une ou plusieurs catégories du guide Apogée"
@@ -98,6 +102,18 @@ export default function AdminBackup() {
               onExportPdf={() => exportSingleCategoryPdf('apogee')}
               onExportMultiplePdf={() => exportMultipleCategoriesPdf('apogee')}
               isLoading={exportingApogee}
+            />
+            <CategoryExportCard
+              title="Catégorie HelpConfort"
+              description="Sélectionnez une ou plusieurs catégories du guide HelpConfort"
+              categories={helpconfortCategories}
+              selectedCategories={selectedHelpconfortCategories}
+              onCategoriesChange={setSelectedHelpconfortCategories}
+              onExportJson={() => exportSingleCategory('helpconfort', 'json')}
+              onExportText={() => exportSingleCategory('helpconfort', 'txt')}
+              onExportPdf={() => exportSingleCategoryPdf('helpconfort')}
+              onExportMultiplePdf={() => exportMultipleCategoriesPdf('helpconfort')}
+              isLoading={exportingHelpconfort}
             />
             <CategoryExportCard
               title="Catégorie Apporteur"
