@@ -1,5 +1,5 @@
 /**
- * Tableau des tickets avec tri, pagination et raccourcis clavier
+ * Tableau des tickets avec tri, pagination, raccourcis clavier et colonnes redimensionnables
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -38,18 +38,26 @@ type SortDirection = 'asc' | 'desc';
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100];
 
-const COLUMNS: { key: SortColumn | 'actions'; label: string; sortable: boolean; width?: string }[] = [
-  { key: 'ticket_number', label: 'Réf', sortable: true, width: 'w-[70px]' },
-  { key: 'heat_priority', label: 'Priorité', sortable: true, width: 'w-[80px]' },
-  { key: 'element_concerne', label: 'Titre', sortable: true },
-  { key: 'module', label: 'Module', sortable: true, width: 'w-[110px]' },
-  { key: 'kanban_status', label: 'Statut', sortable: true, width: 'w-[120px]' },
-  { key: 'actions', label: 'PEC', sortable: false, width: 'w-[90px]' },
-  { key: 'actions', label: 'Origine', sortable: false, width: 'w-[100px]' },
-  { key: 'actions', label: 'Est.', sortable: false, width: 'w-[60px]' },
-  { key: 'actions', label: 'Qualif.', sortable: false, width: 'w-[70px]' },
-  { key: 'created_at', label: 'Créé', sortable: true, width: 'w-[80px]' },
-  { key: 'actions', label: 'Actions', sortable: false, width: 'w-[80px]' },
+interface ColumnDef {
+  key: SortColumn | 'actions';
+  label: string;
+  sortable: boolean;
+  minWidth: number;
+  defaultWidth: number;
+}
+
+const COLUMNS: ColumnDef[] = [
+  { key: 'ticket_number', label: 'Réf', sortable: true, minWidth: 50, defaultWidth: 70 },
+  { key: 'heat_priority', label: 'Priorité', sortable: true, minWidth: 60, defaultWidth: 80 },
+  { key: 'element_concerne', label: 'Titre', sortable: true, minWidth: 150, defaultWidth: 250 },
+  { key: 'module', label: 'Module', sortable: true, minWidth: 80, defaultWidth: 110 },
+  { key: 'kanban_status', label: 'Statut', sortable: true, minWidth: 100, defaultWidth: 120 },
+  { key: 'actions', label: 'PEC', sortable: false, minWidth: 60, defaultWidth: 90 },
+  { key: 'actions', label: 'Origine', sortable: false, minWidth: 80, defaultWidth: 100 },
+  { key: 'actions', label: 'Est.', sortable: false, minWidth: 50, defaultWidth: 60 },
+  { key: 'actions', label: 'Qualif.', sortable: false, minWidth: 60, defaultWidth: 70 },
+  { key: 'created_at', label: 'Créé', sortable: true, minWidth: 70, defaultWidth: 80 },
+  { key: 'actions', label: 'Actions', sortable: false, minWidth: 70, defaultWidth: 80 },
 ];
 
 export function TicketTable({
@@ -70,8 +78,58 @@ export function TicketTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
+  // Colonnes redimensionnables
+  const [columnWidths, setColumnWidths] = useState<number[]>(
+    COLUMNS.map(col => col.defaultWidth)
+  );
+  const [resizingIndex, setResizingIndex] = useState<number | null>(null);
+  const startXRef = useRef<number>(0);
+  const startWidthRef = useRef<number>(0);
+
   // Refs pour les raccourcis clavier
   const statusSelectRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+
+  // Gestion du redimensionnement des colonnes
+  const handleResizeStart = useCallback((e: React.MouseEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingIndex(index);
+    startXRef.current = e.clientX;
+    startWidthRef.current = columnWidths[index];
+  }, [columnWidths]);
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (resizingIndex === null) return;
+    
+    const diff = e.clientX - startXRef.current;
+    const newWidth = Math.max(COLUMNS[resizingIndex].minWidth, startWidthRef.current + diff);
+    
+    setColumnWidths(prev => {
+      const updated = [...prev];
+      updated[resizingIndex] = newWidth;
+      return updated;
+    });
+  }, [resizingIndex]);
+
+  const handleResizeEnd = useCallback(() => {
+    setResizingIndex(null);
+  }, []);
+
+  useEffect(() => {
+    if (resizingIndex !== null) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      
+      return () => {
+        document.removeEventListener('mousemove', handleResizeMove);
+        document.removeEventListener('mouseup', handleResizeEnd);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+    }
+  }, [resizingIndex, handleResizeMove, handleResizeEnd]);
 
   // Tri des tickets
   const sortedTickets = useMemo(() => {
@@ -234,21 +292,35 @@ export function TicketTable({
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
+      {/* Table avec colonnes redimensionnables */}
+      <div className="rounded-md border overflow-auto">
+        <Table style={{ tableLayout: 'fixed', width: columnWidths.reduce((a, b) => a + b, 0) }}>
           <TableHeader>
             <TableRow className="bg-muted/50">
               {COLUMNS.map((col, idx) => (
                 <TableHead
                   key={`${col.key}-${idx}`}
-                  className={cn(col.width, col.sortable && "cursor-pointer hover:bg-muted")}
+                  style={{ width: columnWidths[idx], minWidth: col.minWidth }}
+                  className={cn(
+                    "relative select-none",
+                    col.sortable && "cursor-pointer hover:bg-muted"
+                  )}
                   onClick={col.sortable ? () => handleSort(col.key as SortColumn) : undefined}
                 >
-                  <div className="flex items-center gap-1">
-                    {col.label}
+                  <div className="flex items-center gap-1 pr-2 overflow-hidden">
+                    <span className="truncate">{col.label}</span>
                     {col.sortable && renderSortIcon(col.key as SortColumn)}
                   </div>
+                  
+                  {/* Poignée de redimensionnement */}
+                  <div
+                    className={cn(
+                      "absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-helpconfort-blue/50 transition-colors",
+                      resizingIndex === idx && "bg-helpconfort-blue"
+                    )}
+                    onMouseDown={(e) => handleResizeStart(e, idx)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
                 </TableHead>
               ))}
             </TableRow>
@@ -278,6 +350,7 @@ export function TicketTable({
                   statusSelectRef={{
                     current: statusSelectRefs.current.get(ticket.id) || null,
                   } as React.RefObject<HTMLButtonElement>}
+                  columnWidths={columnWidths}
                 />
               ))
             )}

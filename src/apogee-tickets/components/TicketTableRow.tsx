@@ -2,7 +2,6 @@
  * Ligne de ticket dans la table avec édition inline et gestion des droits
  */
 
-import { useState, useRef, useEffect } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,6 +28,7 @@ interface TicketTableRowProps {
   onQualify: () => void;
   isQualifying?: boolean;
   statusSelectRef?: React.RefObject<HTMLButtonElement>;
+  columnWidths?: number[];
 }
 
 const OWNER_SIDES: { value: OwnerSide; label: string }[] = [
@@ -58,6 +58,7 @@ export function TicketTableRow({
   onQualify,
   isQualifying = false,
   statusSelectRef,
+  columnWidths,
 }: TicketTableRowProps) {
   const { canManage, ticketRole, isAdmin } = roleInfo;
   
@@ -71,6 +72,9 @@ export function TicketTableRow({
 
   // Style des cellules non-éditables
   const disabledCellClass = "bg-muted/30 cursor-not-allowed";
+
+  // Helper pour appliquer la largeur de colonne
+  const cellStyle = (index: number) => columnWidths ? { width: columnWidths[index] } : {};
 
   // Trouve le module label
   const moduleLabel = ticket.module 
@@ -92,18 +96,18 @@ export function TicketTableRow({
       onDoubleClick={onOpenDetail}
     >
       {/* Réf */}
-      <TableCell className="font-mono text-xs whitespace-nowrap">
+      <TableCell className="font-mono text-xs whitespace-nowrap overflow-hidden" style={cellStyle(0)}>
         APO-{ticket.ticket_number}
       </TableCell>
 
       {/* Priorité */}
-      <TableCell className={cn(!canEditPriority && disabledCellClass)}>
+      <TableCell className={cn("overflow-hidden", !canEditPriority && disabledCellClass)} style={cellStyle(1)}>
         <HeatPriorityBadge priority={ticket.heat_priority} size="sm" showLabel={false} />
       </TableCell>
 
       {/* Titre */}
-      <TableCell className="max-w-[300px] truncate" title={ticket.element_concerne}>
-        <div className="flex items-center gap-2">
+      <TableCell className="truncate overflow-hidden" title={ticket.element_concerne} style={cellStyle(2)}>
+        <div className="flex items-center gap-2 overflow-hidden">
           {ticket.needs_completion && (
             <Tooltip>
               <TooltipTrigger>
@@ -117,14 +121,14 @@ export function TicketTableRow({
       </TableCell>
 
       {/* Module */}
-      <TableCell className={cn(!canEditModule && disabledCellClass)}>
+      <TableCell className={cn("overflow-hidden", !canEditModule && disabledCellClass)} style={cellStyle(3)}>
         {canEditModule ? (
           <Select
             value={ticket.module || 'none'}
             onValueChange={(value) => onUpdate({ module: value === 'none' ? null : value })}
           >
             <SelectTrigger 
-              className="h-7 text-xs w-[100px]"
+              className="h-7 text-xs w-full max-w-[100px]"
               onClick={(e) => e.stopPropagation()}
             >
               <SelectValue />
@@ -139,12 +143,12 @@ export function TicketTableRow({
             </SelectContent>
           </Select>
         ) : (
-          <span className="text-xs text-muted-foreground">{moduleLabel}</span>
+          <span className="text-xs text-muted-foreground truncate">{moduleLabel}</span>
         )}
       </TableCell>
 
       {/* Statut */}
-      <TableCell className={cn(!canEditStatus && disabledCellClass)}>
+      <TableCell className={cn("overflow-hidden", !canEditStatus && disabledCellClass)} style={cellStyle(4)}>
         {canEditStatus ? (
           <Select
             value={ticket.kanban_status}
@@ -152,7 +156,7 @@ export function TicketTableRow({
           >
             <SelectTrigger 
               ref={statusSelectRef}
-              className="h-7 text-xs w-[110px]"
+              className="h-7 text-xs w-full max-w-[110px]"
               onClick={(e) => e.stopPropagation()}
             >
               <SelectValue />
@@ -174,21 +178,21 @@ export function TicketTableRow({
             </SelectContent>
           </Select>
         ) : (
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-xs truncate">
             {statusLabel}
           </Badge>
         )}
       </TableCell>
 
       {/* PEC */}
-      <TableCell className={cn(!canEditOwnerSide && disabledCellClass)}>
+      <TableCell className={cn("overflow-hidden", !canEditOwnerSide && disabledCellClass)} style={cellStyle(5)}>
         {canEditOwnerSide ? (
           <Select
             value={ticket.owner_side || 'none'}
             onValueChange={(value) => onUpdate({ owner_side: value === 'none' ? null : value as OwnerSide })}
           >
             <SelectTrigger 
-              className="h-7 text-xs w-[80px]"
+              className="h-7 text-xs w-full max-w-[80px]"
               onClick={(e) => e.stopPropagation()}
             >
               <SelectValue />
@@ -203,19 +207,19 @@ export function TicketTableRow({
             </SelectContent>
           </Select>
         ) : (
-          <span className="text-xs text-muted-foreground">{ticket.owner_side || '—'}</span>
+          <span className="text-xs text-muted-foreground truncate">{ticket.owner_side || '—'}</span>
         )}
       </TableCell>
 
       {/* Origine */}
-      <TableCell className={cn(!canEditReportedBy && disabledCellClass)}>
+      <TableCell className={cn("overflow-hidden", !canEditReportedBy && disabledCellClass)} style={cellStyle(6)}>
         {canEditReportedBy ? (
           <Select
             value={ticket.reported_by || 'none'}
             onValueChange={(value) => onUpdate({ reported_by: value === 'none' ? null : value as ReportedBy })}
           >
             <SelectTrigger 
-              className="h-7 text-xs w-[90px]"
+              className="h-7 text-xs w-full max-w-[90px]"
               onClick={(e) => e.stopPropagation()}
             >
               <SelectValue />
@@ -230,12 +234,12 @@ export function TicketTableRow({
             </SelectContent>
           </Select>
         ) : (
-          <span className="text-xs text-muted-foreground">{ticket.reported_by || '—'}</span>
+          <span className="text-xs text-muted-foreground truncate">{ticket.reported_by || '—'}</span>
         )}
       </TableCell>
 
       {/* Estimation */}
-      <TableCell className={cn("text-center", !canEditEstimation && disabledCellClass)}>
+      <TableCell className={cn("text-center overflow-hidden", !canEditEstimation && disabledCellClass)} style={cellStyle(7)}>
         {ticket.h_min !== null || ticket.h_max !== null ? (
           <span className="text-xs">
             {ticket.h_min ?? '?'}-{ticket.h_max ?? '?'}h
@@ -246,7 +250,7 @@ export function TicketTableRow({
       </TableCell>
 
       {/* Qualifié */}
-      <TableCell className="text-center">
+      <TableCell className="text-center overflow-hidden" style={cellStyle(8)}>
         {ticket.is_qualified ? (
           <Tooltip>
             <TooltipTrigger>
@@ -267,12 +271,12 @@ export function TicketTableRow({
       </TableCell>
 
       {/* Créé le */}
-      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+      <TableCell className="text-xs text-muted-foreground whitespace-nowrap overflow-hidden" style={cellStyle(9)}>
         {format(new Date(ticket.created_at), 'dd/MM/yy', { locale: fr })}
       </TableCell>
 
       {/* Actions */}
-      <TableCell>
+      <TableCell style={cellStyle(10)}>
         <div className="flex items-center gap-1">
           <Tooltip>
             <TooltipTrigger asChild>
