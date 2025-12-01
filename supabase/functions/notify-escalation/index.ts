@@ -25,10 +25,10 @@ interface EscalationRequest {
 
 const getSupportLevelLabel = (level: number) => {
   switch (level) {
-    case 1: return 'N1 - Aide de base';
-    case 2: return 'N2 - Technique';
-    case 3: return 'N3 - Développeur';
-    default: return `Niveau ${level}`;
+    case 1: return 'SA1 - Support de base';
+    case 2: return 'SA2 - Support technique';
+    case 3: return 'SA3 - Support expert';
+    default: return `SA${level}`;
   }
 };
 

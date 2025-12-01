@@ -34,10 +34,10 @@ interface EscalateTicketDialogProps {
 
 const getSupportLevelLabel = (level: number) => {
   switch (level) {
-    case 1: return 'Aide de base';
-    case 2: return 'Technique';
-    case 3: return 'Développeur';
-    default: return `Niveau ${level}`;
+    case 1: return 'SA1 - Support de base';
+    case 2: return 'SA2 - Support technique';
+    case 3: return 'SA3 - Support expert';
+    default: return `SA${level}`;
   }
 };
 
