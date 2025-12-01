@@ -1,43 +1,40 @@
 /**
  * P3.1 - Centralized Scope Registry
  * Single source of truth for all scopes in the application
+ * 
+ * IMPORTANT: Ces slugs doivent correspondre EXACTEMENT aux valeurs utilisées
+ * dans dashboardTiles.ts, roleMatrix.ts, et partout dans l'app
  */
 
 export const SCOPE_SLUGS = {
   // Help Academy
-  HELP_ACADEMY_APOGEE: 'help_academy_apogee',
-  HELP_ACADEMY_APPORTEURS: 'help_academy_apporteurs',
-  HELP_ACADEMY_HELPCONFORT: 'help_academy_helpconfort',
-  HELP_ACADEMY_DOCUMENTS: 'help_academy_documents',
+  APOGEE: 'apogee',
+  APPORTEURS: 'apporteurs',
+  BASE_DOCUMENTAIRE: 'base_documentaire',
 
   // Pilotage Agence
-  PILOTAGE_MES_INDICATEURS: 'pilotage_mes_indicateurs',
-  PILOTAGE_ACTIONS_A_MENER: 'pilotage_actions_a_mener',
-  PILOTAGE_DIFFUSION: 'pilotage_diffusion',
+  MES_INDICATEURS: 'mes_indicateurs',
+  ACTIONS_A_MENER: 'actions_a_mener',
+  DIFFUSION: 'diffusion',
+  RH_TECH: 'rh_tech',
+  MON_EQUIPE: 'mon_equipe',
 
   // Support
-  SUPPORT_MES_DEMANDES: 'support_mes_demandes',
-  SUPPORT_CONSOLE: 'support_console',
+  MES_DEMANDES: 'mes_demandes',
+  SUPPORT_TICKETS: 'support_tickets',
 
   // Réseau Franchiseur
   FRANCHISEUR_DASHBOARD: 'franchiseur_dashboard',
   FRANCHISEUR_KPI: 'franchiseur_kpi',
-  FRANCHISEUR_AGENCIES: 'franchiseur_agencies',
   FRANCHISEUR_ROYALTIES: 'franchiseur_royalties',
 
   // Administration
   ADMIN_USERS: 'admin_users',
-  ADMIN_ROLES: 'admin_roles',
   ADMIN_BACKUP: 'admin_backup',
-  ADMIN_SYSTEM: 'admin_system',
-  ADMIN_CHATBOT_RAG: 'admin_chatbot_rag',
-  ADMIN_AGENCIES: 'admin_agencies',
-  ADMIN_ANNOUNCEMENTS: 'admin_announcements',
+  ADMIN_SETTINGS: 'admin_settings',
 
   // Apogée Ticketing
-  APOGEE_TICKETS_KANBAN: 'apogee_tickets_kanban',
-  APOGEE_TICKETS_MANAGE: 'apogee_tickets_manage',
-  APOGEE_TICKETS_IMPORT: 'apogee_tickets_import',
+  APOGEE_TICKETS: 'apogee_tickets',
 } as const;
 
 export type ScopeSlug = typeof SCOPE_SLUGS[keyof typeof SCOPE_SLUGS];

@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
+import { HeatPriorityBadge } from '@/components/support/HeatPriorityBadge';
 import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, TicketPlus, MessageSquare, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -153,25 +154,7 @@ export default function AdminSupportTickets() {
     );
   };
 
-  const getPriorityBadge = (priority: string) => {
-    const colors = {
-      low: 'bg-blue-100 text-blue-800 border-blue-300',
-      normal: 'bg-gray-100 text-gray-800 border-gray-300',
-      high: 'bg-orange-100 text-orange-800 border-orange-300',
-      urgent: 'bg-red-100 text-red-800 border-red-300',
-    };
-    const labels = {
-      low: 'Faible',
-      normal: 'Normal',
-      high: 'Élevée',
-      urgent: 'Urgente',
-    };
-    return (
-      <Badge variant="outline" className={colors[priority as keyof typeof colors]}>
-        {labels[priority as keyof typeof labels] || priority}
-      </Badge>
-    );
-  };
+  // Removed getPriorityBadge - now using HeatPriorityBadge component
 
   // V2.5: Badges basés sur le champ type unique
   const getDemandTypeBadge = (ticket: Ticket) => {
@@ -438,7 +421,7 @@ export default function AdminSupportTickets() {
                                     <SupportLevelBadge level={ticket.support_level || 1} />
                                     <ServiceBadge service={ticket.service} />
                                     {ticket.category && <TicketCategoryBadge category={ticket.category} />}
-                                    {getPriorityBadge(ticket.priority)}
+                                    <HeatPriorityBadge priority={ticket.heat_priority} size="sm" />
                                   </div>
                                   <p className="text-xs text-muted-foreground mt-2">
                                     {format(new Date(ticket.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}

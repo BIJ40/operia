@@ -80,7 +80,7 @@ interface NavItem {
   children?: NavItem[];
   badge?: string;
   minRole?: GlobalRole;
-  requiresSupportConsole?: boolean;
+  requiresSupportConsoleUI?: boolean;
 }
 
 interface NavGroup {
@@ -227,7 +227,7 @@ export function UnifiedSidebar() {
       indexUrl: ROUTES.support.index,
       items: [
         { title: 'Mes Demandes', url: ROUTES.support.userTickets, icon: LifeBuoy, description: 'Créer et suivre vos demandes de support' },
-        { title: 'Console Support', url: ROUTES.support.console, icon: Headset, description: 'Traiter les demandes de support', requiresSupportConsole: true },
+        { title: 'Console Support', url: ROUTES.support.console, icon: Headset, description: 'Traiter les demandes de support', requiresSupportConsoleUI: true },
       ],
       accessKey: 'canAccessSupport',
     },
@@ -285,7 +285,7 @@ export function UnifiedSidebar() {
 
   const getFilteredItems = (items: NavItem[]): NavItem[] => {
     return items.filter(item => {
-      if (item.requiresSupportConsole && !canAccessSupportConsoleUI) return false;
+      if (item.requiresSupportConsoleUI && !canAccessSupportConsoleUI) return false;
       if (!item.minRole) return true;
       const userLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
       const requiredLevel = GLOBAL_ROLES[item.minRole];
