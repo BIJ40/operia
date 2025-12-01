@@ -64,7 +64,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     version: 'V0.4.2',
-    date: '2025-12-02',
+    date: '2025-12-01',
     title: 'Audits de sécurité, permissions et fonctionnalités',
     changes: [
       { type: 'security', description: 'AUDIT F-SEC-CRIT-1: JWT validation via supabase.auth.getUser() au lieu de décodage manuel (update-user-email)' },
