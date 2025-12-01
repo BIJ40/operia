@@ -160,7 +160,7 @@ interface EditUserDialogProps {
   user: UserProfile | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: { first_name?: string; last_name?: string; agence?: string; role_agence?: string }) => void;
+  onSave: (data: { first_name?: string; last_name?: string; agence?: string; role_agence?: string; support_level?: number }) => void;
   onUpdateEmail: (newEmail: string) => void;
   onResetPassword: (newPassword: string) => void;
   isPending: boolean;
@@ -171,21 +171,32 @@ interface EditUserDialogProps {
 }
 
 export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail, onResetPassword, isPending, isEmailPending, isPasswordPending, agencies = [], canEditRoleAgence = false }: EditUserDialogProps) {
-  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', agence: '', roleAgence: '' });
+  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', agence: '', roleAgence: '', supportLevel: 1 });
   const [newPassword, setNewPassword] = useState('');
 
   // Synchroniser formData avec les données de l'utilisateur à l'ouverture
   useEffect(() => {
     if (open && user) {
+      const modules = user.enabled_modules as any;
+      const supportLevel = modules?.support?.options?.level || 1;
+      
       setFormData({
         firstName: user.first_name || '',
         lastName: user.last_name || '',
         email: user.email || '',
         agence: user.agence || '',
         roleAgence: user.role_agence || '',
+        supportLevel,
       });
     }
   }, [open, user]);
+  
+  // Vérifier si le module support est activé
+  const isSupportModuleEnabled = () => {
+    if (!user?.enabled_modules) return false;
+    const modules = user.enabled_modules as any;
+    return modules?.support?.enabled === true;
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -256,6 +267,20 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
               <p className="text-xs text-muted-foreground">Seul Admin et N+1 peuvent modifier ce champ</p>
             )}
           </div>
+          {isSupportModuleEnabled() && (
+            <div className="space-y-2">
+              <Label>Niveau Support (SA)</Label>
+              <Select value={formData.supportLevel.toString()} onValueChange={(v) => setFormData(prev => ({ ...prev, supportLevel: parseInt(v) }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  <SelectItem value="1">SA1 - Support de base</SelectItem>
+                  <SelectItem value="2">SA2 - Support technique</SelectItem>
+                  <SelectItem value="3">SA3 - Support expert</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Définit le niveau pour les escalades de tickets support</p>
+            </div>
+          )}
           <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
             <Label className="flex items-center gap-2"><KeyRound className="w-4 h-4" />Réinitialiser le mot de passe</Label>
             <div className="flex gap-2">
@@ -268,7 +293,13 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
-          <Button onClick={() => onSave({ first_name: formData.firstName, last_name: formData.lastName, agence: formData.agence, role_agence: formData.roleAgence })} disabled={isPending}>
+          <Button onClick={() => onSave({ 
+            first_name: formData.firstName, 
+            last_name: formData.lastName, 
+            agence: formData.agence, 
+            role_agence: formData.roleAgence,
+            support_level: isSupportModuleEnabled() ? formData.supportLevel : undefined
+          })} disabled={isPending}>
             {isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
             Enregistrer
           </Button>

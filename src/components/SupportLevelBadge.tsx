@@ -8,10 +8,10 @@ interface SupportLevelBadgeProps {
 
 const getSupportLevelLabel = (level: number) => {
   switch (level) {
-    case 1: return 'N1';
-    case 2: return 'N2';
-    case 3: return 'N3';
-    default: return `N${level}`;
+    case 1: return 'SA1';
+    case 2: return 'SA2';
+    case 3: return 'SA3';
+    default: return `SA${level}`;
   }
 };
 
@@ -26,9 +26,9 @@ const getSupportLevelColor = (level: number) => {
 
 const getSupportLevelFullLabel = (level: number) => {
   switch (level) {
-    case 1: return 'Aide de base';
-    case 2: return 'Technique';
-    case 3: return 'Développeur';
+    case 1: return 'Support de base';
+    case 2: return 'Support technique';
+    case 3: return 'Support expert';
     default: return '';
   }
 };

@@ -245,8 +245,39 @@ export function useAdminUsersUnified() {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, data }: { userId: string; data: { first_name?: string; last_name?: string; agence?: string; role_agence?: string } }) => {
-      const { error } = await supabase.from('profiles').update(data).eq('id', userId);
+    mutationFn: async ({ userId, data }: { userId: string; data: { first_name?: string; last_name?: string; agence?: string; role_agence?: string; support_level?: number } }) => {
+      const updateData: any = {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        agence: data.agence,
+        role_agence: data.role_agence,
+      };
+      
+      // Si support_level fourni, mettre à jour enabled_modules.support.options.level
+      if (data.support_level !== undefined) {
+        const { data: currentProfile } = await supabase
+          .from('profiles')
+          .select('enabled_modules')
+          .eq('id', userId)
+          .single();
+        
+        const modules = (currentProfile?.enabled_modules as any) || {};
+        const supportModule = modules.support || { enabled: false };
+        const supportOptions = supportModule.options || {};
+        
+        updateData.enabled_modules = {
+          ...modules,
+          support: {
+            ...supportModule,
+            options: {
+              ...supportOptions,
+              level: data.support_level,
+            }
+          }
+        };
+      }
+      
+      const { error } = await supabase.from('profiles').update(updateData).eq('id', userId);
       if (error) throw error;
       return userId;
     },
