@@ -10,13 +10,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
@@ -25,6 +26,7 @@ import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
 import { CreateTicketDialog } from '../components/CreateTicketDialog';
 import { ActionsConfigDialog } from '../components/ActionsConfigDialog';
 import { useTicketQualification } from '../hooks/useTicketQualification';
+import { exportToCSV, exportToExcel, exportToPDF } from '../utils/exportKanban';
 
 import { useMyTicketRole, TicketRoleInfo } from '../hooks/useTicketPermissions';
 import type { ApogeeTicket, TicketFilters as Filters } from '../types';
@@ -198,6 +200,32 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+          
+          {/* Export dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="sm:size-default">
+                <Download className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Exporter</span>
+                <ChevronDown className="h-4 w-4 sm:ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-background border shadow-lg z-50">
+              <DropdownMenuItem onClick={() => exportToCSV({ tickets, statuses, modules, priorities, ownerSides })}>
+                <FileText className="h-4 w-4 mr-2 text-green-600" />
+                Export CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportToExcel({ tickets, statuses, modules, priorities, ownerSides })}>
+                <Sheet className="h-4 w-4 mr-2 text-emerald-600" />
+                Export Excel (.xlsx)
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => exportToPDF({ tickets, statuses, modules, priorities, ownerSides })}>
+                <FileDown className="h-4 w-4 mr-2 text-red-600" />
+                Export PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
