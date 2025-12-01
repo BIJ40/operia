@@ -4,6 +4,7 @@ import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed 
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { captureEdgeException } from '../_shared/sentry.ts';
 import { errorResponse, successResponse, authError } from '../_shared/error.ts';
+import { validateOptionalBoolean } from '../_shared/validation.ts';
 
 // Cache management
 interface CacheEntry {
@@ -407,17 +408,18 @@ serve(async (req) => {
       return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
     }
 
-    // Get date range from request
-    const body = await req.json().catch(() => ({}));
+    // Valider les paramètres d'entrée
+    const bodyRaw = await req.json().catch(() => ({}));
     
     // Test mode: force error for Sentry testing
-    if (body.forceError === true) {
+    const forceError = validateOptionalBoolean(bodyRaw.forceError);
+    if (forceError === true) {
       throw new Error('test-sentry-edge-network-kpis');
     }
     
-    const dateRange = body.dateRange ? {
-      from: new Date(body.dateRange.from),
-      to: new Date(body.dateRange.to),
+    const dateRange = bodyRaw.dateRange ? {
+      from: new Date(bodyRaw.dateRange.from),
+      to: new Date(bodyRaw.dateRange.to),
     } : undefined;
 
     // Get all active agencies
@@ -432,20 +434,23 @@ serve(async (req) => {
 
     console.log(`🔄 Loading data for ${agencies.length} agencies`);
 
-    // Load data for all agencies sequentially
-    const agencyData = [];
-    for (const agency of agencies) {
+    // PERF: Charger toutes les agences EN PARALLÈLE au lieu de séquentiellement
+    const agencyPromises = agencies.map(async (agency) => {
       console.log(`🔄 Loading ${agency.slug}...`);
       const data = await loadAgencyData(agency.slug);
       if (data) {
-        agencyData.push({
+        console.log(`✅ ${agency.slug}: loaded`);
+        return {
           agencyId: agency.slug,
           agencyLabel: agency.label,
           data,
-        });
-        console.log(`✅ ${agency.slug}: loaded`);
+        };
       }
-    }
+      return null;
+    });
+
+    const agencyResults = await Promise.all(agencyPromises);
+    const agencyData = agencyResults.filter((a): a is NonNullable<typeof a> => a !== null);
 
     console.log(`✅ Loaded ${agencyData.length}/${agencies.length} agencies`);
 

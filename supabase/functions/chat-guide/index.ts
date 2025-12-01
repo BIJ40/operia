@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { errorResponse, validationError } from '../_shared/error.ts';
+import { validateString, validateArray, validateOptionalString, validateOptionalBoolean } from '../_shared/validation.ts';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -191,8 +192,16 @@ serve(async (req) => {
   const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
 
   try {
-    const body = await req.json();
-    const { messages, guideContent, userId, userName, similarityScores, chatContext = 'apogee', hasRagContent = true } = body;
+    const bodyRaw = await req.json();
+    
+    // Valider les paramètres d'entrée
+    const messages = validateArray(bodyRaw.messages, 'messages', { minLength: 1, maxLength: 50 });
+    const guideContent = validateString(bodyRaw.guideContent, 'guideContent', { maxLength: 100000 });
+    const userId = validateOptionalString(bodyRaw.userId, 'userId', 100) || null;
+    const userName = validateOptionalString(bodyRaw.userName, 'userName', 100) || 'Utilisateur';
+    const chatContext = validateOptionalString(bodyRaw.chatContext, 'chatContext', 50) || 'apogee';
+    const hasRagContent = validateOptionalBoolean(bodyRaw.hasRagContent) !== false;
+    const similarityScores = bodyRaw.similarityScores || null;
     
     // Rate limit: 30 req/min per user
     const rateLimitKey = `chat-guide:${userId || 'anonymous'}`;
@@ -202,6 +211,7 @@ serve(async (req) => {
       return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
     }
 
+    // Validation legacy (redondante mais conservée pour compatibilité)
     const validation = validateInput(messages, guideContent);
     if (!validation.valid) {
       console.error('Validation error:', validation.error);
