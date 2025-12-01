@@ -273,7 +273,6 @@ function rowToTicket(row: EvaluatedRow): ApogeeTicketInsert {
     description: row.descriptif || null,
     module: normalizeModule(row.elementConcerne),
     module_area: row.elementConcerne || null,
-    priority: normalizePriority(row.prio), // Mapper vers FK valide (A, B, V1, PLUS_TARD)
     action_type: row.apogeeStatus || null,
     kanban_status: normalizeStatus(row.apogeeStatus),
     owner_side: parseOwnerSide(row.priseEnChargeDynoco),
