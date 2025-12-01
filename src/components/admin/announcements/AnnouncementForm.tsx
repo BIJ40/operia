@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,7 +19,7 @@ import { useCreateAnnouncement, useUpdateAnnouncement } from '@/hooks/use-announ
 import type { Database } from '@/integrations/supabase/types';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -52,6 +52,11 @@ export function AnnouncementForm({
 }: AnnouncementFormProps) {
   const createAnnouncement = useCreateAnnouncement();
   const updateAnnouncement = useUpdateAnnouncement();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    announcement?.image_path || null
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const isEdit = !!announcement;
 
@@ -93,17 +98,42 @@ export function AnnouncementForm({
             ...data,
             expires_at: data.expires_at.toISOString(),
           },
+          imageFile,
+          oldImagePath: announcement.image_path,
         });
       } else {
         await createAnnouncement.mutateAsync({
           ...data,
           expires_at: data.expires_at.toISOString(),
           created_by: userId,
+          imageFile,
         });
       }
       onOpenChange(false);
+      setImageFile(null);
+      setImagePreview(null);
     } catch (error) {
       console.error('Error saving announcement:', error);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -147,13 +177,44 @@ export function AnnouncementForm({
           </div>
 
           {/* Image (optionnel) */}
-          <div>
-            <Label htmlFor="image_path">URL de l'image (optionnel)</Label>
-            <Input
-              id="image_path"
-              {...register('image_path')}
-              placeholder="https://..."
-            />
+          <div className="space-y-2">
+            <Label>Image illustrative (optionnel)</Label>
+            <div className="flex items-center gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                {imagePreview ? 'Changer l\'image' : 'Ajouter une image'}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageChange}
+              />
+            </div>
+            {imagePreview && (
+              <div className="relative w-full max-w-md mt-2 border rounded-lg p-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-1 right-1 h-6 w-6"
+                  onClick={handleRemoveImage}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+                <img
+                  src={imagePreview}
+                  alt="Aperçu"
+                  className="w-full h-auto max-h-48 object-contain rounded"
+                />
+              </div>
+            )}
           </div>
 
           {/* Date d'expiration */}
