@@ -160,6 +160,7 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   // ============================================
   // SUPPORT
   // ============================================
+  { match: (path) => path === '/support/helpcenter', pageKey: 'support_helpcenter', defaultTitle: 'Centre d\'Aide', defaultSubtitle: 'FAQ, Chat et assistance en ligne', icon: 'HelpCircle', parentRoute: '/support', parentLabel: 'Support' },
   { match: (path) => path === '/support/mes-demandes', pageKey: 'support_mes_demandes', defaultTitle: 'Mes Demandes', defaultSubtitle: 'Créer et suivre vos demandes de support', icon: 'MessageSquare', parentRoute: '/support', parentLabel: 'Support' },
   { match: (path) => path === '/support/faq', pageKey: 'support_faq', defaultTitle: 'FAQ', defaultSubtitle: 'Questions fréquemment posées', icon: 'HelpCircle', parentRoute: '/support', parentLabel: 'Support' },
   { match: (path) => path === '/support/console', pageKey: 'support_console', defaultTitle: 'Console Support', defaultSubtitle: 'Traiter les demandes de support', icon: 'Headset', parentRoute: '/support', parentLabel: 'Support' },
@@ -172,6 +173,7 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => /^\/hc-reseau\/agences\/[^/]+$/.test(path), pageKey: 'reseau_agence_profile', defaultTitle: 'Profil Agence', defaultSubtitle: 'Détails et configuration de l\'agence', icon: 'Building2', parentRoute: '/hc-reseau/agences', parentLabel: 'Agences' },
   { match: (path) => path === '/hc-reseau/agences', pageKey: 'reseau_agences', defaultTitle: 'Agences du Réseau', defaultSubtitle: 'Gestion des agences franchisées', icon: 'Building2', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
   { match: (path) => path === '/hc-reseau/utilisateurs', pageKey: 'reseau_utilisateurs', defaultTitle: 'Utilisateurs Réseau', defaultSubtitle: 'Gestion des utilisateurs des agences', icon: 'Users', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
+  { match: (path) => /^\/hc-reseau\/animateurs\/[^/]+$/.test(path), pageKey: 'reseau_animateur_profile', defaultTitle: 'Profil Animateur', defaultSubtitle: 'Détails et agences assignées', icon: 'UserCog', parentRoute: '/hc-reseau/animateurs', parentLabel: 'Animateurs' },
   { match: (path) => path === '/hc-reseau/animateurs', pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs', defaultSubtitle: 'Équipe d\'animation réseau', icon: 'UserCog', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
   { match: (path) => path === '/hc-reseau/stats', pageKey: 'reseau_stats', defaultTitle: 'Statistiques Réseau', defaultSubtitle: 'KPI consolidés du réseau', icon: 'PieChart', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
   { match: (path) => path === '/hc-reseau/comparatifs', pageKey: 'reseau_comparatifs', defaultTitle: 'Comparatifs', defaultSubtitle: 'Comparaison entre agences', icon: 'GitCompare', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
