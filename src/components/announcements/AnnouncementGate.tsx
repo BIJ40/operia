@@ -26,46 +26,50 @@ export function AnnouncementGate({ userId }: AnnouncementGateProps) {
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  // Track des annonces vues pendant cette session (pour "Plus tard")
+  const [viewedInSession, setViewedInSession] = useState<Set<string>>(new Set());
 
-  const currentAnnouncement = unreadAnnouncements[currentIndex];
+  // Filtrer les annonces non vues dans cette session
+  const displayAnnouncements = unreadAnnouncements.filter(
+    (a) => !viewedInSession.has(a.id)
+  );
+
+  const currentAnnouncement = displayAnnouncements[currentIndex];
 
   // Ouvrir la modale s'il y a des annonces non lues
   useEffect(() => {
-    if (unreadAnnouncements.length > 0 && !isOpen) {
+    if (displayAnnouncements.length > 0 && !isOpen) {
       setIsOpen(true);
       setCurrentIndex(0);
     }
-  }, [unreadAnnouncements.length, isOpen]);
+  }, [displayAnnouncements.length, isOpen]);
 
   const handleRead = async () => {
     if (!currentAnnouncement) return;
 
+    // Marquer comme lu en DB (ne réapparaîtra pas)
     await markAsRead.mutateAsync({
       announcementId: currentAnnouncement.id,
       userId,
       status: 'read',
     });
 
-    // Passer à l'annonce suivante ou fermer
-    if (currentIndex < unreadAnnouncements.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      setIsOpen(false);
-      setCurrentIndex(0);
-    }
+    // L'annonce sera retirée de unreadAnnouncements par le refetch automatique
+    // On reste sur le même index car le tableau va se réorganiser
   };
 
   const handleLater = () => {
     if (!currentAnnouncement) return;
 
-    // Ne pas marquer comme lu - l'annonce réapparaîtra à la prochaine connexion
-    // Passer à l'annonce suivante ou fermer
-    if (currentIndex < unreadAnnouncements.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
+    // Marquer comme vue dans cette session uniquement (réapparaîtra à la prochaine connexion)
+    setViewedInSession((prev) => new Set([...prev, currentAnnouncement.id]));
+
+    // Si c'était la dernière, fermer la modale et reset l'index
+    if (currentIndex >= displayAnnouncements.length - 1) {
       setIsOpen(false);
       setCurrentIndex(0);
     }
+    // Sinon, l'annonce suivante s'affichera automatiquement au même index
   };
 
   if (!currentAnnouncement) return null;
@@ -83,8 +87,8 @@ export function AnnouncementGate({ userId }: AnnouncementGateProps) {
             <DialogTitle className="text-xl">{currentAnnouncement.title}</DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground">
-            {unreadAnnouncements.length > 1 && (
-              <span>Annonce {currentIndex + 1} sur {unreadAnnouncements.length}</span>
+            {displayAnnouncements.length > 1 && (
+              <span>Annonce {currentIndex + 1} sur {displayAnnouncements.length}</span>
             )}
           </DialogDescription>
         </DialogHeader>

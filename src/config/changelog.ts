@@ -24,6 +24,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'improvement', description: 'Renommage "Bug Application" → "HC Services (ici)" dans création de ticket' },
       { type: 'improvement', description: 'Upload direct d\'image pour annonces (bucket Storage) au lieu d\'URL externe' },
       { type: 'improvement', description: 'Bouton "Plus tard" réaffiche l\'annonce à chaque connexion jusqu\'à lecture' },
+      { type: 'improvement', description: 'Historique complet des annonces (actives/expirées) avec affichage du créateur et statistiques de lecture' },
+      { type: 'fix', description: 'Gestion correcte du défilement des annonces multiples avec "Plus tard"' },
     ]
   },
   {

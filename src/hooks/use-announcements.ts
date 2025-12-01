@@ -7,6 +7,11 @@ type Announcement = Database['public']['Tables']['priority_announcements']['Row'
 type AnnouncementInsert = Database['public']['Tables']['priority_announcements']['Insert'];
 type AnnouncementRead = Database['public']['Tables']['announcement_reads']['Row'];
 
+export type AnnouncementWithDetails = Announcement & {
+  creator?: { id: string; first_name: string | null; last_name: string | null } | null;
+  reads_count?: number;
+};
+
 /**
  * Hook pour récupérer les annonces actives non lues par l'utilisateur
  */
@@ -49,22 +54,60 @@ export function useUnreadAnnouncements(userId: string | undefined) {
 /**
  * Hook pour récupérer toutes les annonces (admin)
  */
-export function useAllAnnouncements() {
+export function useAllAnnouncements(): ReturnType<typeof useQuery<AnnouncementWithDetails[]>> {
   return useQuery({
     queryKey: ['all-announcements'],
-    queryFn: async () => {
-      const { data, error } = await supabase
+    queryFn: async (): Promise<AnnouncementWithDetails[]> => {
+      // Récupérer toutes les annonces
+      const { data: announcements, error: announcementsError } = await supabase
         .from('priority_announcements')
-        .select(`
-          *,
-          creator:created_by(first_name, last_name),
-          reads:announcement_reads(count)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+      if (announcementsError) throw announcementsError;
+      if (!announcements) return [];
+
+      // Récupérer les créateurs
+      const creatorIds = [...new Set(announcements
+        .map(a => a.created_by)
+        .filter(Boolean))];
+
+      if (creatorIds.length === 0) return announcements;
+
+      const { data: creators, error: creatorsError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .in('id', creatorIds);
+
+      if (creatorsError) throw creatorsError;
+
+      // Créer un map des créateurs
+      const creatorsMap = new Map(
+        creators?.map(c => [c.id, c]) || []
+      );
+
+      // Récupérer les stats de lecture pour chaque annonce
+      const { data: reads } = await supabase
+        .from('announcement_reads')
+        .select('announcement_id, status')
+        .in('announcement_id', announcements.map(a => a.id));
+
+      const readsMap = new Map<string, number>();
+      reads?.forEach(r => {
+        if (r.status === 'read') {
+          readsMap.set(r.announcement_id, (readsMap.get(r.announcement_id) || 0) + 1);
+        }
+      });
+
+      // Enrichir les annonces
+      return announcements.map(a => ({
+        ...a,
+        creator: a.created_by ? creatorsMap.get(a.created_by) : null,
+        reads_count: readsMap.get(a.id) || 0,
+      }));
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 }
 
