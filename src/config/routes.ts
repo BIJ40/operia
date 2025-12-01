@@ -97,6 +97,7 @@ export const ROUTES = {
     importEvaluated: '/projects/import-evaluated',
     importBugs: '/projects/import-bugs',
     importV1: '/projects/import-v1',
+    importTraite: '/projects/import-traite',
     incomplete: '/projects/incomplets',
     classify: '/projects/classifier',
     review: '/projects/review',

@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
@@ -208,6 +208,10 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
                 <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importEvaluated)}>
                   <ListChecks className="h-4 w-4 mr-2 text-green-600" />
                   Liste évaluée / Reste à évaluer
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importTraite)}>
+                  <FileCheck className="h-4 w-4 mr-2 text-purple-600" />
+                  Import TRAITE
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate(ROUTES.projects.import)}>
                   <Files className="h-4 w-4 mr-2" />
