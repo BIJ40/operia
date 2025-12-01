@@ -49,6 +49,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'security', description: 'AUDIT F-PERM-1: Console support strictement réservée aux N5+ - suppression bypass via module option' },
       { type: 'security', description: 'AUDIT F-PERM-2: Groupe navigation Projects filtré selon module apogee_tickets activé' },
       { type: 'security', description: 'AUDIT F-PERM-3: Route /support/console protégée par SupportConsoleGuard dédié (N5+ strictement)' },
+      { type: 'fix', description: 'AUDIT F-MISC-1/F-MISC-2: Correction scopeSlug tiles (base_documentaire, rh_tech, mon_equipe)' },
       { type: 'improvement', description: 'AUDIT F-PERF-1: Parallélisation chargement agences (network-kpis) - Promise.all au lieu de boucle séquentielle' },
       { type: 'improvement', description: 'AUDIT F-TABLE-3: 14 index créés (chatbot_queries, support_tickets, apogee_tickets, profiles, franchiseur_assignments)' },
       { type: 'security', description: 'AUDIT PERMISSIONS: 12 findings identifiés - 2 critiques (Support Console Bypass, EditUserDialog incomplet), 4 élevés (module minRole, agence scope), 6 moyens (guards routes, scopeSlug)' },

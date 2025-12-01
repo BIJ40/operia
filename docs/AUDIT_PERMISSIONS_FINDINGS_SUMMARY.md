@@ -72,11 +72,11 @@
 **Question**: Est-ce que N3-N4 doivent voir section Admin réduite ?  
 **Fix**: Option A (restrict N5+) ou Option B (visibilité partielle N3+)
 
-### F-MISC-1 – Documents scopeSlug incorrect
-**Fix**: Changer 'helpconfort' → 'base_documentaire'
+### F-MISC-1 – Documents scopeSlug incorrect ✅ CORRIGÉ
+**Fix appliqué**: Changé 'helpconfort' → 'base_documentaire'
 
-### F-MISC-2 – RH_TECH/MON_EQUIPE scopeSlug incorrect
-**Fix**: Utiliser scope plus générique ou créer scopes dédiés
+### F-MISC-2 – RH_TECH/MON_EQUIPE scopeSlug incorrect ✅ CORRIGÉ
+**Fix appliqué**: Créé scopes dédiés 'rh_tech' et 'mon_equipe' (anciennement 'mes_indicateurs')
 
 ---
 
@@ -90,7 +90,7 @@
 ### Phase 2 – Cohérence Navigation (3h)
 4. ✅ **CORRIGÉ** - Ajouter requiresModule check pour groupe Projects (F-PERM-2, F-NAV-3)
 5. ✅ **CORRIGÉ** - Créer SupportConsoleGuard pour /support/console (F-PERM-3, F-NAV-2)
-6. ✅ Corriger scopeSlug tiles (F-MISC-1, F-MISC-2)
+6. ✅ **CORRIGÉ** - Corriger scopeSlug tiles (F-MISC-1, F-MISC-2)
 
 ### Phase 3 – UX Admin (6h)
 7. ⏳ Unifier EditUserDialog + UserAccordionItem (F-EDIT-1)
