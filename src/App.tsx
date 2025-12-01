@@ -9,6 +9,7 @@ import { MainLayout } from "./components/layout";
 import { Loader2 } from "lucide-react";
 import { RoleGuard } from "./components/auth/RoleGuard";
 import { ModuleGuard } from "./components/auth/ModuleGuard";
+import { SupportConsoleGuard } from "./components/auth/SupportConsoleGuard";
 
 // Critical pages - loaded immediately
 import Landing from "./pages/Landing";
@@ -213,8 +214,8 @@ function AppContent() {
           <Route path="/mes-demandes" element={<Navigate to="/support/mes-demandes" replace />} />
           {/* FAQ */}
           <Route path="/support/faq" element={<MainLayout><Faq /></MainLayout>} />
-          {/* SU Console - Support agents (N1/N2/N5) */}
-          <Route path="/support/console" element={<MainLayout><RoleGuard minRole="franchisee_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
+          {/* SU Console - Support agents (N5+ strictement) - FIX F-PERM-3 */}
+          <Route path="/support/console" element={<MainLayout><SupportConsoleGuard><AdminSupportTickets /></SupportConsoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* RÉSEAU FRANCHISEUR - Section Index + Sous-pages */}
