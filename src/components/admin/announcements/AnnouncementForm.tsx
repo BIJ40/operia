@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -67,23 +67,45 @@ export function AnnouncementForm({
     formState: { errors },
     setValue,
     watch,
+    reset,
   } = useForm<FormData>({
     resolver: zodResolver(announcementSchema),
-    defaultValues: announcement ? {
-      title: announcement.title,
-      content: announcement.content,
-      image_path: announcement.image_path || '',
-      is_active: announcement.is_active ?? true,
-      expires_at: new Date(announcement.expires_at),
-      target_all: announcement.target_all ?? true,
-      exclude_base_users: announcement.exclude_base_users ?? false,
-    } : {
+    defaultValues: {
       is_active: true,
       target_all: true,
       exclude_base_users: false,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // +7 jours
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      title: '',
+      content: '',
     },
   });
+
+  // Réinitialiser le formulaire quand l'annonce change
+  useEffect(() => {
+    if (announcement) {
+      reset({
+        title: announcement.title,
+        content: announcement.content,
+        image_path: announcement.image_path || '',
+        is_active: announcement.is_active ?? true,
+        expires_at: new Date(announcement.expires_at),
+        target_all: announcement.target_all ?? true,
+        exclude_base_users: announcement.exclude_base_users ?? false,
+      });
+      setImagePreview(announcement.image_path || null);
+    } else {
+      reset({
+        is_active: true,
+        target_all: true,
+        exclude_base_users: false,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        title: '',
+        content: '',
+      });
+      setImagePreview(null);
+    }
+    setImageFile(null);
+  }, [announcement, reset]);
 
   const expiresAt = watch('expires_at');
   const isActive = watch('is_active');
