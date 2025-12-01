@@ -87,6 +87,7 @@ export function ChatWindow({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
+                aria-label="Ouvrir le centre d'aide"
               >
                 <Maximize2 className="h-4 w-4" />
               </Button>
@@ -103,6 +104,7 @@ export function ChatWindow({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
+                  aria-label="Nouvelle conversation"
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
@@ -111,7 +113,7 @@ export function ChatWindow({
             </Tooltip>
           )}
           
-          <Button onClick={onClose} variant="ghost" size="icon">
+          <Button onClick={onClose} variant="ghost" size="icon" aria-label="Fermer le chat">
             <X className="h-4 w-4" />
           </Button>
         </div>

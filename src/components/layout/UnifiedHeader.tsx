@@ -197,6 +197,7 @@ export function UnifiedHeader() {
               variant="ghost" 
               size="icon" 
               onClick={toggleSidebar}
+              aria-label="Basculer le menu latéral"
             >
               <Menu className="w-5 h-5" />
             </Button>
@@ -234,6 +235,7 @@ export function UnifiedHeader() {
                       variant="ghost"
                       size="icon" 
                       onClick={handleOpenMetadataDialog}
+                      aria-label="Modifier les métadonnées de la page"
                     >
                       <FileEdit className="w-5 h-5" />
                     </Button>
@@ -255,6 +257,7 @@ export function UnifiedHeader() {
                       size="icon" 
                       onClick={handleToggleEditMode}
                       className={isInEditMode ? "bg-primary text-primary-foreground" : ""}
+                      aria-label={isInEditMode ? "Désactiver le mode édition" : "Activer le mode édition"}
                     >
                       <Pencil className="w-5 h-5" />
                     </Button>
@@ -273,6 +276,7 @@ export function UnifiedHeader() {
                   variant="ghost" 
                   size="icon" 
                   className={`relative ${hasNewTickets ? 'text-destructive' : ''}`}
+                  aria-label="Ouvrir la console support"
                 >
                   <Headset className="w-5 h-5" />
                   {hasNewTickets && (
@@ -287,7 +291,7 @@ export function UnifiedHeader() {
             {/* User menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
+                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Menu utilisateur">
                   <User className="w-5 h-5" />
                 </Button>
               </DropdownMenuTrigger>

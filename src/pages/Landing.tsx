@@ -203,7 +203,7 @@ const DashboardTileCard = memo(function DashboardTileCard({ tile, dynamicBadge }
             <p className="text-base font-semibold text-foreground truncate">{tile.title}</p>
             <p className="text-xs text-muted-foreground truncate">{tile.description}</p>
           </div>
-          <ArrowRight className="w-4 h-4 flex-shrink-0 text-muted-foreground group-hover:text-helpconfort-blue group-hover:translate-x-0.5 transition-all" />
+          <ArrowRight className="w-4 h-4 flex-shrink-0 text-muted-foreground group-hover:text-helpconfort-blue group-hover:translate-x-0.5 transition-all" aria-hidden="true" />
         </div>
       </div>
     </Link>
@@ -231,7 +231,7 @@ const SectionHeader = memo(function SectionHeader({ title, icon: Icon, colorClas
       </h2>
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground group-hover:text-primary transition-colors">
         <span className="hidden sm:inline text-xs font-medium">Voir tout</span>
-        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
       </div>
     </Link>
   );
