@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -16,6 +16,7 @@ interface CategoryExportCardProps {
   onCategoryChange: (value: string) => void;
   onExportJson: () => void;
   onExportText: () => void;
+  onExportPdf?: () => void;
   isLoading: boolean;
 }
 
@@ -27,6 +28,7 @@ export function CategoryExportCard({
   onCategoryChange,
   onExportJson,
   onExportText,
+  onExportPdf,
   isLoading,
 }: CategoryExportCardProps) {
   return (
@@ -43,7 +45,7 @@ export function CategoryExportCard({
           <SelectTrigger>
             <SelectValue placeholder="Choisir une catégorie" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background z-50">
             {categories.map(cat => (
               <SelectItem key={cat.id} value={cat.id}>
                 {cat.title}
@@ -59,6 +61,18 @@ export function CategoryExportCard({
             Texte
           </Button>
         </div>
+        {onExportPdf && (
+          <Button 
+            onClick={onExportPdf} 
+            disabled={!selectedCategory || isLoading} 
+            className="w-full" 
+            size="sm" 
+            variant="secondary"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            PDF avec images
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

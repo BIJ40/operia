@@ -23,6 +23,7 @@ export default function AdminBackup() {
     exportApporteurData,
     exportTextOnly,
     exportSingleCategory,
+    exportSingleCategoryPdf,
     exportAllData,
     importData,
   } = useAdminBackup();
@@ -93,6 +94,7 @@ export default function AdminBackup() {
               onCategoryChange={setSelectedApogeeCategory}
               onExportJson={() => exportSingleCategory('apogee', 'json')}
               onExportText={() => exportSingleCategory('apogee', 'txt')}
+              onExportPdf={() => exportSingleCategoryPdf('apogee')}
               isLoading={exportingApogee}
             />
             <CategoryExportCard
@@ -103,6 +105,7 @@ export default function AdminBackup() {
               onCategoryChange={setSelectedApporteurCategory}
               onExportJson={() => exportSingleCategory('apporteur', 'json')}
               onExportText={() => exportSingleCategory('apporteur', 'txt')}
+              onExportPdf={() => exportSingleCategoryPdf('apporteur')}
               isLoading={exportingApporteur}
             />
           </div>

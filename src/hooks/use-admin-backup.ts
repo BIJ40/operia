@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/logger';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
+import jsPDF from 'jspdf';
 
 interface CategoryBlock {
   id: string;
@@ -280,6 +281,231 @@ export const useAdminBackup = () => {
     }
   };
 
+  const exportSingleCategoryPdf = async (scope: 'apogee' | 'apporteur') => {
+    const categoryId = scope === 'apogee' ? selectedApogeeCategory : selectedApporteurCategory;
+    const setLoading = scope === 'apogee' ? setExportingApogee : setExportingApporteur;
+    const tableName = scope === 'apogee' ? 'blocks' : 'apporteur_blocks';
+    const guideTitle = scope === 'apogee' ? 'Manuel Apogée' : 'Guide Apporteur';
+
+    if (!categoryId) {
+      errorToast('Aucune catégorie sélectionnée');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await safeQuery<any[]>(
+        supabase.from(tableName).select('*').or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
+        `BACKUP_EXPORT_PDF_${scope.toUpperCase()}`
+      );
+
+      if (!result.success || !result.data) {
+        errorToast("Erreur d'export PDF");
+        return;
+      }
+
+      const blocks = result.data;
+      const category = blocks.find(b => b.id === categoryId);
+      const sections = blocks.filter(b => b.parent_id === categoryId).sort((a, b) => a.order - b.order);
+
+      if (!category) {
+        errorToast('Catégorie non trouvée');
+        return;
+      }
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      const contentWidth = pageWidth - margin * 2;
+      let yPosition = margin;
+
+      // Helper to add new page if needed
+      const checkPageBreak = (requiredHeight: number) => {
+        if (yPosition + requiredHeight > pageHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+          return true;
+        }
+        return false;
+      };
+
+      // Title page
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(guideTitle, pageWidth / 2, 50, { align: 'center' });
+      
+      pdf.setFontSize(18);
+      pdf.text(category.title, pageWidth / 2, 70, { align: 'center' });
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Export du ${new Date().toLocaleDateString('fr-FR')}`, pageWidth / 2, 85, { align: 'center' });
+      pdf.text(`${sections.length} section(s)`, pageWidth / 2, 92, { align: 'center' });
+
+      // Process each section
+      for (const section of sections) {
+        pdf.addPage();
+        yPosition = margin;
+
+        // Section title
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        const titleLines = pdf.splitTextToSize(section.title, contentWidth);
+        pdf.text(titleLines, margin, yPosition);
+        yPosition += titleLines.length * 8 + 5;
+
+        // Draw separator line
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+        yPosition += 8;
+
+        // Parse HTML content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = section.content || '';
+
+        // Process content elements
+        const processNode = async (node: Node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent?.trim();
+            if (text) {
+              pdf.setFontSize(11);
+              pdf.setFont('helvetica', 'normal');
+              const lines = pdf.splitTextToSize(text, contentWidth);
+              checkPageBreak(lines.length * 5 + 3);
+              pdf.text(lines, margin, yPosition);
+              yPosition += lines.length * 5 + 3;
+            }
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as HTMLElement;
+            const tagName = element.tagName.toLowerCase();
+
+            if (tagName === 'img') {
+              const imgSrc = element.getAttribute('src');
+              if (imgSrc) {
+                try {
+                  // Fetch image and convert to base64
+                  const response = await fetch(imgSrc);
+                  const blob = await response.blob();
+                  const base64 = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(blob);
+                  });
+
+                  // Calculate image dimensions
+                  const img = new Image();
+                  await new Promise<void>((resolve) => {
+                    img.onload = () => resolve();
+                    img.onerror = () => resolve();
+                    img.src = base64;
+                  });
+
+                  if (img.width > 0 && img.height > 0) {
+                    const maxWidth = contentWidth;
+                    const maxHeight = 100;
+                    let imgWidth = img.width * 0.264583; // px to mm
+                    let imgHeight = img.height * 0.264583;
+
+                    if (imgWidth > maxWidth) {
+                      const ratio = maxWidth / imgWidth;
+                      imgWidth = maxWidth;
+                      imgHeight *= ratio;
+                    }
+                    if (imgHeight > maxHeight) {
+                      const ratio = maxHeight / imgHeight;
+                      imgHeight = maxHeight;
+                      imgWidth *= ratio;
+                    }
+
+                    checkPageBreak(imgHeight + 10);
+                    pdf.addImage(base64, 'JPEG', margin, yPosition, imgWidth, imgHeight);
+                    yPosition += imgHeight + 8;
+                  }
+                } catch (imgError) {
+                  logError('use-admin-backup', 'Erreur chargement image PDF', imgError);
+                }
+              }
+            } else if (tagName === 'h1' || tagName === 'h2' || tagName === 'h3') {
+              const text = element.textContent?.trim();
+              if (text) {
+                checkPageBreak(15);
+                const fontSize = tagName === 'h1' ? 14 : tagName === 'h2' ? 13 : 12;
+                pdf.setFontSize(fontSize);
+                pdf.setFont('helvetica', 'bold');
+                const lines = pdf.splitTextToSize(text, contentWidth);
+                pdf.text(lines, margin, yPosition);
+                yPosition += lines.length * 6 + 5;
+              }
+            } else if (tagName === 'p') {
+              const text = element.textContent?.trim();
+              if (text) {
+                pdf.setFontSize(11);
+                pdf.setFont('helvetica', 'normal');
+                const lines = pdf.splitTextToSize(text, contentWidth);
+                checkPageBreak(lines.length * 5 + 5);
+                pdf.text(lines, margin, yPosition);
+                yPosition += lines.length * 5 + 5;
+              }
+            } else if (tagName === 'ul' || tagName === 'ol') {
+              const listItems = element.querySelectorAll(':scope > li');
+              let itemIndex = 1;
+              for (const li of Array.from(listItems)) {
+                const text = li.textContent?.trim();
+                if (text) {
+                  const bullet = tagName === 'ul' ? '•' : `${itemIndex}.`;
+                  pdf.setFontSize(11);
+                  pdf.setFont('helvetica', 'normal');
+                  const lines = pdf.splitTextToSize(`${bullet} ${text}`, contentWidth - 5);
+                  checkPageBreak(lines.length * 5 + 2);
+                  pdf.text(lines, margin + 5, yPosition);
+                  yPosition += lines.length * 5 + 2;
+                  itemIndex++;
+                }
+              }
+              yPosition += 3;
+            } else if (tagName === 'table') {
+              // Simple table handling
+              const rows = element.querySelectorAll('tr');
+              for (const row of Array.from(rows)) {
+                const cells = row.querySelectorAll('td, th');
+                const rowText = Array.from(cells).map(c => c.textContent?.trim()).join(' | ');
+                if (rowText) {
+                  pdf.setFontSize(10);
+                  pdf.setFont('helvetica', 'normal');
+                  const lines = pdf.splitTextToSize(rowText, contentWidth);
+                  checkPageBreak(lines.length * 4 + 2);
+                  pdf.text(lines, margin, yPosition);
+                  yPosition += lines.length * 4 + 2;
+                }
+              }
+              yPosition += 5;
+            } else {
+              // Process child nodes for other elements
+              for (const child of Array.from(element.childNodes)) {
+                await processNode(child);
+              }
+            }
+          }
+        };
+
+        // Process all child nodes
+        for (const child of Array.from(tempDiv.childNodes)) {
+          await processNode(child);
+        }
+      }
+
+      // Save PDF
+      pdf.save(`export-${scope}-${category.slug}-${new Date().toISOString().split('T')[0]}.pdf`);
+      successToast('Export PDF réussi !', `"${category.title}" avec ${sections.length} sections et images`);
+    } catch (error) {
+      logError('use-admin-backup', `Erreur export PDF ${scope}`, error);
+      errorToast("Erreur d'export PDF");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const exportAllData = async () => {
     setExporting(true);
     try {
@@ -379,6 +605,6 @@ export const useAdminBackup = () => {
     selectedApogeeCategory, selectedApporteurCategory,
     setSelectedApogeeCategory, setSelectedApporteurCategory,
     exportingApogee, exportingApporteur, exporting, importing, lastBackup,
-    exportApogeeData, exportApporteurData, exportTextOnly, exportSingleCategory, exportAllData, importData,
+    exportApogeeData, exportApporteurData, exportTextOnly, exportSingleCategory, exportSingleCategoryPdf, exportAllData, importData,
   };
 };
