@@ -59,7 +59,7 @@ export const useSupportTicket = () => {
             user_id: user.id,
             subject: lastQuestion.substring(0, 100),
             status: 'new',
-            priority: ticketType === 'chat_ai' ? 'urgent' : 'normal',
+            heat_priority: ticketType === 'chat_ai' ? 11 : 6, // 11=urgent (critical), 6=normal
             source: 'chat',
             type: ticketType,
             agency_slug: profile?.agence || null,
