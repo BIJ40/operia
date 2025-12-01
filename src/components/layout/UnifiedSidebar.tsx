@@ -94,7 +94,7 @@ interface NavGroup {
 export function UnifiedSidebar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { globalRole, agence, canAccessSupportConsole, isAdmin } = useAuth();
+  const { globalRole, agence, canAccessSupportConsole, isAdmin, hasModule } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const menuLabels = useMenuLabels();
@@ -271,6 +271,11 @@ export function UnifiedSidebar() {
   ];
 
   const filteredGroups = navGroups.filter(group => {
+    // ✅ FIX F-PERM-2: Filtrer le groupe projects si module apogee_tickets non activé
+    if (group.labelKey === 'projects') {
+      return hasModule('apogee_tickets');
+    }
+    
     if (!group.accessKey) return true;
     if (group.accessKey === 'canAccessPilotageAgence') {
       if (caps.requiresAgencyForPilotage && !agence) return false;
