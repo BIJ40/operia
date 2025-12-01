@@ -22,6 +22,7 @@ export const ROLE_AGENCE_OPTIONS = [
   { value: 'dirigeant', label: 'Dirigeant' },
   { value: 'assistante', label: 'Assistante' },
   { value: 'commercial', label: 'Commercial' },
+  { value: 'technicien', label: 'Technicien' },
   { value: 'tete_de_reseau', label: 'Tête de réseau' },
   { value: 'externe', label: 'Externe' },
 ];
