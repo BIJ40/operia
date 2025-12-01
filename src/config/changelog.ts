@@ -54,7 +54,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     version: 'V0.2.5',
-    date: '2025-11-01',
+    date: '2025-11-08',
     title: 'Ticketing Apogée avancé',
     changes: [
       { type: 'feature', description: 'Vue liste avec colonnes triables et redimensionnables' },
@@ -66,7 +66,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     version: 'V0.2.0',
-    date: '2025-10-15',
+    date: '2025-11-03',
     title: 'Support et ticketing',
     changes: [
       { type: 'feature', description: 'Système de tickets support avec SLA automatique' },
@@ -78,7 +78,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     version: 'V0.1.5',
-    date: '2025-09-20',
+    date: '2025-10-30',
     title: 'Franchiseur & réseau',
     changes: [
       { type: 'feature', description: 'Dashboard franchiseur avec KPI réseau' },
@@ -90,7 +90,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     version: 'V0.1.0',
-    date: '2025-08-01',
+    date: '2025-10-29',
     title: 'Pilotage agence et indicateurs',
     changes: [
       { type: 'feature', description: 'Module "Mes indicateurs" avec KPI Apogée' },
@@ -102,7 +102,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     version: 'V0.0.5',
-    date: '2025-07-15',
+    date: '2025-09-26',
     title: 'Guides et documentation',
     changes: [
       { type: 'feature', description: 'Help Academy avec guides Apogée, Apporteurs, HelpConfort' },
@@ -114,7 +114,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     version: 'V0.0.1',
-    date: '2025-06-01',
+    date: '2025-09-24',
     title: 'Version initiale',
     changes: [
       { type: 'feature', description: 'Authentification Supabase avec profils utilisateurs' },
