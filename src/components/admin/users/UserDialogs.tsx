@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, UserPlus, Pencil, Save, UserX, UserCheck, Trash2, KeyRound, AlertCircle, Mail, RefreshCw } from 'lucide-react';
+import { generateSecurePassword } from '@/lib/passwordUtils';
 
 const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
@@ -48,33 +49,6 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
     globalRole: 'franchisee_user' as GlobalRole,
     sendEmail: true,
   });
-
-  const generateSecurePassword = (): string => {
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const numbers = '0123456789';
-    const symbols = '!@#$%^&*';
-    const all = lowercase + uppercase + numbers + symbols;
-    
-    let password = '';
-    // Garantir au moins 2 de chaque type pour 18 caractères
-    password += lowercase[Math.floor(Math.random() * lowercase.length)];
-    password += lowercase[Math.floor(Math.random() * lowercase.length)];
-    password += uppercase[Math.floor(Math.random() * uppercase.length)];
-    password += uppercase[Math.floor(Math.random() * uppercase.length)];
-    password += numbers[Math.floor(Math.random() * numbers.length)];
-    password += numbers[Math.floor(Math.random() * numbers.length)];
-    password += symbols[Math.floor(Math.random() * symbols.length)];
-    password += symbols[Math.floor(Math.random() * symbols.length)];
-    
-    // Compléter jusqu'à 18 caractères
-    for (let i = 8; i < 18; i++) {
-      password += all[Math.floor(Math.random() * all.length)];
-    }
-    
-    // Mélanger pour éviter un pattern prévisible
-    return password.split('').sort(() => Math.random() - 0.5).join('');
-  };
 
   const handleGeneratePassword = () => {
     setFormData(prev => ({ ...prev, password: generateSecurePassword() }));

@@ -29,6 +29,8 @@ import { toast } from "sonner";
 import { useMarkCollaboratorAsRegistered } from "../hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { logError } from "@/lib/logger";
+import { RefreshCw } from "lucide-react";
+import { generateSecurePassword } from "@/lib/passwordUtils";
 
 interface CreateUserFromCollaboratorDialogProps {
   open: boolean;
@@ -52,6 +54,7 @@ export function CreateUserFromCollaboratorDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState<GlobalRole>("franchisee_user");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   // Reset email when dialog opens with new collaborator
   useState(() => {
@@ -73,6 +76,11 @@ export function CreateUserFromCollaboratorDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!collaborator || !finalEmail) return;
+    
+    if (!password) {
+      toast.error('Veuillez générer ou saisir un mot de passe temporaire.');
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -85,6 +93,7 @@ export function CreateUserFromCollaboratorDialog({
           global_role: selectedRole,
           agency_id: collaborator.agency_id,
           role_agence: COLLABORATOR_ROLE_LABELS[collaborator.role],
+          password: password,
         },
       });
 
@@ -147,6 +156,35 @@ export function CreateUserFromCollaboratorDialog({
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="password">Mot de passe temporaire *</Label>
+            <div className="flex gap-2">
+              <Input 
+                id="password"
+                type="text"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Générer un mot de passe sécurisé"
+                required
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const pwd = generateSecurePassword();
+                  setPassword(pwd);
+                  toast.success('Mot de passe généré (18 caractères)');
+                }}
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              18 caractères avec majuscules, minuscules, chiffres et symboles
+            </p>
+          </div>
+
           {agencyLabel && (
             <div className="space-y-2">
               <Label>Agence</Label>
@@ -186,7 +224,7 @@ export function CreateUserFromCollaboratorDialog({
             >
               Annuler
             </Button>
-            <Button type="submit" disabled={isLoading || !finalEmail}>
+            <Button type="submit" disabled={isLoading || !finalEmail || !password}>
               {isLoading ? "Création..." : "Créer le compte"}
             </Button>
           </DialogFooter>
