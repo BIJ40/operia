@@ -47,6 +47,9 @@ export function AnnouncementGate({ userId }: AnnouncementGateProps) {
   const handleRead = async () => {
     if (!currentAnnouncement) return;
 
+    // Fermer la modale immédiatement pour éviter le "tremblement"
+    setIsOpen(false);
+    
     // Marquer comme lu en DB (ne réapparaîtra pas)
     await markAsRead.mutateAsync({
       announcementId: currentAnnouncement.id,
@@ -54,13 +57,9 @@ export function AnnouncementGate({ userId }: AnnouncementGateProps) {
       status: 'read',
     });
 
-    // Si c'était la dernière annonce, fermer la modale
-    if (currentIndex >= displayAnnouncements.length - 1) {
-      setIsOpen(false);
-      setCurrentIndex(0);
-    }
-    // Sinon, l'annonce suivante s'affichera automatiquement au même index
-    // car le tableau se réorganise après le refetch
+    // Reset l'index pour la prochaine ouverture
+    setCurrentIndex(0);
+    // Le useEffect rouvrira la modale s'il reste des annonces non lues
   };
 
   const handleLater = () => {
