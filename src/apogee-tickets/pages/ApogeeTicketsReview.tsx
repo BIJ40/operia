@@ -28,8 +28,21 @@ import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { HeatPriorityBadge, HEAT_PRIORITY_OPTIONS } from '../components/HeatPriorityBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from '../components/OwnerSideSlider';
 import { TicketDetailDrawer } from '../components/TicketDetailDrawer';
-import type { ApogeeTicket, TicketFilters } from '../types';
+import type { ApogeeTicket, TicketFilters, MissingFieldFilter } from '../types';
 import { ROUTES } from '@/config/routes';
+
+// Helper pour afficher le label du filtre champ manquant
+const getMissingFieldLabel = (field: MissingFieldFilter): string => {
+  const labels: Record<MissingFieldFilter, string> = {
+    complete: 'Complets',
+    incomplete: 'Incomplets (tous)',
+    no_module: 'Sans module',
+    no_heat: 'Sans priorité',
+    no_hours: 'Sans estimation',
+    no_description: 'Sans description',
+  };
+  return labels[field] || field;
+};
 
 export default function ApogeeTicketsReview() {
   const [filters, setFilters] = useState<TicketFilters>({});
@@ -181,48 +194,60 @@ export default function ApogeeTicketsReview() {
         </CardHeader>
         <CardContent className="pt-0">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Filtre Module avec "Tous" et "Sans module" */}
             <Select
-              value={filters.module || ''}
-              onValueChange={(v) => updateFilter('module', v)}
+              value={filters.module === '__none__' ? '__none__' : filters.module || 'all'}
+              onValueChange={(v) => updateFilter('module', v === 'all' ? undefined : v)}
             >
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Module" />
               </SelectTrigger>
               <SelectContent className="bg-background z-50">
+                <SelectItem value="all">📋 Tous les modules</SelectItem>
+                <SelectItem value="__none__">❌ Sans module</SelectItem>
+                <Separator className="my-1" />
                 {modules.map((m) => (
                   <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
+            {/* Filtre Qualification avec "Tous" */}
             <Select
-              value={filters.is_qualified === true ? 'true' : filters.is_qualified === false ? 'false' : ''}
-              onValueChange={(v) => updateFilter('is_qualified', v === '' ? undefined : v === 'true')}
+              value={filters.is_qualified === true ? 'true' : filters.is_qualified === false ? 'false' : 'all'}
+              onValueChange={(v) => updateFilter('is_qualified', v === 'all' ? undefined : v === 'true')}
             >
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Qualification" />
               </SelectTrigger>
               <SelectContent className="bg-background z-50">
+                <SelectItem value="all">📋 Tous</SelectItem>
                 <SelectItem value="true">✓ Qualifiés IA</SelectItem>
                 <SelectItem value="false">À qualifier</SelectItem>
               </SelectContent>
             </Select>
 
+            {/* Filtre Complétude avec sous-options de champs manquants */}
             <Select
-              value={filters.needs_completion === true ? 'true' : filters.needs_completion === false ? 'false' : ''}
-              onValueChange={(v) => updateFilter('needs_completion', v === '' ? undefined : v === 'true')}
+              value={filters.missing_field || 'all'}
+              onValueChange={(v) => updateFilter('missing_field', v === 'all' ? undefined : v)}
             >
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Complétude" />
               </SelectTrigger>
               <SelectContent className="bg-background z-50">
-                <SelectItem value="true">Incomplets</SelectItem>
-                <SelectItem value="false">Complets</SelectItem>
+                <SelectItem value="all">📋 Tous</SelectItem>
+                <SelectItem value="complete">✅ Complets</SelectItem>
+                <Separator className="my-1" />
+                <SelectItem value="incomplete">⚠️ Incomplets (tous)</SelectItem>
+                <SelectItem value="no_module">❌ Sans module</SelectItem>
+                <SelectItem value="no_heat">❌ Sans priorité</SelectItem>
+                <SelectItem value="no_hours">❌ Sans estimation</SelectItem>
+                <SelectItem value="no_description">❌ Sans description</SelectItem>
               </SelectContent>
             </Select>
-          </div>
 
-          <div className="mt-3">
+            {/* Recherche */}
             <Input
               placeholder="Rechercher..."
               value={filters.search || ''}
@@ -230,6 +255,52 @@ export default function ApogeeTicketsReview() {
               className="h-9"
             />
           </div>
+
+          {/* Filtres actifs affichés comme badges */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {filters.module && (
+                <Badge 
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-destructive/20"
+                  onClick={() => updateFilter('module', undefined)}
+                >
+                  {filters.module === '__none__' ? 'Sans module' : modules.find(m => m.id === filters.module)?.label || filters.module}
+                  <X className="h-3 w-3 ml-1" />
+                </Badge>
+              )}
+              {filters.is_qualified !== undefined && (
+                <Badge 
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-destructive/20"
+                  onClick={() => updateFilter('is_qualified', undefined)}
+                >
+                  {filters.is_qualified ? 'Qualifiés IA' : 'À qualifier'}
+                  <X className="h-3 w-3 ml-1" />
+                </Badge>
+              )}
+              {filters.missing_field && (
+                <Badge 
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-destructive/20"
+                  onClick={() => updateFilter('missing_field', undefined)}
+                >
+                  {getMissingFieldLabel(filters.missing_field)}
+                  <X className="h-3 w-3 ml-1" />
+                </Badge>
+              )}
+              {filters.search && (
+                <Badge 
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-destructive/20"
+                  onClick={() => updateFilter('search', undefined)}
+                >
+                  Recherche: "{filters.search}"
+                  <X className="h-3 w-3 ml-1" />
+                </Badge>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

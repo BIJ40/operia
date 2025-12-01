@@ -104,7 +104,11 @@ export function useApogeeTickets(filters?: TicketFilters) {
         .order('created_at', { ascending: false });
 
       if (filters?.module) {
-        query = query.eq('module', filters.module);
+        if (filters.module === '__none__') {
+          query = query.is('module', null);
+        } else {
+          query = query.eq('module', filters.module);
+        }
       }
       if (filters?.priority) {
         query = query.eq('priority', filters.priority);
