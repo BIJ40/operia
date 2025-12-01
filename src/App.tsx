@@ -95,6 +95,7 @@ const ApogeeTicketsList = lazy(() => import("./apogee-tickets/pages/ApogeeTicket
 const ApogeeTicketsImport = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImport"));
 const ApogeeTicketsImportPriorities = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportPriorities"));
 const ApogeeTicketsImportEvaluated = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportEvaluated"));
+const ApogeeTicketsImportTraite = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportTraite"));
 const ApogeeTicketsImportBugs = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportBugs"));
 const ApogeeTicketsImportV1 = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportV1"));
 const ApogeeTicketsIncomplete = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsIncomplete"));
@@ -297,6 +298,7 @@ function AppContent() {
           <Route path="/projects/import" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImport /></ModuleGuard></MainLayout>} />
           <Route path="/projects/import-priorities" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportPriorities /></ModuleGuard></MainLayout>} />
           <Route path="/projects/import-evaluated" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportEvaluated /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/import-traite" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportTraite /></ModuleGuard></MainLayout>} />
           <Route path="/projects/import-bugs" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportBugs /></ModuleGuard></MainLayout>} />
           <Route path="/projects/import-v1" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportV1 /></ModuleGuard></MainLayout>} />
           <Route path="/projects/incomplets" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsIncomplete /></ModuleGuard></MainLayout>} />
