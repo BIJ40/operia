@@ -145,9 +145,10 @@ interface EditUserDialogProps {
   isEmailPending: boolean;
   isPasswordPending: boolean;
   agencies?: Agency[];
+  canEditRoleAgence?: boolean;
 }
 
-export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail, onResetPassword, isPending, isEmailPending, isPasswordPending, agencies = [] }: EditUserDialogProps) {
+export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail, onResetPassword, isPending, isEmailPending, isPasswordPending, agencies = [], canEditRoleAgence = false }: EditUserDialogProps) {
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', agence: '', roleAgence: '' });
   const [newPassword, setNewPassword] = useState('');
 
@@ -221,7 +222,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
           </div>
           <div className="space-y-2">
             <Label>Poste occupé</Label>
-            <Select value={formData.roleAgence} onValueChange={(v) => setFormData(prev => ({ ...prev, roleAgence: v }))}>
+            <Select value={formData.roleAgence} onValueChange={(v) => setFormData(prev => ({ ...prev, roleAgence: v }))} disabled={!canEditRoleAgence}>
               <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
               <SelectContent className="bg-background z-50">
                 {Object.entries(ROLE_AGENCE_LABELS).map(([value, label]) => (
@@ -229,6 +230,9 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
                 ))}
               </SelectContent>
             </Select>
+            {!canEditRoleAgence && (
+              <p className="text-xs text-muted-foreground">Seul Admin et N+1 peuvent modifier ce champ</p>
+            )}
           </div>
           <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
             <Label className="flex items-center gap-2"><KeyRound className="w-4 h-4" />Réinitialiser le mot de passe</Label>
