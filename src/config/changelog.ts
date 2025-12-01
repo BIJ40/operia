@@ -26,6 +26,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'improvement', description: 'Bouton "Plus tard" réaffiche l\'annonce à chaque connexion jusqu\'à lecture' },
       { type: 'improvement', description: 'Historique complet des annonces (actives/expirées) avec affichage du créateur et statistiques de lecture' },
       { type: 'fix', description: 'Gestion correcte du défilement des annonces multiples avec "Plus tard"' },
+      { type: 'fix', description: 'Affichage automatique de l\'annonce suivante après avoir cliqué "J\'ai lu"' },
+      { type: 'security', description: 'Permissions de suppression : N3+ peuvent supprimer uniquement leurs propres annonces, N5+ toutes les annonces' },
     ]
   },
   {

@@ -54,8 +54,13 @@ export function AnnouncementGate({ userId }: AnnouncementGateProps) {
       status: 'read',
     });
 
-    // L'annonce sera retirée de unreadAnnouncements par le refetch automatique
-    // On reste sur le même index car le tableau va se réorganiser
+    // Si c'était la dernière annonce, fermer la modale
+    if (currentIndex >= displayAnnouncements.length - 1) {
+      setIsOpen(false);
+      setCurrentIndex(0);
+    }
+    // Sinon, l'annonce suivante s'affichera automatiquement au même index
+    // car le tableau se réorganise après le refetch
   };
 
   const handleLater = () => {
