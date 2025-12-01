@@ -12,7 +12,8 @@ export interface Ticket {
   service: string | null;
   category: string | null;
   status: string;
-  priority: string;
+  priority: string; // Legacy - prefer heat_priority
+  heat_priority: number; // 0-12 unified priority
   source: 'chat' | 'portal' | 'system';
   agency_slug: string | null;
   has_attachments: boolean;
@@ -148,7 +149,7 @@ export const useUserTickets = () => {
     category: string,
     description: string,
     files: File[],
-    priority: string = 'normal'
+    heatPriority: number = 6
   ) => {
     if (!user) return null;
 
@@ -179,7 +180,7 @@ export const useUserTickets = () => {
           service,
           category,
           status: 'new',
-          priority,
+          heat_priority: heatPriority,
           source: 'portal',
           agency_slug: profile?.agence || null,
           has_attachments: files.length > 0,

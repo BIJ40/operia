@@ -59,7 +59,7 @@ export default function UserTickets() {
     subject: '',
     service: 'apogee',
     category: 'question',
-    priority: 'normal',
+    heatPriority: 6,
     description: '',
   });
   const [files, setFiles] = useState<File[]>([]);
@@ -92,11 +92,11 @@ export default function UserTickets() {
       newTicket.category,
       trimmedDescription,
       files,
-      newTicket.priority
+      newTicket.heatPriority
     );
 
     if (ticket) {
-      setNewTicket({ subject: '', service: 'apogee', category: 'question', priority: 'normal', description: '' });
+      setNewTicket({ subject: '', service: 'apogee', category: 'question', heatPriority: 6, description: '' });
       setFiles([]);
       setShowCreateForm(false);
     }
@@ -497,14 +497,14 @@ export default function UserTickets() {
 
               <div>
                 <Label>Niveau d'urgence *</Label>
-                {/* Utiliser les nouvelles priorités : mineur, normal, important, urgent, bloquant */}
+                {/* Heat priority 0-12 mapped to UI buttons */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mt-2">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setNewTicket({ ...newTicket, priority: 'mineur' })}
+                    onClick={() => setNewTicket({ ...newTicket, heatPriority: 1 })}
                     className={`rounded-2xl border-l-4 transition-all ${
-                      newTicket.priority === 'mineur'
+                      newTicket.heatPriority === 1
                         ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
                         : 'border-l-border hover:border-l-accent hover:shadow-md'
                     }`}
@@ -514,9 +514,9 @@ export default function UserTickets() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setNewTicket({ ...newTicket, priority: 'normal' })}
+                    onClick={() => setNewTicket({ ...newTicket, heatPriority: 3 })}
                     className={`rounded-2xl border-l-4 transition-all ${
-                      newTicket.priority === 'normal'
+                      newTicket.heatPriority === 3
                         ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
                         : 'border-l-border hover:border-l-accent hover:shadow-md'
                     }`}
@@ -526,9 +526,9 @@ export default function UserTickets() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setNewTicket({ ...newTicket, priority: 'important' })}
+                    onClick={() => setNewTicket({ ...newTicket, heatPriority: 6 })}
                     className={`rounded-2xl border-l-4 transition-all ${
-                      newTicket.priority === 'important'
+                      newTicket.heatPriority === 6
                         ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
                         : 'border-l-border hover:border-l-accent hover:shadow-md'
                     }`}
@@ -538,9 +538,9 @@ export default function UserTickets() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setNewTicket({ ...newTicket, priority: 'urgent' })}
+                    onClick={() => setNewTicket({ ...newTicket, heatPriority: 9 })}
                     className={`rounded-2xl border-l-4 transition-all ${
-                      newTicket.priority === 'urgent'
+                      newTicket.heatPriority === 9
                         ? 'border-l-accent bg-gradient-to-r from-primary to-helpconfort-blue-dark text-white shadow-lg hover:shadow-xl'
                         : 'border-l-border hover:border-l-accent hover:shadow-md'
                     }`}
@@ -550,9 +550,9 @@ export default function UserTickets() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setNewTicket({ ...newTicket, priority: 'bloquant' })}
+                    onClick={() => setNewTicket({ ...newTicket, heatPriority: 12 })}
                     className={`rounded-2xl border-l-4 transition-all ${
-                      newTicket.priority === 'bloquant'
+                      newTicket.heatPriority === 12
                         ? 'border-l-accent bg-gradient-to-r from-red-600 to-red-800 text-white shadow-lg hover:shadow-xl'
                         : 'border-l-border hover:border-l-accent hover:shadow-md'
                     }`}

@@ -68,6 +68,8 @@ export function calculateHeatPriority(
 
 /**
  * Labels descriptifs pour les niveaux de priorité thermique
+ * Note: Utilisez getHeatPriorityConfig() de src/utils/heatPriority.ts
+ * pour l'affichage uniforme (badge, emoji, couleurs)
  */
 export const HEAT_PRIORITY_LABELS: Record<number, string> = {
   0: 'Gelé',

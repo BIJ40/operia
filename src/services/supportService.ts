@@ -128,7 +128,8 @@ export interface SupportUser {
 
 export interface TicketFilters {
   status?: TicketStatus | TicketStatus[];
-  priority?: TicketPriority | TicketPriority[];
+  heatPriorityMin?: number;
+  heatPriorityMax?: number;
   service?: TicketService | TicketService[];
   support_level?: number;
   assigned_to?: string | null;
@@ -332,7 +333,7 @@ export function buildTicketFilterQuery(
 ) {
   let query = supabase.from('support_tickets').select('*');
 
-  // Filtre par statut
+  // Apply filters
   if (filters.status) {
     if (Array.isArray(filters.status)) {
       query = query.in('status', filters.status);
@@ -341,13 +342,12 @@ export function buildTicketFilterQuery(
     }
   }
 
-  // Filtre par priorité
-  if (filters.priority) {
-    if (Array.isArray(filters.priority)) {
-      query = query.in('priority', filters.priority);
-    } else {
-      query = query.eq('priority', filters.priority);
-    }
+  // Filtre par heat priority
+  if (filters.heatPriorityMin !== undefined) {
+    query = query.gte('heat_priority', filters.heatPriorityMin);
+  }
+  if (filters.heatPriorityMax !== undefined) {
+    query = query.lte('heat_priority', filters.heatPriorityMax);
   }
 
   // Filtre par service
@@ -421,12 +421,11 @@ export async function getTicketsForSupportUser(
     }
   }
 
-  if (filters.priority) {
-    if (Array.isArray(filters.priority)) {
-      query = query.in('priority', filters.priority);
-    } else {
-      query = query.eq('priority', filters.priority);
-    }
+  if (filters.heatPriorityMin !== undefined) {
+    query = query.gte('heat_priority', filters.heatPriorityMin);
+  }
+  if (filters.heatPriorityMax !== undefined) {
+    query = query.lte('heat_priority', filters.heatPriorityMax);
   }
 
   if (filters.service) {
@@ -500,16 +499,16 @@ export async function updateTicketStatus(
 }
 
 /**
- * Met à jour la priorité d'un ticket
+ * Met à jour la priorité d'un ticket avec heat priority (0-12)
  */
 export async function updateTicketPriority(
   ticketId: string,
-  newPriority: TicketPriority
+  newPriority: number
 ): Promise<{ success: boolean; error?: string }> {
   const result = await safeMutation(
     supabase
       .from('support_tickets')
-      .update({ priority: newPriority })
+      .update({ heat_priority: newPriority })
       .eq('id', ticketId),
     'SUPPORT_UPDATE_TICKET_PRIORITY'
   );

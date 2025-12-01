@@ -18,7 +18,8 @@ export interface SupportTicket {
   user_id: string;
   assigned_to: string | null;
   status: string;
-  priority: string;
+  priority: string; // Legacy field - prefer heat_priority
+  heat_priority: number; // 0-12 unified priority
   service: string | null;
   subject: string;
   chatbot_conversation: any;
@@ -69,7 +70,8 @@ export const useAdminSupport = () => {
   const [isUserTyping, setIsUserTyping] = useState(false);
   const [isInternalNote, setIsInternalNote] = useState(false);
   
-  const [priorityFilter, setPriorityFilter] = useState<TicketPriority | 'all'>('all');
+  const [heatPriorityMin, setHeatPriorityMin] = useState<number>(0);
+  const [heatPriorityMax, setHeatPriorityMax] = useState<number>(12);
   const [serviceFilter, setServiceFilter] = useState<TicketService | 'all'>('all');
   const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'mine' | 'unassigned'>('all');
   
@@ -243,9 +245,9 @@ export const useAdminSupport = () => {
     }
   };
 
-  const updatePriority = async (ticketId: string, newPriority: TicketPriority) => {
+  const updatePriority = async (ticketId: string, newPriority: number) => {
     const result = await safeMutation(
-      supabase.from('support_tickets').update({ priority: newPriority }).eq('id', ticketId),
+      supabase.from('support_tickets').update({ heat_priority: newPriority }).eq('id', ticketId),
       'ADMIN_SUPPORT_UPDATE_PRIORITY'
     );
 
@@ -258,13 +260,14 @@ export const useAdminSupport = () => {
     await loadTickets();
     
     if (selectedTicket?.id === ticketId) {
-      setSelectedTicket(prev => prev ? { ...prev, priority: newPriority } : null);
+      setSelectedTicket(prev => prev ? { ...prev, heat_priority: newPriority } : null);
     }
   };
 
   const clearFilters = () => {
     setFilter('all');
-    setPriorityFilter('all');
+    setHeatPriorityMin(0);
+    setHeatPriorityMax(12);
     setServiceFilter('all');
     setAssignmentFilter('all');
   };
@@ -432,7 +435,8 @@ export const useAdminSupport = () => {
   // Filtrer les tickets côté client selon les filtres actifs
   const filteredTickets = tickets.filter(ticket => {
     if (filter !== 'all' && ticket.status !== filter) return false;
-    if (priorityFilter !== 'all' && ticket.priority !== priorityFilter) return false;
+    const heat = ticket.heat_priority ?? 6;
+    if (heat < heatPriorityMin || heat > heatPriorityMax) return false;
     if (serviceFilter !== 'all' && ticket.service !== serviceFilter) return false;
     if (assignmentFilter === 'mine' && ticket.assigned_to !== user?.id) return false;
     if (assignmentFilter === 'unassigned' && ticket.assigned_to !== null) return false;
@@ -448,7 +452,8 @@ export const useAdminSupport = () => {
     messages,
     newMessage,
     filter,
-    priorityFilter,
+    heatPriorityMin,
+    heatPriorityMax,
     serviceFilter,
     assignmentFilter,
     isUserTyping,
@@ -456,7 +461,8 @@ export const useAdminSupport = () => {
     messagesEndRef,
     setNewMessage,
     setFilter,
-    setPriorityFilter,
+    setHeatPriorityMin,
+    setHeatPriorityMax,
     setServiceFilter,
     setAssignmentFilter,
     setIsInternalNote,

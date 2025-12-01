@@ -13,25 +13,25 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Filter, X } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 import {
   TICKET_STATUSES,
   TICKET_STATUS_LABELS,
-  TICKET_PRIORITIES,
-  TICKET_PRIORITY_LABELS,
   TICKET_SERVICES,
   TICKET_SERVICE_LABELS,
   type TicketStatus,
-  type TicketPriority,
   type TicketService,
 } from '@/services/supportService';
+import { getHeatPriorityConfig } from '@/utils/heatPriority';
 
 interface TicketFiltersProps {
   statusFilter: TicketStatus | 'all';
-  priorityFilter: TicketPriority | 'all';
+  heatPriorityMin: number;
+  heatPriorityMax: number;
   serviceFilter: TicketService | 'all';
   assignmentFilter: 'all' | 'mine' | 'unassigned';
   onStatusChange: (value: TicketStatus | 'all') => void;
-  onPriorityChange: (value: TicketPriority | 'all') => void;
+  onHeatPriorityChange: (min: number, max: number) => void;
   onServiceChange: (value: TicketService | 'all') => void;
   onAssignmentChange: (value: 'all' | 'mine' | 'unassigned') => void;
   onClearFilters: () => void;
@@ -39,20 +39,25 @@ interface TicketFiltersProps {
 
 export function TicketFilters({
   statusFilter,
-  priorityFilter,
+  heatPriorityMin,
+  heatPriorityMax,
   serviceFilter,
   assignmentFilter,
   onStatusChange,
-  onPriorityChange,
+  onHeatPriorityChange,
   onServiceChange,
   onAssignmentChange,
   onClearFilters,
 }: TicketFiltersProps) {
   const hasActiveFilters =
     statusFilter !== 'all' ||
-    priorityFilter !== 'all' ||
+    heatPriorityMin > 0 ||
+    heatPriorityMax < 12 ||
     serviceFilter !== 'all' ||
     assignmentFilter !== 'all';
+
+  const minConfig = getHeatPriorityConfig(heatPriorityMin);
+  const maxConfig = getHeatPriorityConfig(heatPriorityMax);
 
   return (
     <div className="space-y-3 p-3 bg-muted/30 rounded-lg border">
@@ -96,25 +101,22 @@ export function TicketFilters({
           </Select>
         </div>
 
-        {/* Filtre Priorité */}
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">Priorité</label>
-          <Select
-            value={priorityFilter}
-            onValueChange={(v) => onPriorityChange(v as TicketPriority | 'all')}
-          >
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Toutes" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les priorités</SelectItem>
-              {Object.entries(TICKET_PRIORITY_LABELS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Filtre Priorité Heat (0-12) */}
+        <div className="space-y-2 col-span-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-muted-foreground">Priorité Heat</label>
+            <span className="text-xs font-medium">
+              {minConfig.emoji} {heatPriorityMin} - {heatPriorityMax} {maxConfig.emoji}
+            </span>
+          </div>
+          <Slider
+            min={0}
+            max={12}
+            step={1}
+            value={[heatPriorityMin, heatPriorityMax]}
+            onValueChange={([min, max]) => onHeatPriorityChange(min, max)}
+            className="w-full"
+          />
         </div>
 
         {/* Filtre Service */}
@@ -171,11 +173,11 @@ export function TicketFilters({
               </button>
             </Badge>
           )}
-          {priorityFilter !== 'all' && (
+          {(heatPriorityMin > 0 || heatPriorityMax < 12) && (
             <Badge variant="secondary" className="text-xs">
-              {TICKET_PRIORITY_LABELS[priorityFilter]}
+              Heat: {heatPriorityMin}-{heatPriorityMax}
               <button
-                onClick={() => onPriorityChange('all')}
+                onClick={() => onHeatPriorityChange(0, 12)}
                 className="ml-1 hover:text-destructive"
               >
                 <X className="w-3 h-3" />

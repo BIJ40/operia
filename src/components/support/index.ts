@@ -6,3 +6,5 @@ export { SupportChatCore, type ChatMessage, type FAQSuggestion } from './Support
 export { AIClassificationBadge, AIIndicator } from './AIClassificationBadge';
 export { AIIncompleteBadge, IncompleteIndicator } from './AIIncompleteBadge';
 export { AISuggestionPanel } from './AISuggestionPanel';
+export { HeatPriorityBadge } from './HeatPriorityBadge';
+export { HeatPrioritySelector } from './HeatPrioritySelector';

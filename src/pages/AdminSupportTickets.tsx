@@ -93,7 +93,8 @@ export default function AdminSupportTickets() {
            filters.source !== 'all' || 
            filters.category !== 'all' || 
            filters.agency !== 'all' ||
-           filters.priority !== 'all' ||
+           filters.heatPriorityMin > 0 ||
+           filters.heatPriorityMax < 12 ||
            filters.assignment !== 'all';
   };
 
@@ -103,7 +104,8 @@ export default function AdminSupportTickets() {
       source: 'all',
       category: 'all',
       agency: 'all',
-      priority: 'all',
+      heatPriorityMin: 0,
+      heatPriorityMax: 12,
       assignment: 'all',
     });
   };
@@ -241,25 +243,9 @@ export default function AdminSupportTickets() {
               </SelectContent>
             </Select>
 
-            <Select value={filters.priority} onValueChange={(v) => setFilters({ ...filters, priority: v })}>
-              <SelectTrigger className="w-[130px] h-8 text-xs">
-                <SelectValue>
-                  {filters.priority === 'all' ? 'Urgence' : 
-                   filters.priority === 'mineur' ? '🟢 Mineur' :
-                   filters.priority === 'normal' ? '🔵 Normal' :
-                   filters.priority === 'important' ? '🟠 Important' :
-                   filters.priority === 'urgent' ? '🔴 Urgent' : '⛔ Bloquant'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="bg-background z-50">
-                <SelectItem value="all">Tous niveaux</SelectItem>
-                <SelectItem value="mineur">🟢 Mineur</SelectItem>
-                <SelectItem value="normal">🔵 Normal</SelectItem>
-                <SelectItem value="important">🟠 Important</SelectItem>
-                <SelectItem value="urgent">🔴 Urgent</SelectItem>
-                <SelectItem value="bloquant">⛔ Bloquant</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Heat: {filters.heatPriorityMin}-{filters.heatPriorityMax}</span>
+            </div>
 
             <Select value={filters.assignment} onValueChange={(v) => setFilters({ ...filters, assignment: v })}>
               <SelectTrigger className="w-[130px] h-8 text-xs">
