@@ -188,7 +188,7 @@ export default function ApogeeTicketsReview() {
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Module" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background z-50">
                 {modules.map((m) => (
                   <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
                 ))}
@@ -202,7 +202,7 @@ export default function ApogeeTicketsReview() {
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Qualification" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background z-50">
                 <SelectItem value="true">✓ Qualifiés IA</SelectItem>
                 <SelectItem value="false">À qualifier</SelectItem>
               </SelectContent>
@@ -215,7 +215,7 @@ export default function ApogeeTicketsReview() {
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Complétude" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background z-50">
                 <SelectItem value="true">Incomplets</SelectItem>
                 <SelectItem value="false">Complets</SelectItem>
               </SelectContent>
@@ -367,7 +367,7 @@ export default function ApogeeTicketsReview() {
                   <SelectTrigger className="h-9 mt-1">
                     <SelectValue placeholder="—" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background z-50">
                     {statuses.map((s) => (
                       <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
                     ))}
@@ -384,7 +384,7 @@ export default function ApogeeTicketsReview() {
                   <SelectTrigger className="h-9 mt-1">
                     <SelectValue placeholder="—" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background z-50">
                     {modules.map((m) => (
                       <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
                     ))}

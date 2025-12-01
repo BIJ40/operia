@@ -135,7 +135,7 @@ function UserRolesTab() {
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner un utilisateur" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background z-50">
                 {usersWithoutRole.map((user: any) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.first_name} {user.last_name} ({user.email})
@@ -150,7 +150,7 @@ function UserRolesTab() {
               <SelectTrigger>
                 <SelectValue placeholder="Rôle" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background z-50">
                 {Object.entries(TICKET_ROLE_LABELS).map(([value, label]) => (
                   <SelectItem key={value} value={value}>{label}</SelectItem>
                 ))}
@@ -268,11 +268,11 @@ function TransitionsTab() {
         <div className="flex gap-4 items-end p-4 bg-muted/50 rounded-lg flex-wrap">
           <div className="space-y-2">
             <label className="text-sm font-medium">De</label>
-            <Select value={fromStatus} onValueChange={setFromStatus}>
+          <Select value={fromStatus} onValueChange={setFromStatus}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Statut source" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background z-50">
                 {statuses?.map((s) => (
                   <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
                 ))}
@@ -282,11 +282,11 @@ function TransitionsTab() {
           <ArrowRight className="h-5 w-5 text-muted-foreground mb-2" />
           <div className="space-y-2">
             <label className="text-sm font-medium">Vers</label>
-            <Select value={toStatus} onValueChange={setToStatus}>
+          <Select value={toStatus} onValueChange={setToStatus}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Statut cible" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background z-50">
                 {statuses?.filter(s => s.id !== fromStatus).map((s) => (
                   <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
                 ))}
@@ -295,11 +295,11 @@ function TransitionsTab() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Rôle autorisé</label>
-            <Select value={role} onValueChange={(v) => setRole(v as TicketRole)}>
+          <Select value={role} onValueChange={(v) => setRole(v as TicketRole)}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Rôle" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background z-50">
                 {Object.entries(TICKET_ROLE_LABELS).map(([value, label]) => (
                   <SelectItem key={value} value={value}>{label}</SelectItem>
                 ))}
