@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, UserPlus, Pencil, Save, UserX, UserCheck, Trash2, KeyRound, AlertCircle, Mail } from 'lucide-react';
 
 const ROLE_AGENCE_LABELS: Record<string, string> = {
@@ -113,6 +114,16 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox 
+              id="sendEmail" 
+              checked={formData.sendEmail}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, sendEmail: checked === true }))}
+            />
+            <Label htmlFor="sendEmail" className="text-sm font-normal cursor-pointer">
+              Envoyer l'email de bienvenue avec mot de passe provisoire
+            </Label>
           </div>
         </div>
         <DialogFooter>
