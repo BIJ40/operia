@@ -45,11 +45,11 @@ export default function Error500({ correlationId, onRetry }: Error500Props) {
           </Button>
           {correlationId && (
             <p className="text-xs text-center text-muted-foreground">
-              ID de suivi: {correlationId}
+              ID de suivi : {correlationId}
             </p>
           )}
           <p className="text-xs text-center text-muted-foreground">
-            Code erreur: 500 - Internal Server Error
+            Code erreur : 500 - Internal Server Error
           </p>
         </CardContent>
       </Card>

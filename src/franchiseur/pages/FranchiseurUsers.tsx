@@ -244,13 +244,13 @@ export default function FranchiseurUsers() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Utilisateur mis à jour');
+      toast.success('Utilisateur mis à jour.');
       queryClient.invalidateQueries({ queryKey: ['franchiseur-users'] });
       setIsEditDialogOpen(false);
       setSelectedUser(null);
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error('Erreur lors de la mise à jour.');
       logError(error, 'FRANCHISEUR_USER_UPDATE');
     },
   });
@@ -270,13 +270,13 @@ export default function FranchiseurUsers() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Utilisateur désactivé');
+      toast.success('Utilisateur désactivé.');
       queryClient.invalidateQueries({ queryKey: ['franchiseur-users'] });
       setIsDeactivateDialogOpen(false);
       setSelectedUser(null);
     },
     onError: (error) => {
-      toast.error('Erreur lors de la désactivation');
+      toast.error('Erreur lors de la désactivation.');
       logError(error, 'FRANCHISEUR_USER_DEACTIVATE');
     },
   });
@@ -296,11 +296,11 @@ export default function FranchiseurUsers() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Utilisateur réactivé');
+      toast.success('Utilisateur réactivé.');
       queryClient.invalidateQueries({ queryKey: ['franchiseur-users'] });
     },
     onError: (error) => {
-      toast.error('Erreur lors de la réactivation');
+      toast.error('Erreur lors de la réactivation.');
       logError(error, 'FRANCHISEUR_USER_REACTIVATE');
     },
   });
@@ -314,12 +314,12 @@ export default function FranchiseurUsers() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Mot de passe réinitialisé (temporaire envoyé par email)');
+      toast.success('Mot de passe réinitialisé (temporaire envoyé par email).');
       setIsResetPasswordDialogOpen(false);
       setSelectedUser(null);
     },
     onError: (error) => {
-      toast.error('Erreur lors de la réinitialisation');
+      toast.error('Erreur lors de la réinitialisation.');
       logError(error, 'FRANCHISEUR_USER_RESET_PWD');
     },
   });
@@ -341,13 +341,13 @@ export default function FranchiseurUsers() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Utilisateur créé');
+      toast.success('Utilisateur créé.');
       queryClient.invalidateQueries({ queryKey: ['franchiseur-users'] });
       setIsCreateDialogOpen(false);
       resetForm();
     },
     onError: (error) => {
-      toast.error('Erreur lors de la création');
+      toast.error('Erreur lors de la création.');
       logError(error, 'FRANCHISEUR_USER_CREATE');
     },
   });
@@ -388,7 +388,7 @@ export default function FranchiseurUsers() {
   
   const handleCreateUser = () => {
     if (!formData.email || !formData.first_name || !formData.last_name || !formData.agence) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+      toast.error('Veuillez remplir tous les champs obligatoires.');
       return;
     }
     createUserMutation.mutate(formData);

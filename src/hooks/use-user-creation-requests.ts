@@ -118,11 +118,11 @@ export function useUserCreationRequests() {
       return data;
     },
     onSuccess: () => {
-      toast.success('Demande de création envoyée');
+      toast.success('Demande de création envoyée.');
       queryClient.invalidateQueries({ queryKey: ['user-creation-requests'] });
     },
     onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+      toast.error(`Erreur : ${error.message}`);
     },
   });
 
@@ -181,12 +181,12 @@ export function useUserCreationRequests() {
       return { request, user: createData };
     },
     onSuccess: () => {
-      toast.success('Utilisateur créé avec succès');
+      toast.success('Utilisateur créé avec succès.');
       queryClient.invalidateQueries({ queryKey: ['user-creation-requests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
     },
     onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+      toast.error(`Erreur : ${error.message}`);
     },
   });
 
@@ -206,11 +206,11 @@ export function useUserCreationRequests() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Demande rejetée');
+      toast.success('Demande rejetée.');
       queryClient.invalidateQueries({ queryKey: ['user-creation-requests'] });
     },
     onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+      toast.error(`Erreur : ${error.message}`);
     },
   });
 
@@ -225,11 +225,11 @@ export function useUserCreationRequests() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Demande supprimée');
+      toast.success('Demande supprimée.');
       queryClient.invalidateQueries({ queryKey: ['user-creation-requests'] });
     },
     onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+      toast.error(`Erreur : ${error.message}`);
     },
   });
 

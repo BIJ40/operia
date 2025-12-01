@@ -19,7 +19,7 @@ export const NetworkMonthlyCAChart = ({ data }: NetworkMonthlyCAChartProps) => {
         <h3 className="text-lg font-semibold text-helpconfort-blue">
           Évolution du CA sur l'année
         </h3>
-        <p className="text-sm text-muted-foreground">Répartition mensuelle du chiffre d'affaires réseau</p>
+        <p className="text-sm text-muted-foreground">Répartition mensuelle du chiffre d'affaires réseau.</p>
       </div>
       
       <ResponsiveContainer width="100%" height={300}>

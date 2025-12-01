@@ -36,7 +36,7 @@ export function TopAgenciesWidget({ agencies }: TopAgenciesWidgetProps) {
       </CardHeader>
       <CardContent>
         {agencies.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Aucune donnée disponible</p>
+          <p className="text-sm text-muted-foreground">Aucune donnée disponible.</p>
         ) : (
           <div className="space-y-3">
             {agencies.map((agency) => (

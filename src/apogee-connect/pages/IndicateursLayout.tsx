@@ -16,7 +16,7 @@ export default function IndicateursLayout() {
     if (!agence) {
       toast({
         title: "Accès refusé",
-        description: "Vous devez avoir une agence définie pour accéder aux indicateurs",
+        description: "Vous devez avoir une agence définie pour accéder aux indicateurs.",
         variant: "destructive",
       });
     }

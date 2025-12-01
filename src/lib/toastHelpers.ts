@@ -20,7 +20,7 @@ export function errorToast(error: ErrorWithCorrelation | string) {
     return;
   }
 
-  const message = error.message || "Une erreur est survenue";
+  const message = error.message || "Une erreur est survenue.";
   const correlationId = error.correlationId;
 
   if (correlationId) {

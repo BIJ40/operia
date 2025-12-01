@@ -279,14 +279,14 @@ export function useApogeeImportBugs() {
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
-      toast.success(`Import BUGS terminé: ${result.created} créés, ${result.updated} mis à jour`);
+      toast.success(`Import BUGS terminé : ${result.created} créés, ${result.updated} mis à jour.`);
       if (result.errors.length > 0) {
-        toast.warning(`${result.errors.length} erreur(s) lors de l'import`);
+        toast.warning(`${result.errors.length} erreur(s) lors de l'import.`);
       }
       setIsImporting(false);
     },
     onError: (error) => {
-      toast.error(`Erreur d'import: ${error.message}`);
+      toast.error(`Erreur d'import : ${error.message}`);
       setIsImporting(false);
     },
   });
