@@ -25,6 +25,7 @@ import {
   ModuleKey
 } from '@/types/modules';
 import { toast } from 'sonner';
+import { logError } from '@/lib/logger';
 import type { Json } from '@/integrations/supabase/types';
 
 import { Input } from '@/components/ui/input';
@@ -249,7 +250,7 @@ export default function FranchiseurUsers() {
     },
     onError: (error) => {
       toast.error('Erreur lors de la mise à jour');
-      console.error(error);
+      logError(error, 'FRANCHISEUR_USER_UPDATE');
     },
   });
   
@@ -275,7 +276,7 @@ export default function FranchiseurUsers() {
     },
     onError: (error) => {
       toast.error('Erreur lors de la désactivation');
-      console.error(error);
+      logError(error, 'FRANCHISEUR_USER_DEACTIVATE');
     },
   });
   
@@ -299,7 +300,7 @@ export default function FranchiseurUsers() {
     },
     onError: (error) => {
       toast.error('Erreur lors de la réactivation');
-      console.error(error);
+      logError(error, 'FRANCHISEUR_USER_REACTIVATE');
     },
   });
   
@@ -318,7 +319,7 @@ export default function FranchiseurUsers() {
     },
     onError: (error) => {
       toast.error('Erreur lors de la réinitialisation');
-      console.error(error);
+      logError(error, 'FRANCHISEUR_USER_RESET_PWD');
     },
   });
   
@@ -346,7 +347,7 @@ export default function FranchiseurUsers() {
     },
     onError: (error) => {
       toast.error('Erreur lors de la création');
-      console.error(error);
+      logError(error, 'FRANCHISEUR_USER_CREATE');
     },
   });
   
