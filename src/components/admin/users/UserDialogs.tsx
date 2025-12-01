@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GlobalRole, GLOBAL_ROLE_LABELS, getAllRolesSorted, getRoleLevel, GLOBAL_ROLES } from '@/types/globalRoles';
 import { UserProfile } from '@/hooks/use-admin-users-unified';
 import { Input } from '@/components/ui/input';
@@ -150,8 +150,9 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', agence: '', roleAgence: '' });
   const [newPassword, setNewPassword] = useState('');
 
-  const handleOpenChange = (o: boolean) => {
-    if (o && user) {
+  // Synchroniser formData avec les données de l'utilisateur à l'ouverture
+  useEffect(() => {
+    if (open && user) {
       setFormData({
         firstName: user.first_name || '',
         lastName: user.last_name || '',
@@ -160,11 +161,10 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
         roleAgence: user.role_agence || '',
       });
     }
-    onOpenChange(o);
-  };
+  }, [open, user]);
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
