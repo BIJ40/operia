@@ -14,6 +14,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: 'V0.4.1',
+    date: '2025-12-01',
+    title: 'Annonces prioritaires et communication réseau',
+    changes: [
+      { type: 'feature', description: 'Module d\'annonces prioritaires avec modal bloquante "J\'ai lu" / "Plus tard"' },
+      { type: 'feature', description: 'Accès admin et franchiseur N3+ aux annonces depuis /admin et /hc-reseau' },
+    ]
+  },
+  {
     version: 'V0.4.0',
     date: '2025-12-01',
     title: 'Release Pré-production',
