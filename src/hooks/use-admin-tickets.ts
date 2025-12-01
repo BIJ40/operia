@@ -29,7 +29,8 @@ export const useAdminTickets = () => {
     category: 'all',
     source: 'all',
     agency: 'all',
-    priority: 'all',
+    heatPriorityMin: 0,
+    heatPriorityMax: 12,
     assignment: 'all', // 'all' | 'mine' | 'unassigned'
   });
 
@@ -80,8 +81,11 @@ export const useAdminTickets = () => {
     if (filters.agency !== 'all') {
       query = query.eq('agency_slug', filters.agency);
     }
-    if (filters.priority !== 'all') {
-      query = query.eq('priority', filters.priority);
+    if (filters.heatPriorityMin > 0) {
+      query = query.gte('heat_priority', filters.heatPriorityMin);
+    }
+    if (filters.heatPriorityMax < 12) {
+      query = query.lte('heat_priority', filters.heatPriorityMax);
     }
     
     // Filtre par assignation

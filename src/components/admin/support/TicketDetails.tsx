@@ -15,15 +15,13 @@ import { fr } from 'date-fns/locale';
 import { SupportTicket } from '@/hooks/use-admin-support';
 import { RatingStars } from '@/components/RatingStars';
 import { TicketStatusBadge } from './TicketStatusBadge';
-import { TicketPriorityBadge } from './TicketPriorityBadge';
+import { HeatPriorityBadge } from '@/components/support/HeatPriorityBadge';
+import { HeatPrioritySelector } from '@/components/support/HeatPrioritySelector';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import {
   TICKET_STATUSES,
   TICKET_STATUS_LABELS,
-  TICKET_PRIORITIES,
-  TICKET_PRIORITY_LABELS,
   type TicketStatus,
-  type TicketPriority,
 } from '@/services/supportService';
 
 interface TicketDetailsProps {
@@ -31,7 +29,7 @@ interface TicketDetailsProps {
   onResolve: () => void;
   onReopen: () => void;
   onStatusChange?: (status: TicketStatus) => void;
-  onPriorityChange?: (priority: TicketPriority) => void;
+  onPriorityChange?: (priority: number) => void;
   onEscalate?: () => void;
 }
 
@@ -81,7 +79,7 @@ export function TicketDetails({
         {/* Badges principaux */}
         <div className="flex flex-wrap items-center gap-2">
           <TicketStatusBadge status={ticket.status} />
-          <TicketPriorityBadge priority={ticket.priority} />
+          <HeatPriorityBadge priority={ticket.heat_priority} />
           <ServiceBadge service={ticket.service} />
           {ticket.support_level && (
             <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">
@@ -124,23 +122,12 @@ export function TicketDetails({
             {onPriorityChange && (
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                  Changer la priorité
+                  Changer la priorité (0-12)
                 </label>
-                <Select
-                  value={ticket.priority}
-                  onValueChange={(value) => onPriorityChange(value as TicketPriority)}
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(TICKET_PRIORITY_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <HeatPrioritySelector
+                  value={ticket.heat_priority}
+                  onValueChange={onPriorityChange}
+                />
               </div>
             )}
           </div>

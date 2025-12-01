@@ -6,7 +6,7 @@
 import { getHeatPriorityConfig } from '@/utils/heatPriority';
 
 interface HeatPriorityBadgeProps {
-  priority: number;
+  priority: number | null | undefined;
   size?: 'sm' | 'default';
   showLabel?: boolean;
 }
@@ -16,6 +16,10 @@ export function HeatPriorityBadge({
   size = 'default',
   showLabel = true 
 }: HeatPriorityBadgeProps) {
+  if (priority === null || priority === undefined) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  
   const config = getHeatPriorityConfig(priority);
   
   const sizeClasses = size === 'sm' 
