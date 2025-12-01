@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAllAnnouncements, useDeleteAnnouncement, useAnnouncementStats } from '@/hooks/use-announcements';
+import { useAllAnnouncements, useDeleteAnnouncement, useAnnouncementStats, type AnnouncementWithDetails } from '@/hooks/use-announcements';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -43,11 +43,11 @@ export default function AdminAnnouncements() {
   const deleteAnnouncement = useDeleteAnnouncement();
 
   const [formOpen, setFormOpen] = useState(false);
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | undefined>();
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<AnnouncementWithDetails | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [announcementToDelete, setAnnouncementToDelete] = useState<{ id: string; imagePath?: string | null } | null>(null);
 
-  const handleEdit = (announcement: Announcement) => {
+  const handleEdit = (announcement: AnnouncementWithDetails) => {
     setSelectedAnnouncement(announcement);
     setFormOpen(true);
   };
@@ -64,7 +64,7 @@ export default function AdminAnnouncements() {
     setAnnouncementToDelete(null);
   };
 
-  const openDeleteDialog = (announcement: Announcement) => {
+  const openDeleteDialog = (announcement: AnnouncementWithDetails) => {
     setAnnouncementToDelete({ id: announcement.id, imagePath: announcement.image_path });
     setDeleteDialogOpen(true);
   };
@@ -126,11 +126,16 @@ export default function AdminAnnouncements() {
                       {announcement.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
                     </p>
 
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         Expire le {format(new Date(announcement.expires_at), 'dd MMM yyyy', { locale: fr })}
                       </div>
+                      {announcement.creator && (
+                        <div className="text-xs">
+                          Créé par {announcement.creator.first_name} {announcement.creator.last_name}
+                        </div>
+                      )}
                       <AnnouncementStatsDisplay announcementId={announcement.id} />
                     </div>
                   </div>
