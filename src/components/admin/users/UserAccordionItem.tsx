@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { GlobalRole, GLOBAL_ROLES, GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, getAllRolesSorted } from '@/types/globalRoles';
-import { MODULE_DEFINITIONS, EnabledModules, ModuleKey, ModuleOptionsState } from '@/types/modules';
+import { MODULE_DEFINITIONS, EnabledModules, ModuleKey, ModuleOptionsState, canAccessModule } from '@/types/modules';
 import { UserProfile } from '@/hooks/use-admin-users-unified';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -249,16 +249,29 @@ export const UserAccordionItem = memo(function UserAccordionItem({
               {MODULE_DEFINITIONS.map(moduleDef => {
                 const isEnabled = isModuleEnabled(moduleDef.key);
                 const options = getModuleOptions(moduleDef.key);
+                const canUserAccessModule = canAccessModule(effectiveRole, moduleDef.key);
+                const isModuleDisabled = !canEdit || !canUserAccessModule;
 
                 return (
-                  <div key={moduleDef.key} className={`p-3 rounded-lg border ${isEnabled ? 'bg-primary/5 border-primary/20' : 'bg-muted/30 border-muted'}`}>
+                  <div key={moduleDef.key} className={`p-3 rounded-lg border ${isEnabled ? 'bg-primary/5 border-primary/20' : canUserAccessModule ? 'bg-muted/30 border-muted' : 'bg-muted/50 border-destructive/30'}`}>
                     <div className="flex items-center gap-3">
-                      <Switch
-                        checked={isEnabled}
-                        onCheckedChange={(checked) => onModuleToggle(moduleDef.key, checked)}
-                        disabled={!canEdit}
-                      />
-                      <span className="text-sm font-medium">{moduleDef.label}</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={(checked) => onModuleToggle(moduleDef.key, checked)}
+                              disabled={isModuleDisabled}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        {!canUserAccessModule && (
+                          <TooltipContent>
+                            Ce module nécessite le rôle {GLOBAL_ROLE_LABELS[moduleDef.minRole]} (N{GLOBAL_ROLES[moduleDef.minRole]}) minimum
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                      <span className={`text-sm font-medium ${!canUserAccessModule ? 'text-muted-foreground' : ''}`}>{moduleDef.label}</span>
                       {moduleDef.options.length > 0 && (
                         <Popover>
                           <PopoverTrigger asChild>
