@@ -845,7 +845,8 @@ export function aggregateUniversApporteurMatrix(
       const client = clientsMap.get(commanditaireId) as any;
       if (!client) return;
 
-      const universList = project.data?.univers || project.univers || [];
+      // API returns "universes" (plural) not "univers" (singular)
+      const universList = project.data?.universes || project.data?.univers || project.universes || project.univers || [];
       const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
       const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
 
@@ -890,44 +891,69 @@ export function aggregateTechnicienUniversStats(
       if (!intervDate) return;
       if (dateRange && !isWithinInterval(intervDate, { start: dateRange.start, end: dateRange.end })) return;
 
-      const userId = intervention.userId || intervention.user_id;
-      if (!userId) return;
+      // User ID can be in different places: directly, in data, or in visites array
+      let userIds: number[] = [];
+      if (intervention.userId) {
+        userIds = [intervention.userId];
+      } else if (intervention.user_id) {
+        userIds = [intervention.user_id];
+      } else if (intervention.data?.visites && Array.isArray(intervention.data.visites)) {
+        // API structure: visites[].usersIds
+        intervention.data.visites.forEach((visite: any) => {
+          if (visite.usersIds && Array.isArray(visite.usersIds)) {
+            userIds.push(...visite.usersIds);
+          }
+        });
+      }
 
-      const user = usersMap.get(userId) as any;
-      if (!user) return;
-
-      const techId = String(userId);
-      const techName = user.nom || user.prenom || `Tech ${userId}`;
-      const universList = intervention.univers || intervention.data?.univers || [];
-      const heures = parseFloat(intervention.duree || intervention.data?.duree || 0) || 0;
+      // API returns "universes" (plural) not "univers" (singular)
+      const universList = intervention.data?.universes || intervention.data?.univers || intervention.universes || intervention.univers || [];
+      // Duration in minutes, convert to hours
+      const dureeMinutes = parseFloat(intervention.duree || intervention.data?.duree || 0) || 0;
+      const heures = dureeMinutes / 60;
       const caHT = parseFloat(intervention.montantHT || intervention.data?.montantHT || 0) || 0;
 
-      if (!techMap.has(techId)) {
-        techMap.set(techId, {
-          technicienId: techId,
-          technicienNom: techName,
-          technicienColor: user.couleur || "#666",
-          technicienActif: user.actif !== false,
-          universes: {},
-          totaux: { caHT: 0, heures: 0, caParHeure: 0, nbDossiers: 0 },
-        });
-      }
+      // Process each user involved in the intervention
+      const uniqueUserIds = [...new Set(userIds)];
+      uniqueUserIds.forEach((userId) => {
+        const user = usersMap.get(userId) as any;
+        if (!user) return;
 
-      const tech = techMap.get(techId)!;
-      tech.totaux.caHT += caHT;
-      tech.totaux.heures += heures;
-      tech.totaux.nbDossiers += 1;
+        // Only count techniciens
+        if (user.type !== 'technicien') return;
 
-      if (Array.isArray(universList) && universList.length > 0) {
-        universList.forEach((univers: string) => {
-          if (!tech.universes[univers]) {
-            tech.universes[univers] = { caHT: 0, heures: 0, caParHeure: 0, nbDossiers: 0 };
-          }
-          tech.universes[univers].caHT += caHT / universList.length;
-          tech.universes[univers].heures += heures / universList.length;
-          tech.universes[univers].nbDossiers += 1 / universList.length;
-        });
-      }
+        const techId = String(userId);
+        const techName = `${user.firstname || ''} ${user.name || ''}`.trim() || `Tech ${userId}`;
+
+        if (!techMap.has(techId)) {
+          techMap.set(techId, {
+            technicienId: techId,
+            technicienNom: techName,
+            technicienColor: user.data?.bgcolor?.hex || user.couleur || "#666",
+            technicienActif: user.is_on !== false,
+            universes: {},
+            totaux: { caHT: 0, heures: 0, caParHeure: 0, nbDossiers: 0 },
+          });
+        }
+
+        const tech = techMap.get(techId)!;
+        // Divide by number of users for shared interventions
+        const share = 1 / uniqueUserIds.length;
+        tech.totaux.caHT += caHT * share;
+        tech.totaux.heures += heures * share;
+        tech.totaux.nbDossiers += share;
+
+        if (Array.isArray(universList) && universList.length > 0) {
+          universList.forEach((univers: string) => {
+            if (!tech.universes[univers]) {
+              tech.universes[univers] = { caHT: 0, heures: 0, caParHeure: 0, nbDossiers: 0 };
+            }
+            tech.universes[univers].caHT += (caHT * share) / universList.length;
+            tech.universes[univers].heures += (heures * share) / universList.length;
+            tech.universes[univers].nbDossiers += share / universList.length;
+          });
+        }
+      });
     });
   });
 
