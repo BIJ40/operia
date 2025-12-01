@@ -1,6 +1,9 @@
 /**
  * Hook pour gérer les demandes de création d'utilisateur
- * Utilisé par N3+ pour soumettre des demandes et par admins pour les traiter
+ * 
+ * @deprecated LEGACY SYSTEM - No longer used in V2 permissions.
+ * All user creation is now direct based on getUserManagementCapabilities.
+ * This hook and user_creation_requests table are kept for historical data only.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
