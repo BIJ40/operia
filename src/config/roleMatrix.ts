@@ -615,7 +615,7 @@ export function canAccessTileGroup(
 export function canAccessTile(
   role: GlobalRole | null,
   tileId: string,
-  options?: { agence?: string | null; canAccessSupportConsole?: boolean }
+  options?: { agence?: string | null; canAccessSupportConsoleUI?: boolean }
 ): boolean {
   const caps = getRoleCapabilities(role);
   
@@ -623,7 +623,7 @@ export function canAccessTile(
   switch (tileId) {
     case 'CONSOLE_SUPPORT':
       // Utiliser la valeur combinée si fournie, sinon fallback sur ROLE_MATRIX
-      return options?.canAccessSupportConsole ?? caps.canAccessSupportConsoleUI;
+      return options?.canAccessSupportConsoleUI ?? caps.canAccessSupportConsoleUI;
     case 'ADMIN_USERS':
       return caps.canManageUsers;
     case 'ADMIN_ROLES':

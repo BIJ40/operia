@@ -116,10 +116,19 @@ const [stats, setStats] = useState<SupportStats>({
           ticketsByStatus[t.status] = (ticketsByStatus[t.status] || 0) + 1;
         });
 
-        // Tickets by priority
-        const ticketsByPriority: Record<string, number> = {};
+        // Tickets by heat priority (grouped by ranges)
+        const ticketsByPriority: Record<string, number> = {
+          'Faible (0-3)': 0,
+          'Moyen (4-7)': 0,
+          'Élevé (8-10)': 0,
+          'Critique (11-12)': 0,
+        };
         tickets.forEach(t => {
-          ticketsByPriority[t.priority] = (ticketsByPriority[t.priority] || 0) + 1;
+          const heat = t.heat_priority ?? 6;
+          if (heat <= 3) ticketsByPriority['Faible (0-3)']++;
+          else if (heat <= 7) ticketsByPriority['Moyen (4-7)']++;
+          else if (heat <= 10) ticketsByPriority['Élevé (8-10)']++;
+          else ticketsByPriority['Critique (11-12)']++;
         });
 
         // SLA removed in V2 - priority-based instead

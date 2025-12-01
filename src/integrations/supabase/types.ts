@@ -2154,7 +2154,6 @@ export type Database = {
           has_attachments: boolean
           heat_priority: number | null
           id: string
-          priority: string
           rating: number | null
           rating_comment: string | null
           resolved_at: string | null
@@ -2188,7 +2187,6 @@ export type Database = {
           has_attachments?: boolean
           heat_priority?: number | null
           id?: string
-          priority?: string
           rating?: number | null
           rating_comment?: string | null
           resolved_at?: string | null
@@ -2222,7 +2220,6 @@ export type Database = {
           has_attachments?: boolean
           heat_priority?: number | null
           id?: string
-          priority?: string
           rating?: number | null
           rating_comment?: string | null
           resolved_at?: string | null

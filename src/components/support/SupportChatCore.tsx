@@ -324,7 +324,7 @@ export function SupportChatCore({
           user_id: user.id,
           subject,
           status: 'new',
-          priority: 'normal',
+          heat_priority: 6, // Normal (was priority: 'normal')
           chatbot_conversation: chatbotConversation,
           type: 'ticket',
           source: 'chat',
@@ -379,7 +379,7 @@ export function SupportChatCore({
           user_id: user?.id,
           subject,
           status: 'new',
-          priority: 'important',
+          heat_priority: 8, // Important (was priority: 'important')
           type: 'chat_ai',
           source: 'chat',
           chatbot_conversation: messages.map(m => ({

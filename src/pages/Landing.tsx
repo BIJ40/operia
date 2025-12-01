@@ -32,7 +32,7 @@ export default function Landing() {
       }
       
       // 3. Vérifier l'accès à la tuile spécifique (passer canAccessSupportConsoleUI pour CONSOLE_SUPPORT)
-      return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsole: canAccessSupportConsoleUI });
+      return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsoleUI });
     });
   }, [globalRole, agence, canAccessSupportConsoleUI, enabledModules]);
 

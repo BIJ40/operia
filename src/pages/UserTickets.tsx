@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { TicketSourceBadge } from '@/components/tickets/TicketSourceBadge';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
+import { HeatPriorityBadge } from '@/components/support/HeatPriorityBadge';
 import { Plus, Send, Download, ArrowLeft, X, Paperclip, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -650,7 +651,7 @@ export default function UserTickets() {
                         <TicketSourceBadge source={ticket.source} />
                         <TicketCategoryBadge category={ticket.category} />
                         {getStatusBadge(ticket.status)}
-                        {getPriorityBadge(ticket.priority)}
+                        <HeatPriorityBadge priority={ticket.heat_priority} size="sm" />
                       </div>
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground">
