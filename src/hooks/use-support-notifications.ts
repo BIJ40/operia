@@ -130,21 +130,20 @@ export function useSupportNotifications() {
           loadTickets();
           playNotificationSound();
           
-          const newTicket = payload.new as any;
-          // Distinguer demande de support en direct vs ticket classique
-          const isLiveRequest = newTicket.type === 'chat_human';
-          
-          if (isLiveRequest) {
-            toast.warning('Demande de support en direct', {
-              description: newTicket.subject || 'Un utilisateur demande une assistance immédiate',
-              duration: 8000,
-            });
-          } else {
-            toast.success('Nouveau ticket créé', {
-              description: newTicket.subject || 'Un utilisateur vient de créer un nouveau ticket',
-              duration: 5000,
-            });
-          }
+          // Notifications popup désactivées (UX)
+          // const newTicket = payload.new as any;
+          // const isLiveRequest = newTicket.type === 'chat_human';
+          // if (isLiveRequest) {
+          //   toast.warning('Demande de support en direct', {
+          //     description: newTicket.subject || 'Un utilisateur demande une assistance immédiate',
+          //     duration: 8000,
+          //   });
+          // } else {
+          //   toast.success('Nouveau ticket créé', {
+          //     description: newTicket.subject || 'Un utilisateur vient de créer un nouveau ticket',
+          //     duration: 5000,
+          //   });
+          // }
         }
       )
       .on(
@@ -195,10 +194,11 @@ export function useSupportNotifications() {
           }
 
           playNotificationSound();
-          toast.info('Nouvelle réponse utilisateur', {
-            description: `Nouvelle réponse sur: ${ticket.subject}`,
-            duration: 5000,
-          });
+          // Notification popup désactivée (UX)
+          // toast.info('Nouvelle réponse utilisateur', {
+          //   description: `Nouvelle réponse sur: ${ticket.subject}`,
+          //   duration: 5000,
+          // });
         }
       )
       .subscribe();
@@ -216,19 +216,19 @@ export function useSupportNotifications() {
         async (payload) => {
           playNotificationSound();
 
-          // Récupérer les infos du ticket
-          const { data: ticket } = await supabase
-            .from('support_tickets')
-            .select('subject, user_id')
-            .eq('id', (payload.new as any).ticket_id)
-            .single();
+          // Notification popup désactivée (UX)
+          // const { data: ticket } = await supabase
+          //   .from('support_tickets')
+          //   .select('subject, user_id')
+          //   .eq('id', (payload.new as any).ticket_id)
+          //   .single();
 
-          toast.info('Nouveau document ajouté', {
-            description: ticket 
-              ? `Document ajouté à: ${ticket.subject}`
-              : 'Un document a été ajouté à un ticket',
-            duration: 5000,
-          });
+          // toast.info('Nouveau document ajouté', {
+          //   description: ticket 
+          //     ? `Document ajouté à: ${ticket.subject}`
+          //     : 'Un document a été ajouté à un ticket',
+          //   duration: 5000,
+          // });
         }
       )
       .subscribe();
