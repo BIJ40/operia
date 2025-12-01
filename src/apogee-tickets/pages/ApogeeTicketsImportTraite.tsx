@@ -1,36 +1,37 @@
-import { useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useApogeeImportTraite, type TraiteRow } from '../hooks/useApogeeImportTraite';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+/**
+ * Page d'import pour les tickets TRAITE
+ * Les tickets importés sont directement intégrés en statut DONE (EN_PROD)
+ */
 
-const KANBAN_ROUTE = '/projects';
+import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDropzone } from 'react-dropzone';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, Upload, FileSpreadsheet, Info, CheckCircle } from 'lucide-react';
+import { useApogeeImportTraite, parseTraiteSheet, type TraiteRow } from '../hooks/useApogeeImportTraite';
+import { ROUTES } from '@/config/routes';
+
+const KANBAN_ROUTE = ROUTES.projects.kanban;
 
 export default function ApogeeTicketsImportTraite() {
+  const navigate = useNavigate();
   const [parsedRows, setParsedRows] = useState<TraiteRow[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
+  
+  const { importRows, isImporting, progress, result, errors } = useApogeeImportTraite();
 
-  const { parseTraiteSheet, importRows, isImporting, progress, result, errors } = useApogeeImportTraite();
-
-  const onDrop = async (acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
-
+    
+    setParseError(null);
     try {
-      setParseError(null);
       const { rows, headers: h } = await parseTraiteSheet(file);
       setParsedRows(rows);
       setHeaders(h);
@@ -41,7 +42,7 @@ export default function ApogeeTicketsImportTraite() {
       setParseError(error.message || 'Erreur lors de la lecture du fichier');
       setParsedRows([]);
     }
-  };
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -49,7 +50,7 @@ export default function ApogeeTicketsImportTraite() {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'application/vnd.ms-excel': ['.xls'],
     },
-    multiple: false,
+    maxFiles: 1,
   });
 
   const handleImport = () => {
@@ -59,59 +60,61 @@ export default function ApogeeTicketsImportTraite() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Import Tickets Traités</h1>
-        <p className="text-muted-foreground">
-          Importez des tickets déjà traités qui seront intégrés directement en statut DONE (EN_PROD).
-        </p>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(KANBAN_ROUTE)}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold">Import Tickets Traités</h1>
+          <p className="text-muted-foreground">Import de tickets déjà traités - intégration directe en statut DONE</p>
+        </div>
       </div>
 
       <Alert>
-        <AlertCircle className="h-4 w-4" />
+        <Info className="h-4 w-4" />
         <AlertDescription>
           <div className="space-y-2">
-            <p className="font-semibold">Structure Excel attendue :</p>
-            <ul className="list-disc list-inside space-y-1 text-sm">
-              <li><strong>origine</strong> : Source ou reporter du ticket</li>
-              <li><strong>module</strong> (ou "modue") : Module concerné (RDV, DEVIS, DOSSIER, etc.)</li>
-              <li><strong>objet</strong> : Titre du ticket</li>
-              <li><strong>description</strong> : Description détaillée</li>
-              <li><strong>commentaires</strong> : Commentaires principaux</li>
-              <li><strong>commentaires / échanges</strong> : Commentaires additionnels</li>
-            </ul>
+            <p className="font-semibold">Structure attendue :</p>
+            <p className="text-sm">
+              <strong>origine</strong> | <strong>module</strong> (ou "modue") | <strong>objet</strong> | <strong>description</strong> | <strong>commentaires</strong> | <strong>commentaires / échanges</strong>
+            </p>
             <p className="text-sm mt-2 text-amber-600 font-medium">
-              ⚠️ Les tickets importés seront automatiquement en statut EN_PROD (DONE) et marqués comme qualifiés.
+              ⚠️ Les tickets importés seront automatiquement en statut <Badge variant="outline" className="bg-green-50 text-green-700">EN_PROD (DONE)</Badge> et marqués comme qualifiés.
             </p>
           </div>
         </AlertDescription>
       </Alert>
 
-      <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-radial from-helpconfort-blue/10 via-white to-white">
-        <div className="p-6 space-y-4">
+      {/* Zone d'upload */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5" />
+            Fichier Excel
+          </CardTitle>
+          <CardDescription>
+            Glissez un fichier .xlsx ou cliquez pour sélectionner
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div
             {...getRootProps()}
-            className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
-              isDragActive
-                ? 'border-helpconfort-blue bg-helpconfort-blue/5'
-                : 'border-gray-300 hover:border-helpconfort-blue'
+            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+              isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
             }`}
           >
             <input {...getInputProps()} />
-            <Upload className="mx-auto h-12 w-12 text-helpconfort-blue mb-4" />
-            <p className="text-lg font-medium mb-2">
-              {isDragActive
-                ? 'Déposez le fichier ici...'
-                : 'Glissez-déposez un fichier Excel ici'}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              ou cliquez pour sélectionner un fichier (.xlsx, .xls)
-            </p>
+            <Upload className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
+            {isDragActive ? (
+              <p>Déposez le fichier ici...</p>
+            ) : (
+              <p>Glissez-déposez un fichier Excel ici, ou cliquez pour sélectionner</p>
+            )}
           </div>
 
           {parseError && (
             <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
               <AlertDescription>{parseError}</AlertDescription>
             </Alert>
           )}
@@ -119,72 +122,55 @@ export default function ApogeeTicketsImportTraite() {
           {parsedRows.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileSpreadsheet className="h-5 w-5 text-helpconfort-blue" />
-                  <span className="font-medium">
-                    Fichier TRAITÉ détecté - {parsedRows.length} ligne(s)
+                <div className="flex items-center gap-4">
+                  <Badge variant="secondary">Fichier TRAITE</Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {parsedRows.length} lignes détectées
                   </span>
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                     Statut: EN_PROD (DONE)
                   </Badge>
                 </div>
-                {!isImporting && !result && (
-                  <Button
-                    onClick={handleImport}
-                    className="bg-helpconfort-blue hover:bg-helpconfort-blue/90"
-                  >
-                    Importer
-                  </Button>
-                )}
+                <Button onClick={handleImport} disabled={isImporting}>
+                  {isImporting ? 'Import en cours...' : 'Importer'}
+                </Button>
               </div>
 
               {isImporting && (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Import en cours...</span>
-                    <span>{progress}%</span>
-                  </div>
-                  <Progress value={progress} className="h-2" />
+                  <Progress value={progress} />
+                  <p className="text-sm text-muted-foreground text-center">{progress}%</p>
                 </div>
               )}
 
               {result && (
-                <Alert>
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <AlertDescription>
-                    <p className="font-medium">Import terminé !</p>
-                    <p className="text-sm mt-1">
-                      {result.created} ticket(s) créé(s), {result.updated} mis à jour
-                    </p>
-                    {errors.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm font-medium text-red-600">Erreurs :</p>
-                        <ul className="list-disc list-inside text-sm">
-                          {errors.slice(0, 5).map((err, i) => (
-                            <li key={i}>{err}</li>
-                          ))}
-                          {errors.length > 5 && (
-                            <li>... et {errors.length - 5} autre(s) erreur(s)</li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-                    <Button
-                      onClick={() => (window.location.href = KANBAN_ROUTE)}
-                      className="mt-4 bg-helpconfort-blue hover:bg-helpconfort-blue/90"
-                    >
-                      Voir le Kanban
-                    </Button>
+                <Alert className="bg-green-50 border-green-200">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    Import terminé: {result.created} créés, {result.updated} mis à jour
                   </AlertDescription>
                 </Alert>
               )}
 
-              <div className="border rounded-lg">
+              {errors.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    <div className="max-h-32 overflow-y-auto">
+                      {errors.map((err, i) => (
+                        <div key={i}>{err}</div>
+                      ))}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Aperçu des données */}
+              <div className="border rounded-lg overflow-hidden">
                 <div className="max-h-[400px] overflow-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-16">Ligne</TableHead>
+                        <TableHead className="w-12">#</TableHead>
                         <TableHead>Origine</TableHead>
                         <TableHead>Module</TableHead>
                         <TableHead>Objet</TableHead>
@@ -196,15 +182,19 @@ export default function ApogeeTicketsImportTraite() {
                       {parsedRows.slice(0, 15).map((row) => (
                         <TableRow key={row.rowIndex}>
                           <TableCell className="font-mono text-xs">{row.rowIndex}</TableCell>
-                          <TableCell className="text-sm">{row.origine || '-'}</TableCell>
-                          <TableCell className="text-sm">{row.module || '-'}</TableCell>
-                          <TableCell className="text-sm max-w-xs truncate">
+                          <TableCell className="max-w-[150px] truncate" title={row.origine || ''}>
+                            {row.origine || '-'}
+                          </TableCell>
+                          <TableCell className="max-w-[100px] truncate" title={row.module || ''}>
+                            {row.module || '-'}
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate" title={row.objet || ''}>
                             {row.objet || '-'}
                           </TableCell>
-                          <TableCell className="text-sm max-w-xs truncate">
-                            {row.description || '-'}
+                          <TableCell className="max-w-[200px] truncate" title={row.description || ''}>
+                            {row.description?.substring(0, 50) || '-'}
                           </TableCell>
-                          <TableCell className="text-sm max-w-xs truncate">
+                          <TableCell className="max-w-[150px] truncate">
                             {row.commentaires || row.commentairesEchanges || '-'}
                           </TableCell>
                         </TableRow>
@@ -214,13 +204,13 @@ export default function ApogeeTicketsImportTraite() {
                 </div>
                 {parsedRows.length > 15 && (
                   <div className="p-2 text-center text-sm text-muted-foreground border-t">
-                    ... et {parsedRows.length - 15} autre(s) ligne(s)
+                    + {parsedRows.length - 15} lignes supplémentaires
                   </div>
                 )}
               </div>
             </div>
           )}
-        </div>
+        </CardContent>
       </Card>
     </div>
   );
