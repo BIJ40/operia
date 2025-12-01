@@ -274,6 +274,7 @@ export default function AdminUsersUnified() {
           isPasswordPending={resetPasswordMutation.isPending}
           agencies={agencies}
           canEditRoleAgence={editDialog.user ? canEditUser(editDialog.user.global_role, editDialog.user.agence) : false}
+          assignableRoles={assignableRoles}
         />
 
         <DeactivateDialog
