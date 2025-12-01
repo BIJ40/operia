@@ -91,7 +91,8 @@ export function useChatbotRealtime({
         },
         (payload) => {
           setSupportMessages((prev) => [...prev, payload.new]);
-          if (payload.new.is_from_support) {
+          // Only notify if message is from support AND not from current user
+          if (payload.new.is_from_support && payload.new.sender_id !== userId) {
             playNotificationSound();
             if (!isOpen) setUnreadCount((prev) => prev + 1);
           }
