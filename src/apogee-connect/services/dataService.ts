@@ -2,22 +2,32 @@ import { api, getApiBaseUrl } from "./api";
 import { GlobalFilters } from "@/apogee-connect/contexts/FiltersContext";
 import { isWithinInterval, parseISO } from "date-fns";
 import { logApogee } from "@/lib/logger";
+import type { User, Client, Project, Intervention, Facture, Devis, InterventionCreneau } from "../types";
 
 // TTL du cache en millisecondes (5 minutes)
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
+/** Structure des données en cache */
+export interface CachedData {
+  users: User[];
+  clients: Client[];
+  projects: Project[];
+  interventions: Intervention[];
+  factures: Facture[];
+  devis: Devis[];
+  creneaux: InterventionCreneau[];
+}
+
 interface CacheEntry {
-  data: {
-    users: any[];
-    clients: any[];
-    projects: any[];
-    interventions: any[];
-    factures: any[];
-    devis: any[];
-    creneaux: any[];
-  };
+  data: CachedData;
   timestamp: number;
   agencyUrl: string;
+}
+
+/** Réponse API générique */
+interface ApiResponse<T> {
+  data?: T[];
+  success?: boolean;
 }
 
 export class DataService {
@@ -25,15 +35,7 @@ export class DataService {
   private static cacheEntry: CacheEntry | null = null;
   
   // Cache en mémoire pour accès rapide (sans TTL check)
-  private static cache: {
-    users?: any[];
-    clients?: any[];
-    projects?: any[];
-    interventions?: any[];
-    factures?: any[];
-    devis?: any[];
-    creneaux?: any[];
-  } = {};
+  private static cache: Partial<CachedData> = {};
 
   // Vérifier si le cache est valide
   private static isCacheValid(): boolean {
@@ -142,11 +144,12 @@ export class DataService {
     });
 
     // Extraire les données (l'API peut retourner un objet avec une clé 'data' ou directement un array)
-    const extractData = (response: any) => {
+    const extractData = <T>(response: T[] | ApiResponse<T> | null): T[] => {
       if (!response) return [];
       if (Array.isArray(response)) return response;
-      if (response.data && Array.isArray(response.data)) return response.data;
-      if (response.success && response.data && Array.isArray(response.data)) return response.data;
+      const apiRes = response as ApiResponse<T>;
+      if (apiRes.data && Array.isArray(apiRes.data)) return apiRes.data;
+      if (apiRes.success && apiRes.data && Array.isArray(apiRes.data)) return apiRes.data;
       logApogee.warn('Format de réponse inattendu:', response);
       return [];
     };
@@ -189,8 +192,9 @@ export class DataService {
     return this.cache;
   }
 
-  // Filtrer par date
-  static filterByDateRange(items: any[], filters: GlobalFilters, dateField: string = 'date') {
+  // Filtrer par date (any[] car les structures API varient)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static filterByDateRange(items: any[], filters: GlobalFilters, dateField: string = 'date'): any[] {
     if (!items || items.length === 0) {
       logApogee.debug(`Aucun item à filtrer pour le champ ${dateField}`);
       return [];
@@ -230,7 +234,8 @@ export class DataService {
     return filtered;
   }
 
-  // Jointures et agrégations
+  // Jointures et agrégations (any car structure API variable)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static getFactureTotalHT(facture: any): number {
     if (!facture) return 0;
     if (typeof facture.totalHT === 'number') return facture.totalHT;
@@ -238,6 +243,7 @@ export class DataService {
     if (facture.data?.totalHT) return parseFloat(facture.data.totalHT) || 0;
     if (facture.data?.totalBrutHT) return parseFloat(facture.data.totalBrutHT) || 0;
     if (Array.isArray(facture.items)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return facture.items.reduce((sum: number, item: any) => sum + (item.totalHt || 0), 0);
     }
     return 0;
@@ -369,9 +375,12 @@ export class DataService {
         // Si aucune durée exploitable : collecter les techniciens pour partage égal
         if (!tempsReparti) {
           const techIds = new Set<string>();
-          if (interv.userId) techIds.add(interv.userId);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const intervAny = interv as any;
+          if (intervAny.userId) techIds.add(intervAny.userId);
           if (interv.usersIds) interv.usersIds.forEach((id: string) => techIds.add(id));
           if (interv.data?.visites) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             interv.data.visites.forEach((v: any) => {
               if (v.usersIds) v.usersIds.forEach((id: string) => techIds.add(id));
             });

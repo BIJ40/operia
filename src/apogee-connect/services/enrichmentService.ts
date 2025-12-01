@@ -6,6 +6,18 @@
 
 import { logDebug } from '@/lib/logger';
 
+// Types API flexibles (structures varient selon la version API)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ApiUser = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ApiClient = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ApiProject = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ApiFacture = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ApiDevis = any;
+
 export interface TechnicianRef {
   id: string;
   fullName: string;
@@ -41,9 +53,9 @@ export class EnrichmentService {
    * Initialiser les référentiels à partir des données API
    */
   static initialize(rawData: {
-    users?: any[];
-    clients?: any[];
-    projects?: any[];
+    users?: ApiUser[];
+    clients?: ApiClient[];
+    projects?: ApiProject[];
   }) {
     this.buildTechniciansMap(rawData.users || []);
     this.buildClientsMap(rawData.clients || []);
@@ -54,7 +66,7 @@ export class EnrichmentService {
    * A. RÉFÉRENTIEL TECHNICIENS
    * Source : apiGetUsers
    */
-  private static buildTechniciansMap(users: any[]) {
+  private static buildTechniciansMap(users: ApiUser[]) {
     users.forEach(user => {
       const firstName = user.firstname || user.firstName || '';
       const lastName = user.lastname || user.lastName || '';
@@ -80,7 +92,7 @@ export class EnrichmentService {
    * B. RÉFÉRENTIEL CLIENTS & APPORTEURS
    * Source : apiGetClients
    */
-  private static buildClientsMap(clients: any[]) {
+  private static buildClientsMap(clients: ApiClient[]) {
     clients.forEach(client => {
       const displayName = 
         client.raisonSociale || 
@@ -107,7 +119,7 @@ export class EnrichmentService {
    * C. RÉFÉRENTIEL UNIVERS MÉTIERS
    * Palette de couleurs FIXE par univers (OBLIGATOIRE)
    */
-  private static buildUniversesMap(projects: any[]) {
+  private static buildUniversesMap(projects: ApiProject[]) {
     const universeSlugs = new Set<string>();
     
     // Collecter tous les univers uniques ET LES NORMALISER immédiatement
@@ -275,10 +287,8 @@ export class EnrichmentService {
     return colors[hash % colors.length];
   }
 
-  /**
-   * Enrichir un objet facture avec labels lisibles
-   */
-  static enrichFacture(facture: any, project?: any): any {
+  /** Facture enrichie avec labels lisibles */
+  static enrichFacture(facture: ApiFacture, project?: ApiProject): ApiFacture & { refFacture: string; clientName: string; projectName: string; apporteurName: string; statusLabel: string } {
     // Format du numéro de facture : utiliser le champ réel
     const refFacture = facture.numeroFacture || facture.ref || facture.factRef || `ID #${facture.id}`;
     
@@ -292,10 +302,8 @@ export class EnrichmentService {
     };
   }
 
-  /**
-   * Enrichir un objet devis avec labels lisibles
-   */
-  static enrichDevis(devis: any, project?: any): any {
+  /** Devis enrichi avec labels lisibles */
+  static enrichDevis(devis: ApiDevis, project?: ApiProject): ApiDevis & { clientName: string; apporteurName: string; statusLabel: string } {
     return {
       ...devis,
       clientName: project ? this.getClient(project.clientId).displayName : '',
@@ -304,10 +312,8 @@ export class EnrichmentService {
     };
   }
 
-  /**
-   * Enrichir un objet dossier avec labels lisibles
-   */
-  static enrichProject(project: any): any {
+  /** Projet enrichi avec labels lisibles */
+  static enrichProject(project: ApiProject): ApiProject & { clientName: string; apporteurName: string; universesLabels: string[] } {
     const universes = project.universes || project.data?.universes || [];
     
     return {
@@ -318,10 +324,8 @@ export class EnrichmentService {
     };
   }
 
-  /**
-   * Labels lisibles pour statuts
-   */
-  private static getFactureStatusLabel(facture: any): string {
+  /** Labels lisibles pour statuts */
+  private static getFactureStatusLabel(facture: ApiFacture): string {
     if (facture.state === 'paid' || facture.isPaid) return 'Payée';
     
     const reste = facture.calc?.restePaidTTC || 0;
@@ -336,7 +340,7 @@ export class EnrichmentService {
     return 'En attente';
   }
 
-  private static getDevisStatusLabel(devis: any): string {
+  private static getDevisStatusLabel(devis: ApiDevis): string {
     const labels: Record<string, string> = {
       'draft': 'Brouillon',
       'sent': 'Envoyé',
