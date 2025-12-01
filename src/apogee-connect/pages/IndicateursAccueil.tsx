@@ -160,16 +160,16 @@ export default function IndicateursAccueil() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Layout 2 colonnes : Temporels à gauche, Globaux à droite */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* COLONNE GAUCHE - KPI Temporels */}
-        <Card className="p-4 border-2 border-primary/20 bg-gradient-to-br from-background to-muted/20">
+        <Card className="p-3 sm:p-4 border-2 border-primary/20 bg-gradient-to-br from-background to-muted/20">
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-lg font-semibold text-foreground whitespace-nowrap">Indicateurs Temporels</h2>
-              <div className="flex-1 flex justify-end">
-                <div className="scale-90 origin-right">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+              <h2 className="text-base sm:text-lg font-semibold text-foreground whitespace-nowrap">Indicateurs Temporels</h2>
+              <div className="relative z-50">
+                <div className="scale-90 sm:scale-100 origin-left sm:origin-right">
                   <PeriodSelector />
                 </div>
               </div>
@@ -333,9 +333,9 @@ export default function IndicateursAccueil() {
         </Card>
 
         {/* COLONNE DROITE - KPI Globaux */}
-        <Card className="p-4 border-2 border-primary/20 bg-gradient-to-br from-background to-muted/20">
+        <Card className="p-3 sm:p-4 border-2 border-primary/20 bg-gradient-to-br from-background to-muted/20">
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-foreground">Indicateurs Globaux</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">Indicateurs Globaux</h2>
 
             <div className="grid grid-cols-2 gap-2">
               {/* KPI 9: Délai moyen */}
