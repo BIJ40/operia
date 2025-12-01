@@ -361,7 +361,7 @@ function TransitionsTab() {
 // ============ HISTORY TAB ============
 function HistoryTab() {
   const { data: history, isLoading } = useTicketHistory('');
-  const { statuses } = useApogeeTickets();
+  const { statuses, tickets } = useApogeeTickets();
   
   const getStatusLabel = (id: string) => {
     return statuses?.find(s => s.id === id)?.label || id;
@@ -374,6 +374,15 @@ function HistoryTab() {
       case 'created': return 'Ticket créé';
       default: return action;
     }
+  };
+
+  const getTicketRef = (ticketId: string) => {
+    return `#${ticketId.slice(0, 6).toUpperCase()}`;
+  };
+
+  const getTicketTitle = (ticketId: string) => {
+    const ticket = tickets?.find(t => t.id === ticketId);
+    return ticket?.element_concerne || '';
   };
   
   return (
@@ -389,6 +398,7 @@ function HistoryTab() {
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
+              <TableHead>Ticket</TableHead>
               <TableHead>Utilisateur</TableHead>
               <TableHead>Action</TableHead>
               <TableHead>Détails</TableHead>
@@ -397,13 +407,13 @@ function HistoryTab() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   Chargement...
                 </TableCell>
               </TableRow>
             ) : history?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   Aucun historique
                 </TableCell>
               </TableRow>
@@ -412,6 +422,16 @@ function HistoryTab() {
                 <TableRow key={entry.id}>
                   <TableCell className="text-sm">
                     {format(new Date(entry.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-mono text-xs font-semibold text-primary">
+                        {getTicketRef(entry.ticket_id)}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate max-w-[150px]" title={getTicketTitle(entry.ticket_id)}>
+                        {getTicketTitle(entry.ticket_id)}
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div>
