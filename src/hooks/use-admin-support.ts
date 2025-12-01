@@ -237,7 +237,7 @@ export const useAdminSupport = () => {
       return;
     }
 
-    successToast(`Statut mis à jour: ${newStatus}`);
+    successToast(`Statut mis à jour : ${newStatus}.`);
     await loadTickets();
     
     if (selectedTicket?.id === ticketId) {
@@ -256,7 +256,7 @@ export const useAdminSupport = () => {
       return;
     }
 
-    successToast(`Priorité mise à jour: ${newPriority}`);
+    successToast(`Priorité mise à jour : ${newPriority}.`);
     await loadTickets();
     
     if (selectedTicket?.id === ticketId) {
@@ -285,7 +285,7 @@ export const useAdminSupport = () => {
       return;
     }
 
-    successToast('Ticket résolu');
+    successToast('Ticket résolu.');
     setSelectedTicket(null);
     await loadTickets();
   };
@@ -303,7 +303,7 @@ export const useAdminSupport = () => {
       return;
     }
 
-    successToast('Ticket réouvert');
+    successToast('Ticket réouvert.');
     await loadTickets();
   };
 
@@ -354,7 +354,7 @@ export const useAdminSupport = () => {
         'ADMIN_SUPPORT_ESCALATE_MESSAGE'
       );
 
-      successToast(`Ticket escaladé vers le niveau ${newLevel}`);
+      successToast(`Ticket escaladé vers le niveau ${newLevel}.`);
       await loadTickets();
       
       if (selectedTicket) {
