@@ -160,7 +160,7 @@ interface EditUserDialogProps {
   user: UserProfile | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: { first_name?: string; last_name?: string; agence?: string; role_agence?: string; support_level?: number }) => void;
+  onSave: (data: { first_name?: string; last_name?: string; agence?: string; role_agence?: string; support_level?: number; global_role?: GlobalRole }) => void;
   onUpdateEmail: (newEmail: string) => void;
   onResetPassword: (newPassword: string) => void;
   isPending: boolean;
@@ -168,10 +168,11 @@ interface EditUserDialogProps {
   isPasswordPending: boolean;
   agencies?: Agency[];
   canEditRoleAgence?: boolean;
+  assignableRoles?: GlobalRole[];
 }
 
-export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail, onResetPassword, isPending, isEmailPending, isPasswordPending, agencies = [], canEditRoleAgence = false }: EditUserDialogProps) {
-  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', agence: '', roleAgence: '', supportLevel: 1 });
+export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail, onResetPassword, isPending, isEmailPending, isPasswordPending, agencies = [], canEditRoleAgence = false, assignableRoles = [] }: EditUserDialogProps) {
+  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', agence: '', roleAgence: '', supportLevel: 1, globalRole: 'base_user' as GlobalRole });
   const [newPassword, setNewPassword] = useState('');
 
   // Synchroniser formData avec les données de l'utilisateur à l'ouverture
@@ -187,6 +188,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
         agence: user.agence || '',
         roleAgence: user.role_agence || '',
         supportLevel,
+        globalRole: user.global_role || 'base_user',
       });
     }
   }, [open, user]);
@@ -267,6 +269,18 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
               <p className="text-xs text-muted-foreground">Seul Admin et N+1 peuvent modifier ce champ</p>
             )}
           </div>
+          <div className="space-y-2">
+            <Label>Rôle global (plafond)</Label>
+            <Select value={formData.globalRole} onValueChange={(v) => setFormData(prev => ({ ...prev, globalRole: v as GlobalRole }))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                {assignableRoles.map(role => (
+                  <SelectItem key={role} value={role}>{GLOBAL_ROLE_LABELS[role]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Définit le niveau d'autorité maximum de l'utilisateur</p>
+          </div>
           {isSupportModuleEnabled() && (
             <div className="space-y-2">
               <Label>Niveau Support (SA)</Label>
@@ -298,6 +312,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
             last_name: formData.lastName, 
             agence: formData.agence, 
             role_agence: formData.roleAgence,
+            global_role: formData.globalRole,
             support_level: isSupportModuleEnabled() ? formData.supportLevel : undefined
           })} disabled={isPending}>
             {isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}

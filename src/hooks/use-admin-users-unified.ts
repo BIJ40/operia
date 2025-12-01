@@ -245,12 +245,13 @@ export function useAdminUsersUnified() {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, data }: { userId: string; data: { first_name?: string; last_name?: string; agence?: string; role_agence?: string; support_level?: number } }) => {
+    mutationFn: async ({ userId, data }: { userId: string; data: { first_name?: string; last_name?: string; agence?: string; role_agence?: string; support_level?: number; global_role?: GlobalRole } }) => {
       const updateData: any = {
         first_name: data.first_name,
         last_name: data.last_name,
         agence: data.agence,
         role_agence: data.role_agence,
+        global_role: data.global_role,
       };
       
       // Si support_level fourni, mettre à jour enabled_modules.support.options.level
