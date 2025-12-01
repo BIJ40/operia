@@ -27,9 +27,6 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'feature', description: 'SLA automatique sur les tickets support' },
       { type: 'feature', description: 'Classification IA des tickets support' },
       { type: 'feature', description: 'RAG consolidé avec Mme MICHU chatbot' },
-      { type: 'improvement', description: 'Refactoring 100% - tous les fichiers < 400 lignes' },
-      { type: 'feature', description: 'Dashboard franchiseur avec top apporteurs podium' },
-      { type: 'feature', description: 'Export multi-format Kanban (CSV/Excel/PDF)' },
     ]
   },
   {
@@ -40,6 +37,9 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'fix', description: 'Correction isolation données agence' },
       { type: 'improvement', description: 'Optimisation chargement statistiques' },
       { type: 'feature', description: 'Notifications blinking sur tickets modifiés' },
+      { type: 'improvement', description: 'Refactoring 100% - tous les fichiers < 400 lignes' },
+      { type: 'feature', description: 'Dashboard franchiseur avec top apporteurs podium' },
+      { type: 'feature', description: 'Export multi-format Kanban (CSV/Excel/PDF)' },
     ]
   },
   {
