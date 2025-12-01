@@ -30,11 +30,11 @@
 **Cause**: Dropdown non filtré selon manageScope (ownAgency/assignedAgencies)  
 **Fix appliqué**: Agences filtrées selon getUserManagementCapabilities - N2 voit sa propre agence, N3 voit agences assignées, N4+ voit tout
 
-### F-EDIT-4 – Module activation sans vérification minRole
+### F-EDIT-4 – Module activation sans vérification minRole ✅ CORRIGÉ
 **Impact**: Admin peut activer module N3+ pour user N1 (incohérence DB/runtime)  
 **Fichiers**: `UserAccordionItem.tsx`  
 **Cause**: Switch module ne vérifie pas moduleDef.minRole vs effectiveRole  
-**Fix**: Valider canAccessModule() avant toggle
+**Fix appliqué**: Validation canAccessModule() avant toggle, Switch désactivé si rôle insuffisant, tooltip explicatif
 
 ### F-NAV-1 – Tile CONSOLE_SUPPORT filtre incohérent
 **Impact**: Flag requiresSupport inutilisé, confusion code  
@@ -82,7 +82,7 @@
 
 ## ⚡ ACTIONS IMMÉDIATES RECOMMANDÉES
 
-### Phase 1 – Sécurité (4h)
+### Phase 1 – Sécurité (4h) ✅ TERMINÉE
 1. ✅ **CORRIGÉ** - Décider architecture Support Console (modulaire vs strict N5+) → **Strict N5+ imposé**
 2. ✅ **CORRIGÉ** - Implémenter validation minRole dans module activation (F-EDIT-4)
 3. ✅ **CORRIGÉ** - Filtrer agences selon manageScope dans EditUserDialog (F-EDIT-2)
