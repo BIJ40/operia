@@ -63,7 +63,7 @@ export default function AdminCollaborators() {
             </div>
             <Select value={agencyFilter} onValueChange={setAgencyFilter}>
               <SelectTrigger className="w-64">
-                <SelectValue placeholder="Filtrer par agence" />
+                <SelectValue placeholder="Filtrer par agence." />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes les agences</SelectItem>
