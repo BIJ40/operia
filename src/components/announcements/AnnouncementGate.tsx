@@ -55,15 +55,10 @@ export function AnnouncementGate({ userId }: AnnouncementGateProps) {
     }
   };
 
-  const handleLater = async () => {
+  const handleLater = () => {
     if (!currentAnnouncement) return;
 
-    await markAsRead.mutateAsync({
-      announcementId: currentAnnouncement.id,
-      userId,
-      status: 'later',
-    });
-
+    // Ne pas marquer comme lu - l'annonce réapparaîtra à la prochaine connexion
     // Passer à l'annonce suivante ou fermer
     if (currentIndex < unreadAnnouncements.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -118,7 +113,6 @@ export function AnnouncementGate({ userId }: AnnouncementGateProps) {
           <Button
             variant="outline"
             onClick={handleLater}
-            disabled={markAsRead.isPending}
           >
             Plus tard
           </Button>
