@@ -59,10 +59,22 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
       // Vérifier le cache d'abord avec CacheManager
       const cached = CacheManager.getItem<Block[]>(CACHE_KEY);
-      if (cached) {
-        setBlocks(cached);
-        setLoading(false);
-        return;
+      if (cached && cached.length > 0) {
+        // Vérifier l'intégrité du cache
+        const categories = cached.filter(b => b.type === 'category');
+        const sections = cached.filter(b => b.type === 'section');
+        
+        logEditor.info(`Cache trouvé: ${cached.length} blocks (${categories.length} catégories, ${sections.length} sections)`);
+        
+        // Si cache suspect (catégories sans sections), l'invalider
+        if (categories.length > 0 && sections.length === 0) {
+          logEditor.warn('Cache invalide détecté, rechargement forcé...');
+          CacheManager.removeItem(CACHE_KEY);
+        } else {
+          setBlocks(cached);
+          setLoading(false);
+          return;
+        }
       }
 
       try {
@@ -118,12 +130,26 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             isEmpty: block.is_empty || false,
           }));
 
+          // Vérifier qu'on a bien des catégories ET des sections
+          const categories = transformedBlocks.filter(b => b.type === 'category');
+          const sections = transformedBlocks.filter(b => b.type === 'section');
+          
+          logEditor.info(`${transformedBlocks.length} blocks chargés depuis Supabase (${categories.length} catégories, ${sections.length} sections)`);
+          
+          // Si on a des catégories mais pas de sections, c'est suspect - ne pas utiliser le cache
+          if (categories.length > 0 && sections.length === 0) {
+            logEditor.warn('Cache suspect: catégories sans sections, rechargement complet...');
+            CacheManager.removeItem(CACHE_KEY);
+            // Forcer un rechargement complet en ne mettant pas en cache
+            setBlocks(transformedBlocks);
+            setLoading(false);
+            return;
+          }
+          
           setBlocks(transformedBlocks);
           
-          // Sauvegarder dans le cache avec CacheManager
+          // Sauvegarder dans le cache avec CacheManager seulement si les données sont complètes
           CacheManager.setItem(CACHE_KEY, transformedBlocks, CACHE_TTL);
-          
-          logEditor.info(`${transformedBlocks.length} blocks chargés depuis Supabase`);
         } else {
           setBlocks([]);
           logEditor.warn('Aucun block retourné par Supabase');

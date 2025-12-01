@@ -342,35 +342,55 @@ export default function CategoryPage({ scope }: CategoryPageProps) {
       </div>
 
       {/* Sections */}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={filteredSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
-          <Accordion
-            type="multiple"
-            value={openAccordions}
-            onValueChange={setOpenAccordions}
-            className="space-y-4"
-          >
-            {filteredSections.map((section) => (
-              <CategorySortableItem
-                key={section.id}
-                section={section}
-                category={category}
-                isEditMode={isEditMode}
-                isAdmin={isAdmin}
-                availableCategories={availableCategories}
-                editingId={editingId}
-                scope={scope}
-                onEdit={handleEdit}
-                onDelete={handleDeleteClick}
-                onDuplicate={onDuplicate}
-                onMoveToCategory={handleMoveToCategory}
-                onAddSection={handleAddSection}
-                onAddTips={handleAddTips}
-              />
-            ))}
-          </Accordion>
-        </SortableContext>
-      </DndContext>
+      {filteredSections.length === 0 ? (
+        <div className="text-center py-12 space-y-4">
+          <p className="text-muted-foreground text-lg">
+            {sections.length === 0 
+              ? "Aucune section dans cette catégorie" 
+              : "Utilisez les boutons TIPS / Sections pour afficher le contenu"}
+          </p>
+          {isEditMode && isAdmin && sections.length === 0 && (
+            <div className="flex gap-2 justify-center">
+              <Button variant="outline" size="sm" onClick={() => handleAddSection()} className="gap-2">
+                <Plus className="h-4 w-4" />Ajouter une section
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleAddTips()} className="gap-2">
+                <Lightbulb className="h-4 w-4" />Ajouter un TIPS
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={filteredSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
+            <Accordion
+              type="multiple"
+              value={openAccordions}
+              onValueChange={setOpenAccordions}
+              className="space-y-4"
+            >
+              {filteredSections.map((section) => (
+                <CategorySortableItem
+                  key={section.id}
+                  section={section}
+                  category={category}
+                  isEditMode={isEditMode}
+                  isAdmin={isAdmin}
+                  availableCategories={availableCategories}
+                  editingId={editingId}
+                  scope={scope}
+                  onEdit={handleEdit}
+                  onDelete={handleDeleteClick}
+                  onDuplicate={onDuplicate}
+                  onMoveToCategory={handleMoveToCategory}
+                  onAddSection={handleAddSection}
+                  onAddTips={handleAddTips}
+                />
+              ))}
+            </Accordion>
+          </SortableContext>
+        </DndContext>
+      )}
 
       {/* Documents */}
       <DocumentsList blockId={category.id} scope={scope} />
