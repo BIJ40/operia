@@ -11,8 +11,13 @@ import { fr } from 'date-fns/locale';
 interface DossierDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId: number;
+  projectId: number | string;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ApiProject = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ApiClient = any;
 
 export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDetailDialogProps) {
   const { data, isLoading, error } = useQuery({
@@ -22,13 +27,13 @@ export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDe
     queryFn: async () => {
       const apiData = await DataService.loadAllData(true);
       
-      const project = apiData.projects?.find(p => p.id === projectId);
+      const project: ApiProject = apiData.projects?.find((p: ApiProject) => String(p.id) === String(projectId));
       if (!project) throw new Error('Dossier non trouvé');
       
-      const client = apiData.clients?.find(c => c.id === project.clientId);
-      const devis = apiData.devis?.filter(d => d.projectId === projectId) || [];
-      const factures = apiData.factures?.filter(f => f.projectId === projectId) || [];
-      const interventions = apiData.interventions?.filter(i => i.projectId === projectId) || [];
+      const client: ApiClient = apiData.clients?.find((c: ApiClient) => String(c.id) === String(project.clientId));
+      const devis = apiData.devis?.filter((d: ApiProject) => String(d.projectId) === String(projectId)) || [];
+      const factures = apiData.factures?.filter((f: ApiProject) => String(f.projectId) === String(projectId)) || [];
+      const interventions = apiData.interventions?.filter((i: ApiProject) => String(i.projectId) === String(projectId)) || [];
       
       return { project, client, devis, factures, interventions };
     },
