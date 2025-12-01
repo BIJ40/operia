@@ -131,6 +131,14 @@ serve(async (req) => {
 
     console.log(`[create-user] Création autorisée: ${globalRole} (N${targetRoleLevel}) par N${callerLevel}`)
 
+    // Validation des champs obligatoires
+    if (!firstName || !firstName.trim()) {
+      throw new Error('Le prénom est obligatoire')
+    }
+    if (!lastName || !lastName.trim()) {
+      throw new Error('Le nom est obligatoire')
+    }
+
     // Validation de l'email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {

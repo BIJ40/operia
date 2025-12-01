@@ -78,7 +78,7 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
               <Input value={formData.firstName} onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))} />
             </div>
             <div className="space-y-2">
-              <Label>Nom</Label>
+              <Label>Nom *</Label>
               <Input value={formData.lastName} onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))} />
             </div>
           </div>
@@ -117,7 +117,7 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
-          <Button onClick={handleSubmit} disabled={!formData.email || !formData.password || !formData.firstName || isPending}>
+          <Button onClick={handleSubmit} disabled={!formData.email || !formData.password || !formData.firstName || !formData.lastName || isPending}>
             {isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
             Créer
           </Button>
