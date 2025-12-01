@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAdminUsersUnified, UserProfile } from '@/hooks/use-admin-users-unified';
 import { GLOBAL_ROLES } from '@/types/globalRoles';
 import { useAuth } from '@/contexts/AuthContext';
+import { getUserManagementCapabilities } from '@/config/roleMatrix';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +28,7 @@ import { CreateUserRequestDialog } from '@/components/admin/users/CreateUserRequ
 import { UserCreationRequestsPanel } from '@/components/admin/users/UserCreationRequestsPanel';
 
 export default function AdminUsersUnified() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, globalRole, user: currentUser } = useAuth();
   
   const {
     // Data
@@ -81,6 +84,49 @@ export default function AdminUsersUnified() {
     handleModuleToggle,
     handleModuleOptionToggle,
   } = useAdminUsersUnified();
+
+  // ✅ FIX F-EDIT-2: Récupérer les agences assignées pour le filtrage
+  const { data: assignedAgenciesData } = useQuery({
+    queryKey: ['user-assigned-agencies', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id) return [];
+      const { data, error } = await supabase
+        .from('franchiseur_agency_assignments')
+        .select('agency_id')
+        .eq('user_id', currentUser.id);
+      if (error) throw error;
+      return data.map(a => a.agency_id);
+    },
+    enabled: !!currentUser?.id,
+  });
+
+  // ✅ FIX F-EDIT-2: Filtrer les agences selon manageScope
+  const manageableAgencies = useMemo(() => {
+    const capabilities = getUserManagementCapabilities(globalRole);
+    
+    // N4+: Toutes les agences
+    if (capabilities.manageScope === 'allAgencies') {
+      return agencies;
+    }
+    
+    // N2: Seulement sa propre agence
+    if (capabilities.manageScope === 'ownAgency' && currentUserAgency) {
+      return agencies.filter(a => a.slug === currentUserAgency);
+    }
+    
+    // N3: Agences assignées
+    if (capabilities.manageScope === 'assignedAgencies') {
+      const assignedAgencies = assignedAgenciesData || [];
+      if (assignedAgencies.length > 0) {
+        return agencies.filter(a => assignedAgencies.includes(a.id));
+      }
+      // Si pas d'assignation spécifique, montrer toutes (fallback pour animateurs sans restriction)
+      return agencies;
+    }
+    
+    // N0-N1: Aucune agence
+    return [];
+  }, [agencies, globalRole, currentUserAgency, assignedAgenciesData]);
 
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -151,7 +197,7 @@ export default function AdminUsersUnified() {
           setModuleFilter={(v) => { setModuleFilter(v); setCurrentPage(0); }}
           showDeactivated={showDeactivated}
           setShowDeactivated={(v) => { setShowDeactivated(v); setCurrentPage(0); }}
-          agencies={agencies}
+          agencies={manageableAgencies}
           canCreateUsers={false}
           onCreateUser={() => {}}
           totalUsers={users.length}
@@ -209,7 +255,7 @@ export default function AdminUsersUnified() {
           }}
           isPending={createUserMutation.isPending}
           assignableRoles={assignableRoles}
-          agencies={agencies}
+          agencies={manageableAgencies}
           currentUserLevel={currentUserLevel}
           currentUserAgency={currentUserAgency}
         />
