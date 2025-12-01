@@ -5,6 +5,9 @@ import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CacheManager } from '@/lib/cache-manager';
 import { logError, logDebug } from '@/lib/logger';
+import type { Database } from '@/integrations/supabase/types';
+
+type ApporteurBlockUpdate = Database['public']['Tables']['apporteur_blocks']['Update'];
 
 interface ApporteurEditorContextType {
   blocks: Block[];
@@ -115,7 +118,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
             order: b.order,
             slug: b.slug,
             parent_id: b.parentId || null,
-            attachments: b.attachments as any || [],
+            attachments: (b.attachments || []) as unknown as Database['public']['Tables']['apporteur_blocks']['Insert']['attachments'],
             hide_from_sidebar: b.hideFromSidebar || false,
             show_title_on_card: b.showTitleOnCard !== false,
             show_title_in_menu: b.showTitleInMenu !== false,
@@ -141,7 +144,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
           order: newBlock.order,
           slug: newBlock.slug,
           parent_id: newBlock.parentId || null,
-          attachments: newBlock.attachments as any || [],
+          attachments: (newBlock.attachments || []) as unknown as Database['public']['Tables']['apporteur_blocks']['Insert']['attachments'],
           hide_from_sidebar: newBlock.hideFromSidebar || false,
           show_title_on_card: newBlock.showTitleOnCard !== false,
           show_title_in_menu: newBlock.showTitleInMenu !== false,
@@ -170,7 +173,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
     
     try {
       // Préparer les données pour Supabase
-      const updateData: any = {};
+      const updateData: ApporteurBlockUpdate = {};
       if (updates.title !== undefined) updateData.title = updates.title;
       if (updates.content !== undefined) updateData.content = updates.content;
       if (updates.slug !== undefined) updateData.slug = updates.slug;
@@ -182,7 +185,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
       if (updates.showTitleOnCard !== undefined) updateData.show_title_on_card = updates.showTitleOnCard;
       if (updates.showTitleInMenu !== undefined) updateData.show_title_in_menu = updates.showTitleInMenu;
       if (updates.isSingleSection !== undefined) updateData.is_single_section = updates.isSingleSection;
-      if (updates.attachments !== undefined) updateData.attachments = updates.attachments;
+      if (updates.attachments !== undefined) updateData.attachments = updates.attachments as unknown as ApporteurBlockUpdate['attachments'];
       if (updates.contentType !== undefined) updateData.content_type = updates.contentType;
       if (updates.tipsType !== undefined) updateData.tips_type = updates.tipsType;
       if (updates.summary !== undefined) updateData.summary = updates.summary;

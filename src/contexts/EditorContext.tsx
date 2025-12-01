@@ -8,6 +8,10 @@ import { supabase } from '@/integrations/supabase/client';
 import apogeeData from '@/data/apogee-data.json';
 import { CacheManager } from '@/lib/cache-manager';
 import { logEditor } from '@/lib/logger';
+import type { Database } from '@/integrations/supabase/types';
+
+type BlockRow = Database['public']['Tables']['blocks']['Row'];
+type BlockUpdate = Database['public']['Tables']['blocks']['Update'];
 
 interface EditorContextType {
   blocks: Block[];
@@ -72,9 +76,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
         if (data && data.length > 0) {
           // Then load content separately in smaller batches to avoid timeout
-          const ids = data.map((b: any) => b.id);
+          const ids = data.map((b) => b.id);
           const batchSize = 50;
-          const contentMap = new Map();
+          const contentMap = new Map<string, string>();
 
           // Load content in batches
           for (let i = 0; i < ids.length; i += batchSize) {
@@ -87,25 +91,25 @@ export function EditorProvider({ children }: { children: ReactNode }) {
             if (contentError) throw contentError;
 
             // Add to content map
-            contentData?.forEach((c: any) => contentMap.set(c.id, c.content));
+            contentData?.forEach((c) => contentMap.set(c.id, c.content || ''));
           }
 
           // Transform data to match Block interface
-          const transformedBlocks: Block[] = data.map((block: any) => ({
+          const transformedBlocks: Block[] = data.map((block) => ({
             id: block.id,
-            type: block.type,
+            type: block.type as Block['type'],
             title: block.title,
             slug: block.slug,
             content: contentMap.get(block.id) || '',
             parentId: block.parent_id,
             order: block.order,
             icon: block.icon,
-            colorPreset: block.color_preset,
+            colorPreset: block.color_preset as Block['colorPreset'],
             hideFromSidebar: block.hide_from_sidebar || false,
             hideTitle: block.hide_title || false,
-            attachments: block.attachments || [],
-            contentType: block.content_type || 'section',
-            tipsType: block.tips_type,
+            attachments: (block.attachments || []) as unknown as Block['attachments'],
+            contentType: (block.content_type || 'section') as Block['contentType'],
+            tipsType: block.tips_type as Block['tipsType'],
             summary: block.summary || '',
             showSummary: block.show_summary !== false,
             isInProgress: block.is_in_progress || false,
@@ -166,7 +170,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         icon: newBlock.icon,
         color_preset: newBlock.colorPreset,
         hide_from_sidebar: newBlock.hideFromSidebar,
-        attachments: newBlock.attachments as any,
+        attachments: newBlock.attachments as unknown as Database['public']['Tables']['blocks']['Insert']['attachments'],
         content_type: newBlock.contentType || 'section',
         tips_type: newBlock.tipsType,
         summary: newBlock.summary || '',
@@ -221,7 +225,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     
     // Sauvegarder dans Supabase
     try {
-      const updateData: any = {};
+      const updateData: BlockUpdate = {};
       if (updates.title !== undefined) updateData.title = updates.title;
       if (updates.content !== undefined) updateData.content = updates.content;
       if (updates.slug !== undefined) updateData.slug = updates.slug;
@@ -231,7 +235,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       if (updates.parentId !== undefined) updateData.parent_id = updates.parentId;
       if (updates.hideFromSidebar !== undefined) updateData.hide_from_sidebar = updates.hideFromSidebar;
       if (updates.hideTitle !== undefined) updateData.hide_title = updates.hideTitle;
-      if (updates.attachments !== undefined) updateData.attachments = updates.attachments;
+      if (updates.attachments !== undefined) updateData.attachments = updates.attachments as unknown as BlockUpdate['attachments'];
       if (updates.contentType !== undefined) updateData.content_type = updates.contentType;
       if (updates.tipsType !== undefined) updateData.tips_type = updates.tipsType;
       if (updates.summary !== undefined) updateData.summary = updates.summary;
@@ -384,21 +388,21 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
 
       if (data) {
-        const transformedBlocks: Block[] = data.map((block: any) => ({
+        const transformedBlocks: Block[] = data.map((block) => ({
           id: block.id,
-          type: block.type,
+          type: block.type as Block['type'],
           title: block.title,
           slug: block.slug,
           content: block.content || '',
           parentId: block.parent_id,
           order: block.order,
           icon: block.icon,
-          colorPreset: block.color_preset,
+          colorPreset: block.color_preset as Block['colorPreset'],
           hideFromSidebar: block.hide_from_sidebar || false,
           hideTitle: block.hide_title || false,
-          attachments: block.attachments || [],
-          contentType: block.content_type || 'section',
-          tipsType: block.tips_type,
+          attachments: (block.attachments || []) as unknown as Block['attachments'],
+          contentType: (block.content_type || 'section') as Block['contentType'],
+          tipsType: block.tips_type as Block['tipsType'],
           summary: block.summary || '',
           showSummary: block.show_summary !== false,
         }));
