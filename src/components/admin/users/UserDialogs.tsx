@@ -93,11 +93,11 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
           {currentUserLevel !== GLOBAL_ROLES.franchisee_admin && (
             <div className="space-y-2">
               <Label>Agence</Label>
-              <Select value={formData.agence} onValueChange={(v) => setFormData(prev => ({ ...prev, agence: v }))}>
+              <Select value={formData.agence || "none"} onValueChange={(v) => setFormData(prev => ({ ...prev, agence: v === "none" ? "" : v }))}>
                 <SelectTrigger><SelectValue placeholder="Sélectionner une agence" /></SelectTrigger>
                 <SelectContent className="bg-background z-50">
-                  <SelectItem value="">Aucune agence</SelectItem>
-                  {agencies.map(a => <SelectItem key={a.id} value={a.slug}>{a.label}</SelectItem>)}
+                  <SelectItem value="none">Aucune agence</SelectItem>
+                  {agencies.filter(a => a.slug && a.slug.trim() !== "").map(a => <SelectItem key={a.id} value={a.slug}>{a.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -206,11 +206,11 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
           </div>
           <div className="space-y-2">
             <Label>Agence</Label>
-            <Select value={formData.agence} onValueChange={(v) => setFormData(prev => ({ ...prev, agence: v }))}>
+            <Select value={formData.agence || "none"} onValueChange={(v) => setFormData(prev => ({ ...prev, agence: v === "none" ? "" : v }))}>
               <SelectTrigger><SelectValue placeholder="Sélectionner une agence" /></SelectTrigger>
               <SelectContent className="bg-background z-50">
-                <SelectItem value="">Aucune agence</SelectItem>
-                {agencies.map((agency) => (
+                <SelectItem value="none">Aucune agence</SelectItem>
+                {agencies.filter(a => a.slug && a.slug.trim() !== "").map((agency) => (
                   <SelectItem key={agency.id} value={agency.slug}>
                     {agency.label}
                   </SelectItem>
