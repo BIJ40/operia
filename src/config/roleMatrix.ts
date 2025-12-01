@@ -22,10 +22,9 @@ export interface RoleCapabilities {
    */
   canAccessSupport: boolean;
   /**
-   * canAccessSupportConsole: Accès au back-office support (/admin/support)
-   * Contrôlé par enabled_modules.support.options.agent OU admin
-   * ROLE_MATRIX définit le baseline, mais l'accès réel dépend de AuthContext.canAccessSupportConsole
-   * qui combine ROLE_MATRIX + enabled_modules.support.options
+   * canAccessSupportConsole: Accès au back-office support (/support/console)
+   * ✅ FIX F-PERM-1: Strictement réservé aux N5+ (platform_admin, superadmin)
+   * ROLE_MATRIX est la source de vérité unique, pas de bypass via module option
    */
   canAccessSupportConsole: boolean;
   canAccessFranchiseur: boolean;

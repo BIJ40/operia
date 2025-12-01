@@ -120,9 +120,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isSupportAgent = isSuperAdmin || supportOptions.agent === true;
   const isSupportAdmin = isSuperAdmin || supportOptions.admin === true;
   
-  // canAccessSupportConsole: nécessite global_role >= N1 (franchisee_user) + agent activé
-  const isAtLeastN1 = globalRoleLevel >= GLOBAL_ROLES.franchisee_user; // N1+
-  const canAccessSupportConsole = isSuperAdmin || (isAtLeastN1 && isSupportAgent);
+  // ✅ FIX F-PERM-1: canAccessSupportConsole doit respecter ROLE_MATRIX (N5+ seulement)
+  // La matrice de rôles définit strictement N5+ pour la console support
+  const baselineCanAccessConsole = globalRole ? getRoleCapabilities(globalRole).canAccessSupportConsole : false;
+  const canAccessSupportConsole = baselineCanAccessConsole; // Respecte strictement la matrice (N5+)
   const canManageTickets = canAccessSupportConsole;
 
   // Contexte d'accès V2.0
