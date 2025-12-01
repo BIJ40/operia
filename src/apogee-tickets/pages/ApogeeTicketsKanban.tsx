@@ -117,7 +117,6 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
     statuses,
     modules,
     priorities,
-    impactTags,
     ownerSides,
     isLoading,
     createTicket,
@@ -290,7 +289,6 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
         onFiltersChange={setFilters}
         modules={modules}
         priorities={priorities}
-        impactTags={impactTags}
       />
 
       {/* Stats rapides + Largeur colonnes */}

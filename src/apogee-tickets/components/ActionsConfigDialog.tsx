@@ -19,7 +19,6 @@ import {
   Trash2, 
   GripVertical, 
   Save, 
-  Tag, 
   Palette, 
   CheckCircle2,
   LayoutGrid,
@@ -34,7 +33,7 @@ import { safeMutation } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
 import { logError } from '@/lib/logger';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import type { ApogeeTicketStatus, ApogeeModule, ApogeePriority, ApogeeImpactTag, ApogeeOwnerSide } from '../types';
+import type { ApogeeTicketStatus, ApogeeModule, ApogeePriority, ApogeeOwnerSide } from '../types';
 import {
   DndContext,
   closestCenter,
@@ -218,20 +217,6 @@ export function ActionsConfigDialog({
     enabled: open,
   });
 
-  // Fetch tags
-  const { data: tags = [], isLoading: loadingTags } = useQuery({
-    queryKey: ['apogee-impact-tags-config'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('apogee_impact_tags')
-        .select('*')
-        .order('display_order');
-      if (error) throw error;
-      return data as ApogeeImpactTag[];
-    },
-    enabled: open,
-  });
-
   // Fetch owner sides
   const { data: ownerSides = [], isLoading: loadingOwnerSides } = useQuery({
     queryKey: ['apogee-owner-sides-config'],
@@ -250,7 +235,6 @@ export function ActionsConfigDialog({
   const [editedStatuses, setEditedStatuses] = useState<ApogeeTicketStatus[]>([]);
   const [editedModules, setEditedModules] = useState<ApogeeModule[]>([]);
   const [editedPriorities, setEditedPriorities] = useState<ApogeePriority[]>([]);
-  const [editedTags, setEditedTags] = useState<ApogeeImpactTag[]>([]);
   const [editedOwnerSides, setEditedOwnerSides] = useState<ApogeeOwnerSide[]>([]);
 
   // Sync when data is loaded
@@ -267,14 +251,10 @@ export function ActionsConfigDialog({
   }, [priorities]);
 
   useEffect(() => {
-    if (tags.length > 0) setEditedTags([...tags]);
-  }, [tags]);
-
-  useEffect(() => {
     if (ownerSides.length > 0) setEditedOwnerSides([...ownerSides]);
   }, [ownerSides]);
 
-  const isLoading = loadingStatuses || loadingModules || loadingPriorities || loadingTags || loadingOwnerSides;
+  const isLoading = loadingStatuses || loadingModules || loadingPriorities || loadingOwnerSides;
 
   // DnD sensors for drag and drop
   const sensors = useSensors(
@@ -313,15 +293,6 @@ export function ActionsConfigDialog({
       const oldIndex = editedPriorities.findIndex((p) => p.id === active.id);
       const newIndex = editedPriorities.findIndex((p) => p.id === over.id);
       setEditedPriorities(arrayMove(editedPriorities, oldIndex, newIndex));
-    }
-  };
-
-  const handleTagDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = editedTags.findIndex((t) => t.id === active.id);
-      const newIndex = editedTags.findIndex((t) => t.id === over.id);
-      setEditedTags(arrayMove(editedTags, oldIndex, newIndex));
     }
   };
 
@@ -453,45 +424,6 @@ export function ActionsConfigDialog({
     successToast('Priorités sauvegardées');
   };
 
-  const saveTags = async () => {
-    const existingIds = tags.map(t => t.id);
-    const currentIds = editedTags.map(t => t.id);
-    const toDelete = existingIds.filter(id => !currentIds.includes(id));
-    
-    if (toDelete.length > 0) {
-      const deleteResult = await safeMutation(
-        supabase.from('apogee_impact_tags').delete().in('id', toDelete),
-        'APOGEE_CONFIG_DELETE_TAGS'
-      );
-      if (!deleteResult.success) {
-        logError('apogee-config', 'Error deleting tags', deleteResult.error);
-        errorToast(deleteResult.error!);
-        return;
-      }
-    }
-
-    for (let i = 0; i < editedTags.length; i++) {
-      const tag = editedTags[i];
-      const upsertResult = await safeMutation(
-        supabase.from('apogee_impact_tags').upsert({
-          id: tag.id,
-          label: tag.label,
-          display_order: i,
-          color: tag.color,
-        }),
-        'APOGEE_CONFIG_UPSERT_TAG'
-      );
-      if (!upsertResult.success) {
-        logError('apogee-config', 'Error upserting tag', upsertResult.error);
-        errorToast(upsertResult.error!);
-        return;
-      }
-    }
-
-    queryClient.invalidateQueries({ queryKey: ['apogee-impact-tags'] });
-    successToast('Tags sauvegardés');
-  };
-
   const saveOwnerSides = async () => {
     const existingIds = ownerSides.map(o => o.id);
     const currentIds = editedOwnerSides.map(o => o.id);
@@ -566,17 +498,6 @@ export function ActionsConfigDialog({
     }]);
   };
 
-  const addTag = () => {
-    const newId = `tag_${Date.now()}`;
-    setEditedTags([...editedTags, {
-      id: newId,
-      label: 'Nouveau tag',
-      display_order: editedTags.length,
-      color: 'gray',
-      created_at: new Date().toISOString(),
-    }]);
-  };
-
   const addOwnerSide = () => {
     const newId = `OWNER_${Date.now()}`;
     setEditedOwnerSides([...editedOwnerSides, {
@@ -604,7 +525,7 @@ export function ActionsConfigDialog({
           </div>
         ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-          <TabsList className="mx-6 grid w-auto grid-cols-5">
+          <TabsList className="mx-6 grid w-auto grid-cols-4">
             <TabsTrigger value="statuses" className="flex items-center gap-1.5">
               <LayoutGrid className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Statuts ({editedStatuses.length})</span>
@@ -621,10 +542,6 @@ export function ActionsConfigDialog({
             <TabsTrigger value="priorities" className="flex items-center gap-1.5">
               <Thermometer className="h-3.5 w-3.5" />
               Priorités
-            </TabsTrigger>
-            <TabsTrigger value="tags" className="flex items-center gap-1.5">
-              <Tag className="h-3.5 w-3.5" />
-              Tags ({editedTags.length})
             </TabsTrigger>
           </TabsList>
 
@@ -902,103 +819,6 @@ export function ActionsConfigDialog({
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-
-            {/* Tags */}
-            <TabsContent value="tags" className="px-6 pb-6 space-y-4 mt-4">
-              <Card className="bg-muted/30">
-                <CardHeader className="py-3">
-                  <CardDescription className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    Les tags d'impact permettent de catégoriser les tickets. Glissez pour réordonner.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleTagDragEnd}
-              >
-                <SortableContext
-                  items={editedTags.map(t => t.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-3">
-                    {editedTags.map((tag, idx) => (
-                      <SortableItem key={`tag-${idx}`} id={tag.id}>
-                        <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
-                        
-                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
-                          <div>
-                            <Label className="text-xs text-muted-foreground">ID technique</Label>
-                            <Input
-                              value={tag.id}
-                              onChange={(e) => {
-                                const updated = [...editedTags];
-                                updated[idx] = { ...tag, id: e.target.value.toLowerCase().replace(/\s/g, '_') };
-                                setEditedTags(updated);
-                              }}
-                              placeholder="perf"
-                              className="h-9 text-xs font-mono"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Libellé affiché</Label>
-                            <Input
-                              value={tag.label}
-                              onChange={(e) => {
-                                const updated = [...editedTags];
-                                updated[idx] = { ...tag, label: e.target.value };
-                                setEditedTags(updated);
-                              }}
-                              placeholder="Performance"
-                              className="h-9"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Couleur</Label>
-                            <ColorPicker
-                              value={tag.color}
-                              onChange={(color) => {
-                                const updated = [...editedTags];
-                                updated[idx] = { ...tag, color };
-                                setEditedTags(updated);
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Aperçu</Label>
-                            <div className="h-9 flex items-center">
-                              <BadgePreview label={tag.label} color={tag.color} />
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="shrink-0"
-                          onClick={() => setEditedTags(editedTags.filter((_, i) => i !== idx))}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </SortableItem>
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-              
-              <div className="flex justify-between pt-2">
-                <Button variant="outline" onClick={addTag}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajouter un tag
-                </Button>
-                <Button onClick={saveTags}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Sauvegarder les tags
-                </Button>
-              </div>
             </TabsContent>
 
             {/* Porteurs (Owner sides) */}

@@ -27,13 +27,7 @@ export interface ApogeePriority {
   created_at: string;
 }
 
-export interface ApogeeImpactTag {
-  id: string;
-  label: string;
-  display_order: number;
-  color: string;
-  created_at: string;
-}
+// ApogeeImpactTag supprimé - non utilisé
 
 export interface ApogeeOwnerSide {
   id: string;
@@ -68,7 +62,7 @@ export type TicketTheme =
 export type TicketType = 'bug' | 'evolution' | 'ergonomie' | 'data' | 'process';
 export type PriorityNormalized = 'P0' | 'P1' | 'P2' | 'P3' | 'P4';
 export type QualifStatus = 'a_qualifier' | 'reproduit' | 'spec_ok' | 'pret_dev' | 'en_dev' | 'en_test' | 'deploye' | 'obsolete';
-export type ImpactTag = 'impact_facturation' | 'impact_terrain' | 'impact_rel_client' | 'impact_pilotage' | 'impact_process';
+// ImpactTag supprimé - non utilisé
 
 export interface ApogeeTicket {
   id: string;
@@ -97,7 +91,6 @@ export interface ApogeeTicket {
   // Champs qualification IA
   theme: TicketTheme | null;
   ticket_type: TicketType | null;
-  impact_tags: ImpactTag[] | null;
   priority_normalized: PriorityNormalized | null;
   qualif_status: QualifStatus | null;
   notes_internes: string | null;
@@ -199,7 +192,6 @@ export interface TicketFilters {
   search?: string;
   needs_completion?: boolean;
   is_qualified?: boolean;
-  impact_tag?: string;
   heat_priority_min?: number;
   heat_priority_max?: number;
   heat_priority_exact?: number; // For clicking on a specific dot
