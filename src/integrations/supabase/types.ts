@@ -734,6 +734,7 @@ export type Database = {
           source_row_index: number | null
           source_sheet: string | null
           theme: string | null
+          ticket_number: number
           ticket_type: string | null
           updated_at: string
         }
@@ -772,6 +773,7 @@ export type Database = {
           source_row_index?: number | null
           source_sheet?: string | null
           theme?: string | null
+          ticket_number?: number
           ticket_type?: string | null
           updated_at?: string
         }
@@ -810,6 +812,7 @@ export type Database = {
           source_row_index?: number | null
           source_sheet?: string | null
           theme?: string | null
+          ticket_number?: number
           ticket_type?: string | null
           updated_at?: string
         }

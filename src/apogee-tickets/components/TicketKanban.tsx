@@ -148,8 +148,8 @@ function DraggableTicketCard({
             <GripVertical className="h-4 w-4" />
           </div>
           <div className="flex-1 flex flex-wrap gap-1 items-center">
-            <span className="text-xs font-mono text-muted-foreground">
-              #{ticket.id.slice(0, 6).toUpperCase()}
+            <span className="text-xs font-mono text-muted-foreground font-semibold">
+              APO-{String(ticket.ticket_number || 0).padStart(3, '0')}
             </span>
             {ticket.module && moduleColor && (
               <Badge style={{ backgroundColor: moduleColor }} className="text-white text-xs">

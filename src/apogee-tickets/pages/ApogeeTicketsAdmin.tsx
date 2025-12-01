@@ -377,7 +377,9 @@ function HistoryTab() {
   };
 
   const getTicketRef = (ticketId: string) => {
-    return `#${ticketId.slice(0, 6).toUpperCase()}`;
+    const ticket = tickets?.find(t => t.id === ticketId);
+    const num = ticket?.ticket_number || 0;
+    return `APO-${String(num).padStart(3, '0')}`;
   };
 
   const getTicketTitle = (ticketId: string) => {
