@@ -15,8 +15,8 @@ interface CategoryBlock {
 export const useAdminBackup = () => {
   const [apogeeCategories, setApogeeCategories] = useState<CategoryBlock[]>([]);
   const [apporteurCategories, setApporteurCategories] = useState<CategoryBlock[]>([]);
-  const [selectedApogeeCategory, setSelectedApogeeCategory] = useState<string>('');
-  const [selectedApporteurCategory, setSelectedApporteurCategory] = useState<string>('');
+  const [selectedApogeeCategories, setSelectedApogeeCategories] = useState<string[]>([]);
+  const [selectedApporteurCategories, setSelectedApporteurCategories] = useState<string[]>([]);
   const [exportingApogee, setExportingApogee] = useState(false);
   const [exportingApporteur, setExportingApporteur] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -216,7 +216,8 @@ export const useAdminBackup = () => {
   };
 
   const exportSingleCategory = async (scope: 'apogee' | 'apporteur', format: 'json' | 'txt') => {
-    const categoryId = scope === 'apogee' ? selectedApogeeCategory : selectedApporteurCategory;
+    const selectedCategories = scope === 'apogee' ? selectedApogeeCategories : selectedApporteurCategories;
+    const categoryId = selectedCategories[0];
     const setLoading = scope === 'apogee' ? setExportingApogee : setExportingApporteur;
     const tableName = scope === 'apogee' ? 'blocks' : 'apporteur_blocks';
     const guideTitle = scope === 'apogee' ? 'MANUEL APOGÉE' : 'GUIDE APPORTEUR';
@@ -282,7 +283,8 @@ export const useAdminBackup = () => {
   };
 
   const exportSingleCategoryPdf = async (scope: 'apogee' | 'apporteur') => {
-    const categoryId = scope === 'apogee' ? selectedApogeeCategory : selectedApporteurCategory;
+    const selectedCategories = scope === 'apogee' ? selectedApogeeCategories : selectedApporteurCategories;
+    const categoryId = selectedCategories[0];
     const setLoading = scope === 'apogee' ? setExportingApogee : setExportingApporteur;
     const tableName = scope === 'apogee' ? 'blocks' : 'apporteur_blocks';
     const guideTitle = scope === 'apogee' ? 'Manuel Apogée' : 'Guide Apporteur';
@@ -600,11 +602,229 @@ export const useAdminBackup = () => {
     }
   };
 
+  // Export multiple categories as separate PDFs
+  const exportMultipleCategoriesPdf = async (scope: 'apogee' | 'apporteur') => {
+    const selectedCategories = scope === 'apogee' ? selectedApogeeCategories : selectedApporteurCategories;
+    const setLoading = scope === 'apogee' ? setExportingApogee : setExportingApporteur;
+    const tableName = scope === 'apogee' ? 'blocks' : 'apporteur_blocks';
+    const guideTitle = scope === 'apogee' ? 'Manuel Apogée' : 'Guide Apporteur';
+
+    if (selectedCategories.length === 0) {
+      errorToast('Aucune catégorie sélectionnée');
+      return;
+    }
+
+    setLoading(true);
+    let exportedCount = 0;
+
+    try {
+      for (const categoryId of selectedCategories) {
+        const result = await safeQuery<any[]>(
+          supabase.from(tableName).select('*').or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
+          `BACKUP_EXPORT_MULTI_PDF_${scope.toUpperCase()}`
+        );
+
+        if (!result.success || !result.data) continue;
+
+        const blocks = result.data;
+        const category = blocks.find(b => b.id === categoryId);
+        const sections = blocks.filter(b => b.parent_id === categoryId).sort((a, b) => a.order - b.order);
+
+        if (!category) continue;
+
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 15;
+        const contentWidth = pageWidth - margin * 2;
+        let yPosition = margin;
+
+        const checkPageBreak = (requiredHeight: number) => {
+          if (yPosition + requiredHeight > pageHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+            return true;
+          }
+          return false;
+        };
+
+        // Title page
+        pdf.setFontSize(24);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(guideTitle, pageWidth / 2, 50, { align: 'center' });
+        
+        pdf.setFontSize(18);
+        pdf.text(category.title, pageWidth / 2, 70, { align: 'center' });
+        
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Export du ${new Date().toLocaleDateString('fr-FR')}`, pageWidth / 2, 85, { align: 'center' });
+        pdf.text(`${sections.length} section(s)`, pageWidth / 2, 92, { align: 'center' });
+
+        // Process each section
+        for (const section of sections) {
+          pdf.addPage();
+          yPosition = margin;
+
+          pdf.setFontSize(16);
+          pdf.setFont('helvetica', 'bold');
+          const titleLines = pdf.splitTextToSize(section.title, contentWidth);
+          pdf.text(titleLines, margin, yPosition);
+          yPosition += titleLines.length * 8 + 5;
+
+          pdf.setDrawColor(200, 200, 200);
+          pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+          yPosition += 8;
+
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = section.content || '';
+
+          const processNode = async (node: Node) => {
+            if (node.nodeType === Node.TEXT_NODE) {
+              const text = node.textContent?.trim();
+              if (text) {
+                pdf.setFontSize(11);
+                pdf.setFont('helvetica', 'normal');
+                const lines = pdf.splitTextToSize(text, contentWidth);
+                checkPageBreak(lines.length * 5 + 3);
+                pdf.text(lines, margin, yPosition);
+                yPosition += lines.length * 5 + 3;
+              }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+              const element = node as HTMLElement;
+              const tagName = element.tagName.toLowerCase();
+
+              if (tagName === 'img') {
+                const imgSrc = element.getAttribute('src');
+                if (imgSrc) {
+                  try {
+                    const response = await fetch(imgSrc);
+                    const blob = await response.blob();
+                    const base64 = await new Promise<string>((resolve) => {
+                      const reader = new FileReader();
+                      reader.onloadend = () => resolve(reader.result as string);
+                      reader.readAsDataURL(blob);
+                    });
+
+                    const img = new Image();
+                    await new Promise<void>((resolve) => {
+                      img.onload = () => resolve();
+                      img.onerror = () => resolve();
+                      img.src = base64;
+                    });
+
+                    if (img.width > 0 && img.height > 0) {
+                      const maxWidth = contentWidth;
+                      const maxHeight = 100;
+                      let imgWidth = img.width * 0.264583;
+                      let imgHeight = img.height * 0.264583;
+
+                      if (imgWidth > maxWidth) {
+                        const ratio = maxWidth / imgWidth;
+                        imgWidth = maxWidth;
+                        imgHeight *= ratio;
+                      }
+                      if (imgHeight > maxHeight) {
+                        const ratio = maxHeight / imgHeight;
+                        imgHeight = maxHeight;
+                        imgWidth *= ratio;
+                      }
+
+                      checkPageBreak(imgHeight + 10);
+                      pdf.addImage(base64, 'JPEG', margin, yPosition, imgWidth, imgHeight);
+                      yPosition += imgHeight + 8;
+                    }
+                  } catch (imgError) {
+                    logError('use-admin-backup', 'Erreur chargement image PDF', imgError);
+                  }
+                }
+              } else if (tagName === 'h1' || tagName === 'h2' || tagName === 'h3') {
+                const text = element.textContent?.trim();
+                if (text) {
+                  checkPageBreak(15);
+                  const fontSize = tagName === 'h1' ? 14 : tagName === 'h2' ? 13 : 12;
+                  pdf.setFontSize(fontSize);
+                  pdf.setFont('helvetica', 'bold');
+                  const lines = pdf.splitTextToSize(text, contentWidth);
+                  pdf.text(lines, margin, yPosition);
+                  yPosition += lines.length * 6 + 5;
+                }
+              } else if (tagName === 'p') {
+                const text = element.textContent?.trim();
+                if (text) {
+                  pdf.setFontSize(11);
+                  pdf.setFont('helvetica', 'normal');
+                  const lines = pdf.splitTextToSize(text, contentWidth);
+                  checkPageBreak(lines.length * 5 + 5);
+                  pdf.text(lines, margin, yPosition);
+                  yPosition += lines.length * 5 + 5;
+                }
+              } else if (tagName === 'ul' || tagName === 'ol') {
+                const listItems = element.querySelectorAll(':scope > li');
+                let itemIndex = 1;
+                for (const li of Array.from(listItems)) {
+                  const text = li.textContent?.trim();
+                  if (text) {
+                    const bullet = tagName === 'ul' ? '•' : `${itemIndex}.`;
+                    pdf.setFontSize(11);
+                    pdf.setFont('helvetica', 'normal');
+                    const lines = pdf.splitTextToSize(`${bullet} ${text}`, contentWidth - 5);
+                    checkPageBreak(lines.length * 5 + 2);
+                    pdf.text(lines, margin + 5, yPosition);
+                    yPosition += lines.length * 5 + 2;
+                    itemIndex++;
+                  }
+                }
+                yPosition += 3;
+              } else if (tagName === 'table') {
+                const rows = element.querySelectorAll('tr');
+                for (const row of Array.from(rows)) {
+                  const cells = row.querySelectorAll('td, th');
+                  const rowText = Array.from(cells).map(c => c.textContent?.trim()).join(' | ');
+                  if (rowText) {
+                    pdf.setFontSize(10);
+                    pdf.setFont('helvetica', 'normal');
+                    const lines = pdf.splitTextToSize(rowText, contentWidth);
+                    checkPageBreak(lines.length * 4 + 2);
+                    pdf.text(lines, margin, yPosition);
+                    yPosition += lines.length * 4 + 2;
+                  }
+                }
+                yPosition += 5;
+              } else {
+                for (const child of Array.from(element.childNodes)) {
+                  await processNode(child);
+                }
+              }
+            }
+          };
+
+          for (const child of Array.from(tempDiv.childNodes)) {
+            await processNode(child);
+          }
+        }
+
+        pdf.save(`export-${scope}-${category.slug}-${new Date().toISOString().split('T')[0]}.pdf`);
+        exportedCount++;
+        
+        // Small delay between downloads to avoid browser blocking
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      successToast('Export PDF terminé !', `${exportedCount} fichier(s) PDF exporté(s)`);
+    } catch (error) {
+      logError('use-admin-backup', `Erreur export multi PDF ${scope}`, error);
+      errorToast("Erreur d'export PDF");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     apogeeCategories, apporteurCategories,
-    selectedApogeeCategory, selectedApporteurCategory,
-    setSelectedApogeeCategory, setSelectedApporteurCategory,
+    selectedApogeeCategories, selectedApporteurCategories,
+    setSelectedApogeeCategories, setSelectedApporteurCategories,
     exportingApogee, exportingApporteur, exporting, importing, lastBackup,
-    exportApogeeData, exportApporteurData, exportTextOnly, exportSingleCategory, exportSingleCategoryPdf, exportAllData, importData,
+    exportApogeeData, exportApporteurData, exportTextOnly, exportSingleCategory, exportSingleCategoryPdf, exportMultipleCategoriesPdf, exportAllData, importData,
   };
 };

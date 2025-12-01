@@ -10,10 +10,10 @@ export default function AdminBackup() {
   const {
     apogeeCategories,
     apporteurCategories,
-    selectedApogeeCategory,
-    selectedApporteurCategory,
-    setSelectedApogeeCategory,
-    setSelectedApporteurCategory,
+    selectedApogeeCategories,
+    selectedApporteurCategories,
+    setSelectedApogeeCategories,
+    setSelectedApporteurCategories,
     exportingApogee,
     exportingApporteur,
     exporting,
@@ -24,6 +24,7 @@ export default function AdminBackup() {
     exportTextOnly,
     exportSingleCategory,
     exportSingleCategoryPdf,
+    exportMultipleCategoriesPdf,
     exportAllData,
     importData,
   } = useAdminBackup();
@@ -81,31 +82,33 @@ export default function AdminBackup() {
           <Alert>
             <FileText className="h-4 w-4" />
             <AlertDescription>
-              Exportez une seule catégorie avec toutes ses sections en JSON ou texte brut.
+              Exportez une ou plusieurs catégories avec toutes leurs sections en JSON, texte ou PDF avec images.
             </AlertDescription>
           </Alert>
 
           <div className="grid md:grid-cols-2 gap-6">
             <CategoryExportCard
               title="Catégorie Apogée"
-              description="Sélectionnez une catégorie du guide Apogée"
+              description="Sélectionnez une ou plusieurs catégories du guide Apogée"
               categories={apogeeCategories}
-              selectedCategory={selectedApogeeCategory}
-              onCategoryChange={setSelectedApogeeCategory}
+              selectedCategories={selectedApogeeCategories}
+              onCategoriesChange={setSelectedApogeeCategories}
               onExportJson={() => exportSingleCategory('apogee', 'json')}
               onExportText={() => exportSingleCategory('apogee', 'txt')}
               onExportPdf={() => exportSingleCategoryPdf('apogee')}
+              onExportMultiplePdf={() => exportMultipleCategoriesPdf('apogee')}
               isLoading={exportingApogee}
             />
             <CategoryExportCard
               title="Catégorie Apporteur"
-              description="Sélectionnez une catégorie du guide Apporteur"
+              description="Sélectionnez une ou plusieurs catégories du guide Apporteur"
               categories={apporteurCategories}
-              selectedCategory={selectedApporteurCategory}
-              onCategoryChange={setSelectedApporteurCategory}
+              selectedCategories={selectedApporteurCategories}
+              onCategoriesChange={setSelectedApporteurCategories}
               onExportJson={() => exportSingleCategory('apporteur', 'json')}
               onExportText={() => exportSingleCategory('apporteur', 'txt')}
               onExportPdf={() => exportSingleCategoryPdf('apporteur')}
+              onExportMultiplePdf={() => exportMultipleCategoriesPdf('apporteur')}
               isLoading={exportingApporteur}
             />
           </div>
