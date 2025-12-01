@@ -14,6 +14,9 @@ import { SupportConsoleGuard } from "./components/auth/SupportConsoleGuard";
 // Critical pages - loaded immediately
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
+import Error401 from "./pages/Error401";
+import Error403 from "./pages/Error403";
+import Error500 from "./pages/Error500";
 
 // Lazy loaded pages - Section Index Pages
 const AcademyIndex = lazy(() => import("./pages/AcademyIndex"));
