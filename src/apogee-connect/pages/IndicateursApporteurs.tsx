@@ -213,15 +213,15 @@ export default function IndicateursApporteurs() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
           Les apporteurs
         </h1>
         <SecondaryPeriodSelector />
       </div>
 
       {/* Métriques clés en 5 cartes horizontales */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Carte 1: Dû global */}
         <div className="group rounded-xl border border-helpconfort-blue/20 p-4
           bg-gradient-to-br from-white to-helpconfort-blue/5
@@ -316,7 +316,7 @@ export default function IndicateursApporteurs() {
       </div>
 
       {/* 5 nouveaux KPI avec données réelles */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
         {/* KPI 6: Nombre d'apporteurs actifs */}
         <div className="group rounded-xl border border-helpconfort-blue/15 p-4
           bg-gradient-to-b from-helpconfort-blue/5 to-white

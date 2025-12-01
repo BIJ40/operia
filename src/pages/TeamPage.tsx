@@ -218,7 +218,7 @@ export default function TeamPage() {
               {teamMembers.map((member) => (
                 <div
                   key={member.id}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors gap-2"
                 >
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
@@ -237,36 +237,38 @@ export default function TeamPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end sm:justify-start mt-2 sm:mt-0">
                     {/* Poste */}
-                    <Badge variant="outline">{member.role}</Badge>
+                    <Badge variant="outline" className="text-xs sm:text-sm">{member.role}</Badge>
 
                     {/* Statut compte */}
                     {member.hasAccount ? (
                       <>
-                        <Badge variant="default" className="bg-green-600">
-                          Compte actif
+                        <Badge variant="default" className="bg-green-600 text-xs sm:text-sm">
+                          <span className="hidden sm:inline">Compte actif</span>
+                          <span className="sm:hidden">Actif</span>
                         </Badge>
                         {member.globalRole && (
-                          <Badge variant="secondary">
+                          <Badge variant="secondary" className="text-xs sm:text-sm hidden md:inline-flex">
                             {GLOBAL_ROLE_LABELS[member.globalRole as keyof typeof GLOBAL_ROLE_LABELS] || member.globalRole}
                           </Badge>
                         )}
                         {member.isActive === false && (
-                          <Badge variant="destructive">Inactif</Badge>
+                          <Badge variant="destructive" className="text-xs sm:text-sm">Inactif</Badge>
                         )}
                       </>
                     ) : (
                       <>
-                        <Badge variant="secondary">Sans compte</Badge>
+                        <Badge variant="secondary" className="text-xs sm:text-sm">Sans compte</Badge>
                         {canCreateUser && member.collaborator && (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleCreateUser(member.collaborator!)}
+                            className="text-xs sm:text-sm"
                           >
-                            <UserPlus className="h-4 w-4 mr-1" />
-                            Créer compte
+                            <UserPlus className="h-4 w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">Créer compte</span>
                           </Button>
                         )}
                       </>
@@ -274,22 +276,25 @@ export default function TeamPage() {
 
                     {/* Actions pour collaborateurs non inscrits */}
                     {!member.hasAccount && member.collaborator && (
-                      <div className="flex items-center gap-1 ml-2">
+                      <div className="flex items-center gap-1">
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => handleEdit(member.collaborator!)}
+                          className="text-xs sm:text-sm"
                         >
-                          Modifier
+                          <span className="hidden sm:inline">Modifier</span>
+                          <span className="sm:hidden">Édit.</span>
                         </Button>
                         {canDelete && (
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-destructive hover:text-destructive"
+                            className="text-destructive hover:text-destructive text-xs sm:text-sm"
                             onClick={() => handleDelete(member.collaborator!)}
                           >
-                            Supprimer
+                            <span className="hidden sm:inline">Supprimer</span>
+                            <span className="sm:hidden">Suppr.</span>
                           </Button>
                         )}
                       </div>

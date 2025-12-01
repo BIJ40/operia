@@ -305,7 +305,7 @@ export default function AdminSupportTickets() {
           </div>
 
           {/* Stats Dashboard - ligne unique compacte */}
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
             <Card 
               className={`${getCardClassName('all')} py-2`}
               onClick={() => setFilters({ ...filters, status: 'all' })}

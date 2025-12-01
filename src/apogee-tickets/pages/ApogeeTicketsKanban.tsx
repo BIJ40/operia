@@ -158,21 +158,21 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
   return (
     <div className="space-y-4">
       {/* Header actions */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 flex-wrap">
           {canViewKanban && (
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nouveau ticket
+            <Button onClick={() => setShowCreateDialog(true)} size="sm" className="sm:size-default">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Nouveau ticket</span>
             </Button>
           )}
           {canImport && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Importer
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                <Button variant="outline" size="sm" className="sm:size-default">
+                  <Upload className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Importer</span>
+                  <ChevronDown className="h-4 w-4 sm:ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="bg-background border shadow-lg z-50">
@@ -201,11 +201,11 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
           <Link to={ROUTES.projects.review}>
-            <Button variant="outline">
-              <ListChecks className="h-4 w-4 mr-2" />
-              Revue en masse
+            <Button variant="outline" size="sm">
+              <ListChecks className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Revue en masse</span>
             </Button>
           </Link>
           {/* Bouton complétion - toujours visible avec juste le chiffre */}
