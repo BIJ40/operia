@@ -52,6 +52,78 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'improvement', description: 'Simplification de l\'architecture d\'autorisation' },
     ]
   },
+  {
+    version: 'V0.2.5',
+    date: '2025-11-01',
+    title: 'Ticketing Apogée avancé',
+    changes: [
+      { type: 'feature', description: 'Vue liste avec colonnes triables et redimensionnables' },
+      { type: 'feature', description: 'Export CSV/Excel/PDF du Kanban avec filtres' },
+      { type: 'feature', description: 'Système de priorité heat (0-12)' },
+      { type: 'feature', description: 'Notifications visuelles par bordures clignotantes' },
+      { type: 'improvement', description: 'Automatisation author_type selon rôle utilisateur' },
+    ]
+  },
+  {
+    version: 'V0.2.0',
+    date: '2025-10-15',
+    title: 'Support et ticketing',
+    changes: [
+      { type: 'feature', description: 'Système de tickets support avec SLA automatique' },
+      { type: 'feature', description: 'Classification IA des tickets (catégorie, priorité, tags)' },
+      { type: 'feature', description: 'Centre d\'aide avec FAQ et chatbot Mme MICHU' },
+      { type: 'feature', description: 'Chat temps réel avec équipe support' },
+      { type: 'security', description: 'RLS policies sur support_tickets et support_messages' },
+    ]
+  },
+  {
+    version: 'V0.1.5',
+    date: '2025-09-20',
+    title: 'Franchiseur & réseau',
+    changes: [
+      { type: 'feature', description: 'Dashboard franchiseur avec KPI réseau' },
+      { type: 'feature', description: 'Gestion des agences et redevances' },
+      { type: 'feature', description: 'Statistiques multi-agences avec filtres période' },
+      { type: 'feature', description: 'Top 3 apporteurs avec podium' },
+      { type: 'improvement', description: 'Isolation données par agence' },
+    ]
+  },
+  {
+    version: 'V0.1.0',
+    date: '2025-08-01',
+    title: 'Pilotage agence et indicateurs',
+    changes: [
+      { type: 'feature', description: 'Module "Mes indicateurs" avec KPI Apogée' },
+      { type: 'feature', description: 'Intégration API Apogée multi-agences' },
+      { type: 'feature', description: 'Dashboard avec filtres période (Jour, Semaine, Mois, Année)' },
+      { type: 'feature', description: 'Widgets CA, interventions, projets, techniciens' },
+      { type: 'improvement', description: 'Calculs d\'agrégation côté frontend' },
+    ]
+  },
+  {
+    version: 'V0.0.5',
+    date: '2025-07-15',
+    title: 'Guides et documentation',
+    changes: [
+      { type: 'feature', description: 'Help Academy avec guides Apogée, Apporteurs, HelpConfort' },
+      { type: 'feature', description: 'Système de blocs éditables avec TipTap' },
+      { type: 'feature', description: 'Upload et gestion de documents PDF' },
+      { type: 'feature', description: 'Historique de navigation et favoris' },
+      { type: 'improvement', description: 'Architecture modulaire par catégories' },
+    ]
+  },
+  {
+    version: 'V0.0.1',
+    date: '2025-06-01',
+    title: 'Version initiale',
+    changes: [
+      { type: 'feature', description: 'Authentification Supabase avec profils utilisateurs' },
+      { type: 'feature', description: 'Layout unifié avec sidebar et header' },
+      { type: 'feature', description: 'Dashboard d\'accueil avec tuiles de navigation' },
+      { type: 'feature', description: 'Gestion des utilisateurs (admin)' },
+      { type: 'feature', description: 'Système de thème clair/sombre' },
+    ]
+  },
 ];
 
 /**
