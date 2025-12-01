@@ -38,7 +38,8 @@ import {
   CheckCircle2,
   Flame,
   Snowflake,
-  History
+  History,
+  GitBranch
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -49,7 +50,8 @@ import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
 import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMyTicketRole } from '../hooks/useTicketPermissions';
+import { useMyTicketRole, useAllowedTransitions, useLogTicketAction } from '../hooks/useTicketPermissions';
+import { errorToast } from '@/lib/toastHelpers';
 import type { ApogeeTicket, ApogeeModule, ApogeePriority, ApogeeTicketStatus, AuthorType, ReportedBy } from '../types';
 
 interface TicketDetailDrawerProps {
@@ -89,12 +91,16 @@ export function TicketDetailDrawer({
   onUpdate,
   onDelete,
 }: TicketDetailDrawerProps) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { data: roleInfo } = useMyTicketRole();
   const canManage = roleInfo?.canManage ?? false;
   const isDeveloper = roleInfo?.ticketRole === 'developer';
   // Developers can edit h_min/h_max and owner_side even without canManage
   const canEditDevFields = canManage || isDeveloper;
+  
+  // Transitions autorisées selon le rôle
+  const { data: allowedTransitions = [] } = useAllowedTransitions(ticket?.kanban_status || '');
+  const logAction = useLogTicketAction();
   const { comments, addComment } = useApogeeTicket(ticket?.id || null);
   const { attachments, uploadAttachment, deleteAttachment, isUploading } = useTicketAttachments(ticket?.id || null);
   const { qualifyOne, isQualifying } = useTicketQualification();
@@ -157,6 +163,51 @@ export function TicketDetailDrawer({
     onUpdate({ id: ticket.id, [field]: value });
   };
 
+  // Gestion du changement de statut avec contrôle des transitions
+  const handleStatusChange = async (newStatus: string) => {
+    if (!ticket) return;
+    
+    const isAllowed = isAdmin || allowedTransitions.includes(newStatus);
+    if (!isAllowed && newStatus !== ticket.kanban_status) {
+      errorToast("Vous n'êtes pas autorisé à effectuer cette transition");
+      return;
+    }
+    
+    // Loguer la transition
+    await logAction.mutateAsync({
+      ticketId: ticket.id,
+      actionType: 'status_change',
+      oldValue: ticket.kanban_status,
+      newValue: newStatus,
+      metadata: { 
+        ticket_ref: `APO-${String(ticket.ticket_number || 0).padStart(3, '0')}`,
+        ticket_number: ticket.ticket_number
+      }
+    });
+    
+    handleFieldUpdate('kanban_status', newStatus);
+  };
+
+  // Formater la référence ticket
+  const ticketRef = ticket ? `APO-${String(ticket.ticket_number || 0).padStart(3, '0')}` : '';
+  
+  // Statuts disponibles pour le sélecteur (filtrer selon permissions)
+  const availableStatuses = useMemo(() => {
+    if (isAdmin) return statuses;
+    if (!ticket) return statuses;
+    // Inclure le statut actuel + les transitions autorisées
+    return statuses.filter(s => 
+      s.id === ticket.kanban_status || 
+      allowedTransitions.includes(s.id)
+    );
+  }, [statuses, ticket, isAdmin, allowedTransitions]);
+
+  // Couleur du statut actuel
+  const currentStatusColor = useMemo(() => {
+    const status = statuses.find(s => s.id === ticket?.kanban_status);
+    return status?.color || '#6b7280';
+  }, [statuses, ticket?.kanban_status]);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -172,22 +223,44 @@ export function TicketDetailDrawer({
         <SheetHeader className="p-6 pb-4 border-b">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
+              {/* Référence ticket */}
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="font-mono text-sm font-semibold">
+                  {ticketRef}
+                </Badge>
+              </div>
+              
               {/* Badges de statut */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <Select
-                    value={ticket.kanban_status}
-                    onValueChange={(v) => handleFieldUpdate('kanban_status', v)}
-                    disabled={!canManage}
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  value={ticket.kanban_status}
+                  onValueChange={handleStatusChange}
+                  disabled={!canManage && availableStatuses.length <= 1}
+                >
+                  <SelectTrigger 
+                    className="h-9 w-auto min-w-[140px] text-sm font-medium gap-2"
+                    style={{ 
+                      backgroundColor: `${currentStatusColor}20`,
+                      borderColor: currentStatusColor
+                    }}
                   >
-                    <SelectTrigger className="h-7 w-auto text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statuses.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <GitBranch className="h-4 w-4" style={{ color: currentStatusColor }} />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    {availableStatuses.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-2 h-2 rounded-full" 
+                            style={{ backgroundColor: s.color || '#6b7280' }}
+                          />
+                          {s.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {ticket.module && (
                   <Badge className="bg-blue-500 text-white">
                     {ticket.apogee_modules?.label || ticket.module}

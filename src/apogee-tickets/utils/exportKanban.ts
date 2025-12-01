@@ -10,6 +10,7 @@ import type { ApogeeTicket, ApogeeTicketStatus, ApogeeModule, ApogeePriority, Ap
 // Liste des colonnes à exporter
 const EXPORT_COLUMNS = [
   // Identité
+  { key: 'ticket_ref', label: 'Réf' },
   { key: 'id', label: 'ID' },
   { key: 'element_concerne', label: 'Titre' },
   { key: 'description', label: 'Description' },
@@ -105,6 +106,11 @@ function getOwnerSideLabel(ownerSideId: string | null, ownerSides: ApogeeOwnerSi
   return ownerSides.find(o => o.id === ownerSideId)?.label || ownerSideId;
 }
 
+// Formater la référence ticket
+function formatTicketRef(ticketNumber: number): string {
+  return `APO-${String(ticketNumber || 0).padStart(3, '0')}`;
+}
+
 // Transformer un ticket en ligne exportable
 function ticketToRow(
   ticket: ApogeeTicket,
@@ -119,8 +125,12 @@ function ticketToRow(
   for (const col of EXPORT_COLUMNS) {
     let value: unknown = ticketData[col.key];
     
+    // Résoudre la référence ticket
+    if (col.key === 'ticket_ref') {
+      value = formatTicketRef(ticket.ticket_number);
+    }
     // Résoudre les labels pour les clés étrangères
-    if (col.key === 'kanban_status') {
+    else if (col.key === 'kanban_status') {
       value = getStatusLabel(ticket.kanban_status, statuses);
     } else if (col.key === 'module') {
       value = getModuleLabel(ticket.module, modules);
@@ -240,13 +250,14 @@ export function exportToPDF(options: ExportOptions): void {
   
   // Colonnes principales à afficher dans le PDF
   const pdfColumns = [
-    { key: 'element_concerne', label: 'Titre', width: 60 },
-    { key: 'module', label: 'Module', width: 30 },
-    { key: 'heat_priority', label: 'Prio', width: 15 },
-    { key: 'owner_side', label: 'PEC', width: 20 },
-    { key: 'h_min', label: 'H min', width: 15 },
-    { key: 'h_max', label: 'H max', width: 15 },
-    { key: 'reported_by', label: 'Origine', width: 25 },
+    { key: 'ticket_ref', label: 'Réf', width: 20 },
+    { key: 'element_concerne', label: 'Titre', width: 55 },
+    { key: 'module', label: 'Module', width: 25 },
+    { key: 'heat_priority', label: 'Prio', width: 12 },
+    { key: 'owner_side', label: 'PEC', width: 18 },
+    { key: 'h_min', label: 'H min', width: 12 },
+    { key: 'h_max', label: 'H max', width: 12 },
+    { key: 'reported_by', label: 'Origine', width: 22 },
   ];
   
   const totalWidth = pdfColumns.reduce((sum, c) => sum + c.width, 0);
