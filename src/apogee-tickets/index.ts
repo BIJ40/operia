@@ -18,6 +18,7 @@ export { CreateTicketDialog } from './components/CreateTicketDialog';
 
 // Pages
 export { default as ApogeeTicketsKanban } from './pages/ApogeeTicketsKanban';
+export { default as ApogeeTicketsList } from './pages/ApogeeTicketsList';
 export { default as ApogeeTicketsImport } from './pages/ApogeeTicketsImport';
 export { default as ApogeeTicketsIncomplete } from './pages/ApogeeTicketsIncomplete';
 export { default as ApogeeTicketsClassify } from './pages/ApogeeTicketsClassify';

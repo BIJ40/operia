@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
@@ -161,6 +161,22 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
       {/* Header actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Toggle vue Kanban/Liste */}
+          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+            <Button variant="default" size="sm" className="h-8">
+              <LayoutGrid className="h-4 w-4 mr-1" />
+              Kanban
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8"
+              onClick={() => navigate(ROUTES.projects.list)}
+            >
+              <List className="h-4 w-4 mr-1" />
+              Liste
+            </Button>
+          </div>
           {canViewKanban && (
             <Button onClick={() => setShowCreateDialog(true)} size="sm" className="sm:size-default">
               <Plus className="h-4 w-4 sm:mr-2" />
