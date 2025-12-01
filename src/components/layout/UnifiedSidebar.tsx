@@ -25,7 +25,7 @@ import { useMenuLabels } from '@/hooks/use-page-metadata';
 import logoHelpconfortServices from '@/assets/help-confort-services-logo.png';
 import { useState, useEffect, ReactNode } from 'react';
 import { useChatbotTest } from '@/components/Chatbot';
-import { APP_VERSION } from '@/config/version';
+import { getCurrentVersion } from '@/config/changelog';
 
 // Mapping route → pageKey pour récupérer le menu_label
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
@@ -559,11 +559,11 @@ export function UnifiedSidebar() {
       </SidebarContent>
       
       <SidebarFooter className="border-t p-2">
-        <Link 
+        <Link
           to="/changelog"
           className={`text-xs font-semibold text-muted-foreground hover:text-primary transition-colors block ${collapsed ? 'text-center' : 'text-left'}`}
         >
-          {APP_VERSION}
+          {getCurrentVersion().version}
         </Link>
       </SidebarFooter>
     </Sidebar>
