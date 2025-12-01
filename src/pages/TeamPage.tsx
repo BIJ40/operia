@@ -21,7 +21,7 @@ import {
 } from "@/features/team/hooks";
 import { useAgencyUsers } from "@/franchiseur/hooks/useAgencyUsers";
 import { AgencyCollaborator, CreateCollaboratorPayload, UpdateCollaboratorPayload, COLLABORATOR_ROLE_LABELS } from "@/features/team/types";
-import { CollaboratorFormDialog, CreateUserFromCollaboratorDialog } from "@/features/team/components";
+import { TeamUserDialog } from "@/features/team/components";
 import { GLOBAL_ROLE_LABELS } from "@/types/globalRoles";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -70,13 +70,10 @@ export default function TeamPage() {
   const deleteCollaborator = useDeleteAgencyCollaborator(agencyId || "");
 
   // UI state
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingCollaborator, setEditingCollaborator] = useState<AgencyCollaborator | null>(null);
-  const [createUserTarget, setCreateUserTarget] = useState<AgencyCollaborator | null>(null);
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
 
   // Permissions
   const canCreateUser = hasGlobalRole("franchisee_admin"); // N2+
-  const canDelete = hasGlobalRole("franchisor_user"); // N3+
 
   // Fusionner users inscrits + collaborateurs en une seule liste
   const teamMembers = useMemo((): TeamMember[] => {
@@ -96,56 +93,11 @@ export default function TeamPage() {
       });
     });
 
-    // Ajouter les collaborateurs NON inscrits
-    collaborators
-      .filter((c) => !c.is_registered_user)
-      .forEach((collab) => {
-        members.push({
-          id: `collab-${collab.id}`,
-          first_name: collab.first_name,
-          last_name: collab.last_name,
-          email: collab.email,
-          role: COLLABORATOR_ROLE_LABELS[collab.role] || collab.role,
-          hasAccount: false,
-          collaborator: collab,
-        });
-      });
-
     // Trier par nom
     return members.sort((a, b) => 
       `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
     );
-  }, [registeredUsers, collaborators]);
-
-  const handleSubmit = (data: CreateCollaboratorPayload | UpdateCollaboratorPayload) => {
-    if ("id" in data) {
-      updateCollaborator.mutate(data, {
-        onSuccess: () => {
-          setIsFormOpen(false);
-          setEditingCollaborator(null);
-        },
-      });
-    } else {
-      createCollaborator.mutate(data, {
-        onSuccess: () => {
-          setIsFormOpen(false);
-        },
-      });
-    }
-  };
-
-  const handleEdit = (collaborator: AgencyCollaborator) => {
-    setEditingCollaborator(collaborator);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = (collaborator: AgencyCollaborator) => {
-    deleteCollaborator.mutate(collaborator.id);
-  };
-
-  const handleCreateUser = (collaborator: AgencyCollaborator) => {
-    setCreateUserTarget(collaborator);
-  };
+  }, [registeredUsers]);
 
   // Pour les N3+, rediriger vers l'interface franchiseur
   const isN3Plus = hasGlobalRole("franchisor_user");
@@ -183,9 +135,9 @@ export default function TeamPage() {
             Gérez les membres de votre agence
           </p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
+        <Button onClick={() => setIsCreateUserOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Ajouter un membre
+          Ajouter un utilisateur
         </Button>
       </div>
 
@@ -257,48 +209,7 @@ export default function TeamPage() {
                           <Badge variant="destructive" className="text-xs sm:text-sm">Inactif</Badge>
                         )}
                       </>
-                    ) : (
-                      <>
-                        <Badge variant="secondary" className="text-xs sm:text-sm">Sans compte</Badge>
-                        {canCreateUser && member.collaborator && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleCreateUser(member.collaborator!)}
-                            className="text-xs sm:text-sm"
-                          >
-                            <UserPlus className="h-4 w-4 sm:mr-1" />
-                            <span className="hidden sm:inline">Créer compte</span>
-                          </Button>
-                        )}
-                      </>
-                    )}
-
-                    {/* Actions pour collaborateurs non inscrits */}
-                    {!member.hasAccount && member.collaborator && (
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEdit(member.collaborator!)}
-                          className="text-xs sm:text-sm"
-                        >
-                          <span className="hidden sm:inline">Modifier</span>
-                          <span className="sm:hidden">Édit.</span>
-                        </Button>
-                        {canDelete && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-destructive hover:text-destructive text-xs sm:text-sm"
-                            onClick={() => handleDelete(member.collaborator!)}
-                          >
-                            <span className="hidden sm:inline">Supprimer</span>
-                            <span className="sm:hidden">Suppr.</span>
-                          </Button>
-                        )}
-                      </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               ))}
@@ -307,27 +218,12 @@ export default function TeamPage() {
         </CardContent>
       </div>
 
-      {/* Dialog création/édition */}
-      <CollaboratorFormDialog
-        open={isFormOpen}
-        onOpenChange={(open) => {
-          setIsFormOpen(open);
-          if (!open) setEditingCollaborator(null);
-        }}
-        collaborator={editingCollaborator}
-        onSubmit={handleSubmit}
-        isLoading={createCollaborator.isPending || updateCollaborator.isPending}
-      />
-
       {/* Dialog création utilisateur */}
-      <CreateUserFromCollaboratorDialog
-        open={!!createUserTarget}
-        onOpenChange={(open) => !open && setCreateUserTarget(null)}
-        collaborator={createUserTarget}
-        agencyLabel={agence || undefined}
-        onSuccess={() => {
-          setCreateUserTarget(null);
-        }}
+      <TeamUserDialog
+        open={isCreateUserOpen}
+        onOpenChange={setIsCreateUserOpen}
+        agencyLabel={agence || ""}
+        onSuccess={() => setIsCreateUserOpen(false)}
       />
     </div>
   );
