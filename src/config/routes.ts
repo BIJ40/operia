@@ -91,6 +91,7 @@ export const ROUTES = {
   projects: {
     index: '/projects',
     kanban: '/projects/kanban',
+    list: '/projects/list',
     import: '/projects/import',
     importPriorities: '/projects/import-priorities',
     importEvaluated: '/projects/import-evaluated',

@@ -86,6 +86,7 @@ const AdminSystemHealth = lazy(() => import("./pages/AdminSystemHealth"));
 // Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
 const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
 const ApogeeTicketsKanban = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsKanban"));
+const ApogeeTicketsList = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsList"));
 const ApogeeTicketsImport = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImport"));
 const ApogeeTicketsImportPriorities = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportPriorities"));
 const ApogeeTicketsImportEvaluated = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportEvaluated"));
@@ -281,6 +282,7 @@ function AppContent() {
           {/* ============================================ */}
           <Route path="/projects" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ProjectsIndex /></ModuleGuard></MainLayout>} />
           <Route path="/projects/kanban" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsKanban /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/list" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsList /></ModuleGuard></MainLayout>} />
           <Route path="/projects/import" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImport /></ModuleGuard></MainLayout>} />
           <Route path="/projects/import-priorities" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportPriorities /></ModuleGuard></MainLayout>} />
           <Route path="/projects/import-evaluated" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportEvaluated /></ModuleGuard></MainLayout>} />
