@@ -42,6 +42,7 @@ export default function Landing() {
       help_academy: [],
       pilotage: [],
       support: [],
+      projects: [],
       franchiseur: [],
       admin: [],
     };
@@ -115,6 +116,23 @@ export default function Landing() {
                 tile={tile} 
                 dynamicBadge={tile.id === 'CONSOLE_SUPPORT' && newTicketsCount > 0 ? newTicketsCount : undefined}
               />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Gestion de Projet Section */}
+      {tilesByGroup.projects.length > 0 && (
+        <section>
+          <SectionHeader 
+            title={DASHBOARD_GROUPS.projects.title}
+            icon={DASHBOARD_GROUPS.projects.icon}
+            colorClass={DASHBOARD_GROUPS.projects.colorClass}
+            indexUrl={DASHBOARD_GROUPS.projects.indexUrl}
+          />
+          <div className="grid md:grid-cols-3 gap-4">
+            {tilesByGroup.projects.map(tile => (
+              <DashboardTileCard key={tile.id} tile={tile} />
             ))}
           </div>
         </section>
