@@ -111,8 +111,9 @@ Refonte complète de la sécurité, des permissions et du data model pour établ
 - `support_tickets.priority` (text) DROP COLUMN final
 - `use-support-stats.ts`: Groupement par ranges heat (Faible 0-3, Moyen 4-7, Élevé 8-10, Critique 11-12)
 - `SupportChatCore.tsx`: Création tickets avec heat_priority (6=normal, 8=important)
-- `AdminSupportTickets.tsx`: HeatPriorityBadge remplace getPriorityBadge
-- `UserTickets.tsx`: HeatPriorityBadge remplace getPriorityBadge
+- `AdminSupportTickets.tsx`: HeatPriorityBadge remplace getPriorityBadge + Select priority → read-only badge
+- `UserTickets.tsx`: HeatPriorityBadge remplace getPriorityBadge (fonction morte supprimée)
+- `use-admin-tickets.ts`: updateTicketPriority(heatPriority: number) corrigé
 
 **Fichiers modifiés**: 8  
 **Migrations SQL**: 1
