@@ -41,8 +41,11 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'security', description: 'AUDIT F-SEC-CRIT-1: JWT validation via supabase.auth.getUser() au lieu de décodage manuel (update-user-email)' },
       { type: 'security', description: 'AUDIT F-SEC-5: Validation stricte agence - auto-création désactivée (create-user)' },
       { type: 'security', description: 'AUDIT F-SEC-1: Validation Zod centralisée dans _shared/validation.ts (chat-guide, qualify-ticket, network-kpis, create-user, update-user-email)' },
-      { type: 'security', description: 'AUDIT F-SEC-2: Suppression logs sensibles email/agency_id (create-user, update-user-email)' },
+      { type: 'security', description: 'AUDIT F-SEC-2: Suppression logs sensibles email/agency_id (create-user, update-user-email, search-embeddings, chat-guide)' },
+      { type: 'security', description: 'AUDIT F-SEC-3: Pagination .limit(200) sur notify-support-ticket + sanitize SMS' },
+      { type: 'security', description: 'AUDIT F-SEC-4: Vérification rôle N3+ (franchisor_user) dans network-kpis' },
       { type: 'security', description: 'AUDIT F-SEC-6: Validation renforcée ticket_ids avec vérification UUID (qualify-ticket)' },
+      { type: 'security', description: 'AUDIT F-RLS-4: Correction policy planning_signatures - tech_id cast invalide remplacé par signed_by_user_id' },
       { type: 'improvement', description: 'AUDIT F-PERF-1: Parallélisation chargement agences (network-kpis) - Promise.all au lieu de boucle séquentielle' },
       { type: 'improvement', description: 'AUDIT F-TABLE-3: 14 index créés (chatbot_queries, support_tickets, apogee_tickets, profiles, franchiseur_assignments)' },
     ]
