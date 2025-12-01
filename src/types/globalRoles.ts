@@ -103,7 +103,7 @@ export function canManageUsers(role: GlobalRole | null): boolean {
 
 /**
  * Obtient les rôles assignables par un utilisateur donné
- * Un utilisateur ne peut assigner que des rôles inférieurs ou égaux au sien
+ * Un utilisateur ne peut assigner que des rôles STRICTEMENT INFÉRIEURS au sien (règle N-1)
  * Minimum N3 requis pour assigner des rôles
  */
 export function getAssignableRoles(assignerRole: GlobalRole | null): GlobalRole[] {
@@ -111,5 +111,5 @@ export function getAssignableRoles(assignerRole: GlobalRole | null): GlobalRole[
   if (!canManageUsers(assignerRole)) return [];
   
   const assignerLevel = GLOBAL_ROLES[assignerRole];
-  return getAllRolesSorted().filter(role => GLOBAL_ROLES[role] <= assignerLevel);
+  return getAllRolesSorted().filter(role => GLOBAL_ROLES[role] < assignerLevel);
 }

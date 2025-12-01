@@ -93,9 +93,9 @@ export const canEditTarget = (
     return { allowed: true }
   }
   
-  // N3+: accès global, mais plafonnement au niveau de l'appelant
-  if (targetLevel > callerLevel) {
-    return { allowed: false, reason: `Vous ne pouvez pas attribuer un rôle supérieur à N${callerLevel}` }
+  // N3+: accès global, mais plafonnement STRICT au niveau de l'appelant (règle N-1)
+  if (targetLevel >= callerLevel) {
+    return { allowed: false, reason: `Vous ne pouvez pas attribuer un rôle supérieur ou égal à N${callerLevel}` }
   }
   
   return { allowed: true }

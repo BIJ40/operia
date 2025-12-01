@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { GlobalRole, getRoleLevel, GLOBAL_ROLES } from '@/types/globalRoles';
+import { GlobalRole, getRoleLevel, GLOBAL_ROLES, getAssignableRoles } from '@/types/globalRoles';
 import { getUserManagementCapabilities, canViewUser, canManageUser, canDeactivateUser as canDeactivateUserHelper } from '@/config/roleMatrix';
 import { EnabledModules, ModuleOptionsState, ModuleKey, MODULE_DEFINITIONS } from '@/types/modules';
 import { logAuth } from '@/lib/logger';
@@ -43,7 +43,8 @@ export function useAdminUsersUnified() {
   const canAccessPage = userManagementCaps.viewScope !== 'none' || isAdmin;
   const canCreateUsers = userManagementCaps.canCreateRoles.length > 0;
   const canDeleteUsers = userManagementCaps.canDeleteUsers;
-  const assignableRoles = useMemo(() => userManagementCaps.canCreateRoles, [userManagementCaps]);
+  // ✅ SÉCURITÉ CRITIQUE : Utiliser getAssignableRoles() pour éviter escalade de privilèges
+  const assignableRoles = useMemo(() => getAssignableRoles(effectiveUserRole), [effectiveUserRole]);
   const isSuperAdmin = effectiveUserRole === 'superadmin';
 
   // Permission checks
