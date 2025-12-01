@@ -146,7 +146,7 @@ export const UserAccordionItem = memo(function UserAccordionItem({
               <TooltipTrigger asChild>
                 <Badge variant="outline" className="shrink-0 border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-950/30">
                   <AlertCircle className="w-3 h-3 mr-1" />
-                  À activer
+                  Mot de passe provisoire
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>

@@ -88,28 +88,24 @@ export function getAllRolesSorted(): GlobalRole[] {
 }
 
 /**
- * Niveau minimum requis pour gérer des utilisateurs (créer, modifier)
- * Seuls les N3+ peuvent gérer des utilisateurs
- */
-export const MIN_ROLE_TO_MANAGE_USERS: GlobalRole = 'franchisor_user'; // N3
-
-/**
- * Vérifie si un utilisateur peut gérer d'autres utilisateurs
- */
-export function canManageUsers(role: GlobalRole | null): boolean {
-  if (!role) return false;
-  return GLOBAL_ROLES[role] >= GLOBAL_ROLES[MIN_ROLE_TO_MANAGE_USERS];
-}
-
-/**
  * Obtient les rôles assignables par un utilisateur donné
- * Un utilisateur ne peut assigner que des rôles STRICTEMENT INFÉRIEURS au sien (règle N-1)
- * Minimum N3 requis pour assigner des rôles
+ * Délègue au système de gestion de permissions centralisé (roleMatrix.ts)
+ * pour garantir la cohérence des règles d'assignation.
+ * 
+ * Note: Cette fonction importe dynamiquement depuis roleMatrix pour éviter
+ * les dépendances circulaires et garantir que roleMatrix.ts reste la source de vérité.
  */
 export function getAssignableRoles(assignerRole: GlobalRole | null): GlobalRole[] {
   if (!assignerRole) return [];
-  if (!canManageUsers(assignerRole)) return [];
   
-  const assignerLevel = GLOBAL_ROLES[assignerRole];
-  return getAllRolesSorted().filter(role => GLOBAL_ROLES[role] < assignerLevel);
+  // Déléguer à roleMatrix.ts qui est la source de vérité pour les permissions
+  // Import dynamique pour éviter les dépendances circulaires
+  try {
+    const { getUserManagementCapabilities } = require('@/config/roleMatrix');
+    const capabilities = getUserManagementCapabilities(assignerRole);
+    return capabilities.canCreateRoles;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des rôles assignables:', error);
+    return [];
+  }
 }
