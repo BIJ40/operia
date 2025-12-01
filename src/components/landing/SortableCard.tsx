@@ -14,8 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { memo } from 'react';
 
-export function SortableCard({
+export const SortableCard = memo(function SortableCard({
   card,
   editingId,
   editTitle,
@@ -218,4 +219,4 @@ export function SortableCard({
       )}
     </div>
   );
-}
+});

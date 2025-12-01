@@ -2,6 +2,7 @@ import { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { memo } from "react";
 
 interface MetricCardProps {
   title: string;
@@ -16,7 +17,7 @@ interface MetricCardProps {
   loading?: boolean;
 }
 
-export const MetricCard = ({ 
+export const MetricCard = memo(function MetricCard({ 
   title, 
   value, 
   subtitle, 
@@ -24,7 +25,7 @@ export const MetricCard = ({
   trend, 
   className,
   loading 
-}: MetricCardProps) => {
+}: MetricCardProps) {
   if (loading) {
     return (
       <Card className={className}>
@@ -67,4 +68,4 @@ export const MetricCard = ({
       </CardContent>
     </Card>
   );
-};
+});

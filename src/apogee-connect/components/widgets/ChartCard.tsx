@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ReactNode } from "react";
+import { ReactNode, memo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ChartCardProps {
@@ -9,7 +9,7 @@ interface ChartCardProps {
   loading?: boolean;
 }
 
-export const ChartCard = ({ title, description, children, loading }: ChartCardProps) => {
+export const ChartCard = memo(function ChartCard({ title, description, children, loading }: ChartCardProps) {
   if (loading) {
     return (
       <Card>
@@ -35,4 +35,4 @@ export const ChartCard = ({ title, description, children, loading }: ChartCardPr
       </CardContent>
     </Card>
   );
-};
+});
