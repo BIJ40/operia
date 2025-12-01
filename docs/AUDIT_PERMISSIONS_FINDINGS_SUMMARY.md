@@ -46,9 +46,9 @@
 
 ## 🟡 MOYENS (6)
 
-### F-PERM-3 – Route /support/console mal protégée
-**Fichiers**: `App.tsx` (ligne 217)  
-**Fix**: Créer SupportConsoleGuard au lieu de RoleGuard minRole
+### F-PERM-3 – Route /support/console mal protégée ✅ CORRIGÉ
+**Fichiers**: `App.tsx` (ligne 217), `SupportConsoleGuard.tsx`  
+**Fix appliqué**: Créé SupportConsoleGuard dédié vérifiant canAccessSupportConsole (N5+ strictement)
 
 ### F-PERM-4 – base_user (N0) voit tiles Support
 **Question**: Est-ce que N0 DOIT pouvoir créer tickets support ?  
@@ -89,7 +89,7 @@
 
 ### Phase 2 – Cohérence Navigation (3h)
 4. ✅ **CORRIGÉ** - Ajouter requiresModule check pour groupe Projects (F-PERM-2, F-NAV-3)
-5. ✅ Créer SupportConsoleGuard pour /support/console (F-PERM-3, F-NAV-2)
+5. ✅ **CORRIGÉ** - Créer SupportConsoleGuard pour /support/console (F-PERM-3, F-NAV-2)
 6. ✅ Corriger scopeSlug tiles (F-MISC-1, F-MISC-2)
 
 ### Phase 3 – UX Admin (6h)
