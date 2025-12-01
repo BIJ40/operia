@@ -3,8 +3,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { captureEdgeException } from '../_shared/sentry.ts';
-import { errorResponse, successResponse, authError } from '../_shared/error.ts';
+import { errorResponse, successResponse, authError, forbiddenError } from '../_shared/error.ts';
 import { validateOptionalBoolean } from '../_shared/validation.ts';
+import { getRoleLevel, GLOBAL_ROLES } from '../_shared/roles.ts';
 
 // Cache management
 interface CacheEntry {
@@ -398,6 +399,19 @@ serve(async (req) => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
       return withCors(req, authError('Non autorisé'));
+    }
+
+    // F-SEC-4: Vérifier que l'utilisateur a au moins le rôle N3 (franchisor_user)
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('global_role')
+      .eq('id', user.id)
+      .single();
+
+    const userRoleLevel = getRoleLevel(profile?.global_role);
+    if (userRoleLevel < GLOBAL_ROLES.franchisor_user) {
+      console.log(`[NETWORK-KPIS] Access denied for user ${user.id} with role level ${userRoleLevel}`);
+      return withCors(req, forbiddenError('Accès réservé aux utilisateurs N3+ (Franchiseur)'));
     }
 
     // Rate limit: 20 req/min per user
