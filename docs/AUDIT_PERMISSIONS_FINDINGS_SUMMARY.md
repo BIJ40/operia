@@ -18,11 +18,11 @@
 
 ## 🟠 ÉLEVÉS (4)
 
-### F-PERM-2 – Module apogee_tickets invisible en navigation
-**Impact**: User avec module activé ne découvre pas section Projects  
+### F-PERM-2 – Module apogee_tickets invisible en navigation ✅ CORRIGÉ
+**Impact**: User avec module activé ne découvrait pas section Projects  
 **Fichiers**: `dashboardTiles.ts`, `UnifiedSidebar.tsx`  
 **Cause**: Groupe projects sans accessKey ni requiresModule check  
-**Fix**: Ajouter requiresModule dans navGroups filter
+**Fix appliqué**: Filtrage du groupe projects basé sur hasModule('apogee_tickets')
 
 ### F-EDIT-2 – Agence modifiable sans vérification scope
 **Impact**: Admin N2 voit TOUTES agences dans dropdown, peut choisir hors scope  
@@ -88,7 +88,7 @@
 3. ✅ Filtrer agences selon manageScope dans EditUserDialog (F-EDIT-2)
 
 ### Phase 2 – Cohérence Navigation (3h)
-4. ✅ Ajouter requiresModule check pour groupe Projects (F-PERM-2, F-NAV-3)
+4. ✅ **CORRIGÉ** - Ajouter requiresModule check pour groupe Projects (F-PERM-2, F-NAV-3)
 5. ✅ Créer SupportConsoleGuard pour /support/console (F-PERM-3, F-NAV-2)
 6. ✅ Corriger scopeSlug tiles (F-MISC-1, F-MISC-2)
 
