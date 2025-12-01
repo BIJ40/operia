@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 import {
@@ -402,13 +402,23 @@ export default function AdminAgencies() {
                                     )}
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleAssignUser(user.id, null)}
-                                    >
-                                      Retirer
-                                    </Button>
+                                    <div className="flex gap-2 justify-end">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => navigate(ROUTES.admin.users)}
+                                        title="Voir dans gestion utilisateurs"
+                                      >
+                                        <User className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleAssignUser(user.id, null)}
+                                      >
+                                        Retirer
+                                      </Button>
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               ))}

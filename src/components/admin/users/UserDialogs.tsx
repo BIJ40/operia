@@ -18,13 +18,20 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
   'externe': 'Externe',
 };
 
+interface Agency {
+  id: string;
+  slug: string;
+  label: string;
+  is_active: boolean;
+}
+
 interface CreateUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: { email: string; password: string; firstName: string; lastName: string; agence: string; globalRole: GlobalRole; sendEmail: boolean }) => void;
   isPending: boolean;
   assignableRoles: GlobalRole[];
-  agencies: string[];
+  agencies: Agency[];
   currentUserLevel: number;
   currentUserAgency: string | null;
 }
@@ -89,7 +96,8 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
               <Select value={formData.agence} onValueChange={(v) => setFormData(prev => ({ ...prev, agence: v }))}>
                 <SelectTrigger><SelectValue placeholder="Sélectionner une agence" /></SelectTrigger>
                 <SelectContent className="bg-background z-50">
-                  {agencies.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                  <SelectItem value="">Aucune agence</SelectItem>
+                  {agencies.map(a => <SelectItem key={a.id} value={a.slug}>{a.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -118,6 +126,13 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
   );
 }
 
+interface Agency {
+  id: string;
+  slug: string;
+  label: string;
+  is_active: boolean;
+}
+
 interface EditUserDialogProps {
   user: UserProfile | null;
   open: boolean;
@@ -128,9 +143,10 @@ interface EditUserDialogProps {
   isPending: boolean;
   isEmailPending: boolean;
   isPasswordPending: boolean;
+  agencies?: Agency[];
 }
 
-export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail, onResetPassword, isPending, isEmailPending, isPasswordPending }: EditUserDialogProps) {
+export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail, onResetPassword, isPending, isEmailPending, isPasswordPending, agencies = [] }: EditUserDialogProps) {
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', agence: '', roleAgence: '' });
   const [newPassword, setNewPassword] = useState('');
 
@@ -190,7 +206,17 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
           </div>
           <div className="space-y-2">
             <Label>Agence</Label>
-            <Input value={formData.agence} onChange={(e) => setFormData(prev => ({ ...prev, agence: e.target.value }))} />
+            <Select value={formData.agence} onValueChange={(v) => setFormData(prev => ({ ...prev, agence: v }))}>
+              <SelectTrigger><SelectValue placeholder="Sélectionner une agence" /></SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="">Aucune agence</SelectItem>
+                {agencies.map((agency) => (
+                  <SelectItem key={agency.id} value={agency.slug}>
+                    {agency.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>Poste occupé</Label>

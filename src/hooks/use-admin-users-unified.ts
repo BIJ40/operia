@@ -8,6 +8,7 @@ import { EnabledModules, ModuleOptionsState, ModuleKey, MODULE_DEFINITIONS } fro
 import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
+import { useAdminAgencies } from './use-admin-agencies';
 
 export interface UserProfile {
   id: string;
@@ -99,12 +100,8 @@ export function useAdminUsersUnified() {
     });
   }, [users, userManagementCaps, effectiveUserRole, currentUserAgency, user?.id]);
 
-  // Get unique agencies
-  const agencies = useMemo(() => {
-    if (!users) return [];
-    const agencySet = new Set(users.map(u => u.agence).filter(Boolean) as string[]);
-    return Array.from(agencySet).sort();
-  }, [users]);
+  // Fetch agencies from apogee_agencies table
+  const { data: agencies = [] } = useAdminAgencies();
 
   // Module check helper
   const isModuleEnabledForUser = (modules: EnabledModules, moduleKey: ModuleKey): boolean => {
