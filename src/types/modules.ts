@@ -161,7 +161,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     description: 'Suivi du développement Apogée (tickets, Kanban)',
     icon: 'Kanban',
     defaultForRoles: ['platform_admin', 'superadmin'],
-    minRole: 'franchisee_admin',
+    minRole: 'base_user',
     options: [
       { key: 'kanban', path: 'apogee_tickets.kanban', label: 'Kanban', description: 'Tableau Kanban des tickets', defaultEnabled: true },
       { key: 'import', path: 'apogee_tickets.import', label: 'Import', description: 'Import depuis fichiers Excel', defaultEnabled: true },
