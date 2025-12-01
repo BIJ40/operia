@@ -291,10 +291,10 @@ export function useAssignTicketRole() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ticket-user-roles'] });
-      toast.success('Rôle assigné');
+      toast.success('Rôle assigné.');
     },
     onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+      toast.error(`Erreur : ${error.message}`);
     },
   });
 }
@@ -313,10 +313,10 @@ export function useRemoveTicketRole() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ticket-user-roles'] });
-      toast.success('Rôle retiré');
+      toast.success('Rôle retiré.');
     },
     onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+      toast.error(`Erreur : ${error.message}`);
     },
   });
 }
@@ -334,10 +334,10 @@ export function useAddTransition() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ticket-transitions'] });
-      toast.success('Transition ajoutée');
+      toast.success('Transition ajoutée.');
     },
     onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+      toast.error(`Erreur : ${error.message}`);
     },
   });
 }

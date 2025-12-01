@@ -17,7 +17,7 @@ export const NetworkSAVChart = ({ data }: NetworkSAVChartProps) => {
         <h3 className="text-lg font-semibold text-helpconfort-blue">
           Évolution du taux SAV
         </h3>
-        <p className="text-sm text-muted-foreground">Taux moyen SAV réseau par mois</p>
+        <p className="text-sm text-muted-foreground">Taux moyen SAV réseau par mois.</p>
       </div>
       
       <ResponsiveContainer width="100%" height={300}>
