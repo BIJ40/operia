@@ -131,6 +131,7 @@ export const ROUTES = {
     apogeeTicketsImport: '/admin/apogee-tickets/import',
     apogeeTicketsImportPriorities: '/admin/apogee-tickets/import-priorities',
     apogeeTicketsImportEvaluated: '/admin/apogee-tickets/import-evaluated',
+    apogeeTicketsImportTraite: '/projects/import-traite',
     apogeeTicketsImportBugs: '/admin/apogee-tickets/import-bugs',
     apogeeTicketsImportV1: '/admin/apogee-tickets/import-v1',
     apogeeTicketsIncomplete: '/admin/apogee-tickets/incomplets',

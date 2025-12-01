@@ -42,7 +42,7 @@ export type OwnerSide = 'HC' | 'APOGEE' | 'PARTAGE';
 // Qui a rapporté/identifié le ticket
 export type ReportedBy = 'JEROME' | 'FLORIAN' | 'ERIC' | 'APOGEE' | 'AUTRE';
 export type Severity = 'CRITIQUE' | 'MAJEUR' | 'CONFORT';
-export type CreatedFrom = 'IMPORT' | 'MANUAL';
+export type CreatedFrom = 'IMPORT' | 'IMPORT_TRAITE' | 'MANUAL';
 // Types d'auteurs pour les commentaires (HC ou Apogée uniquement)
 export type AuthorType = 'HC' | 'APOGEE';
 
@@ -151,6 +151,7 @@ export interface ApogeeTicketInsert {
   needs_completion?: boolean;
   heat_priority?: number | null;
   reported_by?: string | null;
+  is_qualified?: boolean;
 }
 
 export interface ApogeeTicketCommentInsert {
