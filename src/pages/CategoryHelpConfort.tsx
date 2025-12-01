@@ -5,8 +5,6 @@ import { ROUTES } from '@/config/routes';
 import { Button } from '@/components/ui/button';
 import { Plus, ChevronsDownUp, ChevronsUpDown, Lightbulb, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
-import { SectionEditForm } from '@/components/SectionEditForm';
-import { TipsEditForm } from '@/components/TipsEditForm';
 import { Accordion } from '@/components/ui/accordion';
 import {
   DndContext,
@@ -18,28 +16,12 @@ import {
 } from '@dnd-kit/sortable';
 import { useMemo } from 'react';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { CategorySortableItem, CategoryBlock } from '@/components/category';
+import { CategorySortableItem, CategoryBlock, CategoryDialogs } from '@/components/category';
 import { useCategoryLogic } from '@/hooks/use-category-logic';
 
 export default function CategoryHelpConfort() {
@@ -334,64 +316,16 @@ export default function CategoryHelpConfort() {
       {/* Documents */}
       <DocumentsList blockId={category.id} scope="helpconfort" />
 
-      {/* Delete Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cette section ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irréversible. La section sera définitivement supprimée.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={(open) => !open && closeEditDialog()}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingSection?.contentType === 'tips' ? 'Modifier le TIPS' : 'Modifier la section'}
-            </DialogTitle>
-          </DialogHeader>
-          {editingSection && (
-            editingSection.contentType === 'tips' ? (
-              <TipsEditForm
-                sectionId={editingSection.id}
-                initialTitle={editingSection.title}
-                initialContent={editingSection.content}
-                initialTipsType={editingSection.tipsType || 'information'}
-                initialHideFromSidebar={editingSection.hideFromSidebar || false}
-                onSave={handleSaveTips}
-                onCancel={closeEditDialog}
-              />
-            ) : (
-              <SectionEditForm
-                sectionId={editingSection.id}
-                initialTitle={editingSection.title}
-                initialContent={editingSection.content}
-                initialColor={editingSection.colorPreset}
-                initialHideFromSidebar={editingSection.hideFromSidebar || false}
-                initialSummary={editingSection.summary || ''}
-                initialShowSummary={editingSection.showSummary || false}
-                initialHideTitle={editingSection.hideTitle || false}
-                initialIsInProgress={editingSection.isInProgress || false}
-                initialCompletedAt={editingSection.completedAt}
-                initialContentUpdatedAt={editingSection.contentUpdatedAt}
-                initialIsEmpty={editingSection.isEmpty || false}
-                onSave={handleSave}
-                onCancel={closeEditDialog}
-              />
-            )
-          )}
-        </DialogContent>
-      </Dialog>
+      <CategoryDialogs
+        deleteDialogOpen={deleteDialogOpen}
+        setDeleteDialogOpen={setDeleteDialogOpen}
+        confirmDelete={confirmDelete}
+        editDialogOpen={editDialogOpen}
+        closeEditDialog={closeEditDialog}
+        editingSection={editingSection}
+        handleSave={handleSave}
+        handleSaveTips={handleSaveTips}
+      />
     </div>
   );
 }
