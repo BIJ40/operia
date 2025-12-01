@@ -44,7 +44,7 @@ const CATEGORY_CONFIGS: Record<CategoryScope, CategoryConfig> = {
     backRoute: ROUTES.academy.apogee,
     categoryRoute: ROUTES.academy.apogeeCategory,
     excludeFaq: true,
-    showRefresh: true,
+    showRefresh: false,
   },
   helpconfort: {
     scope: 'helpconfort',
