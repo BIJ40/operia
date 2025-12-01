@@ -24,7 +24,10 @@ import { Button } from '@/components/ui/button';
 import { MessageSquare, Clock, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { useCanTransition, useLogTicketAction } from '../hooks/useTicketPermissions';
+import { useMyTicketViews } from '../hooks/useTicketViews';
+import { useAuth } from '@/contexts/AuthContext';
 import type { ApogeeTicket, ApogeeTicketStatus, ApogeeModule, ApogeeOwnerSide } from '../types';
 
 const COLLAPSED_COLUMNS_STORAGE_KEY = 'apogee-kanban-collapsed-columns';
@@ -79,11 +82,13 @@ function DraggableTicketCard({
   onClick,
   modules = [],
   ownerSides = [],
+  shouldBlink = false,
 }: {
   ticket: ApogeeTicket;
   onClick: () => void;
   modules?: ApogeeModule[];
   ownerSides?: ApogeeOwnerSide[];
+  shouldBlink?: boolean;
 }) {
   const {
     attributes,
@@ -133,7 +138,10 @@ function DraggableTicketCard({
     <Card
       ref={setNodeRef}
       style={style}
-      className="hover:shadow-md transition-shadow mb-2 border-l-4 group"
+      className={cn(
+        "hover:shadow-md transition-shadow mb-2 border-l-4 group",
+        shouldBlink && "animate-pulse ring-2 ring-green-500 ring-offset-1"
+      )}
       onClick={handleClick}
     >
       <CardContent className="p-3 space-y-2">
@@ -223,6 +231,7 @@ function DroppableColumn({
   columnWidth = 288,
   isCollapsed,
   onToggleCollapse,
+  getTicketShouldBlink,
 }: {
   status: ApogeeTicketStatus;
   tickets: ApogeeTicket[];
@@ -232,6 +241,7 @@ function DroppableColumn({
   columnWidth?: number;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  getTicketShouldBlink: (ticket: ApogeeTicket) => boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status.id });
 
@@ -299,6 +309,7 @@ function DroppableColumn({
             onClick={() => onTicketClick(ticket)}
             modules={modules}
             ownerSides={ownerSides}
+            shouldBlink={getTicketShouldBlink(ticket)}
           />
         ))}
         {tickets.length === 0 && (
@@ -312,9 +323,29 @@ function DroppableColumn({
 }
 
 export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusChange, onTicketClick, columnWidth = 288, onColumnWidthChange }: TicketKanbanProps) {
+  const { user } = useAuth();
   const [activeTicket, setActiveTicket] = useState<ApogeeTicket | null>(null);
   const canTransition = useCanTransition();
   const logAction = useLogTicketAction();
+  const { data: myViews = [] } = useMyTicketViews();
+
+  // Fonction pour déterminer si un ticket doit clignoter
+  const getTicketShouldBlink = useCallback((ticket: ApogeeTicket): boolean => {
+    if (!user?.id || !ticket.last_modified_by_user_id || !ticket.last_modified_at) {
+      return false;
+    }
+    // Ne clignote pas si c'est l'utilisateur courant qui a modifié
+    if (ticket.last_modified_by_user_id === user.id) {
+      return false;
+    }
+    // Chercher la dernière vue
+    const myView = myViews.find(v => v.ticket_id === ticket.id);
+    if (!myView) {
+      return true; // Jamais vu, et modifié par quelqu'un d'autre
+    }
+    // Comparer les dates
+    return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
+  }, [user?.id, myViews]);
 
   // Initialize collapsed columns from localStorage or default (first 3 expanded)
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(() => {
@@ -434,6 +465,7 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
             columnWidth={columnWidth}
             isCollapsed={collapsedColumns.has(status.id)}
             onToggleCollapse={() => toggleColumnCollapse(status.id)}
+            getTicketShouldBlink={getTicketShouldBlink}
           />
         ))}
       </div>

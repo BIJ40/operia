@@ -17,6 +17,8 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TicketTableRow } from './TicketTableRow';
+import { useMyTicketViews } from '../hooks/useTicketViews';
+import { useAuth } from '@/contexts/AuthContext';
 import type { ApogeeTicket, ApogeeModule, ApogeeTicketStatus, ApogeeOwnerSide } from '../types';
 import type { TicketRoleInfo } from '../hooks/useTicketPermissions';
 
@@ -72,11 +74,28 @@ export function TicketTable({
   onQualifyTicket,
   qualifyingTicketId,
 }: TicketTableProps) {
+  const { user } = useAuth();
+  const { data: myViews = [] } = useMyTicketViews();
   const [sortColumn, setSortColumn] = useState<SortColumn>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [pageSize, setPageSize] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+
+  // Fonction pour déterminer si un ticket doit clignoter
+  const getTicketShouldBlink = useCallback((ticket: ApogeeTicket): boolean => {
+    if (!user?.id || !ticket.last_modified_by_user_id || !ticket.last_modified_at) {
+      return false;
+    }
+    if (ticket.last_modified_by_user_id === user.id) {
+      return false;
+    }
+    const myView = myViews.find(v => v.ticket_id === ticket.id);
+    if (!myView) {
+      return true;
+    }
+    return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
+  }, [user?.id, myViews]);
 
   // Colonnes redimensionnables
   const [columnWidths, setColumnWidths] = useState<number[]>(
@@ -344,6 +363,7 @@ export function TicketTable({
                     current: statusSelectRefs.current.get(ticket.id) || null,
                   } as React.RefObject<HTMLButtonElement>}
                   columnWidths={columnWidths}
+                  shouldBlink={getTicketShouldBlink(ticket)}
                 />
               ))
             )}

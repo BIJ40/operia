@@ -29,6 +29,7 @@ interface TicketTableRowProps {
   isQualifying?: boolean;
   statusSelectRef?: React.RefObject<HTMLButtonElement>;
   columnWidths?: number[];
+  shouldBlink?: boolean;
 }
 
 const OWNER_SIDES: { value: OwnerSide; label: string }[] = [
@@ -59,6 +60,7 @@ export function TicketTableRow({
   isQualifying = false,
   statusSelectRef,
   columnWidths,
+  shouldBlink = false,
 }: TicketTableRowProps) {
   const { canManage, ticketRole, isAdmin } = roleInfo;
   
@@ -90,7 +92,8 @@ export function TicketTableRow({
         "cursor-pointer transition-colors",
         isSelected && "bg-helpconfort-blue/10 ring-1 ring-helpconfort-blue",
         ticket.needs_completion && "border-l-2 border-l-orange-400",
-        !ticket.is_qualified && "bg-amber-50/30 dark:bg-amber-950/10"
+        !ticket.is_qualified && "bg-amber-50/30 dark:bg-amber-950/10",
+        shouldBlink && "animate-pulse ring-2 ring-green-500"
       )}
       onClick={onSelect}
       onDoubleClick={onOpenDetail}
