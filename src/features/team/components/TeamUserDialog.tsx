@@ -1,15 +1,16 @@
 /**
  * TeamUserDialog - Formulaire de création directe d'utilisateur depuis /equipe
- * Identique aux formulaires admin/réseau mais avec choix de rôles limités selon niveau
+ * Identique au formulaire admin avec rôles limités selon niveau
  */
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { getAssignableRoles, GLOBAL_ROLE_LABELS } from "@/types/globalRoles";
+import { GLOBAL_ROLE_LABELS } from "@/types/globalRoles";
 import type { GlobalRole } from "@/types/globalRoles";
+import { getUserManagementCapabilities } from "@/config/roleMatrix";
+import { generateSecurePassword } from "@/lib/passwordUtils";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, RefreshCw, UserPlus } from "lucide-react";
 import { successToast, errorToast } from "@/lib/toastHelpers";
 import { logError } from "@/lib/logger";
 
@@ -40,12 +42,12 @@ interface TeamUserDialogProps {
 }
 
 interface UserFormData {
+  firstName: string;
+  lastName: string;
   email: string;
-  first_name: string;
-  last_name: string;
   password: string;
-  role_agence: string;
-  global_role: GlobalRole;
+  globalRole: GlobalRole;
+  sendEmail: boolean;
 }
 
 export function TeamUserDialog({
@@ -57,38 +59,45 @@ export function TeamUserDialog({
   const { globalRole } = useAuth();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const assignableRoles = getAssignableRoles(globalRole);
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-    formState: { errors },
-  } = useForm<UserFormData>({
-    defaultValues: {
-      email: "",
-      first_name: "",
-      last_name: "",
-      password: "",
-      role_agence: "Assistante",
-      global_role: "base_user" as GlobalRole,
-    },
+  
+  const [formData, setFormData] = useState<UserFormData>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    globalRole: "base_user",
+    sendEmail: true,
   });
 
+  const capabilities = getUserManagementCapabilities(globalRole);
+  const assignableRoles = capabilities.canCreateRoles;
+
+  const handleGeneratePassword = () => {
+    setFormData((prev) => ({ ...prev, password: generateSecurePassword() }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      globalRole: "base_user",
+      sendEmail: true,
+    });
+  };
+
   const createUserMutation = useMutation({
-    mutationFn: async (data: UserFormData) => {
+    mutationFn: async () => {
       const { data: result, error } = await supabase.functions.invoke("admin-create-user", {
         body: {
-          email: data.email,
-          password: data.password,
-          first_name: data.first_name,
-          last_name: data.last_name,
+          email: formData.email,
+          password: formData.password,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
           agence: agencyLabel,
-          role_agence: data.role_agence,
-          global_role: data.global_role,
+          global_role: formData.globalRole,
+          sendEmail: formData.sendEmail,
         },
       });
 
@@ -103,7 +112,7 @@ export function TeamUserDialog({
       successToast("Utilisateur créé avec succès");
       queryClient.invalidateQueries({ queryKey: ["agencyUsers"] });
       queryClient.invalidateQueries({ queryKey: ["agencyCollaborators"] });
-      reset();
+      resetForm();
       onSuccess?.();
       onOpenChange(false);
     },
@@ -113,118 +122,100 @@ export function TeamUserDialog({
     },
   });
 
-  const onSubmit = async (data: UserFormData) => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await createUserMutation.mutateAsync(data);
+      await createUserMutation.mutateAsync();
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        onOpenChange(o);
+        if (!o) resetForm();
+      }}
+    >
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Créer un utilisateur</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="w-5 h-5" />
+            Créer un utilisateur
+          </DialogTitle>
           <DialogDescription>
-            Création d'un compte utilisateur pour l'agence {agencyLabel}
+            Remplissez les informations pour créer un nouvel utilisateur.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              {...register("email", {
-                required: "Email requis",
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: "Email invalide",
-                },
-              })}
-              placeholder="utilisateur@exemple.com"
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-          </div>
-
+        <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="first_name">Prénom *</Label>
+              <Label>Prénom *</Label>
               <Input
-                id="first_name"
-                {...register("first_name", { required: "Prénom requis" })}
-                placeholder="Jean"
+                value={formData.firstName}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, firstName: e.target.value }))
+                }
               />
-              {errors.first_name && (
-                <p className="text-sm text-destructive">{errors.first_name.message}</p>
-              )}
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="last_name">Nom *</Label>
+              <Label>Nom *</Label>
               <Input
-                id="last_name"
-                {...register("last_name", { required: "Nom requis" })}
-                placeholder="Dupont"
+                value={formData.lastName}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, lastName: e.target.value }))
+                }
               />
-              {errors.last_name && (
-                <p className="text-sm text-destructive">{errors.last_name.message}</p>
-              )}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe *</Label>
+            <Label>Email *</Label>
             <Input
-              id="password"
-              type="password"
-              {...register("password", {
-                required: "Mot de passe requis",
-                minLength: {
-                  value: 8,
-                  message: "Minimum 8 caractères",
-                },
-                pattern: {
-                  value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]/,
-                  message: "Doit contenir majuscule, minuscule, chiffre et symbole",
-                },
-              })}
-              placeholder="Mot de passe sécurisé"
+              type="email"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, email: e.target.value }))
+              }
             />
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
-            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role_agence">Poste occupé *</Label>
-            <Select
-              value={watch("role_agence")}
-              onValueChange={(value) => setValue("role_agence", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background z-50">
-                <SelectItem value="Dirigeant">Dirigeant</SelectItem>
-                <SelectItem value="Assistante">Assistante</SelectItem>
-                <SelectItem value="Commercial">Commercial</SelectItem>
-                <SelectItem value="Tête de réseau">Tête de réseau</SelectItem>
-                <SelectItem value="Externe">Externe</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>Mot de passe provisoire *</Label>
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, password: e.target.value }))
+                }
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGeneratePassword}
+              >
+                <RefreshCw className="w-4 h-4 mr-1" />
+                Générer
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              18 caractères avec majuscules, minuscules, chiffres et symboles
+            </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="global_role">Rôle système *</Label>
+            <Label>Rôle système</Label>
             <Select
-              value={watch("global_role")}
-              onValueChange={(value) => setValue("global_role", value as GlobalRole)}
+              value={formData.globalRole}
+              onValueChange={(v) =>
+                setFormData((prev) => ({ ...prev, globalRole: v as GlobalRole }))
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -239,24 +230,42 @@ export function TeamUserDialog({
             </Select>
           </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                reset();
-                onOpenChange(false);
-              }}
-              disabled={isSubmitting}
-            >
-              Annuler
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Créer l'utilisateur
-            </Button>
-          </DialogFooter>
-        </form>
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox
+              id="sendEmail"
+              checked={formData.sendEmail}
+              onCheckedChange={(checked) =>
+                setFormData((prev) => ({ ...prev, sendEmail: checked === true }))
+              }
+            />
+            <Label htmlFor="sendEmail" className="text-sm font-normal cursor-pointer">
+              Envoyer l'email de bienvenue avec mot de passe provisoire
+            </Label>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Annuler
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={
+              !formData.email ||
+              !formData.password ||
+              !formData.firstName ||
+              !formData.lastName ||
+              isSubmitting
+            }
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <UserPlus className="w-4 h-4 mr-2" />
+            )}
+            Créer
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
