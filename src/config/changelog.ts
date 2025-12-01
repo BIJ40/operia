@@ -38,6 +38,13 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'improvement', description: 'Phase 3 - Skeleton loaders remplacent spinner générique (UserListSkeleton)' },
       { type: 'improvement', description: 'Phase 3 - React.memo ajouté sur 6 composants (ChartCard, MetricCard, UniversKpiCard, SortableCard)' },
       { type: 'improvement', description: 'Phase 3 - Bibliothèque react-window installée (préparation virtualisation listes longues)' },
+      { type: 'security', description: 'AUDIT F-SEC-CRIT-1: JWT validation via supabase.auth.getUser() au lieu de décodage manuel (update-user-email)' },
+      { type: 'security', description: 'AUDIT F-SEC-5: Validation stricte agence - auto-création désactivée (create-user)' },
+      { type: 'security', description: 'AUDIT F-SEC-1: Validation Zod centralisée dans _shared/validation.ts (chat-guide, qualify-ticket, network-kpis, create-user, update-user-email)' },
+      { type: 'security', description: 'AUDIT F-SEC-2: Suppression logs sensibles email/agency_id (create-user, update-user-email)' },
+      { type: 'security', description: 'AUDIT F-SEC-6: Validation renforcée ticket_ids avec vérification UUID (qualify-ticket)' },
+      { type: 'improvement', description: 'AUDIT F-PERF-1: Parallélisation chargement agences (network-kpis) - Promise.all au lieu de boucle séquentielle' },
+      { type: 'improvement', description: 'AUDIT F-TABLE-3: 14 index créés (chatbot_queries, support_tickets, apogee_tickets, profiles, franchiseur_assignments)' },
     ]
   },
   {

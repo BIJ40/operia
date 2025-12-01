@@ -8,6 +8,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+import { validateArray, validateOptionalString, validateUUID } from '../_shared/validation.ts';
 
 const SYSTEM_PROMPT = `Tu es l'assistant de qualification de tickets pour le projet Apogée / Help Confort.
 
@@ -190,14 +191,13 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { ticket_ids, user_id } = await req.json();
+    // Valider les paramètres d'entrée
+    const bodyRaw = await req.json();
+    const ticket_ids = validateArray(bodyRaw.ticket_ids, 'ticket_ids', { minLength: 1, maxLength: 100 });
+    const user_id = validateOptionalString(bodyRaw.user_id, 'user_id', 100) || null;
 
-    if (!ticket_ids || !Array.isArray(ticket_ids) || ticket_ids.length === 0) {
-      return withCors(req, new Response(
-        JSON.stringify({ error: "ticket_ids requis (array)" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      ));
-    }
+    // Validation renforcée: chaque ticket_id doit être un UUID valide
+    ticket_ids.forEach((id: any) => validateUUID(id, 'ticket_id'));
 
     // Récupérer les tickets
     const { data: tickets, error: fetchError } = await supabase

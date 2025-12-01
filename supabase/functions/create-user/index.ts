@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { Resend } from 'https://esm.sh/resend@4.0.0'
 import { GLOBAL_ROLES, getRoleLevel, canAccessUsersPage, canEditTarget } from '../_shared/roles.ts'
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
+import { validateString, validateOptionalString, validateOptionalBoolean } from '../_shared/validation.ts'
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
@@ -53,7 +54,7 @@ serve(async (req) => {
     const callerAgency = callerProfile?.agence || null
     const callerAgencyId = callerProfile?.agency_id || null
 
-    console.log(`[create-user] Appelant: ${user.id}, N${callerLevel}, agence: ${callerAgency}, agency_id: ${callerAgencyId}`)
+    console.log(`[create-user] Appelant: N${callerLevel}`)
 
     // Vérifier les droits de gestion (N3+ requis pour créer, N2 uniquement sa propre agence)
     if (!canAccessUsersPage(callerLevel)) {
@@ -61,23 +62,18 @@ serve(async (req) => {
       throw new Error('Accès refusé - Niveau N2 minimum requis')
     }
 
-    // Récupérer les données de la requête
-    const body = await req.json()
+    // Valider les données d'entrée
+    const bodyRaw = await req.json()
     
-    // Accepter les deux formats: snake_case et camelCase
-    const email = body.email
-    const password = body.password || generateSecurePassword()
-    const firstName = body.firstName || body.first_name
-    const lastName = body.lastName || body.last_name
-    const agence = body.agence || null
-    const agencyId = body.agency_id || null
-    const globalRole = body.globalRole || body.global_role || 'franchisee_user'
-    const roleAgence = body.role_agence || body.roleAgence || null
-    const sendEmail = body.sendEmail !== false
-
-    if (!email || !firstName || !lastName) {
-      throw new Error('Email, prénom et nom sont requis')
-    }
+    const email = validateString(bodyRaw.email, 'email', { email: true, maxLength: 255 })
+    const firstName = validateString(bodyRaw.firstName || bodyRaw.first_name, 'firstName', { minLength: 1, maxLength: 100 })
+    const lastName = validateString(bodyRaw.lastName || bodyRaw.last_name, 'lastName', { minLength: 1, maxLength: 100 })
+    const password = validateOptionalString(bodyRaw.password, 'password', 100) || generateSecurePassword()
+    const agence = validateOptionalString(bodyRaw.agence, 'agence', 100) || null
+    const agencyId = validateOptionalString(bodyRaw.agency_id, 'agency_id', 100) || null
+    const globalRole = validateOptionalString(bodyRaw.globalRole || bodyRaw.global_role, 'globalRole', 50) || 'franchisee_user'
+    const roleAgence = validateOptionalString(bodyRaw.role_agence || bodyRaw.roleAgence, 'roleAgence', 100) || null
+    const sendEmail = validateOptionalBoolean(bodyRaw.sendEmail) !== false
 
     // Déterminer l'agence cible (UUID ou slug)
     let targetAgency = agence
@@ -146,7 +142,7 @@ serve(async (req) => {
     }
 
     // Validation du mot de passe si fourni
-    if (body.password) {
+    if (bodyRaw.password) {
       const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/])[A-Za-z\d!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]{8,100}$/;
       if (!passwordRegex.test(password)) {
         throw new Error('Le mot de passe doit contenir au moins 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole')
@@ -202,7 +198,7 @@ serve(async (req) => {
       throw new Error('Erreur lors de la mise à jour du profil')
     }
 
-    // Auto-créer l'agence si elle n'existe pas
+    // VALIDATION: Ne pas auto-créer l'agence - elle doit exister
     if (targetAgency && !targetAgencyId) {
       const { data: existingAgency } = await supabaseAdmin
         .from('apogee_agencies')
@@ -211,26 +207,13 @@ serve(async (req) => {
         .maybeSingle()
 
       if (!existingAgency) {
-        const agencySlug = targetAgency.toLowerCase().replace(/[^a-z0-9]/g, '-')
-        const { data: newAgency } = await supabaseAdmin
-          .from('apogee_agencies')
-          .insert({
-            slug: agencySlug,
-            label: targetAgency,
-            is_active: true
-          })
-          .select('id')
-          .single()
-        
-        console.log('[create-user] Agence créée:', agencySlug)
-        
-        // Mettre à jour l'agency_id du nouveau profil
-        if (newAgency) {
-          await supabaseAdmin
-            .from('profiles')
-            .update({ agency_id: newAgency.id })
-            .eq('id', newUser.user.id)
-        }
+        throw new Error(`L'agence "${targetAgency}" n'existe pas. Veuillez créer l'agence d'abord dans la section Administration > Gestion Agences.`)
+      } else {
+        // Mettre à jour l'agency_id du nouveau profil avec l'agence existante
+        await supabaseAdmin
+          .from('profiles')
+          .update({ agency_id: existingAgency.id })
+          .eq('id', newUser.user.id)
       }
     }
 
@@ -293,18 +276,18 @@ serve(async (req) => {
           subject: '🎉 Bienvenue sur HelpConfort Services',
           html: emailHtml,
         })
-        console.log('[create-user] Email envoyé:', email)
+        console.log('[create-user] Email envoyé')
       } catch (emailError) {
         console.error('[create-user] Erreur email:', emailError)
       }
     }
 
-    console.log(`[create-user] Succès: ${email} avec rôle ${globalRole}`)
+    console.log(`[create-user] Succès: utilisateur créé avec rôle ${globalRole}`)
 
     return withCors(req, new Response(
       JSON.stringify({ 
         success: true, 
-        user: { id: newUser.user.id, email: email } 
+        user: { id: newUser.user.id } 
       }),
       { headers: { 'Content-Type': 'application/json' } }
     ))

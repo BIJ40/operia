@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
+import { validateString, validateUUID } from '../_shared/validation.ts'
 
 // ============================================================================
 // SYSTÈME DE PERMISSIONS V2.0 - Helpers centralisés
@@ -69,18 +70,31 @@ serve(async (req) => {
       }
     )
 
+    // CRITIQUE: Authentifier via Supabase au lieu de décoder JWT manuellement
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       throw new Error('Non autorisé')
     }
 
-    const token = authHeader.replace('Bearer ', '')
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    const userId = payload.sub
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: { headers: { Authorization: authHeader } }
+      }
+    )
 
-    if (!userId) {
-      throw new Error('Token invalide')
+    const { data: { user }, error: userAuthError } = await supabaseClient.auth.getUser()
+    if (userAuthError || !user) {
+      throw new Error('Token invalide ou expiré')
     }
+
+    const userId = user.id
+
+    // Valider les paramètres d'entrée
+    const bodyRaw = await req.json()
+    const targetUserId = validateUUID(bodyRaw.userId, 'userId')
+    const newEmail = validateString(bodyRaw.newEmail, 'newEmail', { email: true, maxLength: 255 })
 
     // Récupérer le profil de l'appelant
     const { data: callerProfile } = await supabaseAdmin
@@ -92,13 +106,7 @@ serve(async (req) => {
     const callerLevel = getRoleLevel(callerProfile?.global_role)
     const callerAgency = callerProfile?.agence || null
 
-    console.log(`[update-user-email] Appelant: ${userId}, N${callerLevel}`)
-
-    const { userId: targetUserId, newEmail } = await req.json()
-
-    if (!targetUserId || !newEmail) {
-      throw new Error('userId et newEmail sont requis')
-    }
+    console.log(`[update-user-email] Appelant: N${callerLevel}`)
 
     // Récupérer le profil de la cible
     const { data: targetProfile } = await supabaseAdmin
@@ -110,7 +118,7 @@ serve(async (req) => {
     const targetLevel = getRoleLevel(targetProfile?.global_role)
     const targetAgency = targetProfile?.agence || null
 
-    console.log(`[update-user-email] Cible: ${targetUserId}, N${targetLevel}, agence: ${targetAgency}`)
+    console.log(`[update-user-email] Cible: N${targetLevel}`)
 
     // Vérifier les droits
     const updateCheck = canUpdateEmail(callerLevel, targetLevel, callerAgency, targetAgency)
@@ -120,14 +128,14 @@ serve(async (req) => {
     }
 
     // Mettre à jour l'email dans auth.users
-    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+    const { error: updateAuthError } = await supabaseAdmin.auth.admin.updateUserById(
       targetUserId,
       { email: newEmail }
     )
 
-    if (authError) {
-      console.error('[update-user-email] Erreur auth:', authError)
-      throw authError
+    if (updateAuthError) {
+      console.error('[update-user-email] Erreur auth:', updateAuthError)
+      throw updateAuthError
     }
 
     // Mettre à jour l'email dans profiles
@@ -141,7 +149,7 @@ serve(async (req) => {
       throw profileError
     }
 
-    console.log(`[update-user-email] Succès: ${targetUserId} -> ${newEmail}`)
+    console.log(`[update-user-email] Succès: email mis à jour`)
 
     return withCors(req, new Response(
       JSON.stringify({ success: true }),
