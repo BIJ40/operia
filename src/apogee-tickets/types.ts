@@ -106,6 +106,8 @@ export interface ApogeeTicket {
   // Tracking des modifications (pour clignotement)
   last_modified_by_user_id: string | null;
   last_modified_at: string | null;
+  // Tags
+  impact_tags: string[] | null;
   // Relations
   apogee_modules?: ApogeeModule;
   apogee_priorities?: ApogeePriority;
@@ -152,6 +154,7 @@ export interface ApogeeTicketInsert {
   heat_priority?: number | null;
   reported_by?: string | null;
   is_qualified?: boolean;
+  impact_tags?: string[] | null;
 }
 
 export interface ApogeeTicketCommentInsert {

@@ -178,6 +178,23 @@ function DraggableTicketCard({
           {ticket.element_concerne}
         </p>
 
+        {/* Tags */}
+        {ticket.impact_tags && ticket.impact_tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {ticket.impact_tags.map(tag => {
+              const tagColor = tag === 'BUG' ? 'bg-red-100 text-red-800' :
+                               tag === 'EVO' ? 'bg-blue-100 text-blue-800' :
+                               tag === 'NTH' ? 'bg-gray-100 text-gray-800' :
+                               'bg-purple-100 text-purple-800';
+              return (
+                <Badge key={tag} variant="secondary" className={`${tagColor} text-xs`}>
+                  {tag}
+                </Badge>
+              );
+            })}
+          </div>
+        )}
+
         {/* Description courte */}
         {ticket.description && (
           <p className="text-xs text-muted-foreground line-clamp-2">

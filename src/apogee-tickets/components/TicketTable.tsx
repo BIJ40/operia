@@ -52,6 +52,7 @@ const COLUMNS: ColumnDef[] = [
   { key: 'ticket_number', label: 'Réf', sortable: true, minWidth: 50, defaultWidth: 70 },
   { key: 'heat_priority', label: 'Priorité', sortable: true, minWidth: 60, defaultWidth: 80 },
   { key: 'element_concerne', label: 'Titre', sortable: true, minWidth: 150, defaultWidth: 250 },
+  { key: 'actions', label: 'Tags', sortable: false, minWidth: 80, defaultWidth: 120 },
   { key: 'module', label: 'Module', sortable: true, minWidth: 80, defaultWidth: 110 },
   { key: 'kanban_status', label: 'Statut', sortable: true, minWidth: 100, defaultWidth: 120 },
   { key: 'actions', label: 'PEC', sortable: false, minWidth: 60, defaultWidth: 90 },

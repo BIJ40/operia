@@ -179,6 +179,7 @@ function rowToTicket(row: BugsRow): ApogeeTicketInsert {
     created_from: 'IMPORT',
     needs_completion: !row.module,
     heat_priority: heatPriority,
+    impact_tags: ['BUG'], // Auto-tag avec BUG pour l'import BUGS
   };
 }
 
