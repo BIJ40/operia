@@ -18,7 +18,8 @@ import {
   ChevronDown,
   ChevronRight,
   History,
-  Archive
+  Archive,
+  Megaphone
 } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
@@ -137,6 +138,18 @@ export function NavigationCards() {
         },
         { to: ROUTES.admin.supportStats, icon: BarChart3, title: 'Statistiques Support', description: 'Métriques et indicateurs' },
         { to: ROUTES.admin.escalationHistory, icon: History, title: 'Historique Escalades', description: 'Escalades chatbot' },
+      ],
+    },
+    {
+      title: 'Communication',
+      description: 'Annonces et notifications',
+      cards: [
+        { 
+          to: ROUTES.admin.announcements, 
+          icon: Megaphone, 
+          title: 'Annonces Prioritaires', 
+          description: 'Diffuser des informations importantes',
+        },
       ],
     },
     {
