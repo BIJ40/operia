@@ -45,6 +45,24 @@ export const CHANGELOG: ChangelogEntry[] = [
     ]
   },
   {
+    version: 'V0.5.0',
+    date: '2025-12-01',
+    title: 'Sprints 1-3: Fondations Sécurité, Permissions & Data Model',
+    changes: [
+      { type: 'improvement', description: 'P3.1 - Registre centralisé scopes (scopeRegistry.ts)' },
+      { type: 'improvement', description: 'P3.2 - Documentation format unique enabled_modules V2' },
+      { type: 'security', description: 'P3.3 - Suppression has_franchiseur_role() des RLS' },
+      { type: 'improvement', description: 'P3.4 - Enum strict rag_context_type (7 valeurs)' },
+      { type: 'feature', description: 'P3.5 - heat_priority unique (suppression priority texte)' },
+      { type: 'improvement', description: 'P2.1 - Support Console sémantique (hasSupportAgentRole)' },
+      { type: 'improvement', description: 'P2.2 - Guards centralisés App.tsx' },
+      { type: 'improvement', description: 'P2.3 - Navigation unifiée (canAccessFeature)' },
+      { type: 'security', description: 'P1.1 - RLS Franchiseur (can_access_agency)' },
+      { type: 'security', description: 'P1.2 - RLS Support Console (is_support_agent)' },
+      { type: 'improvement', description: 'P1.3 - Migration agency_id unique' },
+    ]
+  },
+  {
     version: 'V0.4.2',
     date: '2025-12-02',
     title: 'Audits de sécurité, permissions et fonctionnalités',

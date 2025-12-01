@@ -110,8 +110,11 @@ export function useApogeeTickets(filters?: TicketFilters) {
           query = query.eq('module', filters.module);
         }
       }
-      if (filters?.priority) {
-        query = query.eq('priority', filters.priority);
+      if (filters?.heat_priority_min !== undefined) {
+        query = query.gte('heat_priority', filters.heat_priority_min);
+      }
+      if (filters?.heat_priority_max !== undefined) {
+        query = query.lte('heat_priority', filters.heat_priority_max);
       }
       if (filters?.owner_side) {
         query = query.eq('owner_side', filters.owner_side);

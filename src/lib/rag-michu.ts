@@ -10,6 +10,7 @@ import { logDebug, logError, logInfo } from '@/lib/logger';
 
 // ============ TYPES ============
 
+// Must match the database enum rag_context_type
 export type RAGContextType = 'apogee' | 'apporteurs' | 'helpconfort' | 'documents' | 'metier' | 'franchise' | 'auto';
 
 // ============ ROLE-BASED CONTEXT FILTERING ============

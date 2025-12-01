@@ -367,13 +367,14 @@ async function processDocument(doc: IngestionDocument): Promise<void> {
 
     // Insert chunk
     await safeMutation(
-      supabase.from('guide_chunks').insert({
+      supabase.from('guide_chunks').insert([{
         block_id: doc.id,
         block_slug: doc.filename.replace(/[^a-z0-9]/gi, '-').toLowerCase(),
         block_title: doc.filename,
         block_type: blockType,
         chunk_index: i,
         chunk_text: chunk,
+        context_type: detectedContext,
         embedding: embeddingResult.data.embedding,
         metadata: {
           source: 'ingestion',
@@ -384,7 +385,7 @@ async function processDocument(doc: IngestionDocument): Promise<void> {
           role_cible: doc.role_cible,
           job_id: doc.job_id,
         },
-      }),
+      }]),
       'RAG_INGESTION_INSERT_CHUNK'
     );
   }

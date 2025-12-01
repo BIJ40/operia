@@ -771,7 +771,7 @@ export type Database = {
           h_max: number | null
           h_min: number | null
           hca_code: string | null
-          heat_priority: number | null
+          heat_priority: number
           id: string
           impact_tags: string[] | null
           is_qualified: boolean | null
@@ -785,7 +785,6 @@ export type Database = {
           original_description: string | null
           original_title: string | null
           owner_side: string | null
-          priority: string | null
           qualified_at: string | null
           qualified_by: string | null
           reported_by: string | null
@@ -808,7 +807,7 @@ export type Database = {
           h_max?: number | null
           h_min?: number | null
           hca_code?: string | null
-          heat_priority?: number | null
+          heat_priority?: number
           id?: string
           impact_tags?: string[] | null
           is_qualified?: boolean | null
@@ -822,7 +821,6 @@ export type Database = {
           original_description?: string | null
           original_title?: string | null
           owner_side?: string | null
-          priority?: string | null
           qualified_at?: string | null
           qualified_by?: string | null
           reported_by?: string | null
@@ -845,7 +843,7 @@ export type Database = {
           h_max?: number | null
           h_min?: number | null
           hca_code?: string | null
-          heat_priority?: number | null
+          heat_priority?: number
           id?: string
           impact_tags?: string[] | null
           is_qualified?: boolean | null
@@ -859,7 +857,6 @@ export type Database = {
           original_description?: string | null
           original_title?: string | null
           owner_side?: string | null
-          priority?: string | null
           qualified_at?: string | null
           qualified_by?: string | null
           reported_by?: string | null
@@ -891,13 +888,6 @@ export type Database = {
             columns: ["module"]
             isOneToOne: false
             referencedRelation: "apogee_modules"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "apogee_tickets_priority_fkey"
-            columns: ["priority"]
-            isOneToOne: false
-            referencedRelation: "apogee_priorities"
             referencedColumns: ["id"]
           },
         ]
@@ -1129,7 +1119,9 @@ export type Database = {
           apporteur_code_used: string | null
           chat_context: string | null
           context_found: string | null
-          context_type_used: string | null
+          context_type_used:
+            | Database["public"]["Enums"]["rag_context_type"]
+            | null
           created_at: string | null
           id: string
           improvement_block_id: string | null
@@ -1152,7 +1144,9 @@ export type Database = {
           apporteur_code_used?: string | null
           chat_context?: string | null
           context_found?: string | null
-          context_type_used?: string | null
+          context_type_used?:
+            | Database["public"]["Enums"]["rag_context_type"]
+            | null
           created_at?: string | null
           id?: string
           improvement_block_id?: string | null
@@ -1175,7 +1169,9 @@ export type Database = {
           apporteur_code_used?: string | null
           chat_context?: string | null
           context_found?: string | null
-          context_type_used?: string | null
+          context_type_used?:
+            | Database["public"]["Enums"]["rag_context_type"]
+            | null
           created_at?: string | null
           id?: string
           improvement_block_id?: string | null
@@ -1390,7 +1386,7 @@ export type Database = {
           answer: string
           apporteur_code: string | null
           category_id: string | null
-          context_type: string
+          context_type: Database["public"]["Enums"]["rag_context_type"]
           created_at: string
           created_from_query_id: string | null
           display_order: number
@@ -1406,7 +1402,7 @@ export type Database = {
           answer: string
           apporteur_code?: string | null
           category_id?: string | null
-          context_type?: string
+          context_type?: Database["public"]["Enums"]["rag_context_type"]
           created_at?: string
           created_from_query_id?: string | null
           display_order?: number
@@ -1422,7 +1418,7 @@ export type Database = {
           answer?: string
           apporteur_code?: string | null
           category_id?: string | null
-          context_type?: string
+          context_type?: Database["public"]["Enums"]["rag_context_type"]
           created_at?: string
           created_from_query_id?: string | null
           display_order?: number
@@ -1548,6 +1544,7 @@ export type Database = {
           block_type: string
           chunk_index: number
           chunk_text: string
+          context_type: Database["public"]["Enums"]["rag_context_type"]
           created_at: string | null
           embedding: Json
           id: string
@@ -1561,6 +1558,7 @@ export type Database = {
           block_type: string
           chunk_index: number
           chunk_text: string
+          context_type: Database["public"]["Enums"]["rag_context_type"]
           created_at?: string | null
           embedding: Json
           id?: string
@@ -1574,6 +1572,7 @@ export type Database = {
           block_type?: string
           chunk_index?: number
           chunk_text?: string
+          context_type?: Database["public"]["Enums"]["rag_context_type"]
           created_at?: string | null
           embedding?: Json
           id?: string
@@ -1858,7 +1857,7 @@ export type Database = {
         Row: {
           apporteur_code: string | null
           chunk_count: number | null
-          context_type: string | null
+          context_type: Database["public"]["Enums"]["rag_context_type"] | null
           created_at: string
           detected_context: string | null
           error_message: string | null
@@ -1876,7 +1875,7 @@ export type Database = {
         Insert: {
           apporteur_code?: string | null
           chunk_count?: number | null
-          context_type?: string | null
+          context_type?: Database["public"]["Enums"]["rag_context_type"] | null
           created_at?: string
           detected_context?: string | null
           error_message?: string | null
@@ -1894,7 +1893,7 @@ export type Database = {
         Update: {
           apporteur_code?: string | null
           chunk_count?: number | null
-          context_type?: string | null
+          context_type?: Database["public"]["Enums"]["rag_context_type"] | null
           created_at?: string
           detected_context?: string | null
           error_message?: string | null
@@ -2561,13 +2560,6 @@ export type Database = {
         Returns: Database["public"]["Enums"]["apogee_ticket_role"]
       }
       has_franchiseur_access: { Args: { _user_id: string }; Returns: boolean }
-      has_franchiseur_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["franchiseur_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
       has_min_global_role: {
         Args: { _min_level: number; _user_id: string }
         Returns: boolean
@@ -2596,6 +2588,14 @@ export type Database = {
         | "franchisor_admin"
         | "platform_admin"
         | "superadmin"
+      rag_context_type:
+        | "apogee"
+        | "apporteurs"
+        | "helpconfort"
+        | "metier"
+        | "franchise"
+        | "documents"
+        | "auto"
       system_role: "visiteur" | "utilisateur" | "support" | "admin"
     }
     CompositeTypes: {
@@ -2744,6 +2744,15 @@ export const Constants = {
         "franchisor_admin",
         "platform_admin",
         "superadmin",
+      ],
+      rag_context_type: [
+        "apogee",
+        "apporteurs",
+        "helpconfort",
+        "metier",
+        "franchise",
+        "documents",
+        "auto",
       ],
       system_role: ["visiteur", "utilisateur", "support", "admin"],
     },
