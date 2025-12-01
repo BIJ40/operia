@@ -413,6 +413,8 @@ export function UnifiedSidebar() {
                         p-2 rounded-xl transition-all duration-300 ease-out
                         ${groupIsActive ? 'text-helpconfort-blue hover:bg-helpconfort-blue/10 hover:scale-110' : 'text-muted-foreground hover:bg-muted/50 hover:text-helpconfort-blue hover:scale-110'}
                       `}
+                      aria-label={isGroupOpen ? `Réduire la section ${group.labelKey}` : `Développer la section ${group.labelKey}`}
+                      aria-expanded={isGroupOpen}
                     >
                       <ChevronRight 
                         className={`w-3.5 h-3.5 transition-transform duration-300 ${isGroupOpen ? 'rotate-90' : ''}`}
