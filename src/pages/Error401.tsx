@@ -35,7 +35,7 @@ export default function Error401() {
             Se reconnecter
           </Button>
           <p className="text-xs text-center text-muted-foreground">
-            Code erreur: 401 - Unauthorized
+            Code erreur : 401 - Unauthorized
           </p>
         </CardContent>
       </Card>

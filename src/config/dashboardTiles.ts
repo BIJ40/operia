@@ -39,7 +39,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
   {
     id: 'GUIDE_APPORTEURS',
     title: 'Guide Apporteurs',
-    description: "Ressources pour les apporteurs d'affaires",
+    description: 'Ressources pour les apporteurs d\'affaires',
     icon: FileText,
     route: ROUTES.academy.apporteurs,
     scopeSlug: SCOPE_SLUGS.APPORTEURS,
@@ -111,7 +111,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
   // Support
   {
     id: 'CENTRE_AIDE',
-    title: "Centre d'aide",
+    title: 'Centre d\'aide',
     description: 'FAQ, chat et assistance en ligne',
     icon: HelpCircle,
     route: ROUTES.support.helpcenter,
@@ -121,7 +121,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
   },
   {
     id: 'MES_DEMANDES',
-    title: 'Mes Demandes',
+    title: 'Mes demandes',
     description: 'Créer et suivre vos demandes de support',
     icon: LifeBuoy,
     route: ROUTES.support.userTickets,
@@ -131,7 +131,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
   },
   {
     id: 'CONSOLE_SUPPORT',
-    title: 'Console Support',
+    title: 'Console support',
     description: 'Gestion des tickets et demandes utilisateurs',
     icon: Headphones,
     route: ROUTES.support.console,
@@ -199,7 +199,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
   {
     id: 'ADMIN_BACKUP',
     title: 'Sauvegarde',
-    description: 'Import/export des données',
+    description: 'Import et export des données',
     icon: Database,
     route: ROUTES.admin.backup,
     scopeSlug: SCOPE_SLUGS.ADMIN_BACKUP,

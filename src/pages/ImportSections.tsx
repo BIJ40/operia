@@ -15,7 +15,7 @@ export default function ImportSections() {
       await importData(jsonData);
       toast({
         title: 'Succès',
-        description: 'Les sections ont été importées avec succès',
+        description: 'Les sections ont été importées avec succès.',
       });
       setJsonData('');
     } catch (error) {
