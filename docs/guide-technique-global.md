@@ -1,4 +1,4 @@
-# Guide Technique — GLOBAL / Apogée
+# Guide Technique — GLOBAL /HELP CONFORT SERVICES
 
 > **Version** : 2.0  
 > **Mise à jour** : Décembre 2025  
