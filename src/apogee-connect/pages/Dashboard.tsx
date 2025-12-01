@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { AppLayout } from "@/apogee-connect/components/layout/AppLayout";
 import { DataService } from "@/apogee-connect/services/dataService";
+import { LocalErrorBoundary } from "@/components/system/LocalErrorBoundary";
 import { useFilters } from "@/apogee-connect/contexts/FiltersContext";
 import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
 import { useApiToggle } from "@/apogee-connect/contexts/ApiToggleContext";
@@ -311,8 +312,9 @@ export default function Dashboard() {
   ];
 
   return (
-    <AppLayout>
-      <div className="space-y-8">
+    <LocalErrorBoundary componentName="Dashboard Apogée">
+      <AppLayout>
+        <div className="space-y-8">
         {/* Sélecteur de période au-dessus des tuiles */}
         <div>
           <PeriodSelector />
@@ -795,8 +797,9 @@ export default function Dashboard() {
           <div className="mt-8">
             <SegmentationChart data={data?.segmentationData || []} loading={isLoading} />
           </div>
+          </div>
         </div>
-      </div>
-    </AppLayout>
+      </AppLayout>
+    </LocalErrorBoundary>
   );
 }
