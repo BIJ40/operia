@@ -2,7 +2,7 @@ import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
   PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity,
-  HelpCircle
+  HelpCircle, Calendar, UserCog
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -15,7 +15,7 @@ export interface DashboardTile {
   route: string;
   scopeSlug: string;
   color: 'primary' | 'accent';
-  group: 'help_academy' | 'pilotage' | 'support' | 'franchiseur' | 'admin';
+  group: 'help_academy' | 'pilotage' | 'support' | 'projects' | 'franchiseur' | 'admin';
   requiresAdmin?: boolean;
   requiresSupport?: boolean;
   requiresFranchisor?: boolean; // N3+ (franchisor_user)
@@ -87,6 +87,26 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     group: 'pilotage',
     badge: 'En cours',
   },
+  {
+    id: 'RH_TECH',
+    title: 'RH Tech',
+    description: 'Planning hebdomadaire techniciens',
+    icon: Calendar,
+    route: ROUTES.pilotage.rhTech,
+    scopeSlug: 'mes_indicateurs',
+    color: 'accent',
+    group: 'pilotage',
+  },
+  {
+    id: 'MON_EQUIPE',
+    title: 'Mon équipe',
+    description: 'Gestion des collaborateurs de l\'agence',
+    icon: UserCog,
+    route: ROUTES.pilotage.equipe,
+    scopeSlug: 'mes_indicateurs',
+    color: 'accent',
+    group: 'pilotage',
+  },
   // Support
   {
     id: 'CENTRE_AIDE',
@@ -118,6 +138,18 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'accent',
     group: 'support',
     requiresSupport: true,
+  },
+  // Gestion de Projet
+  {
+    id: 'PROJET_KANBAN',
+    title: 'Gestion de Projet',
+    description: 'Kanban et suivi des tickets développement',
+    icon: Kanban,
+    route: ROUTES.projects.kanban,
+    scopeSlug: 'apogee_tickets',
+    color: 'accent',
+    group: 'projects',
+    requiresModule: 'apogee_tickets',
   },
   // Franchiseur
   {
@@ -216,6 +248,12 @@ export const DASHBOARD_GROUPS = {
     icon: MessageSquare,
     colorClass: 'text-primary',
     indexUrl: ROUTES.support.index,
+  },
+  projects: {
+    title: 'Gestion de Projet',
+    icon: Kanban,
+    colorClass: 'text-accent',
+    indexUrl: ROUTES.projects.index,
   },
   franchiseur: {
     title: 'Réseau',
