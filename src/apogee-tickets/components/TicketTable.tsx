@@ -207,13 +207,6 @@ export function TicketTable({
           selectRef?.click();
         }
         break;
-      case '3':
-        e.preventDefault();
-        // Focus priorité (si canManage)
-        if (roleInfo.canManage) {
-          // TODO: implement priority focus
-        }
-        break;
       case '4':
         e.preventDefault();
         if (roleInfo.canManage && !ticket.is_qualified) {
