@@ -125,6 +125,7 @@ export const ROUTES = {
     apogeeGuides: '/admin/apogee-guides',
     chatbotRag: '/admin/chatbot-rag',
     systemHealth: '/admin/system-health',
+    announcements: '/admin/announcements',
     // Legacy redirects (kept for backward compatibility)
     apogeeTickets: '/admin/apogee-tickets',
     apogeeTicketsImport: '/admin/apogee-tickets/import',

@@ -18,7 +18,8 @@ import {
   ChevronDown,
   ChevronRight,
   History,
-  Archive
+  Archive,
+  Bell
 } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
@@ -182,6 +183,12 @@ export function NavigationCards() {
       title: 'Système',
       description: 'Configuration et surveillance',
       cards: [
+        { 
+          to: ROUTES.admin.announcements, 
+          icon: Bell, 
+          title: 'Annonces Prioritaires', 
+          description: 'Diffuser des informations' 
+        },
         { 
           to: ROUTES.admin.systemHealth, 
           icon: Activity, 

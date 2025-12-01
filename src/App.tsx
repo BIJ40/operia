@@ -82,6 +82,7 @@ const AdminPageMetadata = lazy(() => import("./pages/AdminPageMetadata"));
 const AdminApogeeGuides = lazy(() => import("./pages/AdminApogeeGuides"));
 const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
 const AdminSystemHealth = lazy(() => import("./pages/AdminSystemHealth"));
+const AdminAnnouncements = lazy(() => import("./pages/admin/AdminAnnouncements"));
 
 // Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
 const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
@@ -110,6 +111,7 @@ import { ImpersonationProvider } from "./contexts/ImpersonationContext";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { GlobalErrorBoundary } from "./components/system/GlobalErrorBoundary";
+import { AnnouncementGate } from "./components/announcements/AnnouncementGate";
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -133,7 +135,7 @@ function PageLoader() {
 }
 
 function AppContent() {
-  const { mustChangePassword } = useAuth();
+  const { mustChangePassword, user, isAuthLoading } = useAuth();
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   useEffect(() => {
@@ -142,6 +144,9 @@ function AppContent() {
 
   return (
     <>
+      {/* Annonces prioritaires - affichées après chargement auth */}
+      {!isAuthLoading && user && <AnnouncementGate userId={user.id} />}
+      
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Dashboard / Home - Accessible à tous les utilisateurs connectés */}
@@ -265,6 +270,7 @@ function AppContent() {
           <Route path="/admin/page-metadata" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminPageMetadata /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-guides" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminApogeeGuides /></RoleGuard></MainLayout>} />
           <Route path="/admin/chatbot-rag" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminChatbotRag /></RoleGuard></MainLayout>} />
+          <Route path="/admin/announcements" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminAnnouncements /></RoleGuard></MainLayout>} />
           {/* Legacy admin/apogee-tickets - Redirect to /projects */}
           <Route path="/admin/apogee-tickets" element={<Navigate to="/projects/kanban" replace />} />
           <Route path="/admin/apogee-tickets/import" element={<Navigate to="/projects/import" replace />} />
