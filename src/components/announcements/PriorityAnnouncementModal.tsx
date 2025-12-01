@@ -13,14 +13,16 @@ import DOMPurify from 'dompurify';
 import { Check, Clock, Megaphone } from 'lucide-react';
 
 export function PriorityAnnouncementModal() {
-  const { data: announcements, isLoading } = useActiveAnnouncements();
+  const { data: announcements, isLoading, isError } = useActiveAnnouncements();
   const { mutate: markAnnouncement, isPending } = useMarkAnnouncement();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  const currentAnnouncement = announcements?.[currentIndex];
-  const hasMore = announcements && currentIndex < announcements.length - 1;
-  const isOpen = !isLoading && !!currentAnnouncement;
+  // Sécurité: s'assurer que announcements est un tableau valide
+  const safeAnnouncements = Array.isArray(announcements) ? announcements : [];
+  const currentAnnouncement = safeAnnouncements[currentIndex];
+  const hasMore = safeAnnouncements.length > 0 && currentIndex < safeAnnouncements.length - 1;
+  const isOpen = !isLoading && !isError && !!currentAnnouncement;
 
   // Charger l'image si présente
   useEffect(() => {
@@ -65,12 +67,13 @@ export function PriorityAnnouncementModal() {
   // Reset index when announcements change
   useEffect(() => {
     setCurrentIndex(0);
-  }, [announcements?.length]);
+  }, [safeAnnouncements.length]);
 
-  if (!isOpen) return null;
+  // Ne pas afficher si pas d'annonce ou erreur
+  if (!isOpen || !currentAnnouncement) return null;
 
   const hasImage = !!imageUrl;
-  const sanitizedContent = DOMPurify.sanitize(currentAnnouncement.content);
+  const sanitizedContent = DOMPurify.sanitize(currentAnnouncement.content || '');
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
@@ -83,9 +86,9 @@ export function PriorityAnnouncementModal() {
           <div className="flex items-center gap-2 text-primary">
             <Megaphone className="h-5 w-5" />
             <span className="text-sm font-medium">Information importante</span>
-            {announcements && announcements.length > 1 && (
+          {safeAnnouncements.length > 1 && (
               <span className="ml-auto text-xs text-muted-foreground">
-                {currentIndex + 1} / {announcements.length}
+                {currentIndex + 1} / {safeAnnouncements.length}
               </span>
             )}
           </div>
