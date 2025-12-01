@@ -151,6 +151,24 @@ export function TicketDetailDrawer({
 
   const hasMoreComments = sortedComments.length > MAX_VISIBLE_COMMENTS;
 
+  // Statuts disponibles pour le sélecteur (filtrer selon permissions)
+  const availableStatuses = useMemo(() => {
+    if (isAdmin) return statuses;
+    if (!ticket) return statuses;
+    // Inclure le statut actuel + les transitions autorisées
+    return statuses.filter(s => 
+      s.id === ticket.kanban_status || 
+      allowedTransitions.includes(s.id)
+    );
+  }, [statuses, ticket, isAdmin, allowedTransitions]);
+
+  // Couleur du statut actuel
+  const currentStatusColor = useMemo(() => {
+    const status = statuses.find(s => s.id === ticket?.kanban_status);
+    return status?.color || '#6b7280';
+  }, [statuses, ticket?.kanban_status]);
+
+  // Early return MUST be after all hooks
   if (!ticket) return null;
 
   const handleAddComment = async () => {
@@ -201,24 +219,7 @@ export function TicketDetailDrawer({
   };
 
   // Formater la référence ticket
-  const ticketRef = ticket ? `APO-${String(ticket.ticket_number || 0).padStart(3, '0')}` : '';
-  
-  // Statuts disponibles pour le sélecteur (filtrer selon permissions)
-  const availableStatuses = useMemo(() => {
-    if (isAdmin) return statuses;
-    if (!ticket) return statuses;
-    // Inclure le statut actuel + les transitions autorisées
-    return statuses.filter(s => 
-      s.id === ticket.kanban_status || 
-      allowedTransitions.includes(s.id)
-    );
-  }, [statuses, ticket, isAdmin, allowedTransitions]);
-
-  // Couleur du statut actuel
-  const currentStatusColor = useMemo(() => {
-    const status = statuses.find(s => s.id === ticket?.kanban_status);
-    return status?.color || '#6b7280';
-  }, [statuses, ticket?.kanban_status]);
+  const ticketRef = `APO-${String(ticket.ticket_number || 0).padStart(3, '0')}`;
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
