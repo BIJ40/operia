@@ -138,21 +138,21 @@ export default function FranchiseurStats() {
 
       {/* Info agences */}
       {agenciesToLoad.length > 0 && (
-        <Card className="bg-muted/30">
-          <CardContent className="py-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
-                Données agrégées de <span className="font-semibold text-foreground">{agenciesToLoad.length}</span> agence{agenciesToLoad.length > 1 ? 's' : ''}
-              </span>
-              {isLoading && (
-                <div className="flex items-center gap-2">
-                  <Progress value={33} className="w-32 h-2" />
-                  <span className="text-xs text-muted-foreground">Chargement...</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border border-helpconfort-blue/15 p-4
+          bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white dark:via-background dark:to-background
+          shadow-sm border-l-4 border-l-helpconfort-blue">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              Données agrégées de <span className="font-semibold text-foreground">{agenciesToLoad.length}</span> agence{agenciesToLoad.length > 1 ? 's' : ''}
+            </span>
+            {isLoading && (
+              <div className="flex items-center gap-2">
+                <Progress value={33} className="w-32 h-2" />
+                <span className="text-xs text-muted-foreground">Chargement...</span>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {error && (
@@ -171,16 +171,18 @@ export default function FranchiseurStats() {
       />
 
       {/* Matrice Univers × Techniciens */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
+      <div className="rounded-xl border border-helpconfort-blue/15 p-6
+        bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white dark:via-background dark:to-background
+        shadow-sm border-l-4 border-l-helpconfort-blue">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-primary to-helpconfort-blue-dark bg-clip-text text-transparent">
             TOP 5 Collaborateurs du Réseau
-          </CardTitle>
-          <CardDescription>
+          </h3>
+          <p className="text-sm text-muted-foreground">
             Meilleurs collaborateurs par CA, heures et performance sur l'ensemble du réseau
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div>
           {isLoading ? (
             <Skeleton className="h-[400px] w-full" />
           ) : adaptedTechStats.length === 0 ? (
@@ -229,8 +231,8 @@ export default function FranchiseurStats() {
               </TabsContent>
             </Tabs>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -168,7 +168,7 @@ export default function FranchiseurHome() {
       {/* Ligne 3: SAV (intemporel) */}
       <div className="grid gap-4 md:grid-cols-1">
         <div className="group relative rounded-xl border border-helpconfort-blue/15 p-4
-          bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+          bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white dark:via-background dark:to-background
           shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
           hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
           <div className="flex items-center gap-2 mb-3">

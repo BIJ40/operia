@@ -123,10 +123,10 @@ export default function FranchiseurAnimateurs() {
       {/* Stats summary */}
       <div className="grid gap-4 md:grid-cols-3">
         <div className="group rounded-xl p-5
-          bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent
-          border border-blue-500/20 border-l-4 border-l-blue-500
+          bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white dark:via-background dark:to-background
+          border border-helpconfort-blue/20 border-l-4 border-l-blue-500
           shadow-sm transition-all duration-300
-          hover:from-blue-500/15 hover:via-blue-500/8 hover:shadow-lg hover:-translate-y-0.5">
+          hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/30">
               <Users className="h-6 w-6 text-blue-500" />
@@ -139,10 +139,10 @@ export default function FranchiseurAnimateurs() {
         </div>
         
         <div className="group rounded-xl p-5
-          bg-gradient-to-r from-purple-500/10 via-purple-500/5 to-transparent
-          border border-purple-500/20 border-l-4 border-l-purple-500
+          bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white dark:via-background dark:to-background
+          border border-helpconfort-blue/20 border-l-4 border-l-purple-500
           shadow-sm transition-all duration-300
-          hover:from-purple-500/15 hover:via-purple-500/8 hover:shadow-lg hover:-translate-y-0.5">
+          hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30">
               <Users className="h-6 w-6 text-purple-500" />
@@ -155,10 +155,10 @@ export default function FranchiseurAnimateurs() {
         </div>
         
         <div className="group rounded-xl p-5
-          bg-gradient-to-r from-green-500/10 via-green-500/5 to-transparent
-          border border-green-500/20 border-l-4 border-l-green-500
+          bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white dark:via-background dark:to-background
+          border border-helpconfort-blue/20 border-l-4 border-l-green-500
           shadow-sm transition-all duration-300
-          hover:from-green-500/15 hover:via-green-500/8 hover:shadow-lg hover:-translate-y-0.5">
+          hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30">
               <Building2 className="h-6 w-6 text-green-500" />
