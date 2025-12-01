@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserTickets } from '@/hooks/use-user-tickets';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ const CLOSE_REASONS = [
 // Route protégée par RoleGuard dans App.tsx
 export default function UserTickets() {
   const { user } = useAuth();
+  const location = useLocation();
   const {
     tickets,
     selectedTicket,
@@ -44,6 +46,15 @@ export default function UserTickets() {
   } = useUserTickets();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+  // Auto-open create form if navigated with openCreate state
+  useEffect(() => {
+    if (location.state?.openCreate) {
+      setShowCreateForm(true);
+      // Clear the state to prevent reopening on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
   const [newTicket, setNewTicket] = useState({
     subject: '',
     service: 'apogee',
@@ -447,7 +458,7 @@ export default function UserTickets() {
                         : 'border-l-border hover:border-l-red-500 hover:shadow-md'
                     }`}
                   >
-                    🐛 Bug Application
+                    🐛 HC Services (ici)
                   </Button>
                   <Button
                     type="button"
