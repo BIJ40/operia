@@ -114,7 +114,6 @@ export const ROUTES = {
     agencies: '/admin/agencies',
     agencyProfile: (agencyId: string) => `/admin/agencies/${agencyId}`,
     collaborateurs: '/admin/collaborateurs',
-    announcements: '/admin/announcements',
     backup: '/admin/backup',
     cacheBackup: '/admin/cache-backup',
     helpconfortBackup: '/admin/helpconfort-backup',

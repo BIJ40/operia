@@ -82,7 +82,6 @@ const AdminPageMetadata = lazy(() => import("./pages/AdminPageMetadata"));
 const AdminApogeeGuides = lazy(() => import("./pages/AdminApogeeGuides"));
 const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
 const AdminSystemHealth = lazy(() => import("./pages/AdminSystemHealth"));
-const AdminAnnouncementsPage = lazy(() => import("./pages/admin/AdminAnnouncementsPage"));
 
 // Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
 const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
@@ -265,7 +264,6 @@ function AppContent() {
           <Route path="/admin/page-metadata" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminPageMetadata /></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-guides" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminApogeeGuides /></RoleGuard></MainLayout>} />
           <Route path="/admin/chatbot-rag" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminChatbotRag /></RoleGuard></MainLayout>} />
-          <Route path="/admin/announcements" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminAnnouncementsPage /></RoleGuard></MainLayout>} />
           {/* Legacy admin/apogee-tickets - Redirect to /projects */}
           <Route path="/admin/apogee-tickets" element={<Navigate to="/projects/kanban" replace />} />
           <Route path="/admin/apogee-tickets/import" element={<Navigate to="/projects/import" replace />} />

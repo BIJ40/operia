@@ -274,38 +274,6 @@ export type Database = {
           },
         ]
       }
-      announcement_reads: {
-        Row: {
-          announcement_id: string
-          id: string
-          read_at: string | null
-          status: string
-          user_id: string
-        }
-        Insert: {
-          announcement_id: string
-          id?: string
-          read_at?: string | null
-          status: string
-          user_id: string
-        }
-        Update: {
-          announcement_id?: string
-          id?: string
-          read_at?: string | null
-          status?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "announcement_reads_announcement_id_fkey"
-            columns: ["announcement_id"]
-            isOneToOne: false
-            referencedRelation: "priority_announcements"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       apogee_agencies: {
         Row: {
           adresse: string | null
@@ -1741,54 +1709,6 @@ export type Database = {
           updated_at?: string
           week_end?: string
           week_start?: string
-        }
-        Relationships: []
-      }
-      priority_announcements: {
-        Row: {
-          content: string
-          created_at: string | null
-          created_by: string | null
-          exclude_base_users: boolean | null
-          expires_at: string
-          id: string
-          image_path: string | null
-          is_active: boolean | null
-          target_all: boolean | null
-          target_global_roles: Json | null
-          target_role_agences: Json | null
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          created_by?: string | null
-          exclude_base_users?: boolean | null
-          expires_at: string
-          id?: string
-          image_path?: string | null
-          is_active?: boolean | null
-          target_all?: boolean | null
-          target_global_roles?: Json | null
-          target_role_agences?: Json | null
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          created_by?: string | null
-          exclude_base_users?: boolean | null
-          expires_at?: string
-          id?: string
-          image_path?: string | null
-          is_active?: boolean | null
-          target_all?: boolean | null
-          target_global_roles?: Json | null
-          target_role_agences?: Json | null
-          title?: string
-          updated_at?: string | null
         }
         Relationships: []
       }
