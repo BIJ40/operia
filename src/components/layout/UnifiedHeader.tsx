@@ -80,13 +80,13 @@ function formatHelpTitle(title: string): React.ReactNode {
 export function UnifiedHeader() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdmin, canAccessSupportConsole, isLoggingOut, logout, globalRole } = useAuth();
+  const { isAdmin, canAccessSupportConsoleUI, isLoggingOut, logout, globalRole } = useAuth();
   const { toggleSidebar } = useSidebar();
   const { hasNewTickets, newTicketsCount, hasChatHumanRequests, hasTicketRequests, chatHumanCount, ticketRequestCount } = useSupportNotifications();
 
   // Déterminer la classe de clignotement du header pour SU
   const getHeaderBlinkClass = () => {
-    if (!canAccessSupportConsole) return '';
+    if (!canAccessSupportConsoleUI) return '';
     if (hasChatHumanRequests) return 'animate-pulse-red';
     if (hasTicketRequests) return 'animate-pulse-yellow';
     return '';
@@ -267,7 +267,7 @@ export function UnifiedHeader() {
             )}
 
             {/* Support button for support staff */}
-            {canAccessSupportConsole && (
+            {canAccessSupportConsoleUI && (
               <Link to={ROUTES.support.console}>
                 <Button 
                   variant="ghost" 

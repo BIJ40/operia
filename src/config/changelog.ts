@@ -16,19 +16,31 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: 'V0.5.0',
     date: '2025-12-01',
-    title: 'Sprint 1 - Sécurité RLS et cohérence permissions',
+    title: 'Sprint 1 & 2 - Sécurité RLS et cohérence permissions',
     changes: [
       { 
         type: 'security', 
-        description: 'P1.1 - RLS Franchiseur: Remplacement has_franchiseur_role() par global_role + franchiseur_agency_assignments. Création fonctions can_access_agency() et get_user_assigned_agencies(). Policies réécrites sur animator_visits, expense_requests, royalty_*.'
+        description: 'P1.1 - RLS Franchiseur: can_access_agency() et get_user_assigned_agencies(). Policies réécrites sur animator_visits, expense_requests, royalty_*.'
       },
       { 
         type: 'security', 
-        description: 'P1.2 - RLS Support Console (Option B): Console accessible aux utilisateurs avec support.agent=true + N5+. Création fonction is_support_agent(). Policies support_tickets réécrites (SELECT/INSERT/UPDATE/DELETE).'
+        description: 'P1.2 - RLS Support Console (Option B): Console accessible aux support.agent=true + N5+. Fonction is_support_agent(). Policies support_tickets réécrites.'
       },
       { 
         type: 'security', 
-        description: 'P1.3 - Migration agency_id: Établissement profiles.agency_id (UUID) comme source unique. Migration données depuis agence slug. Création fonction get_user_agency_id(). Policies réécrites sur apogee_agencies et agency_collaborators.'
+        description: 'P1.3 - Migration agency_id: profiles.agency_id (UUID) comme source unique. Fonction get_user_agency_id(). Policies réécrites sur apogee_agencies.'
+      },
+      { 
+        type: 'security', 
+        description: 'P2.1 - Sémantique Support clarifiée: isSupportAgent→hasSupportAgentRole, canAccessSupportConsole→canAccessSupportConsoleUI (8 fichiers)'
+      },
+      { 
+        type: 'improvement', 
+        description: 'P2.2 - Guards centralisés vérifiés: 100% des protections dans App.tsx, 0% dans les pages'
+      },
+      { 
+        type: 'improvement', 
+        description: 'P2.3 - Navigation unifiée: canAccessFeature() centrale dans roleMatrix.ts pour tiles/nav/routes'
       },
     ]
   },

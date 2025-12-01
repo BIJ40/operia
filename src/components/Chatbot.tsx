@@ -23,7 +23,7 @@ import type { ChatContext } from '@/components/chatbot/ChatContextSelector';
 export { ChatbotTestProvider, useChatbotTest } from '@/contexts/ChatbotTestContext';
 
 export function Chatbot() {
-  const { isAdmin, canAccessSupportConsole } = useAuth();
+  const { isAdmin, canAccessSupportConsoleUI } = useAuth();
   const { isTestMode } = useChatbotTest();
   const [showChatCloseDialog, setShowChatCloseDialog] = useState(false);
 
@@ -82,7 +82,7 @@ export function Chatbot() {
   const { buttonRef, buttonPosition, isDragging, handleMouseDown } = useChatbotDrag(isOpen);
 
   // Hide chatbot for admins and support agents unless in test mode
-  if ((isAdmin || canAccessSupportConsole) && !isTestMode) return null;
+  if ((isAdmin || canAccessSupportConsoleUI) && !isTestMode) return null;
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (isDragging) {
