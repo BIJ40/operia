@@ -5,18 +5,26 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { ROUTES } from '@/config/routes';
 import { IndexTile, getVariantForIndex } from '@/components/ui/index-tile';
-import { MessageSquare, FileText, Headset, LucideIcon } from 'lucide-react';
+import { MessageSquare, FileText, Headset, PlusCircle, LucideIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface SupportModule {
   title: string;
   description: string;
   icon: LucideIcon;
-  href: string;
+  href?: string;
   badge?: string;
   requiresSupport?: boolean;
+  action?: () => void;
 }
 
-const SUPPORT_MODULES: SupportModule[] = [
+const getSupportModules = (openCreateTicket: () => void): SupportModule[] => [
+  {
+    title: 'Ouvrir un Ticket',
+    description: 'Créer une nouvelle demande de support',
+    icon: PlusCircle,
+    action: openCreateTicket,
+  },
   {
     title: 'Centre d\'aide',
     description: 'Chat IA, FAQ et accès rapide à vos demandes',
@@ -40,12 +48,21 @@ const SUPPORT_MODULES: SupportModule[] = [
 
 export default function SupportIndex() {
   const { enabledModules, globalRole } = useAuth();
+  const navigate = useNavigate();
   
+  // Handle create ticket action
+  const handleOpenCreateTicket = () => {
+    navigate(ROUTES.support.userTickets, { state: { openCreate: true } });
+  };
+
   // Check if user has support agent access (agent flag OR admin roles)
   const supportModule = enabledModules?.support;
   const isAgent = typeof supportModule === 'object' && supportModule !== null && 'agent' in supportModule && supportModule.agent === true;
   const isAdmin = globalRole === 'platform_admin' || globalRole === 'superadmin';
   const hasSupportAccess = isAgent || isAdmin;
+
+  // Get modules with action handler
+  const SUPPORT_MODULES = getSupportModules(handleOpenCreateTicket);
 
   // Filter modules based on user access
   const visibleModules = SUPPORT_MODULES.filter(module => {
@@ -67,17 +84,33 @@ export default function SupportIndex() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {visibleModules.map((module, index) => (
-          <IndexTile
-            key={module.href}
-            title={module.title}
-            description={module.description}
-            icon={module.icon}
-            href={module.href}
-            badge={module.badge}
-            variant={getVariantForIndex(index)}
-          />
-        ))}
+        {visibleModules.map((module, index) => {
+          if (module.action) {
+            return (
+              <div key={module.title} onClick={module.action} className="cursor-pointer">
+                <IndexTile
+                  title={module.title}
+                  description={module.description}
+                  icon={module.icon}
+                  href="#"
+                  badge={module.badge}
+                  variant={getVariantForIndex(index)}
+                />
+              </div>
+            );
+          }
+          return (
+            <IndexTile
+              key={module.href}
+              title={module.title}
+              description={module.description}
+              icon={module.icon}
+              href={module.href!}
+              badge={module.badge}
+              variant={getVariantForIndex(index)}
+            />
+          );
+        })}
       </div>
     </div>
   );

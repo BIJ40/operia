@@ -20,6 +20,8 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       { type: 'feature', description: 'Module d\'annonces prioritaires avec modal bloquante "J\'ai lu" / "Plus tard"' },
       { type: 'feature', description: 'Accès admin et franchiseur N3+ aux annonces depuis /admin et /hc-reseau' },
+      { type: 'improvement', description: 'Tuile "Ouvrir un Ticket" sur page /support pour création rapide' },
+      { type: 'improvement', description: 'Renommage "Bug Application" → "HC Services (ici)" dans création de ticket' },
     ]
   },
   {
