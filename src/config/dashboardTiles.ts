@@ -22,6 +22,7 @@ export interface DashboardTile {
   requiresFranchisor?: boolean; // N3+ (franchisor_user)
   requiresModule?: ModuleKey; // Requires specific module to be enabled
   badge?: string;
+  isDisabled?: boolean; // Tuile grisée "Bientôt disponible"
 }
 
 export const DASHBOARD_TILES: DashboardTile[] = [
@@ -45,6 +46,8 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.APPORTEURS,
     color: 'primary',
     group: 'help_academy',
+    badge: 'Bientôt',
+    isDisabled: true,
   },
   {
     id: 'BASE_DOCUMENTAIRE',
@@ -89,14 +92,16 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     badge: 'En cours',
   },
   {
-    id: 'RH_TECH',
-    title: 'RH Tech',
-    description: 'Planning hebdomadaire techniciens',
+    id: 'VALIDATION_PLANNINGS',
+    title: 'Validation plannings',
+    description: 'Validation des plannings hebdomadaires',
     icon: Calendar,
     route: ROUTES.pilotage.rhTech,
     scopeSlug: SCOPE_SLUGS.RH_TECH,
     color: 'accent',
     group: 'pilotage',
+    badge: 'Bientôt',
+    isDisabled: true,
   },
   {
     id: 'MON_EQUIPE',
@@ -120,9 +125,9 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     group: 'support',
   },
   {
-    id: 'MES_DEMANDES',
-    title: 'Mes demandes',
-    description: 'Créer et suivre vos demandes de support',
+    id: 'OUVRIR_TICKET',
+    title: 'Ouvrir un ticket',
+    description: 'Créer une nouvelle demande de support',
     icon: LifeBuoy,
     route: ROUTES.support.userTickets,
     scopeSlug: SCOPE_SLUGS.MES_DEMANDES,

@@ -178,36 +178,44 @@ export default function Landing() {
 const DashboardTileCard = memo(function DashboardTileCard({ tile, dynamicBadge }: { tile: DashboardTile; dynamicBadge?: number }) {
   const Icon = tile.icon;
   const badgeContent = dynamicBadge ?? tile.badge;
+  const isDisabled = tile.isDisabled;
 
-  return (
-    <Link to={tile.route}>
-      <div className="group relative rounded-xl border border-helpconfort-blue/15 p-4
-        bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
-        shadow-sm transition-all duration-300 cursor-pointer border-l-4 border-l-helpconfort-blue
-        hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
-        {badgeContent && (
-          <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full z-10 ${
-            typeof badgeContent === 'number' 
-              ? 'bg-red-500 text-white animate-pulse min-w-[20px] text-center' 
-              : 'bg-helpconfort-blue text-white text-[10px]'
-          }`}>
-            {badgeContent}
-          </span>
-        )}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex-shrink-0 flex items-center justify-center bg-helpconfort-blue/10
-            group-hover:border-helpconfort-blue transition-all">
-            <Icon className="w-5 h-5 text-helpconfort-blue" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-base font-semibold text-foreground truncate">{tile.title}</p>
-            <p className="text-xs text-muted-foreground truncate">{tile.description}</p>
-          </div>
-          <ArrowRight className="w-4 h-4 flex-shrink-0 text-muted-foreground group-hover:text-helpconfort-blue group-hover:translate-x-0.5 transition-all" aria-hidden="true" />
+  const content = (
+    <div className={`group relative rounded-xl border border-helpconfort-blue/15 p-4
+      bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+      shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
+      ${isDisabled 
+        ? 'opacity-50 cursor-not-allowed' 
+        : 'cursor-pointer hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5'
+      }`}>
+      {badgeContent && (
+        <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full z-10 ${
+          typeof badgeContent === 'number' 
+            ? 'bg-red-500 text-white animate-pulse min-w-[20px] text-center' 
+            : 'bg-helpconfort-blue text-white text-[10px]'
+        }`}>
+          {badgeContent}
+        </span>
+      )}
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex-shrink-0 flex items-center justify-center bg-helpconfort-blue/10
+          ${!isDisabled && 'group-hover:border-helpconfort-blue'} transition-all`}>
+          <Icon className="w-5 h-5 text-helpconfort-blue" />
         </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-base font-semibold text-foreground truncate">{tile.title}</p>
+          <p className="text-xs text-muted-foreground truncate">{tile.description}</p>
+        </div>
+        <ArrowRight className={`w-4 h-4 flex-shrink-0 text-muted-foreground ${!isDisabled && 'group-hover:text-helpconfort-blue group-hover:translate-x-0.5'} transition-all`} aria-hidden="true" />
       </div>
-    </Link>
+    </div>
   );
+
+  if (isDisabled) {
+    return content;
+  }
+
+  return <Link to={tile.route}>{content}</Link>;
 });
 
 interface SectionHeaderProps {
