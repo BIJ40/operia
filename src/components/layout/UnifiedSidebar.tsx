@@ -559,7 +559,7 @@ export function UnifiedSidebar() {
       </SidebarContent>
       
       <SidebarFooter className="border-t p-2">
-        <div className={`text-[10px] text-muted-foreground/60 ${collapsed ? 'text-center' : 'text-left'}`}>
+        <div className={`text-xs font-semibold text-muted-foreground ${collapsed ? 'text-center' : 'text-left'}`}>
           {APP_VERSION}
         </div>
       </SidebarFooter>
