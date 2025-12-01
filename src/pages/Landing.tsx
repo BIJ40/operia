@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronRight, LucideIcon } from 'lucide-react';
 import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashboardTiles';
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { getRoleCapabilities, canAccessTileGroup, canAccessTile, TileGroup } from '@/config/roleMatrix';
 import { isModuleEnabled } from '@/types/modules';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
@@ -175,7 +175,7 @@ export default function Landing() {
   );
 }
 
-function DashboardTileCard({ tile, dynamicBadge }: { tile: DashboardTile; dynamicBadge?: number }) {
+const DashboardTileCard = memo(function DashboardTileCard({ tile, dynamicBadge }: { tile: DashboardTile; dynamicBadge?: number }) {
   const Icon = tile.icon;
   const badgeContent = dynamicBadge ?? tile.badge;
 
@@ -208,7 +208,7 @@ function DashboardTileCard({ tile, dynamicBadge }: { tile: DashboardTile; dynami
       </div>
     </Link>
   );
-}
+});
 
 interface SectionHeaderProps {
   title: React.ReactNode;
@@ -217,7 +217,7 @@ interface SectionHeaderProps {
   indexUrl: string;
 }
 
-function SectionHeader({ title, icon: Icon, colorClass, indexUrl }: SectionHeaderProps) {
+const SectionHeader = memo(function SectionHeader({ title, icon: Icon, colorClass, indexUrl }: SectionHeaderProps) {
   return (
     <Link 
       to={indexUrl}
@@ -235,4 +235,4 @@ function SectionHeader({ title, icon: Icon, colorClass, indexUrl }: SectionHeade
       </div>
     </Link>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { GlobalRole, GLOBAL_ROLES, GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, getAllRolesSorted } from '@/types/globalRoles';
 import { MODULE_DEFINITIONS, EnabledModules, ModuleKey, ModuleOptionsState } from '@/types/modules';
 import { UserProfile } from '@/hooks/use-admin-users-unified';
@@ -42,7 +43,7 @@ interface UserAccordionItemProps {
   onDelete: () => void;
 }
 
-export function UserAccordionItem({
+export const UserAccordionItem = memo(function UserAccordionItem({
   user,
   effectiveRole,
   effectiveModules,
@@ -313,4 +314,4 @@ export function UserAccordionItem({
       </AccordionContent>
     </AccordionItem>
   );
-}
+});
