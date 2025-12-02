@@ -18,14 +18,17 @@ interface MetricAIBuilderProps {
 }
 
 const EXAMPLE_QUERIES = [
-  "CA facturé ce mois",
-  "Nombre d'interventions cette semaine",
-  "Devis validés PAR apporteur",
-  "CA mensuel PAR technicien",
-  "Taux de transformation devis/factures",
-  "Interventions SAV du mois",
-  "Dossiers en cours PAR univers",
-  "Moyenne de CA par intervention"
+  // 7 cas de référence obligatoires
+  "Nombre de devis validés sur la période",
+  "Nombre de devis validés PAR apporteur sur la période",
+  "Taux de transformation de devis en facture",
+  "Taux de transformation de devis en facture PAR apporteur",
+  "Nombre de RDV RT sur la période",
+  "Nombre de RDV RT PAR apporteur sur la période",
+  "Nombre de RDV RT PAR apporteur PAR univers",
+  // Autres exemples utiles
+  "CA moyen PAR technicien",
+  "Part du SAV dans les interventions",
 ];
 
 export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
