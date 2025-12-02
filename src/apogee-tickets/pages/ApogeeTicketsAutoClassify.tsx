@@ -42,10 +42,13 @@ export default function ApogeeTicketsAutoClassify() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [scanProgress, setScanProgress] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [currentBatch, setCurrentBatch] = useState(0);
+  const [totalBatches, setTotalBatches] = useState(0);
   const abortControllerRef = useRef<AbortController | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const CONFIDENCE_THRESHOLD = 0.85;
+  const BATCH_SIZE = 30;
 
   // Compter les tickets sans module
   const { data: ticketsWithoutModule } = useQuery({
@@ -69,8 +72,6 @@ export default function ApogeeTicketsAutoClassify() {
       setElapsedTime(0);
       timerRef.current = setInterval(() => {
         setElapsedTime(prev => prev + 1);
-        // Simulation de progression (estimation ~2s par ticket)
-        setScanProgress(prev => Math.min(prev + (100 / ((ticketsWithoutModule || 50) * 2)), 95));
       }, 1000);
     } else {
       if (timerRef.current) {
@@ -81,7 +82,7 @@ export default function ApogeeTicketsAutoClassify() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isScanning, ticketsWithoutModule]);
+  }, [isScanning]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -103,44 +104,89 @@ export default function ApogeeTicketsAutoClassify() {
     setSuggestions([]);
     setStats(null);
     setSelectedIds(new Set());
+    setCurrentBatch(0);
     
     abortControllerRef.current = new AbortController();
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-classify-modules`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ mode: 'scan', apply_changes: false }),
-          signal: abortControllerRef.current.signal
-        }
-      );
+      // 1. Récupérer tous les tickets sans module
+      const { data: ticketsToProcess, error } = await supabase
+        .from('apogee_tickets')
+        .select('id')
+        .is('module', null)
+        .neq('kanban_status', 'EN_PROD')
+        .order('created_at', { ascending: false })
+        .limit(200);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur serveur');
+      if (error) throw error;
+      if (!ticketsToProcess?.length) {
+        successToast('Aucun ticket à classifier');
+        setIsScanning(false);
+        return;
       }
 
-      const data = await response.json();
+      // 2. Découper en lots de 30
+      const batches: string[][] = [];
+      for (let i = 0; i < ticketsToProcess.length; i += BATCH_SIZE) {
+        batches.push(ticketsToProcess.slice(i, i + BATCH_SIZE).map(t => t.id));
+      }
+      setTotalBatches(batches.length);
 
-      setSuggestions(data.suggestions || []);
-      setStats(data.stats || null);
+      const allSuggestions: ClassificationSuggestion[] = [];
+
+      // 3. Traiter chaque lot séquentiellement
+      for (let i = 0; i < batches.length; i++) {
+        if (abortControllerRef.current?.signal.aborted) break;
+        
+        setCurrentBatch(i + 1);
+        setScanProgress(((i + 1) / batches.length) * 100);
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-classify-modules`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({ 
+              mode: 'batch', 
+              ticket_ids: batches[i],
+              apply_changes: false 
+            }),
+            signal: abortControllerRef.current.signal
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erreur serveur');
+        }
+
+        const data = await response.json();
+        if (data.suggestions) {
+          allSuggestions.push(...data.suggestions);
+        }
+      }
+
+      // 4. Finaliser
+      setSuggestions(allSuggestions.sort((a, b) => b.confidence - a.confidence));
+      setStats({
+        total: allSuggestions.length,
+        high_confidence: allSuggestions.filter(s => s.confidence >= CONFIDENCE_THRESHOLD).length,
+        low_confidence: allSuggestions.filter(s => s.confidence < CONFIDENCE_THRESHOLD).length,
+        auto_applied: 0
+      });
       setScanProgress(100);
 
-      // Pré-sélectionner les tickets haute confiance
-      const highConfIds = (data.suggestions || [])
-        .filter((s: ClassificationSuggestion) => s.confidence >= CONFIDENCE_THRESHOLD && s.suggested_module !== 'AUTRE')
-        .map((s: ClassificationSuggestion) => s.ticket_id);
+      const highConfIds = allSuggestions
+        .filter(s => s.confidence >= CONFIDENCE_THRESHOLD && s.suggested_module !== 'AUTRE')
+        .map(s => s.ticket_id);
       setSelectedIds(new Set(highConfIds));
 
-      successToast(`${data.suggestions?.length || 0} tickets analysés en ${formatTime(elapsedTime)}`);
+      successToast(`${allSuggestions.length} tickets analysés en ${formatTime(elapsedTime)}`);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
-        // Scan annulé par l'utilisateur
         return;
       }
       console.error('Scan error:', err);
@@ -237,7 +283,9 @@ export default function ApogeeTicketsAutoClassify() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin text-amber-600" />
-                  <span className="font-medium">Analyse en cours...</span>
+                  <span className="font-medium">
+                    Analyse en cours... {currentBatch > 0 && `(Lot ${currentBatch}/${totalBatches})`}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="h-4 w-4" />
@@ -246,8 +294,8 @@ export default function ApogeeTicketsAutoClassify() {
               </div>
               <Progress value={scanProgress} className="h-2" />
               <p className="text-sm text-muted-foreground">
-                L'IA analyse chaque ticket pour détecter le module approprié. 
-                Estimation : ~{Math.ceil((ticketsWithoutModule || 50) * 1.5 / 60)} minutes pour {ticketsWithoutModule || '?'} tickets.
+                Traitement par lots de {BATCH_SIZE} tickets pour éviter les timeouts.
+                {totalBatches > 0 && ` Lot ${currentBatch}/${totalBatches} en cours.`}
               </p>
             </div>
           </CardContent>
