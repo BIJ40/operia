@@ -361,28 +361,8 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
         priorities={priorities}
       />
 
-      {/* Stats rapides + Largeur colonnes */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">
-            {tickets.length} ticket{tickets.length > 1 ? 's' : ''}
-          </Badge>
-          <Badge variant="outline" className={unqualifiedCount > 0 ? 'text-purple-600 border-purple-300' : 'text-green-600 border-green-300'}>
-            {unqualifiedCount > 0 ? `${unqualifiedCount} non qualifiés` : '✓ Tous qualifiés'}
-          </Badge>
-          {statuses.map((status) => {
-            const count = tickets.filter(t => t.kanban_status === status.id).length;
-            if (count === 0) return null;
-            return (
-              <Badge key={status.id} variant="outline" className="text-xs">
-                {status.label}: {count}
-              </Badge>
-            );
-          })}
-        </div>
-        
-        {/* Contrôles colonnes */}
-        <div className="flex items-center gap-4 ml-auto">
+      {/* Contrôles colonnes */}
+      <div className="flex items-center gap-4 ml-auto">
           {/* Visibilité colonnes */}
           <Popover>
             <PopoverTrigger asChild>
@@ -441,7 +421,6 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
             <span className="text-xs text-muted-foreground w-12">{columnWidth}px</span>
           </div>
         </div>
-      </div>
 
       {/* Kanban */}
       {isLoading ? (
