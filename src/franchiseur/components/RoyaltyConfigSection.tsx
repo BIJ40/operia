@@ -26,7 +26,7 @@ export function RoyaltyConfigSection({ agencyId }: RoyaltyConfigSectionProps) {
   const saveConfig = useSaveRoyaltyConfig();
   const applyModel = useApplyRoyaltyModel();
   
-  const [modelName, setModelName] = useState("Standard (défaut)");
+  const [modelName, setModelName] = useState("Dégressif 2025");
   const [tiers, setTiers] = useState<TierForm[]>(DEFAULT_TIERS.map(t => ({
     from_amount: t.from_amount,
     to_amount: t.to_amount,
@@ -79,7 +79,7 @@ export function RoyaltyConfigSection({ agencyId }: RoyaltyConfigSectionProps) {
   };
 
   const resetToDefault = () => {
-    setModelName("Standard (défaut)");
+    setModelName("Dégressif 2025");
     setTiers(DEFAULT_TIERS.map(t => ({
       from_amount: t.from_amount,
       to_amount: t.to_amount,

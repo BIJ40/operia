@@ -31,7 +31,7 @@ export function AgencyRoyaltyModelSelector({ agencyId, canManage = false }: Agen
   const { data: allModels, isLoading: modelsLoading } = useAllRoyaltyModels();
   const applyModel = useApplyRoyaltyModel();
 
-  const currentModelName = currentConfig?.model_name || "Standard (défaut)";
+  const currentModelName = currentConfig?.model_name || "Dégressif 2025";
   const currentTiers = currentConfig?.tiers || [];
 
   const handleSelectModel = (modelName: string) => {
