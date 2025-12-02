@@ -313,6 +313,7 @@ export type Database = {
           contact_email: string | null
           contact_phone: string | null
           created_at: string
+          date_cloture_bilan: string | null
           date_ouverture: string | null
           id: string
           is_active: boolean
@@ -327,6 +328,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          date_cloture_bilan?: string | null
           date_ouverture?: string | null
           id?: string
           is_active?: boolean
@@ -341,6 +343,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          date_cloture_bilan?: string | null
           date_ouverture?: string | null
           id?: string
           is_active?: boolean
