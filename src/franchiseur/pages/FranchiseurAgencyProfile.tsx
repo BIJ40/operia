@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
 import { AgencyProfileDialog } from "../components/AgencyProfileDialog";
 import { AgencyRoyaltyModelSelector } from "../components/AgencyRoyaltyModelSelector";
+import { AgencyMonthlyRoyaltiesTable } from "../components/AgencyMonthlyRoyaltiesTable";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { GLOBAL_ROLE_LABELS } from "@/types/globalRoles";
 import { AgencyStatsTab } from "../components/AgencyStatsTab";
@@ -310,16 +311,19 @@ function FranchiseurAgencyProfileContent() {
           {/* Model Selector */}
           <AgencyRoyaltyModelSelector agencyId={agencyId!} canManage={canManage} />
 
+          {/* Monthly CA + Royalties Table */}
+          <AgencyMonthlyRoyaltiesTable agencyId={agencyId!} agencySlug={agency.slug} />
+
           {/* History */}
-          <Card className="rounded-2xl border-l-4 border-l-accent">
-            <CardHeader>
-              <CardTitle>Historique des Redevances</CardTitle>
-              <CardDescription>
-                Derniers calculs de redevances pour cette agence
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {royaltyHistory && royaltyHistory.length > 0 ? (
+          {royaltyHistory && royaltyHistory.length > 0 && (
+            <Card className="rounded-2xl border-l-4 border-l-accent">
+              <CardHeader>
+                <CardTitle>Historique des calculs enregistrés</CardTitle>
+                <CardDescription>
+                  Calculs de redevances sauvegardés pour cette agence
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-3">
                   {royaltyHistory.map((calc) => (
                     <Card key={calc.id} className="p-4">
@@ -347,17 +351,9 @@ function FranchiseurAgencyProfileContent() {
                     </Card>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Euro className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucun historique de redevances</p>
-                  <p className="text-sm mt-2">
-                    Les calculs de redevances apparaîtront ici une fois effectués
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 
