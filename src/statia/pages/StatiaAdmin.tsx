@@ -15,6 +15,7 @@ import { BarChart3, Database, FlaskConical, Search, Settings, Zap } from 'lucide
 import { MetricDefinition } from '../types';
 import { MetricTestPanel } from '../components/MetricTestPanel';
 import { MetricCard } from '../components/MetricCard';
+import { APOGEE_SOURCES } from '../schema/apogeeSchema';
 
 export default function StatiaAdmin() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -203,8 +204,6 @@ export default function StatiaAdmin() {
 }
 
 function ApogeeSchemaViewer() {
-  const { APOGEE_SOURCES } = require('../schema/apogeeSchema');
-
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Object.entries(APOGEE_SOURCES).map(([key, source]: [string, any]) => (
