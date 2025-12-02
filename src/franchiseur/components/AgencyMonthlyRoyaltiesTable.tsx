@@ -206,13 +206,13 @@ export function AgencyMonthlyRoyaltiesTable({ agencyId, agencySlug }: AgencyMont
             </Select>
             
             {comparisonModels.length > 0 && (
-              <Select value={compareModelName} onValueChange={setCompareModelName}>
+              <Select value={compareModelName || "__none__"} onValueChange={(v) => setCompareModelName(v === "__none__" ? "" : v)}>
                 <SelectTrigger className="w-48 bg-background">
                   <GitCompareArrows className="h-4 w-4 mr-2 text-muted-foreground" />
                   <SelectValue placeholder="Comparer avec..." />
                 </SelectTrigger>
                 <SelectContent className="bg-background z-50">
-                  <SelectItem value="">Pas de comparaison</SelectItem>
+                  <SelectItem value="__none__">Pas de comparaison</SelectItem>
                   {comparisonModels.map(model => (
                     <SelectItem key={model.model_name} value={model.model_name}>
                       {model.model_name}
