@@ -58,20 +58,9 @@ export function UserCreateForm({
   defaultAgency,
   creatorRoleLevel = 0,
 }: UserCreateFormProps) {
-  // Filtrer les postes occupés selon le niveau du créateur
-  const getAvailableRoleAgence = () => {
-    const allRoles = { ...ROLE_AGENCE_LABELS };
-    
-    // N2 (franchisee_admin) ne peut pas créer "tête de réseau" ni "externe"
-    if (creatorRoleLevel === 2) {
-      delete allRoles.tete_de_reseau;
-      delete allRoles.externe;
-    }
-    
-    return allRoles;
-  };
-
-  const availableRoleAgence = getAvailableRoleAgence();
+  // N2 créé obligatoirement des utilisateurs agence
+  const isN2Creator = creatorRoleLevel === 2;
+  
   // Valeur par défaut intelligente : le rôle assignable le plus bas
   const defaultRole = assignableRoles.length > 0 ? assignableRoles[0] : 'base_user';
   
@@ -81,8 +70,8 @@ export function UserCreateForm({
     firstName: '',
     lastName: '',
     agence: defaultAgency || '',
-    roleAgence: '',
-    globalRole: defaultRole,
+    roleAgence: isN2Creator ? 'utilisateur_agence' : '',
+    globalRole: isN2Creator ? 'franchisee_user' : defaultRole,
     sendEmail: true,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateUserPayload, string>>>({});
@@ -200,29 +189,43 @@ export function UserCreateForm({
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label>Poste occupé</Label>
-        <Select 
-          value={formData.roleAgence} 
-          onValueChange={handleRoleAgenceChange}
-          disabled={isSubmitting}
-        >
-          <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            {Object.entries(availableRoleAgence).map(([value, label]) => (
-              <SelectItem key={value} value={value}>{label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {isGlobalRoleAutoAssigned && (
-          <p className="text-xs text-muted-foreground">
-            ℹ️ Rôle système attribué automatiquement : Utilisateur franchisé (N1)
-          </p>
-        )}
-        {errors.roleAgence && <p className="text-xs text-destructive">{errors.roleAgence}</p>}
-      </div>
+      {/* Poste occupé - masqué pour N2 car automatique */}
+      {!isN2Creator && (
+        <div className="space-y-2">
+          <Label>Poste occupé</Label>
+          <Select 
+            value={formData.roleAgence} 
+            onValueChange={handleRoleAgenceChange}
+            disabled={isSubmitting}
+          >
+            <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {Object.entries(ROLE_AGENCE_LABELS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {isGlobalRoleAutoAssigned && (
+            <p className="text-xs text-muted-foreground">
+              ℹ️ Rôle système attribué automatiquement : Utilisateur franchisé (N1)
+            </p>
+          )}
+          {errors.roleAgence && <p className="text-xs text-destructive">{errors.roleAgence}</p>}
+        </div>
+      )}
 
-      {!isGlobalRoleAutoAssigned && (
+      {/* Message informatif pour N2 */}
+      {isN2Creator && (
+        <div className="bg-muted p-4 rounded-md space-y-1">
+          <p className="text-sm font-medium">Configuration automatique</p>
+          <p className="text-xs text-muted-foreground">
+            L'utilisateur sera créé avec le poste "Utilisateur agence" et le rôle système "Utilisateur franchisé" (N1).
+          </p>
+        </div>
+      )}
+
+      {/* Rôle système - masqué si N2 ou technicien/assistante car auto-défini */}
+      {!isN2Creator && !isGlobalRoleAutoAssigned && (
         <div className="space-y-2">
           <Label>Rôle système</Label>
           <Select 
