@@ -87,6 +87,7 @@ interface NavGroup {
   label: ReactNode;
   labelKey: string;
   indexUrl: string; // URL de la page index de la section
+  icon: React.ElementType; // Icône de la catégorie
   items: NavItem[];
   accessKey?: 'canAccessHelpAcademy' | 'canAccessPilotageAgence' | 'canAccessSupport' | 'canAccessFranchiseur' | 'canAccessAdmin';
 }
@@ -190,6 +191,7 @@ export function UnifiedSidebar() {
       label: <>Help<span className="text-helpconfort-orange font-black">!</span> Academy</>,
       labelKey: 'help-academy',
       indexUrl: ROUTES.academy.index,
+      icon: BookOpen,
       items: [
         { title: 'Guide Apogée', url: ROUTES.academy.apogee, icon: BookOpen, description: 'Guide complet pour maîtriser le logiciel Apogée' },
         { title: 'Guide Apporteurs', url: ROUTES.academy.apporteurs, icon: FileText, description: 'Ressources pour les apporteurs d\'affaires', badge: 'Bientôt', isDisabled: true },
@@ -201,6 +203,7 @@ export function UnifiedSidebar() {
       label: 'Mon Agence',
       labelKey: 'pilotage',
       indexUrl: ROUTES.pilotage.index,
+      icon: Building2,
       items: [
         { title: 'Mon équipe', url: ROUTES.pilotage.equipe, icon: Users, description: 'Gestion des collaborateurs de l\'agence' },
         { 
@@ -225,6 +228,7 @@ export function UnifiedSidebar() {
       label: 'Support',
       labelKey: 'support',
       indexUrl: ROUTES.support.index,
+      icon: Headset,
       items: [
         { title: 'Centre d\'aide', url: ROUTES.support.helpcenter, icon: HelpCircle, description: 'FAQ, chat et assistance en ligne' },
         { title: 'Ouvrir un ticket', url: ROUTES.support.userTickets, icon: LifeBuoy, description: 'Créer une nouvelle demande de support' },
@@ -236,6 +240,7 @@ export function UnifiedSidebar() {
       label: 'Gestion de Projet',
       labelKey: 'projects',
       indexUrl: ROUTES.projects.index,
+      icon: Kanban,
       items: [
         { title: 'Kanban', url: ROUTES.projects.kanban, icon: Kanban, description: 'Tableau de bord projet' },
         { title: 'Liste', url: ROUTES.projects.list, icon: ListTodo, description: 'Vue liste des tickets' },
@@ -247,6 +252,7 @@ export function UnifiedSidebar() {
       label: 'Espace Franchiseur',
       labelKey: 'franchiseur',
       indexUrl: ROUTES.reseau.index,
+      icon: Network,
       items: [
         { title: 'Dashboard Réseau', url: ROUTES.reseau.dashboard, icon: Network },
         { title: 'Agences', url: ROUTES.reseau.agences, icon: Building2 },
@@ -261,6 +267,7 @@ export function UnifiedSidebar() {
       label: 'Administration',
       labelKey: 'admin',
       indexUrl: ROUTES.admin.index,
+      icon: Settings,
       items: [
         { title: 'Utilisateurs', url: ROUTES.admin.users, icon: Users, description: 'Gérer les comptes utilisateurs' },
         { title: 'Agences', url: ROUTES.admin.agencies, icon: Building2 },
@@ -405,13 +412,14 @@ export function UnifiedSidebar() {
                   <Link
                     to={group.indexUrl}
                     className={`
-                      flex-1 cursor-pointer rounded-xl transition-all duration-300 ease-out flex items-center px-3 py-2
+                      flex-1 cursor-pointer rounded-xl transition-all duration-300 ease-out flex items-center gap-2 px-3 py-2
                       ${groupIsActive 
                         ? 'bg-helpconfort-blue/8 text-helpconfort-blue border-l-2 border-helpconfort-blue' 
                         : 'hover:bg-helpconfort-blue/5 hover:scale-[1.02] hover:shadow-sm'
                       }
                     `}
                   >
+                    <group.icon className="w-4 h-4 flex-shrink-0 text-helpconfort-blue" />
                     <span className={`text-xs font-semibold tracking-wide uppercase transition-colors duration-300 ${groupIsActive ? 'text-helpconfort-blue' : 'text-muted-foreground group-hover/nav:text-helpconfort-blue'}`}>
                       {!collapsed ? getGroupLabel(group) : group.labelKey.charAt(0).toUpperCase()}
                     </span>
