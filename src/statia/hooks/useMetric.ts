@@ -32,6 +32,8 @@ export interface UseMetricOptions {
   enabled?: boolean;
   staleTime?: number;
   refetchInterval?: number | false;
+  /** Permet de tester les métriques draft/test (pour le panel admin) */
+  allowDraft?: boolean;
 }
 
 export interface UseMetricReturn<T = number> {
@@ -53,13 +55,19 @@ export interface UseMetricReturn<T = number> {
 // CHARGEMENT DE LA DÉFINITION
 // ============================================
 
-async function loadMetricDefinition(metricId: string): Promise<MetricDefinition | null> {
-  const { data, error } = await supabase
+async function loadMetricDefinition(metricId: string, allowDraft = false): Promise<MetricDefinition | null> {
+  let query = supabase
     .from('metrics_definitions')
     .select('*')
-    .eq('id', metricId)
-    .eq('validation_status', 'validated')
-    .maybeSingle();
+    .eq('id', metricId);
+
+  // En mode production, ne charger que les métriques validées
+  // En mode test (allowDraft), charger toutes les métriques
+  if (!allowDraft) {
+    query = query.eq('validation_status', 'validated');
+  }
+
+  const { data, error } = await query.maybeSingle();
 
   if (error) {
     logError(`Erreur chargement métrique ${metricId}:`, error);
@@ -87,6 +95,13 @@ async function loadMetricDefinition(metricId: string): Promise<MetricDefinition 
     updated_at: data.updated_at ?? undefined,
     created_by: data.created_by ?? undefined,
   };
+}
+
+/**
+ * Charge une métrique pour le panneau de test admin (tous statuts acceptés)
+ */
+export async function loadMetricDefinitionForTest(metricId: string): Promise<MetricDefinition | null> {
+  return loadMetricDefinition(metricId, true);
 }
 
 // ============================================
@@ -184,21 +199,22 @@ export function useMetric<T = number>(
     enabled = true, 
     staleTime = 5 * 60 * 1000, // 5 minutes
     refetchInterval = false,
+    allowDraft = false,
   } = options;
 
   const queryClient = useQueryClient();
 
-  const queryKey = ['statia-metric', metricId, params];
+  const queryKey = ['statia-metric', metricId, params, allowDraft];
 
   const query = useQuery({
     queryKey,
     queryFn: async (): Promise<MetricResult<T> & { _debug?: { executionTarget: string; complexity: number } }> => {
-      // 1. Charger la définition de la métrique
-      const metric = await loadMetricDefinition(metricId);
+      // 1. Charger la définition de la métrique (allowDraft pour le mode test admin)
+      const metric = await loadMetricDefinition(metricId, allowDraft);
       if (!metric) {
         throw {
           code: 'NOT_FOUND',
-          message: `Métrique "${metricId}" non trouvée ou non validée`,
+          message: `Métrique "${metricId}" non trouvée${allowDraft ? '' : ' ou non validée'}`,
         } as MetricError;
       }
 

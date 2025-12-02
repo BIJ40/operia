@@ -35,7 +35,7 @@ export function MetricTestPanel({ metrics, selectedMetricId, onSelectMetric }: M
   const { value, loading, error, metadata, debug } = useMetric(
     selectedMetricId ?? '',
     testParams,
-    { enabled: isTestEnabled && !!selectedMetricId }
+    { enabled: isTestEnabled && !!selectedMetricId, allowDraft: true }
   );
 
   const handleRunTest = () => {
@@ -101,6 +101,12 @@ export function MetricTestPanel({ metrics, selectedMetricId, onSelectMetric }: M
                   <Badge variant="outline">{selectedMetric.formula.type}</Badge>
                   {selectedMetric.formula.field && (
                     <Badge variant="secondary">{selectedMetric.formula.field}</Badge>
+                  )}
+                  {selectedMetric.validation_status !== 'validated' && (
+                    <Badge variant="destructive" className="gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {selectedMetric.validation_status === 'draft' ? 'Brouillon' : 'En test'}
+                    </Badge>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
