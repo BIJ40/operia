@@ -4,7 +4,6 @@ import {
   Users, 
   Headset, 
   Building2, 
-  UsersRound,
   FileStack,
   TrendingUp,
   HardDrive,
@@ -105,7 +104,7 @@ export function NavigationCards() {
   const sections: Section[] = [
     {
       title: 'Utilisateurs & Équipes',
-      description: 'Gestion des comptes, agences et collaborateurs',
+      description: 'Gestion des comptes et agences',
       cards: [
         { 
           to: ROUTES.admin.users, 
@@ -113,12 +112,10 @@ export function NavigationCards() {
           title: 'Utilisateurs', 
           description: 'Créer et gérer les comptes',
           children: [
-            { to: ROUTES.admin.collaborateurs, icon: UsersRound, title: 'Collaborateurs non inscrits' },
             { to: ROUTES.admin.userActivity, icon: TrendingUp, title: 'Activité connexions' },
           ]
         },
         { to: ROUTES.admin.agencies, icon: Building2, title: 'Agences', description: 'Configurer les agences' },
-        { to: ROUTES.admin.collaborateurs, icon: UsersRound, title: 'Collaborateurs', description: 'Collaborateurs non inscrits' },
         { to: ROUTES.admin.userActivity, icon: TrendingUp, title: 'Activité', description: 'Suivi des connexions' },
       ],
     },

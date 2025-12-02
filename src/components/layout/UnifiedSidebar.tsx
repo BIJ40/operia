@@ -66,7 +66,6 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.reseau.redevances]: 'reseau_redevances',
   // Admin
   [ROUTES.admin.users]: 'admin_users',
-  [ROUTES.admin.collaborateurs]: 'admin_collaborateurs',
   [ROUTES.admin.agencies]: 'admin_agencies',
   [ROUTES.admin.backup]: 'admin_backup',
   [ROUTES.admin.pageMetadata]: 'admin_page_metadata',
@@ -262,7 +261,6 @@ export function UnifiedSidebar() {
       indexUrl: ROUTES.admin.index,
       items: [
         { title: 'Utilisateurs', url: ROUTES.admin.users, icon: Users, description: 'Gérer les comptes utilisateurs' },
-        { title: 'Collaborateurs', url: ROUTES.admin.collaborateurs, icon: Users, description: 'Collaborateurs non inscrits' },
         { title: 'Agences', url: ROUTES.admin.agencies, icon: Building2 },
         { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database },
         { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity },
