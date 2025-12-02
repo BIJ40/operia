@@ -5,6 +5,7 @@ import { PeriodSelector } from "@/apogee-connect/components/filters/PeriodSelect
 import { useFilters } from "@/apogee-connect/contexts/FiltersContext";
 import { DataService } from "@/apogee-connect/services/dataService";
 import { calculateCaJour, calculateDevisJour, calculateDossiersJour } from "@/apogee-connect/utils/dashboardCalculations";
+import { calculateRecouvrement } from "@/apogee-connect/utils/recouvrementCalculations";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { parseISO, isWithinInterval } from "date-fns";
@@ -42,53 +43,18 @@ export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
         agencySlug
       );
 
-      // Recouvrement = total factures TTC - total règlements
-      let totalFacturesTTC = 0;
-      let totalReglements = 0;
-      
-      allData.factures.forEach((f: any) => {
-        const dateEmission = f.dateEmission || f.dateReelle || f.created_at;
-        if (!dateEmission) return;
-        
-        try {
-          const factureDate = parseISO(dateEmission);
-          const inRange = isWithinInterval(factureDate, { 
-            start: filters.dateRange.start, 
-            end: filters.dateRange.end 
-          });
-          
-          if (!inRange) return;
-          
-          // Montant TTC de la facture
-          const montantTTCRaw = f.totalTTC || f.data?.totalTTC || "0";
-          const montantTTC = parseFloat(String(montantTTCRaw).replace(/[^0-9.-]/g, ''));
-          
-          if (!isNaN(montantTTC)) {
-            const typeFacture = (f.typeFacture || f.data?.type || f.state || '').toLowerCase();
-            
-            // Les avoirs sont négatifs
-            if (typeFacture === 'avoir') {
-              totalFacturesTTC -= Math.abs(montantTTC);
-            } else {
-              totalFacturesTTC += montantTTC;
-            }
-          }
-          
-          // Règlements
-          const paidTTC = f.calc?.paidTTC || 0;
-          totalReglements += parseFloat(String(paidTTC).replace(/[^0-9.-]/g, '')) || 0;
-        } catch {
-          // Ignorer les dates invalides
-        }
-      });
-      
-      const recouvrement = totalFacturesTTC - totalReglements;
+      // Calcul du recouvrement via helper centralisé
+      const recouvrementStats = calculateRecouvrement(
+        allData.factures,
+        filters,
+        { includeDetails: false }
+      );
 
       return {
         ca: caTotal,
         nbDossiers,
         volumeDevis: caDevis,
-        recouvrement,
+        recouvrement: recouvrementStats.recouvrement,
       };
     },
     enabled: isAgencyReady && !!agencySlug,
