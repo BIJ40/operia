@@ -112,6 +112,15 @@ export interface LoadDebugInfo {
   rawCounts: Record<string, number>;
   filteredCounts: Record<string, number>;
   appliedFilters: Record<string, any[]>;
+  aggregationStats?: {
+    min?: number;
+    max?: number;
+    avg?: number;
+    sum?: number;
+    count?: number;
+    numeratorCount?: number;
+    denominatorCount?: number;
+  };
 }
 
 export async function loadSourceData(
@@ -254,6 +263,15 @@ export function joinDatasets(
 interface AggregationResult {
   value: number;
   breakdown?: Record<string, number>;
+  stats?: {
+    min?: number;
+    max?: number;
+    avg?: number;
+    sum?: number;
+    count?: number;
+    numeratorCount?: number;
+    denominatorCount?: number;
+  };
 }
 
 /**
@@ -275,14 +293,65 @@ export function executeAggregation(
     filteredData = filterByDateRange(filteredData, params.date_from, params.date_to);
   }
 
+  // Calculer les stats de base pour debug
+  const stats = calculateDebugStats(filteredData, formula);
+
   // Si groupBy, calculer par groupe
   if (formula.groupBy && formula.groupBy.length > 0) {
-    return aggregateWithGroupBy(filteredData, formula);
+    const result = aggregateWithGroupBy(filteredData, formula);
+    return { ...result, stats };
   }
 
   // Sinon, calculer la valeur globale
-  const value = calculateAggregation(filteredData, formula);
-  return { value };
+  const value = calculateAggregation(filteredData, formula, stats);
+  return { value, stats };
+}
+
+/**
+ * Calcule les statistiques de debug pour un dataset
+ */
+function calculateDebugStats(data: any[], formula: FormulaDefinition): AggregationResult['stats'] {
+  const stats: AggregationResult['stats'] = {
+    count: data.length,
+  };
+
+  const field = formula.field;
+  if (field && (formula.type === 'sum' || formula.type === 'avg' || formula.type === 'min' || formula.type === 'max')) {
+    const values = data
+      .map(item => parseFloat(getNestedValue(item, field)) || 0)
+      .filter(v => !isNaN(v));
+    
+    if (values.length > 0) {
+      stats.min = Math.min(...values);
+      stats.max = Math.max(...values);
+      stats.sum = values.reduce((a, b) => a + b, 0);
+      stats.avg = stats.sum / values.length;
+    }
+  }
+
+  // Stats pour ratio
+  if (formula.type === 'ratio' && formula.numerator && formula.denominator) {
+    // Calculer les counts du numérateur et dénominateur
+    if (formula.numerator.filters) {
+      const numeratorData = applyFilters(data, formula.numerator.filters);
+      stats.numeratorCount = formula.numerator.type === 'count' 
+        ? numeratorData.length 
+        : numeratorData.reduce((s, item) => s + (parseFloat(getNestedValue(item, formula.numerator!.field || '')) || 0), 0);
+    } else {
+      stats.numeratorCount = data.length;
+    }
+    
+    if (formula.denominator.filters) {
+      const denominatorData = applyFilters(data, formula.denominator.filters);
+      stats.denominatorCount = formula.denominator.type === 'count'
+        ? denominatorData.length
+        : denominatorData.reduce((s, item) => s + (parseFloat(getNestedValue(item, formula.denominator!.field || '')) || 0), 0);
+    } else {
+      stats.denominatorCount = data.length;
+    }
+  }
+
+  return stats;
 }
 
 function filterByDateRange(data: any[], from?: Date, to?: Date): any[] {
@@ -347,7 +416,7 @@ function aggregateWithGroupBy(data: any[], formula: FormulaDefinition): Aggregat
   return { value: finalValue, breakdown };
 }
 
-function calculateAggregation(data: any[], formula: FormulaDefinition): number {
+function calculateAggregation(data: any[], formula: FormulaDefinition, stats?: AggregationResult['stats']): number {
   const { type, field } = formula;
 
   switch (type) {
@@ -361,26 +430,28 @@ function calculateAggregation(data: any[], formula: FormulaDefinition): number {
 
     case 'sum':
       if (!field) return 0;
-      return data.reduce((sum, item) => {
+      return stats?.sum ?? data.reduce((sum, item) => {
         const val = parseFloat(getNestedValue(item, field)) || 0;
         return sum + val;
       }, 0);
 
     case 'avg':
       if (!field || data.length === 0) return 0;
-      const total = data.reduce((sum, item) => {
-        const val = parseFloat(getNestedValue(item, field)) || 0;
-        return sum + val;
-      }, 0);
-      return total / data.length;
+      return stats?.avg ?? (() => {
+        const total = data.reduce((sum, item) => {
+          const val = parseFloat(getNestedValue(item, field)) || 0;
+          return sum + val;
+        }, 0);
+        return total / data.length;
+      })();
 
     case 'min':
       if (!field || data.length === 0) return 0;
-      return Math.min(...data.map(item => parseFloat(getNestedValue(item, field)) || Infinity));
+      return stats?.min ?? Math.min(...data.map(item => parseFloat(getNestedValue(item, field)) || Infinity));
 
     case 'max':
       if (!field || data.length === 0) return 0;
-      return Math.max(...data.map(item => parseFloat(getNestedValue(item, field)) || -Infinity));
+      return stats?.max ?? Math.max(...data.map(item => parseFloat(getNestedValue(item, field)) || -Infinity));
 
     case 'ratio':
       if (!formula.numerator || !formula.denominator) return 0;
@@ -457,6 +528,12 @@ export async function computeMetric(
     finalValue = applyTransform(finalValue, metric.formula.transform);
   }
   
+  // Enrichir le debug avec les stats d'agrégation
+  const enrichedDebug = {
+    ...loadDebug,
+    aggregationStats: result.stats,
+  };
+  
   return {
     value: finalValue,
     breakdown: result.breakdown,
@@ -466,7 +543,7 @@ export async function computeMetric(
       compute_time_ms: Date.now() - startTime,
       data_points: dataset.length,
     },
-    _loadDebug: loadDebug,
+    _loadDebug: enrichedDebug,
   };
 }
 
