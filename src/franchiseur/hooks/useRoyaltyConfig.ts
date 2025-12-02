@@ -274,6 +274,41 @@ export function useApplyRoyaltyModel() {
   });
 }
 
+/**
+ * Supprime un modèle de configuration (et tous ses tiers)
+ */
+export function useDeleteRoyaltyModel() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (configId: string) => {
+      // Delete tiers first
+      const { error: tiersError } = await supabase
+        .from('agency_royalty_tiers')
+        .delete()
+        .eq('config_id', configId);
+
+      if (tiersError) throw tiersError;
+
+      // Delete config
+      const { error: configError } = await supabase
+        .from('agency_royalty_config')
+        .delete()
+        .eq('id', configId);
+
+      if (configError) throw configError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['royalty-models-all'] });
+      toast.success('Barème supprimé');
+    },
+    onError: (error: any) => {
+      logError('ROYALTY_CONFIG', 'Erreur suppression modèle', { error });
+      toast.error(error.message || 'Erreur lors de la suppression');
+    },
+  });
+}
+
 export function useRoyaltyHistory(agencyId: string | null) {
   return useQuery({
     queryKey: ['royalty-history', agencyId],
