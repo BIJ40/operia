@@ -324,12 +324,20 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       globalRole: GlobalRole; 
       sendEmail: boolean;
     }) => {
+      // 🛡️ RÈGLE AUTOMATIQUE: Dirigeant → N2 (franchisee_admin)
+      let effectiveGlobalRole = userData.globalRole;
+      if (userData.roleAgence?.toLowerCase() === 'dirigeant') {
+        effectiveGlobalRole = 'franchisee_admin';
+      }
+      
       // ✅ VÉRIFICATION CRITIQUE : Le rôle cible est-il créable ?
-      if (!capabilities.canCreateRoles.includes(userData.globalRole)) {
+      if (!capabilities.canCreateRoles.includes(effectiveGlobalRole)) {
         throw new Error('Vous ne pouvez pas créer un utilisateur avec ce rôle');
       }
       
-      const { data, error } = await supabase.functions.invoke('create-user', { body: userData });
+      const { data, error } = await supabase.functions.invoke('create-user', { 
+        body: { ...userData, globalRole: effectiveGlobalRole } 
+      });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
@@ -420,8 +428,14 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         global_role?: GlobalRole;
       } 
     }) => {
+      // 🛡️ RÈGLE AUTOMATIQUE: Dirigeant → N2 (franchisee_admin)
+      let effectiveGlobalRole = data.global_role;
+      if (data.role_agence?.toLowerCase() === 'dirigeant') {
+        effectiveGlobalRole = 'franchisee_admin';
+      }
+      
       // ✅ VÉRIFICATION : Si changement de rôle, est-il autorisé ?
-      if (data.global_role && !capabilities.canEditRoles.includes(data.global_role)) {
+      if (effectiveGlobalRole && !capabilities.canEditRoles.includes(effectiveGlobalRole)) {
         throw new Error('Vous ne pouvez pas attribuer ce rôle');
       }
       
@@ -430,7 +444,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         last_name: data.last_name,
         agence: data.agence,
         role_agence: data.role_agence,
-        global_role: data.global_role,
+        global_role: effectiveGlobalRole,
       };
       
       // 🛡️ V2: Écrire support_level directement dans profiles.support_level (colonne)
