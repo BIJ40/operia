@@ -320,6 +320,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       firstName: string; 
       lastName: string; 
       agence: string; 
+      roleAgence: string;
       globalRole: GlobalRole; 
       sendEmail: boolean;
     }) => {

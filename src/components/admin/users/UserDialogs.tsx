@@ -17,7 +17,7 @@ interface Agency {
 interface CreateUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { email: string; password: string; firstName: string; lastName: string; agence: string; globalRole: GlobalRole; sendEmail: boolean }) => void;
+  onSubmit: (data: { email: string; password: string; firstName: string; lastName: string; agence: string; roleAgence: string; globalRole: GlobalRole; sendEmail: boolean }) => void;
   isPending: boolean;
   assignableRoles: GlobalRole[];
   agencies: Agency[];
@@ -36,6 +36,7 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
       firstName: payload.firstName,
       lastName: payload.lastName,
       agence: finalAgence,
+      roleAgence: payload.roleAgence,
       globalRole: payload.globalRole as GlobalRole,
       sendEmail: payload.sendEmail,
     });
@@ -64,6 +65,7 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
           assignableRoles={assignableRoles}
           showAgencySelector={showAgencySelector}
           defaultAgency={undefined}
+          creatorRoleLevel={currentUserLevel}
         />
 
         <DialogFooter>
