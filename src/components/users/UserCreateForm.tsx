@@ -46,6 +46,7 @@ export interface UserCreateFormProps {
   assignableRoles: GlobalRole[];
   showAgencySelector?: boolean;
   defaultAgency?: string;
+  creatorRoleLevel?: number; // Niveau du créateur pour filtrer les postes
 }
 
 export function UserCreateForm({
@@ -55,7 +56,22 @@ export function UserCreateForm({
   assignableRoles,
   showAgencySelector = true,
   defaultAgency,
+  creatorRoleLevel = 0,
 }: UserCreateFormProps) {
+  // Filtrer les postes occupés selon le niveau du créateur
+  const getAvailableRoleAgence = () => {
+    const allRoles = { ...ROLE_AGENCE_LABELS };
+    
+    // N2 (franchisee_admin) ne peut pas créer "tête de réseau" ni "externe"
+    if (creatorRoleLevel === 2) {
+      delete allRoles.tete_de_reseau;
+      delete allRoles.externe;
+    }
+    
+    return allRoles;
+  };
+
+  const availableRoleAgence = getAvailableRoleAgence();
   // Valeur par défaut intelligente : le rôle assignable le plus bas
   const defaultRole = assignableRoles.length > 0 ? assignableRoles[0] : 'base_user';
   
@@ -193,7 +209,7 @@ export function UserCreateForm({
         >
           <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
           <SelectContent className="bg-background z-50">
-            {Object.entries(ROLE_AGENCE_LABELS).map(([value, label]) => (
+            {Object.entries(availableRoleAgence).map(([value, label]) => (
               <SelectItem key={value} value={value}>{label}</SelectItem>
             ))}
           </SelectContent>
