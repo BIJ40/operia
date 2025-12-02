@@ -63,7 +63,7 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
           availableAgencies={agencies}
           assignableRoles={assignableRoles}
           showAgencySelector={showAgencySelector}
-          defaultAgency={currentUserAgency || undefined}
+          defaultAgency={undefined}
         />
 
         <DialogFooter>
