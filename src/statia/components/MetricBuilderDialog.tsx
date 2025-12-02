@@ -63,6 +63,7 @@ export function MetricBuilderDialog({ open, onOpenChange, onSave, editMetric }: 
         <MetricAIBuilder 
           onSave={handleSave}
           onCancel={handleCancel}
+          initialMetric={editMetric}
         />
       </DialogContent>
     </Dialog>

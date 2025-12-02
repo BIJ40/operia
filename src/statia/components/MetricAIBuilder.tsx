@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 interface MetricAIBuilderProps {
   onSave: (metric: any) => void;
   onCancel: () => void;
+  initialMetric?: any; // Pour mode édition - démarre directement sur review
 }
 
 const EXAMPLE_QUERIES = [
@@ -31,10 +32,28 @@ const EXAMPLE_QUERIES = [
   "Part du SAV dans les interventions",
 ];
 
-export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
-  const [query, setQuery] = useState('');
-  const [editedMetric, setEditedMetric] = useState<MetricAnalysisResult['metric'] | null>(null);
-  const [step, setStep] = useState<'input' | 'review' | 'test'>('input');
+export function MetricAIBuilder({ onSave, onCancel, initialMetric }: MetricAIBuilderProps) {
+  const [query, setQuery] = useState(initialMetric?.label || '');
+  const [editedMetric, setEditedMetric] = useState<MetricAnalysisResult['metric'] | null>(
+    initialMetric ? {
+      id: initialMetric.id,
+      label: initialMetric.label,
+      scope: initialMetric.scope,
+      input_sources: typeof initialMetric.input_sources === 'string' 
+        ? JSON.parse(initialMetric.input_sources) 
+        : initialMetric.input_sources,
+      filters: initialMetric.filters || [],
+      formula: typeof initialMetric.formula === 'string'
+        ? JSON.parse(initialMetric.formula)
+        : initialMetric.formula,
+      dimensions: typeof initialMetric.dimensions === 'string'
+        ? JSON.parse(initialMetric.dimensions)
+        : initialMetric.dimensions || [],
+      description_agence: initialMetric.description_agence,
+      description_franchiseur: initialMetric.description_franchiseur,
+    } : null
+  );
+  const [step, setStep] = useState<'input' | 'review' | 'test'>(initialMetric ? 'review' : 'input');
   const [testResult, setTestResult] = useState<any>(null);
   const [isTesting, setIsTesting] = useState(false);
   
@@ -226,8 +245,8 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
     );
   }
 
-  // Step 2: Review
-  if (step === 'review' && result && editedMetric) {
+  // Step 2: Review - permet aussi d'afficher en mode édition (sans result)
+  if (step === 'review' && editedMetric) {
     return (
       <div className="space-y-6">
         {/* Header avec requête originale */}
@@ -242,31 +261,33 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
           </Button>
         </div>
 
-        {/* Résumé métier */}
-        <Card className="border-green-200 bg-green-50/50">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2 text-green-700">
-              <Check className="h-5 w-5" />
-              <CardTitle className="text-base">Compris !</CardTitle>
-              <Badge variant="outline" className="ml-auto border-green-300">
-                Confiance: {Math.round((result.confidence || 0.9) * 100)}%
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-green-800 mb-1">Résumé métier</p>
-              <p className="text-sm text-green-700">{result.businessSummary}</p>
-            </div>
-            <Separator />
-            <div>
-              <p className="text-sm font-medium text-green-800 mb-1">Résumé technique</p>
-              <p className="text-xs font-mono text-green-600 bg-green-100 p-2 rounded">
-                {result.technicalSummary}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Résumé métier - visible seulement si on a un result (pas en mode édition directe) */}
+        {result && (
+          <Card className="border-green-200 bg-green-50/50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2 text-green-700">
+                <Check className="h-5 w-5" />
+                <CardTitle className="text-base">Compris !</CardTitle>
+                <Badge variant="outline" className="ml-auto border-green-300">
+                  Confiance: {Math.round((result.confidence || 0.9) * 100)}%
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-green-800 mb-1">Résumé métier</p>
+                <p className="text-sm text-green-700">{result.businessSummary}</p>
+              </div>
+              <Separator />
+              <div>
+                <p className="text-sm font-medium text-green-800 mb-1">Résumé technique</p>
+                <p className="text-xs font-mono text-green-600 bg-green-100 p-2 rounded">
+                  {result.technicalSummary}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Détails éditables */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -448,24 +469,26 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
           </CardContent>
         </Card>
 
-        {/* Actions */}
-        <div className="flex justify-between">
-          <Button variant="outline" onClick={handleNewQuery}>
-            ← Modifier la requête
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleTest} disabled={isTesting}>
-              {isTesting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Play className="h-4 w-4 mr-2" />
-              )}
-              Tester
+        {/* Actions - sticky en bas */}
+        <div className="sticky bottom-0 bg-background pt-4 pb-2 border-t mt-6 -mx-6 px-6">
+          <div className="flex justify-between items-center">
+            <Button variant="ghost" size="sm" onClick={handleNewQuery}>
+              ← Nouvelle requête
             </Button>
-            <Button onClick={handleSave}>
-              <Save className="h-4 w-4 mr-2" />
-              Enregistrer
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleTest} disabled={isTesting}>
+                {isTesting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Play className="h-4 w-4 mr-2" />
+                )}
+                Tester
+              </Button>
+              <Button onClick={handleSave}>
+                <Save className="h-4 w-4 mr-2" />
+                Enregistrer
+              </Button>
+            </div>
           </div>
         </div>
       </div>
