@@ -185,43 +185,45 @@ export default function FranchiseurAgencyProfile() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                {agency.date_ouverture && (
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Date d'ouverture</p>
-                      <p className="font-medium">
-                        {new Date(agency.date_ouverture).toLocaleDateString('fr-FR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Date d'ouverture</p>
+                    <p className="font-medium">
+                      {agency.date_ouverture
+                        ? new Date(agency.date_ouverture).toLocaleDateString('fr-FR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })
+                        : <span className="text-muted-foreground italic">Non renseignée</span>
+                      }
+                    </p>
                   </div>
-                )}
+                </div>
 
-                {agency.date_cloture_bilan && (
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Date de clôture bilan</p>
-                      <p className="font-medium">{agency.date_cloture_bilan}</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Date de clôture bilan</p>
+                    <p className="font-medium">
+                      {agency.date_cloture_bilan || <span className="text-muted-foreground italic">Non renseignée</span>}
+                    </p>
                   </div>
-                )}
+                </div>
 
-                {agency.animateurs && agency.animateurs.length > 0 && (
-                  <div className="flex items-center gap-3">
-                    <Users className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Animateurs réseau</p>
-                      <p className="font-medium">
-                        {agency.animateurs.map(a => `${a.first_name} ${a.last_name}`).join(', ')}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <Users className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Animateurs réseau</p>
+                    <p className="font-medium">
+                      {agency.animateurs && agency.animateurs.length > 0
+                        ? agency.animateurs.map(a => `${a.first_name} ${a.last_name}`).join(', ')
+                        : <span className="text-muted-foreground italic">Non renseigné</span>
+                      }
+                    </p>
                   </div>
-                )}
+                </div>
               </div>
 
               <Separator />
@@ -229,43 +231,56 @@ export default function FranchiseurAgencyProfile() {
               <div>
                 <h3 className="font-semibold mb-3">Coordonnées</h3>
                 <div className="space-y-3">
-                  {agency.adresse && (
-                    <div className="flex items-start gap-3">
-                      <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm">{agency.adresse}</p>
-                        {(agency.ville || agency.code_postal) && (
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground mb-1">Adresse</p>
+                      {agency.adresse ? (
+                        <>
+                          <p className="text-sm">{agency.adresse}</p>
                           <p className="text-sm text-muted-foreground">
-                            {agency.code_postal} {agency.ville}
+                            {agency.code_postal || ''} {agency.ville || ''}
                           </p>
-                        )}
-                      </div>
+                        </>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">Non renseignée</p>
+                      )}
                     </div>
-                  )}
+                  </div>
 
-                  {agency.contact_email && (
-                    <div className="flex items-center gap-3">
-                      <Mail className="h-5 w-5 text-muted-foreground" />
-                      <a 
-                        href={`mailto:${agency.contact_email}`}
-                        className="text-sm hover:underline"
-                      >
-                        {agency.contact_email}
-                      </a>
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground mb-1">Email</p>
+                      {agency.contact_email ? (
+                        <a 
+                          href={`mailto:${agency.contact_email}`}
+                          className="text-sm hover:underline"
+                        >
+                          {agency.contact_email}
+                        </a>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">Non renseigné</p>
+                      )}
                     </div>
-                  )}
+                  </div>
 
-                  {agency.contact_phone && (
-                    <div className="flex items-center gap-3">
-                      <Phone className="h-5 w-5 text-muted-foreground" />
-                      <a 
-                        href={`tel:${agency.contact_phone}`}
-                        className="text-sm hover:underline"
-                      >
-                        {agency.contact_phone}
-                      </a>
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground mb-1">Téléphone</p>
+                      {agency.contact_phone ? (
+                        <a 
+                          href={`tel:${agency.contact_phone}`}
+                          className="text-sm hover:underline"
+                        >
+                          {agency.contact_phone}
+                        </a>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">Non renseigné</p>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </CardContent>
