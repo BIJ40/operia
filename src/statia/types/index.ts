@@ -94,6 +94,15 @@ export interface LoadDebugInfo {
   rawCounts: Record<string, number>;
   filteredCounts: Record<string, number>;
   appliedFilters: Record<string, any[]>;
+  aggregationStats?: {
+    min?: number;
+    max?: number;
+    avg?: number;
+    sum?: number;
+    count?: number;
+    numeratorCount?: number;
+    denominatorCount?: number;
+  };
 }
 
 export interface MetricResult<T = number> {
