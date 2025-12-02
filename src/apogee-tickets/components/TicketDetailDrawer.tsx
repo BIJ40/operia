@@ -331,6 +331,18 @@ export function TicketDetailDrawer({
               </div>
             </div>
             
+            {/* Bouton supprimer en haut à droite */}
+            {onDelete && canManage && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full shrink-0"
+                title="Supprimer le ticket"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </SheetHeader>
 
@@ -809,19 +821,6 @@ export function TicketDetailDrawer({
             </ScrollArea>
           </TabsContent>
         </Tabs>
-
-        {/* Bouton supprimer - en bas à droite du drawer */}
-        {onDelete && canManage && (
-          <Button
-            size="icon"
-            variant="ghost"
-            className="absolute bottom-4 right-4 h-10 w-10 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full shadow-sm border border-destructive/20 bg-background z-10"
-            title="Supprimer le ticket"
-            onClick={() => setShowDeleteDialog(true)}
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
-        )}
       </SheetContent>
 
       {/* AlertDialog en dehors du Sheet pour éviter les conflits de portail */}
