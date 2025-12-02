@@ -47,7 +47,7 @@ const getSupportModules = (openCreateTicket: () => void): SupportModule[] => [
 ];
 
 export default function SupportIndex() {
-  const { enabledModules, globalRole } = useAuth();
+  const { canAccessSupportConsoleUI } = useAuth();
   const navigate = useNavigate();
   
   // Handle create ticket action
@@ -55,19 +55,13 @@ export default function SupportIndex() {
     navigate(ROUTES.support.userTickets, { state: { openCreate: true } });
   };
 
-  // Check if user has support agent access (agent flag OR admin roles)
-  const supportModule = enabledModules?.support;
-  const isAgent = typeof supportModule === 'object' && supportModule !== null && 'agent' in supportModule && supportModule.agent === true;
-  const isAdmin = globalRole === 'platform_admin' || globalRole === 'superadmin';
-  const hasSupportAccess = isAgent || isAdmin;
-
   // Get modules with action handler
   const SUPPORT_MODULES = getSupportModules(handleOpenCreateTicket);
 
   // Filter modules based on user access
   const visibleModules = SUPPORT_MODULES.filter(module => {
     if (module.requiresSupport) {
-      return hasSupportAccess;
+      return canAccessSupportConsoleUI;
     }
     return true;
   });
