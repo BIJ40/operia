@@ -431,7 +431,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         global_role: data.global_role,
       };
       
-      // Si support_level fourni, mettre à jour enabled_modules.support.options.level
+      // 🛡️ P0.1: Si support_level fourni, VÉRIFIER que l'agent support est activé
       if (data.support_level !== undefined) {
         const { data: currentProfile } = await supabase
           .from('profiles')
@@ -442,6 +442,15 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         const modules = (currentProfile?.enabled_modules as any) || {};
         const supportModule = modules.support || { enabled: false };
         const supportOptions = supportModule.options || {};
+        const isAgent = supportOptions.agent === true;
+        
+        // ✅ RÈGLE CRITIQUE: Seuls les agents support (agent=true) peuvent avoir un level > 0
+        if (data.support_level > 0 && !isAgent) {
+          throw new Error('Impossible de définir un niveau support sans activer le statut d\'agent support');
+        }
+        
+        // Si agent=false, forcer level à null (suppression)
+        const finalLevel = isAgent ? data.support_level : null;
         
         updateData.enabled_modules = {
           ...modules,
@@ -449,7 +458,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
             ...supportModule,
             options: {
               ...supportOptions,
-              level: data.support_level,
+              level: finalLevel,
             }
           }
         };
@@ -552,6 +561,20 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       newModuleState = { ...moduleState, options: { ...(moduleState.options || {}), [optionKey]: enabled } };
     } else {
       newModuleState = { enabled: !!moduleState, options: { [optionKey]: enabled } };
+    }
+    
+    // 🛡️ P0.2 + P1: GESTION SPÉCIALE support.agent
+    if (moduleKey === 'support' && optionKey === 'agent') {
+      if (enabled) {
+        // ✅ ACTIVATION agent support → forcer level: 1 (SA1) si absent
+        const currentLevel = (newModuleState.options as any).level;
+        if (!currentLevel) {
+          (newModuleState.options as any).level = 1;
+        }
+      } else {
+        // ✅ DÉSACTIVATION agent support → supprimer level
+        delete (newModuleState.options as any).level;
+      }
     }
     
     setModifiedUsers(prev => ({

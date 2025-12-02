@@ -28,6 +28,8 @@ import {
 export default function AdminUsersUnified() {
   const { isAdmin, globalRole, user: currentUser } = useAuth();
   
+  const capabilities = useMemo(() => getUserManagementCapabilities(globalRole), [globalRole]);
+  
   const {
     // Data
     users,
@@ -275,6 +277,12 @@ export default function AdminUsersUnified() {
           agencies={agencies}
           canEditRoleAgence={editDialog.user ? canEditUser(editDialog.user.global_role, editDialog.user.agence) : false}
           assignableRoles={assignableRoles}
+          readOnlyFields={
+            // 🛡️ P1: Bloquer global_role si le rôle cible n'est pas dans canEditRoles
+            editDialog.user && editDialog.user.global_role && !capabilities.canEditRoles.includes(editDialog.user.global_role)
+              ? ['globalRole']
+              : []
+          }
         />
 
         <DeactivateDialog

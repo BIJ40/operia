@@ -71,7 +71,13 @@ serve(async (req) => {
     const password = validateOptionalString(bodyRaw.password, 'password', 100) || generateSecurePassword()
     const agence = validateOptionalString(bodyRaw.agence, 'agence', 100) || null
     const agencyId = validateOptionalString(bodyRaw.agency_id, 'agency_id', 100) || null
-    const globalRole = validateOptionalString(bodyRaw.globalRole || bodyRaw.global_role, 'globalRole', 50) || 'franchisee_user'
+    
+    // 🛡️ P0.3: Rôle système OBLIGATOIRE - pas de fallback silencieux
+    const globalRole = validateOptionalString(bodyRaw.globalRole || bodyRaw.global_role, 'globalRole', 50)
+    if (!globalRole) {
+      throw new Error('Le rôle système (global_role) est obligatoire pour créer un utilisateur')
+    }
+    
     const roleAgence = validateOptionalString(bodyRaw.role_agence || bodyRaw.roleAgence, 'roleAgence', 100) || null
     const sendEmail = validateOptionalBoolean(bodyRaw.sendEmail) !== false
 
