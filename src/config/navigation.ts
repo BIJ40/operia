@@ -93,7 +93,7 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Pilotage Agence',
+    label: 'Mon Agence',
     labelKey: 'pilotage',
     items: [
       { 
