@@ -104,9 +104,12 @@ export default function ApogeeTicketsIncomplete() {
   };
 
   // Initialiser la liste stable une seule fois au chargement
+  // Exclure les tickets EN_PROD (TRAITÉ/PUBLIÉ) qui sont considérés complets
   useEffect(() => {
     if (!isInitialized.current && rawIncompleteTickets.length > 0) {
-      const filtered = rawIncompleteTickets.filter(t => getMissingFields(t).length > 0);
+      const filtered = rawIncompleteTickets.filter(t => 
+        getMissingFields(t).length > 0 && t.kanban_status !== 'EN_PROD'
+      );
       setStableTickets(filtered);
       isInitialized.current = true;
     }
