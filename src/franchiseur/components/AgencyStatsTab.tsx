@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { TrendingUp, FileText, Euro, FolderOpen, Loader2 } from "lucide-react";
+import { FileText, Euro, FolderOpen, Loader2 } from "lucide-react";
 import { PeriodSelector } from "@/apogee-connect/components/filters/PeriodSelector";
 import { useFilters } from "@/apogee-connect/contexts/FiltersContext";
 import { DataService } from "@/apogee-connect/services/dataService";
 import { calculateCaJour, calculateDevisJour, calculateDossiersJour } from "@/apogee-connect/utils/dashboardCalculations";
-import { calculateRecouvrement } from "@/apogee-connect/utils/recouvrementCalculations";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { setApiBaseUrl, getApiBaseUrl } from "@/apogee-connect/services/api";
 import { logApogee } from "@/lib/logger";
+import { RecouvrementTile } from "@/apogee-connect/components/kpi/RecouvrementTile";
 
 interface AgencyStatsTabProps {
   agencySlug: string;
@@ -66,20 +66,10 @@ export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
         agencySlug
       );
 
-      // Calcul du recouvrement via helper centralisé
-      const recouvrementStats = calculateRecouvrement(
-        allData.factures,
-        filters,
-        { includeDetails: false }
-      );
-
       return {
         ca: caTotal,
         nbDossiers,
         volumeDevis: caDevis,
-        recouvrement: recouvrementStats.recouvrement,
-        totalFacturesTTC: recouvrementStats.totalFacturesTTC,
-        totalReglementsRecus: recouvrementStats.totalReglementsRecus,
       };
     } finally {
       // 🔧 Restaurer l'URL d'origine après le chargement
@@ -151,23 +141,8 @@ export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
             </CardContent>
           </Card>
 
-          {/* Recouvrement */}
-          <Card className="rounded-2xl border-l-4 border-l-orange-500 bg-gradient-to-br from-orange-50/50 via-white to-white hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <TrendingUp className="h-5 w-5 text-orange-600" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Recouvrement (dû client TTC)</p>
-                <p className="text-2xl font-bold text-orange-600">
-                  {formatEuros(data?.recouvrement || 0)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Facturé: {formatEuros(data?.totalFacturesTTC || 0)} • Réglé: {formatEuros(data?.totalReglementsRecus || 0)}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Recouvrement - Composant réutilisable */}
+          <RecouvrementTile />
         </div>
       )}
     </div>
