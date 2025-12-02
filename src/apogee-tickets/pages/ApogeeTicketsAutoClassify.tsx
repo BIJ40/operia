@@ -3,7 +3,7 @@
  * Batch review avec seuil de confiance 85%
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,10 +11,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Sparkles, FolderOpen, Check, X, AlertCircle, RefreshCw, Square, Clock } from 'lucide-react';
+import { Loader2, Sparkles, FolderOpen, Check, X, AlertCircle, Zap, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { errorToast, successToast, warningToast } from '@/lib/toastHelpers';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { errorToast, successToast } from '@/lib/toastHelpers';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ClassificationSuggestion {
   ticket_id: string;
@@ -40,174 +40,37 @@ export default function ApogeeTicketsAutoClassify() {
   const [suggestions, setSuggestions] = useState<ClassificationSuggestion[]>([]);
   const [stats, setStats] = useState<ScanStats | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [scanProgress, setScanProgress] = useState(0);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [currentBatch, setCurrentBatch] = useState(0);
-  const [totalBatches, setTotalBatches] = useState(0);
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const CONFIDENCE_THRESHOLD = 0.85;
-  const BATCH_SIZE = 10; // Réduit pour éviter les timeouts
-
-  // Compter les tickets sans module
-  const { data: ticketsWithoutModule } = useQuery({
-    queryKey: ['tickets-without-module-count'],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from('apogee_tickets')
-        .select('id', { count: 'exact', head: true })
-        .is('module', null)
-        .neq('kanban_status', 'EN_PROD');
-      
-      if (error) throw error;
-      return count || 0;
-    }
-  });
-
-  // Timer pour l'affichage du temps écoulé
-  useEffect(() => {
-    if (isScanning) {
-      setScanProgress(0);
-      setElapsedTime(0);
-      timerRef.current = setInterval(() => {
-        setElapsedTime(prev => prev + 1);
-      }, 1000);
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isScanning]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-  };
-
-  const stopScan = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-    setIsScanning(false);
-    warningToast('Scan interrompu');
-  };
 
   const runScan = async () => {
     setIsScanning(true);
     setSuggestions([]);
     setStats(null);
     setSelectedIds(new Set());
-    setCurrentBatch(0);
-    
-    abortControllerRef.current = new AbortController();
 
     try {
-      // 1. Récupérer tous les tickets sans module
-      const { data: ticketsToProcess, error } = await supabase
-        .from('apogee_tickets')
-        .select('id')
-        .is('module', null)
-        .neq('kanban_status', 'EN_PROD')
-        .order('created_at', { ascending: false })
-        .limit(200);
+      const { data, error } = await supabase.functions.invoke('auto-classify-modules', {
+        body: { mode: 'scan', apply_changes: false }
+      });
 
       if (error) throw error;
-      if (!ticketsToProcess?.length) {
-        successToast('Aucun ticket à classifier');
-        setIsScanning(false);
-        return;
-      }
 
-      // 2. Découper en lots de 30
-      const batches: string[][] = [];
-      for (let i = 0; i < ticketsToProcess.length; i += BATCH_SIZE) {
-        batches.push(ticketsToProcess.slice(i, i + BATCH_SIZE).map(t => t.id));
-      }
-      setTotalBatches(batches.length);
+      setSuggestions(data.suggestions || []);
+      setStats(data.stats || null);
 
-      const allSuggestions: ClassificationSuggestion[] = [];
-
-      // 3. Traiter chaque lot séquentiellement avec retry
-      let failedBatches = 0;
-      
-      for (let i = 0; i < batches.length; i++) {
-        if (abortControllerRef.current?.signal.aborted) break;
-        
-        setCurrentBatch(i + 1);
-        setScanProgress(((i + 1) / batches.length) * 100);
-
-        try {
-          const response = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-classify-modules`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-              },
-              body: JSON.stringify({ 
-                mode: 'batch', 
-                ticket_ids: batches[i],
-                apply_changes: false 
-              }),
-              signal: abortControllerRef.current?.signal
-            }
-          );
-
-          if (!response.ok) {
-            console.error(`Lot ${i + 1} échoué: HTTP ${response.status}`);
-            failedBatches++;
-            continue; // Continuer avec le lot suivant
-          }
-
-          const data = await response.json();
-          if (data.suggestions) {
-            allSuggestions.push(...data.suggestions);
-          }
-        } catch (err) {
-          if (err instanceof Error && err.name === 'AbortError') throw err;
-          console.error(`Lot ${i + 1} erreur:`, err);
-          failedBatches++;
-          // Continuer avec le lot suivant
-        }
-      }
-
-      // 4. Finaliser
-      setSuggestions(allSuggestions.sort((a, b) => b.confidence - a.confidence));
-      setStats({
-        total: allSuggestions.length,
-        high_confidence: allSuggestions.filter(s => s.confidence >= CONFIDENCE_THRESHOLD).length,
-        low_confidence: allSuggestions.filter(s => s.confidence < CONFIDENCE_THRESHOLD).length,
-        auto_applied: 0
-      });
-      setScanProgress(100);
-
-      const highConfIds = allSuggestions
-        .filter(s => s.confidence >= CONFIDENCE_THRESHOLD && s.suggested_module !== 'AUTRE')
-        .map(s => s.ticket_id);
+      // Pré-sélectionner les tickets haute confiance
+      const highConfIds = (data.suggestions || [])
+        .filter((s: ClassificationSuggestion) => s.confidence >= CONFIDENCE_THRESHOLD && s.suggested_module !== 'AUTRE')
+        .map((s: ClassificationSuggestion) => s.ticket_id);
       setSelectedIds(new Set(highConfIds));
 
-      if (failedBatches > 0) {
-        warningToast(`${allSuggestions.length} tickets analysés, ${failedBatches} lot(s) en échec`);
-      } else {
-        successToast(`${allSuggestions.length} tickets analysés en ${formatTime(elapsedTime)}`);
-      }
+      successToast(`${data.suggestions?.length || 0} tickets analysés`);
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        return;
-      }
       console.error('Scan error:', err);
       errorToast('Erreur lors du scan');
     } finally {
       setIsScanning(false);
-      abortControllerRef.current = null;
     }
   };
 
@@ -233,7 +96,6 @@ export default function ApogeeTicketsAutoClassify() {
 
       // Refresh
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
-      queryClient.invalidateQueries({ queryKey: ['tickets-without-module-count'] });
       
       successToast(`${selectedIds.size} ticket(s) classé(s)`);
       
@@ -270,74 +132,68 @@ export default function ApogeeTicketsAutoClassify() {
 
   const selectNone = () => setSelectedIds(new Set());
 
+  const getConfidenceColor = (confidence: number) => {
+    if (confidence >= 0.9) return 'bg-green-500';
+    if (confidence >= CONFIDENCE_THRESHOLD) return 'bg-emerald-400';
+    if (confidence >= 0.7) return 'bg-yellow-500';
+    return 'bg-red-400';
+  };
+
   const highConfCount = suggestions.filter(s => s.confidence >= CONFIDENCE_THRESHOLD && s.suggested_module !== 'AUTRE').length;
+  const lowConfCount = suggestions.filter(s => s.confidence < CONFIDENCE_THRESHOLD || s.suggested_module === 'AUTRE').length;
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6">
-      {/* Actions */}
-      <div className="flex justify-end">
-        {isScanning ? (
-          <Button variant="destructive" onClick={stopScan}>
-            <Square className="h-4 w-4 mr-2" />
-            Arrêter
-          </Button>
-        ) : (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Zap className="h-6 w-6 text-amber-500" />
+            Auto-Classeur IA
+          </h2>
+          <p className="text-muted-foreground">
+            Classification automatique des tickets sans module (seuil 85%)
+          </p>
+        </div>
+        <div className="flex gap-2">
           <Button onClick={runScan} disabled={isScanning}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Scanner les tickets {ticketsWithoutModule !== undefined && `(${ticketsWithoutModule})`}
+            {isScanning ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Analyse en cours...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Scanner les tickets
+              </>
+            )}
           </Button>
-        )}
+        </div>
       </div>
 
-      {/* Progression du scan */}
-      {isScanning && (
-        <Card className="border-l-4 border-l-amber-500 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-amber-500/10 via-background to-background">
-          <CardContent className="pt-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-amber-600" />
-                  <span className="font-medium">
-                    Analyse en cours... {currentBatch > 0 && `(Lot ${currentBatch}/${totalBatches})`}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  {formatTime(elapsedTime)}
-                </div>
-              </div>
-              <Progress value={scanProgress} className="h-2" />
-              <p className="text-sm text-muted-foreground">
-                Traitement par lots de {BATCH_SIZE} tickets pour éviter les timeouts.
-                {totalBatches > 0 && ` Lot ${currentBatch}/${totalBatches} en cours.`}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Stats */}
-      {stats && !isScanning && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-l-4 border-l-helpconfort-blue bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background">
+      {stats && (
+        <div className="grid grid-cols-4 gap-4">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold">{stats.total}</div>
               <p className="text-xs text-muted-foreground">Tickets analysés</p>
             </CardContent>
           </Card>
-          <Card className="border-l-4 border-l-green-500 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-green-500/10 via-background to-background">
+          <Card className="border-green-200 bg-green-50/50">
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-green-700">{stats.high_confidence}</div>
               <p className="text-xs text-muted-foreground">Confiance ≥85%</p>
             </CardContent>
           </Card>
-          <Card className="border-l-4 border-l-amber-500 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-amber-500/10 via-background to-background">
+          <Card className="border-amber-200 bg-amber-50/50">
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-amber-700">{stats.low_confidence}</div>
               <p className="text-xs text-muted-foreground">Confiance &lt;85%</p>
             </CardContent>
           </Card>
-          <Card className="border-l-4 border-l-helpconfort-blue bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background">
+          <Card>
             <CardContent className="pt-4">
               <div className="text-2xl font-bold">{selectedIds.size}</div>
               <p className="text-xs text-muted-foreground">Sélectionnés</p>
@@ -347,7 +203,7 @@ export default function ApogeeTicketsAutoClassify() {
       )}
 
       {/* Actions */}
-      {suggestions.length > 0 && !isScanning && (
+      {suggestions.length > 0 && (
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={selectAllHighConf}>
@@ -380,8 +236,8 @@ export default function ApogeeTicketsAutoClassify() {
       )}
 
       {/* Liste des suggestions */}
-      {suggestions.length > 0 && !isScanning ? (
-        <Card className="border-l-4 border-l-helpconfort-blue bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/5 via-background to-background">
+      {suggestions.length > 0 ? (
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FolderOpen className="h-5 w-5" />
