@@ -79,11 +79,10 @@ export function AnnouncementGate({ userId }: AnnouncementGateProps) {
   if (!currentAnnouncement) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleLater(); }}>
       <DialogContent 
         className="max-w-2xl max-h-[90vh] overflow-y-auto"
         onInteractOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <div className="flex items-center gap-2">
