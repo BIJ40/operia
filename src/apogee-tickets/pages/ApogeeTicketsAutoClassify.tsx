@@ -3,7 +3,7 @@
  * Batch review avec seuil de confiance 85%
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,10 +11,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Sparkles, FolderOpen, Check, X, AlertCircle, Zap, RefreshCw } from 'lucide-react';
+import { Loader2, Sparkles, FolderOpen, Check, X, AlertCircle, Zap, RefreshCw, Square, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { errorToast, successToast } from '@/lib/toastHelpers';
-import { useQueryClient } from '@tanstack/react-query';
+import { errorToast, successToast, warningToast } from '@/lib/toastHelpers';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 
 interface ClassificationSuggestion {
   ticket_id: string;
@@ -40,24 +40,96 @@ export default function ApogeeTicketsAutoClassify() {
   const [suggestions, setSuggestions] = useState<ClassificationSuggestion[]>([]);
   const [stats, setStats] = useState<ScanStats | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [scanProgress, setScanProgress] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const CONFIDENCE_THRESHOLD = 0.85;
+
+  // Compter les tickets sans module
+  const { data: ticketsWithoutModule } = useQuery({
+    queryKey: ['tickets-without-module-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('apogee_tickets')
+        .select('id', { count: 'exact', head: true })
+        .is('module', null)
+        .neq('kanban_status', 'EN_PROD');
+      
+      if (error) throw error;
+      return count || 0;
+    }
+  });
+
+  // Timer pour l'affichage du temps écoulé
+  useEffect(() => {
+    if (isScanning) {
+      setScanProgress(0);
+      setElapsedTime(0);
+      timerRef.current = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+        // Simulation de progression (estimation ~2s par ticket)
+        setScanProgress(prev => Math.min(prev + (100 / ((ticketsWithoutModule || 50) * 2)), 95));
+      }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isScanning, ticketsWithoutModule]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+  };
+
+  const stopScan = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsScanning(false);
+    warningToast('Scan interrompu');
+  };
 
   const runScan = async () => {
     setIsScanning(true);
     setSuggestions([]);
     setStats(null);
     setSelectedIds(new Set());
+    
+    abortControllerRef.current = new AbortController();
 
     try {
-      const { data, error } = await supabase.functions.invoke('auto-classify-modules', {
-        body: { mode: 'scan', apply_changes: false }
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-classify-modules`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ mode: 'scan', apply_changes: false }),
+          signal: abortControllerRef.current.signal
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur serveur');
+      }
+
+      const data = await response.json();
 
       setSuggestions(data.suggestions || []);
       setStats(data.stats || null);
+      setScanProgress(100);
 
       // Pré-sélectionner les tickets haute confiance
       const highConfIds = (data.suggestions || [])
@@ -65,12 +137,17 @@ export default function ApogeeTicketsAutoClassify() {
         .map((s: ClassificationSuggestion) => s.ticket_id);
       setSelectedIds(new Set(highConfIds));
 
-      successToast(`${data.suggestions?.length || 0} tickets analysés`);
+      successToast(`${data.suggestions?.length || 0} tickets analysés en ${formatTime(elapsedTime)}`);
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        // Scan annulé par l'utilisateur
+        return;
+      }
       console.error('Scan error:', err);
       errorToast('Erreur lors du scan');
     } finally {
       setIsScanning(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -96,6 +173,7 @@ export default function ApogeeTicketsAutoClassify() {
 
       // Refresh
       queryClient.invalidateQueries({ queryKey: ['apogee-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['tickets-without-module-count'] });
       
       successToast(`${selectedIds.size} ticket(s) classé(s)`);
       
@@ -132,15 +210,7 @@ export default function ApogeeTicketsAutoClassify() {
 
   const selectNone = () => setSelectedIds(new Set());
 
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.9) return 'bg-green-500';
-    if (confidence >= CONFIDENCE_THRESHOLD) return 'bg-emerald-400';
-    if (confidence >= 0.7) return 'bg-yellow-500';
-    return 'bg-red-400';
-  };
-
   const highConfCount = suggestions.filter(s => s.confidence >= CONFIDENCE_THRESHOLD && s.suggested_module !== 'AUTRE').length;
-  const lowConfCount = suggestions.filter(s => s.confidence < CONFIDENCE_THRESHOLD || s.suggested_module === 'AUTRE').length;
 
   return (
     <div className="space-y-6">
@@ -156,24 +226,47 @@ export default function ApogeeTicketsAutoClassify() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={runScan} disabled={isScanning}>
-            {isScanning ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Analyse en cours...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Scanner les tickets
-              </>
-            )}
-          </Button>
+          {isScanning ? (
+            <Button variant="destructive" onClick={stopScan}>
+              <Square className="h-4 w-4 mr-2" />
+              Arrêter
+            </Button>
+          ) : (
+            <Button onClick={runScan} disabled={isScanning}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Scanner les tickets {ticketsWithoutModule !== undefined && `(${ticketsWithoutModule})`}
+            </Button>
+          )}
         </div>
       </div>
 
+      {/* Progression du scan */}
+      {isScanning && (
+        <Card className="border-amber-200 bg-amber-50/50">
+          <CardContent className="pt-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-amber-600" />
+                  <span className="font-medium">Analyse en cours...</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  {formatTime(elapsedTime)}
+                </div>
+              </div>
+              <Progress value={scanProgress} className="h-2" />
+              <p className="text-sm text-muted-foreground">
+                L'IA analyse chaque ticket pour détecter le module approprié. 
+                Estimation : ~{Math.ceil((ticketsWithoutModule || 50) * 1.5 / 60)} minutes pour {ticketsWithoutModule || '?'} tickets.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats */}
-      {stats && (
+      {stats && !isScanning && (
         <div className="grid grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-4">
@@ -203,7 +296,7 @@ export default function ApogeeTicketsAutoClassify() {
       )}
 
       {/* Actions */}
-      {suggestions.length > 0 && (
+      {suggestions.length > 0 && !isScanning && (
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={selectAllHighConf}>
@@ -236,7 +329,7 @@ export default function ApogeeTicketsAutoClassify() {
       )}
 
       {/* Liste des suggestions */}
-      {suggestions.length > 0 ? (
+      {suggestions.length > 0 && !isScanning ? (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
