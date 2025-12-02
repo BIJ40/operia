@@ -12,6 +12,7 @@ import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { Separator } from "@/components/ui/separator";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
 import { AgencyProfileDialog } from "../components/AgencyProfileDialog";
+import { AgencyRoyaltyModelSelector } from "../components/AgencyRoyaltyModelSelector";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { GLOBAL_ROLE_LABELS } from "@/types/globalRoles";
 import { AgencyStatsTab } from "../components/AgencyStatsTab";
@@ -306,6 +307,10 @@ function FranchiseurAgencyProfileContent() {
         </TabsContent>
 
         <TabsContent value="royalties" className="space-y-4 mt-4">
+          {/* Model Selector */}
+          <AgencyRoyaltyModelSelector agencyId={agencyId!} canManage={canManage} />
+
+          {/* History */}
           <Card className="rounded-2xl border-l-4 border-l-accent">
             <CardHeader>
               <CardTitle>Historique des Redevances</CardTitle>
