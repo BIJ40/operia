@@ -1,5 +1,11 @@
 /**
  * STATiA-BY-BIJ - Panel de test des métriques
+ * 
+ * Affiche les résultats et un debug enrichi avec:
+ * - URLs des sources
+ * - Compteurs bruts/filtrés
+ * - Stats min/max/avg pour les agrégations
+ * - Numerator/denominator pour les ratios
  */
 
 import { useState } from 'react';
@@ -10,11 +16,17 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle, CheckCircle2, Clock, FlaskConical, Loader2, Play, Zap } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { 
+  AlertCircle, CheckCircle2, Clock, FlaskConical, Loader2, Play, Zap, 
+  ChevronDown, Database, ArrowRight, TrendingUp, TrendingDown, Minus,
+  Globe
+} from 'lucide-react';
 import { MetricDefinition, MetricParams } from '../types';
 import { useMetric } from '../hooks/useMetric';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { buildAgencyBaseUrl } from '../schema/apogeeSchemaV2';
 
 interface MetricTestPanelProps {
   metrics: MetricDefinition[];
@@ -249,30 +261,166 @@ export function MetricTestPanel({ metrics, selectedMetricId, onSelectMetric }: M
                 </div>
               )}
 
-              {/* Debug Info */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Debug API</p>
-                {(debug as any)._loadDebug && (
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg text-xs space-y-1">
-                    <p><strong>Endpoint:</strong> {(debug as any)._loadDebug?.apiUrl || 'Non configuré'}</p>
-                    <p><strong>Clé API:</strong> {(debug as any)._loadDebug?.apiKeyPresent ? '✅ Présente' : '❌ Absente'}</p>
-                    <p><strong>Données brutes:</strong> {JSON.stringify((debug as any)._loadDebug?.rawCounts || {})}</p>
-                    <p><strong>Après filtres:</strong> {JSON.stringify((debug as any)._loadDebug?.filteredCounts || {})}</p>
-                    <p><strong>Filtres appliqués:</strong></p>
-                    <pre className="p-2 bg-muted rounded text-xs overflow-auto">
-                      {JSON.stringify((debug as any)._loadDebug?.appliedFilters || {}, null, 2)}
-                    </pre>
-                  </div>
-                )}
-                <p className="text-sm font-medium mt-2">Debug complet</p>
-                <pre className="p-3 bg-muted rounded-lg text-xs overflow-auto max-h-40">
-                  {JSON.stringify(debug, null, 2)}
-                </pre>
-              </div>
+              {/* Debug Info - Enriched */}
+              <DebugSection 
+                debug={debug} 
+                selectedMetric={selectedMetric} 
+                testParams={testParams}
+                value={value}
+              />
             </>
           )}
         </CardContent>
       </Card>
     </div>
   );
+}
+
+// ============================================
+// DEBUG SECTION - Composant enrichi
+// ============================================
+
+interface DebugSectionProps {
+  debug: any;
+  selectedMetric: MetricDefinition | undefined;
+  testParams: MetricParams;
+  value: any;
+}
+
+function DebugSection({ debug, selectedMetric, testParams, value }: DebugSectionProps) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  const loadDebug = debug?._loadDebug || {};
+  const sources = selectedMetric?.input_sources || [];
+  
+  // Extract stats from debug if available
+  const stats = loadDebug.aggregationStats || {};
+  const formulaType = selectedMetric?.formula?.type || 'unknown';
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-2">
+      <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium hover:text-foreground">
+        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? '' : '-rotate-90'}`} />
+        Debug enrichi
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-3">
+        {/* Sources utilisées */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">Sources de données</p>
+          {sources.map((source, idx) => (
+            <div key={idx} className="p-3 bg-muted/50 rounded-lg text-xs space-y-2">
+              <div className="flex items-center gap-2">
+                <Database className="h-3 w-3 text-muted-foreground" />
+                <Badge variant="outline" className="text-xs">{source.source}</Badge>
+                <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                <span className="font-mono text-muted-foreground">
+                  {loadDebug.apiUrl || 'URL non configurée'}
+                </span>
+              </div>
+              {testParams.agency_slug && (
+                <div className="flex items-center gap-2">
+                  <Globe className="h-3 w-3 text-muted-foreground" />
+                  <span className="font-mono text-muted-foreground">
+                    {buildAgencyBaseUrl(testParams.agency_slug)}
+                  </span>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <div className="p-2 bg-background rounded">
+                  <span className="text-muted-foreground">Lignes brutes:</span>
+                  <span className="font-medium ml-1">
+                    {loadDebug.rawCounts?.[source.source] ?? '?'}
+                  </span>
+                </div>
+                <div className="p-2 bg-background rounded">
+                  <span className="text-muted-foreground">Après filtres:</span>
+                  <span className="font-medium ml-1">
+                    {loadDebug.filteredCounts?.[source.source] ?? '?'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Stats d'agrégation */}
+        {(formulaType === 'sum' || formulaType === 'avg') && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Statistiques sur les données</p>
+            <div className="grid grid-cols-4 gap-2">
+              <div className="p-2 bg-blue-50 dark:bg-blue-950/20 rounded text-center">
+                <Minus className="h-3 w-3 mx-auto mb-1 text-blue-500" />
+                <p className="text-[10px] text-muted-foreground">Min</p>
+                <p className="font-medium text-sm">{formatStatValue(stats.min)}</p>
+              </div>
+              <div className="p-2 bg-green-50 dark:bg-green-950/20 rounded text-center">
+                <TrendingUp className="h-3 w-3 mx-auto mb-1 text-green-500" />
+                <p className="text-[10px] text-muted-foreground">Max</p>
+                <p className="font-medium text-sm">{formatStatValue(stats.max)}</p>
+              </div>
+              <div className="p-2 bg-amber-50 dark:bg-amber-950/20 rounded text-center">
+                <TrendingDown className="h-3 w-3 mx-auto mb-1 text-amber-500" />
+                <p className="text-[10px] text-muted-foreground">Moy</p>
+                <p className="font-medium text-sm">{formatStatValue(stats.avg)}</p>
+              </div>
+              <div className="p-2 bg-purple-50 dark:bg-purple-950/20 rounded text-center">
+                <Database className="h-3 w-3 mx-auto mb-1 text-purple-500" />
+                <p className="text-[10px] text-muted-foreground">Count</p>
+                <p className="font-medium text-sm">{stats.count ?? '?'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Stats ratio */}
+        {formulaType === 'ratio' && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Détail ratio</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="p-2 bg-green-50 dark:bg-green-950/20 rounded text-center">
+                <p className="text-[10px] text-muted-foreground">Numérateur</p>
+                <p className="font-medium text-sm">{stats.numeratorCount ?? '?'}</p>
+              </div>
+              <div className="p-2 bg-blue-50 dark:bg-blue-950/20 rounded text-center">
+                <p className="text-[10px] text-muted-foreground">Dénominateur</p>
+                <p className="font-medium text-sm">{stats.denominatorCount ?? '?'}</p>
+              </div>
+              <div className="p-2 bg-amber-50 dark:bg-amber-950/20 rounded text-center">
+                <p className="text-[10px] text-muted-foreground">Résultat</p>
+                <p className="font-medium text-sm">
+                  {typeof value === 'number' ? `${value.toFixed(2)}%` : '?'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Filtres appliqués */}
+        {loadDebug.appliedFilters && Object.keys(loadDebug.appliedFilters).length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Filtres appliqués</p>
+            <pre className="p-2 bg-muted rounded text-xs overflow-auto max-h-24">
+              {JSON.stringify(loadDebug.appliedFilters, null, 2)}
+            </pre>
+          </div>
+        )}
+
+        {/* Debug JSON complet */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">JSON complet</p>
+          <ScrollArea className="h-32">
+            <pre className="p-2 bg-muted rounded text-xs">
+              {JSON.stringify(debug, null, 2)}
+            </pre>
+          </ScrollArea>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function formatStatValue(val: any): string {
+  if (val === null || val === undefined) return '?';
+  if (typeof val === 'number') return val.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+  return String(val);
 }

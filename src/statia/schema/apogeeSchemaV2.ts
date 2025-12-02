@@ -3,6 +3,11 @@
  * 
  * Ce fichier contient la définition complète et documentée de tous les endpoints Apogée.
  * Source unique de vérité pour STATiA, le viewer de schéma et le futur builder IA.
+ * 
+ * IMPORTANT - Gestion des agences :
+ * - Une seule clé API partagée pour toutes les agences
+ * - La séparation par agence se fait par la BASE URL, pas par un champ interne
+ * - Exemple: https://dax.hc-apogee.fr/api/ vs https://pau.hc-apogee.fr/api/
  */
 
 import { 
@@ -11,8 +16,33 @@ import {
   ApogeeJoinDefinition,
   ApogeeFilterDefinition,
   BusinessConcept,
-  SchemaSearchResult
+  SchemaSearchResult,
+  AgencyRouting
 } from './types';
+
+// ============================================
+// AGENCY ROUTING - Configuration multi-agences
+// ============================================
+
+/**
+ * Configuration du routing agence via URL
+ * 
+ * IMPORTANT: Il n'y a qu'une seule clé API Apogée.
+ * La séparation par agence se fait par la base URL, pas par un champ interne.
+ */
+export const APOGEE_AGENCY_ROUTING: AgencyRouting = {
+  paramName: 'agency_slug',
+  baseUrlTemplate: 'https://{agency_slug}.hc-apogee.fr/api/',
+  description: 'Une seule clé API partagée. La séparation par agence se fait par la base URL. Le slug agence (dax, pau, etc.) détermine quelle instance Apogée est appelée.',
+  apiKeyShared: true,
+};
+
+/**
+ * Construit l'URL de base pour une agence donnée
+ */
+export function buildAgencyBaseUrl(agencySlug: string): string {
+  return APOGEE_AGENCY_ROUTING.baseUrlTemplate.replace('{agency_slug}', agencySlug);
+}
 
 // ============================================
 // DÉFINITIONS DES ENDPOINTS
@@ -28,20 +58,27 @@ export const APOGEE_SCHEMA: Record<string, ApogeeEndpointDefinition> = {
     primaryKey: 'id',
     datePrimaryField: 'date',
     tags: ['activité', 'planning', 'technicien', 'terrain'],
+    inputParams: [
+      { name: 'date_from', type: 'date', required: false, description: 'Date début période', example: '2025-01-01' },
+      { name: 'date_to', type: 'date', required: false, description: 'Date fin période', example: '2025-01-31' },
+      { name: 'state', type: 'enum', required: false, description: 'Filtrer par état', enumValues: ['planned', 'in_progress', 'completed', 'validated', 'cancelled'] },
+      { name: 'type', type: 'enum', required: false, description: 'Filtrer par type', enumValues: ['technique', 'releve_technique', 'maintenance', 'sav', 'urgence'] },
+    ],
+    pagination: { supported: false },
     fields: [
-      { name: 'id', type: 'number', role: 'id', description: 'Identifiant unique intervention', example: 12345 },
-      { name: 'projectId', type: 'number', role: 'foreignId', description: 'ID du projet/dossier lié', groupable: true, filterable: true },
-      { name: 'userId', type: 'number', role: 'foreignId', description: 'ID technicien principal', groupable: true, filterable: true },
-      { name: 'date', type: 'date', role: 'date', description: 'Date de l\'intervention', example: '2025-01-15', filterable: true },
-      { name: 'state', type: 'enum', role: 'state', description: 'État de l\'intervention', enumValues: ['planned', 'in_progress', 'completed', 'validated', 'cancelled'], groupable: true, filterable: true },
-      { name: 'type', type: 'enum', role: 'category', description: 'Type d\'intervention', enumValues: ['technique', 'releve_technique', 'maintenance', 'sav', 'urgence'], groupable: true, filterable: true },
-      { name: 'visites', type: 'array', role: 'metadata', description: 'Liste des visites avec détails techniciens' },
-      { name: 'duration', type: 'number', path: 'data.duration', role: 'computed', description: 'Durée en minutes', aggregable: true, example: 120 },
-      { name: 'heureDebut', type: 'string', path: 'data.heureDebut', role: 'datetime', description: 'Heure de début', example: '08:30' },
-      { name: 'heureFin', type: 'string', path: 'data.heureFin', role: 'datetime', description: 'Heure de fin', example: '10:30' },
-      { name: 'comments', type: 'string', path: 'data.comments', role: 'label', description: 'Commentaires intervention', nullable: true },
-      { name: 'createdAt', type: 'date', role: 'date', description: 'Date création', filterable: true },
-      { name: 'updatedAt', type: 'date', role: 'date', description: 'Date dernière mise à jour' },
+      { name: 'id', type: 'number', role: 'id', semanticRole: 'dimension', description: 'Identifiant unique intervention', example: 12345 },
+      { name: 'projectId', type: 'number', role: 'foreignId', semanticRole: 'dimension', description: 'ID du projet/dossier lié', groupable: true, filterable: true, keywords: ['dossier', 'project'] },
+      { name: 'userId', type: 'number', role: 'foreignId', semanticRole: 'dimension', description: 'ID technicien principal', groupable: true, filterable: true, keywords: ['technicien', 'tech', 'user'] },
+      { name: 'date', type: 'date', role: 'date', semanticRole: 'dimension', description: 'Date de l\'intervention', example: '2025-01-15', filterable: true, keywords: ['date_intervention', 'rdv'] },
+      { name: 'state', type: 'enum', role: 'state', semanticRole: 'dimension', description: 'État de l\'intervention', enumValues: ['planned', 'in_progress', 'completed', 'validated', 'cancelled'], groupable: true, filterable: true, keywords: ['statut', 'etat'] },
+      { name: 'type', type: 'enum', role: 'category', semanticRole: 'dimension', description: 'Type d\'intervention', enumValues: ['technique', 'releve_technique', 'maintenance', 'sav', 'urgence'], groupable: true, filterable: true, keywords: ['type_intervention', 'nature'] },
+      { name: 'visites', type: 'array', role: 'metadata', semanticRole: 'attribute', description: 'Liste des visites avec détails techniciens' },
+      { name: 'duration', type: 'number', path: 'data.duration', role: 'computed', semanticRole: 'measure', description: 'Durée en minutes', aggregable: true, example: 120, keywords: ['duree', 'temps', 'minutes'] },
+      { name: 'heureDebut', type: 'string', path: 'data.heureDebut', role: 'datetime', semanticRole: 'attribute', description: 'Heure de début', example: '08:30' },
+      { name: 'heureFin', type: 'string', path: 'data.heureFin', role: 'datetime', semanticRole: 'attribute', description: 'Heure de fin', example: '10:30' },
+      { name: 'comments', type: 'string', path: 'data.comments', role: 'label', semanticRole: 'attribute', description: 'Commentaires intervention', nullable: true },
+      { name: 'createdAt', type: 'date', role: 'date', semanticRole: 'attribute', description: 'Date création', filterable: true },
+      { name: 'updatedAt', type: 'date', role: 'date', semanticRole: 'attribute', description: 'Date dernière mise à jour' },
     ],
     joins: [
       { target: 'projects', localField: 'projectId', remoteField: 'id', cardinality: 'many-to-one', description: 'Chaque intervention appartient à un projet/dossier' },
@@ -109,25 +146,32 @@ export const APOGEE_SCHEMA: Record<string, ApogeeEndpointDefinition> = {
     primaryKey: 'id',
     datePrimaryField: 'dateReelle',
     tags: ['finance', 'ca', 'comptabilité', 'paiement'],
+    inputParams: [
+      { name: 'date_from', type: 'date', required: false, description: 'Date début période', example: '2025-01-01' },
+      { name: 'date_to', type: 'date', required: false, description: 'Date fin période', example: '2025-01-31' },
+      { name: 'typeFacture', type: 'enum', required: false, description: 'Type facture/avoir', enumValues: ['facture', 'avoir'] },
+      { name: 'paymentStatus', type: 'enum', required: false, description: 'Statut paiement', enumValues: ['pending', 'paid', 'partially_paid', 'overdue'] },
+    ],
+    pagination: { supported: false },
     fields: [
-      { name: 'id', type: 'number', role: 'id', description: 'Identifiant unique facture' },
-      { name: 'projectId', type: 'number', role: 'foreignId', description: 'ID du dossier facturé', groupable: true, filterable: true },
-      { name: 'reference', type: 'string', role: 'reference', description: 'Référence facture', example: 'FAC-2025-0123' },
-      { name: 'refId', type: 'string', role: 'foreignId', description: 'Référence du devis associé', nullable: true },
-      { name: 'typeFacture', type: 'enum', role: 'category', description: 'Type : facture ou avoir', enumValues: ['facture', 'avoir'], groupable: true, filterable: true },
-      { name: 'dateReelle', type: 'date', role: 'date', description: 'Date réelle de facturation', filterable: true },
-      { name: 'dateEmission', type: 'date', role: 'date', description: 'Date d\'émission', filterable: true },
-      { name: 'totalHT', type: 'number', path: 'data.totalHT', role: 'amount', description: 'Montant HT', aggregable: true, example: 1500.00 },
-      { name: 'totalTTC', type: 'number', path: 'data.totalTTC', role: 'amount', description: 'Montant TTC', aggregable: true, example: 1800.00 },
-      { name: 'paymentStatus', type: 'enum', role: 'state', description: 'Statut paiement', enumValues: ['pending', 'paid', 'partially_paid', 'overdue'], groupable: true, filterable: true },
-      { name: 'restePaidTTC', type: 'number', role: 'amount', description: 'Reste à payer TTC', aggregable: true },
-      { name: 'payments', type: 'array', role: 'metadata', description: 'Liste des paiements enregistrés' },
-      { name: 'technicians', type: 'array', path: 'data.technicians', role: 'metadata', description: 'Techniciens associés à la facture' },
-      { name: 'client', type: 'object', role: 'metadata', description: 'Objet client facturé' },
-      { name: 'facturedItems', type: 'array', role: 'metadata', description: 'Lignes facturées' },
-      { name: 'invoiceType', type: 'string', role: 'category', description: 'Type facture (originale, avoir, refacturation)', groupable: true },
-      { name: 'createdAt', type: 'date', role: 'date', description: 'Date création' },
-      { name: 'updatedAt', type: 'date', role: 'date', description: 'Date mise à jour' },
+      { name: 'id', type: 'number', role: 'id', semanticRole: 'dimension', description: 'Identifiant unique facture' },
+      { name: 'projectId', type: 'number', role: 'foreignId', semanticRole: 'dimension', description: 'ID du dossier facturé', groupable: true, filterable: true, keywords: ['dossier', 'project'] },
+      { name: 'reference', type: 'string', role: 'reference', semanticRole: 'dimension', description: 'Référence facture', example: 'FAC-2025-0123', keywords: ['ref', 'numero'] },
+      { name: 'refId', type: 'string', role: 'foreignId', semanticRole: 'dimension', description: 'Référence du devis associé', nullable: true },
+      { name: 'typeFacture', type: 'enum', role: 'category', semanticRole: 'dimension', description: 'Type : facture ou avoir', enumValues: ['facture', 'avoir'], groupable: true, filterable: true, keywords: ['type', 'avoir'] },
+      { name: 'dateReelle', type: 'date', role: 'date', semanticRole: 'dimension', description: 'Date réelle de facturation', filterable: true, keywords: ['date_facture', 'date_facturation'] },
+      { name: 'dateEmission', type: 'date', role: 'date', semanticRole: 'dimension', description: 'Date d\'émission', filterable: true },
+      { name: 'totalHT', type: 'number', path: 'data.totalHT', role: 'amount', semanticRole: 'measure', description: 'Montant HT', aggregable: true, example: 1500.00, keywords: ['ca', 'chiffre_affaires', 'montant', 'revenue', 'ht'] },
+      { name: 'totalTTC', type: 'number', path: 'data.totalTTC', role: 'amount', semanticRole: 'measure', description: 'Montant TTC', aggregable: true, example: 1800.00, keywords: ['montant_ttc', 'ttc'] },
+      { name: 'paymentStatus', type: 'enum', role: 'state', semanticRole: 'dimension', description: 'Statut paiement', enumValues: ['pending', 'paid', 'partially_paid', 'overdue'], groupable: true, filterable: true, keywords: ['paiement', 'encaissement', 'recouvrement'] },
+      { name: 'restePaidTTC', type: 'number', role: 'amount', semanticRole: 'measure', description: 'Reste à payer TTC', aggregable: true, keywords: ['encours', 'impaye'] },
+      { name: 'payments', type: 'array', role: 'metadata', semanticRole: 'attribute', description: 'Liste des paiements enregistrés' },
+      { name: 'technicians', type: 'array', path: 'data.technicians', role: 'metadata', semanticRole: 'attribute', description: 'Techniciens associés à la facture', keywords: ['tech'] },
+      { name: 'client', type: 'object', role: 'metadata', semanticRole: 'attribute', description: 'Objet client facturé' },
+      { name: 'facturedItems', type: 'array', role: 'metadata', semanticRole: 'attribute', description: 'Lignes facturées' },
+      { name: 'invoiceType', type: 'string', role: 'category', semanticRole: 'dimension', description: 'Type facture (originale, avoir, refacturation)', groupable: true },
+      { name: 'createdAt', type: 'date', role: 'date', semanticRole: 'attribute', description: 'Date création' },
+      { name: 'updatedAt', type: 'date', role: 'date', semanticRole: 'attribute', description: 'Date mise à jour' },
     ],
     joins: [
       { target: 'projects', localField: 'projectId', remoteField: 'id', cardinality: 'many-to-one', description: 'Dossier facturé' },
