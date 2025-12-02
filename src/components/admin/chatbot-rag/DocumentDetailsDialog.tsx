@@ -3,7 +3,7 @@
  * Wizard mode for 1-3 files, Table mode for 4+ files
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -56,15 +56,23 @@ export function DocumentDetailsDialog({
   defaultContext,
   onConfirm,
 }: DocumentDetailsDialogProps) {
-  const [documents, setDocuments] = useState<DocumentMetadata[]>(() =>
-    files.map(file => ({
-      file,
-      title: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
-      contextType: defaultContext,
-      description: '',
-    }))
-  );
+  const [documents, setDocuments] = useState<DocumentMetadata[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Reset documents state when files change or dialog opens
+  useEffect(() => {
+    if (open && files.length > 0) {
+      setDocuments(
+        files.map(file => ({
+          file,
+          title: file.name.replace(/\.[^/.]+$/, ''),
+          contextType: defaultContext,
+          description: '',
+        }))
+      );
+      setCurrentIndex(0);
+    }
+  }, [open, files, defaultContext]);
 
   const isWizardMode = files.length <= WIZARD_THRESHOLD;
 
