@@ -435,6 +435,11 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       
       // 🛡️ P0.1: Si support_level fourni, VÉRIFIER que l'agent support est activé
       if (data.support_level !== undefined) {
+        // C2 - Garde-fou explicite: level=0 n'existe pas conceptuellement
+        if (data.support_level === 0) {
+          throw new Error('Le niveau SA0 n\'existe pas. Utilisez level=null ou désactivez le statut agent.');
+        }
+        
         const { data: currentProfile } = await supabase
           .from('profiles')
           .select('enabled_modules')
