@@ -442,13 +442,46 @@ serve(async (req) => {
       breakdown = {};
       const groups = new Map<string, any[]>();
       
+      // Mapping des dimensions métier
+      const dimensionMapping: Record<string, string[]> = {
+        'apporteur': ['projects_data_commanditaireId', '_joined.data.commanditaireId', 'commanditaireId', 'data.commanditaireId'],
+        'commanditaireid': ['projects_data_commanditaireId', '_joined.data.commanditaireId', 'commanditaireId', 'data.commanditaireId'],
+        'univers': ['projects_data_universes', '_joined.data.universes', 'universes', 'data.universes'],
+        'universes': ['projects_data_universes', '_joined.data.universes', 'universes', 'data.universes'],
+        'technicien': ['userId', 'tech_id', 'data.technicians'],
+        'userid': ['userId', 'tech_id'],
+        'client': ['clientId', 'client.id'],
+        'clientid': ['clientId', 'client.id'],
+        'type': ['type', 'typeFacture', 'invoiceType'],
+        'state': ['state', 'paymentStatus'],
+      };
+      
+      const resolveDimensionValue = (item: any, dim: string): string => {
+        const normalizedDim = dim.toLowerCase();
+        const paths = dimensionMapping[normalizedDim] || [dim];
+        
+        for (const path of paths) {
+          const val = getNestedValue(item, path);
+          if (val !== undefined && val !== null) {
+            return Array.isArray(val) ? val.join(', ') : String(val);
+          }
+        }
+        
+        // Chercher dans _joined
+        if (item._joined) {
+          const joinedVal = getNestedValue(item._joined, dim) || getNestedValue(item._joined, `data.${dim}`);
+          if (joinedVal !== undefined && joinedVal !== null) {
+            return Array.isArray(joinedVal) ? joinedVal.join(', ') : String(joinedVal);
+          }
+        }
+        
+        return 'Non défini';
+      };
+      
       for (const item of data) {
         const groupKey = dimensions
-          .map((dim: string) => {
-            const val = getNestedValue(item, dim);
-            return Array.isArray(val) ? val.join(',') : String(val ?? 'Non défini');
-          })
-          .join('|');
+          .map((dim: string) => resolveDimensionValue(item, dim))
+          .join(' | ');
         
         if (!groups.has(groupKey)) {
           groups.set(groupKey, []);
@@ -466,6 +499,8 @@ serve(async (req) => {
         );
         breakdown[key] = groupValue;
       }
+      
+      console.log(`[COMPUTE] Breakdown: ${Object.keys(breakdown).length} groups`);
     }
 
     const result = {
