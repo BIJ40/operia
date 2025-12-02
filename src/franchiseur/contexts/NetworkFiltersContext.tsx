@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { startOfDay, startOfWeek, startOfMonth, startOfYear, subDays, subWeeks, subMonths, subYears } from 'date-fns';
 
-export type NetworkPeriod = 'day' | 'day-1' | 'week' | 'week-1' | 'month' | 'month-1' | 'year' | 'custom';
+export type NetworkPeriod = 'day' | 'day-1' | 'week' | 'week-1' | 'month' | 'month-1' | 'year' | 'year-1' | 'custom';
 
 export interface DateRange {
   from: Date;
@@ -39,6 +39,8 @@ function getDateRangeForPeriod(period: NetworkPeriod): DateRange {
       return { from: startOfMonth(subMonths(now, 1)), to: startOfMonth(now) };
     case 'year':
       return { from: startOfYear(now), to: now };
+    case 'year-1':
+      return { from: startOfYear(subYears(now, 1)), to: startOfYear(now) };
     default:
       return { from: startOfYear(now), to: now };
   }
