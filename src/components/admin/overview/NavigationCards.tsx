@@ -18,7 +18,8 @@ import {
   ChevronRight,
   History,
   Archive,
-  Bell
+  Bell,
+  FlaskConical
 } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { cn } from '@/lib/utils';
@@ -155,6 +156,12 @@ export function NavigationCards() {
           icon: BookOpen, 
           title: 'Guides Apogée', 
           description: 'Éditer les guides RAG' 
+        },
+        { 
+          to: ROUTES.admin.statia, 
+          icon: FlaskConical, 
+          title: 'STATiA-BY-BIJ', 
+          description: 'Moteur centralisé de métriques' 
         },
       ],
     },
