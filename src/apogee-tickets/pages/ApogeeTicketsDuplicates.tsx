@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Copy, Eye, GitMerge, X, RefreshCw, Loader2 } from "lucide-react";
+import { Copy, Eye, GitMerge, X, RefreshCw, Loader2, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ROUTES } from "@/config/routes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,6 +110,15 @@ export default function ApogeeTicketsDuplicates() {
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
+      {/* Lien retour */}
+      <Link 
+        to={ROUTES.projects.kanban} 
+        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4 mr-1" />
+        Retour au Kanban
+      </Link>
+
       <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/10 via-background to-background">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
