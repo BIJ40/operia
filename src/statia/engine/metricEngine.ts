@@ -415,10 +415,19 @@ function executeJoins(
       throw new Error(`Relation introuvable: source "${join.to}" non chargée`);
     }
     
+    // Support both formats: { on: { local, foreign } } and { localField, remoteField }
+    const localKey = join.on?.local || (join as any).localField;
+    const foreignKey = join.on?.foreign || (join as any).remoteField;
+    
+    if (!localKey || !foreignKey) {
+      console.warn(`Join missing keys:`, join);
+      continue;
+    }
+    
     // Créer un index pour la jointure
     const targetIndex = new Map<any, any>();
     for (const item of targetDataset.data) {
-      const key = getNestedValue(item, join.on.foreign);
+      const key = getNestedValue(item, foreignKey);
       if (key !== undefined) {
         targetIndex.set(key, item);
       }
@@ -427,8 +436,8 @@ function executeJoins(
     // Exécuter la jointure
     let matchedCount = 0;
     result = result.map(item => {
-      const joinKey = getNestedValue(item, join.on.local);
-      const joined = targetIndex.get(joinKey);
+      const joinKeyValue = getNestedValue(item, localKey);
+      const joined = targetIndex.get(joinKeyValue);
       if (joined) {
         matchedCount++;
         return { 
@@ -444,7 +453,7 @@ function executeJoins(
     debugJoins.push({
       from: join.from,
       to: join.to,
-      keys: join.on,
+      keys: { local: localKey, foreign: foreignKey },
       matchedCount,
     });
   }
