@@ -42,7 +42,7 @@ export type OwnerSide = 'HC' | 'APOGEE' | 'PARTAGE';
 // Qui a rapporté/identifié le ticket
 export type ReportedBy = 'JEROME' | 'FLORIAN' | 'ERIC' | 'APOGEE' | 'AUTRE';
 export type Severity = 'CRITIQUE' | 'MAJEUR' | 'CONFORT';
-export type CreatedFrom = 'MANUAL' | 'IMPORT_BUGS' | 'IMPORT_EVALUATED' | 'IMPORT_TRAITE';
+export type CreatedFrom = 'MANUAL' | 'IMPORT_BUGS' | 'IMPORT_EVALUATED' | 'IMPORT_TRAITE' | 'IMPORT_DYSFONCTIONNEMENTS';
 // Types d'auteurs pour les commentaires (HC ou Apogée uniquement)
 export type AuthorType = 'HC' | 'APOGEE';
 

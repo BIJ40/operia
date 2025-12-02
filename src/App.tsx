@@ -97,6 +97,7 @@ const ApogeeTicketsImportEvaluated = lazy(() => import("./apogee-tickets/pages/A
 const ApogeeTicketsImportTraite = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportTraite"));
 const ApogeeTicketsImportBugs = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportBugs"));
 const ApogeeTicketsImportV1 = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportV1"));
+const ApogeeTicketsImportDysfonctionnements = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsImportDysfonctionnements"));
 const ApogeeTicketsIncomplete = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsIncomplete"));
 const ApogeeTicketsClassify = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsClassify"));
 const ApogeeTicketsReview = lazy(() => import("./apogee-tickets/pages/ApogeeTicketsReview"));
@@ -297,6 +298,7 @@ function AppContent() {
           <Route path="/projects/import-traite" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportTraite /></ModuleGuard></MainLayout>} />
           <Route path="/projects/import-bugs" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportBugs /></ModuleGuard></MainLayout>} />
           <Route path="/projects/import-v1" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportV1 /></ModuleGuard></MainLayout>} />
+          <Route path="/projects/import-dysfonctionnements" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsImportDysfonctionnements /></ModuleGuard></MainLayout>} />
           <Route path="/projects/incomplets" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsIncomplete /></ModuleGuard></MainLayout>} />
           <Route path="/projects/classifier" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsClassify /></ModuleGuard></MainLayout>} />
           <Route path="/projects/review" element={<MainLayout><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsReview /></ModuleGuard></MainLayout>} />
