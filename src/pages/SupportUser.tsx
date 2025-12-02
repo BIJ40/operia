@@ -191,7 +191,7 @@ export default function SupportUser() {
               <MessageSquare className="w-5 h-5 text-primary" />
               Chat IA
             </CardTitle>
-            <p className="text-xs text-muted-foreground break-words">
+            <p className="text-xs text-muted-foreground break-words whitespace-normal">
               Contextes disponibles: {allowedContexts.join(', ')}
             </p>
           </CardHeader>
