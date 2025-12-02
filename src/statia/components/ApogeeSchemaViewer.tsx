@@ -12,10 +12,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { 
   Search, Database, Link2, Key, Hash, Calendar, DollarSign, 
   Tag, ToggleLeft, FileText, ChevronDown, ChevronRight, Zap, Filter,
-  Network, BookOpen, ArrowRight
+  Network, BookOpen, ArrowRight, Download
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { downloadSchemaDoc } from '../schema/generateSchemaDoc';
 import { 
-  APOGEE_SCHEMA, 
   BUSINESS_CONCEPTS, 
   searchSchema, 
   getSchemaRelations,
@@ -115,6 +116,10 @@ export function ApogeeSchemaViewer() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+            <Button variant="outline" size="sm" onClick={downloadSchemaDoc} className="gap-2">
+              <Download className="h-4 w-4" />
+              Export .md
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -339,7 +344,6 @@ function SearchResultItem({ result }: { result: SchemaSearchResult }) {
 
 function RelationsView() {
   const relations = getSchemaRelations();
-  const endpoints = getAllEndpoints();
 
   return (
     <Card>
@@ -356,9 +360,9 @@ function RelationsView() {
               <div className="space-y-2">
                 {relations.map((rel, idx) => (
                   <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded text-sm">
-                    <Badge variant="outline">{APOGEE_SCHEMA[rel.source]?.label || rel.source}</Badge>
+                    <Badge variant="outline">{rel.source}</Badge>
                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    <Badge variant="outline">{APOGEE_SCHEMA[rel.target]?.label || rel.target}</Badge>
+                    <Badge variant="outline">{rel.target}</Badge>
                     <span className="text-xs text-muted-foreground ml-auto font-mono">{rel.label}</span>
                   </div>
                 ))}
