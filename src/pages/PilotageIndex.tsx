@@ -2,6 +2,7 @@ import { BarChart3, ListTodo, Tv, Calendar, Users } from 'lucide-react';
 import { IndexTile, getVariantForIndex } from '@/components/ui/index-tile';
 import { ROUTES } from '@/config/routes';
 import { useMenuLabels } from '@/hooks/use-page-metadata';
+import { AgencyInfoTile } from '@/components/pilotage/AgencyInfoTile';
 
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.pilotage.statsHub]: 'pilotage_statistiques',
@@ -58,7 +59,11 @@ export default function PilotageIndex() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4 space-y-6">
+      {/* Tuile Informations Agence */}
+      <AgencyInfoTile />
+
+      {/* Modules de pilotage */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {pilotageModules.map((module, index) => (
           <IndexTile
