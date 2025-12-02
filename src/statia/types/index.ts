@@ -88,6 +88,14 @@ export interface MetricParams {
   [key: string]: any;
 }
 
+export interface LoadDebugInfo {
+  apiUrl: string;
+  apiKeyPresent: boolean;
+  rawCounts: Record<string, number>;
+  filteredCounts: Record<string, number>;
+  appliedFilters: Record<string, any[]>;
+}
+
 export interface MetricResult<T = number> {
   value: T;
   breakdown?: Record<string, T>; // si groupBy
@@ -97,6 +105,7 @@ export interface MetricResult<T = number> {
     compute_time_ms: number;
     data_points: number;
   };
+  _loadDebug?: LoadDebugInfo;
 }
 
 export interface MetricError {

@@ -245,7 +245,20 @@ export function MetricTestPanel({ metrics, selectedMetricId, onSelectMetric }: M
 
               {/* Debug Info */}
               <div className="space-y-2">
-                <p className="text-sm font-medium">Debug</p>
+                <p className="text-sm font-medium">Debug API</p>
+                {(debug as any)._loadDebug && (
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg text-xs space-y-1">
+                    <p><strong>Endpoint:</strong> {(debug as any)._loadDebug?.apiUrl || 'Non configuré'}</p>
+                    <p><strong>Clé API:</strong> {(debug as any)._loadDebug?.apiKeyPresent ? '✅ Présente' : '❌ Absente'}</p>
+                    <p><strong>Données brutes:</strong> {JSON.stringify((debug as any)._loadDebug?.rawCounts || {})}</p>
+                    <p><strong>Après filtres:</strong> {JSON.stringify((debug as any)._loadDebug?.filteredCounts || {})}</p>
+                    <p><strong>Filtres appliqués:</strong></p>
+                    <pre className="p-2 bg-muted rounded text-xs overflow-auto">
+                      {JSON.stringify((debug as any)._loadDebug?.appliedFilters || {}, null, 2)}
+                    </pre>
+                  </div>
+                )}
+                <p className="text-sm font-medium mt-2">Debug complet</p>
                 <pre className="p-3 bg-muted rounded-lg text-xs overflow-auto max-h-40">
                   {JSON.stringify(debug, null, 2)}
                 </pre>
