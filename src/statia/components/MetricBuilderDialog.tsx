@@ -1,6 +1,6 @@
 /**
- * STATiA-BY-BIJ - Builder de métriques IA-FIRST
- * L'utilisateur décrit sa métrique en langage naturel, l'IA fait le reste
+ * STATiA-BY-BIJ - Dialog principal du builder de métriques IA
+ * Interface fullscreen pour une meilleure ergonomie
  */
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -28,7 +28,10 @@ export function MetricBuilderDialog({ open, onOpenChange, onSave, editMetric }: 
       scope: metricData.scope || 'agency',
       input_sources: typeof metricData.input_sources === 'string' 
         ? JSON.parse(metricData.input_sources)
-        : [{ source: metricData.input_sources?.primary || 'factures', filters: metricData.filters || [] }],
+        : [{ 
+            source: metricData.input_sources?.primary || 'factures', 
+            filters: metricData.filters || [] 
+          }],
       formula: typeof metricData.formula === 'string'
         ? JSON.parse(metricData.formula)
         : metricData.formula,
@@ -49,22 +52,26 @@ export function MetricBuilderDialog({ open, onOpenChange, onSave, editMetric }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-helpconfort-blue" />
+            <div className="p-1.5 rounded-md bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
             STATiA - Créer une métrique
           </DialogTitle>
           <DialogDescription>
-            Décrivez votre métrique en langage naturel. L'IA analysera votre demande et construira automatiquement la configuration.
+            Décrivez votre métrique en langage naturel. L'IA générera automatiquement la configuration complète.
           </DialogDescription>
         </DialogHeader>
 
-        <MetricAIBuilder 
-          onSave={handleSave}
-          onCancel={handleCancel}
-          initialMetric={editMetric}
-        />
+        <div className="flex-1 overflow-hidden">
+          <MetricAIBuilder 
+            onSave={handleSave}
+            onCancel={handleCancel}
+            initialMetric={editMetric}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
