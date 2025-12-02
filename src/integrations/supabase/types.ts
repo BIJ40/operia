@@ -1705,6 +1705,92 @@ export type Database = {
         }
         Relationships: []
       }
+      metrics_cache: {
+        Row: {
+          cache_key: string
+          computed_at: string
+          expires_at: string
+          id: string
+          metric_id: string
+          result: Json
+        }
+        Insert: {
+          cache_key: string
+          computed_at?: string
+          expires_at: string
+          id?: string
+          metric_id: string
+          result: Json
+        }
+        Update: {
+          cache_key?: string
+          computed_at?: string
+          expires_at?: string
+          id?: string
+          metric_id?: string
+          result?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metrics_cache_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "metrics_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metrics_definitions: {
+        Row: {
+          cache_ttl_seconds: number | null
+          compute_hint: string | null
+          created_at: string
+          created_by: string | null
+          description_agence: string | null
+          description_franchiseur: string | null
+          formula: Json
+          id: string
+          input_sources: Json
+          label: string
+          scope: string
+          updated_at: string
+          validation_status: string
+          visibility: Json | null
+        }
+        Insert: {
+          cache_ttl_seconds?: number | null
+          compute_hint?: string | null
+          created_at?: string
+          created_by?: string | null
+          description_agence?: string | null
+          description_franchiseur?: string | null
+          formula?: Json
+          id: string
+          input_sources?: Json
+          label: string
+          scope: string
+          updated_at?: string
+          validation_status?: string
+          visibility?: Json | null
+        }
+        Update: {
+          cache_ttl_seconds?: number | null
+          compute_hint?: string | null
+          created_at?: string
+          created_by?: string | null
+          description_agence?: string | null
+          description_franchiseur?: string | null
+          formula?: Json
+          id?: string
+          input_sources?: Json
+          label?: string
+          scope?: string
+          updated_at?: string
+          validation_status?: string
+          visibility?: Json | null
+        }
+        Relationships: []
+      }
       page_metadata: {
         Row: {
           created_at: string

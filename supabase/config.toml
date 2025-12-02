@@ -65,3 +65,6 @@ verify_jwt = true
 
 [functions.merge-tickets]
 verify_jwt = true
+
+[functions.compute-metric]
+verify_jwt = true
