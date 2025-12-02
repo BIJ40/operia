@@ -781,6 +781,7 @@ export type Database = {
           kanban_status: string
           last_modified_at: string | null
           last_modified_by_user_id: string | null
+          merged_into_ticket_id: string | null
           module: string | null
           module_area: string | null
           needs_completion: boolean | null
@@ -817,6 +818,7 @@ export type Database = {
           kanban_status?: string
           last_modified_at?: string | null
           last_modified_by_user_id?: string | null
+          merged_into_ticket_id?: string | null
           module?: string | null
           module_area?: string | null
           needs_completion?: boolean | null
@@ -853,6 +855,7 @@ export type Database = {
           kanban_status?: string
           last_modified_at?: string | null
           last_modified_by_user_id?: string | null
+          merged_into_ticket_id?: string | null
           module?: string | null
           module_area?: string | null
           needs_completion?: boolean | null
@@ -884,6 +887,13 @@ export type Database = {
             columns: ["kanban_status"]
             isOneToOne: false
             referencedRelation: "apogee_ticket_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apogee_tickets_merged_into_ticket_id_fkey"
+            columns: ["merged_into_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_tickets"
             referencedColumns: ["id"]
           },
           {
@@ -2241,6 +2251,93 @@ export type Database = {
           viewed_by_support_at?: string | null
         }
         Relationships: []
+      }
+      ticket_duplicate_suggestions: {
+        Row: {
+          created_at: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          similarity: number
+          status: string
+          ticket_id_candidate: string
+          ticket_id_source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          similarity: number
+          status?: string
+          ticket_id_candidate: string
+          ticket_id_source: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          similarity?: number
+          status?: string
+          ticket_id_candidate?: string
+          ticket_id_source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_duplicate_suggestions_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_duplicate_suggestions_ticket_id_candidate_fkey"
+            columns: ["ticket_id_candidate"]
+            isOneToOne: false
+            referencedRelation: "apogee_tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_duplicate_suggestions_ticket_id_source_fkey"
+            columns: ["ticket_id_source"]
+            isOneToOne: false
+            referencedRelation: "apogee_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_embeddings: {
+        Row: {
+          embedding: Json
+          id: string
+          text_hash: string | null
+          ticket_id: string
+          updated_at: string
+        }
+        Insert: {
+          embedding: Json
+          id?: string
+          text_hash?: string | null
+          ticket_id: string
+          updated_at?: string
+        }
+        Update: {
+          embedding?: Json
+          id?: string
+          text_hash?: string | null
+          ticket_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_embeddings_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: true
+            referencedRelation: "apogee_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_actions_config: {
         Row: {

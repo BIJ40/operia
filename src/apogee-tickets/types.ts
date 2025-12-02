@@ -203,3 +203,35 @@ export interface TicketFilters {
   missing_field?: MissingFieldFilter; // Filtre sur complétude des champs
   tags?: string[]; // Filtre par tags
 }
+
+// Duplicate detection types
+export type DuplicateSuggestionStatus = 'pending' | 'accepted' | 'rejected';
+
+export interface TicketDuplicateSuggestion {
+  id: string;
+  ticket_id_source: string;
+  ticket_id_candidate: string;
+  similarity: number;
+  status: DuplicateSuggestionStatus;
+  created_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+}
+
+export interface MergeTicketsPayload {
+  ticket_id_main: string;
+  ticket_id_duplicate: string;
+  merge_options: {
+    merge_comments: boolean;
+    merge_attachments: boolean;
+    merge_tags: boolean;
+  };
+}
+
+export interface TicketEmbedding {
+  id: string;
+  ticket_id: string;
+  embedding: number[];
+  text_hash: string | null;
+  updated_at: string;
+}
