@@ -14,6 +14,33 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: 'V0.5.2',
+    date: '2025-12-02',
+    title: 'Détection doublons IA, Import TRAITÉ, Support SA levels',
+    changes: [
+      { type: 'feature', description: 'Détection doublons IA pour tickets Apogée avec fusion manuelle et scan global Kanban' },
+      { type: 'feature', description: 'Bouton "Tout fusionner" pour fusion batch des doublons détectés' },
+      { type: 'feature', description: 'Import TRAITÉ pour importer des tickets directement en statut EN_PROD (DONE)' },
+      { type: 'feature', description: 'Système de tags tickets (BUG, EVO, NTH) avec filtre multi-sélection' },
+      { type: 'feature', description: 'Niveaux Support Agent (SA1/SA2/SA3) avec interface admin dédiée' },
+      { type: 'feature', description: 'Tile infos agence avec date ouverture et date clôture bilan' },
+      { type: 'feature', description: 'KPI Recouvrement avec taux et montants (facturé, encaissé, reste)' },
+      { type: 'improvement', description: 'Lien retour parent dans header pour navigation hiérarchique' },
+      { type: 'improvement', description: 'Sélecteur de période unifié (J/J-1/S/S-1/M/M-1/A/custom)' },
+      { type: 'improvement', description: 'Formulaires création utilisateur unifiés admin/franchiseur/équipe' },
+      { type: 'improvement', description: 'Règle automatique Dirigeant → N2 (franchisee_admin)' },
+      { type: 'improvement', description: 'Fusion franchiseur_roles → global_role (N3=animateur, N4=directeur, N5+=dg)' },
+      { type: 'improvement', description: 'Filtrage techniciens inactifs dans plannings et stats' },
+      { type: 'fix', description: 'Correction embedding hashing pour détection doublons' },
+      { type: 'fix', description: 'Correction qualification IA edge function errors' },
+      { type: 'fix', description: 'Correction import priorité et global_role vide' },
+      { type: 'fix', description: 'Correction calculs recouvrement TTC et structure données' },
+      { type: 'fix', description: 'Correction chat text overflow et support notifications' },
+      { type: 'security', description: 'Superadmin bypass complet des modules (N5+ accès total)' },
+      { type: 'security', description: 'Support level gating renforcé (SA1/SA2/SA3)' },
+    ]
+  },
+  {
     version: 'V0.5.1',
     date: '2025-12-02',
     title: 'Correction critique - Droits superadmin absolus',
