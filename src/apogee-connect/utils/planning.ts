@@ -138,6 +138,14 @@ interface BuildPlanningParams {
   interventions?: RawIntervention[];
   projects?: RawProject[];
   clients?: RawClient[];
+  showInactiveTechs?: boolean;
+}
+
+/**
+ * Détermine si un utilisateur est actif (même logique que buildTechMap dans techTools.ts)
+ */
+function isUserActive(user: RawUser): boolean {
+  return (user as any)?.is_on === true || (user as any)?.isActive === true;
 }
 
 /**
@@ -156,6 +164,7 @@ export function buildPlanningByTech({
   interventions = [],
   projects = [],
   clients = [],
+  showInactiveTechs = false,
 }: BuildPlanningParams): PlanningByTech {
   if (!users || users.length === 0) {
     return {};
@@ -223,6 +232,9 @@ export function buildPlanningByTech({
       visite.usersIds.forEach((techId) => {
         const user = userMap.get(techId);
         if (!user) return;
+        
+        // Filtrer les techniciens inactifs si demandé
+        if (!showInactiveTechs && !isUserActive(user)) return;
 
         if (!planningByTech[techId]) {
           planningByTech[techId] = {
@@ -281,6 +293,9 @@ export function buildPlanningByTech({
       creneau.usersIds.forEach((techId) => {
         const user = userMap.get(techId);
         if (!user) return;
+        
+        // Filtrer les techniciens inactifs si demandé
+        if (!showInactiveTechs && !isUserActive(user)) return;
 
         if (!planningByTech[techId]) {
           planningByTech[techId] = {

@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 interface TechWeeklyPlanningListProps {
   techFilterId?: number;
+  showInactiveTechs?: boolean;
 }
 
 // Sub-component for tech signature
@@ -66,6 +67,7 @@ function TechSignatureSection({
 
 export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
   techFilterId,
+  showInactiveTechs = false,
 }) => {
   const {
     data,
@@ -75,7 +77,7 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
     goToPrevWeek,
     goToNextWeek,
     goToCurrentWeek,
-  } = useWeeklyTechPlanning(techFilterId);
+  } = useWeeklyTechPlanning(techFilterId, showInactiveTechs);
 
   if (isLoading) {
     return (
