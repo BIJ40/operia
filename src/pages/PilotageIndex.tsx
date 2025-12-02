@@ -60,9 +60,6 @@ export default function PilotageIndex() {
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
-      {/* Tuile Informations Agence */}
-      <AgencyInfoTile />
-
       {/* Modules de pilotage */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {pilotageModules.map((module, index) => (
@@ -77,6 +74,9 @@ export default function PilotageIndex() {
           />
         ))}
       </div>
+
+      {/* Tuile Informations Agence */}
+      <AgencyInfoTile />
     </div>
   );
 }
