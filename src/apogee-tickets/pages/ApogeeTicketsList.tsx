@@ -29,7 +29,8 @@ import {
   FileDown, 
   Loader2, 
   ShieldAlert,
-  FileCheck
+  FileCheck,
+  AlertTriangle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
@@ -221,6 +222,10 @@ function ApogeeTicketsListContent({ roleInfo }: { roleInfo: NonNullable<ReturnTy
                 <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importTraite)}>
                   <FileCheck className="h-4 w-4 mr-2 text-purple-600" />
                   Import TRAITE
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(ROUTES.projects.importDysfonctionnements)}>
+                  <AlertTriangle className="h-4 w-4 mr-2 text-amber-600" />
+                  Import Dysfonctionnements
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate(ROUTES.projects.import)}>
                   <Files className="h-4 w-4 mr-2" />

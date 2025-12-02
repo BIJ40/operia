@@ -98,6 +98,7 @@ export const ROUTES = {
     importBugs: '/projects/import-bugs',
     importV1: '/projects/import-v1',
     importTraite: '/projects/import-traite',
+    importDysfonctionnements: '/projects/import-dysfonctionnements',
     incomplete: '/projects/incomplets',
     classify: '/projects/classifier',
     review: '/projects/review',

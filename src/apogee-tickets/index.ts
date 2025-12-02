@@ -28,3 +28,4 @@ export { default as ApogeeTicketsImportBugs } from './pages/ApogeeTicketsImportB
 export { default as ApogeeTicketsImportEvaluated } from './pages/ApogeeTicketsImportEvaluated';
 export { default as ApogeeTicketsImportPriorities } from './pages/ApogeeTicketsImportPriorities';
 export { default as ApogeeTicketsImportV1 } from './pages/ApogeeTicketsImportV1';
+export { default as ApogeeTicketsImportDysfonctionnements } from './pages/ApogeeTicketsImportDysfonctionnements';
