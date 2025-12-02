@@ -6,9 +6,9 @@ import { useFilters } from "@/apogee-connect/contexts/FiltersContext";
 import { DataService } from "@/apogee-connect/services/dataService";
 import { calculateCaJour, calculateDevisJour, calculateDossiersJour } from "@/apogee-connect/utils/dashboardCalculations";
 import { calculateRecouvrement } from "@/apogee-connect/utils/recouvrementCalculations";
-import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
-import { parseISO, isWithinInterval } from "date-fns";
+import { setApiBaseUrl, getApiBaseUrl } from "@/apogee-connect/services/api";
+import { logApogee } from "@/lib/logger";
 
 interface AgencyStatsTabProps {
   agencySlug: string;
@@ -16,12 +16,35 @@ interface AgencyStatsTabProps {
 
 export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
   const { filters } = useFilters();
-  const { isAgencyReady } = useAgency();
 
   const { data, isLoading } = useQuery({
     queryKey: ['franchiseur-agency-stats', agencySlug, filters.dateRange],
     queryFn: async () => {
-      const allData = await DataService.loadAllData(true, false);
+      // 🔧 CRITICAL: Configurer temporairement l'API pour l'agence ciblée
+      const originalBaseUrl = getApiBaseUrl();
+      const targetBaseUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
+      
+      logApogee.debug('🎯 AgencyStatsTab - Configuration API pour agence cible', {
+        agencySlug,
+        originalBaseUrl,
+        targetBaseUrl
+      });
+      
+      setApiBaseUrl(targetBaseUrl);
+      
+      try {
+        const allData = await DataService.loadAllData(true, true); // Force refresh pour nouvelle agence
+        
+        logApogee.debug('📊 AgencyStatsTab - Données chargées', {
+          agencySlug,
+          nbFactures: allData.factures?.length || 0,
+          nbProjects: allData.projects?.length || 0,
+          facturesSample: allData.factures?.slice(0, 3).map(f => ({
+            id: f.id,
+            totalTTC: f.totalTTC,
+            calc: f.calc
+          }))
+        });
       
       const { caTotal } = calculateCaJour(
         allData.factures,
@@ -55,19 +78,19 @@ export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
         nbDossiers,
         volumeDevis: caDevis,
         recouvrement: recouvrementStats.recouvrement,
+        totalFacturesTTC: recouvrementStats.totalFacturesTTC,
+        totalReglementsRecus: recouvrementStats.totalReglementsRecus,
       };
+    } finally {
+      // 🔧 Restaurer l'URL d'origine après le chargement
+      logApogee.debug('🔄 AgencyStatsTab - Restauration BASE_URL originale', { originalBaseUrl });
+      setApiBaseUrl(originalBaseUrl);
+    }
     },
-    enabled: isAgencyReady && !!agencySlug,
+    enabled: !!agencySlug,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  if (!isAgencyReady) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Chargement de vos données d'agence...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -138,6 +161,9 @@ export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
                 <p className="text-sm text-muted-foreground">Recouvrement (dû client TTC)</p>
                 <p className="text-2xl font-bold text-orange-600">
                   {formatEuros(data?.recouvrement || 0)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Facturé: {formatEuros(data?.totalFacturesTTC || 0)} • Réglé: {formatEuros(data?.totalReglementsRecus || 0)}
                 </p>
               </div>
             </CardContent>
