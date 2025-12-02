@@ -256,7 +256,7 @@ export function MetricTestPanel({ metrics, selectedMetricId, onSelectMetric }: M
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <p className="text-xs text-muted-foreground">Exécution</p>
-                    <p className="font-medium">{debug.executionTarget}</p>
+                    <p className="font-medium">{debug?.executionTarget ?? 'frontend'}</p>
                   </div>
                 </div>
               )}
