@@ -61,6 +61,70 @@ const FUNCTION_SCHEMA = {
   }
 };
 
+const AI_TIMEOUT_MS = 15000; // 15s timeout per ticket
+const BATCH_SIZE = 5; // Process 5 tickets at a time
+
+async function classifyTicketWithTimeout(
+  ticket: { id: string; element_concerne: string | null; description: string | null; module_area: string | null },
+  apiKey: string
+): Promise<{ module_id: string; confidence: number; reasoning: string } | null> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+  try {
+    const userPrompt = `Classifie ce ticket dans un module :
+
+TITRE: ${ticket.element_concerne || "N/A"}
+DESCRIPTION: ${ticket.description || "N/A"}
+MODULE_AREA actuel: ${ticket.module_area || "N/A"}
+
+Analyse et retourne le module le plus approprié avec ton score de confiance.`;
+
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userPrompt }
+        ],
+        tools: [FUNCTION_SCHEMA],
+        tool_choice: { type: "function", function: { name: "classify_module" } }
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!aiResponse.ok) {
+      console.error(`AI error for ticket ${ticket.id}: ${aiResponse.status}`);
+      return null;
+    }
+
+    const aiData = await aiResponse.json();
+    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+
+    if (!toolCall || toolCall.function.name !== "classify_module") {
+      console.error(`No valid tool call for ticket ${ticket.id}`);
+      return null;
+    }
+
+    return JSON.parse(toolCall.function.arguments);
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error(`Timeout for ticket ${ticket.id}`);
+    } else {
+      console.error(`Error classifying ticket ${ticket.id}:`, error);
+    }
+    return null;
+  }
+}
+
 serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
@@ -75,12 +139,11 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { mode = 'scan', ticket_ids, apply_changes = false } = await req.json();
+    const { mode = 'scan', ticket_ids, apply_changes = false, batch_index = 0 } = await req.json();
 
     let ticketsToProcess: Array<{id: string; element_concerne: string | null; description: string | null; module: string | null; module_area: string | null}> = [];
 
     if (mode === 'scan') {
-      // Récupérer tous les tickets sans module
       const { data, error } = await supabase
         .from("apogee_tickets")
         .select("id, element_concerne, description, module, module_area")
@@ -88,6 +151,26 @@ serve(async (req) => {
         .neq("kanban_status", "EN_PROD")
         .order("created_at", { ascending: false })
         .limit(200);
+
+      if (error) throw error;
+      ticketsToProcess = data || [];
+      
+      // Return total count for batch processing
+      return withCors(req, new Response(
+        JSON.stringify({ 
+          success: true, 
+          total_tickets: ticketsToProcess.length,
+          tickets: ticketsToProcess.map(t => ({ id: t.id, title: t.element_concerne }))
+        }),
+        { headers: { "Content-Type": "application/json" } }
+      ));
+    }
+    
+    if (mode === 'classify_batch' && ticket_ids?.length > 0) {
+      const { data, error } = await supabase
+        .from("apogee_tickets")
+        .select("id, element_concerne, description, module, module_area")
+        .in("id", ticket_ids);
 
       if (error) throw error;
       ticketsToProcess = data || [];
@@ -118,55 +201,35 @@ serve(async (req) => {
       auto_applied: boolean;
     }> = [];
 
-    for (const ticket of ticketsToProcess) {
-      try {
-        const userPrompt = `Classifie ce ticket dans un module :
+    // Process tickets in parallel batches
+    for (let i = 0; i < ticketsToProcess.length; i += BATCH_SIZE) {
+      const batch = ticketsToProcess.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(ticket => classifyTicketWithTimeout(ticket, LOVABLE_API_KEY))
+      );
 
-TITRE: ${ticket.element_concerne || "N/A"}
-DESCRIPTION: ${ticket.description || "N/A"}
-MODULE_AREA actuel: ${ticket.module_area || "N/A"}
+      for (let j = 0; j < batch.length; j++) {
+        const ticket = batch[j];
+        const classification = batchResults[j];
 
-Analyse et retourne le module le plus approprié avec ton score de confiance.`;
-
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [
-              { role: "system", content: SYSTEM_PROMPT },
-              { role: "user", content: userPrompt }
-            ],
-            tools: [FUNCTION_SCHEMA],
-            tool_choice: { type: "function", function: { name: "classify_module" } }
-          }),
-        });
-
-        if (!aiResponse.ok) {
-          console.error(`AI error for ticket ${ticket.id}: ${aiResponse.status}`);
+        if (!classification) {
+          suggestions.push({
+            ticket_id: ticket.id,
+            title: ticket.element_concerne || "Sans titre",
+            current_module: ticket.module,
+            suggested_module: "AUTRE",
+            confidence: 0,
+            reasoning: "Échec de classification (timeout ou erreur)",
+            auto_applied: false
+          });
           continue;
         }
 
-        const aiData = await aiResponse.json();
-        const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-
-        if (!toolCall || toolCall.function.name !== "classify_module") {
-          console.error(`No valid tool call for ticket ${ticket.id}`);
-          continue;
-        }
-
-        const classification = JSON.parse(toolCall.function.arguments);
         const confidence = Math.min(1, Math.max(0, classification.confidence));
-        
-        // Si confiance < seuil, forcer AUTRE
         const finalModule = confidence >= CONFIDENCE_THRESHOLD ? classification.module_id : "AUTRE";
-        const shouldAutoApply = apply_changes && confidence >= CONFIDENCE_THRESHOLD;
+        const shouldAutoApply = apply_changes && confidence >= CONFIDENCE_THRESHOLD && finalModule !== "AUTRE";
 
-        // Appliquer le changement si demandé et confiance suffisante
-        if (shouldAutoApply && finalModule !== "AUTRE") {
+        if (shouldAutoApply) {
           await supabase
             .from("apogee_tickets")
             .update({ module: finalModule })
@@ -178,17 +241,13 @@ Analyse et retourne le module le plus approprié avec ton score de confiance.`;
           title: ticket.element_concerne || "Sans titre",
           current_module: ticket.module,
           suggested_module: finalModule,
-          confidence: confidence,
+          confidence,
           reasoning: classification.reasoning || "",
-          auto_applied: shouldAutoApply && finalModule !== "AUTRE"
+          auto_applied: shouldAutoApply
         });
-
-      } catch (ticketError) {
-        console.error(`Error processing ticket ${ticket.id}:`, ticketError);
       }
     }
 
-    // Statistiques
     const stats = {
       total: suggestions.length,
       high_confidence: suggestions.filter(s => s.confidence >= CONFIDENCE_THRESHOLD).length,
