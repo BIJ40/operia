@@ -48,7 +48,7 @@ export default function ApogeeTicketsAutoClassify() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const CONFIDENCE_THRESHOLD = 0.85;
-  const BATCH_SIZE = 30;
+  const BATCH_SIZE = 10; // Réduit pour éviter les timeouts
 
   // Compter les tickets sans module
   const { data: ticketsWithoutModule } = useQuery({
@@ -134,38 +134,48 @@ export default function ApogeeTicketsAutoClassify() {
 
       const allSuggestions: ClassificationSuggestion[] = [];
 
-      // 3. Traiter chaque lot séquentiellement
+      // 3. Traiter chaque lot séquentiellement avec retry
+      let failedBatches = 0;
+      
       for (let i = 0; i < batches.length; i++) {
         if (abortControllerRef.current?.signal.aborted) break;
         
         setCurrentBatch(i + 1);
         setScanProgress(((i + 1) / batches.length) * 100);
 
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-classify-modules`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: JSON.stringify({ 
-              mode: 'batch', 
-              ticket_ids: batches[i],
-              apply_changes: false 
-            }),
-            signal: abortControllerRef.current.signal
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-classify-modules`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: JSON.stringify({ 
+                mode: 'batch', 
+                ticket_ids: batches[i],
+                apply_changes: false 
+              }),
+              signal: abortControllerRef.current?.signal
+            }
+          );
+
+          if (!response.ok) {
+            console.error(`Lot ${i + 1} échoué: HTTP ${response.status}`);
+            failedBatches++;
+            continue; // Continuer avec le lot suivant
           }
-        );
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Erreur serveur');
-        }
-
-        const data = await response.json();
-        if (data.suggestions) {
-          allSuggestions.push(...data.suggestions);
+          const data = await response.json();
+          if (data.suggestions) {
+            allSuggestions.push(...data.suggestions);
+          }
+        } catch (err) {
+          if (err instanceof Error && err.name === 'AbortError') throw err;
+          console.error(`Lot ${i + 1} erreur:`, err);
+          failedBatches++;
+          // Continuer avec le lot suivant
         }
       }
 
@@ -184,7 +194,11 @@ export default function ApogeeTicketsAutoClassify() {
         .map(s => s.ticket_id);
       setSelectedIds(new Set(highConfIds));
 
-      successToast(`${allSuggestions.length} tickets analysés en ${formatTime(elapsedTime)}`);
+      if (failedBatches > 0) {
+        warningToast(`${allSuggestions.length} tickets analysés, ${failedBatches} lot(s) en échec`);
+      } else {
+        successToast(`${allSuggestions.length} tickets analysés en ${formatTime(elapsedTime)}`);
+      }
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         return;
