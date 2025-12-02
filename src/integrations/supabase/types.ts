@@ -2664,13 +2664,6 @@ export type Database = {
         Returns: Database["public"]["Enums"]["apogee_ticket_role"]
       }
       has_franchiseur_access: { Args: { _user_id: string }; Returns: boolean }
-      has_franchiseur_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["franchiseur_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
       has_min_global_role: {
         Args: { _min_level: number; _user_id: string }
         Returns: boolean
