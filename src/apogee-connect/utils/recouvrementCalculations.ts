@@ -138,10 +138,11 @@ export function calculateRecouvrement(
 
       nbFactures++;
 
-      const data: any = (facture as any).data ?? {};
+      // Récupération des données - peuvent être dans facture.data ou directement sur facture
+      const factureData = (facture as any).data ?? (facture as any);
 
       // 1. Calcul du montant TTC de la facture
-      const montantTTCRaw = data.totalTTC ?? (facture as any).totalTTC ?? 0;
+      const montantTTCRaw = factureData.totalTTC ?? (facture as any).totalTTC ?? 0;
       const montantTTCBase = Number(String(montantTTCRaw).replace(/[^0-9.-]/g, "")) || 0;
 
       if (isNaN(montantTTCBase) || montantTTCBase === 0) {
@@ -149,7 +150,7 @@ export function calculateRecouvrement(
           id: (facture as any).id,
           numeroFacture: (facture as any).numeroFacture,
           totalTTC: (facture as any).totalTTC,
-          dataTotalTTC: data.totalTTC,
+          dataTotalTTC: factureData.totalTTC,
         });
         return;
       }
@@ -173,8 +174,8 @@ export function calculateRecouvrement(
       let montantRegle = 0;
 
       // Priorité 1: Si calcPaymentsTotal OU calcPaymentsReste existent
-      const calcPaymentsTotalRaw = data.calcPaymentsTotal;
-      const calcPaymentsResteRaw = data.calcPaymentsReste;
+      const calcPaymentsTotalRaw = factureData.calcPaymentsTotal;
+      const calcPaymentsResteRaw = factureData.calcPaymentsReste;
       const hasCalcPayments = 
         (calcPaymentsTotalRaw !== undefined && calcPaymentsTotalRaw !== null) ||
         (calcPaymentsResteRaw !== undefined && calcPaymentsResteRaw !== null);
@@ -183,8 +184,8 @@ export function calculateRecouvrement(
         const calcPaymentsTotal = Number(String(calcPaymentsTotalRaw ?? 0).replace(/[^0-9.-]/g, "")) || 0;
         montantRegle = Math.min(calcPaymentsTotal, montantFactureAbs);
       } else {
-        // Priorité 2: data.financier.sommesPercues[]
-        const sommesPercues = data.financier?.sommesPercues;
+        // Priorité 2: factureData.financier.sommesPercues[]
+        const sommesPercues = factureData.financier?.sommesPercues;
         let sommeSommesPercues = 0;
         if (Array.isArray(sommesPercues) && sommesPercues.length > 0) {
           sommeSommesPercues = sommesPercues.reduce((sum: number, sp: any) => {
@@ -227,8 +228,9 @@ export function calculateRecouvrement(
           state: (facture as any).state,
           paymentStatus: (facture as any).paymentStatus,
           totalTTC: montantFactureAbs,
-          calcPaymentsTotal: data.calcPaymentsTotal,
-          calcPaymentsReste: data.calcPaymentsReste,
+          calcPaymentsTotal: factureData.calcPaymentsTotal,
+          calcPaymentsReste: factureData.calcPaymentsReste,
+          hasData: !!(facture as any).data,
           montantRegle,
         });
       }
