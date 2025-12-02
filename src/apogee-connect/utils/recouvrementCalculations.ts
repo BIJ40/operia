@@ -70,7 +70,22 @@ export function calculateRecouvrement(
   filters: GlobalFilters,
   options: { includeDetails?: boolean; agencySlug?: string } = {}
 ): RecouvrementStats {
+  // 🔍 DEBUG: Log initial
+  logApogee.debug('🔍 calculateRecouvrement - début', {
+    nbFacturesTotal: factures?.length || 0,
+    dateRange: filters.dateRange,
+    sample: factures?.slice(0, 3).map(f => ({
+      id: f.id,
+      date: f.date,
+      totalTTC: f.totalTTC,
+      typeFacture: f.typeFacture,
+      calc: f.calc,
+      paidTTC: f.calc?.paidTTC
+    }))
+  });
+
   if (!factures || factures.length === 0) {
+    logApogee.warn('❌ calculateRecouvrement - Aucune facture reçue');
     return {
       totalFacturesTTC: 0,
       totalReglementsRecus: 0,
@@ -110,6 +125,18 @@ export function calculateRecouvrement(
       if (!inRange) return;
 
       nbFactures++;
+
+      // 🔍 DEBUG: Log par facture (limité aux 5 premières)
+      if (nbFactures <= 5) {
+        logApogee.debug(`📄 Facture ${nbFactures}/${factures.length}`, {
+          id: facture.id,
+          date: dateEmission,
+          totalTTC: facture.totalTTC,
+          typeFacture: facture.typeFacture,
+          calc: facture.calc,
+          paidTTC: facture.calc?.paidTTC
+        });
+      }
 
       // 1. Calcul du montant TTC de la facture
       const montantTTCRaw = facture.totalTTC || 0;
@@ -162,20 +189,19 @@ export function calculateRecouvrement(
 
   const recouvrement = totalFacturesTTC - totalReglementsRecus;
 
-  if (import.meta.env.DEV) {
-    logApogee.debug('Calcul recouvrement', {
-      nbFactures,
-      totalFacturesTTC,
-      totalReglementsRecus,
-      recouvrement,
-      details: options.includeDetails ? {
-        facturesPositives,
-        avoirs,
-        facturesPayees,
-        facturesEnAttente
-      } : undefined
-    });
-  }
+  // 🔍 DEBUG: Résultat final
+  logApogee.debug('✅ calculateRecouvrement - résultat', {
+    nbFactures,
+    totalFacturesTTC: totalFacturesTTC.toFixed(2),
+    totalReglementsRecus: totalReglementsRecus.toFixed(2),
+    recouvrement: recouvrement.toFixed(2),
+    details: options.includeDetails ? {
+      facturesPositives: facturesPositives.toFixed(2),
+      avoirs: avoirs.toFixed(2),
+      facturesPayees,
+      facturesEnAttente
+    } : undefined
+  });
 
   return {
     totalFacturesTTC,
