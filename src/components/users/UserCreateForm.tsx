@@ -46,13 +46,16 @@ export function UserCreateForm({
   showAgencySelector = true,
   defaultAgency,
 }: UserCreateFormProps) {
+  // Valeur par défaut intelligente : le rôle assignable le plus bas
+  const defaultRole = assignableRoles.length > 0 ? assignableRoles[0] : 'base_user';
+  
   const [formData, setFormData] = useState<CreateUserPayload>({
     email: '',
     password: '',
     firstName: '',
     lastName: '',
     agence: defaultAgency || '',
-    globalRole: 'franchisee_user',
+    globalRole: defaultRole,
     sendEmail: true,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateUserPayload, string>>>({});
