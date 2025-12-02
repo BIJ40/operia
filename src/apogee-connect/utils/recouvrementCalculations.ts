@@ -70,10 +70,11 @@ export function calculateRecouvrement(
   filters: GlobalFilters,
   options: { includeDetails?: boolean; agencySlug?: string } = {}
 ): RecouvrementStats {
-  // 🔍 DEBUG: Log initial
+  // 🔍 DEBUG: Log initial avec structure complète
   logApogee.debug('🔍 calculateRecouvrement - début', {
     nbFacturesTotal: factures?.length || 0,
     dateRange: filters.dateRange,
+    premiereFactureBrute: factures?.[0] ? JSON.stringify(factures[0], null, 2) : null,
     sample: factures?.slice(0, 3).map((f: any) => ({
       id: f.id,
       date: f.date,
@@ -81,8 +82,12 @@ export function calculateRecouvrement(
       typeFacture: f.typeFacture,
       state: f.state,
       paymentStatus: f.paymentStatus,
-      calcPaymentsTotal: f.data?.calcPaymentsTotal,
-      calcPaymentsReste: f.data?.calcPaymentsReste,
+      // Essayons différents chemins possibles
+      calcPaymentsTotal_data: f.data?.calcPaymentsTotal,
+      calcPaymentsReste_data: f.data?.calcPaymentsReste,
+      calcPaymentsTotal_direct: f.calcPaymentsTotal,
+      calcPaymentsReste_direct: f.calcPaymentsReste,
+      payments: f.data?.payments,
       sommesPercues: f.data?.financier?.sommesPercues,
     })),
   });
