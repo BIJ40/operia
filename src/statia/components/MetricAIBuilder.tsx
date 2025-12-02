@@ -7,7 +7,8 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Loader2, Check, ChevronRight, AlertCircle, Lightbulb, RefreshCw, Save, Play, Database, Filter, Calculator } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Sparkles, Loader2, Check, AlertCircle, Lightbulb, RefreshCw, Save, Play, Database, Filter, Calculator, Layers } from 'lucide-react';
 import { useMetricAIAnalysis, MetricAnalysisResult } from '../hooks/useMetricAIAnalysis';
 import { cn } from '@/lib/utils';
 
@@ -19,11 +20,11 @@ interface MetricAIBuilderProps {
 const EXAMPLE_QUERIES = [
   "CA facturé ce mois",
   "Nombre d'interventions cette semaine",
-  "Devis validés en attente de facturation",
-  "Top 5 techniciens par CA",
+  "Devis validés PAR apporteur",
+  "CA mensuel PAR technicien",
   "Taux de transformation devis/factures",
   "Interventions SAV du mois",
-  "Dossiers en cours par univers",
+  "Dossiers en cours PAR univers",
   "Moyenne de CA par intervention"
 ];
 
@@ -34,7 +35,7 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
   const [testResult, setTestResult] = useState<any>(null);
   const [isTesting, setIsTesting] = useState(false);
   
-  const { analyzeQuery, isAnalyzing, result, error, reset } = useMetricAIAnalysis();
+  const { analyzeQuery, isAnalyzing, result, reset } = useMetricAIAnalysis();
 
   const handleAnalyze = async () => {
     const analysisResult = await analyzeQuery(query);
@@ -55,20 +56,38 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
     setTestResult(null);
   };
 
+  const hasDimensions = editedMetric?.dimensions && editedMetric.dimensions.length > 0;
+
   const handleTest = async () => {
     setIsTesting(true);
-    // Simulation de test - en production, appeler l'API Apogée
+    // Simulation de test avec données dimensionnelles si applicable
     await new Promise(resolve => setTimeout(resolve, 1500));
-    setTestResult({
-      success: true,
-      count: Math.floor(Math.random() * 100) + 10,
-      executionTime: Math.floor(Math.random() * 500) + 100,
-      sample: [
-        { id: '1', value: 1250.50 },
-        { id: '2', value: 890.00 },
-        { id: '3', value: 2100.75 }
-      ]
-    });
+    
+    if (hasDimensions) {
+      // Résultat avec dimensions (tableau)
+      const dimensionKey = editedMetric?.dimensions?.[0]?.label || 'Groupe';
+      setTestResult({
+        success: true,
+        hasDimensions: true,
+        dimensionLabel: dimensionKey,
+        data: [
+          { dimension: 'AXA', value: 42 },
+          { dimension: 'MAIF', value: 28 },
+          { dimension: 'Allianz', value: 15 },
+          { dimension: 'Groupama', value: 12 },
+          { dimension: 'MMA', value: 8 }
+        ],
+        executionTime: Math.floor(Math.random() * 500) + 100,
+      });
+    } else {
+      // Résultat simple (un nombre)
+      setTestResult({
+        success: true,
+        hasDimensions: false,
+        count: Math.floor(Math.random() * 100) + 10,
+        executionTime: Math.floor(Math.random() * 500) + 100,
+      });
+    }
     setIsTesting(false);
     setStep('test');
   };
@@ -79,9 +98,18 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
         ...editedMetric,
         input_sources: JSON.stringify(editedMetric.input_sources),
         formula: JSON.stringify(editedMetric.formula),
+        dimensions: JSON.stringify(editedMetric.dimensions || []),
         validation_status: 'draft'
       });
     }
+  };
+
+  // Helper to safely display filter values
+  const formatFilterValue = (value: unknown): string => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object') return JSON.stringify(value);
+    if (Array.isArray(value)) return value.join(', ');
+    return String(value);
   };
 
   // Step 1: Input
@@ -96,13 +124,13 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
               <CardTitle className="text-lg">Décrivez votre métrique</CardTitle>
             </div>
             <CardDescription>
-              Tapez une phrase en langage naturel, STATiA comprendra et construira la métrique automatiquement
+              Tapez une phrase en langage naturel. Utilisez "PAR" pour des analyses dimensionnelles (ex: "CA PAR apporteur")
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
               <Input
-                placeholder="Ex: CA facturé du mois, Nombre d'interventions cette semaine..."
+                placeholder="Ex: Nombre de devis validés PAR apporteur sur la période"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !isAnalyzing && handleAnalyze()}
@@ -132,14 +160,17 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Lightbulb className="h-3 w-3" />
-                Exemples de requêtes
+                Exemples de requêtes (avec ou sans dimension)
               </p>
               <div className="flex flex-wrap gap-2">
                 {EXAMPLE_QUERIES.map((example) => (
                   <Badge
                     key={example}
                     variant="outline"
-                    className="cursor-pointer hover:bg-primary/10 transition-colors"
+                    className={cn(
+                      "cursor-pointer hover:bg-primary/10 transition-colors",
+                      example.includes('PAR') && "border-primary/50 bg-primary/5"
+                    )}
                     onClick={() => handleExampleClick(example)}
                   >
                     {example}
@@ -314,20 +345,13 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-1">
-                {editedMetric.filters.map((filter, i) => {
-                  const displayValue = typeof filter.value === 'object' && filter.value !== null
-                    ? JSON.stringify(filter.value)
-                    : Array.isArray(filter.value) 
-                      ? filter.value.join(', ') 
-                      : String(filter.value);
-                  return (
-                    <div key={i} className="flex items-center gap-2 text-xs font-mono bg-muted p-1.5 rounded">
-                      <span className="font-medium">{filter.field}</span>
-                      <span className="text-muted-foreground">{filter.operator}</span>
-                      <span className="text-primary">{displayValue}</span>
-                    </div>
-                  );
-                })}
+                {editedMetric.filters.map((filter, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs font-mono bg-muted p-1.5 rounded">
+                    <span className="font-medium">{filter.field}</span>
+                    <span className="text-muted-foreground">{filter.operator}</span>
+                    <span className="text-primary">{formatFilterValue(filter.value)}</span>
+                  </div>
+                ))}
                 {editedMetric.filters.length === 0 && (
                   <p className="text-xs text-muted-foreground">Aucun filtre</p>
                 )}
@@ -357,7 +381,7 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
                 </Badge>
                 {editedMetric.formula.groupBy && editedMetric.formula.groupBy.length > 0 && (
                   <div className="flex items-center gap-1 text-xs">
-                    <span className="text-muted-foreground">Groupé par:</span>
+                    <span className="text-muted-foreground">GROUP BY:</span>
                     {editedMetric.formula.groupBy.map((g, i) => (
                       <Badge key={i} variant="outline" className="text-xs">{g}</Badge>
                     ))}
@@ -367,6 +391,37 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
             </CardContent>
           </Card>
         </div>
+
+        {/* Dimensions - Section mise en valeur */}
+        {hasDimensions && (
+          <Card className="border-2 border-purple-200 bg-purple-50/30">
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-purple-700">
+                <Layers className="h-4 w-4" />
+                Dimensions (ventilation des résultats)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {editedMetric.dimensions?.map((dim, i) => (
+                  <div key={i} className="flex items-center gap-2 p-2 bg-purple-100/50 rounded">
+                    <Badge variant="secondary" className="bg-purple-200 text-purple-800">
+                      PAR {dim.label}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {dim.source && `Source: ${dim.source}`}
+                      {dim.field && ` • Champ: ${dim.field}`}
+                      {dim.via && ` • Via: ${dim.via}`}
+                    </span>
+                  </div>
+                ))}
+                <p className="text-xs text-purple-600 mt-2">
+                  ℹ️ Le résultat sera un tableau ventilé par {editedMetric.dimensions?.map(d => d.label).join(', ')}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Description */}
         <Card>
@@ -429,20 +484,60 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
             <CardTitle className="text-base">Résultats du test</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-3 bg-white rounded-lg">
-                <p className="text-2xl font-bold text-primary">{testResult.count}</p>
-                <p className="text-xs text-muted-foreground">Éléments trouvés</p>
-              </div>
-              <div className="text-center p-3 bg-white rounded-lg">
-                <p className="text-2xl font-bold">{testResult.executionTime}ms</p>
-                <p className="text-xs text-muted-foreground">Temps d'exécution</p>
-              </div>
-              <div className="text-center p-3 bg-white rounded-lg">
-                <p className="text-2xl font-bold text-green-600">✓</p>
-                <p className="text-xs text-muted-foreground">Statut</p>
-              </div>
-            </div>
+            {testResult.hasDimensions ? (
+              <>
+                {/* Résultat dimensionnel = tableau */}
+                <div className="bg-white rounded-lg p-4">
+                  <p className="text-sm font-medium mb-3">
+                    Ventilation par {testResult.dimensionLabel}
+                  </p>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{testResult.dimensionLabel}</TableHead>
+                        <TableHead className="text-right">Valeur</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {testResult.data.map((row: any, i: number) => (
+                        <TableRow key={i}>
+                          <TableCell className="font-medium">{row.dimension}</TableCell>
+                          <TableCell className="text-right text-primary font-bold">{row.value}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 bg-white rounded-lg">
+                    <p className="text-2xl font-bold">{testResult.data.length}</p>
+                    <p className="text-xs text-muted-foreground">Groupes trouvés</p>
+                  </div>
+                  <div className="text-center p-3 bg-white rounded-lg">
+                    <p className="text-2xl font-bold">{testResult.executionTime}ms</p>
+                    <p className="text-xs text-muted-foreground">Temps d'exécution</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Résultat simple = un nombre */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center p-3 bg-white rounded-lg">
+                    <p className="text-2xl font-bold text-primary">{testResult.count}</p>
+                    <p className="text-xs text-muted-foreground">Valeur calculée</p>
+                  </div>
+                  <div className="text-center p-3 bg-white rounded-lg">
+                    <p className="text-2xl font-bold">{testResult.executionTime}ms</p>
+                    <p className="text-xs text-muted-foreground">Temps d'exécution</p>
+                  </div>
+                  <div className="text-center p-3 bg-white rounded-lg">
+                    <p className="text-2xl font-bold text-green-600">✓</p>
+                    <p className="text-xs text-muted-foreground">Statut</p>
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Debug */}
             <details className="mt-4">
