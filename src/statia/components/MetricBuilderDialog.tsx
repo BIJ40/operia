@@ -13,9 +13,11 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, Plus, X, Zap, Database, Save } from 'lucide-react';
-import { APOGEE_SCHEMA, validateMetricDefinition, getAllEndpoints } from '../schema/apogeeSchemaV2';
+import { APOGEE_SCHEMA, validateMetricDefinition, getAllEndpoints, getAggregableFields, getGroupableFields, getFilterableFields } from '../schema/apogeeSchemaV2';
 import { MetricDefinition, MetricScope, AggregationType, FilterCondition } from '../types';
 import { toast } from 'sonner';
+import { AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface MetricBuilderDialogProps {
   open: boolean;
@@ -104,6 +106,15 @@ export function MetricBuilderDialog({ open, onOpenChange, onSave, editMetric }: 
         description: validation.errors.join(', '),
       });
       return;
+    }
+
+    // Avertissements mais pas bloquants
+    if (validation.warnings && validation.warnings.length > 0) {
+      toast.warning('Métrique créée avec avertissements', {
+        description: validation.warnings.join(', '),
+      });
+    } else {
+      toast.success(isEditMode ? 'Métrique mise à jour' : 'Métrique créée');
     }
 
     onSave(draft as MetricDefinition);
@@ -458,14 +469,16 @@ function StepFilters({ draft, setDraft }: { draft: Partial<MetricDefinition>; se
 function StepFormula({ draft, setDraft }: { draft: Partial<MetricDefinition>; setDraft: (d: any) => void }) {
   const sources = draft.input_sources || [];
   const primarySource = sources[0]?.source;
-  const endpoint = primarySource ? APOGEE_SCHEMA[primarySource] : null;
-  const aggregableFields = endpoint?.fields.filter(f => f.aggregable) || [];
+  const aggregableFields = primarySource ? getAggregableFields(primarySource) : [];
+  const groupableFields = primarySource ? getGroupableFields(primarySource) : [];
 
   const formula = draft.formula || { type: 'sum', field: '' };
 
   const updateFormula = (updates: Partial<typeof formula>) => {
     setDraft({ ...draft, formula: { ...formula, ...updates } });
   };
+
+  const needsField = !['count', 'distinct_count', 'ratio'].includes(formula.type);
 
   return (
     <div className="space-y-4">
@@ -493,21 +506,49 @@ function StepFormula({ draft, setDraft }: { draft: Partial<MetricDefinition>; se
           </Select>
         </div>
 
-        {formula.type !== 'count' && formula.type !== 'ratio' && (
+        {needsField && (
           <div className="space-y-2">
-            <Label>Champ à agréger</Label>
+            <Label>Champ à agréger <Badge variant="outline" className="text-[10px] ml-1">MES</Badge></Label>
             <Select value={formula.field || ''} onValueChange={(v) => updateFormula({ field: v })}>
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Sélectionner un champ" />
               </SelectTrigger>
               <SelectContent className="bg-background z-50">
                 {aggregableFields.map((f) => (
-                  <SelectItem key={f.name} value={f.path || f.name}>{f.name}</SelectItem>
+                  <SelectItem key={f.name} value={f.path || f.name}>
+                    <span className="font-mono text-sm">{f.name}</span>
+                    <span className="text-xs text-muted-foreground ml-2">{f.description}</span>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {aggregableFields.length === 0 && (
+              <p className="text-xs text-amber-600">Aucun champ agrégable trouvé pour cette source</p>
+            )}
           </div>
         )}
+      </div>
+
+      {/* GroupBy optionnel */}
+      <div className="space-y-2">
+        <Label>GroupBy (optionnel) <Badge variant="outline" className="text-[10px] ml-1">DIM</Badge></Label>
+        <Select 
+          value={formula.groupBy?.[0] || ''} 
+          onValueChange={(v) => updateFormula({ groupBy: v ? [v] : undefined })}
+        >
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Aucun groupement" />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="">Aucun</SelectItem>
+            {groupableFields.map((f) => (
+              <SelectItem key={f.name} value={f.path || f.name}>
+                <span className="font-mono text-sm">{f.name}</span>
+                <span className="text-xs text-muted-foreground ml-2">{f.description}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -551,52 +592,100 @@ function StepReview({ draft }: { draft: Partial<MetricDefinition> }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Résumé</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">ID</span>
-              <span className="font-mono">{draft.id || '-'}</span>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Résumé de la métrique</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">ID</span>
+            <span className="font-mono bg-muted px-2 py-0.5 rounded">{draft.id || '-'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Label</span>
+            <span className="font-medium">{draft.label || '-'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Scope</span>
+            <Badge variant="outline">{draft.scope}</Badge>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Sources</span>
+            <div className="flex gap-1">
+              {draft.input_sources?.map(s => (
+                <Badge key={s.source} variant="secondary" className="text-xs">{s.source}</Badge>
+              )) || '-'}
             </div>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Formule</span>
+            <code className="text-xs bg-muted px-2 py-0.5 rounded">
+              {draft.formula?.type}({draft.formula?.field || '*'})
+              {draft.formula?.groupBy?.length ? ` GROUP BY ${draft.formula.groupBy.join(', ')}` : ''}
+            </code>
+          </div>
+          {draft.formula?.unit && (
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Label</span>
-              <span>{draft.label || '-'}</span>
+              <span className="text-muted-foreground">Unité</span>
+              <span>{draft.formula.unit}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Scope</span>
-              <Badge variant="outline">{draft.scope}</Badge>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Sources</span>
-              <span>{draft.input_sources?.map(s => s.source).join(', ') || '-'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Formule</span>
-              <span>{draft.formula?.type}({draft.formula?.field || '*'})</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={validation.valid ? 'border-green-200' : 'border-destructive'}>
-          <CardHeader className="pb-2">
-            <CardTitle className={`text-sm ${validation.valid ? 'text-green-600' : 'text-destructive'}`}>
-              {validation.valid ? '✓ Validation réussie' : '✗ Erreurs de validation'}
-            </CardTitle>
-          </CardHeader>
-          {!validation.valid && (
-            <CardContent>
-              <ul className="list-disc list-inside space-y-1 text-sm text-destructive">
-                {validation.errors.map((err, i) => (
-                  <li key={i}>{err}</li>
-                ))}
-              </ul>
-            </CardContent>
           )}
-        </Card>
-      </div>
+        </CardContent>
+      </Card>
+
+      {/* Erreurs */}
+      {!validation.valid && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <p className="font-medium mb-2">Erreurs de validation ({validation.errors.length})</p>
+            <ul className="list-disc list-inside space-y-1 text-sm">
+              {validation.errors.map((err, i) => (
+                <li key={i}>{err}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Warnings */}
+      {validation.warnings && validation.warnings.length > 0 && (
+        <Alert className="border-amber-200 bg-amber-50 text-amber-800">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertDescription>
+            <p className="font-medium mb-2">Avertissements ({validation.warnings.length})</p>
+            <ul className="list-disc list-inside space-y-1 text-sm">
+              {validation.warnings.map((warn, i) => (
+                <li key={i}>{warn}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Success */}
+      {validation.valid && (!validation.warnings || validation.warnings.length === 0) && (
+        <Alert className="border-green-200 bg-green-50 text-green-800">
+          <CheckCircle2 className="h-4 w-4 text-green-600" />
+          <AlertDescription>
+            Métrique valide et prête à être créée.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* JSON Preview */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-mono">JSON DSL</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-32">
+            <pre className="text-xs bg-muted p-2 rounded overflow-x-auto">
+              {JSON.stringify(draft, null, 2)}
+            </pre>
+          </ScrollArea>
+        </CardContent>
+      </Card>
     </div>
   );
 }
