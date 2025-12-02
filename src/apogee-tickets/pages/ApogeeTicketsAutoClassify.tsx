@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Sparkles, FolderOpen, Check, X, AlertCircle, Zap, RefreshCw, Square, Clock } from 'lucide-react';
+import { Loader2, Sparkles, FolderOpen, Check, X, AlertCircle, RefreshCw, Square, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { errorToast, successToast, warningToast } from '@/lib/toastHelpers';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
@@ -213,36 +213,25 @@ export default function ApogeeTicketsAutoClassify() {
   const highConfCount = suggestions.filter(s => s.confidence >= CONFIDENCE_THRESHOLD && s.suggested_module !== 'AUTRE').length;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Zap className="h-6 w-6 text-amber-500" />
-            Auto-Classeur IA
-          </h2>
-          <p className="text-muted-foreground">
-            Classification automatique des tickets sans module (seuil 85%)
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {isScanning ? (
-            <Button variant="destructive" onClick={stopScan}>
-              <Square className="h-4 w-4 mr-2" />
-              Arrêter
-            </Button>
-          ) : (
-            <Button onClick={runScan} disabled={isScanning}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Scanner les tickets {ticketsWithoutModule !== undefined && `(${ticketsWithoutModule})`}
-            </Button>
-          )}
-        </div>
+    <div className="container mx-auto py-8 px-4 space-y-6">
+      {/* Actions */}
+      <div className="flex justify-end">
+        {isScanning ? (
+          <Button variant="destructive" onClick={stopScan}>
+            <Square className="h-4 w-4 mr-2" />
+            Arrêter
+          </Button>
+        ) : (
+          <Button onClick={runScan} disabled={isScanning}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Scanner les tickets {ticketsWithoutModule !== undefined && `(${ticketsWithoutModule})`}
+          </Button>
+        )}
       </div>
 
       {/* Progression du scan */}
       {isScanning && (
-        <Card className="border-amber-200 bg-amber-50/50">
+        <Card className="border-l-4 border-l-amber-500 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-amber-500/10 via-background to-background">
           <CardContent className="pt-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -267,26 +256,26 @@ export default function ApogeeTicketsAutoClassify() {
 
       {/* Stats */}
       {stats && !isScanning && (
-        <div className="grid grid-cols-4 gap-4">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="border-l-4 border-l-helpconfort-blue bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background">
             <CardContent className="pt-4">
               <div className="text-2xl font-bold">{stats.total}</div>
               <p className="text-xs text-muted-foreground">Tickets analysés</p>
             </CardContent>
           </Card>
-          <Card className="border-green-200 bg-green-50/50">
+          <Card className="border-l-4 border-l-green-500 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-green-500/10 via-background to-background">
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-green-700">{stats.high_confidence}</div>
               <p className="text-xs text-muted-foreground">Confiance ≥85%</p>
             </CardContent>
           </Card>
-          <Card className="border-amber-200 bg-amber-50/50">
+          <Card className="border-l-4 border-l-amber-500 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-amber-500/10 via-background to-background">
             <CardContent className="pt-4">
               <div className="text-2xl font-bold text-amber-700">{stats.low_confidence}</div>
               <p className="text-xs text-muted-foreground">Confiance &lt;85%</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-helpconfort-blue bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-background to-background">
             <CardContent className="pt-4">
               <div className="text-2xl font-bold">{selectedIds.size}</div>
               <p className="text-xs text-muted-foreground">Sélectionnés</p>
@@ -330,7 +319,7 @@ export default function ApogeeTicketsAutoClassify() {
 
       {/* Liste des suggestions */}
       {suggestions.length > 0 && !isScanning ? (
-        <Card>
+        <Card className="border-l-4 border-l-helpconfort-blue bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/5 via-background to-background">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FolderOpen className="h-5 w-5" />
