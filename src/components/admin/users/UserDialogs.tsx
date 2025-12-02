@@ -94,9 +94,10 @@ interface EditUserDialogProps {
   agencies?: Agency[];
   canEditRoleAgence?: boolean;
   assignableRoles?: GlobalRole[];
+  readOnlyFields?: string[]; // 🛡️ P1: Liste des champs en lecture seule
 }
 
-export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail, onResetPassword, isPending, isEmailPending, isPasswordPending, agencies = [], canEditRoleAgence = false, assignableRoles = [] }: EditUserDialogProps) {
+export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail, onResetPassword, isPending, isEmailPending, isPasswordPending, agencies = [], canEditRoleAgence = false, assignableRoles = [], readOnlyFields = [] }: EditUserDialogProps) {
   if (!user) return null;
 
   return (
@@ -121,6 +122,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
           availableAgencies={agencies}
           assignableRoles={assignableRoles}
           canEditRoleAgence={canEditRoleAgence}
+          readOnlyFields={readOnlyFields}
         />
 
         <DialogFooter>

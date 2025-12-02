@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useUserManagement, UserProfile } from '@/hooks/use-user-management';
 import { useAuth } from '@/contexts/AuthContext';
+import { getUserManagementCapabilities } from '@/config/roleMatrix';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +23,9 @@ import {
 } from '@/components/admin/users';
 
 export default function EquipePage() {
-  const { agence: currentUserAgency } = useAuth();
+  const { agence: currentUserAgency, globalRole } = useAuth();
+  
+  const capabilities = useMemo(() => getUserManagementCapabilities(globalRole), [globalRole]);
   
   // ✅ Utiliser restrictToAgencyId pour forcer le filtre sur l'agence courante
   const {
@@ -233,6 +236,12 @@ export default function EquipePage() {
           agencies={currentAgency}
           canEditRoleAgence={editDialog.user ? canEditUser(editDialog.user.global_role, editDialog.user.agence) : false}
           assignableRoles={assignableRoles}
+          readOnlyFields={
+            // 🛡️ P1: Bloquer global_role si le rôle cible n'est pas dans canEditRoles
+            editDialog.user && editDialog.user.global_role && !capabilities.canEditRoles.includes(editDialog.user.global_role)
+              ? ['globalRole']
+              : []
+          }
         />
 
         <DeactivateDialog
