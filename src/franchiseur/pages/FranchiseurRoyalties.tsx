@@ -136,7 +136,7 @@ export default function FranchiseurRoyalties() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {allModels.map((model) => (
                 <Card key={model.model_name} className="bg-muted/30 relative group">
-                  {model.model_name !== 'Standard (défaut)' && (
+                  {model.model_name !== 'Dégressif 2025' && (
                     <Button
                       variant="ghost"
                       size="icon"

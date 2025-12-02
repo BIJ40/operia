@@ -113,7 +113,7 @@ export function useAllRoyaltyModels() {
       }
 
       // Add default model if not exists
-      const defaultModelName = 'Standard (défaut)';
+      const defaultModelName = 'Dégressif 2025';
       if (!modelsMap.has(defaultModelName)) {
         modelsMap.set(defaultModelName, {
           id: 'default',
@@ -133,9 +133,9 @@ export function useAllRoyaltyModels() {
       }
 
       return Array.from(modelsMap.values()).sort((a, b) => {
-        // Standard first
-        if (a.model_name.includes('Standard')) return -1;
-        if (b.model_name.includes('Standard')) return 1;
+        // Dégressif 2025 first
+        if (a.model_name.includes('Dégressif 2025')) return -1;
+        if (b.model_name.includes('Dégressif 2025')) return 1;
         return a.model_name.localeCompare(b.model_name);
       });
     },
