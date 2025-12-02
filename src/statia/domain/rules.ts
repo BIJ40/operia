@@ -10,34 +10,27 @@ import type { MetricDefinitionJSON } from '@/statia/engine/metricEngine';
 // ==============================================
 
 export const STATIA_RULES = {
-  // 1. RÈGLES FONDAMENTALES
   project: {
     statusComptableSource: "apiGetProjects.state",
-    interventionNeverDefinesAccounting: true,
+    interventionNeverDefinesAccounting: true
   },
-
-  // 2. CHIFFRE D'AFFAIRES
   CA: {
     source: "apiGetFactures.data.totalHT",
-    includeStates: ["sent", "paid", "partial", "partially_paid", "overdue"],
+    includeStates: ["sent", "paid", "partial"],
     avoir: "subtract",
-    duClientSource: "apiGetFactures.data.calcReglementsReste",
+    duClientSource: "apiGetFactures.data.calcReglementsReste"
   },
-
-  // 3. TECHNICIENS
   technicians: {
     productiveTypes: ["depannage", "repair", "travaux", "work"],
     nonProductiveTypes: ["RT", "rdv", "rdvtech", "sav", "diagnostic"],
     timeAllocation: "duration_facturee",
     timeSourceField: "projects.duration | projects.tempsPrevus",
-    RT_generates_NO_CA: true,
+    RT_generates_NO_CA: true
   },
-
-  // 4. DEVIS
   devis: {
     transformation: {
       ratioNumber: "count(devis_ayant_facture(projectId)) / total_devis_envoyes",
-      ratioMontant: "sum(montant_facturé) / sum(montant_devisé)",
+      ratioMontant: "sum(montant_facturé) / sum(montant_devisé)"
     },
     diagnosticResolution: {
       type2_A_DEFINIR: {
@@ -45,77 +38,62 @@ export const STATIA_RULES = {
         logic: [
           { path: "biDepan.items.isValidated", type: "depannage" },
           { path: "biTvx.items.isValidated", type: "travaux" },
-          { path: "biRt.items.isValidated", type: "rt" },
-        ],
-      },
-    },
+          { path: "biRt.items.isValidated", type: "rt" }
+        ]
+      }
+    }
   },
-
-  // 5. INTERVENTIONS
   interventions: {
     determineRealType: "diagnosticResolution",
     validStates: ["validated", "done", "finished"],
-    excludeStates: ["draft", "canceled", "refused"],
+    excludeStates: ["draft", "canceled", "refused"]
   },
-
-  // 6. APPORTEURS
   apporteurs: {
     source: "apiGetProjects.commanditaireId",
     excludeSAV: true,
-    CA: "sum(factures.totalHT where commanditaireId = X)",
+    CA: "sum(factures.totalHT where commanditaireId = X)"
   },
-
-  // 7. UNIVERS
   univers: {
     source: "apiGetProjects.universes",
-    multiUniverseAllocation: "uniform_or_time_weighted",
+    multiUniverseAllocation: "uniform_or_time_weighted"
   },
-
-  // 8. SAV
-  sav: {
-    identification: "linked_dossier",
-    caImpact: 0,
-    technicianStatsImpact: false,
-    costCalculation: ["temps_passe", "nb_visites", "pourcentage_facture_parent"],
-  },
-
-  // 9. TEMPORALITÉ
   dates: {
     use: "depends_on_metric",
     factures: "dateReelle",
     interventions: "dateReelle",
-    projects: "date",
+    projects: "date"
   },
-
-  // 10. GROUP BY / AGGREGATIONS
   groupBy: [
-    "technicien", "apporteur", "univers", "type_intervention",
-    "type_devis", "mois", "semaine", "année", "ville", "client", "dossier"
-  ] as const,
-  aggregations: ["sum", "count", "avg", "min", "max", "median", "ratio"] as const,
-
-  // 11. VALIDATIONS & ERRORS
+    "technicien",
+    "apporteur",
+    "univers",
+    "type_intervention",
+    "type_devis",
+    "mois",
+    "semaine",
+    "annee",
+    "ville",
+    "client",
+    "dossier"
+  ],
+  aggregations: ["sum", "count", "avg", "min", "max", "median", "ratio"],
   errors: {
     interventionWithoutProject: "error_intervention_without_project",
     projectWithoutApporteur: "assign_inconnu",
-    factureWithoutHT: "compute_from_TTC",
+    factureWithoutHT: "compute_from_TTC"
   },
-
-  // 12. SYNONYMES NATUREL (NLP)
   synonyms: {
     apporteur: ["commanditaire", "prescripteur"],
     univers: ["metier", "domaine"],
     rt: ["releve technique", "rdv technique"],
     sav: ["service apres vente", "garantie", "retour chantier"],
     travaux: ["tvx", "work", "reparation"],
-    technicien: ["intervenant", "ouvrier"],
+    technicien: ["intervenant", "ouvrier"]
   },
-
-  // 13. INTERPRÉTATION IA
   nlp: {
     par: "groupBy",
-    sur_la_periode: "date between {{date_from}} and {{date_to}}",
-  },
+    sur_la_periode: "date between {{date_from}} and {{date_to}}"
+  }
 } as const;
 
 export type StatiaRules = typeof STATIA_RULES;
