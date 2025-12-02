@@ -2,6 +2,15 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export interface MetricDimension {
+  key: string;
+  label: string;
+  source?: string;
+  field: string;
+  labelField?: string;
+  via?: string;
+}
+
 export interface MetricAnalysisResult {
   understood: boolean;
   businessSummary: string;
@@ -22,8 +31,9 @@ export interface MetricAnalysisResult {
     filters: Array<{
       field: string;
       operator: 'eq' | 'in' | 'between' | 'gt' | 'lt';
-      value: string | string[];
+      value: string | string[] | Record<string, unknown>;
     }>;
+    dimensions?: MetricDimension[];
     description_agence?: string;
     description_franchiseur?: string;
   } | null;

@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Schéma Apogée simplifié pour le contexte IA
+// Schéma Apogée enrichi avec dimensions
 const APOGEE_CONTEXT = `
 Tu es un assistant expert en analyse de données métier pour un réseau de franchises de services à domicile (plomberie, électricité, etc.).
 
@@ -13,7 +13,7 @@ Tu es un assistant expert en analyse de données métier pour un réseau de fran
 
 1. **apiGetDevis** - Devis/Quotes
    - Champs: id, reference, projectId, clientId, state, dateReelle, totalHT, totalTTC, items[]
-   - États possibles: new, sent, accepted, rejected, cancelled, invoice_sent, order
+   - États possibles: new, sent, accepted, rejected, cancelled, invoice_sent, order, valide
    - Cas d'usage: CA prévisionnel, pipeline commercial, taux de transformation
 
 2. **apiGetFactures** - Factures
@@ -37,6 +37,7 @@ Tu es un assistant expert en analyse de données métier pour un réseau de fran
    - Champs: id, name, type, address, phone
    - type: particulier, assurance, gestionnaire, bailleur
    - Cas d'usage: statistiques clients, top apporteurs
+   - NOTE: Pour "par apporteur", utiliser le champ data.commanditaireId des projets/devis qui pointe vers apiGetClients
 
 6. **apiGetUsers** - Utilisateurs/Techniciens
    - Champs: id, firstname, lastname, type, universes[], skills[]
@@ -50,8 +51,24 @@ Tu es un assistant expert en analyse de données métier pour un réseau de fran
 - Taux de transformation = devis transformés en facture / total devis
 - Interventions productives = state 'completed' ou 'validated', type 'technique'
 
+## DIMENSIONS / GROUPBY - TRÈS IMPORTANT
+
+Quand l'utilisateur utilise "PAR" ou "par" dans sa phrase (ex: "par apporteur", "par technicien", "par univers"):
+- Il veut une **analyse dimensionnelle** avec regroupement
+- Le résultat doit être une SÉRIE de valeurs, pas un chiffre unique
+
+### Mapping des dimensions:
+- "par apporteur" → dimension: { source: "clients", field: "id", via: "commanditaireId", label: "name" }
+  - Jointure: devis/projects.data.commanditaireId → clients.id
+- "par technicien" → dimension: { source: "users", field: "id", via: "userId", label: "firstname lastname" }
+  - Jointure: interventions.userId → users.id
+- "par univers" → dimension: { source: "projects", field: "data.universes", label: "univers" }
+- "par agence" → dimension: { field: "agency_slug", label: "agence" }
+- "par mois" / "par période" → dimension: { field: "dateReelle", groupBy: "month", label: "mois" }
+- "par client" → dimension: { source: "clients", field: "id", via: "clientId", label: "name" }
+
 ## Filtres standards
-- Période: date_range (date_from, date_to)
+- Période: date_range (date_from, date_to) - utiliser {{date_from}}, {{date_to}}
 - Agence: agency_slug
 - Univers: universes[]
 - État/Statut: state, paymentStatus
@@ -62,34 +79,44 @@ Tu es un assistant expert en analyse de données métier pour un réseau de fran
 - sum: sommer un champ numérique (totalHT, totalTTC)
 - avg: moyenne d'un champ numérique
 - ratio: rapport entre deux valeurs (ex: taux de transformation)
-- groupBy: regrouper par dimension (mois, univers, technicien, apporteur)
 `;
 
 const SYSTEM_PROMPT = `${APOGEE_CONTEXT}
 
 ## Ta mission
 Analyser une phrase métier en français et générer une définition de métrique JSON.
+DÉTECTER OBLIGATOIREMENT les "PAR X" pour créer des dimensions.
 
 ## Format de réponse OBLIGATOIRE (JSON strict)
 {
   "understood": true/false,
   "businessSummary": "Résumé en français de ce que la métrique va mesurer",
-  "technicalSummary": "Résumé technique: source, filtres, agrégation",
+  "technicalSummary": "Résumé technique: source, filtres, agrégation, dimensions",
   "metric": {
     "id": "identifiant_snake_case",
     "label": "Nom affichable de la métrique",
     "scope": "agency" ou "franchiseur",
     "input_sources": {
       "primary": "nom_endpoint",
-      "joins": []
+      "joins": ["endpoint_jointure_si_necessaire"]
     },
     "formula": {
       "type": "count|sum|avg|ratio",
       "field": "champ_si_sum_ou_avg",
-      "groupBy": ["dimension_optionnelle"]
+      "groupBy": ["dimension_si_PAR_detecte"]
     },
     "filters": [
       {"field": "nom_champ", "operator": "eq|in|between|gt|lt", "value": "valeur_ou_variable"}
+    ],
+    "dimensions": [
+      {
+        "key": "identifiant_dimension",
+        "label": "Libellé affiché (ex: Apporteur, Technicien)",
+        "source": "endpoint_source",
+        "field": "champ_id",
+        "labelField": "champ_label_affiche",
+        "via": "champ_jointure_si_different"
+      }
     ],
     "description_agence": "Description pour utilisateur agence",
     "description_franchiseur": "Description pour franchiseur"
@@ -98,12 +125,34 @@ Analyser une phrase métier en français et générer une définition de métriq
   "suggestions": ["suggestion1 si ambiguïté", "suggestion2"]
 }
 
-## Règles
+## Règles CRITIQUES
 1. Toujours répondre en JSON valide
 2. Si la demande est floue, understood=false et proposer des suggestions
 3. Utiliser les variables {{date_from}}, {{date_to}}, {{agency_slug}} pour les filtres dynamiques
 4. Privilégier les formules simples et efficaces
 5. Le scope est "agency" par défaut sauf si mention explicite du réseau/toutes agences
+6. **DÉTECTER "PAR X"** : si la phrase contient "par apporteur", "par technicien", "par univers", etc., TOUJOURS ajouter la dimension correspondante
+7. Si une dimension est détectée, le champ formula.groupBy DOIT contenir le champ correspondant
+8. dimensions est un tableau (peut être vide si pas de "PAR X")
+
+## Exemples
+
+### "Nombre de devis validés sur la période"
+→ Pas de "PAR", donc dimensions: []
+→ Résultat: un seul nombre
+
+### "Nombre de devis validés PAR apporteur sur la période"
+→ Détection de "PAR apporteur"
+→ dimensions: [{ key: "apporteur", label: "Apporteur", source: "clients", field: "id", labelField: "name", via: "commanditaireId" }]
+→ formula.groupBy: ["commanditaireId"]
+→ input_sources.joins: ["clients"]
+→ Résultat: tableau de { apporteur: string, count: number }
+
+### "CA mensuel PAR technicien"
+→ Détection de "PAR technicien"
+→ dimensions: [{ key: "technicien", label: "Technicien", source: "users", field: "id", labelField: "name", via: "userId" }]
+→ formula.groupBy: ["userId"]
+→ Résultat: tableau de { technicien: string, ca: number }
 `;
 
 serve(async (req) => {
@@ -126,6 +175,8 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    console.log("[statia-analyze-metric] Analyzing query:", query);
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -136,9 +187,8 @@ serve(async (req) => {
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: `Analyse cette demande métier et génère la définition de métrique:\n\n"${query}"` }
+          { role: "user", content: `Analyse cette demande métier et génère la définition de métrique:\n\n"${query}"\n\nATTENTION: Si la phrase contient "PAR" suivi d'un nom (apporteur, technicien, univers, etc.), tu DOIS ajouter une dimension correspondante.` }
         ],
-        temperature: 0.3,
       }),
     });
 
@@ -167,6 +217,8 @@ serve(async (req) => {
       throw new Error("No content in AI response");
     }
 
+    console.log("[statia-analyze-metric] AI response:", content.substring(0, 500));
+
     // Parse JSON response from AI
     let analysisResult;
     try {
@@ -174,6 +226,11 @@ serve(async (req) => {
       const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
       const jsonStr = jsonMatch ? jsonMatch[1] : content;
       analysisResult = JSON.parse(jsonStr.trim());
+      
+      // Ensure dimensions is always an array
+      if (analysisResult.metric && !Array.isArray(analysisResult.metric.dimensions)) {
+        analysisResult.metric.dimensions = [];
+      }
     } catch (parseError) {
       console.error("Failed to parse AI response:", content);
       analysisResult = {
@@ -185,7 +242,8 @@ serve(async (req) => {
         suggestions: [
           "CA facturé du mois",
           "Nombre d'interventions cette semaine",
-          "Devis en attente de validation",
+          "Devis validés PAR apporteur",
+          "CA mensuel PAR technicien",
           "Top 5 techniciens par nombre d'interventions"
         ]
       };
