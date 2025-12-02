@@ -74,14 +74,17 @@ export function calculateRecouvrement(
   logApogee.debug('🔍 calculateRecouvrement - début', {
     nbFacturesTotal: factures?.length || 0,
     dateRange: filters.dateRange,
-    sample: factures?.slice(0, 3).map(f => ({
+    sample: factures?.slice(0, 3).map((f: any) => ({
       id: f.id,
       date: f.date,
-      totalTTC: f.totalTTC,
+      totalTTC: f.data?.totalTTC ?? f.totalTTC,
       typeFacture: f.typeFacture,
-      calc: f.calc,
-      paidTTC: f.calc?.paidTTC
-    }))
+      state: f.state,
+      paymentStatus: f.paymentStatus,
+      calcPaymentsTotal: f.data?.calcPaymentsTotal,
+      calcPaymentsReste: f.data?.calcPaymentsReste,
+      sommesPercues: f.data?.financier?.sommesPercues,
+    })),
   });
 
   if (!factures || factures.length === 0) {
@@ -133,72 +136,105 @@ export function calculateRecouvrement(
       // 🔍 DEBUG: Log par facture (limité aux 5 premières)
       if (nbFactures <= 5) {
         logApogee.debug(`📄 Facture ${nbFactures}/${factures.length}`, {
-          id: facture.id,
+          id: (facture as any).id,
           date: dateEmission,
-          totalTTC: facture.totalTTC,
-          typeFacture: facture.typeFacture,
-          calc: facture.calc,
-          paidTTC: facture.calc?.paidTTC
+          totalTTC: (facture as any).data?.totalTTC ?? (facture as any).totalTTC,
+          typeFacture: (facture as any).typeFacture,
+          state: (facture as any).state,
+          paymentStatus: (facture as any).paymentStatus,
+          calcPaymentsTotal: (facture as any).data?.calcPaymentsTotal,
+          calcPaymentsReste: (facture as any).data?.calcPaymentsReste,
+          sommesPercues: (facture as any).data?.financier?.sommesPercues,
         });
       }
 
-      // 1. Calcul du montant TTC de la facture
-       const montantTTCRaw = (facture as any).data?.totalTTC ?? (facture as any).totalTTC ?? 0;
-       const montantTTC = Number(String(montantTTCRaw).replace(/[^0-9.-]/g, '')) || 0;
- 
-       if (isNaN(montantTTC) || montantTTC === 0) {
-         logApogee.warn('Facture avec montant TTC invalide ou nul', {
-           id: facture.id,
-           numeroFacture: facture.numeroFacture,
-           totalTTC: facture.totalTTC,
-           dataTotalTTC: (facture as any).data?.totalTTC
-         });
-         return;
-       }
+      const data: any = (facture as any).data ?? {};
 
-       // Gestion des avoirs : montant négatif
-       const typeFacture = (facture.typeFacture || facture.state || '').toLowerCase();
-       
-       if (typeFacture === 'avoir') {
-         const montantAvoir = -Math.abs(montantTTC);
-         totalFacturesTTC += montantAvoir;
-         avoirs += Math.abs(montantTTC);
-       } else {
-         totalFacturesTTC += montantTTC;
-         facturesPositives += montantTTC;
-       }
+      // 1. Calcul du montant TTC de la facture (valeur absolue, hors signe avoir)
+      const montantTTCRaw = data.totalTTC ?? (facture as any).totalTTC ?? 0;
+      const montantTTCBase = Number(String(montantTTCRaw).replace(/[^0-9.-]/g, "")) || 0;
 
-       // 2. Calcul des règlements reçus depuis l'API apiGetFactures
-       let montantReglements = 0;
-       
-       // Priorité 1: data.calcPaymentsTotal
-       const calcPaymentsTotal = (facture as any).data?.calcPaymentsTotal;
-       if (calcPaymentsTotal !== undefined && calcPaymentsTotal !== null) {
-         montantReglements = Number(String(calcPaymentsTotal).replace(/[^0-9.-]/g, '')) || 0;
-       } else {
-         // Priorité 2: somme des montants dans data.financier.sommesPercues[]
-         const sommesPercues = (facture as any).data?.financier?.sommesPercues;
-         if (Array.isArray(sommesPercues) && sommesPercues.length > 0) {
-           montantReglements = sommesPercues.reduce((sum, sp) => {
-             const amount = Number(String(sp.amount || 0).replace(/[^0-9.-]/g, '')) || 0;
-             return sum + amount;
-           }, 0);
-         }
-       }
-       
-       totalReglementsRecus += montantReglements;
+      if (isNaN(montantTTCBase) || montantTTCBase === 0) {
+        logApogee.warn("Facture avec montant TTC invalide ou nul", {
+          id: (facture as any).id,
+          numeroFacture: (facture as any).numeroFacture,
+          totalTTC: (facture as any).totalTTC,
+          dataTotalTTC: data.totalTTC,
+        });
+        return;
+      }
 
-       // Stats détaillées basées sur calcPaymentsReste ou state
-       if (options.includeDetails) {
-         const calcPaymentsReste = (facture as any).data?.calcPaymentsReste;
-         const state = (facture as any).state?.toLowerCase();
-         
-         if (state === 'paid' || (calcPaymentsReste !== undefined && Number(calcPaymentsReste) <= 0)) {
-           facturesPayees++;
-         } else {
-           facturesEnAttente++;
-         }
-       }
+      const typeFacture = ((facture as any).typeFacture || (facture as any).state || "").toLowerCase();
+
+      // Montant facture avec gestion des avoirs (signé)
+      let montantFacture = montantTTCBase;
+      if (typeFacture === "avoir") {
+        montantFacture = -Math.abs(montantTTCBase);
+        totalFacturesTTC += montantFacture;
+        avoirs += Math.abs(montantTTCBase);
+      } else {
+        totalFacturesTTC += montantFacture;
+        facturesPositives += montantFacture;
+      }
+
+      const montantFactureAbs = Math.abs(montantTTCBase);
+
+      // 2. Calcul des règlements reçus depuis l'API apiGetFactures
+      let montantReglements = 0;
+
+      // Priorité 1: data.calcPaymentsTotal
+      const calcPaymentsTotalRaw = data.calcPaymentsTotal;
+      const calcPaymentsTotal = calcPaymentsTotalRaw !== undefined && calcPaymentsTotalRaw !== null
+        ? Number(String(calcPaymentsTotalRaw).replace(/[^0-9.-]/g, "")) || 0
+        : 0;
+
+      // Priorité 2: somme des montants dans data.financier.sommesPercues[]
+      const sommesPercues = data.financier?.sommesPercues;
+      let sommeSommesPercues = 0;
+      if (Array.isArray(sommesPercues) && sommesPercues.length > 0) {
+        sommeSommesPercues = sommesPercues.reduce((sum: number, sp: any) => {
+          const amount = Number(String(sp?.amount ?? 0).replace(/[^0-9.-]/g, "")) || 0;
+          return sum + amount;
+        }, 0);
+      }
+
+      const state = (facture as any).state?.toLowerCase();
+      const paymentStatus = (facture as any).paymentStatus?.toLowerCase();
+
+      if (calcPaymentsTotal > 0) {
+        montantReglements = Math.min(calcPaymentsTotal, montantFactureAbs);
+      } else if (sommeSommesPercues > 0) {
+        montantReglements = Math.min(sommeSommesPercues, montantFactureAbs);
+      } else if (state === "paid" || paymentStatus === "paid") {
+        montantReglements = montantFactureAbs;
+      } else {
+        montantReglements = 0;
+      }
+
+      // Alignement des règlements sur le signe de la facture pour les avoirs
+      if (typeFacture === "avoir") {
+        montantReglements = -montantReglements;
+      }
+
+      totalReglementsRecus += montantReglements;
+
+      // Stats détaillées basées sur calcPaymentsReste, state et montant réglé
+      if (options.includeDetails) {
+        const calcPaymentsResteRaw = data.calcPaymentsReste;
+        const calcPaymentsReste = calcPaymentsResteRaw !== undefined && calcPaymentsResteRaw !== null
+          ? Number(String(calcPaymentsResteRaw).replace(/[^0-9.-]/g, "")) || 0
+          : undefined;
+
+        const isPaidByState = state === "paid" || paymentStatus === "paid";
+        const isPaidByReste = calcPaymentsReste !== undefined && calcPaymentsReste <= 0;
+        const isFullyPaidByAmount = Math.abs(montantReglements) >= montantFactureAbs - 0.01;
+
+        if (isPaidByState || isPaidByReste || isFullyPaidByAmount) {
+          facturesPayees++;
+        } else {
+          facturesEnAttente++;
+        }
+      }
 
     } catch (error) {
       logApogee.warn('Erreur parsing date facture pour recouvrement', {

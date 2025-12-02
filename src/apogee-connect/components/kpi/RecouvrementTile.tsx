@@ -79,8 +79,8 @@ export function RecouvrementTile() {
                   <p className="font-semibold">Formule :</p>
                   <p>Recouvrement = Factures TTC - Règlements reçus</p>
                   <div className="pt-2 border-t">
-                    <p>Facturé TTC : {formatEuros(data.totalFacturesTTC)}</p>
-                    <p>Règlements : {formatEuros(data.totalReglementsRecus)}</p>
+                    <p>Facturé : {formatEuros(data.totalFacturesTTC)}</p>
+                    <p>Réglé : {formatEuros(data.totalReglementsRecus)}</p>
                   </div>
                   {data.details && (
                     <div className="pt-2 border-t text-xs text-muted-foreground">
