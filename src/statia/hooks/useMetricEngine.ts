@@ -8,6 +8,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback } from 'react';
 import { runMetric, MetricExecutionParams, MetricDefinitionJSON, MetricExecutionResult } from '../engine/metricEngine';
 
+// Re-export runMetric for direct usage
+export { runMetric };
+
 // ============================================
 // TYPES
 // ============================================

@@ -17,10 +17,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   AlertCircle, FlaskConical, Loader2, Play, Zap, 
-  ChevronDown, Copy, Check, Server, Monitor
+  ChevronDown, Copy, Check, Server, Monitor, GitCompare
 } from 'lucide-react';
 import { MetricDefinition } from '../types';
-import { useMetricExecutor } from '../hooks/useMetricEngine';
+import { useMetricExecutor, runMetric } from '../hooks/useMetricEngine';
 import { MetricVisualization } from './MetricVisualization';
 import { MetricDebugPanel } from './MetricDebugPanel';
 import type { MetricDefinitionJSON, MetricExecutionParams, MetricExecutionResult } from '../engine/metricEngine';
@@ -136,6 +136,14 @@ function buildMetricDefinitionJSON(metric: MetricDefinition): MetricDefinitionJS
 // COMPOSANT PRINCIPAL
 // ============================================
 
+// Comparison types
+interface ComparisonResult {
+  frontend: MetricExecutionResult | null;
+  edge: MetricExecutionResult | null;
+  frontendDuration: number;
+  edgeDuration: number;
+}
+
 export function MetricTestPanel({ metrics, selectedMetricId, onSelectMetric }: MetricTestPanelProps) {
   const [testParams, setTestParams] = useState<MetricExecutionParams>({
     agency_slug: '',
@@ -148,6 +156,11 @@ export function MetricTestPanel({ metrics, selectedMetricId, onSelectMetric }: M
   const [edgeResult, setEdgeResult] = useState<MetricExecutionResult | null>(null);
   const [edgeLoading, setEdgeLoading] = useState(false);
   const [edgeError, setEdgeError] = useState<Error | null>(null);
+
+  // Comparison state
+  const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
 
   const frontendExecutor = useMetricExecutor();
   const selectedMetric = metrics.find(m => m.id === selectedMetricId);
@@ -233,6 +246,7 @@ export function MetricTestPanel({ metrics, selectedMetricId, onSelectMetric }: M
       return;
     }
 
+    setShowComparison(false);
     try {
       if (executionTarget === 'frontend') {
         await frontendExecutor.execute(metricDefinitionJSON, testParams);
@@ -241,6 +255,84 @@ export function MetricTestPanel({ metrics, selectedMetricId, onSelectMetric }: M
       }
     } catch (err) {
       console.error('Erreur d\'exécution:', err);
+    }
+  };
+
+  const handleRunComparison = async () => {
+    if (!metricDefinitionJSON) {
+      toast.error('Veuillez sélectionner une métrique');
+      return;
+    }
+    if (!testParams.agency_slug?.trim()) {
+      toast.error('Veuillez renseigner le slug de l\'agence');
+      return;
+    }
+
+    setComparisonLoading(true);
+    setShowComparison(true);
+    setComparisonResult(null);
+
+    try {
+      // Execute frontend
+      const frontendStart = performance.now();
+      const frontendRes = await runMetric(metricDefinitionJSON, testParams);
+      const frontendDuration = Math.round(performance.now() - frontendStart);
+
+      // Execute edge
+      const edgeStart = performance.now();
+      const { data, error: invokeError } = await supabase.functions.invoke('compute-metric', {
+        body: {
+          metric_definition: metricDefinitionJSON,
+          params: {
+            agency_slug: testParams.agency_slug,
+            date_from: testParams.date_from instanceof Date 
+              ? testParams.date_from.toISOString() 
+              : testParams.date_from,
+            date_to: testParams.date_to instanceof Date 
+              ? testParams.date_to.toISOString() 
+              : testParams.date_to,
+          },
+        },
+      });
+      const edgeDuration = Math.round(performance.now() - edgeStart);
+
+      let edgeRes: MetricExecutionResult | null = null;
+      if (!invokeError && data) {
+        edgeRes = {
+          success: data.success ?? true,
+          value: data.value ?? null,
+          breakdown: data.breakdown,
+          visualization: data.visualization || {
+            type: 'single',
+            recommendedChart: 'number',
+            value: data.value,
+          },
+          debug: data.debug || {
+            executionId: `edge_${Date.now()}`,
+            startedAt: new Date().toISOString(),
+            completedAt: new Date().toISOString(),
+            durationMs: edgeDuration,
+            endpoints: [],
+            joins: [],
+            filters: [],
+            aggregation: { type: 'unknown', stats: {} },
+          },
+        };
+      }
+
+      setComparisonResult({
+        frontend: frontendRes,
+        edge: edgeRes,
+        frontendDuration,
+        edgeDuration,
+      });
+
+      toast.success('Comparaison terminée');
+    } catch (err) {
+      console.error('Erreur de comparaison:', err);
+      toast.error('Erreur lors de la comparaison');
+    } finally {
+      setComparisonLoading(false);
     }
   };
 
@@ -304,6 +396,8 @@ export function MyMetricComponent() {
     frontendExecutor.reset();
     setEdgeResult(null);
     setEdgeError(null);
+    setComparisonResult(null);
+    setShowComparison(false);
   };
 
   const formulaInfo = useMemo(() => {
@@ -436,24 +530,194 @@ export function MyMetricComponent() {
                 </div>
               </div>
 
-              <Button 
-                className="w-full gap-2" 
-                onClick={handleRunTest}
-                disabled={loading || !testParams.agency_slug?.trim()}
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Play className="h-4 w-4" />
-                )}
-                Exécuter ({executionTarget === 'frontend' ? 'Frontend' : 'Edge'})
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  className="flex-1 gap-2" 
+                  onClick={handleRunTest}
+                  disabled={loading || comparisonLoading || !testParams.agency_slug?.trim()}
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
+                  Exécuter ({executionTarget === 'frontend' ? 'Frontend' : 'Edge'})
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="gap-2" 
+                  onClick={handleRunComparison}
+                  disabled={loading || comparisonLoading || !testParams.agency_slug?.trim()}
+                >
+                  {comparisonLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <GitCompare className="h-4 w-4" />
+                  )}
+                  Comparer
+                </Button>
+              </div>
             </>
           )}
         </CardContent>
       </Card>
 
-      {(result || loading || error) && (
+      {/* Comparison Results */}
+      {showComparison && (
+        <Card className="border-l-4 border-l-purple-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GitCompare className="h-5 w-5" />
+              Comparaison Frontend vs Edge
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {comparisonLoading ? (
+              <div className="text-center py-12">
+                <Loader2 className="h-12 w-12 mx-auto mb-3 animate-spin text-purple-500" />
+                <p className="text-muted-foreground">Exécution des deux moteurs...</p>
+              </div>
+            ) : comparisonResult ? (
+              <div className="space-y-6">
+                {/* Summary */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Monitor className="h-4 w-4 text-blue-500" />
+                      <span className="font-medium">Frontend</span>
+                      <Badge variant="outline">{comparisonResult.frontendDuration}ms</Badge>
+                    </div>
+                    <div className="text-3xl font-bold">
+                      {comparisonResult.frontend?.value != null 
+                        ? typeof comparisonResult.frontend.value === 'number'
+                          ? comparisonResult.frontend.value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })
+                          : comparisonResult.frontend.value
+                        : 'N/A'}
+                    </div>
+                    {comparisonResult.frontend?.breakdown && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {Object.keys(comparisonResult.frontend.breakdown).length} groupes
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Server className="h-4 w-4 text-orange-500" />
+                      <span className="font-medium">Edge</span>
+                      <Badge variant="outline">{comparisonResult.edgeDuration}ms</Badge>
+                    </div>
+                    <div className="text-3xl font-bold">
+                      {comparisonResult.edge?.value != null 
+                        ? typeof comparisonResult.edge.value === 'number'
+                          ? comparisonResult.edge.value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })
+                          : comparisonResult.edge.value
+                        : 'N/A'}
+                    </div>
+                    {comparisonResult.edge?.breakdown && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {Object.keys(comparisonResult.edge.breakdown).length} groupes
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Difference Analysis */}
+                {comparisonResult.frontend?.value != null && comparisonResult.edge?.value != null && (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <h4 className="text-sm font-medium mb-2">Analyse des écarts</h4>
+                    {(() => {
+                      const frontVal = Number(comparisonResult.frontend?.value) || 0;
+                      const edgeVal = Number(comparisonResult.edge?.value) || 0;
+                      const diff = Math.abs(frontVal - edgeVal);
+                      const pctDiff = frontVal !== 0 ? (diff / frontVal) * 100 : 0;
+                      const isIdentical = diff < 0.01;
+                      
+                      return (
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Différence absolue</span>
+                            <span className={isIdentical ? 'text-green-500' : 'text-yellow-500'}>
+                              {diff.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Différence relative</span>
+                            <span className={pctDiff < 1 ? 'text-green-500' : 'text-yellow-500'}>
+                              {pctDiff.toFixed(2)}%
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Temps Frontend</span>
+                            <span>{comparisonResult.frontendDuration}ms</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Temps Edge</span>
+                            <span>{comparisonResult.edgeDuration}ms</span>
+                          </div>
+                          {isIdentical ? (
+                            <Badge variant="default" className="mt-2">✓ Résultats identiques</Badge>
+                          ) : pctDiff < 1 ? (
+                            <Badge variant="secondary" className="mt-2">⚠ Écart négligeable (&lt;1%)</Badge>
+                          ) : (
+                            <Badge variant="destructive" className="mt-2">✗ Écart significatif ({pctDiff.toFixed(1)}%)</Badge>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Detailed breakdown comparison */}
+                {comparisonResult.frontend?.breakdown && comparisonResult.edge?.breakdown && (
+                  <Collapsible>
+                    <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium hover:text-foreground">
+                      <ChevronDown className="h-4 w-4" />
+                      Comparaison détaillée des breakdowns
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-3">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left p-2">Dimension</th>
+                              <th className="text-right p-2">Frontend</th>
+                              <th className="text-right p-2">Edge</th>
+                              <th className="text-right p-2">Écart</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.keys({
+                              ...comparisonResult.frontend.breakdown,
+                              ...comparisonResult.edge.breakdown,
+                            }).map(key => {
+                              const frontVal = comparisonResult.frontend?.breakdown?.[key] ?? 0;
+                              const edgeVal = comparisonResult.edge?.breakdown?.[key] ?? 0;
+                              const diff = frontVal - edgeVal;
+                              return (
+                                <tr key={key} className="border-b border-border/50">
+                                  <td className="p-2">{key}</td>
+                                  <td className="text-right p-2 font-mono">{frontVal.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}</td>
+                                  <td className="text-right p-2 font-mono">{edgeVal.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}</td>
+                                  <td className={`text-right p-2 font-mono ${Math.abs(diff) > 0.01 ? 'text-yellow-500' : 'text-green-500'}`}>
+                                    {diff !== 0 ? (diff > 0 ? '+' : '') + diff.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) : '='}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      )}
+
+      {(result || loading || error) && !showComparison && (
         <Card className="border-l-4 border-l-green-500">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -582,13 +846,16 @@ export function MyMetricComponent() {
         </Card>
       )}
 
-      {!result && !loading && !error && selectedMetric && (
+      {!result && !loading && !error && selectedMetric && !showComparison && (
         <Card className="border-dashed">
           <CardContent className="text-center py-12 text-muted-foreground">
             <FlaskConical className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p>Cliquez sur "Exécuter" pour voir les résultats</p>
             <p className="text-xs mt-2">
               Mode: {executionTarget === 'frontend' ? 'Frontend (client)' : 'Edge (serveur)'}
+            </p>
+            <p className="text-xs mt-1">
+              ou "Comparer" pour tester les deux moteurs
             </p>
           </CardContent>
         </Card>
