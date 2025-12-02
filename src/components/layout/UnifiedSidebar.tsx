@@ -198,10 +198,11 @@ export function UnifiedSidebar() {
       accessKey: 'canAccessHelpAcademy',
     },
     {
-      label: 'Pilotage Agence',
+      label: 'Mon Agence',
       labelKey: 'pilotage',
       indexUrl: ROUTES.pilotage.index,
       items: [
+        { title: 'Mon équipe', url: ROUTES.pilotage.equipe, icon: Users, description: 'Gestion des collaborateurs de l\'agence' },
         { 
           title: 'Statistiques', 
           url: ROUTES.pilotage.statsHub,
@@ -217,7 +218,6 @@ export function UnifiedSidebar() {
         { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
         { title: 'Diffusion', url: ROUTES.pilotage.diffusion, icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
         { title: 'Validation plannings', url: ROUTES.pilotage.rhTech, icon: Calendar, description: 'Validation des plannings hebdomadaires', badge: 'Bientôt', isDisabled: true },
-        { title: 'Mon équipe', url: ROUTES.pilotage.equipe, icon: Users, description: 'Gestion des collaborateurs de l\'agence' },
       ],
       accessKey: 'canAccessPilotageAgence',
     },
@@ -238,7 +238,9 @@ export function UnifiedSidebar() {
       indexUrl: ROUTES.projects.index,
       items: [
         { title: 'Kanban', url: ROUTES.projects.kanban, icon: Kanban, description: 'Tableau de bord projet' },
-        { title: 'Tickets incomplets', url: ROUTES.projects.incomplete, icon: ListTodo, description: 'Tickets à compléter' },
+        { title: 'Liste', url: ROUTES.projects.list, icon: ListTodo, description: 'Vue liste des tickets' },
+        { title: 'Doublons IA', url: ROUTES.projects.duplicates, icon: GitCompare, description: 'Détection des doublons' },
+        { title: 'Tickets incomplets', url: ROUTES.projects.incomplete, icon: FileText, description: 'Tickets à compléter' },
       ],
     },
     {
