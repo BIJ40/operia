@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { GlobalRole, GLOBAL_ROLES, GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, getAllRolesSorted } from '@/types/globalRoles';
 import { MODULE_DEFINITIONS, EnabledModules, ModuleKey, ModuleOptionsState, canAccessModule } from '@/types/modules';
-import { UserProfile } from '@/hooks/use-admin-users-unified';
+import { UserProfile } from '@/hooks/use-user-management';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';

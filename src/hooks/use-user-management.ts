@@ -2,8 +2,15 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { GlobalRole, getRoleLevel, GLOBAL_ROLES, getAssignableRoles } from '@/types/globalRoles';
-import { getUserManagementCapabilities, canViewUser, canManageUser, canDeactivateUser as canDeactivateUserHelper } from '@/config/roleMatrix';
+import { GlobalRole, getRoleLevel, getAssignableRoles } from '@/types/globalRoles';
+import { 
+  getUserManagementCapabilities, 
+  canViewUser, 
+  canManageUser, 
+  canDeactivateUser as canDeactivateUserHelper,
+  UserViewScope,
+  UserManagementCapabilities 
+} from '@/config/roleMatrix';
 import { EnabledModules, ModuleOptionsState, ModuleKey, MODULE_DEFINITIONS } from '@/types/modules';
 import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
@@ -28,24 +35,72 @@ export interface UserProfile {
 
 const PAGE_SIZE = 20;
 
-export function useAdminUsersUnified() {
+// ============================================================================
+// Types pour le hook unifié
+// ============================================================================
+
+type HookScopeOption = 'ownAgency' | 'assignedAgencies' | 'allAgencies';
+
+interface UseUserManagementOptions {
+  scope?: HookScopeOption;
+  restrictToAgencyId?: string | null;
+}
+
+// ============================================================================
+// Helper: Calcul du scope effectif (min entre scope demandé et capabilities)
+// ============================================================================
+
+/**
+ * Retourne le scope effectif = min(scopeProp, capabilities.viewScope)
+ * Garantit qu'on ne peut jamais voir plus que ce que nos capabilities autorisent
+ */
+function getRestrictedScope(
+  requestedScope: HookScopeOption,
+  capabilities: UserManagementCapabilities
+): UserViewScope {
+  const scopeOrder: UserViewScope[] = [
+    'none',
+    'self',
+    'ownAgency',
+    'assignedAgencies',
+    'allAgencies',
+  ];
+  
+  const requestedIndex = scopeOrder.indexOf(requestedScope);
+  const capabilitiesIndex = scopeOrder.indexOf(capabilities.viewScope);
+  
+  // Retourner le scope le plus restrictif
+  return scopeOrder[Math.min(requestedIndex, capabilitiesIndex)];
+}
+
+// ============================================================================
+// Hook principal
+// ============================================================================
+
+export function useUserManagement(options: UseUserManagementOptions = {}) {
+  const { scope = 'allAgencies', restrictToAgencyId } = options;
   const queryClient = useQueryClient();
   const { globalRole, suggestedGlobalRole, isAdmin, user, agence: currentUserAgency } = useAuth();
   
-  // Permissions
+  // ✅ SOURCE DE VÉRITÉ : Permissions depuis roleMatrix.ts
   const effectiveUserRole = globalRole ?? suggestedGlobalRole;
   const currentUserLevel = getRoleLevel(effectiveUserRole);
-  const userManagementCaps = useMemo(
+  const capabilities = useMemo(
     () => getUserManagementCapabilities(effectiveUserRole),
     [effectiveUserRole]
   );
   
-  const canAccessPage = userManagementCaps.viewScope !== 'none' || isAdmin;
-  const canCreateUsers = userManagementCaps.canCreateRoles.length > 0;
-  const canDeleteUsers = userManagementCaps.canDeleteUsers;
-  // ✅ SÉCURITÉ CRITIQUE : Utiliser getAssignableRoles() pour éviter escalade de privilèges
+  const canAccessPage = capabilities.viewScope !== 'none' || isAdmin;
+  const canCreateUsers = capabilities.canCreateRoles.length > 0;
+  const canDeleteUsers = capabilities.canDeleteUsers;
   const assignableRoles = useMemo(() => getAssignableRoles(effectiveUserRole), [effectiveUserRole]);
   const isSuperAdmin = effectiveUserRole === 'superadmin';
+
+  // ✅ Calcul du scope effectif (croise scope demandé avec capabilities)
+  const effectiveScope = useMemo(
+    () => getRestrictedScope(scope, capabilities),
+    [scope, capabilities]
+  );
 
   // Permission checks
   const canEditUser = (targetRole: GlobalRole | null, targetAgency: string | null): boolean => {
@@ -75,34 +130,101 @@ export function useAdminUsersUnified() {
     enabled_modules?: EnabledModules | null;
   }>>({});
 
-  // Fetch users
-  const { data: users, isLoading: usersLoading } = useQuery({
-    queryKey: ['admin-users-unified'],
+  // ✅ Récupérer les agences assignées (pour N3/N4)
+  const { data: assignedAgenciesRaw } = useQuery({
+    queryKey: ['franchiseur-assigned-agencies', user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
       const { data, error } = await supabase
+        .from('franchiseur_agency_assignments')
+        .select('agency_id')
+        .eq('user_id', user.id);
+      if (error) throw error;
+      return data?.map(a => a.agency_id) ?? [];
+    },
+    enabled: !!user?.id && (effectiveUserRole === 'franchisor_user' || effectiveUserRole === 'franchisor_admin'),
+  });
+
+  // ✅ Calcul de manageableAgencyIds (liste des agences visibles/gérables)
+  const manageableAgencyIds = useMemo<string[] | null>(() => {
+    // Si restrictToAgencyId fourni (ex: /equipe), forcer ce scope
+    if (restrictToAgencyId) return [restrictToAgencyId];
+    
+    switch (effectiveScope) {
+      case 'none':
+      case 'self':
+        return []; // Pas de gestion d'autres utilisateurs
+      case 'ownAgency':
+        return currentUserAgency ? [currentUserAgency] : [];
+      case 'assignedAgencies':
+        // Utiliser les agences assignées, ou vide si aucune
+        return assignedAgenciesRaw?.length ? assignedAgenciesRaw : [];
+      case 'allAgencies':
+        return null; // null = pas de filtre agence
+      default:
+        return [];
+    }
+  }, [effectiveScope, restrictToAgencyId, currentUserAgency, assignedAgenciesRaw]);
+
+  // ✅ Fetch users avec sélection explicite de colonnes
+  const { data: users, isLoading: usersLoading } = useQuery({
+    queryKey: ['user-management', manageableAgencyIds, showDeactivated],
+    queryFn: async () => {
+      let query = supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, agence, global_role, enabled_modules, role_agence, created_at, is_active, deactivated_at, deactivated_by, must_change_password')
-        .order('email');
+        .select(`
+          id, 
+          email, 
+          first_name, 
+          last_name, 
+          agence, 
+          global_role, 
+          enabled_modules, 
+          role_agence, 
+          is_active, 
+          created_at,
+          deactivated_at,
+          deactivated_by,
+          must_change_password
+        `);
       
+      // Filtre agences
+      if (manageableAgencyIds !== null) {
+        query = query.in('agence', manageableAgencyIds);
+      }
+      
+      // Filtre statut
+      if (!showDeactivated) {
+        query = query.eq('is_active', true);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
       return data as UserProfile[];
     },
+    enabled: effectiveScope !== 'none' && effectiveScope !== 'self',
   });
 
-  // Filter users based on viewScope
+  // ✅ Filter users based on viewScope (utilise canViewUser avec assignedAgencies)
   const visibleUsers = useMemo(() => {
     if (!users) return [];
     
     return users.filter(u => {
-      if (userManagementCaps.viewScope === 'self') {
+      if (capabilities.viewScope === 'self') {
         return u.id === user?.id;
       }
-      return canViewUser(effectiveUserRole, currentUserAgency, u.agence);
+      return canViewUser(effectiveUserRole, currentUserAgency, u.agence, assignedAgenciesRaw);
     });
-  }, [users, userManagementCaps, effectiveUserRole, currentUserAgency, user?.id]);
+  }, [users, capabilities, effectiveUserRole, currentUserAgency, user?.id, assignedAgenciesRaw]);
 
   // Fetch agencies from apogee_agencies table
   const { data: agencies = [] } = useAdminAgencies();
+
+  // Compute manageable agencies for UI filters
+  const manageableAgencies = useMemo(() => {
+    if (manageableAgencyIds === null) return agencies; // All agencies
+    return agencies.filter(a => manageableAgencyIds.includes(a.id));
+  }, [agencies, manageableAgencyIds]);
 
   // Module check helper
   const isModuleEnabledForUser = (modules: EnabledModules, moduleKey: ModuleKey): boolean => {
@@ -155,13 +277,21 @@ export function useAdminUsersUnified() {
 
   const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
 
-  // Mutations
+  // ============================================================================
+  // Mutations avec vérifications de permissions
+  // ============================================================================
+
   const saveMutation = useMutation({
     mutationFn: async ({ userId, globalRole, enabledModules }: { 
       userId: string; 
       globalRole: GlobalRole | null; 
       enabledModules: EnabledModules | null;
     }) => {
+      // ✅ VÉRIFICATION CRITIQUE : Le rôle cible est-il éditable ?
+      if (globalRole && !capabilities.canEditRoles.includes(globalRole)) {
+        throw new Error('Vous ne pouvez pas attribuer ce rôle');
+      }
+      
       const { error } = await supabase
         .from('profiles')
         .update({ global_role: globalRole, enabled_modules: enabledModules as Json })
@@ -173,7 +303,8 @@ export function useAdminUsersUnified() {
       logAuth.info(`Permissions sauvegardées pour user ${userId}`);
       toast.success('Permissions enregistrées');
       setModifiedUsers(prev => { const next = { ...prev }; delete next[userId]; return next; });
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['user-management'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
     },
     onError: (error) => {
       logAuth.error('Erreur sauvegarde:', error);
@@ -182,7 +313,20 @@ export function useAdminUsersUnified() {
   });
 
   const createUserMutation = useMutation({
-    mutationFn: async (userData: { email: string; password: string; firstName: string; lastName: string; agence: string; globalRole: GlobalRole; sendEmail: boolean }) => {
+    mutationFn: async (userData: { 
+      email: string; 
+      password: string; 
+      firstName: string; 
+      lastName: string; 
+      agence: string; 
+      globalRole: GlobalRole; 
+      sendEmail: boolean;
+    }) => {
+      // ✅ VÉRIFICATION CRITIQUE : Le rôle cible est-il créable ?
+      if (!capabilities.canCreateRoles.includes(userData.globalRole)) {
+        throw new Error('Vous ne pouvez pas créer un utilisateur avec ce rôle');
+      }
+      
       const { data, error } = await supabase.functions.invoke('create-user', { body: userData });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -190,24 +334,35 @@ export function useAdminUsersUnified() {
     },
     onSuccess: () => {
       toast.success('Utilisateur créé avec succès');
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['user-management'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
 
   const deactivateMutation = useMutation({
     mutationFn: async (targetUser: UserProfile) => {
+      // ✅ VÉRIFICATION : Peut-on désactiver ce rôle ?
+      if (!capabilities.canDeactivateRoles.includes(targetUser.global_role!)) {
+        throw new Error('Vous ne pouvez pas désactiver cet utilisateur');
+      }
+      
       const { error } = await supabase
         .from('profiles')
-        .update({ is_active: false, deactivated_at: new Date().toISOString(), deactivated_by: user?.email || 'unknown' })
+        .update({ 
+          is_active: false, 
+          deactivated_at: new Date().toISOString(), 
+          deactivated_by: user?.email || 'unknown' 
+        })
         .eq('id', targetUser.id);
       if (error) throw error;
       return targetUser;
     },
     onSuccess: (targetUser) => {
-      logAuth.info(`[ADMIN] Utilisateur désactivé: ${targetUser.email}`);
+      logAuth.info(`[USER_MGMT] Utilisateur désactivé: ${targetUser.email}`);
       toast.success(`${targetUser.email || 'Utilisateur'} a été désactivé`);
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['user-management'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
@@ -222,30 +377,52 @@ export function useAdminUsersUnified() {
       return targetUser;
     },
     onSuccess: (targetUser) => {
-      logAuth.info(`[ADMIN] Utilisateur réactivé: ${targetUser.email}`);
+      logAuth.info(`[USER_MGMT] Utilisateur réactivé: ${targetUser.email}`);
       toast.success(`${targetUser.email || 'Utilisateur'} a été réactivé`);
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['user-management'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
 
   const hardDeleteMutation = useMutation({
     mutationFn: async (targetUser: UserProfile) => {
+      // ✅ VÉRIFICATION : Seuls N5+ peuvent hard delete
+      if (!capabilities.canDeleteUsers) {
+        throw new Error('Vous n\'avez pas les droits pour supprimer définitivement cet utilisateur');
+      }
+      
       const { data, error } = await supabase.functions.invoke('delete-user', { body: { userId: targetUser.id } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return targetUser;
     },
     onSuccess: (targetUser) => {
-      logAuth.info(`[ADMIN] Utilisateur SUPPRIMÉ définitivement: ${targetUser.email}`);
+      logAuth.info(`[USER_MGMT] Utilisateur SUPPRIMÉ définitivement: ${targetUser.email}`);
       toast.success(`${targetUser.email || 'Utilisateur'} a été supprimé définitivement`);
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['user-management'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
     },
     onError: (error: Error) => toast.error(`Erreur suppression: ${error.message}`),
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, data }: { userId: string; data: { first_name?: string; last_name?: string; agence?: string; role_agence?: string; support_level?: number; global_role?: GlobalRole } }) => {
+    mutationFn: async ({ userId, data }: { 
+      userId: string; 
+      data: { 
+        first_name?: string; 
+        last_name?: string; 
+        agence?: string; 
+        role_agence?: string; 
+        support_level?: number; 
+        global_role?: GlobalRole;
+      } 
+    }) => {
+      // ✅ VÉRIFICATION : Si changement de rôle, est-il autorisé ?
+      if (data.global_role && !capabilities.canEditRoles.includes(data.global_role)) {
+        throw new Error('Vous ne pouvez pas attribuer ce rôle');
+      }
+      
       const updateData: any = {
         first_name: data.first_name,
         last_name: data.last_name,
@@ -284,7 +461,8 @@ export function useAdminUsersUnified() {
     },
     onSuccess: () => {
       toast.success('Informations mises à jour');
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['user-management'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
@@ -298,7 +476,8 @@ export function useAdminUsersUnified() {
     },
     onSuccess: () => {
       toast.success('Email mis à jour');
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['user-management'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
@@ -312,12 +491,16 @@ export function useAdminUsersUnified() {
     },
     onSuccess: () => {
       toast.success('Mot de passe réinitialisé');
-      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] });
+      queryClient.invalidateQueries({ queryKey: ['user-management'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-unified'] }); // backward compat
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });
 
+  // ============================================================================
   // Handlers
+  // ============================================================================
+
   const saveChanges = (userId: string) => {
     const targetUser = visibleUsers.find(u => u.id === userId);
     const changes = modifiedUsers[userId];
@@ -377,12 +560,17 @@ export function useAdminUsersUnified() {
     }));
   };
 
+  // ============================================================================
+  // Return object
+  // ============================================================================
+
   return {
     // Data
     users: visibleUsers,
     paginatedUsers,
     filteredUsers,
     agencies,
+    manageableAgencies,
     usersLoading,
     modifiedUsers,
     
@@ -404,7 +592,7 @@ export function useAdminUsersUnified() {
     showDeactivated,
     setShowDeactivated,
     
-    // Permissions
+    // Permissions (calculées depuis roleMatrix.ts - pas configurables)
     canAccessPage,
     canCreateUsers,
     canDeleteUsers,
@@ -413,6 +601,11 @@ export function useAdminUsersUnified() {
     effectiveUserRole,
     currentUserLevel,
     currentUserAgency,
+    capabilities,
+    effectiveScope,
+    manageableAgencyIds,
+    
+    // Permission checks (fonctions helper)
     canEditUser,
     canDeactivateUserCheck,
     canDeleteUser,

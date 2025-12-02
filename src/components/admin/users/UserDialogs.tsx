@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { GlobalRole, GLOBAL_ROLE_LABELS, getAllRolesSorted, getRoleLevel, GLOBAL_ROLES } from '@/types/globalRoles';
-import { UserProfile } from '@/hooks/use-admin-users-unified';
+import { UserProfile } from '@/hooks/use-user-management';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

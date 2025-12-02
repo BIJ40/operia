@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAdminUsersUnified, UserProfile } from '@/hooks/use-admin-users-unified';
+import { useUserManagement, UserProfile } from '@/hooks/use-user-management';
 import { GLOBAL_ROLES } from '@/types/globalRoles';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserManagementCapabilities } from '@/config/roleMatrix';
@@ -81,7 +81,7 @@ export default function AdminUsersUnified() {
     handleRoleChange,
     handleModuleToggle,
     handleModuleOptionToggle,
-  } = useAdminUsersUnified();
+  } = useUserManagement({ scope: 'allAgencies' });
 
   // ✅ FIX F-EDIT-2: Récupérer les agences assignées pour le filtrage
   const { data: assignedAgenciesData } = useQuery({
