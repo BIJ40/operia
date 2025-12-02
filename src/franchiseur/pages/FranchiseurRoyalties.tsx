@@ -155,7 +155,7 @@ export default function FranchiseurRoyalties() {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base font-medium">
                       {model.model_name}
-                      {model.model_name === 'Standard (défaut)' && (
+                      {model.model_name === 'Dégressif 2025' && (
                         <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
                           Défaut
                         </span>

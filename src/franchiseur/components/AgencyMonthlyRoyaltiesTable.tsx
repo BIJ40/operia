@@ -165,7 +165,7 @@ export function AgencyMonthlyRoyaltiesTable({ agencyId, agencySlug }: AgencyMont
   const showComparison = !!compareModelName && !!compareTiers;
 
   // Filter out current model from comparison options
-  const currentModelName = config?.model_name || 'Standard (défaut)';
+  const currentModelName = config?.model_name || 'Dégressif 2025';
   const comparisonModels = allModels.filter(m => m.model_name !== currentModelName);
 
   if (caError) {
