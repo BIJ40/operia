@@ -347,7 +347,10 @@ serve(async (req) => {
       for (const join of definition.input_sources.joins) {
         const targetData = datasets.get(join.to);
         if (targetData) {
-          data = executeJoin(data, targetData, join.on.local, join.on.foreign);
+          // Support both formats: { on: { local, foreign } } and { localField, remoteField }
+          const localKey = join.on?.local || join.localField;
+          const foreignKey = join.on?.foreign || join.remoteField;
+          data = executeJoin(data, targetData, localKey, foreignKey);
         }
       }
     }
