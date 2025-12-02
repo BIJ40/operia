@@ -87,7 +87,7 @@ function ModuleCombobox({
 export default function ApogeeTicketsIncomplete() {
   const navigate = useNavigate();
   const { tickets: rawIncompleteTickets, isLoading } = useIncompleteTickets();
-  const { modules, priorities, statuses, updateTicket } = useApogeeTickets();
+  const { modules, priorities, statuses, updateTicket, deleteTicket } = useApogeeTickets();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -403,6 +403,13 @@ export default function ApogeeTicketsIncomplete() {
           setStableTickets(prev => prev.map(t =>
             t.id === updates.id ? { ...t, ...updates } : t
           ));
+        }}
+        onDelete={(id) => {
+          deleteTicket.mutate(id);
+          setStableTickets(prev => prev.filter(t => t.id !== id));
+          if (currentIndex >= stableTickets.length - 1 && currentIndex > 0) {
+            setCurrentIndex(currentIndex - 1);
+          }
         }}
       />
     </div>
