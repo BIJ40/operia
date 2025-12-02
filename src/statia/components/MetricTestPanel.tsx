@@ -787,45 +787,86 @@ export function MyMetricComponent() {
                 </TabsList>
 
                 <TabsContent value="visualization" className="space-y-4">
-                  <MetricVisualization 
-                    data={result.visualization}
-                    title={selectedMetric?.label}
-                    height={350}
-                  />
-
-                  {result.value !== null && result.value !== undefined && (
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Valeur globale</p>
-                      <p className="text-2xl font-bold">
-                        {typeof result.value === 'number' 
-                          ? result.value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })
-                          : result.value}
-                        {formulaInfo?.type === 'ratio' && '%'}
-                      </p>
-                    </div>
-                  )}
-
-                  {result.breakdown && Object.keys(result.breakdown).length > 0 && (
-                    <Collapsible>
-                      <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium hover:text-foreground">
-                        <ChevronDown className="h-4 w-4" />
-                        Détail ({Object.keys(result.breakdown).length} valeurs)
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-2">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-auto">
-                          {Object.entries(result.breakdown)
-                            .sort(([, a], [, b]) => b - a)
-                            .map(([key, value]) => (
-                              <div key={key} className="p-2 bg-muted/50 rounded text-sm">
-                                <span className="text-muted-foreground truncate block">{key}</span>
-                                <span className="font-mono font-medium">
-                                  {value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-                                </span>
-                              </div>
-                            ))}
+                  {/* Affichage principal selon type de métrique */}
+                  {result.breakdown && Object.keys(result.breakdown).length > 0 ? (
+                    // Distribution (groupBy) - Afficher le tableau/graphique
+                    <>
+                      <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/30 mb-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="secondary">Distribution</Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {Object.keys(result.breakdown).length} groupes
+                          </span>
                         </div>
-                      </CollapsibleContent>
-                    </Collapsible>
+                        <p className="text-sm text-muted-foreground">
+                          Somme totale: <strong>{result.value?.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}</strong>
+                          {formulaInfo?.type === 'ratio' && '%'}
+                        </p>
+                      </div>
+                      
+                      {/* Tableau de distribution trié */}
+                      <div className="overflow-x-auto border rounded-lg">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b bg-muted/50">
+                              <th className="text-left p-3 font-medium">Dimension</th>
+                              <th className="text-right p-3 font-medium">Valeur</th>
+                              <th className="text-right p-3 font-medium">%</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(result.breakdown)
+                              .sort(([, a], [, b]) => b - a)
+                              .map(([key, value]) => {
+                                const pct = result.value && result.value > 0 
+                                  ? (value / result.value) * 100 
+                                  : 0;
+                                return (
+                                  <tr key={key} className="border-b border-border/50 hover:bg-muted/30">
+                                    <td className="p-3">{key}</td>
+                                    <td className="text-right p-3 font-mono font-medium">
+                                      {value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
+                                    </td>
+                                    <td className="text-right p-3 font-mono text-muted-foreground">
+                                      {pct.toFixed(1)}%
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Graphique si disponible */}
+                      {result.visualization?.labels && result.visualization.labels.length > 0 && (
+                        <MetricVisualization 
+                          data={result.visualization}
+                          title={selectedMetric?.label}
+                          height={350}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    // Valeur simple
+                    <>
+                      <MetricVisualization 
+                        data={result.visualization}
+                        title={selectedMetric?.label}
+                        height={350}
+                      />
+
+                      {result.value !== null && result.value !== undefined && (
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                          <p className="text-sm text-muted-foreground">Valeur calculée</p>
+                          <p className="text-3xl font-bold">
+                            {typeof result.value === 'number' 
+                              ? result.value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })
+                              : result.value}
+                            {formulaInfo?.type === 'ratio' && '%'}
+                          </p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </TabsContent>
 

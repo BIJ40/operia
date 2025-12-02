@@ -568,14 +568,20 @@ function resolveDimensionField(dimension: string, item: any): string {
   // Mapping des dimensions métier vers les champs réels
   const dimensionMapping: Record<string, string[]> = {
     'apporteur': ['projects_data_commanditaireId', '_projects.data.commanditaireId', 'commanditaireId', 'data.commanditaireId'],
+    'commanditaireid': ['projects_data_commanditaireId', '_projects.data.commanditaireId', 'commanditaireId', 'data.commanditaireId'],
     'univers': ['projects_data_universes', '_projects.data.universes', 'universes', 'data.universes'],
+    'universes': ['projects_data_universes', '_projects.data.universes', 'universes', 'data.universes'],
     'technicien': ['userId', 'tech_id', 'data.technicians'],
+    'userid': ['userId', 'tech_id', 'data.technicians'],
     'client': ['clientId', 'client.id', 'projects_clientId'],
+    'clientid': ['clientId', 'client.id', 'projects_clientId'],
     'type': ['type', 'typeFacture', 'invoiceType'],
     'state': ['state', 'paymentStatus', 'kanban_status'],
   };
   
-  const paths = dimensionMapping[dimension.toLowerCase()] || [dimension];
+  // Normaliser la dimension (lowercase)
+  const normalizedDimension = dimension.toLowerCase();
+  const paths = dimensionMapping[normalizedDimension] || [dimension];
   
   for (const path of paths) {
     const value = getNestedValue(item, path);
@@ -585,6 +591,21 @@ function resolveDimensionField(dimension: string, item: any): string {
         return value.join(', ') || 'Non défini';
       }
       return String(value);
+    }
+  }
+  
+  // Chercher aussi dans les données jointes
+  const joinedPrefixes = ['_projects', '_clients', '_factures', '_devis', '_interventions', '_users'];
+  for (const prefix of joinedPrefixes) {
+    const joinedData = item[prefix];
+    if (joinedData) {
+      const value = getNestedValue(joinedData, dimension) || getNestedValue(joinedData, `data.${dimension}`);
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          return value.join(', ') || 'Non défini';
+        }
+        return String(value);
+      }
     }
   }
   
