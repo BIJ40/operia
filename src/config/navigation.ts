@@ -97,6 +97,13 @@ export const NAV_GROUPS: NavGroup[] = [
     labelKey: 'pilotage',
     items: [
       { 
+        title: 'Mon équipe', 
+        url: ROUTES.pilotage.equipe, 
+        icon: Users, 
+        scope: 'mes_indicateurs', 
+        description: 'Gestion des collaborateurs de l\'agence'
+      },
+      { 
         title: 'Statistiques', 
         url: ROUTES.pilotage.statsHub,
         icon: PieChart, 
@@ -163,13 +170,6 @@ export const NAV_GROUPS: NavGroup[] = [
         badge: 'Bientôt',
         isDisabled: true,
       },
-      { 
-        title: 'Mon équipe', 
-        url: ROUTES.pilotage.equipe, 
-        icon: Users, 
-        scope: 'mes_indicateurs', 
-        description: 'Gestion des collaborateurs de l\'agence'
-      },
     ],
   },
   {
@@ -209,6 +209,20 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Kanban, 
         scope: 'apogee_tickets', 
         description: 'Tableau de bord projet' 
+      },
+      { 
+        title: 'Liste', 
+        url: ROUTES.projects.list, 
+        icon: ListTodo, 
+        scope: 'apogee_tickets', 
+        description: 'Vue liste des tickets' 
+      },
+      { 
+        title: 'Doublons IA', 
+        url: ROUTES.projects.duplicates, 
+        icon: FileText, 
+        scope: 'apogee_tickets', 
+        description: 'Détection des doublons' 
       },
       { 
         title: 'Tickets incomplets', 
