@@ -9,6 +9,68 @@ const corsHeaders = {
 const APOGEE_API_KEY = Deno.env.get('APOGEE_API_KEY');
 
 /**
+ * Mapping des champs anglais vers les champs réels de l'API Apogée
+ */
+const FIELD_MAPPING: Record<string, string> = {
+  'duration': 'duree',
+  'amount': 'totalHT',
+  'amountHT': 'totalHT', 
+  'amountTTC': 'totalTTC',
+};
+
+function mapFieldName(field: string | undefined): string | undefined {
+  if (!field) return undefined;
+  return FIELD_MAPPING[field] || field;
+}
+
+/**
+ * Normalise une définition de métrique (v1 array ou v2 object)
+ */
+function normalizeDefinition(definition: any): {
+  primary: string;
+  filters: any[];
+  formula: any;
+  joins: any[];
+  dimensions: string[];
+} {
+  let primary = 'projects';
+  let filters: any[] = [];
+  let joins: any[] = [];
+  
+  const inputSources = definition.input_sources;
+  
+  if (Array.isArray(inputSources)) {
+    // V1 format: array
+    if (inputSources.length > 0) {
+      primary = inputSources[0]?.source || 'projects';
+      // Extract filters from v1 format
+      if (Array.isArray(inputSources[0]?.filters)) {
+        filters = inputSources[0].filters;
+      }
+    }
+  } else if (inputSources && typeof inputSources === 'object') {
+    // V2 format: object
+    primary = inputSources.primary || 'projects';
+    joins = Array.isArray(inputSources.joins) ? inputSources.joins : [];
+  }
+  
+  // Also check definition.filters (may be set by frontend)
+  if (Array.isArray(definition.filters) && definition.filters.length > 0) {
+    filters = definition.filters;
+  }
+  
+  // Map field name
+  const formula = { ...definition.formula };
+  if (formula.field) {
+    formula.field = mapFieldName(formula.field);
+  }
+  
+  const dimensions = definition.dimensions || formula.groupBy || [];
+  
+  return { primary, filters, formula, joins, dimensions };
+}
+
+/**
  * Construit l'URL de base pour une agence
  */
 function buildAgencyBaseUrl(agencySlug: string): string {
@@ -304,27 +366,36 @@ serve(async (req) => {
 
     console.log(`[COMPUTE] Starting metric ${definition.id} for agency ${agencySlug}`);
 
+    // Normaliser la définition (v1/v2 support)
+    const normalized = normalizeDefinition(definition);
+    const { primary, filters, formula, joins, dimensions } = normalized;
+    
+    console.log(`[COMPUTE] Normalized: primary=${primary}, filters=${filters.length}, joins=${joins.length}`);
+
     // Identifier les sources nécessaires
     const sources = new Set<string>();
-    if (definition.input_sources?.primary) {
-      sources.add(definition.input_sources.primary);
-    }
+    sources.add(primary);
+    
     if (definition.input_sources?.secondary) {
       definition.input_sources.secondary.forEach((s: any) => sources.add(s.source || s));
     }
-    // Legacy support
+    // Legacy support v1
     if (Array.isArray(definition.input_sources)) {
       definition.input_sources.forEach((s: any) => sources.add(s.source));
+    }
+    // Add join targets
+    for (const join of joins) {
+      sources.add(join.from);
+      sources.add(join.to);
     }
 
     // Charger les données
     const datasets = await loadSourceData(agencySlug, Array.from(sources));
     
     // Récupérer le dataset principal
-    const primarySource = definition.input_sources?.primary || definition.input_sources?.[0]?.source;
-    let data = datasets.get(primarySource) || [];
+    let data = datasets.get(primary) || [];
     
-    console.log(`[COMPUTE] Primary source ${primarySource}: ${data.length} records`);
+    console.log(`[COMPUTE] Primary source ${primary}: ${data.length} records`);
 
     // Appliquer le filtre de période
     if (params.date_from || params.date_to) {
@@ -332,9 +403,9 @@ serve(async (req) => {
       console.log(`[COMPUTE] After date filter: ${data.length} records`);
     }
 
-    // Appliquer les filtres de la définition
-    if (definition.filters) {
-      for (const filter of definition.filters) {
+    // Appliquer les filtres (from normalized definition)
+    if (filters.length > 0) {
+      for (const filter of filters) {
         data = data.filter(item =>
           evaluateCondition(getNestedValue(item, filter.field), filter.operator, filter.value)
         );
@@ -343,8 +414,8 @@ serve(async (req) => {
     }
 
     // Exécuter les jointures si nécessaire
-    if (definition.input_sources?.joins) {
-      for (const join of definition.input_sources.joins) {
+    if (joins.length > 0) {
+      for (const join of joins) {
         const targetData = datasets.get(join.to);
         if (targetData) {
           // Support both formats: { on: { local, foreign } } and { localField, remoteField }
@@ -355,8 +426,7 @@ serve(async (req) => {
       }
     }
 
-    // Calculer l'agrégation
-    const formula = definition.formula;
+    // Calculer l'agrégation (using normalized formula with mapped field)
     const { value, stats } = calculateAggregation(
       data,
       formula.type,
@@ -367,7 +437,6 @@ serve(async (req) => {
 
     // Calculer le breakdown si groupBy
     let breakdown: Record<string, number> | undefined;
-    const dimensions = definition.dimensions || formula.groupBy;
     
     if (dimensions && dimensions.length > 0) {
       breakdown = {};
