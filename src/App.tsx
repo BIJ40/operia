@@ -86,6 +86,7 @@ const AdminApogeeGuides = lazy(() => import("./pages/AdminApogeeGuides"));
 const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
 const AdminSystemHealth = lazy(() => import("./pages/AdminSystemHealth"));
 const AdminAnnouncements = lazy(() => import("./pages/admin/AdminAnnouncements"));
+const StatiaAdmin = lazy(() => import("./statia/pages/StatiaAdmin"));
 
 // Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
 const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
@@ -286,6 +287,7 @@ function AppContent() {
           <Route path="/admin/apogee-tickets/review" element={<Navigate to="/projects/review" replace />} />
           <Route path="/admin/apogee-tickets/permissions" element={<Navigate to="/projects/permissions" replace />} />
           <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSystemHealth /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/statia-by-bij" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><StatiaAdmin /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}
