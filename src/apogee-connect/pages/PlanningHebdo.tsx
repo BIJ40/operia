@@ -9,8 +9,6 @@ import { useTechniciens } from "@/apogee-connect/hooks/useTechniciens";
 import { api } from "@/apogee-connect/services/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function PlanningHebdoContent() {
@@ -28,7 +26,7 @@ function PlanningHebdoContent() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { techniciensList, showInactive, setShowInactive } = useTechniciens(usersData || []);
+  const { techniciensList } = useTechniciens(usersData || []);
 
   if (!isAgencyReady) {
     return (
@@ -101,23 +99,12 @@ function PlanningHebdoContent() {
                   ))}
                 </SelectContent>
               </Select>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="show-inactive"
-                  checked={showInactive}
-                  onCheckedChange={setShowInactive}
-                />
-                <Label htmlFor="show-inactive" className="text-xs">
-                  Afficher les techniciens inactifs
-                </Label>
-              </div>
             </CardContent>
           </div>
         </div>
 
         {/* Planning List */}
-        <TechWeeklyPlanningList techFilterId={selectedTechId} showInactiveTechs={showInactive} />
+        <TechWeeklyPlanningList techFilterId={selectedTechId} />
       </div>
     </AppLayout>
   );
