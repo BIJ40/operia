@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -237,6 +237,7 @@ export function TicketDetailDrawer({
         {/* Header fixe */}
         <SheetHeader className="p-6 pb-4 border-b">
           <SheetTitle className="sr-only">Détail du ticket {ticketRef}</SheetTitle>
+          <SheetDescription className="sr-only">Détails et actions pour le ticket {ticketRef}</SheetDescription>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
               {/* Référence ticket */}
