@@ -47,7 +47,7 @@ const IndicateursUnivers = lazy(() => import("./apogee-connect/pages/Indicateurs
 const IndicateursTechniciens = lazy(() => import("./apogee-connect/pages/IndicateursTechniciens"));
 const IndicateursSAV = lazy(() => import("./apogee-connect/pages/IndicateursSAV"));
 const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
-const TeamPage = lazy(() => import("./pages/TeamPage"));
+const EquipePage = lazy(() => import("./pages/EquipePage"));
 
 // Lazy loaded pages - Support
 const SupportIndex = lazy(() => import("./pages/SupportIndex"));
@@ -66,7 +66,7 @@ const FranchiseurRoyalties = lazy(() => import("./franchiseur/pages/FranchiseurR
 const FranchiseurSettings = lazy(() => import("./franchiseur/pages/FranchiseurSettings"));
 const FranchiseurAnimateurs = lazy(() => import("./franchiseur/pages/FranchiseurAnimateurs"));
 const AnimatorProfile = lazy(() => import("./franchiseur/pages/AnimatorProfile"));
-const FranchiseurUsers = lazy(() => import("./franchiseur/pages/FranchiseurUsers"));
+const TDRUsersPage = lazy(() => import("./pages/TDRUsersPage"));
 
 // Lazy loaded pages - Admin
 const AdminIndex = lazy(() => import("./pages/AdminIndex"));
@@ -203,7 +203,7 @@ function AppContent() {
           <Route path="/hc-agency/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PlanningHebdo /></RoleGuard></MainLayout>} />
           
           {/* Équipe */}
-          <Route path="/hc-agency/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><TeamPage /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><EquipePage /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
@@ -249,9 +249,7 @@ function AppContent() {
           <Route path="/hc-reseau/parametres" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurSettings />} />
           </Route>
-          <Route path="/hc-reseau/utilisateurs" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
-            <Route index element={<FranchiseurUsers />} />
-          </Route>
+          <Route path="/hc-reseau/utilisateurs" element={<MainLayout><RoleGuard minRole="franchisor_user"><TDRUsersPage /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* ADMINISTRATION - Section Index + Sous-pages */}
