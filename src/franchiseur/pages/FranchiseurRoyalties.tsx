@@ -78,9 +78,10 @@ export default function FranchiseurRoyalties() {
     }
 
     try {
-      // Save as a template (using a placeholder agency ID that won't be used)
+      // Use a nil UUID for template models (not tied to a specific agency)
+      const templateAgencyId = '00000000-0000-0000-0000-000000000000';
       await saveConfig.mutateAsync({
-        agencyId: 'template-' + Date.now(),
+        agencyId: templateAgencyId,
         modelName: newModelName.trim(),
         tiers: tiers.map((t, i) => ({
           from_amount: t.from_amount,
