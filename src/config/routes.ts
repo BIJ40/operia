@@ -103,6 +103,7 @@ export const ROUTES = {
     classify: '/projects/classifier',
     review: '/projects/review',
     permissions: '/projects/permissions',
+    duplicates: '/projects/doublons',
   },
 
   // ============================================

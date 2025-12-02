@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { usePendingDuplicates, useTicketDuplicates, DuplicateTicketInfo } from "../hooks/useTicketDuplicates";
 import { MergeTicketsDialog } from "../components/MergeTicketsDialog";
-import { TicketDetailDrawer } from "../components/TicketDetailDrawer";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { ApogeeTicket, MergeTicketsPayload } from "../types";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -33,7 +33,7 @@ export default function ApogeeTicketsDuplicates() {
   }>({ open: false });
 
   // Fetch selected ticket for drawer
-  const { data: selectedTicket } = useApogeeTicket(selectedTicketId || undefined);
+  const { ticket: selectedTicket } = useApogeeTicket(selectedTicketId || undefined);
 
   const handleBatchScan = async () => {
     setIsBatchScanning(true);
@@ -257,13 +257,27 @@ export default function ApogeeTicketsDuplicates() {
         </CardContent>
       </Card>
 
-      {/* Ticket detail drawer */}
+      {/* Ticket detail drawer - simplified preview */}
       {selectedTicket && (
-        <TicketDetailDrawer
-          ticket={selectedTicket}
-          open={!!selectedTicketId}
-          onOpenChange={(open) => !open && setSelectedTicketId(null)}
-        />
+        <Sheet open={!!selectedTicketId} onOpenChange={(open) => !open && setSelectedTicketId(null)}>
+          <SheetContent className="w-full sm:max-w-xl">
+            <div className="space-y-4">
+              <div>
+                <span className="font-mono text-lg font-bold text-primary">
+                  APO-{String(selectedTicket.ticket_number).padStart(3, "0")}
+                </span>
+                <h2 className="text-xl font-semibold mt-2">{selectedTicket.element_concerne}</h2>
+              </div>
+              {selectedTicket.description && (
+                <p className="text-muted-foreground">{selectedTicket.description}</p>
+              )}
+              <div className="flex gap-2 flex-wrap">
+                {selectedTicket.module && <Badge variant="outline">{selectedTicket.module}</Badge>}
+                <Badge>{selectedTicket.kanban_status}</Badge>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       )}
 
       {/* Merge dialog */}
