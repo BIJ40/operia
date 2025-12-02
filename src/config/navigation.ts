@@ -282,7 +282,6 @@ export const NAV_GROUPS: NavGroup[] = [
         description: 'Gestion des comptes',
         children: [
           { title: 'Liste utilisateurs', url: ROUTES.admin.users, icon: Users, scope: 'admin_users' },
-          { title: 'Collaborateurs', url: ROUTES.admin.collaborateurs, icon: Users, scope: 'admin_users' },
           { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity, scope: 'admin_users' },
         ]
       },
@@ -396,7 +395,6 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.admin.backup]: 'Sauvegardes',
   [ROUTES.admin.helpconfortBackup]: 'HelpConfort Backup',
   [ROUTES.admin.cacheBackup]: 'Cache Backup',
-  [ROUTES.admin.collaborateurs]: 'Collaborateurs non inscrits',
   [ROUTES.admin.userActivity]: 'Activité Utilisateurs',
   [ROUTES.admin.escalationHistory]: 'Historique Escalades',
   [ROUTES.admin.chatbotRag]: 'Chatbot & RAG',

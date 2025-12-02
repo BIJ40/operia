@@ -51,7 +51,6 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'admin_index', defaultTitle: 'Administration', defaultSubtitle: 'Configuration du système', route: ROUTES.admin.index },
   { pageKey: 'admin_users', defaultTitle: 'Gestion Utilisateurs', defaultSubtitle: 'Comptes et permissions', route: ROUTES.admin.users },
   { pageKey: 'admin_agencies', defaultTitle: 'Gestion Agences', defaultSubtitle: 'Configuration des agences', route: ROUTES.admin.agencies },
-  { pageKey: 'admin_collaborateurs', defaultTitle: 'Collaborateurs non inscrits', defaultSubtitle: 'Collaborateurs sans compte utilisateur', route: ROUTES.admin.collaborateurs },
   { pageKey: 'admin_backup', defaultTitle: 'Sauvegardes', defaultSubtitle: 'Export et import des données', route: ROUTES.admin.backup },
   { pageKey: 'admin_user_activity', defaultTitle: 'Activité Utilisateurs', defaultSubtitle: 'Historique des connexions', route: ROUTES.admin.userActivity },
   { pageKey: 'admin_support_stats', defaultTitle: 'Statistiques Support', defaultSubtitle: 'Métriques et indicateurs du support', route: ROUTES.admin.supportStats },

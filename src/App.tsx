@@ -81,7 +81,6 @@ const AdminStorageQuota = lazy(() => import("./pages/AdminStorageQuota"));
 const AdminCacheBackup = lazy(() => import("./pages/AdminCacheBackup"));
 const AdminUserActivity = lazy(() => import("./pages/AdminUserActivity"));
 const AdminUsersUnified = lazy(() => import("./pages/AdminUsersUnified"));
-const AdminCollaborators = lazy(() => import("./pages/AdminCollaborators"));
 const AdminPageMetadata = lazy(() => import("./pages/AdminPageMetadata"));
 const AdminApogeeGuides = lazy(() => import("./pages/AdminApogeeGuides"));
 const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
@@ -269,7 +268,6 @@ function AppContent() {
           <Route path="/admin/storage-quota" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminStorageQuota /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/cache-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminCacheBackup /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/user-activity" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminUserActivity /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/admin/collaborateurs" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminCollaborators /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/page-metadata" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminPageMetadata /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/apogee-guides" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeGuides /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/chatbot-rag" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminChatbotRag /></ModuleGuard></RoleGuard></MainLayout>} />
