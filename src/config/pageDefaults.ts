@@ -21,8 +21,8 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'academy_apporteurs', defaultTitle: 'Guide Apporteurs', defaultSubtitle: 'Ressources pour les apporteurs d\'affaires', route: ROUTES.academy.apporteurs },
   { pageKey: 'academy_documents', defaultTitle: 'Base Documentaire', defaultSubtitle: 'Documents et ressources HelpConfort', route: ROUTES.academy.documents },
   
-  // Pilotage Agence
-  { pageKey: 'pilotage_index', defaultTitle: 'Pilotage Agence', defaultSubtitle: 'Gérez votre activité au quotidien', route: ROUTES.pilotage.index },
+  // Mon Agence
+  { pageKey: 'pilotage_index', defaultTitle: 'Mon Agence', defaultSubtitle: 'Gérez votre activité au quotidien', route: ROUTES.pilotage.index },
   { pageKey: 'pilotage_indicateurs', defaultTitle: 'Indicateurs généraux', defaultSubtitle: 'Suivez vos principaux KPI agence', route: ROUTES.pilotage.indicateurs },
   { pageKey: 'pilotage_indicateurs_apporteurs', defaultTitle: 'Indicateurs Apporteurs', defaultSubtitle: 'Performance de vos apporteurs d\'affaires', route: ROUTES.pilotage.indicateursApporteurs },
   { pageKey: 'pilotage_indicateurs_univers', defaultTitle: 'Indicateurs Univers', defaultSubtitle: 'Répartition par univers de métier', route: ROUTES.pilotage.indicateursUnivers },
@@ -38,8 +38,8 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'support_mes_demandes', defaultTitle: 'Mes demandes', defaultSubtitle: 'Créer et suivre vos demandes de support', route: ROUTES.support.userTickets },
   { pageKey: 'support_console', defaultTitle: 'Console support', defaultSubtitle: 'Traiter les demandes de support', route: ROUTES.support.console },
   
-  // Réseau Franchiseur
-  { pageKey: 'reseau_index', defaultTitle: 'Réseau Franchiseur', defaultSubtitle: 'Pilotage du réseau HelpConfort', route: ROUTES.reseau.index },
+  // Espace Franchiseur
+  { pageKey: 'reseau_index', defaultTitle: 'Espace Franchiseur', defaultSubtitle: 'Pilotage du réseau HelpConfort', route: ROUTES.reseau.index },
   { pageKey: 'reseau_dashboard', defaultTitle: 'Dashboard Réseau', defaultSubtitle: 'Vue d\'ensemble du réseau', route: ROUTES.reseau.dashboard },
   { pageKey: 'reseau_agences', defaultTitle: 'Agences du Réseau', defaultSubtitle: 'Gestion des agences franchisées', route: ROUTES.reseau.agences },
   { pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs', defaultSubtitle: 'Équipe d\'animation réseau', route: ROUTES.reseau.animateurs },
@@ -140,11 +140,11 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   
   // Autres pages Pilotage
   { match: (path) => path.startsWith('/hc-agency/actions/category/'), pageKey: 'pilotage_actions_category', defaultTitle: 'Détail Actions', defaultSubtitle: 'Actions par catégorie', icon: 'CheckSquare', parentRoute: '/hc-agency/actions', parentLabel: 'Actions' },
-  { match: (path) => path === '/hc-agency/actions', pageKey: 'pilotage_actions', defaultTitle: 'Actions à Mener', defaultSubtitle: 'Suivi des actions et tâches en cours', icon: 'CheckSquare', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
-  { match: (path) => path === '/hc-agency/diffusion', pageKey: 'pilotage_diffusion', defaultTitle: 'Mode Diffusion', defaultSubtitle: 'Affichage TV pour l\'agence', icon: 'Tv', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
-  { match: (path) => path === '/hc-agency/rh-tech', pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens', icon: 'CalendarDays', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
-  { match: (path) => path === '/hc-agency/equipe', pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Gestion des collaborateurs de l\'agence', icon: 'Users', parentRoute: '/hc-agency', parentLabel: 'Pilotage' },
-  { match: (path) => path === '/hc-agency', pageKey: 'pilotage_index', defaultTitle: 'Pilotage Agence', defaultSubtitle: 'Gérez votre activité au quotidien', icon: 'Gauge', parentRoute: '/', parentLabel: 'Accueil' },
+  { match: (path) => path === '/hc-agency/actions', pageKey: 'pilotage_actions', defaultTitle: 'Actions à Mener', defaultSubtitle: 'Suivi des actions et tâches en cours', icon: 'CheckSquare', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
+  { match: (path) => path === '/hc-agency/diffusion', pageKey: 'pilotage_diffusion', defaultTitle: 'Mode Diffusion', defaultSubtitle: 'Affichage TV pour l\'agence', icon: 'Tv', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
+  { match: (path) => path === '/hc-agency/rh-tech', pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens', icon: 'CalendarDays', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
+  { match: (path) => path === '/hc-agency/equipe', pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Gestion des collaborateurs de l\'agence', icon: 'Users', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
+  { match: (path) => path === '/hc-agency', pageKey: 'pilotage_index', defaultTitle: 'Mon Agence', defaultSubtitle: 'Gérez votre activité au quotidien', icon: 'Gauge', parentRoute: '/', parentLabel: 'Accueil' },
   
   // ============================================
   // HELP ACADEMY
@@ -168,19 +168,19 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path === '/support', pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Assistance et demandes', icon: 'LifeBuoy', parentRoute: '/', parentLabel: 'Accueil' },
   
   // ============================================
-  // RÉSEAU FRANCHISEUR
+  // ESPACE FRANCHISEUR
   // ============================================
-  { match: (path) => path === '/hc-reseau/dashboard', pageKey: 'reseau_dashboard', defaultTitle: 'Dashboard Réseau', defaultSubtitle: 'Vue d\'ensemble du réseau', icon: 'LayoutDashboard', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
+  { match: (path) => path === '/hc-reseau/dashboard', pageKey: 'reseau_dashboard', defaultTitle: 'Dashboard Réseau', defaultSubtitle: 'Vue d\'ensemble du réseau', icon: 'LayoutDashboard', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
   { match: (path) => /^\/hc-reseau\/agences\/[^/]+$/.test(path), pageKey: 'reseau_agence_profile', defaultTitle: 'Profil Agence', defaultSubtitle: 'Détails et configuration de l\'agence', icon: 'Building2', parentRoute: '/hc-reseau/agences', parentLabel: 'Agences' },
-  { match: (path) => path === '/hc-reseau/agences', pageKey: 'reseau_agences', defaultTitle: 'Agences du Réseau', defaultSubtitle: 'Gestion des agences franchisées', icon: 'Building2', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
-  { match: (path) => path === '/hc-reseau/utilisateurs', pageKey: 'reseau_utilisateurs', defaultTitle: 'Utilisateurs Réseau', defaultSubtitle: 'Gestion des utilisateurs des agences', icon: 'Users', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
+  { match: (path) => path === '/hc-reseau/agences', pageKey: 'reseau_agences', defaultTitle: 'Agences du Réseau', defaultSubtitle: 'Gestion des agences franchisées', icon: 'Building2', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
+  { match: (path) => path === '/hc-reseau/utilisateurs', pageKey: 'reseau_utilisateurs', defaultTitle: 'Utilisateurs Réseau', defaultSubtitle: 'Gestion des utilisateurs des agences', icon: 'Users', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
   { match: (path) => /^\/hc-reseau\/animateurs\/[^/]+$/.test(path), pageKey: 'reseau_animateur_profile', defaultTitle: 'Profil Animateur', defaultSubtitle: 'Détails et agences assignées', icon: 'UserCog', parentRoute: '/hc-reseau/animateurs', parentLabel: 'Animateurs' },
-  { match: (path) => path === '/hc-reseau/animateurs', pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs', defaultSubtitle: 'Équipe d\'animation réseau', icon: 'UserCog', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
-  { match: (path) => path === '/hc-reseau/stats', pageKey: 'reseau_stats', defaultTitle: 'Statistiques Réseau', defaultSubtitle: 'KPI consolidés du réseau', icon: 'PieChart', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
-  { match: (path) => path === '/hc-reseau/comparatifs', pageKey: 'reseau_comparatifs', defaultTitle: 'Comparatifs', defaultSubtitle: 'Comparaison entre agences', icon: 'GitCompare', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
-  { match: (path) => path === '/hc-reseau/redevances', pageKey: 'reseau_redevances', defaultTitle: 'Redevances', defaultSubtitle: 'Calcul et suivi des redevances', icon: 'Calculator', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
-  { match: (path) => path === '/hc-reseau/parametres', pageKey: 'reseau_parametres', defaultTitle: 'Paramètres Réseau', defaultSubtitle: 'Configuration du réseau franchiseur', icon: 'Settings', parentRoute: '/hc-reseau', parentLabel: 'Réseau' },
-  { match: (path) => path === '/hc-reseau', pageKey: 'reseau_index', defaultTitle: 'Réseau Franchiseur', defaultSubtitle: 'Pilotage du réseau HelpConfort', icon: 'Network', parentRoute: '/', parentLabel: 'Accueil' },
+  { match: (path) => path === '/hc-reseau/animateurs', pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs', defaultSubtitle: 'Équipe d\'animation réseau', icon: 'UserCog', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
+  { match: (path) => path === '/hc-reseau/stats', pageKey: 'reseau_stats', defaultTitle: 'Statistiques Réseau', defaultSubtitle: 'KPI consolidés du réseau', icon: 'PieChart', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
+  { match: (path) => path === '/hc-reseau/comparatifs', pageKey: 'reseau_comparatifs', defaultTitle: 'Comparatifs', defaultSubtitle: 'Comparaison entre agences', icon: 'GitCompare', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
+  { match: (path) => path === '/hc-reseau/redevances', pageKey: 'reseau_redevances', defaultTitle: 'Redevances', defaultSubtitle: 'Calcul et suivi des redevances', icon: 'Calculator', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
+  { match: (path) => path === '/hc-reseau/parametres', pageKey: 'reseau_parametres', defaultTitle: 'Paramètres Réseau', defaultSubtitle: 'Configuration du réseau franchiseur', icon: 'Settings', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
+  { match: (path) => path === '/hc-reseau', pageKey: 'reseau_index', defaultTitle: 'Espace Franchiseur', defaultSubtitle: 'Pilotage du réseau HelpConfort', icon: 'Network', parentRoute: '/', parentLabel: 'Accueil' },
   
   // ============================================
   // ADMINISTRATION

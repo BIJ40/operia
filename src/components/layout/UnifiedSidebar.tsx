@@ -244,7 +244,7 @@ export function UnifiedSidebar() {
       ],
     },
     {
-      label: 'Réseau Franchiseur',
+      label: 'Espace Franchiseur',
       labelKey: 'franchiseur',
       indexUrl: ROUTES.reseau.index,
       items: [
