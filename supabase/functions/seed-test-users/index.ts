@@ -8,8 +8,7 @@ const testUsers = [
     firstName: 'Test',
     lastName: 'N1-FranchiseeUser',
     agence: 'test-agence',
-    globalRole: 'franchisee_user',
-    systemRole: 'utilisateur'
+    globalRole: 'franchisee_user'
   },
   {
     email: 'test-n2@helpconfort.test',
@@ -17,8 +16,7 @@ const testUsers = [
     firstName: 'Test',
     lastName: 'N2-FranchiseeAdmin',
     agence: 'test-agence',
-    globalRole: 'franchisee_admin',
-    systemRole: 'utilisateur'
+    globalRole: 'franchisee_admin'
   },
   {
     email: 'test-n3@helpconfort.test',
@@ -26,8 +24,7 @@ const testUsers = [
     firstName: 'Test',
     lastName: 'N3-FranchisorUser',
     agence: 'test-agence',
-    globalRole: 'franchisor_user',
-    systemRole: 'support'
+    globalRole: 'franchisor_user'
   },
   {
     email: 'test-n5@helpconfort.test',
@@ -35,8 +32,7 @@ const testUsers = [
     firstName: 'Test',
     lastName: 'N5-PlatformAdmin',
     agence: 'test-agence',
-    globalRole: 'platform_admin',
-    systemRole: 'admin'
+    globalRole: 'platform_admin'
   }
 ]
 
@@ -83,7 +79,6 @@ Deno.serve(async (req) => {
           .from('profiles')
           .update({ 
             global_role: user.globalRole,
-            system_role: user.systemRole,
             agence: user.agence
           })
           .eq('id', existingProfile.id)
@@ -120,8 +115,7 @@ Deno.serve(async (req) => {
           first_name: user.firstName,
           last_name: user.lastName,
           agence: user.agence,
-          global_role: user.globalRole,
-          system_role: user.systemRole
+          global_role: user.globalRole
         })
         .eq('id', authUser.user.id)
 
