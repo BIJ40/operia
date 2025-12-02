@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useAllRoyaltyModels, useSaveRoyaltyConfig } from '../hooks/useRoyaltyConfig';
+import { useAllRoyaltyModels, useSaveRoyaltyConfig, useDeleteRoyaltyModel } from '../hooks/useRoyaltyConfig';
 import { DEFAULT_TIERS, formatCurrency, formatPercentage, calculateRoyalties } from '../utils/royaltyCalculator';
-import { Calculator, Plus, Trash2, Save, RotateCcw, Layers } from 'lucide-react';
+import { Calculator, Plus, Trash2, Save, RotateCcw, Layers, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface TierForm {
@@ -18,6 +18,7 @@ interface TierForm {
 export default function FranchiseurRoyalties() {
   const { data: allModels = [], isLoading: modelsLoading } = useAllRoyaltyModels();
   const saveConfig = useSaveRoyaltyConfig();
+  const deleteModel = useDeleteRoyaltyModel();
 
   // State for new model creation
   const [newModelName, setNewModelName] = useState('');
@@ -134,7 +135,22 @@ export default function FranchiseurRoyalties() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {allModels.map((model) => (
-                <Card key={model.model_name} className="bg-muted/30">
+                <Card key={model.model_name} className="bg-muted/30 relative group">
+                  {model.model_name !== 'Standard (défaut)' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        if (confirm(`Supprimer le barème "${model.model_name}" ?`)) {
+                          deleteModel.mutate(model.id);
+                        }
+                      }}
+                      disabled={deleteModel.isPending}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base font-medium">
                       {model.model_name}
