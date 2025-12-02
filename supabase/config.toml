@@ -71,3 +71,6 @@ verify_jwt = true
 
 [functions.statia-analyze-metric]
 verify_jwt = true
+
+[functions.auto-classify-modules]
+verify_jwt = true
