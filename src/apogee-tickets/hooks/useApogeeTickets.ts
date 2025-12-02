@@ -122,7 +122,9 @@ export function useApogeeTickets(filters?: TicketFilters) {
         query = query.eq('reported_by', filters.reported_by);
       }
       if (filters?.needs_completion) {
-        query = query.or('needs_completion.eq.true,kanban_status.eq.IMPORT');
+        // Exclure les tickets EN_PROD (TRAITÉ/PUBLIÉ) qui sont considérés complets
+        query = query.or('needs_completion.eq.true,kanban_status.eq.IMPORT')
+                     .neq('kanban_status', 'EN_PROD');
       }
       if (filters?.search) {
         query = query.or(`element_concerne.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);

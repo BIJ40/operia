@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle } from 'lucide-react';
+import { Plus, Upload, AlertCircle, Settings, Sparkles, ListChecks, Flame, ChevronDown, Bug, FileSpreadsheet, Files, FolderOpen, Columns, Eye, Shield, Loader2, ShieldAlert, Download, FileText, Sheet, FileDown, LayoutGrid, List, FileCheck, AlertTriangle, Copy } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { TicketKanban } from '../components/TicketKanban';
@@ -130,8 +130,8 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
   const { qualifyAllUnqualified, isQualifying } = useTicketQualification();
   
 
-  // Compteurs
-  const incompleteCount = tickets.filter(t => t.needs_completion).length;
+  // Compteurs (exclure EN_PROD pour les incomplets)
+  const incompleteCount = tickets.filter(t => t.needs_completion && t.kanban_status !== 'EN_PROD').length;
   const unqualifiedCount = tickets.filter(t => !t.is_qualified).length;
   const toClassifyCount = tickets.filter(t => t.kanban_status === 'SPEC_A_FAIRE').length;
 
@@ -311,6 +311,24 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
             </TooltipTrigger>
             <TooltipContent>
               <p>{unqualifiedCount} ticket{unqualifiedCount > 1 ? 's' : ''} non qualifié{unqualifiedCount > 1 ? 's' : ''}</p>
+            </TooltipContent>
+          </Tooltip>
+          {/* Bouton Doublons IA */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to={ROUTES.projects.duplicates}>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-indigo-600 border-indigo-300 hover:bg-indigo-50"
+                >
+                  <Copy className="h-4 w-4 mr-1" />
+                  Doublons IA
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Détecter et gérer les doublons potentiels</p>
             </TooltipContent>
           </Tooltip>
           {isAdmin && (
