@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { Building2, TrendingUp, Euro, Calendar, Phone, Mail, MapPin, Users, Edit, Plus, Loader2, UserPlus } from "lucide-react";
+import { Building2, Euro, Calendar, Phone, Mail, MapPin, Users, Edit, Plus, Loader2, UserPlus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,10 @@ import {
 } from "@/features/team/hooks";
 import { AgencyCollaborator, CreateCollaboratorPayload, UpdateCollaboratorPayload, COLLABORATOR_ROLE_LABELS } from "@/features/team/types";
 import { CollaboratorFormDialog, CreateUserFromCollaboratorDialog } from "@/features/team/components";
+import { AgencyStatsTab } from "../components/AgencyStatsTab";
+import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
+import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
+import { FiltersProvider } from "@/apogee-connect/contexts/FiltersContext";
 
 // Type unifié pour la liste équipe
 interface TeamMember {
@@ -36,7 +40,7 @@ interface TeamMember {
   collaborator?: AgencyCollaborator;
 }
 
-export default function FranchiseurAgencyProfile() {
+function FranchiseurAgencyProfileContent() {
   const { agencyId } = useParams<{ agencyId: string }>();
   const { data: agency, isLoading: agencyLoading } = useAgency(agencyId || null);
   const { data: royaltyHistory } = useRoyaltyHistory(agencyId || null);
@@ -412,17 +416,11 @@ export default function FranchiseurAgencyProfile() {
             <CardHeader>
               <CardTitle>KPIs & Statistiques</CardTitle>
               <CardDescription>
-                Vue d'ensemble des performances de l'agence
+                Vue d'ensemble des performances de l'agence sur la période sélectionnée
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Statistiques de l'agence</p>
-                <p className="text-sm mt-2">
-                  Les KPIs seront affichés ici en se connectant aux données Apogée
-                </p>
-              </div>
+              <AgencyStatsTab agencySlug={agency.slug} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -503,5 +501,17 @@ export default function FranchiseurAgencyProfile() {
         agencyLabel={agency?.label}
       />
     </div>
+  );
+}
+
+export default function FranchiseurAgencyProfile() {
+  return (
+    <ApiToggleProvider>
+      <AgencyProvider>
+        <FiltersProvider>
+          <FranchiseurAgencyProfileContent />
+        </FiltersProvider>
+      </AgencyProvider>
+    </ApiToggleProvider>
   );
 }
