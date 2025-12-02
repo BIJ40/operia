@@ -36,13 +36,14 @@ export function parseDysfonctionnementsSheet(file: File): Promise<{ rows: Dysfon
         }
         
         // Récupérer les headers (première ligne)
-        const headers = (jsonData[0] as string[]).map(h => String(h || '').trim());
+        const headers = (jsonData[0] || []).map((h: any) => String(h ?? '').trim());
         
         // Trouver les indices des colonnes
         const findIndex = (names: string[]) => {
-          return headers.findIndex(h => 
-            names.some(n => h.toUpperCase().includes(n.toUpperCase()))
-          );
+          return headers.findIndex((h: string) => {
+            const headerUpper = (h || '').toUpperCase();
+            return names.some(n => headerUpper.includes(n.toUpperCase()));
+          });
         };
         
         // Colonne 1 = Description (première colonne ou colonne avec "description/dysfonctionnement")
