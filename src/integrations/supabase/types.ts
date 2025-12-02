@@ -602,6 +602,45 @@ export type Database = {
           },
         ]
       }
+      apogee_ticket_field_permissions: {
+        Row: {
+          can_delete_ticket: string[] | null
+          can_edit_estimation: string[] | null
+          can_edit_module: string[] | null
+          can_edit_owner_side: string[] | null
+          can_edit_priority: string[] | null
+          can_merge_tickets: string[] | null
+          can_qualify_ticket: string[] | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          can_delete_ticket?: string[] | null
+          can_edit_estimation?: string[] | null
+          can_edit_module?: string[] | null
+          can_edit_owner_side?: string[] | null
+          can_edit_priority?: string[] | null
+          can_merge_tickets?: string[] | null
+          can_qualify_ticket?: string[] | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          can_delete_ticket?: string[] | null
+          can_edit_estimation?: string[] | null
+          can_edit_module?: string[] | null
+          can_edit_owner_side?: string[] | null
+          can_edit_priority?: string[] | null
+          can_merge_tickets?: string[] | null
+          can_qualify_ticket?: string[] | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       apogee_ticket_history: {
         Row: {
           action_type: string

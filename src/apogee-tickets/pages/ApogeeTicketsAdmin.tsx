@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Plus, Users, ArrowRight, History, Shield } from 'lucide-react';
+import { Trash2, Plus, Users, ArrowRight, History, Shield, Settings, Check, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -21,9 +21,16 @@ import {
   TICKET_ROLE_LABELS,
   TicketRole,
 } from '../hooks/useTicketPermissions';
+import {
+  useTicketFieldPermissions,
+  useUpdateTicketFieldPermissions,
+  PERMISSION_LABELS,
+  TicketFieldPermissions,
+} from '../hooks/useTicketFieldPermissions';
 import { useApogeeTickets } from '../hooks/useApogeeTickets';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function ApogeeTicketsAdmin() {
   const { isAdmin } = useAuth();
@@ -50,7 +57,11 @@ export default function ApogeeTicketsAdmin() {
           </TabsTrigger>
           <TabsTrigger value="transitions" className="gap-2">
             <ArrowRight className="h-4 w-4" />
-            Transitions Autorisées
+            Transitions
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="gap-2">
+            <Settings className="h-4 w-4" />
+            Paramètres
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-2">
             <History className="h-4 w-4" />
@@ -64,6 +75,10 @@ export default function ApogeeTicketsAdmin() {
         
         <TabsContent value="transitions">
           <TransitionsTab />
+        </TabsContent>
+        
+        <TabsContent value="settings">
+          <SettingsTab />
         </TabsContent>
         
         <TabsContent value="history">
@@ -353,6 +368,96 @@ function TransitionsTab() {
             ))}
           </div>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============ SETTINGS TAB ============
+function SettingsTab() {
+  const { data: permissions, isLoading } = useTicketFieldPermissions();
+  const updatePermissions = useUpdateTicketFieldPermissions();
+  
+  const permissionKeys = Object.keys(PERMISSION_LABELS) as (keyof typeof PERMISSION_LABELS)[];
+  const roles: TicketRole[] = ['developer', 'tester', 'franchiseur'];
+  
+  const handleToggle = (field: keyof typeof PERMISSION_LABELS, role: TicketRole, checked: boolean) => {
+    if (!permissions) return;
+    
+    const currentRoles = permissions[field] as TicketRole[];
+    const newRoles = checked
+      ? [...currentRoles, role]
+      : currentRoles.filter(r => r !== role);
+    
+    updatePermissions.mutate({ [field]: newRoles });
+  };
+  
+  const isRoleEnabled = (field: keyof typeof PERMISSION_LABELS, role: TicketRole): boolean => {
+    if (!permissions) return false;
+    const allowedRoles = permissions[field] as TicketRole[];
+    return allowedRoles.includes(role);
+  };
+  
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-muted-foreground">
+          Chargement des paramètres...
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Settings className="h-5 w-5" />
+          Paramètres des Permissions
+        </CardTitle>
+        <CardDescription>
+          Définissez quels rôles peuvent effectuer quelles actions sur les tickets.
+          Les admins ont tous les droits par défaut.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[300px]">Action</TableHead>
+              {roles.map(role => (
+                <TableHead key={role} className="text-center w-[120px]">
+                  <Badge variant="outline">{TICKET_ROLE_LABELS[role]}</Badge>
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {permissionKeys.map(field => (
+              <TableRow key={field}>
+                <TableCell className="font-medium">
+                  {PERMISSION_LABELS[field]}
+                </TableCell>
+                {roles.map(role => (
+                  <TableCell key={role} className="text-center">
+                    <Checkbox
+                      checked={isRoleEnabled(field, role)}
+                      onCheckedChange={(checked) => handleToggle(field, role, checked === true)}
+                      disabled={updatePermissions.isPending}
+                    />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        
+        <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+          <p className="text-sm text-muted-foreground">
+            <strong>Note:</strong> Les administrateurs (N5+) ont automatiquement tous les droits, 
+            indépendamment de ces paramètres.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
