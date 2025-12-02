@@ -133,24 +133,9 @@ export function calculateRecouvrement(
 
       nbFactures++;
 
-      // 🔍 DEBUG: Log par facture (limité aux 5 premières)
-      if (nbFactures <= 5) {
-        logApogee.debug(`📄 Facture ${nbFactures}/${factures.length}`, {
-          id: (facture as any).id,
-          date: dateEmission,
-          totalTTC: (facture as any).data?.totalTTC ?? (facture as any).totalTTC,
-          typeFacture: (facture as any).typeFacture,
-          state: (facture as any).state,
-          paymentStatus: (facture as any).paymentStatus,
-          calcPaymentsTotal: (facture as any).data?.calcPaymentsTotal,
-          calcPaymentsReste: (facture as any).data?.calcPaymentsReste,
-          sommesPercues: (facture as any).data?.financier?.sommesPercues,
-        });
-      }
-
       const data: any = (facture as any).data ?? {};
 
-      // 1. Calcul du montant TTC de la facture (valeur absolue, hors signe avoir)
+      // 1. Calcul du montant TTC de la facture
       const montantTTCRaw = data.totalTTC ?? (facture as any).totalTTC ?? 0;
       const montantTTCBase = Number(String(montantTTCRaw).replace(/[^0-9.-]/g, "")) || 0;
 
@@ -179,57 +164,74 @@ export function calculateRecouvrement(
 
       const montantFactureAbs = Math.abs(montantTTCBase);
 
-      // 2. Calcul des règlements reçus depuis l'API apiGetFactures
-      let montantReglements = 0;
+      // 2. Calcul des règlements reçus - LOGIQUE STRICTE
+      let montantRegle = 0;
 
-      // Priorité 1: data.calcPaymentsTotal
+      // Priorité 1: Si calcPaymentsTotal OU calcPaymentsReste existent
       const calcPaymentsTotalRaw = data.calcPaymentsTotal;
-      const calcPaymentsTotal = calcPaymentsTotalRaw !== undefined && calcPaymentsTotalRaw !== null
-        ? Number(String(calcPaymentsTotalRaw).replace(/[^0-9.-]/g, "")) || 0
-        : 0;
+      const calcPaymentsResteRaw = data.calcPaymentsReste;
+      const hasCalcPayments = 
+        (calcPaymentsTotalRaw !== undefined && calcPaymentsTotalRaw !== null) ||
+        (calcPaymentsResteRaw !== undefined && calcPaymentsResteRaw !== null);
 
-      // Priorité 2: somme des montants dans data.financier.sommesPercues[]
-      const sommesPercues = data.financier?.sommesPercues;
-      let sommeSommesPercues = 0;
-      if (Array.isArray(sommesPercues) && sommesPercues.length > 0) {
-        sommeSommesPercues = sommesPercues.reduce((sum: number, sp: any) => {
-          const amount = Number(String(sp?.amount ?? 0).replace(/[^0-9.-]/g, "")) || 0;
-          return sum + amount;
-        }, 0);
-      }
-
-      const state = (facture as any).state?.toLowerCase();
-      const paymentStatus = (facture as any).paymentStatus?.toLowerCase();
-
-      if (calcPaymentsTotal > 0) {
-        montantReglements = Math.min(calcPaymentsTotal, montantFactureAbs);
-      } else if (sommeSommesPercues > 0) {
-        montantReglements = Math.min(sommeSommesPercues, montantFactureAbs);
-      } else if (state === "paid" || paymentStatus === "paid") {
-        montantReglements = montantFactureAbs;
+      if (hasCalcPayments) {
+        const calcPaymentsTotal = Number(String(calcPaymentsTotalRaw ?? 0).replace(/[^0-9.-]/g, "")) || 0;
+        montantRegle = Math.min(calcPaymentsTotal, montantFactureAbs);
       } else {
-        montantReglements = 0;
+        // Priorité 2: data.financier.sommesPercues[]
+        const sommesPercues = data.financier?.sommesPercues;
+        let sommeSommesPercues = 0;
+        if (Array.isArray(sommesPercues) && sommesPercues.length > 0) {
+          sommeSommesPercues = sommesPercues.reduce((sum: number, sp: any) => {
+            const amount = Number(String(sp?.amount ?? 0).replace(/[^0-9.-]/g, "")) || 0;
+            return sum + amount;
+          }, 0);
+        }
+
+        if (sommeSommesPercues > 0) {
+          montantRegle = Math.min(sommeSommesPercues, montantFactureAbs);
+        } else {
+          // Priorité 3: Pas d'info de paiement, on regarde le statut
+          const state = (facture as any).state;
+          const paymentStatus = (facture as any).paymentStatus;
+
+          const isFullyPaidStatus =
+            paymentStatus === "paid" ||
+            (state === "paid" && paymentStatus !== "partially_paid");
+
+          if (isFullyPaidStatus) {
+            montantRegle = montantFactureAbs;
+          } else {
+            // Sinon (y compris partially_paid) → 0
+            montantRegle = 0;
+          }
+        }
       }
 
       // Alignement des règlements sur le signe de la facture pour les avoirs
       if (typeFacture === "avoir") {
-        montantReglements = -montantReglements;
+        montantRegle = -montantRegle;
       }
 
-      totalReglementsRecus += montantReglements;
+      totalReglementsRecus += montantRegle;
 
-      // Stats détaillées basées sur calcPaymentsReste, state et montant réglé
+      // 🔍 DEBUG: Log des 20 premières factures pour analyse
+      if (nbFactures <= 20) {
+        logApogee.debug(`🧾 DEBUG RECOUVREMENT Facture ${nbFactures}`, {
+          id: (facture as any).id,
+          state: (facture as any).state,
+          paymentStatus: (facture as any).paymentStatus,
+          totalTTC: montantFactureAbs,
+          calcPaymentsTotal: data.calcPaymentsTotal,
+          calcPaymentsReste: data.calcPaymentsReste,
+          montantRegle,
+        });
+      }
+
+      // Stats détaillées
       if (options.includeDetails) {
-        const calcPaymentsResteRaw = data.calcPaymentsReste;
-        const calcPaymentsReste = calcPaymentsResteRaw !== undefined && calcPaymentsResteRaw !== null
-          ? Number(String(calcPaymentsResteRaw).replace(/[^0-9.-]/g, "")) || 0
-          : undefined;
-
-        const isPaidByState = state === "paid" || paymentStatus === "paid";
-        const isPaidByReste = calcPaymentsReste !== undefined && calcPaymentsReste <= 0;
-        const isFullyPaidByAmount = Math.abs(montantReglements) >= montantFactureAbs - 0.01;
-
-        if (isPaidByState || isPaidByReste || isFullyPaidByAmount) {
+        const resteDu = montantFactureAbs - Math.abs(montantRegle);
+        if (resteDu < 0.01) {
           facturesPayees++;
         } else {
           facturesEnAttente++;
