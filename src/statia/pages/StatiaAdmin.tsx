@@ -25,6 +25,7 @@ export default function StatiaAdmin() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedMetricId, setSelectedMetricId] = useState<string | null>(null);
   const [builderOpen, setBuilderOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('list');
   const queryClient = useQueryClient();
 
   const { data: metrics, isLoading } = useQuery({
@@ -131,7 +132,7 @@ export default function StatiaAdmin() {
         </Card>
       </div>
 
-      <Tabs defaultValue="list" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="list" className="gap-2">
             <Database className="h-4 w-4" />
@@ -212,9 +213,7 @@ export default function StatiaAdmin() {
                   onSelect={() => setSelectedMetricId(metric.id)}
                   onTest={() => {
                     setSelectedMetricId(metric.id);
-                    // Switch to test tab
-                    const testTab = document.querySelector('[data-value="test"]') as HTMLElement;
-                    testTab?.click();
+                    setActiveTab('test');
                   }}
                 />
               ))}

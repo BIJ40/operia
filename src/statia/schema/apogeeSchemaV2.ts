@@ -412,6 +412,7 @@ export function searchSchema(query: string): SchemaSearchResult[] {
 
 /**
  * Valide qu'un champ existe dans une source
+ * Accepte: nom direct (duration), path complet (data.isSAV), ou nom avec path défini
  */
 export function validateField(sourceName: string, fieldName: string): { valid: boolean; error?: string } {
   const endpoint = APOGEE_SCHEMA[sourceName];
@@ -419,9 +420,20 @@ export function validateField(sourceName: string, fieldName: string): { valid: b
     return { valid: false, error: `Source "${sourceName}" inconnue` };
   }
 
-  const field = endpoint.fields.find(f => f.name === fieldName || f.path === fieldName);
+  // Recherche flexible : par nom, par path complet, ou le nom du champ dont le path correspond
+  const field = endpoint.fields.find(f => {
+    // Correspondance directe par nom
+    if (f.name === fieldName) return true;
+    // Correspondance par path complet (ex: "data.isSAV")
+    if (f.path === fieldName) return true;
+    // Si le fieldName contient un path (ex: "data.totalHT"), vérifier si un champ a ce path
+    if (fieldName.includes('.') && f.path === fieldName) return true;
+    return false;
+  });
+
   if (!field) {
-    return { valid: false, error: `Champ "${fieldName}" non trouvé dans ${sourceName}. Champs disponibles: ${endpoint.fields.map(f => f.name).join(', ')}` };
+    const availableFields = endpoint.fields.map(f => f.path ? `${f.name} (${f.path})` : f.name).join(', ');
+    return { valid: false, error: `Champ "${fieldName}" non trouvé dans ${sourceName}. Champs disponibles: ${availableFields}` };
   }
 
   return { valid: true };
