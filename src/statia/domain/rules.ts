@@ -875,6 +875,181 @@ export function applyDomainRules(
 }
 
 // ============================================================================
+// RÈGLES SUPPLÉMENTAIRES - STATUTS FACTURES INCLUS
+// ============================================================================
+
+/**
+ * TOUS les statuts de factures comptent dans le CA
+ * Aucune facture n'est exclue selon le statut
+ * 
+ * Règle HelpConfort: Toutes les factures émises comptent
+ */
+export const FACTURE_STATES_INCLUDED = [
+  'draft',         // CA prévisionnel
+  'sent',          // CA engagé
+  'paid',          // CA encaissé
+  'partially_paid', // CA partiellement encaissé
+  'overdue',       // CA en retard
+] as const;
+
+// ============================================================================
+// RÈGLES SUPPLÉMENTAIRES - DATE DE RÉFÉRENCE
+// ============================================================================
+
+/**
+ * Priorité des dates pour le CA
+ * dateReelle si présente, sinon date
+ */
+export const DATE_PRIORITY = ['dateReelle', 'date'] as const;
+
+/**
+ * Récupère la date de référence d'une facture/devis
+ */
+export function getReferenceDate(item: { dateReelle?: string; date?: string }): string | null {
+  return item.dateReelle || item.date || null;
+}
+
+// ============================================================================
+// RÈGLES SUPPLÉMENTAIRES - DEVIS VALIDÉ
+// ============================================================================
+
+/**
+ * États considérés comme "devis validé"
+ * Un devis avec facture liée est automatiquement validé
+ */
+export const DEVIS_VALIDATED_STATES = [
+  'validated',
+  'signed',
+  'order',      // Commande passée
+  'accepted',   // Accepté
+] as const;
+
+/**
+ * Vérifie si un devis est validé
+ */
+export function isDevisValidated(
+  devis: { isValidated?: boolean; state?: string },
+  hasLinkedFacture: boolean = false
+): boolean {
+  if (hasLinkedFacture) return true;
+  if (devis.isValidated === true) return true;
+  
+  const state = (devis.state || '').toLowerCase();
+  return DEVIS_VALIDATED_STATES.some(vs => state.includes(vs.toLowerCase()));
+}
+
+// ============================================================================
+// RÈGLES SUPPLÉMENTAIRES - ORDRE DE JOINTURE IA
+// ============================================================================
+
+/**
+ * Ordre de jointure PRÉFÉRÉ pour l'IA
+ * 
+ * Toujours joindre dans cet ordre pour cohérence:
+ * factures → projects → clients
+ * interventions → projects → clients
+ * devis → projects → clients
+ */
+export const JOIN_PREFERRED_ORDER = {
+  fromFactures: ['factures', 'projects', 'clients'],
+  fromInterventions: ['interventions', 'projects', 'clients'],
+  fromDevis: ['devis', 'projects', 'clients'],
+} as const;
+
+/**
+ * Champs de jointure standards
+ */
+export const JOIN_FIELDS = {
+  factureToProject: 'projectId',
+  interventionToProject: 'projectId',
+  devisToProject: 'projectId',
+  projectToClient: 'clientId',
+  projectToApporteur: 'data.commanditaireId',
+} as const;
+
+// ============================================================================
+// RÈGLES SUPPLÉMENTAIRES - CAS EXTRÊMES
+// ============================================================================
+
+/**
+ * Valeurs par défaut pour les cas extrêmes
+ */
+export const EDGE_CASE_DEFAULTS = {
+  /** Projet sans univers */
+  noUnivers: 'Non classé',
+  
+  /** Projet sans apporteur */
+  noApporteur: 'Direct',
+  
+  /** Intervention sans visite → technicien = intervention.userId */
+  noVisiteFallback: 'userId',
+  
+  /** Facture sans interventions → CA attribué 100% agence */
+  noInterventionAttribution: 'agence',
+  
+  /** Intervention annulée → ignorée */
+  cancelledInterventionBehavior: 'ignore',
+  
+  /** Projet abandonné → aucun CA */
+  abandonedProjectCA: 0,
+} as const;
+
+/**
+ * Récupère l'univers d'un projet (avec fallback)
+ */
+export function getProjectUnivers(project: {
+  data?: { universes?: string[]; univers?: string };
+  universId?: string;
+}): string[] {
+  const universes = project.data?.universes || 
+    (project.data?.univers ? [project.data.univers] : null) ||
+    (project.universId ? [project.universId] : null);
+  
+  if (Array.isArray(universes) && universes.length > 0) {
+    return universes;
+  }
+  return [EDGE_CASE_DEFAULTS.noUnivers];
+}
+
+/**
+ * Récupère l'apporteur d'un projet (avec fallback)
+ */
+export function getProjectApporteur(project: {
+  data?: { commanditaireId?: string | number };
+}): string {
+  const apporteur = project.data?.commanditaireId;
+  return apporteur?.toString() || EDGE_CASE_DEFAULTS.noApporteur;
+}
+
+// ============================================================================
+// RÈGLES SUPPLÉMENTAIRES - CALCUL TAUX TRANSFORMATION
+// ============================================================================
+
+/**
+ * Calcul du taux de transformation devis → facture
+ * Deux méthodes: en nombre ET en montant HT
+ */
+export function calculateTransformationRate(
+  devisEmis: number | number[],
+  devisFactures: number | number[],
+  method: 'count' | 'amount' = 'count'
+): number {
+  if (method === 'count') {
+    const total = Array.isArray(devisEmis) ? devisEmis.length : devisEmis;
+    const transformed = Array.isArray(devisFactures) ? devisFactures.length : devisFactures;
+    return total === 0 ? 0 : transformed / total;
+  } else {
+    const totalHT = Array.isArray(devisEmis) 
+      ? devisEmis.reduce((sum, d) => sum + d, 0) 
+      : devisEmis;
+    const transformedHT = Array.isArray(devisFactures)
+      ? devisFactures.reduce((sum, d) => sum + d, 0)
+      : devisFactures;
+    return totalHT === 0 ? 0 : transformedHT / totalHT;
+  }
+}
+
+// ============================================================================
 // EXPORT RÉSUMÉ DES RÈGLES (pour documentation/debug)
 // ============================================================================
 
@@ -889,6 +1064,8 @@ export const BUSINESS_RULES_SUMMARY = {
     avoirs: AVOIR_RULE,
     univers: UNIVERS_RULE,
     champsFacture: FACTURE_FIELDS,
+    statesInclus: FACTURE_STATES_INCLUDED,
+    datePriority: DATE_PRIORITY,
   },
   sav: SAV_RULE,
   transformation: TRANSFORMATION_RATE_RULE,
@@ -900,4 +1077,109 @@ export const BUSINESS_RULES_SUMMARY = {
     etatsValides: VISITE_VALIDATED_STATES,
     typesProductifs: VISITE_PRODUCTIVE_TYPES,
   },
+  devis: {
+    etatsValides: DEVIS_VALIDATED_STATES,
+    includeIfFactured: true,
+  },
+  jointures: JOIN_PREFERRED_ORDER,
+  edgeCases: EDGE_CASE_DEFAULTS,
 } as const;
+
+// ============================================================================
+// CONFIGURATION JSON EXPORTABLE (pour stockage/IA)
+// ============================================================================
+
+export const RULES_JSON_CONFIG = {
+  version: '1.1.0',
+  lastUpdated: '2025-12-02',
+  
+  ca: {
+    amountField: 'data.totalHT',
+    includeInvoiceStates: ['draft', 'sent', 'paid', 'partially_paid', 'overdue'],
+    includeAvoir: true,
+    avoirBehavior: 'negative',
+    datePriority: ['dateReelle', 'date'],
+  },
+  
+  technicians: {
+    nonProductiveTypes: ['rt', 'releve technique', 'th', 'sav_non_facture'],
+    productiveTypes: ['travaux', 'depannage', 'recherche de fuite'],
+    resolveTypeFromBI: true,
+    BIResolutionRules: {
+      trigger: 'A DEFINIR',
+      fields: {
+        biTvx: 'travaux',
+        biRt: 'rt',
+        biDepan: 'depannage',
+      },
+      checkPath: 'Items.IsValidated',
+    },
+    multiTechAttribution: 'timeOrVisitsOrEqual',
+    timeSource: 'getInterventionsCreneaux',
+    visitStateRequired: 'validated',
+  },
+  
+  devis: {
+    validatedStates: ['validated', 'signed', 'order', 'accepted'],
+    includeIfFactured: true,
+    amountField: 'totalHT',
+  },
+  
+  sav: {
+    indicators: ['sav', 'facture_sav'],
+    productiveOnlyIfBilled: true,
+    excludeFromTechStats: true,
+    excludeFromGlobalStats: true,
+    detectViaDossierEnfant: true,
+    costFactors: ['temps_passe', 'nb_visites', 'pourcentage_facture_parent'],
+  },
+  
+  classification: {
+    apporteur: 'project.data.commanditaireId',
+    univers: ['project.data.universes', 'project.data.univers', 'project.universId'],
+    technicians: ['intervention.userId', 'visites.usersIds'],
+    defaults: {
+      univers: 'Non classé',
+      apporteur: 'Direct',
+    },
+    multiUniversDistribution: 'prorata_lines',
+  },
+  
+  projectState: {
+    terminated: ['facturé', 'clos', 'archive', 'done', 'invoiced'],
+    abandoned: ['abandonne', 'annulé', 'cancelled'],
+    inProgress: ['in_progress', 'en_cours', 'planifie', 'planned'],
+  },
+  
+  joins: {
+    preferredOrder: [
+      'factures → projects → clients',
+      'interventions → projects → clients',
+      'devis → projects → clients',
+    ],
+    fields: {
+      factureToProject: 'projectId',
+      interventionToProject: 'projectId',
+      devisToProject: 'projectId',
+      projectToClient: 'clientId',
+      projectToApporteur: 'data.commanditaireId',
+    },
+  },
+  
+  edgeCases: {
+    noUnivers: 'Non classé',
+    noApporteur: 'Direct',
+    noVisiteFallback: 'userId',
+    noInterventionAttribution: 'agence',
+    cancelledInterventionBehavior: 'ignore',
+    abandonedProjectCA: 0,
+  },
+  
+  financial: {
+    dueAmountField: 'data.calcReglementsReste',
+    recoveryRateFormula: 'paidAmount / totalInvoiced',
+    avgDurationSource: 'visites.duration',
+  },
+} as const;
+
+export type RulesJsonConfig = typeof RULES_JSON_CONFIG;
