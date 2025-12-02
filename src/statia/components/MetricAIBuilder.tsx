@@ -329,9 +329,15 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
                 {editedMetric.input_sources.joins && editedMetric.input_sources.joins.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     <span className="text-xs text-muted-foreground">+ Jointures:</span>
-                    {editedMetric.input_sources.joins.map((j, i) => (
-                      <Badge key={i} variant="outline" className="text-xs">{j}</Badge>
-                    ))}
+                    {editedMetric.input_sources.joins.map((j, i) => {
+                      const joinStr = typeof j === 'string' ? j : 
+                        (j as { from?: string; to?: string }).from && (j as { from?: string; to?: string }).to 
+                          ? `${(j as { from: string }).from} → ${(j as { to: string }).to}` 
+                          : JSON.stringify(j);
+                      return (
+                        <Badge key={i} variant="outline" className="text-xs">{joinStr}</Badge>
+                      );
+                    })}
                   </div>
                 )}
               </div>
