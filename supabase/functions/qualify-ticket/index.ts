@@ -274,7 +274,6 @@ Propose également une priorité thermique (heat_priority_suggested) entre 0 et 
             theme: qualification.theme,
             ticket_type: qualification.ticket_type,
             impact_tags: qualification.impact_tags,
-            qualif_status: qualification.qualif_status,
             notes_internes: qualification.notes_internes,
             element_concerne: qualification.titre_ameliore || ticket.element_concerne,
             description: qualification.description_amelioree || ticket.description,
