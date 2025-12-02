@@ -1,12 +1,19 @@
 /**
- * STATiA-BY-BIJ - Carte de métrique
+ * STATiA-BY-BIJ - Carte de métrique avec actions
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BarChart3, FlaskConical, Zap } from 'lucide-react';
-import { MetricDefinition } from '../types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { FlaskConical, Zap, Pencil, MoreVertical, ArrowUpCircle, CheckCircle, ArrowDownCircle, Trash2 } from 'lucide-react';
+import { MetricDefinition, ValidationStatus } from '../types';
 import { cn } from '@/lib/utils';
 
 interface MetricCardProps {
@@ -14,6 +21,9 @@ interface MetricCardProps {
   isSelected: boolean;
   onSelect: () => void;
   onTest: () => void;
+  onEdit: () => void;
+  onChangeStatus: (newStatus: ValidationStatus) => void;
+  onDelete: () => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -36,7 +46,36 @@ const scopeLabels: Record<string, string> = {
   mix: 'Mixte',
 };
 
-export function MetricCard({ metric, isSelected, onSelect, onTest }: MetricCardProps) {
+export function MetricCard({ 
+  metric, 
+  isSelected, 
+  onSelect, 
+  onTest, 
+  onEdit, 
+  onChangeStatus, 
+  onDelete 
+}: MetricCardProps) {
+  const status = metric.validation_status;
+
+  // Transitions possibles selon le statut actuel
+  const getAvailableTransitions = () => {
+    switch (status) {
+      case 'draft':
+        return [{ status: 'test' as const, label: 'Promouvoir en test', icon: ArrowUpCircle }];
+      case 'test':
+        return [
+          { status: 'validated' as const, label: 'Valider', icon: CheckCircle },
+          { status: 'draft' as const, label: 'Rétrograder en brouillon', icon: ArrowDownCircle },
+        ];
+      case 'validated':
+        return [{ status: 'test' as const, label: 'Dévalider (repasser en test)', icon: ArrowDownCircle }];
+      default:
+        return [];
+    }
+  };
+
+  const transitions = getAvailableTransitions();
+
   return (
     <Card 
       className={cn(
@@ -93,6 +132,54 @@ export function MetricCard({ metric, isSelected, onSelect, onTest }: MetricCardP
             <FlaskConical className="h-3 w-3" />
             Tester
           </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+          >
+            <Pencil className="h-3 w-3" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-background z-50">
+              {transitions.map((t) => (
+                <DropdownMenuItem
+                  key={t.status}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChangeStatus(t.status);
+                  }}
+                  className="gap-2"
+                >
+                  <t.icon className="h-4 w-4" />
+                  {t.label}
+                </DropdownMenuItem>
+              ))}
+              {transitions.length > 0 && <DropdownMenuSeparator />}
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="gap-2 text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardContent>
     </Card>

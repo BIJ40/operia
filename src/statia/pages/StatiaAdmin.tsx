@@ -11,8 +11,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Database, FlaskConical, Search, Settings, Plus } from 'lucide-react';
-import { MetricDefinition } from '../types';
+import { MetricDefinition, ValidationStatus } from '../types';
 import { MetricTestPanel } from '../components/MetricTestPanel';
 import { MetricCard } from '../components/MetricCard';
 import { ApogeeSchemaViewer } from '../components/ApogeeSchemaViewer';
@@ -25,6 +35,8 @@ export default function StatiaAdmin() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedMetricId, setSelectedMetricId] = useState<string | null>(null);
   const [builderOpen, setBuilderOpen] = useState(false);
+  const [editingMetric, setEditingMetric] = useState<MetricDefinition | undefined>(undefined);
+  const [deleteConfirmMetric, setDeleteConfirmMetric] = useState<MetricDefinition | null>(null);
   const [activeTab, setActiveTab] = useState('list');
   const queryClient = useQueryClient();
 
@@ -64,8 +76,6 @@ export default function StatiaAdmin() {
     return matchesSearch && matchesScope && matchesStatus;
   }) ?? [];
 
-  const selectedMetric = metrics?.find(m => m.id === selectedMetricId);
-
   const stats = {
     total: metrics?.length ?? 0,
     validated: metrics?.filter(m => m.validation_status === 'validated').length ?? 0,
@@ -101,6 +111,94 @@ export default function StatiaAdmin() {
       toast.error('Erreur lors de la création', { description: error.message });
     },
   });
+
+  // Mutation pour mettre à jour une métrique
+  const updateMetricMutation = useMutation({
+    mutationFn: async (metric: MetricDefinition) => {
+      const { error } = await supabase
+        .from('metrics_definitions')
+        .update({
+          label: metric.label,
+          description_agence: metric.description_agence,
+          description_franchiseur: metric.description_franchiseur,
+          scope: metric.scope,
+          input_sources: metric.input_sources as any,
+          formula: metric.formula as any,
+          compute_hint: metric.compute_hint,
+          validation_status: metric.validation_status,
+          visibility: metric.visibility as any,
+          cache_ttl_seconds: metric.cache_ttl_seconds,
+        })
+        .eq('id', metric.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['statia-metrics-admin'] });
+      toast.success('Métrique mise à jour avec succès');
+    },
+    onError: (error: any) => {
+      toast.error('Erreur lors de la mise à jour', { description: error.message });
+    },
+  });
+
+  // Mutation pour changer le statut
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: ValidationStatus }) => {
+      const { error } = await supabase
+        .from('metrics_definitions')
+        .update({ validation_status: status })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_, { status }) => {
+      queryClient.invalidateQueries({ queryKey: ['statia-metrics-admin'] });
+      const statusLabels = { draft: 'brouillon', test: 'en test', validated: 'validée' };
+      toast.success(`Métrique passée en ${statusLabels[status]}`);
+    },
+    onError: (error: any) => {
+      toast.error('Erreur lors du changement de statut', { description: error.message });
+    },
+  });
+
+  // Mutation pour supprimer une métrique
+  const deleteMetricMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('metrics_definitions')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['statia-metrics-admin'] });
+      toast.success('Métrique supprimée');
+      setDeleteConfirmMetric(null);
+    },
+    onError: (error: any) => {
+      toast.error('Erreur lors de la suppression', { description: error.message });
+    },
+  });
+
+  const handleSaveMetric = (metric: MetricDefinition) => {
+    if (editingMetric) {
+      updateMetricMutation.mutate(metric);
+    } else {
+      createMetricMutation.mutate(metric);
+    }
+    setEditingMetric(undefined);
+  };
+
+  const handleOpenBuilder = (metric?: MetricDefinition) => {
+    setEditingMetric(metric);
+    setBuilderOpen(true);
+  };
+
+  const handleCloseBuilder = (open: boolean) => {
+    setBuilderOpen(open);
+    if (!open) {
+      setEditingMetric(undefined);
+    }
+  };
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
@@ -186,7 +284,7 @@ export default function StatiaAdmin() {
                     <SelectItem value="draft">Brouillon</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button onClick={() => setBuilderOpen(true)} className="bg-helpconfort-blue hover:bg-helpconfort-blue/90">
+                <Button onClick={() => handleOpenBuilder()} className="bg-helpconfort-blue hover:bg-helpconfort-blue/90">
                   <Plus className="h-4 w-4 mr-2" />
                   Nouvelle métrique
                 </Button>
@@ -215,6 +313,9 @@ export default function StatiaAdmin() {
                     setSelectedMetricId(metric.id);
                     setActiveTab('test');
                   }}
+                  onEdit={() => handleOpenBuilder(metric)}
+                  onChangeStatus={(newStatus) => updateStatusMutation.mutate({ id: metric.id, status: newStatus })}
+                  onDelete={() => setDeleteConfirmMetric(metric)}
                 />
               ))}
             </div>
@@ -239,9 +340,32 @@ export default function StatiaAdmin() {
       {/* Builder Dialog */}
       <MetricBuilderDialog
         open={builderOpen}
-        onOpenChange={setBuilderOpen}
-        onSave={(metric) => createMetricMutation.mutate(metric)}
+        onOpenChange={handleCloseBuilder}
+        onSave={handleSaveMetric}
+        editMetric={editingMetric}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirmMetric} onOpenChange={(open) => !open && setDeleteConfirmMetric(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer la métrique ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer la métrique "{deleteConfirmMetric?.label}" ({deleteConfirmMetric?.id}) ? 
+              Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteConfirmMetric && deleteMetricMutation.mutate(deleteConfirmMetric.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
