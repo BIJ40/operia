@@ -95,6 +95,7 @@ export function TicketDetailDrawer({
   onDelete,
 }: TicketDetailDrawerProps) {
   const { user, isAdmin } = useAuth();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { data: roleInfo } = useMyTicketRole();
   const canManage = roleInfo?.canManage ?? false;
   const isDeveloper = roleInfo?.ticketRole === 'developer';
@@ -811,40 +812,43 @@ export function TicketDetailDrawer({
 
         {/* Bouton supprimer - en bas à droite du drawer */}
         {onDelete && canManage && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="absolute bottom-4 right-4 h-10 w-10 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full shadow-sm border border-destructive/20 bg-background z-10"
-                title="Supprimer le ticket"
-              >
-                <Trash2 className="h-5 w-5" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Supprimer ce ticket ?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Cette action est irréversible. Le ticket "{ticket.element_concerne.slice(0, 50)}..." sera définitivement supprimé.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={() => {
-                    onDelete(ticket.id);
-                    onClose();
-                  }}
-                >
-                  Supprimer
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="absolute bottom-4 right-4 h-10 w-10 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full shadow-sm border border-destructive/20 bg-background z-10"
+            title="Supprimer le ticket"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 className="h-5 w-5" />
+          </Button>
         )}
       </SheetContent>
+
+      {/* AlertDialog en dehors du Sheet pour éviter les conflits de portail */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce ticket ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Le ticket "{ticket?.element_concerne?.slice(0, 50)}..." sera définitivement supprimé.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (ticket && onDelete) {
+                  onDelete(ticket.id);
+                  onClose();
+                }
+              }}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }
