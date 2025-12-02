@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,17 +11,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Database, FlaskConical, Search, Settings, Zap } from 'lucide-react';
+import { Database, FlaskConical, Search, Settings, Plus } from 'lucide-react';
 import { MetricDefinition } from '../types';
 import { MetricTestPanel } from '../components/MetricTestPanel';
 import { MetricCard } from '../components/MetricCard';
-import { APOGEE_SOURCES } from '../schema/apogeeSchema';
+import { ApogeeSchemaViewer } from '../components/ApogeeSchemaViewer';
+import { MetricBuilderDialog } from '../components/MetricBuilderDialog';
+import { toast } from 'sonner';
 
 export default function StatiaAdmin() {
   const [searchTerm, setSearchTerm] = useState('');
   const [scopeFilter, setScopeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedMetricId, setSelectedMetricId] = useState<string | null>(null);
+  const [builderOpen, setBuilderOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: metrics, isLoading } = useQuery({
     queryKey: ['statia-metrics-admin'],
@@ -67,6 +71,35 @@ export default function StatiaAdmin() {
     test: metrics?.filter(m => m.validation_status === 'test').length ?? 0,
     draft: metrics?.filter(m => m.validation_status === 'draft').length ?? 0,
   };
+
+  // Mutation pour créer une métrique
+  const createMetricMutation = useMutation({
+    mutationFn: async (metric: MetricDefinition) => {
+      const { error } = await supabase
+        .from('metrics_definitions')
+        .insert({
+          id: metric.id,
+          label: metric.label,
+          description_agence: metric.description_agence,
+          description_franchiseur: metric.description_franchiseur,
+          scope: metric.scope,
+          input_sources: metric.input_sources as any,
+          formula: metric.formula as any,
+          compute_hint: metric.compute_hint,
+          validation_status: metric.validation_status,
+          visibility: metric.visibility as any,
+          cache_ttl_seconds: metric.cache_ttl_seconds,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['statia-metrics-admin'] });
+      toast.success('Métrique créée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error('Erreur lors de la création', { description: error.message });
+    },
+  });
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
@@ -116,7 +149,7 @@ export default function StatiaAdmin() {
 
         {/* Catalogue Tab */}
         <TabsContent value="list" className="space-y-4">
-          {/* Filters */}
+          {/* Filters + Actions */}
           <Card>
             <CardContent className="pt-4">
               <div className="flex flex-col md:flex-row gap-4">
@@ -152,6 +185,10 @@ export default function StatiaAdmin() {
                     <SelectItem value="draft">Brouillon</SelectItem>
                   </SelectContent>
                 </Select>
+                <Button onClick={() => setBuilderOpen(true)} className="bg-helpconfort-blue hover:bg-helpconfort-blue/90">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouvelle métrique
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -199,54 +236,13 @@ export default function StatiaAdmin() {
           <ApogeeSchemaViewer />
         </TabsContent>
       </Tabs>
-    </div>
-  );
-}
 
-function ApogeeSchemaViewer() {
-  return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {Object.entries(APOGEE_SOURCES).map(([key, source]: [string, any]) => (
-        <Card key={key} className="border-l-4 border-l-helpconfort-blue">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">{source.name}</CardTitle>
-              <Badge variant="outline">{source.endpoint}</Badge>
-            </div>
-            <CardDescription>Clé: {source.primaryKey}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-sm font-medium mb-1">Champs ({source.fields.length})</p>
-              <div className="flex flex-wrap gap-1">
-                {source.fields.slice(0, 6).map((f: any) => (
-                  <Badge key={f.name} variant="secondary" className="text-xs">
-                    {f.name}
-                    {f.aggregable && <Zap className="h-2 w-2 ml-1" />}
-                  </Badge>
-                ))}
-                {source.fields.length > 6 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{source.fields.length - 6}
-                  </Badge>
-                )}
-              </div>
-            </div>
-            {source.joins.length > 0 && (
-              <div>
-                <p className="text-sm font-medium mb-1">Jointures</p>
-                <div className="flex flex-wrap gap-1">
-                  {source.joins.map((j: any, idx: number) => (
-                    <Badge key={idx} variant="outline" className="text-xs">
-                      → {j.targetSource}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+      {/* Builder Dialog */}
+      <MetricBuilderDialog
+        open={builderOpen}
+        onOpenChange={setBuilderOpen}
+        onSave={(metric) => createMetricMutation.mutate(metric)}
+      />
     </div>
   );
 }
