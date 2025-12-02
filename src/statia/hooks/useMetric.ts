@@ -234,6 +234,7 @@ export function useMetric<T = number>(
     executionTarget: (query.data as any)?._debug?.executionTarget ?? 'unknown',
     complexity: (query.data as any)?._debug?.complexity ?? 0,
     params,
+    _loadDebug: query.data?._loadDebug,
   };
 
   // Transformer l'erreur en MetricError

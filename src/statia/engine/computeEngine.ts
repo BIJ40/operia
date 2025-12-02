@@ -83,15 +83,31 @@ interface LoadedData {
 /**
  * Charge les données depuis les sources Apogée
  */
+export interface LoadDebugInfo {
+  apiUrl: string;
+  apiKeyPresent: boolean;
+  rawCounts: Record<string, number>;
+  filteredCounts: Record<string, number>;
+  appliedFilters: Record<string, any[]>;
+}
+
 export async function loadSourceData(
   sources: InputSource[],
   params: MetricParams
-): Promise<LoadedData> {
+): Promise<{ data: LoadedData; debug: LoadDebugInfo }> {
   const result: LoadedData = {};
+  const debug: LoadDebugInfo = {
+    apiUrl: '',
+    apiKeyPresent: !!import.meta.env.VITE_APOGEE_API_KEY,
+    rawCounts: {},
+    filteredCounts: {},
+    appliedFilters: {},
+  };
   
   // Configurer l'URL de l'agence
   if (params.agency_slug) {
     const apiUrl = `https://${params.agency_slug}.hc-apogee.fr/api/`;
+    debug.apiUrl = apiUrl;
     setApiBaseUrl(apiUrl);
     DataService.clearCache();
   }
@@ -113,15 +129,19 @@ export async function loadSourceData(
     const dataKey = sourceMapping[source.source];
     let data = allData[dataKey] || [];
     
+    debug.rawCounts[source.source] = data.length;
+    debug.appliedFilters[source.source] = source.filters || [];
+    
     // Appliquer les filtres au niveau source
     if (source.filters && source.filters.length > 0) {
       data = applyFilters(data, source.filters);
     }
     
+    debug.filteredCounts[source.source] = data.length;
     result[source.alias || source.source] = data;
   }
 
-  return result;
+  return { data: result, debug };
 }
 
 // ============================================
@@ -363,8 +383,8 @@ export async function computeMetric(
 ): Promise<MetricResult> {
   const startTime = Date.now();
   
-  // Charger les données sources
-  const loadedData = await loadSourceData(metric.input_sources, params);
+  // Charger les données sources avec debug
+  const { data: loadedData, debug: loadDebug } = await loadSourceData(metric.input_sources, params);
   
   // Préparer le dataset principal
   let primarySource = metric.input_sources[0];
@@ -410,6 +430,7 @@ export async function computeMetric(
       compute_time_ms: Date.now() - startTime,
       data_points: dataset.length,
     },
+    _loadDebug: loadDebug,
   };
 }
 
