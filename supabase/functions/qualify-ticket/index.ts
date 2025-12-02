@@ -68,47 +68,28 @@ IMPORTANT : Propose une priorité thermique (heat_priority_suggested) entre 0 et
 - La gêne pour les utilisateurs`;
 
 // Fonction de calcul de priorité thermique basée sur les règles métier
-function calculateHeatPriority(sourceSheet: string | null, priority: string | null): number {
+function calculateHeatPriority(sourceSheet: string | null, currentHeat: number | null): number {
+  // Si déjà une priorité thermique définie, la garder
+  if (currentHeat !== null && currentHeat >= 0) return currentHeat;
+  
   const sheet = (sourceSheet || '').toLowerCase().trim();
-  const prio = (priority || '').toLowerCase().trim();
 
   // Priorités A
-  if (sheet.includes('priorit') && sheet.includes('a')) {
-    if (prio.includes('x1') || prio === '1') return 10;
-    if (prio.includes('x2') || prio === '2') return 9;
-    if (prio.includes('x3') || prio === '3') return 8;
-    return 9;
-  }
-
+  if (sheet.includes('priorit') && sheet.includes('a')) return 9;
   // Priorités B
-  if (sheet.includes('priorit') && sheet.includes('b')) {
-    if (prio.includes('x1') || prio === '1') return 7;
-    if (prio.includes('x2') || prio === '2') return 6;
-    if (prio.includes('x3') || prio === '3') return 5;
-    return 6;
-  }
-
+  if (sheet.includes('priorit') && sheet.includes('b')) return 6;
   // Liste évaluée
-  if (sheet.includes('evalué') || sheet.includes('prioriser')) {
-    if (prio.includes('c')) return 4;
-    return 3;
-  }
-
+  if (sheet.includes('evalué') || sheet.includes('prioriser')) return 4;
   // LISTE V1
   if (sheet.includes('v1')) return 3;
-
   // Bugs
-  if (sheet.includes('bug')) {
-    if (prio.includes('urgent') || prio.includes('bloquant')) return 11;
-    if (prio.includes('critique')) return 9;
-    if (prio.includes('important')) return 7;
-    return 5;
-  }
-
+  if (sheet.includes('bug') || sheet.includes('dysfonctionnement')) return 5;
+  // Traité
+  if (sheet.includes('traite') || sheet.includes('traité')) return 3;
   // Manuel sans info
   if (sheet.includes('manual') || !sheet) return 5;
 
-  return 3;
+  return 5;
 }
 
 const FUNCTION_SCHEMA = {
@@ -224,14 +205,13 @@ TITRE: ${ticket.element_concerne || "N/A"}
 DESCRIPTION: ${ticket.description || "N/A"}
 MODULE: ${ticket.module || "N/A"}
 MODULE_AREA: ${ticket.module_area || "N/A"}
-PRIORITÉ BRUTE: ${ticket.priority || "N/A"}
-STATUT APOGÉE: ${ticket.apogee_status_raw || "N/A"}
-STATUT HC: ${ticket.hc_status_raw || "N/A"}
 OWNER: ${ticket.owner_side || "N/A"}
 SOURCE: ${ticket.source_sheet || "MANUAL"}
 SEVERITY: ${ticket.severity || "N/A"}
 H_MIN: ${ticket.h_min || "N/A"}
 H_MAX: ${ticket.h_max || "N/A"}
+HEAT_PRIORITY: ${ticket.heat_priority || "N/A"}
+TAGS: ${ticket.impact_tags?.join(', ') || "N/A"}
 
 Analyse et retourne la qualification complète via la fonction qualify_ticket.
 Propose également une priorité thermique (heat_priority_suggested) entre 0 et 12.`;
@@ -277,7 +257,7 @@ Propose également une priorité thermique (heat_priority_suggested) entre 0 et 
         const qualification = JSON.parse(toolCall.function.arguments);
 
         // Calculer la priorité thermique : IA si valide, sinon algorithme
-        const baseHeat = calculateHeatPriority(ticket.source_sheet, ticket.priority);
+        const baseHeat = calculateHeatPriority(ticket.source_sheet, ticket.heat_priority);
         const heatFromIa = typeof qualification.heat_priority_suggested === 'number'
           ? Math.max(0, Math.min(12, Math.round(qualification.heat_priority_suggested)))
           : null;
