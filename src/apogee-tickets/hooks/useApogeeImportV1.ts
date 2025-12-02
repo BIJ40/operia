@@ -246,7 +246,7 @@ function rowToTicket(row: V1Row): ApogeeTicketInsert {
     source_sheet: 'LISTE_V1',
     source_row_index: row.rowIndex,
     external_key: `LISTE_V1#${row.rowIndex}`,
-    created_from: 'IMPORT',
+    created_from: 'IMPORT_EVALUATED',
     needs_completion: !row.elementConcerne || !row.prio,
   };
 }

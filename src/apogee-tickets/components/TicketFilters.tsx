@@ -6,8 +6,11 @@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Search, X, Snowflake, Flame } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Search, X, Snowflake, Flame, Tag } from 'lucide-react';
 import type { ApogeeModule, ApogeePriority, TicketFilters as Filters, ReportedBy, MissingFieldFilter } from '../types';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +48,9 @@ const ORIGINE_OPTIONS: { value: ReportedBy; label: string }[] = [
   { value: 'FLORIAN', label: 'Florian' },
   { value: 'JEROME', label: 'Jérôme' },
 ];
+
+// Tags par défaut
+const DEFAULT_TAGS = ['BUG', 'EVO', 'NTH'];
 
 export function TicketFilters({ filters, onFiltersChange, modules, priorities }: TicketFiltersProps) {
   const updateFilter = (key: keyof Filters, value: any) => {
@@ -182,6 +188,46 @@ export function TicketFilters({ filters, onFiltersChange, modules, priorities }:
             <SelectItem value="unqualified">À qualifier</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Tags Filter */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Tag className="h-4 w-4 mr-2" />
+              Tags
+              {filters.tags && filters.tags.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {filters.tags.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 bg-background z-50" align="start">
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Filtrer par tag</div>
+              <div className="space-y-1">
+                {DEFAULT_TAGS.map((tag) => (
+                  <label
+                    key={tag}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1"
+                  >
+                    <Checkbox
+                      checked={filters.tags?.includes(tag) || false}
+                      onCheckedChange={(checked) => {
+                        const currentTags = filters.tags || [];
+                        const newTags = checked
+                          ? [...currentTags, tag]
+                          : currentTags.filter((t) => t !== tag);
+                        updateFilter('tags', newTags.length > 0 ? newTags : undefined);
+                      }}
+                    />
+                    <span className="text-sm">{tag}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         {/* Complétude - champs manquants */}
         <Select

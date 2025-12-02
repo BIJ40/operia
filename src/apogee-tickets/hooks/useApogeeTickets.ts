@@ -189,6 +189,13 @@ export function useApogeeTickets(filters?: TicketFilters) {
         }
       }
 
+      // Filtrage client-side pour tags
+      if (filters?.tags && filters.tags.length > 0) {
+        data = data.filter(t => 
+          t.impact_tags && t.impact_tags.some(tag => filters.tags!.includes(tag))
+        );
+      }
+
       return data;
     },
   });

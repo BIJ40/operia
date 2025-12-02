@@ -176,7 +176,7 @@ function rowToTicket(row: BugsRow): ApogeeTicketInsert {
     source_sheet: 'BUGS',
     source_row_index: row.rowIndex,
     external_key: `BUGS#${row.rowIndex}`,
-    created_from: 'IMPORT',
+    created_from: 'IMPORT_BUGS',
     needs_completion: !row.module,
     heat_priority: heatPriority,
     impact_tags: ['BUG'], // Auto-tag avec BUG pour l'import BUGS
