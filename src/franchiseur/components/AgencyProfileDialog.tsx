@@ -226,12 +226,20 @@ export function AgencyProfileDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="date_cloture_bilan">Date de clôture bilan</Label>
+                <Label htmlFor="date_cloture_bilan">Date de clôture bilan (JJ/MM)</Label>
                 <Input
                   id="date_cloture_bilan"
-                  type="date"
+                  type="text"
+                  placeholder="31/03"
+                  maxLength={5}
                   value={formData.date_cloture_bilan}
-                  onChange={(e) => setFormData({ ...formData, date_cloture_bilan: e.target.value })}
+                  onChange={(e) => {
+                    let value = e.target.value.replace(/[^0-9/]/g, '');
+                    if (value.length === 2 && !value.includes('/')) {
+                      value = value + '/';
+                    }
+                    setFormData({ ...formData, date_cloture_bilan: value });
+                  }}
                   disabled={!canManage}
                 />
               </div>

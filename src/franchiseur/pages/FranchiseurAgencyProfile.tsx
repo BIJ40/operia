@@ -206,13 +206,7 @@ export default function FranchiseurAgencyProfile() {
                     <Calendar className="h-5 w-5 text-primary" />
                     <div>
                       <p className="text-sm text-muted-foreground">Date de clôture bilan</p>
-                      <p className="font-medium">
-                        {new Date(agency.date_cloture_bilan).toLocaleDateString('fr-FR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                      </p>
+                      <p className="font-medium">{agency.date_cloture_bilan}</p>
                     </div>
                   </div>
                 )}
