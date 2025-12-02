@@ -3,6 +3,8 @@
  * 
  * Moteur générique, robuste et performant capable d'exécuter n'importe quelle
  * définition JSON produite par STATiA (multi-endpoints, multi-dimensions, ratios).
+ * 
+ * Intègre les règles métier centralisées depuis /statia/rules/
  */
 
 import { 
@@ -19,6 +21,16 @@ import { APOGEE_SCHEMA, buildAgencyBaseUrl } from '../schema/apogeeSchemaV2';
 import { setApiBaseUrl, getApiBaseUrl } from '@/apogee-connect/services/api';
 import { DataService } from '@/apogee-connect/services/dataService';
 import type { ApogeeSourceName, FilterCondition, FormulaDefinition } from '../types';
+import { 
+  STATIA_RULES_JSON,
+  resolveInterventionType,
+  isProductiveIntervention,
+  isSAVIntervention,
+  getDateField,
+  calculateNetAmount,
+  getGroupByConfig,
+  normalizeSynonym
+} from '../rules/rules';
 
 // ============================================
 // TYPES DU MOTEUR
@@ -315,15 +327,20 @@ function applyFilters(
 function applyDateRangeFilter(
   data: any[],
   dateFrom?: Date | string,
-  dateTo?: Date | string
+  dateTo?: Date | string,
+  source?: string
 ): any[] {
   if (!dateFrom && !dateTo) return data;
   
   const from = dateFrom ? (typeof dateFrom === 'string' ? parseISO(dateFrom) : dateFrom) : null;
   const to = dateTo ? (typeof dateTo === 'string' ? parseISO(dateTo) : dateTo) : null;
   
+  // Utiliser le champ date approprié selon les règles métier
+  const dateField = source ? getDateField(source) : 'date';
+  
   return data.filter(item => {
-    const dateStr = item.date || item.dateReelle || item.dateEmission || item.created_at;
+    // Chercher dans plusieurs champs possibles selon les règles
+    const dateStr = item[dateField] || item.dateReelle || item.date || item.dateEmission || item.created_at;
     const itemDate = parseDateSafe(dateStr);
     if (!itemDate) return true;
     
@@ -333,6 +350,29 @@ function applyDateRangeFilter(
     if (from) return itemDate >= from;
     if (to) return itemDate <= to;
     return true;
+  });
+}
+
+/**
+ * Applique les règles métier STATiA aux données
+ */
+function applyBusinessRules(data: any[], source: string): any[] {
+  return data.map(item => {
+    const enriched = { ...item };
+    
+    // Pour les interventions: résoudre le type réel si "A DEFINIR"
+    if (source === 'interventions') {
+      enriched._resolvedType = resolveInterventionType(item);
+      enriched._isProductive = isProductiveIntervention(item);
+      enriched._isSAV = isSAVIntervention(item);
+    }
+    
+    // Pour les factures: calculer le montant net (gestion des avoirs)
+    if (source === 'factures') {
+      enriched._netAmount = calculateNetAmount(item);
+    }
+    
+    return enriched;
   });
 }
 
@@ -562,25 +602,33 @@ interface AggregationResult {
 }
 
 /**
- * Résout un champ dimension pour le groupBy
+ * Résout un champ dimension pour le groupBy en utilisant les règles STATiA
  */
 function resolveDimensionField(dimension: string, item: any): string {
-  // Mapping des dimensions métier vers les champs réels
+  // Normaliser la dimension via les synonymes NLP
+  const normalizedDimension = normalizeSynonym(dimension).toLowerCase();
+  
+  // Mapping des dimensions métier vers les champs réels (enrichi avec STATIA_RULES)
   const dimensionMapping: Record<string, string[]> = {
     'apporteur': ['projects_data_commanditaireId', '_projects.data.commanditaireId', 'commanditaireId', 'data.commanditaireId'],
+    'commanditaire': ['projects_data_commanditaireId', '_projects.data.commanditaireId', 'commanditaireId', 'data.commanditaireId'],
+    'prescripteur': ['projects_data_commanditaireId', '_projects.data.commanditaireId', 'commanditaireId', 'data.commanditaireId'],
     'commanditaireid': ['projects_data_commanditaireId', '_projects.data.commanditaireId', 'commanditaireId', 'data.commanditaireId'],
     'univers': ['projects_data_universes', '_projects.data.universes', 'universes', 'data.universes'],
+    'metier': ['projects_data_universes', '_projects.data.universes', 'universes', 'data.universes'],
+    'domaine': ['projects_data_universes', '_projects.data.universes', 'universes', 'data.universes'],
     'universes': ['projects_data_universes', '_projects.data.universes', 'universes', 'data.universes'],
-    'technicien': ['userId', 'tech_id', 'data.technicians'],
+    'technicien': ['userId', 'tech_id', 'data.technicians', '_resolvedTechnicianId'],
+    'intervenant': ['userId', 'tech_id', 'data.technicians'],
+    'ouvrier': ['userId', 'tech_id', 'data.technicians'],
     'userid': ['userId', 'tech_id', 'data.technicians'],
     'client': ['clientId', 'client.id', 'projects_clientId'],
     'clientid': ['clientId', 'client.id', 'projects_clientId'],
-    'type': ['type', 'typeFacture', 'invoiceType'],
+    'type': ['type', '_resolvedType', 'typeFacture', 'invoiceType'],
+    'type_intervention': ['type', '_resolvedType'],
     'state': ['state', 'paymentStatus', 'kanban_status'],
   };
   
-  // Normaliser la dimension (lowercase)
-  const normalizedDimension = dimension.toLowerCase();
   const paths = dimensionMapping[normalizedDimension] || [dimension];
   
   for (const path of paths) {

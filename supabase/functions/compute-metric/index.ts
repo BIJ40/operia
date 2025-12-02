@@ -8,6 +8,36 @@ const corsHeaders = {
 
 const APOGEE_API_KEY = Deno.env.get('APOGEE_API_KEY');
 
+// =============================================================
+// STATIA_RULES - Règles métier centralisées
+// =============================================================
+const STATIA_RULES = {
+  CA: {
+    source: "apiGetFactures.data.totalHT",
+    includeStates: ["sent", "paid", "partial"],
+    avoir: "subtract",
+  },
+  technicians: {
+    productiveTypes: ["depannage", "repair", "travaux", "work"],
+    nonProductiveTypes: ["RT", "rdv", "rdvtech", "sav", "diagnostic"],
+    RT_generates_NO_CA: true,
+  },
+  interventions: {
+    validStates: ["validated", "done", "finished"],
+    excludeStates: ["draft", "canceled", "refused"],
+  },
+  dates: {
+    factures: "dateReelle",
+    interventions: "dateReelle",
+    projects: "date",
+  },
+  synonyms: {
+    apporteur: ["commanditaire", "prescripteur"],
+    univers: ["metier", "domaine"],
+    technicien: ["intervenant", "ouvrier"],
+  },
+};
+
 /**
  * Mapping des champs anglais vers les champs réels de l'API Apogée
  */
@@ -179,16 +209,64 @@ function evaluateCondition(value: any, operator: string, target: any): boolean {
 }
 
 /**
- * Filtre les données par plage de dates
+ * Retourne le champ date approprié selon les règles STATiA
  */
-function filterByDateRange(data: any[], dateFrom?: string, dateTo?: string): any[] {
+function getDateFieldForSource(source: string): string {
+  const mapping: Record<string, string> = STATIA_RULES.dates;
+  return mapping[source] || 'date';
+}
+
+/**
+ * Normalise un synonyme vers le terme canonique (règles NLP)
+ */
+function normalizeSynonym(term: string): string {
+  const termLower = term.toLowerCase().trim();
+  for (const [canonical, synonyms] of Object.entries(STATIA_RULES.synonyms)) {
+    if (termLower === canonical) return canonical;
+    if (synonyms.some((s: string) => termLower.includes(s.toLowerCase()))) {
+      return canonical;
+    }
+  }
+  return term;
+}
+
+/**
+ * Calcule le montant net d'une facture (gestion des avoirs)
+ */
+function calculateNetAmount(facture: any): number {
+  const montant = parseFloat(facture.data?.totalHT || facture.totalHT || 0);
+  const typeFacture = (facture.typeFacture || facture.type || '').toLowerCase();
+  
+  if (STATIA_RULES.CA.avoir === 'subtract' && typeFacture === 'avoir') {
+    return -Math.abs(montant);
+  }
+  return montant;
+}
+
+/**
+ * Vérifie si une intervention est productive
+ */
+function isProductiveIntervention(intervention: any): boolean {
+  const type = (intervention.type || intervention.type2 || '').toLowerCase();
+  return STATIA_RULES.technicians.productiveTypes.some(
+    t => type.includes(t.toLowerCase())
+  );
+}
+
+/**
+ * Filtre les données par plage de dates (utilise les règles STATiA)
+ */
+function filterByDateRange(data: any[], dateFrom?: string, dateTo?: string, source?: string): any[] {
   if (!dateFrom && !dateTo) return data;
   
   const from = dateFrom ? new Date(dateFrom) : null;
   const to = dateTo ? new Date(dateTo) : null;
   
+  // Utiliser le champ date approprié selon les règles métier
+  const dateField = source ? getDateFieldForSource(source) : 'date';
+  
   return data.filter(item => {
-    const dateStr = item.date || item.dateReelle || item.dateEmission || item.created_at;
+    const dateStr = item[dateField] || item.dateReelle || item.date || item.dateEmission || item.created_at;
     if (!dateStr) return true;
     
     const itemDate = new Date(dateStr);

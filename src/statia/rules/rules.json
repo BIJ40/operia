@@ -1,0 +1,94 @@
+{
+  "version": "1.0",
+  "description": "STATiA-BY-BIJ Rules Engine - Règles métier HelpConfort",
+  "project": {
+    "statusComptableSource": "apiGetProjects.state",
+    "interventionNeverDefinesAccounting": true
+  },
+  "CA": {
+    "source": "apiGetFactures.data.totalHT",
+    "includeStates": ["sent", "paid", "partial"],
+    "avoir": "subtract",
+    "duClientSource": "apiGetFactures.data.calcReglementsReste"
+  },
+  "technicians": {
+    "productiveTypes": ["depannage", "repair", "travaux", "work"],
+    "nonProductiveTypes": ["RT", "rdv", "rdvtech", "sav", "diagnostic"],
+    "timeAllocation": "duration_facturee",
+    "timeSourceField": "projects.duration | projects.tempsPrevus",
+    "RT_generates_NO_CA": true
+  },
+  "devis": {
+    "transformation": {
+      "ratioNumber": "count(devis_ayant_facture(projectId)) / total_devis_envoyes",
+      "ratioMontant": "sum(montant_facturé) / sum(montant_devisé)"
+    },
+    "diagnosticResolution": {
+      "type2_A_DEFINIR": {
+        "rule": "chooseValidated",
+        "logic": [
+          { "path": "biDepan.items.isValidated", "type": "depannage" },
+          { "path": "biTvx.items.isValidated", "type": "travaux" },
+          { "path": "biRt.items.isValidated", "type": "rt" }
+        ]
+      }
+    }
+  },
+  "interventions": {
+    "determineRealType": "diagnosticResolution",
+    "validStates": ["validated", "done", "finished"],
+    "excludeStates": ["draft", "canceled", "refused"]
+  },
+  "apporteurs": {
+    "source": "apiGetProjects.commanditaireId",
+    "excludeSAV": true,
+    "CA": "sum(factures.totalHT where commanditaireId = X)"
+  },
+  "univers": {
+    "source": "apiGetProjects.universes",
+    "multiUniverseAllocation": "uniform_or_time_weighted"
+  },
+  "sav": {
+    "identification": "linked_dossier",
+    "caImpact": 0,
+    "technicianStatsImpact": false,
+    "costCalculation": ["temps_passe", "nb_visites", "pourcentage_facture_parent"]
+  },
+  "dates": {
+    "use": "depends_on_metric",
+    "factures": "dateReelle",
+    "interventions": "dateReelle",
+    "projects": "date"
+  },
+  "groupBy": [
+    "technicien",
+    "apporteur",
+    "univers",
+    "type_intervention",
+    "type_devis",
+    "mois",
+    "semaine",
+    "annee",
+    "ville",
+    "client",
+    "dossier"
+  ],
+  "aggregations": ["sum", "count", "avg", "min", "max", "median", "ratio"],
+  "errors": {
+    "interventionWithoutProject": "error_intervention_without_project",
+    "projectWithoutApporteur": "assign_inconnu",
+    "factureWithoutHT": "compute_from_TTC"
+  },
+  "synonyms": {
+    "apporteur": ["commanditaire", "prescripteur"],
+    "univers": ["metier", "domaine"],
+    "rt": ["releve technique", "rdv technique"],
+    "sav": ["service apres vente", "garantie", "retour chantier"],
+    "travaux": ["tvx", "work", "reparation"],
+    "technicien": ["intervenant", "ouvrier"]
+  },
+  "nlp": {
+    "par": "groupBy",
+    "sur_la_periode": "date between {{date_from}} and {{date_to}}"
+  }
+}

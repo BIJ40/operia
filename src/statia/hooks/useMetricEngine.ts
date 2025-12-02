@@ -2,14 +2,19 @@
  * STATiA-BY-BIJ - Hook d'exécution de métriques V2
  * 
  * API simplifiée pour exécuter des métriques générées par l'IA.
+ * Intègre les règles métier centralisées depuis /statia/rules/
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback } from 'react';
 import { runMetric, MetricExecutionParams, MetricDefinitionJSON, MetricExecutionResult } from '../engine/metricEngine';
+import { STATIA_RULES_JSON, parseNLPGroupBy, normalizeSynonym } from '../rules/rules';
 
 // Re-export runMetric for direct usage
 export { runMetric };
+
+// Re-export rules for convenience
+export { STATIA_RULES_JSON, parseNLPGroupBy, normalizeSynonym };
 
 // ============================================
 // TYPES
