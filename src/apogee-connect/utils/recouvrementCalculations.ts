@@ -111,16 +111,20 @@ export function calculateRecouvrement(
   let facturesEnAttente = 0;
 
   factures.forEach((facture) => {
-    // Filtrage par date
-    const dateEmission = facture.date;
-    if (!dateEmission) return;
-
-    try {
-      const factureDate = parseISO(dateEmission);
-      const inRange = isWithinInterval(factureDate, {
-        start: filters.dateRange.start,
-        end: filters.dateRange.end
-      });
+     // Filtrage par date - utiliser les mêmes champs que les autres calculs
+     const dateEmission =
+       (facture as any).dateReelle ||
+       (facture as any).dateEmission ||
+       (facture as any).date ||
+       (facture as any).created_at;
+     if (!dateEmission) return;
+ 
+     try {
+       const factureDate = parseISO(dateEmission as string);
+       const inRange = isWithinInterval(factureDate, {
+         start: filters.dateRange.start,
+         end: filters.dateRange.end
+       });
 
       if (!inRange) return;
 
@@ -138,10 +142,10 @@ export function calculateRecouvrement(
         });
       }
 
-      // 1. Calcul du montant TTC de la facture
-      const montantTTCRaw = facture.totalTTC || 0;
-      const montantTTC = parseFloat(String(montantTTCRaw).replace(/[^0-9.-]/g, ''));
-
+      // 1. Calcul du montant TTC de la facture (gestion formats variés)
+       const montantTTCRaw = (facture as any).totalTTC ?? (facture as any).data?.totalTTC ?? 0;
+       const montantTTC = parseFloat(String(montantTTCRaw).replace(/[^0-9.-]/g, ''));
+ 
       if (isNaN(montantTTC)) {
         logApogee.warn('Facture avec montant TTC invalide', {
           id: facture.id,
@@ -252,15 +256,19 @@ export function calculateRecouvrementByClient(
   const recouvrementByClient = new Map<string, RecouvrementStats & { label: string }>();
 
   factures.forEach((facture) => {
-    const dateEmission = facture.date;
-    if (!dateEmission) return;
-
-    try {
-      const factureDate = parseISO(dateEmission);
-      const inRange = isWithinInterval(factureDate, {
-        start: filters.dateRange.start,
-        end: filters.dateRange.end
-      });
+     const dateEmission =
+       (facture as any).dateReelle ||
+       (facture as any).dateEmission ||
+       (facture as any).date ||
+       (facture as any).created_at;
+     if (!dateEmission) return;
+ 
+     try {
+       const factureDate = parseISO(dateEmission as string);
+       const inRange = isWithinInterval(factureDate, {
+         start: filters.dateRange.start,
+         end: filters.dateRange.end
+       });
 
       if (!inRange) return;
 
@@ -282,9 +290,9 @@ export function calculateRecouvrementByClient(
       const stats = recouvrementByClient.get(clientId)!;
 
       // Montant TTC
-      const montantTTCRaw = facture.totalTTC || 0;
-      const montantTTC = parseFloat(String(montantTTCRaw).replace(/[^0-9.-]/g, ''));
-
+       const montantTTCRaw = (facture as any).totalTTC ?? (facture as any).data?.totalTTC ?? 0;
+       const montantTTC = parseFloat(String(montantTTCRaw).replace(/[^0-9.-]/g, ''));
+ 
       if (!isNaN(montantTTC)) {
         const typeFacture = (facture.typeFacture || '').toLowerCase();
         if (typeFacture === 'avoir') {
@@ -333,15 +341,19 @@ export function calculateRecouvrementByProject(
   const recouvrementByProject = new Map<string, RecouvrementStats & { label: string }>();
 
   factures.forEach((facture) => {
-    const dateEmission = facture.date;
-    if (!dateEmission) return;
-
-    try {
-      const factureDate = parseISO(dateEmission);
-      const inRange = isWithinInterval(factureDate, {
-        start: filters.dateRange.start,
-        end: filters.dateRange.end
-      });
+     const dateEmission =
+       (facture as any).dateReelle ||
+       (facture as any).dateEmission ||
+       (facture as any).date ||
+       (facture as any).created_at;
+     if (!dateEmission) return;
+ 
+     try {
+       const factureDate = parseISO(dateEmission as string);
+       const inRange = isWithinInterval(factureDate, {
+         start: filters.dateRange.start,
+         end: filters.dateRange.end
+       });
 
       if (!inRange) return;
 
@@ -363,9 +375,9 @@ export function calculateRecouvrementByProject(
       const stats = recouvrementByProject.get(projectId)!;
 
       // Montant TTC
-      const montantTTCRaw = facture.totalTTC || 0;
-      const montantTTC = parseFloat(String(montantTTCRaw).replace(/[^0-9.-]/g, ''));
-
+       const montantTTCRaw = (facture as any).totalTTC ?? (facture as any).data?.totalTTC ?? 0;
+       const montantTTC = parseFloat(String(montantTTCRaw).replace(/[^0-9.-]/g, ''));
+ 
       if (!isNaN(montantTTC)) {
         const typeFacture = (facture.typeFacture || '').toLowerCase();
         if (typeFacture === 'avoir') {
