@@ -27,6 +27,13 @@ export const VISIT_TYPE_LABELS: Record<string, string> = {
   formation: 'Formation',
 };
 
+export const VISIT_TYPE_ICONS: Record<string, string> = {
+  visite_terrain: 'MapPin',
+  audit: 'ClipboardCheck',
+  accompagnement: 'Users',
+  formation: 'GraduationCap',
+};
+
 export const VISIT_STATUS_LABELS: Record<string, string> = {
   planifie: 'Planifiée',
   effectue: 'Effectuée',

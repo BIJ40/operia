@@ -6,9 +6,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAdminAgencies } from '@/hooks/use-admin-agencies';
-import { useCreateVisit, useUpdateVisit, AnimatorVisit, VISIT_TYPE_LABELS } from '../hooks/useAnimatorVisits';
+import { useCreateVisit, useUpdateVisit, AnimatorVisit, VISIT_TYPE_LABELS, VISIT_TYPE_ICONS } from '../hooks/useAnimatorVisits';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, MapPin, ClipboardCheck, Users, GraduationCap } from 'lucide-react';
+
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  MapPin,
+  ClipboardCheck,
+  Users,
+  GraduationCap,
+};
 
 interface AnimatorVisitDialogProps {
   open: boolean;
@@ -134,11 +141,17 @@ export function AnimatorVisitDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(VISIT_TYPE_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
+                {Object.entries(VISIT_TYPE_LABELS).map(([value, label]) => {
+                  const IconComponent = iconMap[VISIT_TYPE_ICONS[value]];
+                  return (
+                    <SelectItem key={value} value={value}>
+                      <span className="flex items-center gap-2">
+                        {IconComponent && <IconComponent className="h-4 w-4 text-helpconfort-blue" />}
+                        {label}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
