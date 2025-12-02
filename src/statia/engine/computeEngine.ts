@@ -141,6 +141,24 @@ export function applyFilters(data: any[], filters: FilterCondition[]): any[] {
 }
 
 function getNestedValue(obj: any, path: string): any {
+  // Gestion des fallbacks pour les champs monétaires courants
+  const monetaryFallbacks: Record<string, string[]> = {
+    'data.totalHT': ['data.totalHT', 'totalHT', 'data.montantHT', 'montantHT'],
+    'data.totalTTC': ['data.totalTTC', 'totalTTC', 'data.montantTTC', 'montantTTC'],
+    'totalHT': ['totalHT', 'data.totalHT', 'montantHT', 'data.montantHT'],
+  };
+  
+  const fallbacks = monetaryFallbacks[path];
+  if (fallbacks) {
+    for (const fallbackPath of fallbacks) {
+      const value = fallbackPath.split('.').reduce((current, key) => current?.[key], obj);
+      if (value !== null && value !== undefined) {
+        return value;
+      }
+    }
+    return undefined;
+  }
+  
   return path.split('.').reduce((current, key) => current?.[key], obj);
 }
 
