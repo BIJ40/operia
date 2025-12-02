@@ -58,7 +58,7 @@ export function useSupportAgents() {
     try {
       const { data, error: queryError } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, agence, global_role, enabled_modules')
+        .select('id, email, first_name, last_name, agence, global_role, enabled_modules, support_level')
         .eq('is_active', true);
 
       if (queryError) throw queryError;
@@ -85,7 +85,8 @@ export function useSupportAgents() {
             global_role: profile.global_role,
             isAgent: options.agent === true,
             isAdmin: options.admin === true,
-            level: options.level ?? null,
+            // V2: Utiliser profiles.support_level avec fallback sur options.level
+            level: (profile as any).support_level ?? options.level ?? null,
             skills: options.skills ?? [],
           };
         });

@@ -433,7 +433,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         global_role: data.global_role,
       };
       
-      // 🛡️ P0.1: Si support_level fourni, VÉRIFIER que l'agent support est activé
+      // 🛡️ V2: Écrire support_level directement dans profiles.support_level (colonne)
       if (data.support_level !== undefined) {
         // C2 - Garde-fou explicite: level=0 n'existe pas conceptuellement
         if (data.support_level === 0) {
@@ -456,19 +456,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           throw new Error('Impossible de définir un niveau support sans activer le statut d\'agent support');
         }
         
-        // Si agent=false, forcer level à null (suppression)
-        const finalLevel = isAgent ? data.support_level : null;
-        
-        updateData.enabled_modules = {
-          ...modules,
-          support: {
-            ...supportModule,
-            options: {
-              ...supportOptions,
-              level: finalLevel,
-            }
-          }
-        };
+        // V2: Écrire dans profiles.support_level (colonne) au lieu de enabled_modules.support.options.level
+        updateData.support_level = isAgent ? data.support_level : null;
       }
       
       const { error } = await supabase.from('profiles').update(updateData).eq('id', userId);
