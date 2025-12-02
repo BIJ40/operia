@@ -117,7 +117,7 @@ function PlanningHebdoContent() {
         </div>
 
         {/* Planning List */}
-        <TechWeeklyPlanningList techFilterId={selectedTechId} />
+        <TechWeeklyPlanningList techFilterId={selectedTechId} showInactiveTechs={showInactive} />
       </div>
     </AppLayout>
   );

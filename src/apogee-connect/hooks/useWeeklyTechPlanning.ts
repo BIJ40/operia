@@ -27,7 +27,7 @@ interface WeeklyPlanningHookResult {
   goToCurrentWeek: () => void;
 }
 
-export function useWeeklyTechPlanning(techFilterId?: number): WeeklyPlanningHookResult {
+export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs = false): WeeklyPlanningHookResult {
   const { isAgencyReady } = useAgency();
   const [weekDate, setWeekDate] = useState<Date>(new Date());
 
@@ -135,6 +135,7 @@ export function useWeeklyTechPlanning(techFilterId?: number): WeeklyPlanningHook
       interventions: interventions ?? [],
       projects: projects ?? [],
       clients: clients ?? [],
+      showInactiveTechs,
     });
 
     let weekly = buildWeeklyTechPlanning(planning, weekDate);
@@ -145,7 +146,7 @@ export function useWeeklyTechPlanning(techFilterId?: number): WeeklyPlanningHook
     }
 
     return { planningByTech: planning, weeklyData: weekly };
-  }, [creneaux, users, interventions, projects, clients, weekDate, techFilterId, isLoading, error]);
+  }, [creneaux, users, interventions, projects, clients, weekDate, techFilterId, showInactiveTechs, isLoading, error]);
 
   const goToPrevWeek = () => setWeekDate((prev) => subWeeks(prev, 1));
   const goToNextWeek = () => setWeekDate((prev) => addWeeks(prev, 1));
