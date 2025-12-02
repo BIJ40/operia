@@ -29,6 +29,9 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'improvement', description: 'Intégration règles dans useMetricEngine et compute-metric edge function' },
       { type: 'improvement', description: 'Export JSON rules.json pour backend et interprétation IA' },
       { type: 'improvement', description: 'Helpers métier : resolveInterventionType, isProductiveIntervention, calculateNetAmount, normalizeSynonym' },
+      { type: 'feature', description: 'Menu IA unifié dans toolbar Kanban : K-LifIA (qualification), IA-IA (doublons), Auto-Classeur (modules)' },
+      { type: 'feature', description: 'Auto-Classeur IA : classification automatique des tickets sans module (seuil confiance 85%)' },
+      { type: 'feature', description: 'Batch review pour Auto-Classeur avec sélection multiple et application groupée' },
     ]
   },
   {

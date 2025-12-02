@@ -295,42 +295,65 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
               <p>{toClassifyCount} ticket{toClassifyCount > 1 ? 's' : ''} à classifier</p>
             </TooltipContent>
           </Tooltip>
-          {/* Bouton qualification IA - toujours visible */}
-          <Tooltip>
-            <TooltipTrigger asChild>
+          {/* Menu IA regroupé */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button 
                 variant="outline" 
                 size="sm"
-                className={unqualifiedCount > 0 ? "text-purple-600 border-purple-300 hover:bg-purple-50" : ""}
+                className="text-purple-600 border-purple-300 hover:bg-purple-50"
+              >
+                <Sparkles className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">IA</span>
+                <ChevronDown className="h-4 w-4 sm:ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-background border shadow-lg z-50 w-56">
+              <DropdownMenuItem 
                 onClick={qualifyAllUnqualified}
                 disabled={isQualifying || unqualifiedCount === 0}
+                className="cursor-pointer"
               >
-                <Sparkles className="h-4 w-4 mr-1" />
-                IA {unqualifiedCount > 0 && `(${unqualifiedCount})`}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{unqualifiedCount} ticket{unqualifiedCount > 1 ? 's' : ''} non qualifié{unqualifiedCount > 1 ? 's' : ''}</p>
-            </TooltipContent>
-          </Tooltip>
-          {/* Bouton Doublons IA */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link to={ROUTES.projects.duplicates}>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="text-indigo-600 border-indigo-300 hover:bg-indigo-50"
-                >
-                  <Copy className="h-4 w-4 mr-1" />
-                  Doublons IA
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Détecter et gérer les doublons potentiels</p>
-            </TooltipContent>
-          </Tooltip>
+                <Sparkles className="h-4 w-4 mr-2 text-purple-600" />
+                <div className="flex-1">
+                  <span>K-LifIA</span>
+                  <span className="text-xs text-muted-foreground ml-1">
+                    (Qualification)
+                  </span>
+                </div>
+                {unqualifiedCount > 0 && (
+                  <Badge variant="secondary" className="ml-auto">
+                    {unqualifiedCount}
+                  </Badge>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => navigate(ROUTES.projects.duplicates)}
+                className="cursor-pointer"
+              >
+                <Copy className="h-4 w-4 mr-2 text-indigo-600" />
+                <div className="flex-1">
+                  <span>IA-IA</span>
+                  <span className="text-xs text-muted-foreground ml-1">
+                    (Doublons)
+                  </span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => navigate(ROUTES.projects.autoClassify)}
+                className="cursor-pointer"
+              >
+                <FolderOpen className="h-4 w-4 mr-2 text-amber-600" />
+                <div className="flex-1">
+                  <span>Auto-Classeur</span>
+                  <span className="text-xs text-muted-foreground ml-1">
+                    (Modules)
+                  </span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {isAdmin && (
             <>
               <Link to={ROUTES.projects.permissions}>

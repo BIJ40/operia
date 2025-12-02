@@ -2,7 +2,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   Headset, Network, Building2, PieChart, GitCompare,
-  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, HelpCircle
+  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, HelpCircle, Sparkles
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import {
@@ -244,7 +244,8 @@ export function UnifiedSidebar() {
       items: [
         { title: 'Kanban', url: ROUTES.projects.kanban, icon: Kanban, description: 'Tableau de bord projet' },
         { title: 'Liste', url: ROUTES.projects.list, icon: ListTodo, description: 'Vue liste des tickets' },
-        { title: 'Doublons IA', url: ROUTES.projects.duplicates, icon: GitCompare, description: 'Détection des doublons' },
+        { title: 'IA-IA (Doublons)', url: ROUTES.projects.duplicates, icon: GitCompare, description: 'Détection des doublons' },
+        { title: 'Auto-Classeur', url: ROUTES.projects.autoClassify, icon: Sparkles, description: 'Classification IA modules' },
         { title: 'Tickets incomplets', url: ROUTES.projects.incomplete, icon: FileText, description: 'Tickets à compléter' },
       ],
     },
