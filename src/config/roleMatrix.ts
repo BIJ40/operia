@@ -440,50 +440,63 @@ export function canAccessFeature(
   const { globalRole, agence, enabledModules, canAccessSupportConsoleUI } = context;
   const caps = getRoleCapabilities(globalRole);
   
+  // Helper: vérifie si un module est activé
+  const hasModuleActivated = (moduleKey: string): boolean => {
+    // N5+ bypass complet
+    const roleLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
+    if (roleLevel >= GLOBAL_ROLES.platform_admin) return true;
+    
+    if (!enabledModules) return false;
+    const moduleState = enabledModules[moduleKey as keyof typeof enabledModules];
+    if (typeof moduleState === 'boolean') return moduleState;
+    if (typeof moduleState === 'object') return moduleState.enabled;
+    return false;
+  };
+  
   // Mapping featureId → règles d'accès
   // Features principales (tiles, routes, nav items)
   switch (featureId) {
-    // Help Academy
+    // Help Academy - VÉRIFIE RÔLE ET MODULE
     case 'GUIDE_APOGEE':
     case 'apogee':
     case 'academy_apogee':
-      return caps.canAccessHelpAcademy;
+      return caps.canAccessHelpAcademy && hasModuleActivated('help_academy');
       
     case 'GUIDE_APPORTEURS':
     case 'apporteurs':
     case 'academy_apporteurs':
-      return caps.canAccessHelpAcademy;
+      return caps.canAccessHelpAcademy && hasModuleActivated('help_academy');
       
     case 'BASE_DOCUMENTAIRE':
     case 'helpconfort':
     case 'academy_documents':
-      return caps.canAccessHelpAcademy;
+      return caps.canAccessHelpAcademy && hasModuleActivated('help_academy');
     
-    // Pilotage Agence
+    // Pilotage Agence - VÉRIFIE RÔLE ET MODULE
     case 'STATISTIQUES_HUB':
     case 'mes_indicateurs':
       if (caps.requiresAgencyForPilotage && !agence) return false;
-      return caps.canAccessPilotageAgence;
+      return caps.canAccessPilotageAgence && hasModuleActivated('pilotage_agence');
       
     case 'ACTIONS_A_MENER':
     case 'actions_a_mener':
       if (caps.requiresAgencyForPilotage && !agence) return false;
-      return caps.canAccessPilotageAgence;
+      return caps.canAccessPilotageAgence && hasModuleActivated('pilotage_agence');
       
     case 'DIFFUSION':
     case 'diffusion':
       if (caps.requiresAgencyForPilotage && !agence) return false;
-      return caps.canAccessPilotageAgence;
+      return caps.canAccessPilotageAgence && hasModuleActivated('pilotage_agence');
       
     case 'RH_TECH':
     case 'rh_tech':
       if (caps.requiresAgencyForPilotage && !agence) return false;
-      return caps.canAccessPilotageAgence;
+      return caps.canAccessPilotageAgence && hasModuleActivated('pilotage_agence');
       
     case 'MON_EQUIPE':
     case 'mon_equipe':
       if (caps.requiresAgencyForPilotage && !agence) return false;
-      return caps.canAccessPilotageAgence;
+      return caps.canAccessPilotageAgence && hasModuleActivated('pilotage_agence');
     
     // Support
     case 'CENTRE_AIDE':
