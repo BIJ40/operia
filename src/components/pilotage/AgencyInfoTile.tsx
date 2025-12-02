@@ -9,10 +9,12 @@ import { useAgency } from "@/franchiseur/hooks/useAgencies";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logError } from "@/lib/logger";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function AgencyInfoTile() {
   const { agencyId } = useAuth();
   const { data: agency, isLoading } = useAgency(agencyId);
+  const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -53,6 +55,10 @@ export function AgencyInfoTile() {
         .eq('id', agencyId);
 
       if (error) throw error;
+
+      // Invalider les caches pour synchroniser partout
+      await queryClient.invalidateQueries({ queryKey: ['franchiseur-agency', agencyId] });
+      await queryClient.invalidateQueries({ queryKey: ['franchiseur-agencies'] });
 
       toast.success("Informations mises à jour avec succès");
       setIsEditing(false);
