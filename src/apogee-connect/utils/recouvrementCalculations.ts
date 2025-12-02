@@ -142,45 +142,63 @@ export function calculateRecouvrement(
         });
       }
 
-      // 1. Calcul du montant TTC de la facture (gestion formats variés)
-       const montantTTCRaw = (facture as any).totalTTC ?? (facture as any).data?.totalTTC ?? 0;
-       const montantTTC = parseFloat(String(montantTTCRaw).replace(/[^0-9.-]/g, ''));
+      // 1. Calcul du montant TTC de la facture
+       const montantTTCRaw = (facture as any).data?.totalTTC ?? (facture as any).totalTTC ?? 0;
+       const montantTTC = Number(String(montantTTCRaw).replace(/[^0-9.-]/g, '')) || 0;
  
-      if (isNaN(montantTTC)) {
-        logApogee.warn('Facture avec montant TTC invalide', {
-          id: facture.id,
-          numeroFacture: facture.numeroFacture,
-          totalTTC: facture.totalTTC
-        });
-        return;
-      }
+       if (isNaN(montantTTC) || montantTTC === 0) {
+         logApogee.warn('Facture avec montant TTC invalide ou nul', {
+           id: facture.id,
+           numeroFacture: facture.numeroFacture,
+           totalTTC: facture.totalTTC,
+           dataTotalTTC: (facture as any).data?.totalTTC
+         });
+         return;
+       }
 
-      // Gestion des avoirs : montant négatif
-      const typeFacture = (facture.typeFacture || facture.state || '').toLowerCase();
-      
-      if (typeFacture === 'avoir') {
-        const montantAvoir = -Math.abs(montantTTC);
-        totalFacturesTTC += montantAvoir;
-        avoirs += Math.abs(montantTTC);
-      } else {
-        totalFacturesTTC += montantTTC;
-        facturesPositives += montantTTC;
-      }
+       // Gestion des avoirs : montant négatif
+       const typeFacture = (facture.typeFacture || facture.state || '').toLowerCase();
+       
+       if (typeFacture === 'avoir') {
+         const montantAvoir = -Math.abs(montantTTC);
+         totalFacturesTTC += montantAvoir;
+         avoirs += Math.abs(montantTTC);
+       } else {
+         totalFacturesTTC += montantTTC;
+         facturesPositives += montantTTC;
+       }
 
-      // 2. Calcul des règlements reçus
-      const paidTTC = facture.calc?.paidTTC || 0;
-      const montantReglements = parseFloat(String(paidTTC).replace(/[^0-9.-]/g, '')) || 0;
-      
-      totalReglementsRecus += montantReglements;
+       // 2. Calcul des règlements reçus depuis l'API apiGetFactures
+       let montantReglements = 0;
+       
+       // Priorité 1: data.calcPaymentsTotal
+       const calcPaymentsTotal = (facture as any).data?.calcPaymentsTotal;
+       if (calcPaymentsTotal !== undefined && calcPaymentsTotal !== null) {
+         montantReglements = Number(String(calcPaymentsTotal).replace(/[^0-9.-]/g, '')) || 0;
+       } else {
+         // Priorité 2: somme des montants dans data.financier.sommesPercues[]
+         const sommesPercues = (facture as any).data?.financier?.sommesPercues;
+         if (Array.isArray(sommesPercues) && sommesPercues.length > 0) {
+           montantReglements = sommesPercues.reduce((sum, sp) => {
+             const amount = Number(String(sp.amount || 0).replace(/[^0-9.-]/g, '')) || 0;
+             return sum + amount;
+           }, 0);
+         }
+       }
+       
+       totalReglementsRecus += montantReglements;
 
-      // Stats détaillées
-      if (options.includeDetails) {
-        if (montantReglements >= Math.abs(montantTTC)) {
-          facturesPayees++;
-        } else {
-          facturesEnAttente++;
-        }
-      }
+       // Stats détaillées basées sur calcPaymentsReste ou state
+       if (options.includeDetails) {
+         const calcPaymentsReste = (facture as any).data?.calcPaymentsReste;
+         const state = (facture as any).state?.toLowerCase();
+         
+         if (state === 'paid' || (calcPaymentsReste !== undefined && Number(calcPaymentsReste) <= 0)) {
+           facturesPayees++;
+         } else {
+           facturesEnAttente++;
+         }
+       }
 
     } catch (error) {
       logApogee.warn('Erreur parsing date facture pour recouvrement', {
@@ -290,22 +308,33 @@ export function calculateRecouvrementByClient(
       const stats = recouvrementByClient.get(clientId)!;
 
       // Montant TTC
-       const montantTTCRaw = (facture as any).totalTTC ?? (facture as any).data?.totalTTC ?? 0;
-       const montantTTC = parseFloat(String(montantTTCRaw).replace(/[^0-9.-]/g, ''));
+       const montantTTCRaw = (facture as any).data?.totalTTC ?? (facture as any).totalTTC ?? 0;
+       const montantTTC = Number(String(montantTTCRaw).replace(/[^0-9.-]/g, '')) || 0;
  
-      if (!isNaN(montantTTC)) {
-        const typeFacture = (facture.typeFacture || '').toLowerCase();
-        if (typeFacture === 'avoir') {
-          stats.totalFacturesTTC -= Math.abs(montantTTC);
-        } else {
-          stats.totalFacturesTTC += montantTTC;
-        }
-      }
+       if (!isNaN(montantTTC) && montantTTC !== 0) {
+         const typeFacture = (facture.typeFacture || '').toLowerCase();
+         if (typeFacture === 'avoir') {
+           stats.totalFacturesTTC -= Math.abs(montantTTC);
+         } else {
+           stats.totalFacturesTTC += montantTTC;
+         }
+       }
 
-      // Règlements
-      const paidTTC = facture.calc?.paidTTC || 0;
-      const montantReglements = parseFloat(String(paidTTC).replace(/[^0-9.-]/g, '')) || 0;
-      stats.totalReglementsRecus += montantReglements;
+       // Règlements reçus
+       let montantReglements = 0;
+       const calcPaymentsTotal = (facture as any).data?.calcPaymentsTotal;
+       if (calcPaymentsTotal !== undefined && calcPaymentsTotal !== null) {
+         montantReglements = Number(String(calcPaymentsTotal).replace(/[^0-9.-]/g, '')) || 0;
+       } else {
+         const sommesPercues = (facture as any).data?.financier?.sommesPercues;
+         if (Array.isArray(sommesPercues) && sommesPercues.length > 0) {
+           montantReglements = sommesPercues.reduce((sum, sp) => {
+             const amount = Number(String(sp.amount || 0).replace(/[^0-9.-]/g, '')) || 0;
+             return sum + amount;
+           }, 0);
+         }
+       }
+       stats.totalReglementsRecus += montantReglements;
 
       stats.nbFactures++;
       stats.recouvrement = stats.totalFacturesTTC - stats.totalReglementsRecus;
@@ -375,22 +404,33 @@ export function calculateRecouvrementByProject(
       const stats = recouvrementByProject.get(projectId)!;
 
       // Montant TTC
-       const montantTTCRaw = (facture as any).totalTTC ?? (facture as any).data?.totalTTC ?? 0;
-       const montantTTC = parseFloat(String(montantTTCRaw).replace(/[^0-9.-]/g, ''));
+       const montantTTCRaw = (facture as any).data?.totalTTC ?? (facture as any).totalTTC ?? 0;
+       const montantTTC = Number(String(montantTTCRaw).replace(/[^0-9.-]/g, '')) || 0;
  
-      if (!isNaN(montantTTC)) {
-        const typeFacture = (facture.typeFacture || '').toLowerCase();
-        if (typeFacture === 'avoir') {
-          stats.totalFacturesTTC -= Math.abs(montantTTC);
-        } else {
-          stats.totalFacturesTTC += montantTTC;
-        }
-      }
+       if (!isNaN(montantTTC) && montantTTC !== 0) {
+         const typeFacture = (facture.typeFacture || '').toLowerCase();
+         if (typeFacture === 'avoir') {
+           stats.totalFacturesTTC -= Math.abs(montantTTC);
+         } else {
+           stats.totalFacturesTTC += montantTTC;
+         }
+       }
 
-      // Règlements
-      const paidTTC = facture.calc?.paidTTC || 0;
-      const montantReglements = parseFloat(String(paidTTC).replace(/[^0-9.-]/g, '')) || 0;
-      stats.totalReglementsRecus += montantReglements;
+       // Règlements reçus
+       let montantReglements = 0;
+       const calcPaymentsTotal = (facture as any).data?.calcPaymentsTotal;
+       if (calcPaymentsTotal !== undefined && calcPaymentsTotal !== null) {
+         montantReglements = Number(String(calcPaymentsTotal).replace(/[^0-9.-]/g, '')) || 0;
+       } else {
+         const sommesPercues = (facture as any).data?.financier?.sommesPercues;
+         if (Array.isArray(sommesPercues) && sommesPercues.length > 0) {
+           montantReglements = sommesPercues.reduce((sum, sp) => {
+             const amount = Number(String(sp.amount || 0).replace(/[^0-9.-]/g, '')) || 0;
+             return sum + amount;
+           }, 0);
+         }
+       }
+       stats.totalReglementsRecus += montantReglements;
 
       stats.nbFactures++;
       stats.recouvrement = stats.totalFacturesTTC - stats.totalReglementsRecus;
