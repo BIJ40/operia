@@ -115,10 +115,10 @@ export function UserEditForm({
     }
   }, [user]);
 
-  const isSupportModuleEnabled = () => {
+  const isSupportAgentEnabled = () => {
     if (!user?.enabled_modules) return false;
     const modules = user.enabled_modules as any;
-    return modules?.support?.enabled === true;
+    return modules?.support?.options?.agent === true;
   };
 
   const isFieldReadOnly = (field: string) => readOnlyFields.includes(field);
@@ -143,7 +143,7 @@ export function UserEditForm({
       agence: formData.agence,
       role_agence: formData.roleAgence,
       global_role: formData.globalRole as GlobalRole,
-      support_level: isSupportModuleEnabled() ? formData.supportLevel : undefined,
+      support_level: isSupportAgentEnabled() ? formData.supportLevel : undefined,
     });
   };
 
@@ -271,7 +271,7 @@ export function UserEditForm({
         {errors.globalRole && <p className="text-xs text-destructive">{errors.globalRole}</p>}
       </div>
 
-      {isSupportModuleEnabled() && (
+      {isSupportAgentEnabled() && (
         <div className="space-y-2">
           <Label>Niveau Support (SA)</Label>
           <Select 
@@ -286,7 +286,7 @@ export function UserEditForm({
               <SelectItem value="3">SA3 - Support expert</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">Définit le niveau pour les escalades de tickets support</p>
+          <p className="text-xs text-muted-foreground">Visible uniquement pour les agents support (option "Agent support" activée)</p>
         </div>
       )}
 
