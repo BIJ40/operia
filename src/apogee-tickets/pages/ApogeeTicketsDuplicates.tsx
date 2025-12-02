@@ -25,6 +25,7 @@ export default function ApogeeTicketsDuplicates() {
   const { rejectSuggestion, isRejecting, mergeTickets, isMerging } = useTicketDuplicates();
   
   const [isBatchScanning, setIsBatchScanning] = useState(false);
+  const [isBatchMerging, setIsBatchMerging] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [mergeDialog, setMergeDialog] = useState<{
     open: boolean;
@@ -42,6 +43,47 @@ export default function ApogeeTicketsDuplicates() {
       successToast(`Scan terminé : ${result.scanned} tickets analysés`);
     } finally {
       setIsBatchScanning(false);
+    }
+  };
+
+  const handleBatchMerge = async () => {
+    if (suggestions.length === 0) return;
+    
+    setIsBatchMerging(true);
+    let merged = 0;
+    let failed = 0;
+    
+    try {
+      for (const suggestion of suggestions) {
+        if (!suggestion.source_ticket || !suggestion.candidate_ticket) continue;
+        
+        try {
+          await new Promise<void>((resolve, reject) => {
+            mergeTickets({
+              ticket_id_main: suggestion.ticket_id_source,
+              ticket_id_duplicate: suggestion.ticket_id_candidate,
+              merge_options: {
+                merge_comments: true,
+                merge_attachments: true,
+                merge_tags: true,
+              },
+            }, {
+              onSuccess: () => resolve(),
+              onError: () => reject(),
+            });
+          });
+          merged++;
+        } catch {
+          failed++;
+        }
+      }
+      
+      if (merged > 0) {
+        successToast(`${merged} fusion${merged > 1 ? 's' : ''} effectuée${merged > 1 ? 's' : ''}${failed > 0 ? `, ${failed} échec${failed > 1 ? 's' : ''}` : ''}`);
+        refetch();
+      }
+    } finally {
+      setIsBatchMerging(false);
     }
   };
 
@@ -134,6 +176,21 @@ export default function ApogeeTicketsDuplicates() {
               )}
               Scanner tous les tickets
             </Button>
+            {suggestions.length > 0 && (
+              <Button
+                variant="default"
+                onClick={handleBatchMerge}
+                disabled={isBatchMerging || isMerging}
+                className="bg-primary"
+              >
+                {isBatchMerging ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <GitMerge className="h-4 w-4 mr-2" />
+                )}
+                Tout fusionner
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
