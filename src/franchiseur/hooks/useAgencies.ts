@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { safeQuery } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
+import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 
 export interface AgencyAnimator {
   id: string;
@@ -29,6 +30,18 @@ export interface Agency {
 }
 
 const DEFAULT_AGENCIES: Agency[] = [];
+
+/**
+ * Dérive le rôle franchiseur depuis global_role
+ * N3 = animateur, N4 = directeur, N5+ = dg
+ */
+function deriveFranchiseurRole(globalRole: GlobalRole | null): string {
+  if (!globalRole) return 'animateur';
+  const level = GLOBAL_ROLES[globalRole] ?? 0;
+  if (level >= 5) return 'dg';
+  if (level >= 4) return 'directeur';
+  return 'animateur';
+}
 
 export function useAgencies() {
   return useQuery({
@@ -78,39 +91,24 @@ export function useAgencies() {
         first_name: string | null;
         last_name: string | null;
         email: string | null;
-      }
-      
-      interface RoleRow {
-        user_id: string;
-        franchiseur_role: string;
+        global_role: GlobalRole | null;
       }
       
       const assignments = assignmentsResult.data || [];
       const userIds = [...new Set(assignments.map(a => a.user_id))];
       
       let animatorProfiles: ProfileRow[] = [];
-      let franchiseurRoles: RoleRow[] = [];
       
       if (userIds.length > 0) {
-        const [profilesResult, rolesResult] = await Promise.all([
-          safeQuery<ProfileRow[]>(
-            supabase
-              .from('profiles')
-              .select('id, first_name, last_name, email')
-              .in('id', userIds),
-            'FRANCHISEUR_ANIMATOR_PROFILES_LOAD'
-          ),
-          safeQuery<RoleRow[]>(
-            supabase
-              .from('franchiseur_roles')
-              .select('user_id, franchiseur_role')
-              .in('user_id', userIds),
-            'FRANCHISEUR_ANIMATOR_ROLES_LOAD'
-          )
-        ]);
+        const profilesResult = await safeQuery<ProfileRow[]>(
+          supabase
+            .from('profiles')
+            .select('id, first_name, last_name, email, global_role')
+            .in('id', userIds),
+          'FRANCHISEUR_ANIMATOR_PROFILES_LOAD'
+        );
         
         animatorProfiles = profilesResult.data || [];
-        franchiseurRoles = rolesResult.data || [];
       }
 
       // Merge data - each agency gets an array of animators
@@ -118,10 +116,12 @@ export function useAgencies() {
         const agencyAssignments = assignments.filter(a => a.agency_id === agency.id);
         const animateurs = agencyAssignments.map(assignment => {
           const profile = animatorProfiles.find(p => p.id === assignment.user_id);
-          const role = franchiseurRoles.find(r => r.user_id === assignment.user_id);
           return profile ? {
-            ...profile,
-            franchiseur_role: role?.franchiseur_role || 'animateur'
+            id: profile.id,
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            email: profile.email,
+            franchiseur_role: deriveFranchiseurRole(profile.global_role)
           } : null;
         }).filter(Boolean) as AgencyAnimator[];
 
@@ -193,38 +193,25 @@ export function useAgency(agencyId: string | null) {
         first_name: string | null;
         last_name: string | null;
         email: string | null;
-      }
-      
-      interface RoleRow {
-        user_id: string;
-        franchiseur_role: string;
+        global_role: GlobalRole | null;
       }
       
       if (userIds.length > 0) {
-        const [profilesResult, rolesResult] = await Promise.all([
-          safeQuery<ProfileRow[]>(
-            supabase
-              .from('profiles')
-              .select('id, first_name, last_name, email')
-              .in('id', userIds),
-            'FRANCHISEUR_AGENCY_ANIMATOR_PROFILES_LOAD'
-          ),
-          safeQuery<RoleRow[]>(
-            supabase
-              .from('franchiseur_roles')
-              .select('user_id, franchiseur_role')
-              .in('user_id', userIds),
-            'FRANCHISEUR_AGENCY_ANIMATOR_ROLES_LOAD'
-          )
-        ]);
+        const profilesResult = await safeQuery<ProfileRow[]>(
+          supabase
+            .from('profiles')
+            .select('id, first_name, last_name, email, global_role')
+            .in('id', userIds),
+          'FRANCHISEUR_AGENCY_ANIMATOR_PROFILES_LOAD'
+        );
         
-        animateurs = (profilesResult.data || []).map(profile => {
-          const role = rolesResult.data?.find(r => r.user_id === profile.id);
-          return {
-            ...profile,
-            franchiseur_role: role?.franchiseur_role || 'animateur'
-          };
-        });
+        animateurs = (profilesResult.data || []).map(profile => ({
+          id: profile.id,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          email: profile.email,
+          franchiseur_role: deriveFranchiseurRole(profile.global_role)
+        }));
       }
 
       return {

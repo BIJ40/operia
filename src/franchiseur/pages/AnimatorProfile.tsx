@@ -57,18 +57,28 @@ export default function AnimatorProfile() {
     enabled: !!animatorId && canViewProfile,
   });
   
-  // Fetch animator's franchiseur role
-  const { data: animatorRole } = useQuery({
-    queryKey: ['animator-role', animatorId],
+  // Derive franchiseur role from animator's global_role
+  const animatorRole = useMemo(() => {
+    if (!animator) return null;
+    // Query global_role from profiles (already fetched in animator query)
+    return null; // Will be enriched below
+  }, [animator]);
+  
+  // Fetch animator's global_role for role display
+  const { data: animatorGlobalRole } = useQuery({
+    queryKey: ['animator-global-role', animatorId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('franchiseur_roles')
-        .select('franchiseur_role')
-        .eq('user_id', animatorId)
+      const { data } = await supabase
+        .from('profiles')
+        .select('global_role')
+        .eq('id', animatorId)
         .single();
       
-      if (error) return null;
-      return data?.franchiseur_role;
+      if (!data?.global_role) return 'animateur';
+      const role = data.global_role;
+      if (role === 'superadmin' || role === 'platform_admin') return 'dg';
+      if (role === 'franchisor_admin') return 'directeur';
+      return 'animateur';
     },
     enabled: !!animatorId && canViewProfile,
   });
@@ -190,9 +200,9 @@ export default function AnimatorProfile() {
               <div>
                 <h2 className="text-xl font-semibold">{animator.first_name} {animator.last_name}</h2>
                 <p className="text-muted-foreground">{animator.email}</p>
-                {animatorRole && (
+                {animatorGlobalRole && (
                   <Badge variant="outline" className="mt-2">
-                    {ROLE_LABELS[animatorRole] || animatorRole}
+                    {ROLE_LABELS[animatorGlobalRole] || animatorGlobalRole}
                   </Badge>
                 )}
               </div>

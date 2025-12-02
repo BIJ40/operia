@@ -437,21 +437,18 @@ export const useAdminTickets = () => {
       return;
     }
 
-    // Also load franchiseur roles for these users
-    const franchiseurResult = await safeQuery<any[]>(
-      supabase
-        .from('franchiseur_roles')
-        .select('user_id, franchiseur_role')
-        .in('user_id', userIds),
-      'ADMIN_TICKETS_LOAD_FRANCHISEUR_ROLES'
-    );
+    // Derive franchiseur_role from global_role (V2)
+    const deriveFranchiseurRole = (globalRole: string | null): string => {
+      if (!globalRole) return 'animateur';
+      if (globalRole === 'superadmin' || globalRole === 'platform_admin') return 'dg';
+      if (globalRole === 'franchisor_admin') return 'directeur';
+      return 'animateur';
+    };
 
-    const franchiseurRoles = franchiseurResult.success ? franchiseurResult.data || [] : [];
-
-    // Merge franchiseur_role into profiles
+    // Merge derived franchiseur_role into profiles
     const usersWithRoles = supportProfiles.map(profile => ({
       ...profile,
-      franchiseur_role: franchiseurRoles.find(fr => fr.user_id === profile.id)?.franchiseur_role
+      franchiseur_role: deriveFranchiseurRole(profile.global_role)
     }));
 
     setSupportUsers(usersWithRoles as SupportUser[]);
@@ -469,56 +466,44 @@ export const useAdminTickets = () => {
       return;
     }
 
-    // Get current user info with franchiseur role
+    // Helper to derive franchiseur role from global_role
+    const deriveFranchiseurRole = (globalRole: string | null): string => {
+      if (!globalRole) return 'animateur';
+      if (globalRole === 'superadmin' || globalRole === 'platform_admin') return 'dg';
+      if (globalRole === 'franchisor_admin') return 'directeur';
+      return 'animateur';
+    };
+
+    // Get current user info with global_role
     const currentUserResult = await safeQuery<any>(
       supabase
         .from('profiles')
-        .select('first_name, last_name')
+        .select('first_name, last_name, global_role')
         .eq('id', user?.id)
         .maybeSingle(),
       'ADMIN_TICKETS_ESCALATE_CURRENT_USER'
     );
-    
-    const currentUserFranchiseurResult = await safeQuery<any>(
-      supabase
-        .from('franchiseur_roles')
-        .select('franchiseur_role')
-        .eq('user_id', user?.id || '')
-        .maybeSingle(),
-      'ADMIN_TICKETS_ESCALATE_CURRENT_FR_ROLE'
-    );
 
-    // Get target user info with franchiseur role
+    // Get target user info with global_role
     const targetUserResult = await safeQuery<any>(
       supabase
         .from('profiles')
-        .select('first_name, last_name')
+        .select('first_name, last_name, global_role')
         .eq('id', targetUserId)
         .maybeSingle(),
       'ADMIN_TICKETS_ESCALATE_TARGET_USER'
     );
-      
-    const targetUserFranchiseurResult = await safeQuery<any>(
-      supabase
-        .from('franchiseur_roles')
-        .select('franchiseur_role')
-        .eq('user_id', targetUserId)
-        .maybeSingle(),
-      'ADMIN_TICKETS_ESCALATE_TARGET_FR_ROLE'
-    );
 
     const currentUser = currentUserResult.data;
     const targetUser = targetUserResult.data;
-    const currentUserFranchiseurRole = currentUserFranchiseurResult.data;
-    const targetUserFranchiseurRole = targetUserFranchiseurResult.data;
 
     let fromRole = undefined;
     let toRole = undefined;
 
-    // For HelpConfort, determine roles from franchiseur_roles table
+    // For HelpConfort, derive roles from global_role (V2)
     if (currentTicket.service === 'HelpConfort') {
-      fromRole = currentUserFranchiseurRole?.franchiseur_role || 'animateur';
-      toRole = targetUserFranchiseurRole?.franchiseur_role || 'directeur';
+      fromRole = deriveFranchiseurRole(currentUser?.global_role);
+      toRole = deriveFranchiseurRole(targetUser?.global_role);
     }
 
     const escalationEntry = {
