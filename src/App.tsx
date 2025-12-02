@@ -160,31 +160,31 @@ function AppContent() {
           {/* ============================================ */}
           {/* HELP ACADEMY - Section Index + Sous-pages */}
           {/* ============================================ */}
-          <Route path="/academy" element={<MainLayout><RoleGuard minRole="franchisee_user"><AcademyIndex /></RoleGuard></MainLayout>} />
+          <Route path="/academy" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><AcademyIndex /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Guide Apogée */}
-          <Route path="/academy/apogee" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApogeeGuide /></RoleGuard></MainLayout>} />
-          <Route path="/academy/apogee/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><Category /></RoleGuard></MainLayout>} />
+          <Route path="/academy/apogee" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><ApogeeGuide /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/academy/apogee/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><Category /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Guide Apporteurs */}
-          <Route path="/academy/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApporteurGuide /></RoleGuard></MainLayout>} />
-          <Route path="/academy/apporteurs/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ApporteurSubcategories /></RoleGuard></MainLayout>} />
-          <Route path="/academy/apporteurs/category/:slug/sub/:subslug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryApporteur /></RoleGuard></MainLayout>} />
+          <Route path="/academy/apporteurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><ApporteurGuide /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/academy/apporteurs/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><ApporteurSubcategories /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/academy/apporteurs/category/:slug/sub/:subslug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><CategoryApporteur /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Base Documentaire */}
-          <Route path="/academy/hc-base" element={<MainLayout><RoleGuard minRole="franchisee_user"><HelpConfort /></RoleGuard></MainLayout>} />
-          <Route path="/academy/hc-base/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><CategoryHelpConfort /></RoleGuard></MainLayout>} />
+          <Route path="/academy/hc-base" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><HelpConfort /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/academy/hc-base/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="help_academy"><CategoryHelpConfort /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* PILOTAGE AGENCE - Section Index + Sous-pages */}
           {/* ============================================ */}
-          <Route path="/hc-agency" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PilotageIndex /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PilotageIndex /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Hub Statistiques */}
-          <Route path="/hc-agency/statistiques" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PilotageStatsHub /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/statistiques" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PilotageStatsHub /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Indicateurs détaillés */}
-          <Route path="/hc-agency/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><IndicateursLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-agency/indicateurs" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><IndicateursLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<IndicateursAccueil />} />
             <Route path="apporteurs" element={<IndicateursApporteurs />} />
             <Route path="univers" element={<IndicateursUnivers />} />
@@ -193,17 +193,17 @@ function AppContent() {
           </Route>
           
           {/* Actions à Mener */}
-          <Route path="/hc-agency/actions" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ActionsAMener /></RoleGuard></MainLayout>} />
-          <Route path="/hc-agency/actions/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_admin"><CategoryActionsAMener /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/actions" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><ActionsAMener /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/actions/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CategoryActionsAMener /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Diffusion */}
-          <Route path="/hc-agency/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><DiffusionDashboard /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><DiffusionDashboard /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* RH Tech */}
-          <Route path="/hc-agency/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><PlanningHebdo /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Équipe */}
-          <Route path="/hc-agency/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><EquipePage /></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><EquipePage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}

@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
 export default function IndicateursLayout() {
-  const { agence, hasAccessToScope } = useAuth();
+  const { agence, hasAccessToScope, hasModule } = useAuth();
   const { toast } = useToast();
 
   // Block access if no agency defined
@@ -22,8 +22,8 @@ export default function IndicateursLayout() {
     }
   }, [agence, toast]);
 
-  // Redirect if no agency or no permission
-  if (!agence || !hasAccessToScope('mes_indicateurs')) {
+  // Redirect if no agency, no permission, or module not enabled
+  if (!agence || !hasAccessToScope('mes_indicateurs') || !hasModule('pilotage_agence')) {
     return <Navigate to="/" replace />;
   }
 
