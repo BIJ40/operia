@@ -13,10 +13,33 @@ import {
   FilterCondition,
   ComputeComplexity,
   InputSource,
-  ApogeeSourceName
+  ApogeeSourceName,
+  MetricError
 } from '../types';
-import { APOGEE_SOURCES, getJoinKeys, getFieldDefinition } from '../schema/apogeeSchema';
+import { validateMetricDefinition, getSchemaRelations, APOGEE_SCHEMA } from '../schema/apogeeSchemaV2';
 import { DataService } from '@/apogee-connect/services/dataService';
+
+/**
+ * Trouve les clés de jointure entre deux sources via le schema
+ */
+function getJoinKeys(source: ApogeeSourceName, target: ApogeeSourceName): { localKey: string; foreignKey: string } | null {
+  const endpoint = APOGEE_SCHEMA[source];
+  if (!endpoint) return null;
+  
+  const join = endpoint.joins.find(j => j.target === target);
+  if (join) {
+    return { localKey: join.localField, foreignKey: join.remoteField };
+  }
+  
+  // Tenter la jointure inverse
+  const targetEndpoint = APOGEE_SCHEMA[target];
+  const reverseJoin = targetEndpoint?.joins.find(j => j.target === source);
+  if (reverseJoin) {
+    return { localKey: reverseJoin.remoteField, foreignKey: reverseJoin.localField };
+  }
+  
+  return null;
+}
 import { setApiBaseUrl } from '@/apogee-connect/services/api';
 import { parseISO, parse, isWithinInterval, differenceInMinutes } from 'date-fns';
 
@@ -375,6 +398,13 @@ function calculateAggregation(data: any[], formula: FormulaDefinition): number {
 // ============================================
 
 /**
+ * Valide une métrique contre le schema Apogée
+ */
+export function validateMetric(metric: MetricDefinition): { valid: boolean; errors: string[] } {
+  return validateMetricDefinition(metric);
+}
+
+/**
  * Exécute le calcul complet d'une métrique
  */
 export async function computeMetric(
@@ -382,6 +412,12 @@ export async function computeMetric(
   params: MetricParams
 ): Promise<MetricResult> {
   const startTime = Date.now();
+  
+  // Validation contre le schema
+  const validation = validateMetricDefinition(metric);
+  if (!validation.valid) {
+    throw new Error(`Metric validation failed: ${validation.errors.join(', ')}`);
+  }
   
   // Charger les données sources avec debug
   const { data: loadedData, debug: loadDebug } = await loadSourceData(metric.input_sources, params);
