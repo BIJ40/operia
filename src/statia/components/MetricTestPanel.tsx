@@ -75,6 +75,21 @@ function safeParseJSON<T>(value: unknown, fallback: T): T {
 /**
  * Construit une MetricDefinitionJSON robuste depuis une MetricDefinition DB
  */
+/**
+ * Mapping des champs anglais vers les champs réels de l'API Apogée
+ */
+const FIELD_MAPPING: Record<string, string> = {
+  'duration': 'duree',
+  'amount': 'totalHT',
+  'amountHT': 'totalHT', 
+  'amountTTC': 'totalTTC',
+};
+
+function mapFieldName(field: string | undefined): string | undefined {
+  if (!field) return undefined;
+  return FIELD_MAPPING[field] || field;
+}
+
 function buildMetricDefinitionJSON(metric: MetricDefinition): MetricDefinitionJSON {
   const rawInputSources = safeParseJSON<any>(metric.input_sources, {});
   const rawFormula = safeParseJSON<ParsedFormula>(metric.formula, { type: 'count' });
@@ -82,16 +97,23 @@ function buildMetricDefinitionJSON(metric: MetricDefinition): MetricDefinitionJS
   let primary = 'projects';
   let secondary: Array<{ source: string; joinOn?: { local: string; foreign: string } }> = [];
   let joins: Array<{ from: string; to: string; on: { local: string; foreign: string } }> = [];
+  let extractedFilters: any[] = [];
   
   if (Array.isArray(rawInputSources)) {
+    // Format v1: array of sources with inline filters
     if (rawInputSources.length > 0) {
       primary = rawInputSources[0]?.source || 'projects';
+      // Extract filters from the primary source (v1 format)
+      if (Array.isArray(rawInputSources[0]?.filters)) {
+        extractedFilters = rawInputSources[0].filters;
+      }
       secondary = rawInputSources.slice(1).map((s: any) => ({
         source: s.source,
         joinOn: s.joinOn,
       }));
     }
   } else if (typeof rawInputSources === 'object' && rawInputSources !== null) {
+    // Format v2: object with primary/secondary/joins
     primary = rawInputSources.primary || 'projects';
     secondary = Array.isArray(rawInputSources.secondary) 
       ? rawInputSources.secondary.map((s: any) => ({
@@ -102,9 +124,16 @@ function buildMetricDefinitionJSON(metric: MetricDefinition): MetricDefinitionJS
     joins = Array.isArray(rawInputSources.joins) ? rawInputSources.joins : [];
   }
   
-  const filters = Array.isArray(rawFormula.filters) ? rawFormula.filters : [];
+  // Filters from formula or from v1 input_sources (prioritize v1)
+  const filters = extractedFilters.length > 0 
+    ? extractedFilters 
+    : (Array.isArray(rawFormula.filters) ? rawFormula.filters : []);
+  
   const dimensions = Array.isArray(rawFormula.groupBy) ? rawFormula.groupBy : [];
   const hasGroupBy = dimensions.length > 0;
+  
+  // Map field name for API compatibility
+  const mappedField = mapFieldName(rawFormula.field);
   
   return {
     id: metric.id,
@@ -116,7 +145,7 @@ function buildMetricDefinitionJSON(metric: MetricDefinition): MetricDefinitionJS
     },
     formula: {
       type: rawFormula.type || 'count',
-      field: rawFormula.field,
+      field: mappedField,
       numerator: rawFormula.numerator,
       denominator: rawFormula.denominator,
       groupBy: dimensions,
