@@ -15,6 +15,7 @@ export default function Landing() {
 
   // V2: Capacités basées sur ROLE_MATRIX
   const caps = getRoleCapabilities(globalRole);
+  const isAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
 
   // V2: Filtrer les tuiles basé sur ROLE_MATRIX + canAccessSupportConsole de AuthContext
   const visibleTiles = useMemo(() => {
@@ -77,7 +78,7 @@ export default function Landing() {
           />
           <div className="grid md:grid-cols-3 gap-4">
             {tilesByGroup.help_academy.map(tile => (
-              <DashboardTileCard key={tile.id} tile={tile} />
+              <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
             ))}
           </div>
         </section>
@@ -94,7 +95,7 @@ export default function Landing() {
           />
           <div className="grid md:grid-cols-3 gap-4">
             {tilesByGroup.pilotage.map(tile => (
-              <DashboardTileCard key={tile.id} tile={tile} />
+              <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
             ))}
           </div>
         </section>
@@ -114,6 +115,7 @@ export default function Landing() {
               <DashboardTileCard 
                 key={tile.id} 
                 tile={tile} 
+                isAdmin={isAdmin}
                 dynamicBadge={tile.id === 'CONSOLE_SUPPORT' && newTicketsCount > 0 ? newTicketsCount : undefined}
               />
             ))}
@@ -132,7 +134,7 @@ export default function Landing() {
           />
           <div className="grid md:grid-cols-3 gap-4">
             {tilesByGroup.projects.map(tile => (
-              <DashboardTileCard key={tile.id} tile={tile} />
+              <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
             ))}
           </div>
         </section>
@@ -149,7 +151,7 @@ export default function Landing() {
           />
           <div className="grid md:grid-cols-3 gap-4">
             {tilesByGroup.franchiseur.map(tile => (
-              <DashboardTileCard key={tile.id} tile={tile} />
+              <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
             ))}
           </div>
         </section>
@@ -166,7 +168,7 @@ export default function Landing() {
           />
           <div className="grid md:grid-cols-4 gap-4">
             {tilesByGroup.admin.map(tile => (
-              <DashboardTileCard key={tile.id} tile={tile} />
+              <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
             ))}
           </div>
         </section>
@@ -175,10 +177,11 @@ export default function Landing() {
   );
 }
 
-const DashboardTileCard = memo(function DashboardTileCard({ tile, dynamicBadge }: { tile: DashboardTile; dynamicBadge?: number }) {
+const DashboardTileCard = memo(function DashboardTileCard({ tile, dynamicBadge, isAdmin }: { tile: DashboardTile; dynamicBadge?: number; isAdmin?: boolean }) {
   const Icon = tile.icon;
   const badgeContent = dynamicBadge ?? tile.badge;
-  const isDisabled = tile.isDisabled;
+  // Les admins (N5+) peuvent accéder aux tuiles désactivées
+  const isDisabled = tile.isDisabled && !isAdmin;
 
   const content = (
     <div className={`group relative rounded-xl border border-helpconfort-blue/15 p-4
