@@ -119,8 +119,8 @@ export async function loadSourceData(
   const sourceMapping: Record<ApogeeSourceName, keyof typeof allData> = {
     interventions: 'interventions',
     projects: 'projects',
-    factures: 'invoices',
-    devis: 'quotes',
+    factures: 'factures',
+    devis: 'devis',
     users: 'users',
     clients: 'clients',
   };
