@@ -17,6 +17,7 @@ export interface Agency {
   label: string;
   is_active: boolean;
   date_ouverture: string | null;
+  date_cloture_bilan: string | null;
   contact_email: string | null;
   contact_phone: string | null;
   adresse: string | null;
@@ -39,6 +40,7 @@ export function useAgencies() {
         label: string;
         is_active: boolean;
         date_ouverture: string | null;
+        date_cloture_bilan: string | null;
         contact_email: string | null;
         contact_phone: string | null;
         adresse: string | null;
@@ -147,6 +149,7 @@ export function useAgency(agencyId: string | null) {
         label: string;
         is_active: boolean;
         date_ouverture: string | null;
+        date_cloture_bilan: string | null;
         contact_email: string | null;
         contact_phone: string | null;
         adresse: string | null;

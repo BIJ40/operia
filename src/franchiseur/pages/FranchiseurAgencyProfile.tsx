@@ -201,6 +201,22 @@ export default function FranchiseurAgencyProfile() {
                   </div>
                 )}
 
+                {agency.date_cloture_bilan && (
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Date de clôture bilan</p>
+                      <p className="font-medium">
+                        {new Date(agency.date_cloture_bilan).toLocaleDateString('fr-FR', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {agency.animateurs && agency.animateurs.length > 0 && (
                   <div className="flex items-center gap-3">
                     <Users className="h-5 w-5 text-primary" />

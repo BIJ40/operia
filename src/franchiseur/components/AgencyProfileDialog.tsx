@@ -45,6 +45,7 @@ export function AgencyProfileDialog({
     slug: "",
     is_active: true,
     date_ouverture: "",
+    date_cloture_bilan: "",
     contact_email: "",
     contact_phone: "",
     adresse: "",
@@ -61,6 +62,7 @@ export function AgencyProfileDialog({
         slug: agency.slug || "",
         is_active: agency.is_active,
         date_ouverture: agency.date_ouverture || "",
+        date_cloture_bilan: agency.date_cloture_bilan || "",
         contact_email: agency.contact_email || "",
         contact_phone: agency.contact_phone || "",
         adresse: agency.adresse || "",
@@ -91,6 +93,7 @@ export function AgencyProfileDialog({
       const dataToSave = {
         ...formData,
         date_ouverture: formData.date_ouverture || null,
+        date_cloture_bilan: formData.date_cloture_bilan || null,
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
         adresse: formData.adresse || null,
@@ -218,6 +221,17 @@ export function AgencyProfileDialog({
                   type="date"
                   value={formData.date_ouverture}
                   onChange={(e) => setFormData({ ...formData, date_ouverture: e.target.value })}
+                  disabled={!canManage}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="date_cloture_bilan">Date de clôture bilan</Label>
+                <Input
+                  id="date_cloture_bilan"
+                  type="date"
+                  value={formData.date_cloture_bilan}
+                  onChange={(e) => setFormData({ ...formData, date_cloture_bilan: e.target.value })}
                   disabled={!canManage}
                 />
               </div>
