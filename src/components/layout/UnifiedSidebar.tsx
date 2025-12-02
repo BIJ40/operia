@@ -278,6 +278,16 @@ export function UnifiedSidebar() {
       return hasModule('apogee_tickets');
     }
     
+    // ✅ FIX: Filtrer Help Academy si module help_academy non activé
+    if (group.labelKey === 'help-academy') {
+      return hasModule('help_academy');
+    }
+    
+    // ✅ FIX: Filtrer Pilotage Agence si module pilotage_agence non activé
+    if (group.labelKey === 'pilotage') {
+      return hasModule('pilotage_agence');
+    }
+    
     if (!group.accessKey) return true;
     if (group.accessKey === 'canAccessPilotageAgence') {
       if (caps.requiresAgencyForPilotage && !agence) return false;
