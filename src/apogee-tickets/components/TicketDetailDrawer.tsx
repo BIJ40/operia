@@ -809,42 +809,40 @@ export function TicketDetailDrawer({
           </TabsContent>
         </Tabs>
 
-        {/* Bouton supprimer - en bas à droite */}
+        {/* Bouton supprimer - en bas à droite du drawer */}
         {onDelete && canManage && (
-          <div className="absolute bottom-4 right-4">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-10 w-10 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full shadow-sm border border-destructive/20"
-                  title="Supprimer le ticket"
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute bottom-4 right-4 h-10 w-10 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full shadow-sm border border-destructive/20 bg-background z-10"
+                title="Supprimer le ticket"
+              >
+                <Trash2 className="h-5 w-5" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Supprimer ce ticket ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Cette action est irréversible. Le ticket "{ticket.element_concerne.slice(0, 50)}..." sera définitivement supprimé.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => {
+                    onDelete(ticket.id);
+                    onClose();
+                  }}
                 >
-                  <Trash2 className="h-5 w-5" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Supprimer ce ticket ?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Cette action est irréversible. Le ticket "{ticket.element_concerne.slice(0, 50)}..." sera définitivement supprimé.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    onClick={() => {
-                      onDelete(ticket.id);
-                      onClose();
-                    }}
-                  >
-                    Supprimer
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+                  Supprimer
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </SheetContent>
     </Sheet>
