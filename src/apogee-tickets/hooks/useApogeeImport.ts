@@ -271,7 +271,7 @@ function rowToTicket(row: ImportedRow): ApogeeTicketInsert {
     source_sheet: row.sheetName,
     source_row_index: row.rowIndex,
     external_key: `${row.sheetName}#${row.rowIndex}`,
-    created_from: 'IMPORT',
+    created_from: 'IMPORT_EVALUATED',
     heat_priority: heatPriority,
   };
 }

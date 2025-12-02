@@ -42,7 +42,7 @@ export type OwnerSide = 'HC' | 'APOGEE' | 'PARTAGE';
 // Qui a rapporté/identifié le ticket
 export type ReportedBy = 'JEROME' | 'FLORIAN' | 'ERIC' | 'APOGEE' | 'AUTRE';
 export type Severity = 'CRITIQUE' | 'MAJEUR' | 'CONFORT';
-export type CreatedFrom = 'IMPORT' | 'IMPORT_TRAITE' | 'MANUAL';
+export type CreatedFrom = 'MANUAL' | 'IMPORT_BUGS' | 'IMPORT_EVALUATED' | 'IMPORT_TRAITE';
 // Types d'auteurs pour les commentaires (HC ou Apogée uniquement)
 export type AuthorType = 'HC' | 'APOGEE';
 
@@ -201,4 +201,5 @@ export interface TicketFilters {
   heat_priority_max?: number;
   heat_priority_exact?: number; // For clicking on a specific dot
   missing_field?: MissingFieldFilter; // Filtre sur complétude des champs
+  tags?: string[]; // Filtre par tags
 }

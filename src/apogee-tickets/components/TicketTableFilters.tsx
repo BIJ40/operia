@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, X, CalendarIcon, Filter, RotateCcw } from 'lucide-react';
+import { Search, X, CalendarIcon, Filter, RotateCcw, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { ApogeeModule, ApogeeTicketStatus, TicketFilters, OwnerSide, ReportedBy } from '../types';
@@ -37,6 +37,8 @@ const REPORTED_BY_OPTIONS: { value: ReportedBy; label: string }[] = [
   { value: 'AUTRE', label: 'Autre' },
 ];
 
+const DEFAULT_TAGS = ['BUG', 'EVO', 'NTH'];
+
 export function TicketTableFilters({
   filters,
   onFiltersChange,
@@ -53,6 +55,7 @@ export function TicketTableFilters({
   );
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
+  const [selectedTags, setSelectedTags] = useState<string[]>(filters.tags || []);
 
   const handleSearchSubmit = () => {
     onFiltersChange({ ...filters, search: localSearch || undefined });
@@ -99,12 +102,21 @@ export function TicketTableFilters({
     });
   };
 
+  const handleTagToggle = (tag: string) => {
+    const newTags = selectedTags.includes(tag)
+      ? selectedTags.filter(t => t !== tag)
+      : [...selectedTags, tag];
+    setSelectedTags(newTags);
+    onFiltersChange({ ...filters, tags: newTags.length > 0 ? newTags : undefined });
+  };
+
   const handleReset = () => {
     setLocalSearch('');
     setHeatRange([0, 12]);
     setSelectedModules([]);
     setSelectedStatuses([]);
     setDateRange({});
+    setSelectedTags([]);
     onFiltersChange({});
   };
 
@@ -278,6 +290,40 @@ export function TicketTableFilters({
           </SelectContent>
         </Select>
 
+        {/* Tags */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-9">
+              <Tag className="h-4 w-4 mr-2" />
+              Tags
+              {selectedTags.length > 0 && (
+                <Badge variant="secondary" className="ml-2 px-1.5">
+                  {selectedTags.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 bg-background z-50" align="start">
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Tags</div>
+              <div className="space-y-1">
+                {DEFAULT_TAGS.map((tag) => (
+                  <label
+                    key={tag}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1"
+                  >
+                    <Checkbox
+                      checked={selectedTags.includes(tag)}
+                      onCheckedChange={() => handleTagToggle(tag)}
+                    />
+                    <span className="text-sm">{tag}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         {/* Date */}
         <Popover>
           <PopoverTrigger asChild>
@@ -348,6 +394,19 @@ export function TicketTableFilters({
               <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter('is_qualified')} />
             </Badge>
           )}
+          {filters.tags && filters.tags.length > 0 && filters.tags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="gap-1">
+              Tag: {tag}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => {
+                  const newTags = selectedTags.filter(t => t !== tag);
+                  setSelectedTags(newTags);
+                  onFiltersChange({ ...filters, tags: newTags.length > 0 ? newTags : undefined });
+                }}
+              />
+            </Badge>
+          ))}
         </div>
       )}
     </div>
