@@ -314,15 +314,20 @@ export function MetricAIBuilder({ onSave, onCancel }: MetricAIBuilderProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-1">
-                {editedMetric.filters.map((filter, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs font-mono bg-muted p-1.5 rounded">
-                    <span className="font-medium">{filter.field}</span>
-                    <span className="text-muted-foreground">{filter.operator}</span>
-                    <span className="text-primary">
-                      {Array.isArray(filter.value) ? filter.value.join(', ') : filter.value}
-                    </span>
-                  </div>
-                ))}
+                {editedMetric.filters.map((filter, i) => {
+                  const displayValue = typeof filter.value === 'object' && filter.value !== null
+                    ? JSON.stringify(filter.value)
+                    : Array.isArray(filter.value) 
+                      ? filter.value.join(', ') 
+                      : String(filter.value);
+                  return (
+                    <div key={i} className="flex items-center gap-2 text-xs font-mono bg-muted p-1.5 rounded">
+                      <span className="font-medium">{filter.field}</span>
+                      <span className="text-muted-foreground">{filter.operator}</span>
+                      <span className="text-primary">{displayValue}</span>
+                    </div>
+                  );
+                })}
                 {editedMetric.filters.length === 0 && (
                   <p className="text-xs text-muted-foreground">Aucun filtre</p>
                 )}
