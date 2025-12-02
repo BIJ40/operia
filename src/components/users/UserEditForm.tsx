@@ -1,0 +1,331 @@
+import { useState, useEffect } from 'react';
+import { z } from 'zod';
+import { GlobalRole, GLOBAL_ROLE_LABELS } from '@/types/globalRoles';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Mail, KeyRound, AlertCircle, UserX } from 'lucide-react';
+
+const ROLE_AGENCE_LABELS: Record<string, string> = {
+  'dirigeant': 'Dirigeant(e)',
+  'assistante': 'Assistante',
+  'commercial': 'Commercial',
+  'technicien': 'Technicien',
+  'tete_de_reseau': 'Tête de réseau',
+  'externe': 'Externe',
+};
+
+// Validation schema
+const editUserSchema = z.object({
+  firstName: z.string().trim().min(1, { message: "Prénom requis" }).max(100, { message: "Prénom trop long" }),
+  lastName: z.string().trim().min(1, { message: "Nom requis" }).max(100, { message: "Nom trop long" }),
+  email: z.string().trim().email({ message: "Email invalide" }).max(255, { message: "Email trop long" }),
+  agence: z.string(),
+  roleAgence: z.string(),
+  globalRole: z.string(),
+  supportLevel: z.number().min(1).max(3).optional(),
+});
+
+export type UpdateUserPayload = {
+  first_name?: string;
+  last_name?: string;
+  agence?: string;
+  role_agence?: string;
+  global_role?: GlobalRole;
+  support_level?: number;
+};
+
+interface Agency {
+  id: string;
+  slug: string;
+  label: string;
+  is_active: boolean;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  agence: string | null;
+  global_role: GlobalRole | null;
+  enabled_modules: any;
+  role_agence: string | null;
+  is_active: boolean | null;
+  must_change_password: boolean | null;
+}
+
+export interface UserEditFormProps {
+  user: UserProfile;
+  onSave: (payload: UpdateUserPayload) => void;
+  onUpdateEmail: (newEmail: string) => void;
+  onResetPassword: (newPassword: string) => void;
+  isSubmitting: boolean;
+  isEmailPending: boolean;
+  isPasswordPending: boolean;
+  availableAgencies: Agency[];
+  assignableRoles: GlobalRole[];
+  showModulesEditor?: boolean;
+  readOnlyFields?: string[];
+  canEditRoleAgence?: boolean;
+}
+
+export function UserEditForm({
+  user,
+  onSave,
+  onUpdateEmail,
+  onResetPassword,
+  isSubmitting,
+  isEmailPending,
+  isPasswordPending,
+  availableAgencies,
+  assignableRoles,
+  readOnlyFields = [],
+  canEditRoleAgence = true,
+}: UserEditFormProps) {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    agence: '',
+    roleAgence: '',
+    supportLevel: 1,
+    globalRole: 'base_user' as GlobalRole,
+  });
+  const [newPassword, setNewPassword] = useState('');
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof formData, string>>>({});
+
+  // Synchroniser formData avec user
+  useEffect(() => {
+    if (user) {
+      const modules = user.enabled_modules as any;
+      const supportLevel = modules?.support?.options?.level || 1;
+      
+      setFormData({
+        firstName: user.first_name || '',
+        lastName: user.last_name || '',
+        email: user.email || '',
+        agence: user.agence || '',
+        roleAgence: user.role_agence || '',
+        supportLevel,
+        globalRole: user.global_role || 'base_user',
+      });
+    }
+  }, [user]);
+
+  const isSupportModuleEnabled = () => {
+    if (!user?.enabled_modules) return false;
+    const modules = user.enabled_modules as any;
+    return modules?.support?.enabled === true;
+  };
+
+  const isFieldReadOnly = (field: string) => readOnlyFields.includes(field);
+
+  const handleSubmit = () => {
+    // Validation
+    const result = editUserSchema.safeParse(formData);
+    if (!result.success) {
+      const newErrors: Partial<Record<keyof typeof formData, string>> = {};
+      result.error.issues.forEach((issue) => {
+        const path = issue.path[0] as keyof typeof formData;
+        newErrors[path] = issue.message;
+      });
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
+    onSave({
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      agence: formData.agence,
+      role_agence: formData.roleAgence,
+      global_role: formData.globalRole as GlobalRole,
+      support_level: isSupportModuleEnabled() ? formData.supportLevel : undefined,
+    });
+  };
+
+  return (
+    <div className="space-y-4 py-4">
+      <div className="flex gap-2 flex-wrap">
+        {user?.must_change_password && (
+          <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-950/30">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Mot de passe provisoire non changé
+          </Badge>
+        )}
+        {user?.is_active === false && (
+          <Badge variant="destructive">
+            <UserX className="w-3 h-3 mr-1" />
+            Compte désactivé
+          </Badge>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Prénom</Label>
+          <Input 
+            value={formData.firstName} 
+            onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))} 
+            disabled={isSubmitting || isFieldReadOnly('firstName')}
+          />
+          {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
+        </div>
+        <div className="space-y-2">
+          <Label>Nom</Label>
+          <Input 
+            value={formData.lastName} 
+            onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))} 
+            disabled={isSubmitting || isFieldReadOnly('lastName')}
+          />
+          {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Email</Label>
+        <div className="flex gap-2">
+          <Input 
+            type="email" 
+            value={formData.email} 
+            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} 
+            className="flex-1"
+            disabled={isFieldReadOnly('email')}
+          />
+          {!isFieldReadOnly('email') && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => onUpdateEmail(formData.email)} 
+              disabled={formData.email === user?.email || isEmailPending}
+            >
+              <Mail className="w-4 h-4 mr-1" />
+              Modifier email
+            </Button>
+          )}
+        </div>
+        {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Agence</Label>
+        <Select 
+          value={formData.agence || "none"} 
+          onValueChange={(v) => setFormData(prev => ({ ...prev, agence: v === "none" ? "" : v }))}
+          disabled={isSubmitting || isFieldReadOnly('agence')}
+        >
+          <SelectTrigger><SelectValue placeholder="Sélectionner une agence" /></SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="none">Aucune agence</SelectItem>
+            {availableAgencies
+              .filter(a => a.slug && a.slug.trim() !== "")
+              .map(agency => (
+                <SelectItem key={agency.id} value={agency.slug}>
+                  {agency.label}
+                </SelectItem>
+              ))
+            }
+          </SelectContent>
+        </Select>
+        {errors.agence && <p className="text-xs text-destructive">{errors.agence}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Poste occupé</Label>
+        <Select 
+          value={formData.roleAgence} 
+          onValueChange={(v) => setFormData(prev => ({ ...prev, roleAgence: v }))} 
+          disabled={!canEditRoleAgence || isSubmitting}
+        >
+          <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            {Object.entries(ROLE_AGENCE_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>{label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {!canEditRoleAgence && (
+          <p className="text-xs text-muted-foreground">Seul Admin et N+1 peuvent modifier ce champ</p>
+        )}
+        {errors.roleAgence && <p className="text-xs text-destructive">{errors.roleAgence}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Rôle global (plafond)</Label>
+        <Select 
+          value={formData.globalRole} 
+          onValueChange={(v) => setFormData(prev => ({ ...prev, globalRole: v as GlobalRole }))}
+          disabled={isSubmitting || isFieldReadOnly('globalRole')}
+        >
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            {assignableRoles.map(role => (
+              <SelectItem key={role} value={role}>{GLOBAL_ROLE_LABELS[role]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">Définit le niveau d'autorité maximum de l'utilisateur</p>
+        {errors.globalRole && <p className="text-xs text-destructive">{errors.globalRole}</p>}
+      </div>
+
+      {isSupportModuleEnabled() && (
+        <div className="space-y-2">
+          <Label>Niveau Support (SA)</Label>
+          <Select 
+            value={formData.supportLevel.toString()} 
+            onValueChange={(v) => setFormData(prev => ({ ...prev, supportLevel: parseInt(v) }))}
+            disabled={isSubmitting}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="1">SA1 - Support de base</SelectItem>
+              <SelectItem value="2">SA2 - Support technique</SelectItem>
+              <SelectItem value="3">SA3 - Support expert</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">Définit le niveau pour les escalades de tickets support</p>
+        </div>
+      )}
+
+      <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
+        <Label className="flex items-center gap-2">
+          <KeyRound className="w-4 h-4" />
+          Réinitialiser le mot de passe
+        </Label>
+        <div className="flex gap-2">
+          <Input 
+            type="text" 
+            placeholder="Nouveau mot de passe (min 8 car.)" 
+            value={newPassword} 
+            onChange={(e) => setNewPassword(e.target.value)} 
+            className="flex-1"
+            disabled={isPasswordPending}
+          />
+          <Button 
+            variant="outline" 
+            onClick={() => { 
+              onResetPassword(newPassword); 
+              setNewPassword(''); 
+            }} 
+            disabled={!newPassword || isPasswordPending}
+          >
+            {isPasswordPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+          </Button>
+        </div>
+      </div>
+
+      <div className="pt-4">
+        <Button 
+          onClick={handleSubmit} 
+          disabled={isSubmitting}
+          className="w-full"
+        >
+          {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Enregistrer les modifications"}
+        </Button>
+      </div>
+    </div>
+  );
+}
