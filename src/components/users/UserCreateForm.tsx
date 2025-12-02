@@ -212,17 +212,7 @@ export function UserCreateForm({
         {errors.roleAgence && <p className="text-xs text-destructive">{errors.roleAgence}</p>}
       </div>
 
-      {/* Message informatif pour N2 */}
-      {isN2Creator && (
-        <div className="bg-muted p-4 rounded-md space-y-1">
-          <p className="text-sm font-medium">Rôle système automatique</p>
-          <p className="text-xs text-muted-foreground">
-            Le rôle système sera automatiquement défini sur "Utilisateur franchisé" (N1).
-          </p>
-        </div>
-      )}
-
-      {/* Rôle système - masqué si N2 ou technicien/assistante car auto-défini */}
+      {/* Rôle système - masqué si N2 ou technicien/assistante */}
       {!isN2Creator && !isGlobalRoleAutoAssigned && (
         <div className="space-y-2">
           <Label>Rôle système</Label>
