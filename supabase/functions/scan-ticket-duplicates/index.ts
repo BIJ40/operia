@@ -45,13 +45,13 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Check if source ticket has embedding
-    const { data: sourceEmbedding, error: sourceError } = await supabase
+    let sourceEmbeddingData = await supabase
       .from("ticket_embeddings")
       .select("embedding")
       .eq("ticket_id", ticket_id)
       .single();
 
-    if (sourceError || !sourceEmbedding) {
+    if (sourceEmbeddingData.error || !sourceEmbeddingData.data) {
       // Try to generate embedding first
       console.log("No embedding found, generating...");
       const genResponse = await fetch(`${supabaseUrl}/functions/v1/generate-ticket-embedding`, {
@@ -71,20 +71,21 @@ serve(async (req) => {
       }
 
       // Re-fetch embedding
-      const { data: newEmbedding, error: newError } = await supabase
+      sourceEmbeddingData = await supabase
         .from("ticket_embeddings")
         .select("embedding")
         .eq("ticket_id", ticket_id)
         .single();
 
-      if (newError || !newEmbedding) {
+      if (sourceEmbeddingData.error || !sourceEmbeddingData.data) {
         return new Response(
           JSON.stringify({ error: "Failed to retrieve generated embedding" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      
-      const sourceVector = newEmbedding.embedding as number[];
+    }
+    
+    const sourceVector = sourceEmbeddingData.data.embedding as number[];
 
     // Load all embeddings except the source
     const { data: allEmbeddings, error: embeddingsError } = await supabase
