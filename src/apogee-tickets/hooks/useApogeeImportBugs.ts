@@ -164,22 +164,19 @@ function rowToTicket(row: BugsRow): ApogeeTicketInsert {
     description: row.description,
     module: normalizedModule,
     module_area: row.module || null,
-    priority: null,
     action_type: row.statut || null,
     kanban_status: normalizeStatus(row.statut),
     owner_side: 'HC',
     h_min: null,
     h_max: null,
     hca_code: null,
-    apogee_status_raw: row.statut || null,
-    hc_status_raw: null,
     source_sheet: 'BUGS',
     source_row_index: row.rowIndex,
     external_key: `BUGS#${row.rowIndex}`,
     created_from: 'IMPORT_BUGS',
     needs_completion: !row.module,
     heat_priority: heatPriority,
-    impact_tags: ['BUG'], // Auto-tag avec BUG pour l'import BUGS
+    impact_tags: ['BUG'],
   };
 }
 
