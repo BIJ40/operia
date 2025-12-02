@@ -192,7 +192,7 @@ export default function IndicateursAccueil() {
                 <p className="text-xl font-bold">{data?.dossiersJour || 0}</p>
               </Card>
 
-              {/* KPI 2: RT réalisés */}
+              {/* KPI 2: RDV réalisés */}
               <Card className="p-3 hover:scale-105 transition-all duration-200 cursor-pointer border hover:border-green-500/50">
                 <div className="flex items-center gap-2 mb-1.5">
                   <div className="relative group">
@@ -200,10 +200,10 @@ export default function IndicateursAccueil() {
                       <ClipboardCheck className="w-4 h-4 text-white" />
                     </div>
                     <div className="absolute z-50 left-0 top-full mt-1 rounded-md border bg-popover px-2 py-1 text-[10px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                      Nombre de relevés techniques réalisés sur la période.
+                      Nombre de rendez-vous réalisés sur la période.
                     </div>
                   </div>
-                  <p className="text-xs font-medium text-muted-foreground">RT réalisés</p>
+                  <p className="text-xs font-medium text-muted-foreground">RDV réalisés</p>
                 </div>
                 <p className="text-xl font-bold">{data?.rtJour || 0}</p>
               </Card>
