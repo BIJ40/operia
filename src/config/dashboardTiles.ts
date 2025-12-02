@@ -36,6 +36,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.APOGEE,
     color: 'primary',
     group: 'help_academy',
+    requiresModule: 'help_academy',
   },
   {
     id: 'GUIDE_APPORTEURS',
@@ -46,6 +47,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.APPORTEURS,
     color: 'primary',
     group: 'help_academy',
+    requiresModule: 'help_academy',
     badge: 'Bientôt',
     isDisabled: true,
   },
@@ -58,6 +60,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.BASE_DOCUMENTAIRE,
     color: 'primary',
     group: 'help_academy',
+    requiresModule: 'help_academy',
   },
   // Pilotage Agence
   {
@@ -69,6 +72,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.MES_INDICATEURS,
     color: 'accent',
     group: 'pilotage',
+    requiresModule: 'pilotage_agence',
   },
   {
     id: 'ACTIONS_A_MENER',
@@ -79,6 +83,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.ACTIONS_A_MENER,
     color: 'accent',
     group: 'pilotage',
+    requiresModule: 'pilotage_agence',
   },
   {
     id: 'DIFFUSION',
@@ -89,6 +94,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.DIFFUSION,
     color: 'accent',
     group: 'pilotage',
+    requiresModule: 'pilotage_agence',
     badge: 'En cours',
   },
   {
@@ -100,6 +106,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.RH_TECH,
     color: 'accent',
     group: 'pilotage',
+    requiresModule: 'pilotage_agence',
     badge: 'Bientôt',
     isDisabled: true,
   },
@@ -112,6 +119,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.MON_EQUIPE,
     color: 'accent',
     group: 'pilotage',
+    requiresModule: 'pilotage_agence',
   },
   // Support
   {
