@@ -9,6 +9,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RefreshCw } from 'lucide-react';
 import { generateSecurePassword } from '@/lib/passwordUtils';
 
+const ROLE_AGENCE_LABELS: Record<string, string> = {
+  'dirigeant': 'Dirigeant(e)',
+  'assistante': 'Assistante',
+  'commercial': 'Commercial',
+  'technicien': 'Technicien',
+  'tete_de_reseau': 'Tête de réseau',
+  'externe': 'Externe',
+};
+
 // Validation schema
 const createUserSchema = z.object({
   email: z.string().trim().email({ message: "Email invalide" }).max(255, { message: "Email trop long (max 255 caractères)" }),
@@ -16,6 +25,7 @@ const createUserSchema = z.object({
   firstName: z.string().trim().min(1, { message: "Prénom requis" }).max(100, { message: "Prénom trop long" }),
   lastName: z.string().trim().min(1, { message: "Nom requis" }).max(100, { message: "Nom trop long" }),
   agence: z.string(),
+  roleAgence: z.string(),
   globalRole: z.string(),
   sendEmail: z.boolean(),
 });
@@ -55,10 +65,25 @@ export function UserCreateForm({
     firstName: '',
     lastName: '',
     agence: defaultAgency || '',
+    roleAgence: '',
     globalRole: defaultRole,
     sendEmail: true,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateUserPayload, string>>>({});
+
+  // Logique automatique : technicien/assistante → franchisee_user (N1)
+  const handleRoleAgenceChange = (newRoleAgence: string) => {
+    setFormData(prev => {
+      const shouldAutoAssignN1 = ['technicien', 'assistante'].includes(newRoleAgence);
+      return {
+        ...prev,
+        roleAgence: newRoleAgence,
+        globalRole: shouldAutoAssignN1 ? 'franchisee_user' : prev.globalRole,
+      };
+    });
+  };
+
+  const isGlobalRoleAutoAssigned = ['technicien', 'assistante'].includes(formData.roleAgence);
 
   const handleGeneratePassword = () => {
     setFormData(prev => ({ ...prev, password: generateSecurePassword() }));
@@ -160,21 +185,45 @@ export function UserCreateForm({
       )}
 
       <div className="space-y-2">
-        <Label>Rôle système</Label>
+        <Label>Poste occupé</Label>
         <Select 
-          value={formData.globalRole} 
-          onValueChange={(v) => setFormData(prev => ({ ...prev, globalRole: v }))}
+          value={formData.roleAgence} 
+          onValueChange={handleRoleAgenceChange}
           disabled={isSubmitting}
         >
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
           <SelectContent className="bg-background z-50">
-            {assignableRoles.map(role => (
-              <SelectItem key={role} value={role}>{GLOBAL_ROLE_LABELS[role]}</SelectItem>
+            {Object.entries(ROLE_AGENCE_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>{label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {errors.globalRole && <p className="text-xs text-destructive">{errors.globalRole}</p>}
+        {isGlobalRoleAutoAssigned && (
+          <p className="text-xs text-muted-foreground">
+            ℹ️ Rôle système attribué automatiquement : Utilisateur franchisé (N1)
+          </p>
+        )}
+        {errors.roleAgence && <p className="text-xs text-destructive">{errors.roleAgence}</p>}
       </div>
+
+      {!isGlobalRoleAutoAssigned && (
+        <div className="space-y-2">
+          <Label>Rôle système</Label>
+          <Select 
+            value={formData.globalRole} 
+            onValueChange={(v) => setFormData(prev => ({ ...prev, globalRole: v }))}
+            disabled={isSubmitting}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {assignableRoles.map(role => (
+                <SelectItem key={role} value={role}>{GLOBAL_ROLE_LABELS[role]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.globalRole && <p className="text-xs text-destructive">{errors.globalRole}</p>}
+        </div>
+      )}
 
       <div className="flex items-center space-x-2 pt-2">
         <Checkbox 
