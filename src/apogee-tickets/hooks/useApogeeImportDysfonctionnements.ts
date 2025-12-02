@@ -99,22 +99,19 @@ function rowToTicket(row: DysfonctionnementRow): ApogeeTicketInsert {
     description: cleanDesc,
     module: null,
     module_area: null,
-    priority: null,
     action_type: null,
-    kanban_status: 'BACKLOG', // Import en backlog par défaut
+    kanban_status: 'BACKLOG',
     owner_side: 'HC',
     h_min: null,
     h_max: null,
     hca_code: null,
-    apogee_status_raw: null,
-    hc_status_raw: null,
     source_sheet: 'DYSFONCTIONNEMENTS',
     source_row_index: row.rowIndex,
     external_key: `DYSFONCTIONNEMENTS#${row.rowIndex}`,
     created_from: 'IMPORT_DYSFONCTIONNEMENTS',
-    needs_completion: true, // Pas de module, donc à compléter
-    heat_priority: 5, // Priorité moyenne par défaut
-    impact_tags: ['BUG'], // Auto-tag BUG car ce sont des dysfonctionnements
+    needs_completion: true,
+    heat_priority: 5,
+    impact_tags: ['BUG'],
   };
 }
 
