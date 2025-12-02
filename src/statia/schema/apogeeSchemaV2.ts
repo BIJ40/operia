@@ -507,39 +507,143 @@ export function validateField(sourceName: string, fieldName: string): { valid: b
 }
 
 /**
- * Valide une définition de métrique complète
+ * Valide une définition de métrique complète contre le schéma
+ * Vérifie: sources, filtres, champs de formule, agrégabilité
  */
-export function validateMetricDefinition(metric: any): { valid: boolean; errors: string[] } {
+export function validateMetricDefinition(metric: any): { valid: boolean; errors: string[]; warnings: string[] } {
   const errors: string[] = [];
+  const warnings: string[] = [];
 
+  // 1. Métadonnées obligatoires
+  if (!metric.id || metric.id.trim() === '') {
+    errors.push('Identifiant (id) requis');
+  } else if (!/^[a-z][a-z0-9_]*$/.test(metric.id)) {
+    errors.push('Identifiant doit être en snake_case (lettres minuscules, chiffres, underscores)');
+  }
+
+  if (!metric.label || metric.label.trim() === '') {
+    errors.push('Libellé requis');
+  }
+
+  // 2. Sources de données
   if (!metric.input_sources || metric.input_sources.length === 0) {
     errors.push('Au moins une source de données requise');
   }
 
   for (const source of metric.input_sources || []) {
-    if (!APOGEE_SCHEMA[source.source]) {
-      errors.push(`Source "${source.source}" inconnue`);
+    const endpoint = APOGEE_SCHEMA[source.source];
+    if (!endpoint) {
+      errors.push(`Source "${source.source}" inconnue. Sources valides: ${Object.keys(APOGEE_SCHEMA).join(', ')}`);
+      continue;
     }
 
-    // Valider les filtres
+    // Valider les filtres de la source
     for (const filter of source.filters || []) {
+      if (!filter.field) {
+        warnings.push(`Filtre sans champ défini sur "${endpoint.label}"`);
+        continue;
+      }
       const validation = validateField(source.source, filter.field);
       if (!validation.valid) {
-        errors.push(`Filtre: ${validation.error}`);
+        errors.push(`Filtre sur ${endpoint.label}: ${validation.error}`);
       }
     }
   }
 
-  // Valider le champ de la formule
+  // 3. Validation de la formule
+  if (!metric.formula?.type) {
+    errors.push('Type d\'agrégation requis dans la formule');
+  }
+
+  const aggregationTypes = ['sum', 'avg', 'count', 'distinct_count', 'min', 'max', 'ratio'];
+  if (metric.formula?.type && !aggregationTypes.includes(metric.formula.type)) {
+    errors.push(`Type d'agrégation "${metric.formula.type}" invalide. Valides: ${aggregationTypes.join(', ')}`);
+  }
+
+  // 4. Vérifier le champ de la formule
   if (metric.formula?.field && metric.input_sources?.length > 0) {
     const mainSource = metric.input_sources[0].source;
-    const validation = validateField(mainSource, metric.formula.field);
-    if (!validation.valid) {
-      errors.push(`Formule: ${validation.error}`);
+    const endpoint = APOGEE_SCHEMA[mainSource];
+    
+    if (endpoint) {
+      const validation = validateField(mainSource, metric.formula.field);
+      if (!validation.valid) {
+        errors.push(`Champ formule: ${validation.error}`);
+      } else {
+        // Vérifier l'agrégabilité pour sum/avg/min/max
+        const needsAggregable = ['sum', 'avg', 'min', 'max'].includes(metric.formula.type);
+        if (needsAggregable) {
+          const field = endpoint.fields.find(f => 
+            f.name === metric.formula.field || f.path === metric.formula.field
+          );
+          if (field && !field.aggregable) {
+            warnings.push(`Le champ "${metric.formula.field}" n'est pas marqué comme agrégable. Résultat potentiellement inattendu.`);
+          }
+          if (field && field.semanticRole !== 'measure') {
+            warnings.push(`Le champ "${metric.formula.field}" est de type "${field.semanticRole}" et non "measure". Vérifiez que c'est bien un montant/durée.`);
+          }
+        }
+      }
     }
   }
 
-  return { valid: errors.length === 0, errors };
+  // 5. Vérifier le groupBy
+  if (metric.formula?.groupBy && metric.input_sources?.length > 0) {
+    const mainSource = metric.input_sources[0].source;
+    const endpoint = APOGEE_SCHEMA[mainSource];
+    
+    if (endpoint) {
+      for (const groupField of metric.formula.groupBy) {
+        const validation = validateField(mainSource, groupField);
+        if (!validation.valid) {
+          errors.push(`GroupBy: ${validation.error}`);
+        } else {
+          const field = endpoint.fields.find(f => 
+            f.name === groupField || f.path === groupField
+          );
+          if (field && !field.groupable && field.semanticRole !== 'dimension') {
+            warnings.push(`Le champ "${groupField}" n'est pas marqué comme groupable. Vérifiez que c'est bien une dimension.`);
+          }
+        }
+      }
+    }
+  }
+
+  // 6. Validation ratio
+  if (metric.formula?.type === 'ratio') {
+    if (!metric.formula.numerator || !metric.formula.denominator) {
+      errors.push('Un ratio nécessite un numérateur et un dénominateur');
+    }
+  }
+
+  return { valid: errors.length === 0, errors, warnings };
+}
+
+/**
+ * Récupère les champs agrégables d'un endpoint
+ */
+export function getAggregableFields(sourceName: string): ApogeeFieldDefinition[] {
+  const endpoint = APOGEE_SCHEMA[sourceName];
+  if (!endpoint) return [];
+  return endpoint.fields.filter(f => f.aggregable || f.semanticRole === 'measure');
+}
+
+/**
+ * Récupère les champs groupables d'un endpoint
+ */
+export function getGroupableFields(sourceName: string): ApogeeFieldDefinition[] {
+  const endpoint = APOGEE_SCHEMA[sourceName];
+  if (!endpoint) return [];
+  return endpoint.fields.filter(f => f.groupable || f.semanticRole === 'dimension');
+}
+
+/**
+ * Récupère les champs filtrables d'un endpoint
+ */
+export function getFilterableFields(sourceName: string): ApogeeFieldDefinition[] {
+  const endpoint = APOGEE_SCHEMA[sourceName];
+  if (!endpoint) return [];
+  return endpoint.fields.filter(f => f.filterable);
 }
 
 /**
