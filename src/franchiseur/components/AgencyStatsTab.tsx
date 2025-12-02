@@ -42,29 +42,47 @@ export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
         agencySlug
       );
 
-      // Recouvrement = somme des factures non payées (état !== 'payé')
-      const recouvrement = allData.factures
-        .filter((f: any) => {
-          const dateEmission = f.dateEmission || f.dateReelle || f.created_at;
-          if (!dateEmission) return false;
-          try {
-            const factureDate = parseISO(dateEmission);
-            const inRange = isWithinInterval(factureDate, { 
-              start: filters.dateRange.start, 
-              end: filters.dateRange.end 
-            });
+      // Recouvrement = total factures TTC - total règlements
+      let totalFacturesTTC = 0;
+      let totalReglements = 0;
+      
+      allData.factures.forEach((f: any) => {
+        const dateEmission = f.dateEmission || f.dateReelle || f.created_at;
+        if (!dateEmission) return;
+        
+        try {
+          const factureDate = parseISO(dateEmission);
+          const inRange = isWithinInterval(factureDate, { 
+            start: filters.dateRange.start, 
+            end: filters.dateRange.end 
+          });
+          
+          if (!inRange) return;
+          
+          // Montant TTC de la facture
+          const montantTTCRaw = f.totalTTC || f.data?.totalTTC || "0";
+          const montantTTC = parseFloat(String(montantTTCRaw).replace(/[^0-9.-]/g, ''));
+          
+          if (!isNaN(montantTTC)) {
             const typeFacture = (f.typeFacture || f.data?.type || f.state || '').toLowerCase();
-            const isPaid = (f.state || f.status || f.data?.etat || '').toLowerCase().includes('pay');
-            return inRange && typeFacture !== 'avoir' && !isPaid;
-          } catch {
-            return false;
+            
+            // Les avoirs sont négatifs
+            if (typeFacture === 'avoir') {
+              totalFacturesTTC -= Math.abs(montantTTC);
+            } else {
+              totalFacturesTTC += montantTTC;
+            }
           }
-        })
-        .reduce((sum: number, f: any) => {
-          const montantRaw = f.totalHT || f.data?.totalHT || "0";
-          const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-          return sum + (isNaN(montant) ? 0 : montant);
-        }, 0);
+          
+          // Règlements
+          const paidTTC = f.calc?.paidTTC || 0;
+          totalReglements += parseFloat(String(paidTTC).replace(/[^0-9.-]/g, '')) || 0;
+        } catch {
+          // Ignorer les dates invalides
+        }
+      });
+      
+      const recouvrement = totalFacturesTTC - totalReglements;
 
       return {
         ca: caTotal,
@@ -151,7 +169,7 @@ export function AgencyStatsTab({ agencySlug }: AgencyStatsTabProps) {
                 <TrendingUp className="h-5 w-5 text-orange-600" />
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Recouvrement (dû client)</p>
+                <p className="text-sm text-muted-foreground">Recouvrement (dû client TTC)</p>
                 <p className="text-2xl font-bold text-orange-600">
                   {formatEuros(data?.recouvrement || 0)}
                 </p>
