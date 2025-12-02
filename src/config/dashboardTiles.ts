@@ -252,7 +252,7 @@ export const DASHBOARD_GROUPS = {
     indexUrl: ROUTES.academy.index,
   },
   pilotage: {
-    title: 'Pilotage Agence',
+    title: 'Mon Agence',
     icon: BarChart3,
     colorClass: 'text-accent',
     indexUrl: ROUTES.pilotage.index,
@@ -270,7 +270,7 @@ export const DASHBOARD_GROUPS = {
     indexUrl: ROUTES.projects.index,
   },
   franchiseur: {
-    title: 'Réseau',
+    title: 'Espace Franchiseur',
     icon: Network,
     colorClass: 'text-accent',
     indexUrl: ROUTES.reseau.index,

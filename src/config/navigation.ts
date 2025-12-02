@@ -269,7 +269,7 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Réseau Franchiseur',
+    label: 'Espace Franchiseur',
     labelKey: 'franchiseur',
     requiredRole: 'franchiseur',
     items: [
@@ -371,7 +371,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.academy.documents]: 'Base Documentaire',
   
   // Pilotage (V2 routes)
-  [ROUTES.pilotage.index]: 'Pilotage Agence',
+  [ROUTES.pilotage.index]: 'Mon Agence',
   [ROUTES.pilotage.statsHub]: 'Statistiques',
   [ROUTES.pilotage.indicateurs]: 'Indicateurs généraux',
   [ROUTES.pilotage.indicateursApporteurs]: 'Indicateurs Apporteurs',
@@ -390,7 +390,7 @@ export const PAGE_TITLES: Record<string, string> = {
   [ROUTES.support.console]: 'Console support',
   
   // Réseau Franchiseur (V2 routes)
-  [ROUTES.reseau.index]: 'Réseau Franchiseur',
+  [ROUTES.reseau.index]: 'Espace Franchiseur',
   [ROUTES.reseau.dashboard]: 'Dashboard Réseau',
   [ROUTES.reseau.agences]: 'Agences du Réseau',
   [ROUTES.reseau.users]: 'Utilisateurs Réseau',
