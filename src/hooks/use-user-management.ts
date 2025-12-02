@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { GlobalRole, getRoleLevel, getAssignableRoles } from '@/types/globalRoles';
+import { GlobalRole, getRoleLevel } from '@/types/globalRoles';
 import { 
   getUserManagementCapabilities, 
   canViewUser, 
@@ -93,7 +93,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
   const canAccessPage = capabilities.viewScope !== 'none' || isAdmin;
   const canCreateUsers = capabilities.canCreateRoles.length > 0;
   const canDeleteUsers = capabilities.canDeleteUsers;
-  const assignableRoles = useMemo(() => getAssignableRoles(effectiveUserRole), [effectiveUserRole]);
+  // ✅ FIX: Utiliser directement capabilities.canCreateRoles au lieu de getAssignableRoles() qui échoue avec require()
+  const assignableRoles = useMemo(() => capabilities.canCreateRoles, [capabilities.canCreateRoles]);
   const isSuperAdmin = effectiveUserRole === 'superadmin';
 
   // ✅ Calcul du scope effectif (croise scope demandé avec capabilities)
