@@ -74,7 +74,8 @@ export default function AdminSupportTickets() {
       name: `${u.first_name} ${u.last_name}`,
       first_name: u.first_name,
       last_name: u.last_name,
-      support_level: options.level || 1,
+      // V2: Utiliser profiles.support_level avec fallback sur options.level
+      support_level: (u as any).support_level ?? options.level ?? 1,
       service_competencies: options.skills ? 
         options.skills.reduce((acc: any, skill: string) => ({ ...acc, [skill]: true }), {}) : {},
     };

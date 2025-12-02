@@ -64,26 +64,23 @@ export function EscalateTicketDialog({ ticket, supportUsers, onEscalate }: Escal
     const loadUserData = async () => {
       if (!user?.id) return;
       
-      // Load support level from enabled_modules V2
+      // Load support level from profiles.support_level (V2 column)
       const { data: profile } = await supabase
         .from('profiles')
-        .select('enabled_modules')
+        .select('support_level, global_role')
         .eq('id', user.id)
         .single();
       if (profile) {
-        const modules = profile.enabled_modules as any;
-        const options = modules?.support?.options || {};
-        setUserLevel(options.level || 1);
+        // V2: Utiliser profiles.support_level directement
+        setUserLevel(profile.support_level ?? 1);
       }
       
-      // Load franchiseur role
-      const { data: franchiseurRole } = await supabase
-        .from('franchiseur_roles')
-        .select('franchiseur_role')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (franchiseurRole) {
-        setUserFranchiseurRole(franchiseurRole.franchiseur_role);
+      // Note: franchiseur_roles sera supprimé - utiliser global_role N3/N4
+      const franchiseurRole = profile?.global_role;
+      if (franchiseurRole === 'franchisor_user') {
+        setUserFranchiseurRole('animateur');
+      } else if (franchiseurRole === 'franchisor_admin') {
+        setUserFranchiseurRole('directeur');
       }
     };
     loadUserData();

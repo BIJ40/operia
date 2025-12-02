@@ -1814,6 +1814,7 @@ export type Database = {
           must_change_password: boolean | null
           phone: string | null
           role_agence: string | null
+          support_level: number | null
           updated_at: string
         }
         Insert: {
@@ -1834,6 +1835,7 @@ export type Database = {
           must_change_password?: boolean | null
           phone?: string | null
           role_agence?: string | null
+          support_level?: number | null
           updated_at?: string
         }
         Update: {
@@ -1854,6 +1856,7 @@ export type Database = {
           must_change_password?: boolean | null
           phone?: string | null
           role_agence?: string | null
+          support_level?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -2655,6 +2658,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: number
       }
+      get_user_support_level: { Args: { _user_id: string }; Returns: number }
       get_user_ticket_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["apogee_ticket_role"]
@@ -2668,6 +2672,10 @@ export type Database = {
         Returns: boolean
       }
       has_min_global_role: {
+        Args: { _min_level: number; _user_id: string }
+        Returns: boolean
+      }
+      has_min_support_level: {
         Args: { _min_level: number; _user_id: string }
         Returns: boolean
       }

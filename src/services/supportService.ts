@@ -148,7 +148,7 @@ export async function getAllSupportUsers(): Promise<SupportUser[]> {
   const result = await safeQuery<any[]>(
     supabase
       .from('profiles')
-      .select('id, email, first_name, last_name, enabled_modules')
+      .select('id, email, first_name, last_name, enabled_modules, support_level')
       .eq('is_active', true),
     'SUPPORT_GET_ALL_USERS'
   );
@@ -174,7 +174,8 @@ export async function getAllSupportUsers(): Promise<SupportUser[]> {
         email: profile.email,
         first_name: profile.first_name,
         last_name: profile.last_name,
-        support_level: options.level || 1,
+        // V2: Utiliser profiles.support_level (colonne) avec fallback sur options.level
+        support_level: profile.support_level ?? options.level ?? 1,
         service_competencies: options.skills ? 
           options.skills.reduce((acc: any, skill: string) => ({ ...acc, [skill]: true }), {}) : 
           null,
@@ -381,17 +382,17 @@ export function buildTicketFilterQuery(
 
 /**
  * Récupère les tickets filtrés pour un Support User
- * Basé sur ses compétences et son niveau (V2: enabled_modules.support)
+ * Basé sur ses compétences et son niveau (V2: profiles.support_level)
  */
 export async function getTicketsForSupportUser(
   userId: string,
   filters: TicketFilters = {}
 ): Promise<any[]> {
-  // Récupérer le profil du SU avec enabled_modules
-  const profileResult = await safeQuery<{ enabled_modules: any }>(
+  // Récupérer le profil du SU avec support_level (V2 colonne)
+  const profileResult = await safeQuery<{ enabled_modules: any; support_level: number | null }>(
     supabase
       .from('profiles')
-      .select('enabled_modules')
+      .select('enabled_modules, support_level')
       .eq('id', userId)
       .maybeSingle(),
     'SUPPORT_GET_USER_PROFILE'
@@ -404,7 +405,8 @@ export async function getTicketsForSupportUser(
 
   const modules = profileResult.data.enabled_modules as any;
   const options = modules?.support?.options || {};
-  const supportLevel = options.level || 1;
+  // V2: Utiliser profiles.support_level avec fallback sur options.level
+  const supportLevel = profileResult.data.support_level ?? options.level ?? 1;
   // Support les deux formats de clés
   const skills = options.skills || options.service_competencies || [];
   const competencies = skills.reduce((acc: any, skill: string) => ({ ...acc, [skill]: true }), {});
