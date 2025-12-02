@@ -192,7 +192,7 @@ export function useMetric<T = number>(
 
   const query = useQuery({
     queryKey,
-    queryFn: async (): Promise<MetricResult<T>> => {
+    queryFn: async (): Promise<MetricResult<T> & { _debug?: { executionTarget: string; complexity: number } }> => {
       // 1. Charger la définition de la métrique
       const metric = await loadMetricDefinition(metricId);
       if (!metric) {
@@ -208,9 +208,19 @@ export function useMetric<T = number>(
         return cached as MetricResult<T>;
       }
 
-      // 3. Exécuter le calcul
+      // 3. Calculer la complexité et la cible d'exécution
+      const complexity = evaluateComplexity(metric, params);
+      const executionTarget = determineExecutionTarget(metric, params);
+
+      // 4. Exécuter le calcul
       const result = await executeMetric(metric, params);
-      return result as MetricResult<T>;
+      return {
+        ...result,
+        _debug: {
+          executionTarget,
+          complexity: complexity.score,
+        },
+      } as MetricResult<T> & { _debug?: { executionTarget: string; complexity: number } };
     },
     enabled: enabled && !!metricId,
     staleTime,
@@ -218,11 +228,11 @@ export function useMetric<T = number>(
     retry: 1,
   });
 
-  // Debug info
+  // Debug info avec valeurs réelles du calcul
   const debugInfo = {
     metricId,
-    executionTarget: 'unknown' as const,
-    complexity: 0,
+    executionTarget: (query.data as any)?._debug?.executionTarget ?? 'unknown',
+    complexity: (query.data as any)?._debug?.complexity ?? 0,
     params,
   };
 
