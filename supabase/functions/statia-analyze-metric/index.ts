@@ -466,6 +466,43 @@ Mots-clés: "taux", "ratio", "pourcentage", "part", "proportion", "transformatio
 8. **Output_format**: recommander le meilleur affichage (number/table/pivot/timeseries)
 9. Si ambiguïté: understood=true mais proposer des suggestions[]
 10. **Scope par défaut**: "agency"
+
+## RÈGLES MÉTIER STATIA (SOURCE DE VÉRITÉ)
+
+### Configuration CA
+- Source: apiGetFactures.data.totalHT
+- États inclus: sent, paid, partial
+- Avoirs: soustraits (montant négatif)
+- Dû client: apiGetFactures.data.calcReglementsReste
+
+### Techniciens
+- Types productifs: depannage, repair, travaux, work
+- Types non-productifs: RT, rdv, rdvtech, sav, diagnostic
+- RT ne génère JAMAIS de CA technicien
+
+### Interventions
+- États valides: validated, done, finished
+- États exclus: draft, canceled, refused
+- Type "A DEFINIR" → résoudre via biDepan/biTvx/biRt IsValidated
+
+### Synonymes NLP (reconnaissance automatique)
+- apporteur = commanditaire, prescripteur
+- univers = metier, domaine
+- rt = releve technique, rdv technique
+- sav = service apres vente, garantie, retour chantier
+- travaux = tvx, work, reparation
+- technicien = intervenant, ouvrier
+
+### GroupBy disponibles
+technicien, apporteur, univers, type_intervention, type_devis, mois, semaine, annee, ville, client, dossier
+
+### Agrégations disponibles
+sum, count, avg, min, max, median, ratio
+
+### Champs Date par source
+- factures: dateReelle
+- interventions: dateReelle
+- projects: date
 `;
 
 serve(async (req) => {
