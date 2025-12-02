@@ -9,10 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Search, Database, Link2, Key, Hash, Calendar, DollarSign, 
   Tag, ToggleLeft, FileText, ChevronDown, ChevronRight, Zap, Filter,
-  Network, BookOpen, ArrowRight, Download
+  Network, BookOpen, ArrowRight, Download, Building2, Globe, Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { downloadSchemaDoc } from '../schema/generateSchemaDoc';
@@ -20,9 +21,11 @@ import {
   BUSINESS_CONCEPTS, 
   searchSchema, 
   getSchemaRelations,
-  getAllEndpoints
+  getAllEndpoints,
+  APOGEE_AGENCY_ROUTING,
+  buildAgencyBaseUrl
 } from '../schema/apogeeSchemaV2';
-import { ApogeeEndpointDefinition, ApogeeFieldDefinition, FieldRole, SchemaSearchResult } from '../schema/types';
+import { ApogeeEndpointDefinition, ApogeeFieldDefinition, FieldRole, SemanticRole, SchemaSearchResult } from '../schema/types';
 
 // ============================================
 // ICÔNES PAR RÔLE DE CHAMP
@@ -56,6 +59,12 @@ const ROLE_COLORS: Record<FieldRole, string> = {
   reference: 'bg-indigo-100 text-indigo-700 border-indigo-300',
   computed: 'bg-amber-100 text-amber-700 border-amber-300',
   metadata: 'bg-slate-100 text-slate-700 border-slate-300',
+};
+
+const SEMANTIC_BADGES: Record<SemanticRole, { label: string; className: string; icon: typeof Layers }> = {
+  dimension: { label: 'DIM', className: 'bg-violet-100 text-violet-700', icon: Layers },
+  measure: { label: 'MES', className: 'bg-emerald-100 text-emerald-700', icon: Zap },
+  attribute: { label: 'ATT', className: 'bg-slate-100 text-slate-600', icon: FileText },
 };
 
 // ============================================
@@ -141,6 +150,9 @@ export function ApogeeSchemaViewer() {
           </CardContent>
         </Card>
       )}
+
+      {/* Card Agency Routing - Toujours visible */}
+      <AgencyRoutingCard />
 
       {/* Contenu selon le mode */}
       {viewMode === 'cards' && (
@@ -277,32 +289,118 @@ function EndpointCard({
 }
 
 // ============================================
-// ITEM CHAMP
+// ITEM CHAMP - Enrichi avec semantic role
 // ============================================
 
 function FieldItem({ field }: { field: ApogeeFieldDefinition }) {
   const Icon = ROLE_ICONS[field.role] || FileText;
   const colorClass = ROLE_COLORS[field.role] || ROLE_COLORS.label;
+  const semanticInfo = field.semanticRole ? SEMANTIC_BADGES[field.semanticRole] : null;
 
   return (
-    <div className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded text-sm">
-      <div className={`p-1 rounded ${colorClass}`}>
-        <Icon className="h-3 w-3" />
+    <TooltipProvider>
+      <div className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded text-sm">
+        <div className={`p-1 rounded ${colorClass}`}>
+          <Icon className="h-3 w-3" />
+        </div>
+        <span className="font-mono font-medium">{field.name}</span>
+        <Badge variant="outline" className="text-xs">
+          {field.type}
+        </Badge>
+        {/* Semantic role badge */}
+        {semanticInfo && (
+          <Tooltip>
+            <TooltipTrigger>
+              <Badge className={`text-[10px] px-1 ${semanticInfo.className}`}>
+                {semanticInfo.label}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">
+                {field.semanticRole === 'dimension' && 'Dimension : utilisable pour groupBy'}
+                {field.semanticRole === 'measure' && 'Mesure : utilisable pour sum/avg/min/max'}
+                {field.semanticRole === 'attribute' && 'Attribut : information complémentaire'}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {field.aggregable && (
+          <Tooltip>
+            <TooltipTrigger>
+              <Zap className="h-3 w-3 text-amber-500" />
+            </TooltipTrigger>
+            <TooltipContent>Agrégable (sum, avg...)</TooltipContent>
+          </Tooltip>
+        )}
+        {field.path && (
+          <span className="text-xs text-muted-foreground">({field.path})</span>
+        )}
+        {/* Keywords tooltip */}
+        {field.keywords && field.keywords.length > 0 && (
+          <Tooltip>
+            <TooltipTrigger>
+              <Tag className="h-3 w-3 text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">Mots-clés: {field.keywords.join(', ')}</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        <span className="text-xs text-muted-foreground ml-auto truncate max-w-[200px]" title={field.description}>
+          {field.description}
+        </span>
       </div>
-      <span className="font-mono font-medium">{field.name}</span>
-      <Badge variant="outline" className="text-xs">
-        {field.type}
-      </Badge>
-      {field.aggregable && (
-        <Zap className="h-3 w-3 text-amber-500" />
-      )}
-      {field.path && (
-        <span className="text-xs text-muted-foreground">({field.path})</span>
-      )}
-      <span className="text-xs text-muted-foreground ml-auto truncate max-w-[200px]" title={field.description}>
-        {field.description}
-      </span>
-    </div>
+    </TooltipProvider>
+  );
+}
+
+// ============================================
+// CARD AGENCY ROUTING
+// ============================================
+
+function AgencyRoutingCard() {
+  return (
+    <Card className="border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50/50 to-background">
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2">
+          <Building2 className="h-5 w-5 text-amber-600" />
+          <CardTitle className="text-base">Gestion Multi-Agences</CardTitle>
+          <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700">Important</Badge>
+        </div>
+        <CardDescription>{APOGEE_AGENCY_ROUTING.description}</CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="grid md:grid-cols-3 gap-4 text-sm">
+          <div className="p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-2 mb-1">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Template URL</span>
+            </div>
+            <code className="text-xs bg-background px-2 py-1 rounded block">
+              {APOGEE_AGENCY_ROUTING.baseUrlTemplate}
+            </code>
+          </div>
+          <div className="p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-2 mb-1">
+              <Key className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Clé API</span>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {APOGEE_AGENCY_ROUTING.apiKeyShared ? 'Unique et partagée' : 'Par agence'}
+            </span>
+          </div>
+          <div className="p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-2 mb-1">
+              <Database className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Exemple</span>
+            </div>
+            <code className="text-xs bg-background px-2 py-1 rounded block">
+              {buildAgencyBaseUrl('dax')}
+            </code>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
