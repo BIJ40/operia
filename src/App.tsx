@@ -209,14 +209,14 @@ function AppContent() {
           {/* SUPPORT V2 - Unified Support System */}
           {/* ============================================ */}
           {/* Support HUB */}
-          <Route path="/support" element={<MainLayout><RoleGuard><SupportIndex /></RoleGuard></MainLayout>} />
+          <Route path="/support" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="support"><SupportIndex /></ModuleGuard></RoleGuard></MainLayout>} />
           {/* Help Center - 3 columns (FAQ | Chat | Demands) */}
-          <Route path="/support/helpcenter" element={<MainLayout><RoleGuard><SupportUser /></RoleGuard></MainLayout>} />
+          <Route path="/support/helpcenter" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="support"><SupportUser /></ModuleGuard></RoleGuard></MainLayout>} />
           {/* User Tickets - Full ticket management */}
-          <Route path="/support/mes-demandes" element={<MainLayout><RoleGuard><UserTickets /></RoleGuard></MainLayout>} />
+          <Route path="/support/mes-demandes" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="support"><UserTickets /></ModuleGuard></RoleGuard></MainLayout>} />
           {/* Legacy route - redirect */}
           <Route path="/mes-demandes" element={<Navigate to="/support/mes-demandes" replace />} />
-          {/* FAQ */}
+          {/* FAQ - accessible à tous, pas de ModuleGuard */}
           <Route path="/support/faq" element={<MainLayout><Faq /></MainLayout>} />
           {/* SU Console - Support agents (N5+ strictement) - FIX F-PERM-3 */}
           <Route path="/support/console" element={<MainLayout><SupportConsoleGuard><AdminSupportTickets /></SupportConsoleGuard></MainLayout>} />
@@ -224,56 +224,56 @@ function AppContent() {
           {/* ============================================ */}
           {/* RÉSEAU FRANCHISEUR - Section Index + Sous-pages */}
           {/* ============================================ */}
-          <Route path="/hc-reseau" element={<MainLayout><RoleGuard minRole="franchisor_user"><ReseauIndex /></RoleGuard></MainLayout>} />
+          <Route path="/hc-reseau" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><ReseauIndex /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          <Route path="/hc-reseau/dashboard" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/dashboard" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurHome />} />
           </Route>
-          <Route path="/hc-reseau/agences" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/agences" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurAgencies />} />
             <Route path=":agencyId" element={<FranchiseurAgencyProfile />} />
           </Route>
-          <Route path="/hc-reseau/animateurs" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/animateurs" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurAnimateurs />} />
             <Route path=":animatorId" element={<AnimatorProfile />} />
           </Route>
-          <Route path="/hc-reseau/stats" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/stats" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurStats />} />
           </Route>
-          <Route path="/hc-reseau/comparatifs" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/comparatifs" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurComparison />} />
           </Route>
-          <Route path="/hc-reseau/redevances" element={<MainLayout><RoleGuard minRole="franchisor_admin"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/redevances" element={<MainLayout><RoleGuard minRole="franchisor_admin"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurRoyalties />} />
           </Route>
-          <Route path="/hc-reseau/parametres" element={<MainLayout><RoleGuard minRole="franchisor_user"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/hc-reseau/parametres" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurSettings />} />
           </Route>
-          <Route path="/hc-reseau/utilisateurs" element={<MainLayout><RoleGuard minRole="franchisor_user"><TDRUsersPage /></RoleGuard></MainLayout>} />
+          <Route path="/hc-reseau/utilisateurs" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><TDRUsersPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* ADMINISTRATION - Section Index + Sous-pages */}
           {/* ============================================ */}
-          <Route path="/admin" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminIndex /></RoleGuard></MainLayout>} />
+          <Route path="/admin" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminIndex /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/documents" element={<Navigate to="/admin/chatbot-rag" replace />} />
-          <Route path="/admin/support-tickets" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminSupportTickets /></RoleGuard></MainLayout>} />
-          <Route path="/admin/support-stats" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminSupportStats /></RoleGuard></MainLayout>} />
-          <Route path="/admin/escalation-history" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminEscalationHistory /></RoleGuard></MainLayout>} />
-          <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminBackup /></RoleGuard></MainLayout>} />
-          <Route path="/admin/helpconfort-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminHelpConfortBackup /></RoleGuard></MainLayout>} />
-          <Route path="/admin/users" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminUsersUnified /></RoleGuard></MainLayout>} />
-          <Route path="/admin/agencies" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminAgencies /></RoleGuard></MainLayout>} />
-          <Route path="/admin/agencies/:agencyId" element={<MainLayout><RoleGuard minRole="platform_admin"><FranchiseurLayout /></RoleGuard></MainLayout>}>
+          <Route path="/admin/support-tickets" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="admin_plateforme"><AdminSupportTickets /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/support-stats" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSupportStats /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/escalation-history" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="admin_plateforme"><AdminEscalationHistory /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/backup" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminBackup /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/helpconfort-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminHelpConfortBackup /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/users" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminUsersUnified /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/agencies" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminAgencies /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/agencies/:agencyId" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurAgencyProfile />} />
           </Route>
-          <Route path="/admin/storage-quota" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminStorageQuota /></RoleGuard></MainLayout>} />
-          <Route path="/admin/cache-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminCacheBackup /></RoleGuard></MainLayout>} />
-          <Route path="/admin/user-activity" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminUserActivity /></RoleGuard></MainLayout>} />
-          <Route path="/admin/collaborateurs" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminCollaborators /></RoleGuard></MainLayout>} />
-          <Route path="/admin/page-metadata" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminPageMetadata /></RoleGuard></MainLayout>} />
-          <Route path="/admin/apogee-guides" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminApogeeGuides /></RoleGuard></MainLayout>} />
-          <Route path="/admin/chatbot-rag" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminChatbotRag /></RoleGuard></MainLayout>} />
-          <Route path="/admin/announcements" element={<MainLayout><RoleGuard minRole="franchisor_user"><AdminAnnouncements /></RoleGuard></MainLayout>} />
+          <Route path="/admin/storage-quota" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminStorageQuota /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/cache-backup" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminCacheBackup /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/user-activity" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminUserActivity /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/collaborateurs" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminCollaborators /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/page-metadata" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminPageMetadata /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/apogee-guides" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminApogeeGuides /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/chatbot-rag" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminChatbotRag /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/announcements" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="admin_plateforme"><AdminAnnouncements /></ModuleGuard></RoleGuard></MainLayout>} />
           {/* Legacy admin/apogee-tickets - Redirect to /projects */}
           <Route path="/admin/apogee-tickets" element={<Navigate to="/projects/kanban" replace />} />
           <Route path="/admin/apogee-tickets/import" element={<Navigate to="/projects/import" replace />} />
@@ -285,7 +285,7 @@ function AppContent() {
           <Route path="/admin/apogee-tickets/classifier" element={<Navigate to="/projects/classifier" replace />} />
           <Route path="/admin/apogee-tickets/review" element={<Navigate to="/projects/review" replace />} />
           <Route path="/admin/apogee-tickets/permissions" element={<Navigate to="/projects/permissions" replace />} />
-          <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><AdminSystemHealth /></RoleGuard></MainLayout>} />
+          <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSystemHealth /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}
