@@ -14,6 +14,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: 'V0.6.0',
+    date: '2025-12-02',
+    title: 'STATiA By BiJ - Moteur de règles métier',
+    changes: [
+      { type: 'feature', description: 'Création du module STATiA By BiJ - moteur de règles centralisé pour calculs métier HelpConfort' },
+      { type: 'feature', description: 'Règles CA : source apiGetFactures.data.totalHT, états inclus (sent/paid/partial), avoirs soustraits automatiquement' },
+      { type: 'feature', description: 'Règles Techniciens : types productifs (dépannage/travaux), non-productifs (RT/SAV/diagnostic), allocation proportionnelle au temps' },
+      { type: 'feature', description: 'Règles Devis : taux transformation en nombre ET montant HT, résolution diagnostique type2="A DEFINIR"' },
+      { type: 'feature', description: 'Règles Interventions : états valides (validated/done/finished), résolution automatique RT/TH/SAV' },
+      { type: 'feature', description: 'Règles Univers/Apporteurs : allocation multi-univers uniforme ou pondérée, exclusion SAV des stats apporteurs' },
+      { type: 'feature', description: 'Parser NLP avec synonymes métier (commanditaire→apporteur, tvx→travaux, garantie→sav)' },
+      { type: 'feature', description: 'GroupBy dynamique : technicien, apporteur, univers, type_intervention, mois, semaine, année, ville, client, dossier' },
+      { type: 'improvement', description: 'Intégration règles dans useMetricEngine et compute-metric edge function' },
+      { type: 'improvement', description: 'Export JSON rules.json pour backend et interprétation IA' },
+      { type: 'improvement', description: 'Helpers métier : resolveInterventionType, isProductiveIntervention, calculateNetAmount, normalizeSynonym' },
+    ]
+  },
+  {
     version: 'V0.5.2',
     date: '2025-12-02',
     title: 'Détection doublons IA, Import TRAITÉ, Support SA levels',
