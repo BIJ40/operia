@@ -60,7 +60,7 @@ export const PeriodSelector = () => {
       value: `en ${currentMonth}`,
     },
     {
-      label: lastMonth.charAt(0).toUpperCase() + lastMonth.slice(1),
+      label: getMonthShort(lastMonth),
       action: () => {
         const lastMonthDate = subMonths(new Date(), 1);
         const monthLabel = `en ${lastMonth}`;
