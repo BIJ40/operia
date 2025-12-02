@@ -88,17 +88,6 @@ export const logError = (...args: unknown[]): void => {
   }
 };
 
-/**
- * Log de dépréciation - n'apparaît qu'une seule fois par message, uniquement en dev
- * Utiliser pour marquer les fonctions/méthodes obsolètes
- */
-const deprecationWarnings = new Set<string>();
-export const logDeprecation = (message: string): void => {
-  if (canDebug && !deprecationWarnings.has(message)) {
-    console.warn('[DEPRECATED]', message);
-    deprecationWarnings.add(message);
-  }
-};
 
 /**
  * Log Apogée API - catégorisé pour faciliter le filtrage

@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Section, CategoryBlock, CategoryScope } from './types';
 import { Block } from '@/types/block';
+import { isSectionUpdated } from './UpdateBadge';
 
 // Helper to check if section is new (completed within 7 days)
 const isSectionNew = (completedAt?: string) => {
@@ -28,14 +29,6 @@ const isSectionNew = (completedAt?: string) => {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   return new Date(completedAt) > sevenDaysAgo;
-};
-
-// Helper to check if section was recently updated (within 7 days)
-const isSectionUpdated = (contentUpdatedAt?: string | null) => {
-  if (!contentUpdatedAt) return false;
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  return new Date(contentUpdatedAt) > sevenDaysAgo;
 };
 
 interface AccordionSectionProps {

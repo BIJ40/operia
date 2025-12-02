@@ -66,23 +66,3 @@ export function calculateHeatPriority(
   return 3;
 }
 
-/**
- * Labels descriptifs pour les niveaux de priorité thermique
- * Note: Utilisez getHeatPriorityConfig() de src/utils/heatPriority.ts
- * pour l'affichage uniforme (badge, emoji, couleurs)
- */
-export const HEAT_PRIORITY_LABELS: Record<number, string> = {
-  0: 'Gelé',
-  1: 'Glacial',
-  2: 'Froid',
-  3: 'Frais',
-  4: 'Tiède-',
-  5: 'Tiède',
-  6: 'Tiède+',
-  7: 'Chaud-',
-  8: 'Chaud',
-  9: 'Chaud+',
-  10: 'Brûlant',
-  11: 'Critique',
-  12: 'Urgence absolue'
-};
