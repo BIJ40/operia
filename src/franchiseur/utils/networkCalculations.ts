@@ -873,8 +873,70 @@ export function aggregateUniversApporteurMatrix(
 }
 
 /**
+ * Calculate tech time by project for a single agency
+ * Excludes RT, SAV, only counts productive types (biDepan, biTvx), validated visits only
+ * Returns time per tech per project for CA prorating
+ */
+function calculateTechTimeByProjectForAgency(interventions: any[]): {
+  dureeTechParProjet: Record<number, Record<number, number>>;
+  dureeTotaleParProjet: Record<number, number>;
+} {
+  const dureeTechParProjet: Record<number, Record<number, number>> = {};
+  const dureeTotaleParProjet: Record<number, number> = {};
+
+  interventions.forEach((intervention) => {
+    const projectId = intervention.projectId;
+    if (!projectId) return;
+
+    // RÈGLE: Exclure les RT (relevés techniques)
+    const isRT =
+      intervention.data?.biRt?.isValidated === true ||
+      intervention.data?.type2 === "RT" ||
+      intervention.type2?.toUpperCase() === "RT";
+    if (isRT) return;
+
+    // RÈGLE: Exclure les SAV
+    const type2Lower = (intervention.data?.type2 || intervention.type2 || "").toLowerCase();
+    const typeRaw = (intervention.data?.type || intervention.type || "").toLowerCase();
+    const isSAV = type2Lower.includes("sav") || typeRaw.includes("sav");
+    if (isSAV) return;
+
+    // RÈGLE: Types productifs uniquement (biDepan ou biTvx validés)
+    const isProductive = intervention.data?.biDepan || intervention.data?.biTvx;
+    if (!isProductive) return;
+
+    // Initialiser le projet si nécessaire
+    if (!dureeTechParProjet[projectId]) {
+      dureeTechParProjet[projectId] = {};
+      dureeTotaleParProjet[projectId] = 0;
+    }
+
+    // RÈGLE: Parcourir les visites VALIDÉES uniquement
+    const visites = intervention.data?.visites || [];
+    visites.forEach((visite: any) => {
+      if (visite.state !== "validated") return;
+
+      const duree = Number(visite.duree) || 0;
+      const usersIds = visite.usersIds || [];
+
+      usersIds.forEach((techId: number) => {
+        if (!dureeTechParProjet[projectId][techId]) {
+          dureeTechParProjet[projectId][techId] = 0;
+        }
+        // Chaque technicien compte la durée complète de la visite
+        dureeTechParProjet[projectId][techId] += duree;
+        dureeTotaleParProjet[projectId] += duree;
+      });
+    });
+  });
+
+  return { dureeTechParProjet, dureeTotaleParProjet };
+}
+
+/**
  * Aggregate Technicien × Univers stats across multiple agencies
  * Joins factures → projects → interventions → users to attribute CA to technicians
+ * ALIGNED WITH STATIA_RULES: excludes RT/SAV, prorata by time, validated visits only
  */
 export function aggregateTechnicienUniversStats(
   agencyData: AgencyData[],
@@ -887,19 +949,11 @@ export function aggregateTechnicienUniversStats(
 
     const usersMap = new Map(agency.data.users.map((u: any) => [u.id, u]));
     const projectsMap = new Map(agency.data.projects.map((p: any) => [p.id, p]));
-    
-    // Group interventions by project to attribute CA
-    const interventionsByProject = new Map<number, any[]>();
-    agency.data.interventions.forEach((intervention: any) => {
-      const projectId = intervention.projectId;
-      if (!projectId) return;
-      
-      const existing = interventionsByProject.get(projectId) || [];
-      existing.push(intervention);
-      interventionsByProject.set(projectId, existing);
-    });
 
-    // Process factures and attribute CA to technicians via interventions
+    // RÈGLE: Calculer le temps passé par technicien par projet (excluant RT/SAV, visites validées uniquement)
+    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProjectForAgency(agency.data.interventions);
+
+    // Process factures and attribute CA to technicians via time prorating
     agency.data.factures.forEach((facture: any) => {
       if (facture.type === 'avoir') return;
 
@@ -909,60 +963,41 @@ export function aggregateTechnicienUniversStats(
 
       const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
       const caHT = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
-      if (caHT === 0) return;
+      if (caHT <= 0) return;
 
       const project = projectsMap.get(facture.projectId) as any;
       if (!project) return;
 
       // Get universes from project
       const universList = project.data?.universes || project.data?.univers || project.universes || project.univers || [];
+      const nbUniverses = Array.isArray(universList) && universList.length > 0 ? universList.length : 1;
 
-      // Get all technicians involved in this project via interventions
-      const projectInterventions = interventionsByProject.get(facture.projectId) || [];
-      const technicianIds = new Set<number>();
-      let totalHeures = 0;
+      // RÈGLE: Récupérer les durées par technicien pour ce projet
+      const dureesParTech = dureeTechParProjet[facture.projectId] || {};
+      const dureeTotale = dureeTotaleParProjet[facture.projectId] || 0;
 
-      projectInterventions.forEach((intervention: any) => {
-        // Get duration
-        const dureeMinutes = parseFloat(intervention.duree || intervention.data?.duree || 0) || 0;
-        totalHeures += dureeMinutes / 60;
+      // Si pas de temps attribué (pas de visites validées productives), ignorer la facture
+      if (dureeTotale === 0) return;
 
-        // Get user IDs from intervention
-        if (intervention.userId) {
-          technicianIds.add(intervention.userId);
-        } else if (intervention.user_id) {
-          technicianIds.add(intervention.user_id);
-        } else if (intervention.data?.visites && Array.isArray(intervention.data.visites)) {
-          intervention.data.visites.forEach((visite: any) => {
-            if (visite.usersIds && Array.isArray(visite.usersIds)) {
-              visite.usersIds.forEach((id: number) => technicianIds.add(id));
-            }
-          });
-        }
-      });
+      // RÈGLE: Répartir le CA PRORATA AU TEMPS (duration_facturee)
+      Object.entries(dureesParTech).forEach(([techIdStr, dureeTech]) => {
+        const techId = Number(techIdStr);
+        const user = usersMap.get(techId) as any;
+        
+        // Filtrer uniquement les techniciens
+        if (!user || user.type !== 'technicien') return;
 
-      // Filter to only techniciens
-      const validTechIds = Array.from(technicianIds).filter(id => {
-        const user = usersMap.get(id) as any;
-        return user && user.type === 'technicien';
-      });
+        // RÈGLE: Prorata temps
+        const partTech = (dureeTech as number) / dureeTotale;
+        const caTechFacture = caHT * partTech;
+        const heuresTech = (dureeTech as number) / 60;
 
-      if (validTechIds.length === 0) return;
+        const techKey = String(techId);
+        const techName = `${user.firstname || ''} ${user.name || ''}`.trim() || `Tech ${techId}`;
 
-      // Distribute CA and hours equally among technicians
-      const caPerTech = caHT / validTechIds.length;
-      const heuresPerTech = totalHeures / validTechIds.length;
-
-      validTechIds.forEach((userId) => {
-        const user = usersMap.get(userId) as any;
-        if (!user) return;
-
-        const techId = String(userId);
-        const techName = `${user.firstname || ''} ${user.name || ''}`.trim() || `Tech ${userId}`;
-
-        if (!techMap.has(techId)) {
-          techMap.set(techId, {
-            technicienId: techId,
+        if (!techMap.has(techKey)) {
+          techMap.set(techKey, {
+            technicienId: techKey,
             technicienNom: techName,
             technicienColor: user.data?.bgcolor?.hex || user.couleur || "#666",
             technicienActif: user.is_on !== false,
@@ -971,31 +1006,39 @@ export function aggregateTechnicienUniversStats(
           });
         }
 
-        const tech = techMap.get(techId)!;
-        tech.totaux.caHT += caPerTech;
-        tech.totaux.heures += heuresPerTech;
-        tech.totaux.nbDossiers += 1 / validTechIds.length;
+        const tech = techMap.get(techKey)!;
+        tech.totaux.caHT += caTechFacture;
+        tech.totaux.heures += heuresTech;
+        tech.totaux.nbDossiers += partTech; // Prorata pour le dossier aussi
 
-        // Distribute across universes
+        // Distribute across universes (pro-rata si multi-univers)
         if (Array.isArray(universList) && universList.length > 0) {
           universList.forEach((univers: string) => {
             if (!tech.universes[univers]) {
               tech.universes[univers] = { caHT: 0, heures: 0, caParHeure: 0, nbDossiers: 0 };
             }
-            tech.universes[univers].caHT += caPerTech / universList.length;
-            tech.universes[univers].heures += heuresPerTech / universList.length;
-            tech.universes[univers].nbDossiers += (1 / validTechIds.length) / universList.length;
+            tech.universes[univers].caHT += caTechFacture / nbUniverses;
+            tech.universes[univers].heures += heuresTech / nbUniverses;
+            tech.universes[univers].nbDossiers += partTech / nbUniverses;
           });
         }
       });
     });
   });
 
-  // Calculate caParHeure for all techs
+  // Calculate caParHeure and apply rounding for all techs
   techMap.forEach((tech) => {
+    // RÈGLE: Arrondis
+    tech.totaux.caHT = Math.round(tech.totaux.caHT * 100) / 100;
+    tech.totaux.heures = Math.round(tech.totaux.heures * 10) / 10;
+    tech.totaux.nbDossiers = Math.round(tech.totaux.nbDossiers * 10) / 10;
     tech.totaux.caParHeure = tech.totaux.heures > 0 ? Math.round(tech.totaux.caHT / tech.totaux.heures) : 0;
+
     Object.keys(tech.universes).forEach((univers) => {
       const u = tech.universes[univers];
+      u.caHT = Math.round(u.caHT * 100) / 100;
+      u.heures = Math.round(u.heures * 10) / 10;
+      u.nbDossiers = Math.round(u.nbDossiers * 10) / 10;
       u.caParHeure = u.heures > 0 ? Math.round(u.caHT / u.heures) : 0;
     });
   });
