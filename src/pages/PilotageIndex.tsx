@@ -106,10 +106,10 @@ const pilotageModules: PilotageModule[] = [
   {
     id: 'ged',
     title: 'G.E.D',
-    description: 'Gestion électronique des documents',
+    description: 'Dépôt et gestion des documents collaborateurs',
     icon: FileText,
     href: ROUTES.pilotage.equipe,
-    badge: 'Bientôt',
+    requiresModuleOptions: { module: 'rh', options: ['rh_viewer', 'rh_admin'] },
     category: 'rh',
   },
   // AUTRES
