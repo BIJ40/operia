@@ -205,8 +205,8 @@ function AppContent() {
           <Route path="/hc-agency/actions" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><ActionsAMener /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/hc-agency/actions/category/:slug" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><CategoryActionsAMener /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* Diffusion */}
-          <Route path="/hc-agency/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><DiffusionDashboard /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Diffusion (sous statistiques) */}
+          <Route path="/hc-agency/statistiques/diffusion" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><DiffusionDashboard /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* RH Tech */}
           <Route path="/hc-agency/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
