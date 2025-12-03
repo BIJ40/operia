@@ -123,6 +123,9 @@ export const UserModulesTab = memo(function UserModulesTab({
                   const isAllowed = isRhOptionAllowedForRole(userRole, opt.key);
                   const isDisabled = !canEdit || !isAllowed;
                   
+                  // Debug log
+                  console.log(`[UserModulesTab] RH option "${opt.key}": userRole=${userRole}, isAllowed=${isAllowed}, isDisabled=${isDisabled}`);
+                  
                   return (
                     <div 
                       key={opt.key} 
