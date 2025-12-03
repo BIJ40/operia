@@ -21,7 +21,6 @@ import {
 } from '@/types/documentRequest';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MainLayout } from '@/components/layout/MainLayout';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
@@ -99,23 +98,21 @@ export default function MonCoffreRH() {
 
   if (error) {
     return (
-      <MainLayout>
-        <div className="space-y-6">
-          <Card className="border-l-4 border-l-destructive bg-gradient-to-br from-destructive/5 via-background to-background">
-            <CardContent className="py-10 text-center space-y-4">
-              <p className="text-destructive">Erreur lors du chargement de vos documents.</p>
-              <Button variant="outline" onClick={handleRetry}>
-                Réessayer
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </MainLayout>
+      <div className="space-y-6">
+        <Card className="border-l-4 border-l-destructive bg-gradient-to-br from-destructive/5 via-background to-background">
+          <CardContent className="py-10 text-center space-y-4">
+            <p className="text-destructive">Erreur lors du chargement de vos documents.</p>
+            <Button variant="outline" onClick={handleRetry}>
+              Réessayer
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <MainLayout>
+    <>
       <div className="space-y-6">
         {/* Bloc Coffre-fort documents */}
         <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
@@ -314,6 +311,6 @@ export default function MonCoffreRH() {
           </DialogContent>
         </Dialog>
       </div>
-    </MainLayout>
+    </>
   );
 }
