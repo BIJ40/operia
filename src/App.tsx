@@ -187,7 +187,7 @@ function AppContent() {
           {/* ============================================ */}
           {/* PILOTAGE AGENCE - Section Index + Sous-pages */}
           {/* ============================================ */}
-          <Route path="/hc-agency" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PilotageIndex /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><PilotageIndex /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Hub Statistiques */}
           <Route path="/hc-agency/statistiques" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PilotageStatsHub /></ModuleGuard></RoleGuard></MainLayout>} />
