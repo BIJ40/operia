@@ -1,10 +1,15 @@
 export { HRDocumentManager } from './HRDocumentManager';
+export { HRDocumentViewer } from './HRDocumentViewer';
 export { DocumentCategoryTabs } from './DocumentCategoryTabs';
 export { DocumentGrid } from './DocumentGrid';
 export { DocumentItem } from './DocumentItem';
+export { ReadOnlyDocumentGrid } from './ReadOnlyDocumentGrid';
+export { ReadOnlyDocumentItem } from './ReadOnlyDocumentItem';
 export { DocumentPreviewModal } from './DocumentPreviewModal';
 export { DocumentDropzone } from './DocumentDropzone';
 export { DocumentBreadcrumb } from './DocumentBreadcrumb';
+export { ReadOnlyDocumentBreadcrumb } from './ReadOnlyDocumentBreadcrumb';
 export { DraggableDocumentItem } from './DraggableDocumentItem';
 export { DroppableFolder, DroppableRoot } from './DroppableFolder';
 export { SubfolderButtons } from './SubfolderButtons';
+export { ReadOnlySubfolderButtons } from './ReadOnlySubfolderButtons';
