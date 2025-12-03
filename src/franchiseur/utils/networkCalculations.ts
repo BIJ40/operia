@@ -874,6 +874,7 @@ export function aggregateUniversApporteurMatrix(
 
 /**
  * Aggregate Technicien × Univers stats across multiple agencies
+ * Joins factures → projects → interventions → users to attribute CA to technicians
  */
 export function aggregateTechnicienUniversStats(
   agencyData: AgencyData[],
@@ -882,45 +883,79 @@ export function aggregateTechnicienUniversStats(
   const techMap = new Map<string, NetworkTechnicienUniversStats>();
 
   agencyData.forEach((agency) => {
-    if (!agency.data?.interventions || !agency.data?.users) return;
+    if (!agency.data?.factures || !agency.data?.projects || !agency.data?.interventions || !agency.data?.users) return;
 
     const usersMap = new Map(agency.data.users.map((u: any) => [u.id, u]));
-
+    const projectsMap = new Map(agency.data.projects.map((p: any) => [p.id, p]));
+    
+    // Group interventions by project to attribute CA
+    const interventionsByProject = new Map<number, any[]>();
     agency.data.interventions.forEach((intervention: any) => {
-      const intervDate = parseDate(intervention.date || intervention.created_at);
-      if (!intervDate) return;
-      if (dateRange && !isWithinInterval(intervDate, { start: dateRange.start, end: dateRange.end })) return;
+      const projectId = intervention.projectId;
+      if (!projectId) return;
+      
+      const existing = interventionsByProject.get(projectId) || [];
+      existing.push(intervention);
+      interventionsByProject.set(projectId, existing);
+    });
 
-      // User ID can be in different places: directly, in data, or in visites array
-      let userIds: number[] = [];
-      if (intervention.userId) {
-        userIds = [intervention.userId];
-      } else if (intervention.user_id) {
-        userIds = [intervention.user_id];
-      } else if (intervention.data?.visites && Array.isArray(intervention.data.visites)) {
-        // API structure: visites[].usersIds
-        intervention.data.visites.forEach((visite: any) => {
-          if (visite.usersIds && Array.isArray(visite.usersIds)) {
-            userIds.push(...visite.usersIds);
-          }
-        });
-      }
+    // Process factures and attribute CA to technicians via interventions
+    agency.data.factures.forEach((facture: any) => {
+      if (facture.type === 'avoir') return;
 
-      // API returns "universes" (plural) not "univers" (singular)
-      const universList = intervention.data?.universes || intervention.data?.univers || intervention.universes || intervention.univers || [];
-      // Duration in minutes, convert to hours
-      const dureeMinutes = parseFloat(intervention.duree || intervention.data?.duree || 0) || 0;
-      const heures = dureeMinutes / 60;
-      const caHT = parseFloat(intervention.montantHT || intervention.data?.montantHT || 0) || 0;
+      const factureDate = parseDate(facture.dateReelle || facture.dateEmission || facture.created_at);
+      if (!factureDate) return;
+      if (dateRange && !isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end })) return;
 
-      // Process each user involved in the intervention
-      const uniqueUserIds = [...new Set(userIds)];
-      uniqueUserIds.forEach((userId) => {
+      const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
+      const caHT = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+      if (caHT === 0) return;
+
+      const project = projectsMap.get(facture.projectId) as any;
+      if (!project) return;
+
+      // Get universes from project
+      const universList = project.data?.universes || project.data?.univers || project.universes || project.univers || [];
+
+      // Get all technicians involved in this project via interventions
+      const projectInterventions = interventionsByProject.get(facture.projectId) || [];
+      const technicianIds = new Set<number>();
+      let totalHeures = 0;
+
+      projectInterventions.forEach((intervention: any) => {
+        // Get duration
+        const dureeMinutes = parseFloat(intervention.duree || intervention.data?.duree || 0) || 0;
+        totalHeures += dureeMinutes / 60;
+
+        // Get user IDs from intervention
+        if (intervention.userId) {
+          technicianIds.add(intervention.userId);
+        } else if (intervention.user_id) {
+          technicianIds.add(intervention.user_id);
+        } else if (intervention.data?.visites && Array.isArray(intervention.data.visites)) {
+          intervention.data.visites.forEach((visite: any) => {
+            if (visite.usersIds && Array.isArray(visite.usersIds)) {
+              visite.usersIds.forEach((id: number) => technicianIds.add(id));
+            }
+          });
+        }
+      });
+
+      // Filter to only techniciens
+      const validTechIds = Array.from(technicianIds).filter(id => {
+        const user = usersMap.get(id) as any;
+        return user && user.type === 'technicien';
+      });
+
+      if (validTechIds.length === 0) return;
+
+      // Distribute CA and hours equally among technicians
+      const caPerTech = caHT / validTechIds.length;
+      const heuresPerTech = totalHeures / validTechIds.length;
+
+      validTechIds.forEach((userId) => {
         const user = usersMap.get(userId) as any;
         if (!user) return;
-
-        // Only count techniciens
-        if (user.type !== 'technicien') return;
 
         const techId = String(userId);
         const techName = `${user.firstname || ''} ${user.name || ''}`.trim() || `Tech ${userId}`;
@@ -937,20 +972,19 @@ export function aggregateTechnicienUniversStats(
         }
 
         const tech = techMap.get(techId)!;
-        // Divide by number of users for shared interventions
-        const share = 1 / uniqueUserIds.length;
-        tech.totaux.caHT += caHT * share;
-        tech.totaux.heures += heures * share;
-        tech.totaux.nbDossiers += share;
+        tech.totaux.caHT += caPerTech;
+        tech.totaux.heures += heuresPerTech;
+        tech.totaux.nbDossiers += 1 / validTechIds.length;
 
+        // Distribute across universes
         if (Array.isArray(universList) && universList.length > 0) {
           universList.forEach((univers: string) => {
             if (!tech.universes[univers]) {
               tech.universes[univers] = { caHT: 0, heures: 0, caParHeure: 0, nbDossiers: 0 };
             }
-            tech.universes[univers].caHT += (caHT * share) / universList.length;
-            tech.universes[univers].heures += (heures * share) / universList.length;
-            tech.universes[univers].nbDossiers += share / universList.length;
+            tech.universes[univers].caHT += caPerTech / universList.length;
+            tech.universes[univers].heures += heuresPerTech / universList.length;
+            tech.universes[univers].nbDossiers += (1 / validTechIds.length) / universList.length;
           });
         }
       });

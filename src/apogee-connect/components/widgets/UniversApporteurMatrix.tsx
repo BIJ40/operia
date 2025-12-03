@@ -176,12 +176,12 @@ export const UniversApporteurMatrix = ({
                           className="border border-border p-3 text-center"
                           style={{ backgroundColor: bgColor }}
                         >
-                          <div className="space-y-1">
+                        <div className="space-y-1">
                             <div className="font-semibold">
                               {formatEuros(cellData.ca)}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {cellData.nbDossiers} dossier{cellData.nbDossiers > 1 ? 's' : ''}
+                              {cellData.nbDossiers.toFixed(1)} dossier{cellData.nbDossiers > 1 ? 's' : ''}
                             </div>
                           </div>
                         </td>
@@ -191,7 +191,7 @@ export const UniversApporteurMatrix = ({
                       <div className="space-y-1">
                         <div>{formatEuros(total.ca)}</div>
                         <div className="text-xs text-muted-foreground">
-                          {total.dossiers} dossier{total.dossiers > 1 ? 's' : ''}
+                          {total.dossiers.toFixed(1)} dossier{total.dossiers > 1 ? 's' : ''}
                         </div>
                       </div>
                     </td>
@@ -210,7 +210,7 @@ export const UniversApporteurMatrix = ({
                       <div className="space-y-1">
                         <div>{formatEuros(total.ca)}</div>
                         <div className="text-xs">
-                          {total.dossiers} dossier{total.dossiers > 1 ? 's' : ''}
+                          {total.dossiers.toFixed(1)} dossier{total.dossiers > 1 ? 's' : ''}
                         </div>
                       </div>
                     </td>
@@ -230,7 +230,7 @@ export const UniversApporteurMatrix = ({
                       {sortedTypes.reduce(
                         (sum, type) => sum + calculateTypeTotal(type).dossiers,
                         0
-                      )}{' '}
+                      ).toFixed(1)}{' '}
                       dossiers
                     </div>
                   </div>

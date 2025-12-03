@@ -177,9 +177,9 @@ export const TechnicienUniversHeatmap = ({
                         {value > 0 ? (
                           <div className="space-y-1">
                             <div className="font-semibold">{formatValue(value)}</div>
-                            {universeData && (
+                        {universeData && (
                               <div className="text-xs text-muted-foreground">
-                                {universeData.nbDossiers} dossier{universeData.nbDossiers > 1 ? 's' : ''}
+                                {universeData.nbDossiers.toFixed(1)} dossier{universeData.nbDossiers > 1 ? 's' : ''}
                               </div>
                             )}
                           </div>
@@ -193,7 +193,7 @@ export const TechnicienUniversHeatmap = ({
                     <div className="space-y-1">
                       <div>{formatValue(mode === "ca" ? tech.totaux.caHT : mode === "heures" ? tech.totaux.heures : tech.totaux.caParHeure)}</div>
                       <div className="text-xs text-muted-foreground">
-                        {tech.totaux.nbDossiers} dossier{tech.totaux.nbDossiers > 1 ? 's' : ''}
+                        {tech.totaux.nbDossiers.toFixed(1)} dossier{tech.totaux.nbDossiers > 1 ? 's' : ''}
                       </div>
                     </div>
                   </td>
