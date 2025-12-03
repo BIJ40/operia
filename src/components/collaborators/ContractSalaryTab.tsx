@@ -59,8 +59,9 @@ import {
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useCollaboratorDocuments } from '@/hooks/useCollaboratorDocuments';
-import { useAnalyzePayslip } from '@/hooks/usePayslipAnalysis';
+import { useAnalyzePayslip, usePayslipDataByCollaborator } from '@/hooks/usePayslipAnalysis';
 import { toast } from 'sonner';
+import { PayslipDataViewer } from './payslip';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -91,6 +92,7 @@ export function ContractSalaryTab({ collaboratorId, canManage }: ContractSalaryT
 
   const { documents } = useCollaboratorDocuments(collaboratorId);
   const analyzePayslip = useAnalyzePayslip();
+  const { data: payslipsData, isLoading: isLoadingPayslips } = usePayslipDataByCollaborator(collaboratorId);
 
   const [showContractDialog, setShowContractDialog] = useState(false);
   const [showSalaryDialog, setShowSalaryDialog] = useState(false);
@@ -398,6 +400,13 @@ export function ContractSalaryTab({ collaboratorId, canManage }: ContractSalaryT
           </Card>
         )}
       </div>
+
+      {/* Données bulletins de paie analysés */}
+      {(payslipsData && payslipsData.length > 0) && (
+        <div className="mt-6">
+          <PayslipDataViewer payslips={payslipsData} isLoading={isLoadingPayslips} />
+        </div>
+      )}
 
       {/* Dialogs */}
       <ContractDialog
