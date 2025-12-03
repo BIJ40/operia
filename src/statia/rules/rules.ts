@@ -23,10 +23,52 @@ export const STATIA_RULES_JSON = {
   },
   technicians: {
     productiveTypes: ["depannage", "repair", "travaux", "work"],
-    nonProductiveTypes: ["RT", "rdv", "rdvtech", "sav", "diagnostic"],
-    timeAllocation: "duration_facturee",
-    timeSourceField: "projects.duration | projects.tempsPrevus",
-    RT_generates_NO_CA: true
+    nonProductiveTypes: ["RT", "rdv", "rdvtech", "sav", "diagnostic", "TH"],
+    timeAllocation: "prorata_duree_visites_validees",
+    timeSourceField: "interventions.visites[].duree",
+    RT_generates_NO_CA: true,
+    // Règles d'identification des techniciens
+    identification: {
+      rules: [
+        "user.isTechnicien === true",
+        "user.type === 'technicien'",
+        "(user.type === 'utilisateur' && user.data.universes.length > 0)"
+      ],
+      activeCheck: "user.is_on === true || user.isActive === true"
+    },
+    // Règles d'exclusion des interventions
+    exclusions: {
+      RT: {
+        conditions: [
+          "intervention.data?.biRt?.isValidated === true",
+          "intervention.data?.type2 === 'RT'",
+          "intervention.type2?.toUpperCase() === 'RT'"
+        ]
+      },
+      SAV: {
+        conditions: [
+          "type2.toLowerCase().includes('sav')",
+          "type.toLowerCase().includes('sav')"
+        ]
+      }
+    },
+    // Règles d'inclusion (types productifs)
+    productiveCheck: {
+      condition: "intervention.data?.biDepan || intervention.data?.biTvx",
+      description: "Seules les interventions avec biDepan ou biTvx sont productives"
+    },
+    // Visites
+    visites: {
+      validState: "validated",
+      minDuree: 1,
+      technicienSource: "visite.usersIds"
+    },
+    // Répartition CA
+    caAllocation: {
+      method: "prorata_temps",
+      formula: "caTech = caFactureHT * (dureeTech / dureeTotaleProjet)",
+      multiUnivers: "uniform_distribution"
+    }
   },
   devis: {
     transformation: {
@@ -56,7 +98,17 @@ export const STATIA_RULES_JSON = {
   },
   univers: {
     source: "apiGetProjects.universes",
-    multiUniverseAllocation: "uniform_or_time_weighted"
+    fallbackSources: ["apiGetProjects.data.univers", "apiGetProjects.univers"],
+    multiUniverseAllocation: "uniform_distribution",
+    normalization: {
+      "amelioration_logement": "pmr",
+      "amelioration-logement": "pmr",
+      "ame_logement": "pmr",
+      "volets": "volet_roulant",
+      "volet": "volet_roulant"
+    },
+    excludedUniverses: ["mobilier", "travaux_xterieurs", "travaux_exterieurs"],
+    defaultIfEmpty: "ignore_facture"
   },
   sav: {
     identification: "linked_dossier",
