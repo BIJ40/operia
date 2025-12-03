@@ -55,7 +55,7 @@ const pilotageModules: PilotageModule[] = [
   },
   {
     title: 'Mon équipe',
-    description: 'Gestion des collaborateurs de l\'agence',
+    description: 'Collaborateurs, documents RH et bulletins de salaire',
     icon: Users,
     href: ROUTES.pilotage.equipe,
   },

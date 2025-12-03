@@ -31,7 +31,7 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'pilotage_actions', defaultTitle: 'Actions à Mener', defaultSubtitle: 'Suivi des actions et tâches en cours', route: ROUTES.pilotage.actions },
   { pageKey: 'pilotage_diffusion', defaultTitle: 'Mode Diffusion', defaultSubtitle: 'Affichage TV pour l\'agence', route: ROUTES.pilotage.diffusion },
   { pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens', route: ROUTES.pilotage.rhTech },
-  { pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Gestion des collaborateurs de l\'agence', route: ROUTES.pilotage.equipe },
+  { pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Collaborateurs, documents RH et bulletins de salaire', route: ROUTES.pilotage.equipe },
   
   // Support
   { pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Assistance et demandes', route: ROUTES.support.index },
@@ -147,7 +147,7 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path.startsWith('/hc-agency/collaborateurs/'), pageKey: 'pilotage_collaborateur_profile', defaultTitle: 'Fiche collaborateur', defaultSubtitle: 'Profil 360°', icon: 'User', parentRoute: '/hc-agency/collaborateurs', parentLabel: 'Collaborateurs' },
   { match: (path) => path === '/mon-coffre-rh', pageKey: 'mon_coffre_rh', defaultTitle: 'Mon Coffre-fort RH', defaultSubtitle: 'Vos documents RH disponibles', icon: 'FolderOpen', parentRoute: '/', parentLabel: 'Accueil' },
   { match: (path) => path === '/hc-agency/demandes-rh', pageKey: 'pilotage_demandes_rh', defaultTitle: 'Demandes RH', defaultSubtitle: 'Demandes de documents des collaborateurs', icon: 'Inbox', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
-  { match: (path) => path === '/hc-agency/equipe', pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Gestion des collaborateurs de l\'agence', icon: 'Users', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
+  { match: (path) => path === '/hc-agency/equipe', pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Collaborateurs, documents RH et bulletins de salaire', icon: 'Users', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
   { match: (path) => path === '/hc-agency', pageKey: 'pilotage_index', defaultTitle: 'Mon Agence', defaultSubtitle: 'Gérez votre activité au quotidien', icon: 'Gauge', parentRoute: '/', parentLabel: 'Accueil' },
   
   // ============================================

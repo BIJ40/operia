@@ -205,7 +205,7 @@ export function UnifiedSidebar() {
       indexUrl: ROUTES.pilotage.index,
       icon: Building2,
       items: [
-        { title: 'Mon équipe', url: ROUTES.pilotage.equipe, icon: Users, description: 'Gestion des collaborateurs de l\'agence' },
+        { title: 'Mon équipe', url: ROUTES.pilotage.equipe, icon: Users, description: 'Collaborateurs, documents RH et bulletins de salaire' },
         { 
           title: 'Statistiques', 
           url: ROUTES.pilotage.statsHub,
