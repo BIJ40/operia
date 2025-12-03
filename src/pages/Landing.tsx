@@ -33,11 +33,19 @@ export default function Landing() {
           const hasModule = isModuleEnabled(enabledModules, tile.requiresModule);
           if (!hasModule) return false;
           
-          // Vérifier si une option spécifique est requise
+          // Vérifier si une option spécifique est requise (singulier)
           if (tile.requiresModuleOption) {
             if (!isModuleOptionEnabled(enabledModules, tile.requiresModule as ModuleKey, tile.requiresModuleOption)) {
               return false;
             }
+          }
+          
+          // Vérifier si l'une des options est requise (pluriel - logique OR)
+          if (tile.requiresModuleOptions && tile.requiresModuleOptions.length > 0) {
+            const hasAnyOption = tile.requiresModuleOptions.some(opt => 
+              isModuleOptionEnabled(enabledModules, tile.requiresModule as ModuleKey, opt)
+            );
+            if (!hasAnyOption) return false;
           }
           
           // Le module est activé avec l'option → tuile visible (skip group check)
