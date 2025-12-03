@@ -76,10 +76,14 @@ export const CollapsibleSection = memo(function CollapsibleSection({
     </div>
   );
 
+  // Si pas de href, tout le header toggle
+  const handleHeaderClick = href ? undefined : toggleOpen;
+
   return (
     <section className="group/section">
       {/* Header - 72px+ imposant */}
       <div
+        onClick={handleHeaderClick}
         className={cn(
           "w-full flex items-center justify-between",
           "min-h-[72px] py-4 px-5 -mx-1 rounded-2xl",
@@ -87,10 +91,11 @@ export const CollapsibleSection = memo(function CollapsibleSection({
           "bg-gradient-to-r from-muted/50 via-background to-muted/30",
           "hover:border-border hover:from-muted/80 hover:via-background hover:to-muted/50",
           "hover:shadow-md",
-          "transition-all duration-300"
+          "transition-all duration-300",
+          !href && "cursor-pointer"
         )}
       >
-        {/* Left: Icon + Title - Navigates to section page */}
+        {/* Left: Icon + Title - Navigates to section page if href, otherwise part of toggle */}
         {href ? (
           <Link 
             to={href} 
@@ -99,7 +104,7 @@ export const CollapsibleSection = memo(function CollapsibleSection({
             {TitleContent}
           </Link>
         ) : (
-          <div className="flex-1">{TitleContent}</div>
+          <div className="flex-1 cursor-pointer">{TitleContent}</div>
         )}
 
         {/* Right: Combo barre + chevron - Toggles collapse */}
