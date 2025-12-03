@@ -3,7 +3,8 @@
  * Interface style Finder avec drag & drop, catégories, sous-dossiers et preview
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, pointerWithin } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -32,13 +33,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FolderOpen, Loader2, Upload, FolderPlus, ChevronRight } from 'lucide-react';
+import { FolderOpen, Loader2, Upload } from 'lucide-react';
 import { useCollaboratorDocuments } from '@/hooks/useCollaboratorDocuments';
+import { useSubfolders } from '@/hooks/useSubfolders';
 import { CollaboratorDocument, DocumentType, DocumentVisibility, DOCUMENT_TYPES, DOCUMENT_VISIBILITY } from '@/types/collaboratorDocument';
 import { DocumentCategoryTabs } from './DocumentCategoryTabs';
 import { DocumentGrid } from './DocumentGrid';
 import { DocumentDropzone } from './DocumentDropzone';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
+import { DocumentBreadcrumb } from './DocumentBreadcrumb';
+import { DroppableFolder } from './DroppableFolder';
+import { DocumentItem } from './DocumentItem';
 import { toast } from 'sonner';
 
 interface HRDocumentManagerProps {
@@ -65,6 +70,8 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     getSignedUrl,
   } = useCollaboratorDocuments(collaboratorId);
 
+  const { getSubfolders, addSubfolder, removeSubfolder, syncWithDocuments } = useSubfolders(collaboratorId);
+
   // State
   const [activeCategory, setActiveCategory] = useState<DocumentType | 'ALL'>('ALL');
   const [activeSubfolder, setActiveSubfolder] = useState<string | null>(null);
@@ -75,6 +82,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
   const [currentUploadIndex, setCurrentUploadIndex] = useState(0);
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [draggedDocument, setDraggedDocument] = useState<CollaboratorDocument | null>(null);
 
   // Compute category counts
   const categoryCounts = useMemo(() => {
@@ -84,14 +92,45 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     }, {} as Record<string, number>);
   }, [documents]);
 
-  // Get subfolders for active category
+  // Get subfolders for active category (from localStorage + documents)
   const subfolders = useMemo(() => {
     if (activeCategory === 'ALL') return [];
-    const folderSet = new Set<string>();
+    
+    // Get persisted subfolders
+    const persistedFolders = getSubfolders(activeCategory);
+    
+    // Get subfolders from documents
+    const documentFolders = new Set<string>();
     documents
       .filter((doc) => doc.doc_type === activeCategory && doc.subfolder)
-      .forEach((doc) => folderSet.add(doc.subfolder!));
-    return Array.from(folderSet).sort();
+      .forEach((doc) => documentFolders.add(doc.subfolder!));
+    
+    // Merge and sort
+    const allFolders = new Set([...persistedFolders, ...documentFolders]);
+    return Array.from(allFolders).sort();
+  }, [documents, activeCategory, getSubfolders]);
+
+  // Sync document subfolders to localStorage
+  useEffect(() => {
+    if (activeCategory !== 'ALL') {
+      const documentFolders = documents
+        .filter((doc) => doc.doc_type === activeCategory && doc.subfolder)
+        .map((doc) => doc.subfolder!);
+      if (documentFolders.length > 0) {
+        syncWithDocuments(activeCategory, documentFolders);
+      }
+    }
+  }, [documents, activeCategory, syncWithDocuments]);
+
+  // Get document count per subfolder
+  const subfolderCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    documents
+      .filter((doc) => doc.doc_type === activeCategory && doc.subfolder)
+      .forEach((doc) => {
+        counts[doc.subfolder!] = (counts[doc.subfolder!] || 0) + 1;
+      });
+    return counts;
   }, [documents, activeCategory]);
 
   // Filter documents by active category and subfolder
@@ -163,20 +202,66 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     }
   };
 
-  // Handle create new subfolder (placeholder - just creates the subfolder name for future uploads)
+  // Handle create new subfolder
   const handleCreateSubfolder = () => {
-    if (!newFolderName.trim()) return;
+    if (!newFolderName.trim() || activeCategory === 'ALL') return;
     
-    // Navigate to the new subfolder (documents uploaded here will have this subfolder)
-    setActiveSubfolder(newFolderName.trim());
+    const folderName = newFolderName.trim();
+    addSubfolder(activeCategory, folderName);
+    setActiveSubfolder(folderName);
     setShowNewFolderDialog(false);
     setNewFolderName('');
-    toast.success(`Dossier "${newFolderName.trim()}" créé`);
+    toast.success(`Dossier "${folderName}" créé`);
+  };
+
+  // Handle delete empty subfolder
+  const handleDeleteSubfolder = (folderName: string) => {
+    if (activeCategory === 'ALL') return;
+    removeSubfolder(activeCategory, folderName);
+    toast.success(`Dossier "${folderName}" supprimé`);
   };
 
   // Handle rename
   const handleRename = (doc: CollaboratorDocument, newTitle: string) => {
     updateDocument.mutate({ id: doc.id, data: { title: newTitle } });
+  };
+
+  // Handle drag start
+  const handleDragStart = (event: DragStartEvent) => {
+    const doc = event.active.data.current?.document as CollaboratorDocument;
+    setDraggedDocument(doc);
+  };
+
+  // Handle drag end - move document to new folder
+  const handleDragEnd = (event: DragEndEvent) => {
+    setDraggedDocument(null);
+    
+    const { active, over } = event;
+    if (!over || !active.data.current?.document) return;
+
+    const document = active.data.current.document as CollaboratorDocument;
+    const targetData = over.data.current;
+    
+    if (!targetData) return;
+
+    const newSubfolder = targetData.subfolder as string | null;
+    
+    // Don't update if same folder
+    if (document.subfolder === newSubfolder) return;
+
+    // Update document subfolder
+    updateDocument.mutate(
+      { id: document.id, data: { subfolder: newSubfolder } },
+      {
+        onSuccess: () => {
+          toast.success(
+            newSubfolder 
+              ? `Document déplacé vers "${newSubfolder}"` 
+              : 'Document déplacé à la racine'
+          );
+        },
+      }
+    );
   };
 
   // Update pending upload
@@ -205,7 +290,11 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
   }
 
   return (
-    <>
+    <DndContext
+      collisionDetection={pointerWithin}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2">
@@ -222,50 +311,34 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
             totalCount={documents.length}
           />
 
-          {/* Breadcrumb + New Folder Button (when in a category) */}
-          {activeCategory !== 'ALL' && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 text-sm">
-                <button
-                  onClick={() => setActiveSubfolder(null)}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {DOCUMENT_TYPES.find((t) => t.value === activeCategory)?.label || activeCategory}
-                </button>
-                {activeSubfolder && (
-                  <>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{activeSubfolder}</span>
-                  </>
-                )}
-              </div>
-              
-              {canManage && !activeSubfolder && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowNewFolderDialog(true)}
-                  className="gap-2"
-                >
-                  <FolderPlus className="h-4 w-4" />
-                  Nouveau dossier
-                </Button>
-              )}
-            </div>
-          )}
+          {/* Breadcrumb + New Folder Button */}
+          <DocumentBreadcrumb
+            activeCategory={activeCategory}
+            activeSubfolder={activeSubfolder}
+            onNavigateRoot={() => handleCategoryChange('ALL')}
+            onNavigateCategory={() => setActiveSubfolder(null)}
+            onCreateFolder={() => setShowNewFolderDialog(true)}
+            canManage={canManage}
+            isDragging={!!draggedDocument}
+          />
 
           {/* Subfolders (only when in category root, not in a subfolder) */}
           {activeCategory !== 'ALL' && !activeSubfolder && subfolders.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {subfolders.map((folder) => (
-                <button
+                <DroppableFolder
                   key={folder}
+                  folderId={folder}
+                  folderName={folder}
+                  documentCount={subfolderCounts[folder] || 0}
                   onClick={() => setActiveSubfolder(folder)}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border/50 hover:border-helpconfort-blue hover:bg-helpconfort-blue/5 transition-all group"
-                >
-                  <FolderOpen className="h-10 w-10 text-helpconfort-orange group-hover:text-helpconfort-blue transition-colors" />
-                  <span className="text-sm font-medium text-center line-clamp-2">{folder}</span>
-                </button>
+                  onDelete={
+                    (subfolderCounts[folder] || 0) === 0 
+                      ? () => handleDeleteSubfolder(folder) 
+                      : undefined
+                  }
+                  canManage={canManage}
+                />
               ))}
             </div>
           )}
@@ -290,6 +363,22 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
           />
         </CardContent>
       </Card>
+
+      {/* Drag Overlay */}
+      <DragOverlay>
+        {draggedDocument && (
+          <div className="opacity-80 scale-105 pointer-events-none">
+            <DocumentItem
+              document={draggedDocument}
+              onPreview={() => {}}
+              onDownload={() => {}}
+              onDelete={() => {}}
+              onRename={() => {}}
+              canManage={false}
+            />
+          </div>
+        )}
+      </DragOverlay>
 
       {/* Preview Modal */}
       <DocumentPreviewModal
@@ -449,6 +538,6 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </DndContext>
   );
 }

@@ -4,3 +4,6 @@ export { DocumentGrid } from './DocumentGrid';
 export { DocumentItem } from './DocumentItem';
 export { DocumentPreviewModal } from './DocumentPreviewModal';
 export { DocumentDropzone } from './DocumentDropzone';
+export { DocumentBreadcrumb } from './DocumentBreadcrumb';
+export { DraggableDocumentItem } from './DraggableDocumentItem';
+export { DroppableFolder, DroppableRoot } from './DroppableFolder';
