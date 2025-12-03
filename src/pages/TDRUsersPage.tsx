@@ -207,7 +207,7 @@ export default function TDRUsersPage() {
                   effectiveRole={getEffectiveRole(userItem)}
                   effectiveModules={getEffectiveModules(userItem)}
                   isModified={!!modifiedUsers[userItem.id]}
-                  canEdit={canEditUser(userItem.global_role, userItem.agence)}
+                  canEdit={canEditUser(userItem.global_role, userItem.agence, userItem.id)}
                   canDeactivate={canDeactivateUserCheck(userItem.global_role)}
                   canDelete={canDeleteUser(userItem.global_role)}
                   isSuperAdmin={isSuperAdmin}
@@ -274,7 +274,7 @@ export default function TDRUsersPage() {
           isEmailPending={updateEmailMutation.isPending}
           isPasswordPending={resetPasswordMutation.isPending}
           agencies={agencies}
-          canEditRoleAgence={editDialog.user ? canEditUser(editDialog.user.global_role, editDialog.user.agence) : false}
+          canEditRoleAgence={editDialog.user ? canEditUser(editDialog.user.global_role, editDialog.user.agence, editDialog.user.id) : false}
           assignableRoles={assignableRoles}
           readOnlyFields={
             // 🛡️ P1: Bloquer global_role si le rôle cible n'est pas dans canEditRoles
@@ -288,7 +288,7 @@ export default function TDRUsersPage() {
           onModuleOptionToggle={(moduleKey, optionKey, enabled) => {
             if (editDialog.user) handleModuleOptionToggle(editDialog.user.id, moduleKey, optionKey, enabled);
           }}
-          canEdit={editDialog.user ? canEditUser(editDialog.user.global_role, editDialog.user.agence) : false}
+          canEdit={editDialog.user ? canEditUser(editDialog.user.global_role, editDialog.user.agence, editDialog.user.id) : false}
         />
 
         <DeactivateDialog
