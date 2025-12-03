@@ -119,6 +119,19 @@ export function DocumentItem({
   const isImage = document.file_type?.startsWith('image/');
   const isPDF = document.file_type === 'application/pdf';
 
+  const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    e.preventDefault();
+    action();
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only trigger selection if clicking on the card itself, not buttons
+    if (onSelect) {
+      onSelect(e);
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -128,7 +141,7 @@ export function DocumentItem({
         isHovered && 'border-helpconfort-blue/30',
         isSelected && 'ring-2 ring-helpconfort-blue border-helpconfort-blue bg-helpconfort-blue/5'
       )}
-      onClick={onSelect}
+      onClick={handleCardClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -164,6 +177,7 @@ export function DocumentItem({
             onBlur={handleSaveRename}
             onKeyDown={handleKeyDown}
             className="text-center text-sm h-8"
+            onClick={(e) => e.stopPropagation()}
           />
         ) : (
           <p 
@@ -202,7 +216,7 @@ export function DocumentItem({
           variant="secondary"
           size="icon"
           className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-helpconfort-blue hover:text-white"
-          onClick={onPreview}
+          onClick={(e) => handleButtonClick(e, onPreview)}
           title="Aperçu"
         >
           <Eye className="h-4 w-4" />
@@ -211,7 +225,7 @@ export function DocumentItem({
           variant="secondary"
           size="icon"
           className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-helpconfort-blue hover:text-white"
-          onClick={onDownload}
+          onClick={(e) => handleButtonClick(e, onDownload)}
           title="Télécharger"
         >
           <Download className="h-4 w-4" />
@@ -222,7 +236,7 @@ export function DocumentItem({
               variant="secondary"
               size="icon"
               className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-helpconfort-orange hover:text-white"
-              onClick={onEdit}
+              onClick={(e) => handleButtonClick(e, onEdit)}
               title="Modifier"
             >
               <Pencil className="h-4 w-4" />
@@ -231,7 +245,7 @@ export function DocumentItem({
               variant="secondary"
               size="icon"
               className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-destructive hover:text-white"
-              onClick={onDelete}
+              onClick={(e) => handleButtonClick(e, onDelete)}
               title="Supprimer"
             >
               <Trash2 className="h-4 w-4" />

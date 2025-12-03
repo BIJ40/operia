@@ -7,6 +7,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { CollaboratorDocument } from '@/types/collaboratorDocument';
 import { DocumentItem } from './DocumentItem';
+import { GripVertical } from 'lucide-react';
 
 interface DraggableDocumentItemProps {
   document: CollaboratorDocument;
@@ -47,13 +48,22 @@ export function DraggableDocumentItem({
     <div
       ref={setNodeRef}
       style={style}
-      {...listeners}
-      {...attributes}
       className={cn(
-        'touch-none cursor-grab active:cursor-grabbing',
+        'relative group',
         isDragging && 'opacity-50 z-50'
       )}
     >
+      {/* Drag handle - only this area triggers drag */}
+      {canManage && (
+        <div
+          {...listeners}
+          {...attributes}
+          className="absolute top-2 left-2 z-10 p-1 rounded cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity touch-none"
+          title="Glisser pour déplacer"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+      )}
       <DocumentItem
         document={document}
         onPreview={onPreview}
