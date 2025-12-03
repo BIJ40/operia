@@ -16,7 +16,6 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { MainLayout } from '@/components/layout/MainLayout';
 import { Loader2, Inbox } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -52,17 +51,14 @@ export default function DemandesRHPage() {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <div className="container mx-auto py-8 px-4 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      </MainLayout>
+      <div className="container mx-auto py-8 px-4 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="container mx-auto py-8 px-4 space-y-6">
+    <div className="container mx-auto py-8 px-4 space-y-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -235,7 +231,6 @@ export default function DemandesRHPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </MainLayout>
+    </div>
   );
 }
