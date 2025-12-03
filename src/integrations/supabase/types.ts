@@ -1301,6 +1301,7 @@ export type Database = {
           agency_id: string
           apogee_user_id: number | null
           birth_date: string | null
+          city: string | null
           created_at: string
           created_by: string | null
           email: string | null
@@ -1314,8 +1315,10 @@ export type Database = {
           leaving_date: string | null
           notes: string | null
           phone: string | null
+          postal_code: string | null
           role: string
           social_security_number: string | null
+          street: string | null
           type: string | null
           updated_at: string
           user_id: string | null
@@ -1325,6 +1328,7 @@ export type Database = {
           agency_id: string
           apogee_user_id?: number | null
           birth_date?: string | null
+          city?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -1338,8 +1342,10 @@ export type Database = {
           leaving_date?: string | null
           notes?: string | null
           phone?: string | null
+          postal_code?: string | null
           role?: string
           social_security_number?: string | null
+          street?: string | null
           type?: string | null
           updated_at?: string
           user_id?: string | null
@@ -1349,6 +1355,7 @@ export type Database = {
           agency_id?: string
           apogee_user_id?: number | null
           birth_date?: string | null
+          city?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -1362,8 +1369,10 @@ export type Database = {
           leaving_date?: string | null
           notes?: string | null
           phone?: string | null
+          postal_code?: string | null
           role?: string
           social_security_number?: string | null
+          street?: string | null
           type?: string | null
           updated_at?: string
           user_id?: string | null

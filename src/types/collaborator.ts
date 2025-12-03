@@ -36,7 +36,10 @@ export interface Collaborator {
   hiring_date: string | null;
   leaving_date: string | null;
   birth_date: string | null;
-  address: string | null;
+  address: string | null; // Legacy - conserver pour compatibilité
+  street: string | null;
+  postal_code: string | null;
+  city: string | null;
   social_security_number: string | null;
   
   // Contact urgence
@@ -63,7 +66,10 @@ export interface CollaboratorFormData {
   hiring_date?: string;
   leaving_date?: string;
   birth_date?: string;
-  address?: string;
+  address?: string; // Legacy
+  street?: string;
+  postal_code?: string;
+  city?: string;
   social_security_number?: string;
   emergency_contact?: string;
   emergency_phone?: string;
