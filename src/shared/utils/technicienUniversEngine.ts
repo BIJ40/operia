@@ -499,6 +499,23 @@ export function aggregateTechUniversStatsMultiAgency(
     });
   });
 
-  // Trier par CA total décroissant
-  return Array.from(techMap.values()).sort((a, b) => b.totaux.caHT - a.totaux.caHT);
+  const result = Array.from(techMap.values()).sort((a, b) => b.totaux.caHT - a.totaux.caHT);
+  
+  // Log de contrôle réseau franchiseur
+  const totalCATechReseau = result.reduce((sum, t) => sum + t.totaux.caHT, 0);
+  const totalHeuresReseau = result.reduce((sum, t) => sum + t.totaux.heures, 0);
+  const totalDossiersReseau = result.reduce((sum, t) => sum + t.totaux.nbDossiers, 0);
+  
+  console.log("[STATIA RESEAU] Stats agrégées multi-agences:", {
+    nbAgences: agenciesData.length,
+    nbTechniciens: result.length,
+    totalCATechReseau: Math.round(totalCATechReseau * 100) / 100,
+    totalHeuresReseau: Math.round(totalHeuresReseau * 10) / 10,
+    totalDossiersReseau,
+    caParHeureReseau: totalHeuresReseau > 0 
+      ? Math.round(totalCATechReseau / totalHeuresReseau) 
+      : 0
+  });
+
+  return result;
 }
