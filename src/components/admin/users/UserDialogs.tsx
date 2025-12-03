@@ -23,12 +23,15 @@ interface CreateUserDialogProps {
   agencies: Agency[];
   currentUserLevel: number;
   currentUserAgency: string | null;
+  /** Si true, force l'agence courante sans possibilité de choisir (mode agence) */
+  forceOwnAgency?: boolean;
 }
 
-export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assignableRoles, agencies, currentUserLevel, currentUserAgency }: CreateUserDialogProps) {
+export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assignableRoles, agencies, currentUserLevel, currentUserAgency, forceOwnAgency = false }: CreateUserDialogProps) {
   const handleSubmit = (payload: CreateUserPayload) => {
-    // Si l'utilisateur est N2 (franchisee_admin), forcer son agence
-    const finalAgence = currentUserLevel === 2 ? (currentUserAgency || '') : payload.agence;
+    // Si forceOwnAgency ou N2, forcer l'agence courante
+    const shouldForceAgency = forceOwnAgency || currentUserLevel === 2;
+    const finalAgence = shouldForceAgency ? (currentUserAgency || '') : payload.agence;
     
     onSubmit({
       email: payload.email,
@@ -42,8 +45,8 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
     });
   };
 
-  // Masquer le sélecteur d'agence pour les N2
-  const showAgencySelector = currentUserLevel !== 2;
+  // Masquer le sélecteur d'agence si forceOwnAgency ou N2
+  const showAgencySelector = !forceOwnAgency && currentUserLevel !== 2;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
