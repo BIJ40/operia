@@ -1,5 +1,9 @@
-import { DataService } from '@/apogee-connect/services/dataService';
-import { setApiBaseUrl } from '@/apogee-connect/services/api';
+/**
+ * Service de chargement de données réseau multi-agences
+ * Utilise le proxy sécurisé pour accéder à l'API Apogée
+ */
+
+import { apogeeProxy } from '@/services/apogeeProxy';
 import { DateRange } from '../contexts/NetworkFiltersContext';
 import { parseISO, parse, isWithinInterval } from 'date-fns';
 import { logNetwork } from '@/lib/logger';
@@ -14,27 +18,22 @@ const dataCache = new Map<string, CacheEntry>();
 
 export class NetworkDataService {
   /**
-   * Load data for a single agency
-   * Must be called SEQUENTIALLY to avoid BASE_URL race condition
+   * Load data for a single agency via secure proxy
    */
   static async loadAgencyData(agencySlug: string) {
     try {
-      // Configure BASE_URL for this agency
-      const apiUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
-      setApiBaseUrl(apiUrl);
+      logNetwork.info(`Loading data for agency ${agencySlug} via secure proxy`);
       
-      // Clear DataService cache to force fresh load
-      DataService.clearCache();
+      // Use secure proxy to load all data
+      const loadedData = await apogeeProxy.getAllData({ agencySlug });
       
-      // Load data for this agency
-      const loadedData: any = await DataService.loadAllData(true);
       return {
         users: loadedData.users || [],
         clients: loadedData.clients || [],
         projects: loadedData.projects || [],
         interventions: loadedData.interventions || [],
-        factures: loadedData.invoices || loadedData.factures || [],
-        devis: loadedData.quotes || loadedData.devis || [],
+        factures: loadedData.factures || [],
+        devis: loadedData.devis || [],
       };
     } catch (error) {
       logNetwork.error(`Erreur chargement ${agencySlug}:`, error);
@@ -43,45 +42,37 @@ export class NetworkDataService {
   }
 
   /**
-   * Load data for multiple agencies SEQUENTIALLY to avoid BASE_URL race condition
+   * Load data for multiple agencies via secure proxy
+   * Uses parallel loading since proxy handles agency isolation
    */
   static async loadMultiAgencyData(agencySlugs: string[], dateRange?: DateRange) {
     const results = [];
     
-    logNetwork.info(`Chargement de ${agencySlugs.length} agences...`);
+    logNetwork.info(`Chargement de ${agencySlugs.length} agences via proxy sécurisé...`);
     
-    // Load agencies sequentially to avoid BASE_URL conflicts
-    for (const agencySlug of agencySlugs) {
-      const cacheKey = `${agencySlug}-${dateRange?.from.toISOString()}-${dateRange?.to.toISOString()}`;
+    // Load agencies in parallel - proxy handles isolation
+    const loadPromises = agencySlugs.map(async (agencySlug) => {
+      const cacheKey = `${agencySlug}-${dateRange?.from?.toISOString()}-${dateRange?.to?.toISOString()}`;
       
       // Check cache
       const cached = dataCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
         logNetwork.debug(`${agencySlug}: données en cache`);
-        results.push({ agencyId: agencySlug, data: cached.data });
-        continue;
+        return { agencyId: agencySlug, data: cached.data };
       }
 
-      // Load fresh data
+      // Load fresh data via secure proxy
       try {
-        // Configure BASE_URL for this agency
-        const apiUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
-        logNetwork.debug(`${agencySlug}: configuration BASE_URL...`);
-        setApiBaseUrl(apiUrl);
+        logNetwork.debug(`${agencySlug}: chargement via proxy...`);
         
-        // Clear DataService cache to force fresh load
-        DataService.clearCache();
-        
-        // Load data for this agency
-        const loadedData: any = await DataService.loadAllData(true);
+        const loadedData = await apogeeProxy.getAllData({ agencySlug });
         const data = {
           users: loadedData.users || [],
           clients: loadedData.clients || [],
           projects: loadedData.projects || [],
           interventions: loadedData.interventions || [],
-          // Harmonisation des noms: les données API peuvent utiliser invoices/quotes
-          factures: loadedData.invoices || loadedData.factures || [],
-          devis: loadedData.quotes || loadedData.devis || [],
+          factures: loadedData.factures || [],
+          devis: loadedData.devis || [],
         };
 
         logNetwork.debug(`${agencySlug}: ${data.factures.length} factures, ${data.projects.length} projets, ${data.interventions.length} interventions`);
@@ -89,15 +80,23 @@ export class NetworkDataService {
         // Cache the data
         dataCache.set(cacheKey, { data, timestamp: Date.now() });
         
-        results.push({ agencyId: agencySlug, data });
+        return { agencyId: agencySlug, data };
       } catch (error) {
         logNetwork.error(`${agencySlug}: échec chargement`, error);
-        results.push({ agencyId: agencySlug, data: null, error });
+        return { agencyId: agencySlug, data: null, error };
+      }
+    });
+
+    const loadedResults = await Promise.all(loadPromises);
+    
+    for (const result of loadedResults) {
+      if (result.data) {
+        results.push(result);
       }
     }
 
-    logNetwork.info(`Chargement terminé: ${results.filter(r => r.data).length}/${agencySlugs.length} agences OK`);
-    return results.filter(r => r.data);
+    logNetwork.info(`Chargement terminé: ${results.length}/${agencySlugs.length} agences OK`);
+    return results;
   }
 
   /**

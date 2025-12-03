@@ -17,7 +17,7 @@ import {
   MetricError
 } from '../types';
 import { validateMetricDefinition, getSchemaRelations, APOGEE_SCHEMA } from '../schema/apogeeSchemaV2';
-import { DataService } from '@/apogee-connect/services/dataService';
+import { apogeeProxy } from '@/services/apogeeProxy';
 
 /**
  * Trouve les clés de jointure entre deux sources via le schema
@@ -40,7 +40,6 @@ function getJoinKeys(source: ApogeeSourceName, target: ApogeeSourceName): { loca
   
   return null;
 }
-import { setApiBaseUrl } from '@/apogee-connect/services/api';
 import { parseISO, parse, isWithinInterval, differenceInMinutes } from 'date-fns';
 
 // ============================================
@@ -136,16 +135,15 @@ export async function loadSourceData(
     appliedFilters: {},
   };
   
-  // Configurer l'URL de l'agence
-  if (params.agency_slug) {
-    const apiUrl = `https://${params.agency_slug}.hc-apogee.fr/api/`;
-    debug.apiUrl = apiUrl;
-    setApiBaseUrl(apiUrl);
-    DataService.clearCache();
+  // Charger les données via proxy sécurisé
+  if (!params.agency_slug) {
+    throw new Error('agency_slug is required for metric computation');
   }
-
-  // Charger toutes les données nécessaires
-  const allData: any = await DataService.loadAllData(true);
+  
+  debug.apiUrl = `proxy-apogee (agency: ${params.agency_slug})`;
+  
+  // Charger toutes les données via proxy sécurisé
+  const allData = await apogeeProxy.getAllData({ agencySlug: params.agency_slug });
   
   // Mapper les sources
   const sourceMapping: Record<ApogeeSourceName, keyof typeof allData> = {
