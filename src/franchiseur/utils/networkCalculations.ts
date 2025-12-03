@@ -875,9 +875,13 @@ export function aggregateUniversApporteurMatrix(
 /**
  * Calculate tech time by project for a single agency
  * Excludes RT, SAV, only counts productive types (biDepan, biTvx), validated visits only
+ * CRITICAL: Only counts time for actual technicians (user.type === 'technicien')
  * Returns time per tech per project for CA prorating
  */
-function calculateTechTimeByProjectForAgency(interventions: any[]): {
+function calculateTechTimeByProjectForAgency(
+  interventions: any[],
+  usersMap: Map<number, any>
+): {
   dureeTechParProjet: Record<number, Record<number, number>>;
   dureeTotaleParProjet: Record<number, number>;
 } {
@@ -917,9 +921,20 @@ function calculateTechTimeByProjectForAgency(interventions: any[]): {
       if (visite.state !== "validated") return;
 
       const duree = Number(visite.duree) || 0;
+      if (duree <= 0) return;
+      
       const usersIds = visite.usersIds || [];
 
-      usersIds.forEach((techId: number) => {
+      // CRITICAL FIX: Ne compter QUE les techniciens (pas assistants, etc.)
+      const technicienIds = usersIds.filter((userId: number) => {
+        const user = usersMap.get(userId);
+        return user && user.type === 'technicien';
+      });
+
+      // Si aucun technicien sur cette visite, ignorer
+      if (technicienIds.length === 0) return;
+
+      technicienIds.forEach((techId: number) => {
         if (!dureeTechParProjet[projectId][techId]) {
           dureeTechParProjet[projectId][techId] = 0;
         }
@@ -947,11 +962,11 @@ export function aggregateTechnicienUniversStats(
   agencyData.forEach((agency) => {
     if (!agency.data?.factures || !agency.data?.projects || !agency.data?.interventions || !agency.data?.users) return;
 
-    const usersMap = new Map(agency.data.users.map((u: any) => [u.id, u]));
+    const usersMap = new Map<number, any>(agency.data.users.map((u: any) => [u.id, u]));
     const projectsMap = new Map(agency.data.projects.map((p: any) => [p.id, p]));
 
-    // RÈGLE: Calculer le temps passé par technicien par projet (excluant RT/SAV, visites validées uniquement)
-    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProjectForAgency(agency.data.interventions);
+    // RÈGLE: Calculer le temps passé par technicien par projet (excluant RT/SAV, visites validées uniquement, techniciens uniquement)
+    const { dureeTechParProjet, dureeTotaleParProjet } = calculateTechTimeByProjectForAgency(agency.data.interventions, usersMap);
 
     // Process factures and attribute CA to technicians via time prorating
     agency.data.factures.forEach((facture: any) => {
