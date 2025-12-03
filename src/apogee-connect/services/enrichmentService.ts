@@ -122,12 +122,22 @@ export class EnrichmentService {
   private static buildUniversesMap(projects: ApiProject[]) {
     const universeSlugs = new Set<string>();
     
+    // Univers à exclure (obsolètes ou non pertinents)
+    const excludedUniverses = new Set([
+      'mobilier',
+      'travaux_xterieurs',
+      'travaux_exterieurs',
+    ]);
+    
     // Collecter tous les univers uniques ET LES NORMALISER immédiatement
     projects.forEach(project => {
       const universes = project.universes || project.data?.universes || [];
       universes.forEach((u: string) => {
         const normalized = this.normalizeUniverseSlug(u);
-        universeSlugs.add(normalized);
+        // Exclure les univers non pertinents
+        if (!excludedUniverses.has(normalized)) {
+          universeSlugs.add(normalized);
+        }
       });
     });
 
