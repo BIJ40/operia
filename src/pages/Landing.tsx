@@ -92,6 +92,7 @@ export default function Landing() {
           title={<>Help<span className="text-helpconfort-orange">!</span> Academy</>}
           icon={DASHBOARD_GROUPS.help_academy.icon}
           colorClass={DASHBOARD_GROUPS.help_academy.colorClass}
+          href="/academy"
         >
           {tilesByGroup.help_academy.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
@@ -106,6 +107,7 @@ export default function Landing() {
           title={DASHBOARD_GROUPS.pilotage.title}
           icon={DASHBOARD_GROUPS.pilotage.icon}
           colorClass={DASHBOARD_GROUPS.pilotage.colorClass}
+          href="/pilotage"
         >
           {tilesByGroup.pilotage.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
@@ -120,6 +122,7 @@ export default function Landing() {
           title={DASHBOARD_GROUPS.support.title}
           icon={DASHBOARD_GROUPS.support.icon}
           colorClass={DASHBOARD_GROUPS.support.colorClass}
+          href="/support"
         >
           {tilesByGroup.support.map(tile => (
             <DashboardTileCard 
@@ -139,6 +142,7 @@ export default function Landing() {
           title={DASHBOARD_GROUPS.projects.title}
           icon={DASHBOARD_GROUPS.projects.icon}
           colorClass={DASHBOARD_GROUPS.projects.colorClass}
+          href="/projects"
         >
           {tilesByGroup.projects.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
@@ -153,6 +157,7 @@ export default function Landing() {
           title={DASHBOARD_GROUPS.franchiseur.title}
           icon={DASHBOARD_GROUPS.franchiseur.icon}
           colorClass={DASHBOARD_GROUPS.franchiseur.colorClass}
+          href="/hc-reseau"
         >
           {tilesByGroup.franchiseur.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
@@ -167,6 +172,7 @@ export default function Landing() {
           title={DASHBOARD_GROUPS.admin.title}
           icon={DASHBOARD_GROUPS.admin.icon}
           colorClass={DASHBOARD_GROUPS.admin.colorClass}
+          href="/admin"
         >
           {tilesByGroup.admin.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />

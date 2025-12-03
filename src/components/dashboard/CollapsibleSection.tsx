@@ -1,5 +1,6 @@
 import { ReactNode, memo, useState, useEffect } from 'react';
 import { ChevronDown, LucideIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 interface CollapsibleSectionProps {
@@ -9,6 +10,7 @@ interface CollapsibleSectionProps {
   colorClass: string;
   children: ReactNode;
   defaultOpen?: boolean;
+  href?: string;
 }
 
 const STORAGE_KEY = 'dashboard-sections-state';
@@ -37,6 +39,7 @@ export const CollapsibleSection = memo(function CollapsibleSection({
   colorClass,
   children,
   defaultOpen = false,
+  href,
 }: CollapsibleSectionProps) {
   const [isOpen, setIsOpen] = useState(() => {
     const stored = getStoredState();
@@ -50,13 +53,33 @@ export const CollapsibleSection = memo(function CollapsibleSection({
     setStoredState(currentState);
   }, [id, isOpen]);
 
-  const toggleOpen = () => setIsOpen(prev => !prev);
+  const toggleOpen = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(prev => !prev);
+  };
+
+  const TitleContent = (
+    <div className="flex items-center gap-4">
+      <div className={cn(
+        "w-12 h-12 rounded-xl flex items-center justify-center",
+        "bg-gradient-to-br from-helpconfort-blue/15 to-helpconfort-blue/5",
+        "border border-helpconfort-blue/20",
+        "group-hover/title:from-helpconfort-blue/25 group-hover/title:to-helpconfort-blue/10",
+        "transition-all duration-300"
+      )}>
+        <Icon className={cn("w-6 h-6", colorClass)} />
+      </div>
+      <h2 className="text-xl font-bold text-foreground tracking-tight">
+        {title}
+      </h2>
+    </div>
+  );
 
   return (
     <section className="group/section">
       {/* Header - 72px+ imposant */}
-      <button
-        onClick={toggleOpen}
+      <div
         className={cn(
           "w-full flex items-center justify-between",
           "min-h-[72px] py-4 px-5 -mx-1 rounded-2xl",
@@ -64,29 +87,31 @@ export const CollapsibleSection = memo(function CollapsibleSection({
           "bg-gradient-to-r from-muted/50 via-background to-muted/30",
           "hover:border-border hover:from-muted/80 hover:via-background hover:to-muted/50",
           "hover:shadow-md",
-          "transition-all duration-300 cursor-pointer",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          "transition-all duration-300"
         )}
-        aria-expanded={isOpen}
       >
-        {/* Left: Icon + Title */}
-        <div className="flex items-center gap-4">
-          <div className={cn(
-            "w-12 h-12 rounded-xl flex items-center justify-center",
-            "bg-gradient-to-br from-helpconfort-blue/15 to-helpconfort-blue/5",
-            "border border-helpconfort-blue/20",
-            "group-hover/section:from-helpconfort-blue/25 group-hover/section:to-helpconfort-blue/10",
-            "transition-all duration-300"
-          )}>
-            <Icon className={cn("w-6 h-6", colorClass)} />
-          </div>
-          <h2 className="text-xl font-bold text-foreground tracking-tight">
-            {title}
-          </h2>
-        </div>
+        {/* Left: Icon + Title - Navigates to section page */}
+        {href ? (
+          <Link 
+            to={href} 
+            className="group/title flex-1 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg"
+          >
+            {TitleContent}
+          </Link>
+        ) : (
+          <div className="flex-1">{TitleContent}</div>
+        )}
 
-        {/* Right: Combo barre + chevron */}
-        <div className="flex items-center gap-3">
+        {/* Right: Combo barre + chevron - Toggles collapse */}
+        <button
+          onClick={toggleOpen}
+          className={cn(
+            "flex items-center gap-3 cursor-pointer",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg p-1"
+          )}
+          aria-expanded={isOpen}
+          aria-label={isOpen ? "Réduire la section" : "Développer la section"}
+        >
           {/* Barre décorative */}
           <div className={cn(
             "hidden sm:block w-16 h-1 rounded-full",
@@ -99,20 +124,19 @@ export const CollapsibleSection = memo(function CollapsibleSection({
           <div className={cn(
             "w-10 h-10 rounded-xl flex items-center justify-center",
             "bg-muted/80 border border-border/50",
-            "group-hover/section:bg-helpconfort-blue/10 group-hover/section:border-helpconfort-blue/30",
+            "hover:bg-helpconfort-blue/10 hover:border-helpconfort-blue/30",
             "transition-all duration-300"
           )}>
             <ChevronDown 
               className={cn(
                 "w-5 h-5 text-muted-foreground",
-                "group-hover/section:text-helpconfort-blue",
                 "transition-all duration-300",
                 isOpen && "rotate-180"
               )} 
             />
           </div>
-        </div>
-      </button>
+        </button>
+      </div>
 
       {/* Content with fade + slide animation */}
       <div
