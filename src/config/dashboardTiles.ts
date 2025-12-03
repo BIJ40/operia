@@ -2,7 +2,7 @@ import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
   PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity,
-  HelpCircle, Calendar, UserCog, Briefcase
+  HelpCircle, Calendar, UserCog, Briefcase, Inbox
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -22,6 +22,7 @@ export interface DashboardTile {
   requiresFranchisor?: boolean; // N3+ (franchisor_user)
   requiresModule?: ModuleKey; // Requires specific module to be enabled
   requiresModuleOption?: string; // Requires specific module option (e.g., 'coffre' for rh_parc.coffre)
+  requiresModuleOptions?: string[]; // OR logic - at least one option required
   badge?: string;
   isDisabled?: boolean; // Tuile grisée "Bientôt disponible"
 }
@@ -133,6 +134,18 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     group: 'pilotage',
     requiresModule: 'rh',
     requiresModuleOption: 'coffre', // Nécessite l'option coffre spécifiquement
+  },
+  {
+    id: 'DEMANDES_RH',
+    title: 'Demandes RH',
+    description: 'Traitement des demandes de documents',
+    icon: Inbox,
+    route: ROUTES.pilotage.demandesRh,
+    scopeSlug: SCOPE_SLUGS.DEMANDES_RH,
+    color: 'accent',
+    group: 'pilotage',
+    requiresModule: 'rh',
+    requiresModuleOptions: ['rh_viewer', 'rh_admin'], // OR logic - l'une ou l'autre
   },
   // Support
   {
