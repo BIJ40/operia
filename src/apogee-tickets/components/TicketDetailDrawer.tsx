@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
+import { FileManager } from '@/components/files/FileManager';
 import { Sheet, SheetContent, SheetHeader } from '@/components/ui/sheet';
 import {
   AlertDialog,
@@ -774,69 +775,14 @@ export function TicketDetailDrawer({
           {/* Onglet Documents */}
           <TabsContent value="documents" className="flex-1 overflow-hidden m-0">
             <ScrollArea className="h-full">
-              <div className="p-6 space-y-4">
-                {/* Upload */}
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <input
-                    type="file"
-                    id="file-upload"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    disabled={isUploading}
-                  />
-                  <label
-                    htmlFor="file-upload"
-                    className="cursor-pointer flex flex-col items-center gap-2"
-                  >
-                    <Upload className="h-8 w-8 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      {isUploading ? 'Envoi en cours...' : 'Cliquez pour ajouter un fichier'}
-                    </span>
-                  </label>
-                </div>
-
-                {/* Liste des fichiers */}
-                <div className="space-y-2">
-                  {attachments.map((att) => (
-                    <div
-                      key={att.id}
-                      className="flex items-center gap-3 p-3 border rounded-lg"
-                    >
-                      <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{att.file_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {att.file_size ? `${(att.file_size / 1024).toFixed(1)} Ko` : ''} 
-                          {att.created_at && ` • ${format(new Date(att.created_at), 'dd/MM/yyyy', { locale: fr })}`}
-                        </p>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => window.open(att.file_url, '_blank')}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => deleteAttachment(att.id, att.file_path)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {attachments.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      Aucun document attaché
-                    </p>
-                  )}
-                </div>
+              <div className="p-6">
+                <FileManager
+                  bucketName="apogee-ticket-attachments"
+                  recordId={ticket.id}
+                  basePath="tickets"
+                  maxFileSize={10}
+                  className="border-0 shadow-none"
+                />
               </div>
             </ScrollArea>
           </TabsContent>
