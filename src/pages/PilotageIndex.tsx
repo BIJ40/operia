@@ -1,4 +1,4 @@
-import { BarChart3, ListTodo, Tv, Calendar, Users, Inbox } from 'lucide-react';
+import { BarChart3, ListTodo, Tv, Calendar, Users, Inbox, Briefcase } from 'lucide-react';
 import { IndexTile, getVariantForIndex } from '@/components/ui/index-tile';
 import { ROUTES } from '@/config/routes';
 import { useMenuLabels } from '@/hooks/use-page-metadata';
@@ -14,6 +14,7 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.pilotage.diffusion]: 'pilotage_diffusion',
   [ROUTES.pilotage.rhTech]: 'pilotage_rh_tech',
   [ROUTES.pilotage.equipe]: 'pilotage_equipe',
+  [ROUTES.pilotage.monCoffreRh]: 'pilotage_mon_coffre_rh',
   [ROUTES.pilotage.demandesRh]: 'pilotage_demandes_rh',
 };
 
@@ -57,6 +58,13 @@ const pilotageModules: PilotageModule[] = [
     description: 'Gestion des collaborateurs de l\'agence',
     icon: Users,
     href: ROUTES.pilotage.equipe,
+  },
+  {
+    title: 'Mon Coffre RH',
+    description: 'Documents RH et demandes',
+    icon: Briefcase,
+    href: ROUTES.pilotage.monCoffreRh,
+    requiresModuleOptions: { module: 'rh', options: ['coffre', 'rh_viewer', 'rh_admin'] },
   },
   {
     title: 'Demandes RH',
