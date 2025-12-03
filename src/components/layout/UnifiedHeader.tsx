@@ -7,7 +7,7 @@ import {
   MessageSquare, LifeBuoy, HelpCircle,
   LayoutDashboard, Building2, UserCog, PieChart, GitCompare, Calculator, Network,
   Building, Database, FileText, Home, ListTodo, Activity,
-  Upload, Bug, AlertCircle, Tags, Eye, Shield, UserMinus, ArrowUpCircle, HardDrive, Star,
+  Upload, Bug, AlertCircle, Tags, Eye, Shield, UserMinus, ArrowUpCircle, HardDrive, Star, Heart,
   LucideIcon
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -300,6 +300,12 @@ export function UnifiedHeader() {
                   <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
                     <User className="w-4 h-4" />
                     Mon profil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/favorites" className="flex items-center gap-2 cursor-pointer">
+                    <Heart className="w-4 h-4" />
+                    Mes favoris
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
