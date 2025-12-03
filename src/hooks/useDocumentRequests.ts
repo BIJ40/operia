@@ -56,6 +56,7 @@ export function useMyDocumentRequests() {
         });
 
       if (error) throw error;
+      if (!data) throw new Error('Aucune donnée retournée par request_document');
       return data as DocumentRequest;
     },
     onSuccess: () => {
