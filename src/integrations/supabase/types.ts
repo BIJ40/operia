@@ -16,47 +16,74 @@ export type Database = {
     Tables: {
       agency_collaborators: {
         Row: {
+          address: string | null
           agency_id: string
+          apogee_user_id: number | null
+          birth_date: string | null
           created_at: string
           created_by: string | null
           email: string | null
+          emergency_contact: string | null
+          emergency_phone: string | null
           first_name: string
+          hiring_date: string | null
           id: string
           is_registered_user: boolean
           last_name: string
+          leaving_date: string | null
           notes: string | null
           phone: string | null
           role: string
+          social_security_number: string | null
+          type: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          address?: string | null
           agency_id: string
+          apogee_user_id?: number | null
+          birth_date?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
+          emergency_contact?: string | null
+          emergency_phone?: string | null
           first_name: string
+          hiring_date?: string | null
           id?: string
           is_registered_user?: boolean
           last_name: string
+          leaving_date?: string | null
           notes?: string | null
           phone?: string | null
           role?: string
+          social_security_number?: string | null
+          type?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          address?: string | null
           agency_id?: string
+          apogee_user_id?: number | null
+          birth_date?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
+          emergency_contact?: string | null
+          emergency_phone?: string | null
           first_name?: string
+          hiring_date?: string | null
           id?: string
           is_registered_user?: boolean
           last_name?: string
+          leaving_date?: string | null
           notes?: string | null
           phone?: string | null
           role?: string
+          social_security_number?: string | null
+          type?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -77,6 +104,52 @@ export type Database = {
           },
           {
             foreignKeyName: "agency_collaborators_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_rh_roles: {
+        Row: {
+          agency_id: string
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_rh_roles_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_rh_roles_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_rh_roles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -2788,6 +2861,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["apogee_ticket_role"]
       }
+      has_agency_rh_role: {
+        Args: { _agency_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_franchiseur_access: { Args: { _user_id: string }; Returns: boolean }
       has_min_global_role: {
         Args: { _min_level: number; _user_id: string }
@@ -2799,6 +2876,10 @@ export type Database = {
       }
       has_support_access: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_agency_dirigeant: {
+        Args: { _agency_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_support_agent: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {

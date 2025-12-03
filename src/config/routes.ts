@@ -53,8 +53,11 @@ export const ROUTES = {
     diffusion: '/hc-agency/diffusion',
     // RH Tech
     rhTech: '/hc-agency/rh-tech',
-    // Équipe
+    // Équipe (legacy - redirects to collaborateurs)
     equipe: '/hc-agency/equipe',
+    // Collaborateurs (Module RH & Parc - Phase 1)
+    collaborateurs: '/hc-agency/collaborateurs',
+    collaborateurProfile: (id: string) => `/hc-agency/collaborateurs/${id}`,
   },
 
   // ============================================
