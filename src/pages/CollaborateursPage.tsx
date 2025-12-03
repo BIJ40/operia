@@ -67,7 +67,7 @@ export default function CollaborateursPage() {
         onCreateClick={() => setShowCreateDialog(true)}
       />
 
-      {/* Dialog de création d'utilisateur (remplace CollaboratorForm) */}
+      {/* Dialog de création d'utilisateur - mode agence : forceOwnAgency masque le sélecteur d'agence */}
       <CreateUserDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
@@ -77,6 +77,7 @@ export default function CollaborateursPage() {
         agencies={agencies}
         currentUserLevel={currentUserLevel}
         currentUserAgency={agence}
+        forceOwnAgency={true}
       />
     </div>
   );
