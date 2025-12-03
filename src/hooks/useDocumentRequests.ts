@@ -151,10 +151,35 @@ export function useAgencyDocumentRequests() {
     },
   });
 
+  // Nombre de demandes en attente pour le badge
+  const pendingCount = requests.filter(r => r.status === 'PENDING' || r.status === 'IN_PROGRESS').length;
+
   return {
     requests,
     isLoading,
     error,
     updateRequest,
+    pendingCount,
   };
+}
+
+/**
+ * Hook léger pour récupérer uniquement le compteur de demandes en attente
+ * (pour afficher un badge sur la tuile sans charger toutes les données)
+ */
+export function usePendingDocumentRequestsCount() {
+  const { data: count = 0, isLoading } = useQuery({
+    queryKey: ['agency-document-requests-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('document_requests')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['PENDING', 'IN_PROGRESS']);
+
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  return { count, isLoading };
 }
