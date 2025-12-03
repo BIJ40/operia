@@ -5,6 +5,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -70,22 +71,44 @@ export function CollaboratorForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      first_name: collaborator?.first_name || '',
-      last_name: collaborator?.last_name || '',
-      email: collaborator?.email || '',
-      phone: collaborator?.phone || '',
-      type: collaborator?.type || 'AUTRE',
-      role: collaborator?.role || '',
-      notes: collaborator?.notes || '',
-      hiring_date: collaborator?.hiring_date || '',
-      leaving_date: collaborator?.leaving_date || '',
-      birth_date: collaborator?.birth_date || '',
-      address: collaborator?.address || '',
-      emergency_contact: collaborator?.emergency_contact || '',
-      emergency_phone: collaborator?.emergency_phone || '',
-      apogee_user_id: collaborator?.apogee_user_id || undefined,
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone: '',
+      type: 'AUTRE',
+      role: '',
+      notes: '',
+      hiring_date: '',
+      leaving_date: '',
+      birth_date: '',
+      address: '',
+      emergency_contact: '',
+      emergency_phone: '',
+      apogee_user_id: undefined,
     },
   });
+
+  // Reset form when dialog opens or collaborator changes
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        first_name: collaborator?.first_name || '',
+        last_name: collaborator?.last_name || '',
+        email: collaborator?.email || '',
+        phone: collaborator?.phone || '',
+        type: collaborator?.type || 'AUTRE',
+        role: collaborator?.role || '',
+        notes: collaborator?.notes || '',
+        hiring_date: collaborator?.hiring_date || '',
+        leaving_date: collaborator?.leaving_date || '',
+        birth_date: collaborator?.birth_date || '',
+        address: collaborator?.address || '',
+        emergency_contact: collaborator?.emergency_contact || '',
+        emergency_phone: collaborator?.emergency_phone || '',
+        apogee_user_id: collaborator?.apogee_user_id || undefined,
+      });
+    }
+  }, [open, collaborator, form]);
 
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
     onSubmit({
