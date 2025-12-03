@@ -68,7 +68,6 @@ interface AuthContextType {
   // Auth actions
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-  signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   
   // Compatibilité minimale
   hasAccessToScope: (scope: string) => boolean;
@@ -303,19 +302,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/` },
-      });
-      if (error) return { success: false, error: error.message };
-      return { success: true };
-    } catch {
-      return { success: false, error: 'Une erreur est survenue' };
-    }
-  };
 
   const logout = async () => {
     try {
@@ -380,7 +366,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Auth actions
       login, 
       logout,
-      signup,
       hasAccessToScope,
       suggestedGlobalRole: globalRole ?? 'base_user',
     }}>
