@@ -65,9 +65,7 @@ export default function Changelog() {
           {currentVersion.version === 'V0.6.2' && (
             <div className="mt-4 pt-4 border-t border-border/50">
               <a 
-                href="https://github.com/lovable-project/guide-apogee-dev/blob/main/docs/SECURITY-AUDIT-REPORT.md"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/security-audit-report"
                 className="inline-flex items-center gap-2 text-sm text-helpconfort-blue hover:underline"
               >
                 <Shield className="w-4 h-4" />
@@ -75,9 +73,7 @@ export default function Changelog() {
               </a>
               <span className="mx-2 text-muted-foreground">•</span>
               <a 
-                href="https://github.com/lovable-project/guide-apogee-dev/blob/main/docs/SECURITY.md"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/security-documentation"
                 className="inline-flex items-center gap-2 text-sm text-helpconfort-blue hover:underline"
               >
                 <FileText className="w-4 h-4" />
