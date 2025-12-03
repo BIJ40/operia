@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api, setApiBaseUrl } from "@/apogee-connect/services/api";
+import { apogeeProxy } from "@/services/apogeeProxy";
 import { parseISO, getMonth, getYear } from "date-fns";
 import { logApogee } from "@/lib/logger";
 
@@ -24,6 +24,9 @@ function getFactureTotalHT(facture: Facture): number {
   return 0;
 }
 
+/**
+ * Hook pour récupérer le CA mensuel d'une agence via le proxy sécurisé
+ */
 export function useAgencyMonthlyCA(agencySlug: string | undefined, year: number) {
   return useQuery({
     queryKey: ['agency-monthly-ca', agencySlug, year],
@@ -32,14 +35,10 @@ export function useAgencyMonthlyCA(agencySlug: string | undefined, year: number)
         throw new Error('Agency slug is required');
       }
 
-      // Set API base URL for this agency
-      const baseUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
-      setApiBaseUrl(baseUrl);
-      
       logApogee.info(`Fetching monthly CA for agency ${agencySlug}, year ${year}`);
 
-      // Fetch invoices
-      const facturesResponse = await api.getFactures();
+      // Fetch invoices via secure proxy
+      const facturesResponse = await apogeeProxy.getFactures({ agencySlug });
       const factures: Facture[] = Array.isArray(facturesResponse) 
         ? facturesResponse 
         : (facturesResponse as { data?: Facture[] })?.data || [];
