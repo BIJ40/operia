@@ -65,11 +65,12 @@ export default function Favorites() {
     if (!user) return;
 
     try {
-      // Charger les favoris
+      // Charger les favoris (uniquement Academy: apogee et apporteurs-nationaux)
       const { data: favoritesData, error: favoritesError } = await supabase
         .from('favorites')
         .select('*')
         .eq('user_id', user.id)
+        .in('scope', ['apogee', 'apporteurs-nationaux'])
         .order('created_at', { ascending: false });
 
       if (favoritesError) throw favoritesError;
@@ -219,11 +220,11 @@ export default function Favorites() {
         </h1>
         <Button 
           variant="outline" 
-          onClick={() => navigate(ROUTES.home)}
+          onClick={() => navigate(ROUTES.academy.index)}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          Retour
+          Retour à l'Academy
         </Button>
       </div>
 
@@ -240,8 +241,8 @@ export default function Favorites() {
           <p className="text-sm text-muted-foreground mb-6">
             Ajoutez des sections en favoris pour les retrouver facilement ici
           </p>
-          <Button onClick={() => navigate(ROUTES.academy.apogee)} variant="outline">
-            Parcourir le guide
+          <Button onClick={() => navigate(ROUTES.academy.index)} variant="outline">
+            Parcourir les guides
           </Button>
         </div>
       ) : (
