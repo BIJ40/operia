@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { useMenuLabels } from '@/hooks/use-page-metadata';
 import { AgencyInfoTile } from '@/components/pilotage/AgencyInfoTile';
+import { GEDCollaboratorDropdown } from '@/components/pilotage/GEDCollaboratorDropdown';
 import { usePendingDocumentRequestsCount } from '@/hooks/useDocumentRequests';
 import { useAuth } from '@/contexts/AuthContext';
 import { isModuleOptionEnabled, ModuleKey } from '@/types/modules';
@@ -242,13 +243,17 @@ export default function PilotageIndex() {
           colorClass={PILOTAGE_GROUPS.rh.colorClass}
         >
           {modulesByCategory.rh.map(module => (
-            <PilotageTileCard
-              key={module.id}
-              module={module}
-              title={getModuleTitle(module)}
-              badge={getBadge(module)}
-              isAdmin={isAdmin}
-            />
+            module.id === 'ged' ? (
+              <GEDCollaboratorDropdown key={module.id} />
+            ) : (
+              <PilotageTileCard
+                key={module.id}
+                module={module}
+                title={getModuleTitle(module)}
+                badge={getBadge(module)}
+                isAdmin={isAdmin}
+              />
+            )
           ))}
         </CollapsibleSection>
       )}

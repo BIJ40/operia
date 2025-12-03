@@ -49,6 +49,7 @@ interface CollaboratorProfileProps {
   onEdit: () => void;
   onDelete: () => void;
   isDeleting?: boolean;
+  defaultTab?: CollaboratorTab;
 }
 
 export function CollaboratorProfile({
@@ -57,9 +58,10 @@ export function CollaboratorProfile({
   onEdit,
   onDelete,
   isDeleting,
+  defaultTab = 'identity',
 }: CollaboratorProfileProps) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<CollaboratorTab>('identity');
+  const [activeTab, setActiveTab] = useState<CollaboratorTab>(defaultTab);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const initials = `${collaborator.first_name?.[0] || ''}${collaborator.last_name?.[0] || ''}`.toUpperCase();
