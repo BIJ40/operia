@@ -29,10 +29,11 @@ export function MainLayout({
   const { isImpersonating } = useImpersonation();
   const [loginOpen, setLoginOpen] = useState(false);
   
-  // Hooks for tracking
+  // Hooks for tracking - temporairement désactivés pour debug
   useStorageQuota();
-  useUserPresence();
-  useConnectionLogger();
+  // NOTE: Hooks désactivés temporairement - causent des problèmes de stabilité après resize instance
+  // useUserPresence();
+  // useConnectionLogger();
 
   // Show loading state while auth is initializing
   if (isAuthLoading) {
