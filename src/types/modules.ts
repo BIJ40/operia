@@ -269,13 +269,25 @@ export function isModuleOptionEnabled(
  */
 export function getDefaultModulesForRole(role: GlobalRole): EnabledModules {
   const modules: EnabledModules = {};
+  const roleLevel = GLOBAL_ROLES[role];
   
   for (const moduleDef of MODULE_DEFINITIONS) {
     if (moduleDef.defaultForRoles.includes(role)) {
       // Activer le module avec ses options par défaut
       const options: Record<string, boolean> = {};
       for (const opt of moduleDef.options) {
-        options[opt.key] = opt.defaultEnabled;
+        // Cas spécial pour le module RH
+        if (moduleDef.key === 'rh') {
+          // N2+ (franchisee_admin+): rh_viewer et rh_admin activés, mais PAS coffre
+          if (roleLevel >= GLOBAL_ROLES.franchisee_admin) {
+            options[opt.key] = opt.key === 'coffre' ? false : true;
+          } else {
+            // N0/N1: coffre activé, rh_viewer/rh_admin désactivés
+            options[opt.key] = opt.key === 'coffre' ? true : false;
+          }
+        } else {
+          options[opt.key] = opt.defaultEnabled;
+        }
       }
       modules[moduleDef.key] = { enabled: true, options };
     }
