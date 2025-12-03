@@ -82,8 +82,80 @@ export type CollaboratorTab =
 export const COLLABORATOR_TABS: { value: CollaboratorTab; label: string; phase: number }[] = [
   { value: 'identity', label: 'Identité', phase: 1 },
   { value: 'documents', label: 'Documents RH', phase: 2 },
-  { value: 'contract', label: 'Contrat & Salaire', phase: 2 },
+  { value: 'contract', label: 'Contrat & Salaire', phase: 1 }, // Phase 2 implemented
   { value: 'equipment', label: 'Matériel & EPI', phase: 3 },
   { value: 'vehicle', label: 'Véhicule', phase: 4 },
   { value: 'alerts', label: 'Alertes', phase: 5 },
 ];
+
+// Phase 2: Contrats & Salaires
+
+export type ContractType =
+  | 'CDI'
+  | 'CDD'
+  | 'APPRENTISSAGE'
+  | 'STAGE'
+  | 'INTERIM';
+
+export const CONTRACT_TYPES: { value: ContractType; label: string }[] = [
+  { value: 'CDI', label: 'CDI' },
+  { value: 'CDD', label: 'CDD' },
+  { value: 'APPRENTISSAGE', label: 'Apprentissage' },
+  { value: 'STAGE', label: 'Stage' },
+  { value: 'INTERIM', label: 'Intérim' },
+];
+
+export type JobCategory =
+  | 'TECHNICIEN'
+  | 'ASSISTANTE'
+  | 'DIRIGEANT'
+  | 'COMMERCIAL'
+  | 'AUTRE';
+
+export const JOB_CATEGORIES: { value: JobCategory; label: string }[] = [
+  { value: 'TECHNICIEN', label: 'Technicien' },
+  { value: 'ASSISTANTE', label: 'Assistante' },
+  { value: 'DIRIGEANT', label: 'Dirigeant' },
+  { value: 'COMMERCIAL', label: 'Commercial' },
+  { value: 'AUTRE', label: 'Autre' },
+];
+
+export type SalaryReasonType =
+  | 'EMBAUCHE'
+  | 'AUGMENTATION'
+  | 'AVENANT'
+  | 'PRIME';
+
+export const SALARY_REASON_TYPES: { value: SalaryReasonType; label: string }[] = [
+  { value: 'EMBAUCHE', label: 'Embauche' },
+  { value: 'AUGMENTATION', label: 'Augmentation' },
+  { value: 'AVENANT', label: 'Avenant' },
+  { value: 'PRIME', label: 'Prime' },
+];
+
+export interface EmploymentContract {
+  id: string;
+  collaborator_id: string;
+  agency_id: string;
+  contract_type: ContractType;
+  start_date: string;
+  end_date: string | null;
+  weekly_hours: number | null;
+  job_title: string | null;
+  job_category: JobCategory | null;
+  is_current: boolean;
+  created_at: string;
+  created_by: string | null;
+}
+
+export interface SalaryHistory {
+  id: string;
+  contract_id: string;
+  effective_date: string;
+  hourly_rate: number | null;
+  monthly_salary: number | null;
+  reason_type: SalaryReasonType | null;
+  comment: string | null;
+  decided_by: string | null;
+  created_at: string;
+}
