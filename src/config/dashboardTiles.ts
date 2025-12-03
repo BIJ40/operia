@@ -2,7 +2,7 @@ import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
   PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity,
-  HelpCircle, Calendar, UserCog, Briefcase, Inbox
+  HelpCircle, Calendar, UserCog, Briefcase, Inbox, Building2, GitCompare
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -203,11 +203,41 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     group: 'franchiseur',
   },
   {
+    id: 'FRANCHISEUR_AGENCES',
+    title: 'Agences',
+    description: 'Gestion des agences du réseau',
+    icon: Building2,
+    route: ROUTES.reseau.agences,
+    scopeSlug: SCOPE_SLUGS.FRANCHISEUR_AGENCIES,
+    color: 'accent',
+    group: 'franchiseur',
+  },
+  {
+    id: 'FRANCHISEUR_USERS',
+    title: 'Utilisateurs Réseau',
+    description: 'Gestion des utilisateurs du réseau',
+    icon: Users,
+    route: ROUTES.reseau.users,
+    scopeSlug: SCOPE_SLUGS.FRANCHISEUR_AGENCIES,
+    color: 'accent',
+    group: 'franchiseur',
+  },
+  {
     id: 'FRANCHISEUR_STATS',
     title: 'Statistiques Réseau',
     description: 'Matrices de performance multi-agences',
     icon: PieChart,
     route: ROUTES.reseau.stats,
+    scopeSlug: SCOPE_SLUGS.FRANCHISEUR_KPI,
+    color: 'accent',
+    group: 'franchiseur',
+  },
+  {
+    id: 'FRANCHISEUR_COMPARATIFS',
+    title: 'Comparatifs',
+    description: 'Comparaison des performances entre agences',
+    icon: GitCompare,
+    route: ROUTES.reseau.comparatifs,
     scopeSlug: SCOPE_SLUGS.FRANCHISEUR_KPI,
     color: 'accent',
     group: 'franchiseur',
@@ -234,6 +264,17 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'primary',
     group: 'admin',
     requiresFranchisor: true, // N3+ can manage users
+  },
+  {
+    id: 'ADMIN_ANNOUNCEMENTS',
+    title: 'Annonces',
+    description: 'Annonces prioritaires réseau',
+    icon: MessageSquare,
+    route: ROUTES.admin.announcements,
+    scopeSlug: SCOPE_SLUGS.ADMIN_SETTINGS,
+    color: 'primary',
+    group: 'admin',
+    requiresAdmin: true,
   },
   {
     id: 'ADMIN_BACKUP',
