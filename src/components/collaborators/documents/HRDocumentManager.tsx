@@ -323,14 +323,26 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     setSelectedDocIds(new Set());
   };
 
-  // Update pending upload
+  // Update pending upload - propagate doc_type/visibility to subsequent files
   const updatePendingUpload = (field: keyof PendingUpload, value: any) => {
     setPendingUploads((prev) => {
       const newUploads = [...prev];
+      // Update current document
       newUploads[currentUploadIndex] = {
         ...newUploads[currentUploadIndex],
         [field]: value,
       };
+      
+      // Propagate doc_type and visibility to subsequent documents for faster batch uploads
+      if (field === 'doc_type' || field === 'visibility') {
+        for (let i = currentUploadIndex + 1; i < newUploads.length; i++) {
+          newUploads[i] = {
+            ...newUploads[i],
+            [field]: value,
+          };
+        }
+      }
+      
       return newUploads;
     });
   };
