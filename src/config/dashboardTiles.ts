@@ -133,7 +133,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'accent',
     group: 'pilotage',
     requiresModule: 'rh',
-    requiresModuleOption: 'coffre', // Nécessite l'option coffre spécifiquement
+    requiresModuleOptions: ['coffre', 'rh_viewer', 'rh_admin'], // Toutes les options RH donnent accès
   },
   {
     id: 'DEMANDES_RH',

@@ -2391,6 +2391,77 @@ export type Database = {
         }
         Relationships: []
       }
+      rh_notifications: {
+        Row: {
+          agency_id: string
+          collaborator_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string | null
+          notification_type: string
+          read_at: string | null
+          related_document_id: string | null
+          related_request_id: string | null
+          title: string
+        }
+        Insert: {
+          agency_id: string
+          collaborator_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          notification_type: string
+          read_at?: string | null
+          related_document_id?: string | null
+          related_request_id?: string | null
+          title: string
+        }
+        Update: {
+          agency_id?: string
+          collaborator_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          notification_type?: string
+          read_at?: string | null
+          related_document_id?: string | null
+          related_request_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_notifications_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_notifications_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_notifications_related_document_id_fkey"
+            columns: ["related_document_id"]
+            isOneToOne: false
+            referencedRelation: "collaborator_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_notifications_related_request_id_fkey"
+            columns: ["related_request_id"]
+            isOneToOne: false
+            referencedRelation: "document_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       salary_history: {
         Row: {
           comment: string | null
