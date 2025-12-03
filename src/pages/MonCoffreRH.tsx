@@ -119,13 +119,7 @@ export default function MonCoffreRH() {
       <div className="space-y-6">
         {/* Bloc Coffre-fort documents */}
         <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
-              Mes Documents
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {isLoading ? (
               <div className="py-10 flex items-center justify-center">
                 <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -190,17 +184,17 @@ export default function MonCoffreRH() {
 
         {/* Bloc Demandes de documents */}
         <Card className="border-l-4 border-l-helpconfort-orange bg-gradient-to-br from-helpconfort-orange/5 via-background to-background">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Send className="h-5 w-5 text-helpconfort-orange" />
-              Mes demandes de documents
-            </CardTitle>
-            <Button size="sm" onClick={() => setShowRequestDialog(true)}>
-              <Plus className="h-4 w-4 mr-1" />
-              Demander un document
-            </Button>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Send className="h-5 w-5 text-helpconfort-orange" />
+                Mes demandes de documents
+              </h3>
+              <Button size="sm" onClick={() => setShowRequestDialog(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Demander un document
+              </Button>
+            </div>
             {requestError && (
               <div className="text-sm text-destructive mb-4">
                 Une erreur est survenue lors du chargement de vos demandes.
