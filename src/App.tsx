@@ -48,6 +48,7 @@ const IndicateursTechniciens = lazy(() => import("./apogee-connect/pages/Indicat
 const IndicateursSAV = lazy(() => import("./apogee-connect/pages/IndicateursSAV"));
 const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
+const Messages = lazy(() => import("./pages/Messages"));
 
 // Lazy loaded pages - Collaborateurs (Module RH & Parc)
 const CollaborateursPage = lazy(() => import("./pages/CollaborateursPage"));
@@ -167,6 +168,9 @@ function AppContent() {
         <Routes>
           {/* Dashboard / Home - Accessible à tous les utilisateurs connectés */}
           <Route path="/" element={<MainLayout><Landing /></MainLayout>} />
+          
+          {/* Messages - Discussion interne */}
+          <Route path="/messages" element={<MainLayout><RoleGuard minRole="franchisee_user"><Messages /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* HELP ACADEMY - Section Index + Sous-pages */}
