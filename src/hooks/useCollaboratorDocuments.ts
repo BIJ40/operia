@@ -182,20 +182,38 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
 
 /**
  * Hook pour le coffre-fort salarié (vue employee)
+ * Ne retourne QUE les documents du collaborateur connecté
  */
 export function useMyDocuments() {
+  const { user } = useAuth();
+  
   const { data: documents = [], isLoading, error } = useQuery({
-    queryKey: ['my-documents'],
+    queryKey: ['my-documents', user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+      
+      // 1) Récupérer le collaborator_id de l'utilisateur connecté
+      const { data: collaborator, error: collabError } = await supabase
+        .from('collaborators')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (collabError) throw collabError;
+      if (!collaborator) return []; // Pas de profil collaborateur = pas de documents
+      
+      // 2) Ne charger que les documents de CE collaborateur avec visibilité employee
       const { data, error } = await supabase
         .from('collaborator_documents')
         .select('*')
+        .eq('collaborator_id', collaborator.id)
         .eq('visibility', 'EMPLOYEE_VISIBLE')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as CollaboratorDocument[];
     },
+    enabled: !!user?.id,
   });
 
   const downloadDocument = async (doc: CollaboratorDocument) => {
