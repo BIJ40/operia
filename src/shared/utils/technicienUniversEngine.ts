@@ -367,14 +367,53 @@ export function computeTechUniversStatsForAgency(
   });
 
   // Logs de contrôle pour vérifier la cohérence
-  console.log("[STATIA TECH] Contrôle cohérence CA:", {
+  const ecartBrut = totalFacturesNet - totalCAReparti;
+  
+  console.log("[STATIA TECH] Contrôle cohérence CA (avant lissage):", {
     totalFacturesNet: Math.round(totalFacturesNet * 100) / 100,
     totalCAReparti: Math.round(totalCAReparti * 100) / 100,
-    ecart: Math.round((totalFacturesNet - totalCAReparti) * 100) / 100,
+    ecart: Math.round(ecartBrut * 100) / 100,
     nbFacturesTraitees,
     nbAvoirsTraites,
     nbTechniciens: result.length
   });
+
+  // RÈGLE DE LISSAGE : Répartir l'écart équitablement entre les techniciens
+  // pour que le total CA techniciens = total CA factures net
+  if (result.length > 0 && Math.abs(ecartBrut) > 0.01) {
+    const ajustementParTech = ecartBrut / result.length;
+    
+    result.forEach((tech) => {
+      // Répartir l'ajustement proportionnellement entre les univers du technicien
+      const universKeys = Object.keys(tech.universes);
+      if (universKeys.length === 0) return;
+      
+      const ajustementParUnivers = ajustementParTech / universKeys.length;
+      
+      universKeys.forEach((univers) => {
+        tech.universes[univers].caHT += ajustementParUnivers;
+        tech.universes[univers].caHT = Math.round(tech.universes[univers].caHT * 100) / 100;
+        // Recalculer CA/heure
+        tech.universes[univers].caParHeure = tech.universes[univers].heures > 0 
+          ? Math.round(tech.universes[univers].caHT / tech.universes[univers].heures) 
+          : 0;
+      });
+      
+      // Recalculer les totaux du technicien
+      tech.totaux.caHT += ajustementParTech;
+      tech.totaux.caHT = Math.round(tech.totaux.caHT * 100) / 100;
+      tech.totaux.caParHeure = tech.totaux.heures > 0 
+        ? Math.round(tech.totaux.caHT / tech.totaux.heures) 
+        : 0;
+    });
+    
+    const nouveauTotal = result.reduce((sum, t) => sum + t.totaux.caHT, 0);
+    console.log("[STATIA TECH] Après lissage:", {
+      ajustementParTech: Math.round(ajustementParTech * 100) / 100,
+      nouveauTotalCATech: Math.round(nouveauTotal * 100) / 100,
+      ecartResiduel: Math.round((totalFacturesNet - nouveauTotal) * 100) / 100
+    });
+  }
 
   // Trier par CA total décroissant
   return result.sort((a, b) => b.totaux.caHT - a.totaux.caHT);
