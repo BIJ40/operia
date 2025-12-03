@@ -49,8 +49,8 @@ export const ROUTES = {
     // Actions à mener
     actions: '/hc-agency/actions',
     actionsCategory: (slug: string) => `/hc-agency/actions/category/${slug}`,
-    // Diffusion
-    diffusion: '/hc-agency/diffusion',
+    // Diffusion (sous statistiques)
+    diffusion: '/hc-agency/statistiques/diffusion',
     // RH Tech
     rhTech: '/hc-agency/rh-tech',
     // Équipe (legacy - redirects to collaborateurs)
