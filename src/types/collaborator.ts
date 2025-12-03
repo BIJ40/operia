@@ -81,7 +81,7 @@ export type CollaboratorTab =
 
 export const COLLABORATOR_TABS: { value: CollaboratorTab; label: string; phase: number }[] = [
   { value: 'identity', label: 'Identité', phase: 1 },
-  { value: 'documents', label: 'Documents RH', phase: 2 },
+  { value: 'documents', label: 'Documents RH', phase: 1 }, // Phase 2.1 implemented
   { value: 'contract', label: 'Contrat & Salaire', phase: 1 }, // Phase 2 implemented
   { value: 'equipment', label: 'Matériel & EPI', phase: 3 },
   { value: 'vehicle', label: 'Véhicule', phase: 4 },
