@@ -13,6 +13,7 @@ interface DraggableDocumentItemProps {
   onPreview: () => void;
   onDownload: () => void;
   onDelete: () => void;
+  onEdit: () => void;
   onRename: (newTitle: string) => void;
   canManage: boolean;
   isSelected?: boolean;
@@ -25,6 +26,7 @@ export function DraggableDocumentItem({
   onPreview,
   onDownload,
   onDelete,
+  onEdit,
   onRename,
   canManage,
   isSelected = false,
@@ -57,6 +59,7 @@ export function DraggableDocumentItem({
         onPreview={onPreview}
         onDownload={onDownload}
         onDelete={onDelete}
+        onEdit={onEdit}
         onRename={onRename}
         canManage={canManage}
         isSelected={isSelected}

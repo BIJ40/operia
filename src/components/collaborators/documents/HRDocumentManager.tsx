@@ -78,6 +78,8 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
   const [activeSubfolder, setActiveSubfolder] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<CollaboratorDocument | null>(null);
   const [documentToDelete, setDocumentToDelete] = useState<CollaboratorDocument | null>(null);
+  const [documentToEdit, setDocumentToEdit] = useState<CollaboratorDocument | null>(null);
+  const [editForm, setEditForm] = useState({ title: '', doc_type: 'OTHER' as DocumentType, visibility: 'ADMIN_ONLY' as DocumentVisibility });
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [currentUploadIndex, setCurrentUploadIndex] = useState(0);
@@ -444,6 +446,10 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
             onPreview={setPreviewDoc}
             onDownload={downloadDocument}
             onDelete={setDocumentToDelete}
+            onEdit={(doc) => {
+              setDocumentToEdit(doc);
+              setEditForm({ title: doc.title, doc_type: doc.doc_type, visibility: doc.visibility });
+            }}
             onRename={handleRename}
             canManage={canManage}
             selectedIds={selectedDocIds}
@@ -461,6 +467,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
               onPreview={() => {}}
               onDownload={() => {}}
               onDelete={() => {}}
+              onEdit={() => {}}
               onRename={() => {}}
               canManage={false}
             />
@@ -598,6 +605,92 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Document Dialog */}
+      <Dialog open={!!documentToEdit} onOpenChange={(open) => !open && setDocumentToEdit(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier le document</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Title */}
+            <div className="space-y-2">
+              <Label>Titre</Label>
+              <Input
+                value={editForm.title}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder="Titre du document"
+              />
+            </div>
+
+            {/* Type */}
+            <div className="space-y-2">
+              <Label>Type de document</Label>
+              <Select
+                value={editForm.doc_type}
+                onValueChange={(v) => setEditForm((prev) => ({ ...prev, doc_type: v as DocumentType }))}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  {DOCUMENT_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Visibility */}
+            <div className="space-y-2">
+              <Label>Visibilité</Label>
+              <Select
+                value={editForm.visibility}
+                onValueChange={(v) => setEditForm((prev) => ({ ...prev, visibility: v as DocumentVisibility }))}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  {DOCUMENT_VISIBILITY.map((v) => (
+                    <SelectItem key={v.value} value={v.value}>
+                      {v.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDocumentToEdit(null)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={() => {
+                if (documentToEdit && editForm.title.trim()) {
+                  updateDocument.mutate({
+                    id: documentToEdit.id,
+                    data: {
+                      title: editForm.title.trim(),
+                      doc_type: editForm.doc_type,
+                      visibility: editForm.visibility,
+                    },
+                  });
+                  setDocumentToEdit(null);
+                }
+              }}
+              disabled={updateDocument.isPending || !editForm.title.trim()}
+            >
+              {updateDocument.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* New Folder Dialog */}
       <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
