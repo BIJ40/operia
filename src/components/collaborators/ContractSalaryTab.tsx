@@ -32,7 +32,18 @@ import {
   Plus,
   Loader2,
   Clock,
+  Trash2,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useEmploymentContracts, useSalaryHistory } from '@/hooks/useEmploymentContracts';
 import {
   EmploymentContract,
@@ -67,12 +78,16 @@ export function ContractSalaryTab({ collaboratorId, canManage }: ContractSalaryT
     currentSalary,
     isLoading: isLoadingSalary,
     createSalaryEntry,
+    updateSalaryEntry,
+    deleteSalaryEntry,
   } = useSalaryHistory(currentContract?.id);
 
   const [showContractDialog, setShowContractDialog] = useState(false);
   const [showSalaryDialog, setShowSalaryDialog] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [editingContract, setEditingContract] = useState<EmploymentContract | null>(null);
+  const [editingSalary, setEditingSalary] = useState<SalaryHistory | null>(null);
+  const [deletingSalaryId, setDeletingSalaryId] = useState<string | null>(null);
 
   const formatDate = (date: string | null) => {
     if (!date) return '-';
@@ -223,9 +238,9 @@ export function ContractSalaryTab({ collaboratorId, canManage }: ContractSalaryT
                       {salaryHistory.map((entry) => (
                         <div
                           key={entry.id}
-                          className="flex items-start justify-between gap-3 text-sm border rounded-md px-3 py-2"
+                          className="flex items-start justify-between gap-3 text-sm border rounded-md px-3 py-2 group"
                         >
-                          <div>
+                          <div className="flex-1">
                             <p className="font-medium">
                               {formatDate(entry.effective_date)} · {entry.reason_type || 'MAJ'}
                             </p>
@@ -233,12 +248,37 @@ export function ContractSalaryTab({ collaboratorId, canManage }: ContractSalaryT
                               <p className="text-muted-foreground">{entry.comment}</p>
                             )}
                           </div>
-                          <div className="text-right">
-                            {entry.monthly_salary && <p>{formatCurrency(entry.monthly_salary)}</p>}
-                            {entry.hourly_rate && (
-                              <p className="text-xs text-muted-foreground">
-                                {entry.hourly_rate} €/h
-                              </p>
+                          <div className="text-right flex items-start gap-2">
+                            <div>
+                              {entry.monthly_salary && <p>{formatCurrency(entry.monthly_salary)}</p>}
+                              {entry.hourly_rate && (
+                                <p className="text-xs text-muted-foreground">
+                                  {entry.hourly_rate} €/h
+                                </p>
+                              )}
+                            </div>
+                            {canManage && (
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => {
+                                    setEditingSalary(entry);
+                                    setShowSalaryDialog(true);
+                                  }}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-destructive hover:text-destructive"
+                                  onClick={() => setDeletingSalaryId(entry.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -305,11 +345,43 @@ export function ContractSalaryTab({ collaboratorId, canManage }: ContractSalaryT
 
       <SalaryDialog
         open={showSalaryDialog}
-        onOpenChange={setShowSalaryDialog}
+        onOpenChange={(open) => {
+          setShowSalaryDialog(open);
+          if (!open) setEditingSalary(null);
+        }}
         contractId={currentContract?.id || ''}
-        onSave={createSalaryEntry.mutateAsync}
-        isSaving={createSalaryEntry.isPending}
+        salary={editingSalary}
+        onSave={editingSalary
+          ? (data) => updateSalaryEntry.mutateAsync({ id: editingSalary.id, data })
+          : createSalaryEntry.mutateAsync
+        }
+        isSaving={createSalaryEntry.isPending || updateSalaryEntry.isPending}
       />
+
+      <AlertDialog open={!!deletingSalaryId} onOpenChange={() => setDeletingSalaryId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette entrée ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. L'entrée de salaire sera définitivement supprimée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deletingSalaryId) {
+                  deleteSalaryEntry.mutate(deletingSalaryId);
+                  setDeletingSalaryId(null);
+                }
+              }}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <CloseContractDialog
         open={showCloseDialog}
@@ -482,38 +554,74 @@ interface SalaryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contractId: string;
+  salary: SalaryHistory | null;
   onSave: (data: any) => Promise<any>;
   isSaving: boolean;
 }
 
-function SalaryDialog({ open, onOpenChange, contractId, onSave, isSaving }: SalaryDialogProps) {
+function SalaryDialog({ open, onOpenChange, contractId, salary, onSave, isSaving }: SalaryDialogProps) {
   const [formData, setFormData] = useState({
-    effective_date: '',
-    monthly_salary: '',
-    hourly_rate: '',
-    reason_type: '' as SalaryReasonType | '',
-    comment: '',
+    effective_date: salary?.effective_date || '',
+    monthly_salary: salary?.monthly_salary?.toString() || '',
+    hourly_rate: salary?.hourly_rate?.toString() || '',
+    reason_type: (salary?.reason_type || '') as SalaryReasonType | '',
+    comment: salary?.comment || '',
+  });
+
+  // Reset form when salary changes
+  useState(() => {
+    if (salary) {
+      setFormData({
+        effective_date: salary.effective_date || '',
+        monthly_salary: salary.monthly_salary?.toString() || '',
+        hourly_rate: salary.hourly_rate?.toString() || '',
+        reason_type: (salary.reason_type || '') as SalaryReasonType | '',
+        comment: salary.comment || '',
+      });
+    }
   });
 
   const handleSave = async () => {
-    await onSave({
-      contract_id: contractId,
+    const payload = {
       effective_date: formData.effective_date,
       monthly_salary: formData.monthly_salary ? parseFloat(formData.monthly_salary) : null,
       hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
       reason_type: formData.reason_type || null,
       comment: formData.comment || null,
-      decided_by: null,
-    });
+    };
+
+    if (!salary) {
+      // Create mode - include contract_id
+      await onSave({
+        ...payload,
+        contract_id: contractId,
+        decided_by: null,
+      });
+    } else {
+      // Edit mode
+      await onSave(payload);
+    }
+    
     onOpenChange(false);
     setFormData({ effective_date: '', monthly_salary: '', hourly_rate: '', reason_type: '', comment: '' });
   };
+
+  // Update form when salary prop changes
+  useState(() => {
+    setFormData({
+      effective_date: salary?.effective_date || '',
+      monthly_salary: salary?.monthly_salary?.toString() || '',
+      hourly_rate: salary?.hourly_rate?.toString() || '',
+      reason_type: (salary?.reason_type || '') as SalaryReasonType | '',
+      comment: salary?.comment || '',
+    });
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Nouvelle entrée de salaire</DialogTitle>
+          <DialogTitle>{salary ? 'Modifier l\'entrée salaire' : 'Nouvelle entrée de salaire'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -581,7 +689,7 @@ function SalaryDialog({ open, onOpenChange, contractId, onSave, isSaving }: Sala
           </Button>
           <Button onClick={handleSave} disabled={isSaving || !formData.effective_date}>
             {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Ajouter
+            {salary ? 'Mettre à jour' : 'Ajouter'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -162,6 +162,45 @@ export function useSalaryHistory(contractId: string | undefined) {
     },
   });
 
+  const updateSalaryEntry = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<SalaryHistory> }) => {
+      const { data: result, error } = await supabase
+        .from('salary_history')
+        .update(data)
+        .eq('id', id)
+        .select('*')
+        .single();
+
+      if (error) throw error;
+      return result as SalaryHistory;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['salary-history', contractId] });
+      toast.success('Entrée de salaire mise à jour');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur mise à jour salaire: ${error.message}`);
+    },
+  });
+
+  const deleteSalaryEntry = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('salary_history')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['salary-history', contractId] });
+      toast.success('Entrée de salaire supprimée');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur suppression: ${error.message}`);
+    },
+  });
+
   return {
     history,
     currentSalary,
@@ -169,5 +208,7 @@ export function useSalaryHistory(contractId: string | undefined) {
     error,
     canManage,
     createSalaryEntry,
+    updateSalaryEntry,
+    deleteSalaryEntry,
   };
 }
