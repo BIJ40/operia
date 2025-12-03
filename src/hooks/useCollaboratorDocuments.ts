@@ -1,9 +1,6 @@
 /**
  * Hooks pour la gestion des documents RH - Phase 2.1
- */
-
-/**
- * Hooks pour la gestion des documents RH - Phase 2.1
+ * Avec analyse automatique des bulletins de paie
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -28,6 +25,31 @@ async function createSignedDownloadUrl(filePath: string): Promise<string | null>
     return null;
   }
   return data.signedUrl;
+}
+
+/**
+ * Déclenche l'analyse automatique d'un bulletin de paie (async, non-bloquant)
+ */
+async function triggerPayslipAnalysis(
+  documentId: string,
+  filePath: string,
+  collaboratorId: string,
+  agencyId: string
+) {
+  try {
+    // Appel non-bloquant - on n'attend pas le résultat
+    supabase.functions.invoke('analyze-payslip', {
+      body: { documentId, filePath, collaboratorId, agencyId },
+    }).then(({ data, error }) => {
+      if (error) {
+        console.error('Erreur analyse bulletin (async):', error);
+      } else if (data?.success) {
+        console.log('Bulletin analysé avec succès:', documentId);
+      }
+    });
+  } catch (err) {
+    console.error('Erreur déclenchement analyse:', err);
+  }
 }
 
 export function useCollaboratorDocuments(collaboratorId: string | undefined) {
@@ -97,7 +119,15 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
         throw error;
       }
 
-      return data as CollaboratorDocument;
+      const doc = data as CollaboratorDocument;
+
+      // 3) Si c'est un bulletin de paie PDF, déclencher l'analyse automatique
+      if (formData.doc_type === 'PAYSLIP' && formData.file.type === 'application/pdf') {
+        triggerPayslipAnalysis(doc.id, filePath, formData.collaborator_id, agencyId);
+        toast.info('Analyse du bulletin en cours...', { duration: 3000 });
+      }
+
+      return doc;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['collaborator-documents', variables.collaborator_id] });
