@@ -20,23 +20,34 @@ export default function Landing() {
   // V2: Filtrer les tuiles basé sur ROLE_MATRIX + canAccessSupportConsole de AuthContext
   const visibleTiles = useMemo(() => {
     return DASHBOARD_TILES.filter(tile => {
-      // 1. Vérifier l'accès au groupe
-      const groupAccess = canAccessTileGroup(globalRole, tile.group as TileGroup, { agence });
-      if (!groupAccess) return false;
+      const isAdminUser = globalRole === 'superadmin' || globalRole === 'platform_admin';
       
-      // 2. Vérifier si la tuile nécessite un module spécifique (admins bypass)
+      // 1. Vérifier si la tuile nécessite un module spécifique
+      // Si le module est activé avec l'option requise, la tuile est visible même sans accès au groupe
       if (tile.requiresModule) {
-        const isAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
-        if (!isAdmin && !isModuleEnabled(enabledModules, tile.requiresModule)) {
-          return false;
-        }
-        
-        // 2b. Vérifier si une option spécifique est requise
-        if (tile.requiresModuleOption && !isAdmin) {
-          if (!isModuleOptionEnabled(enabledModules, tile.requiresModule as ModuleKey, tile.requiresModuleOption)) {
-            return false;
+        // Admin bypass
+        if (isAdminUser) {
+          // Admins voient tout, mais on vérifie quand même le groupe pour le tri
+        } else {
+          // Vérifier si le module est activé
+          const hasModule = isModuleEnabled(enabledModules, tile.requiresModule);
+          if (!hasModule) return false;
+          
+          // Vérifier si une option spécifique est requise
+          if (tile.requiresModuleOption) {
+            if (!isModuleOptionEnabled(enabledModules, tile.requiresModule as ModuleKey, tile.requiresModuleOption)) {
+              return false;
+            }
           }
+          
+          // Le module est activé avec l'option → tuile visible (skip group check)
+          // Mais on vérifie quand même les tuiles spéciales
+          return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsoleUI });
         }
+      } else {
+        // 2. Pas de module requis → vérifier l'accès au groupe
+        const groupAccess = canAccessTileGroup(globalRole, tile.group as TileGroup, { agence });
+        if (!groupAccess) return false;
       }
       
       // 3. Vérifier l'accès à la tuile spécifique (passer canAccessSupportConsoleUI pour CONSOLE_SUPPORT)
