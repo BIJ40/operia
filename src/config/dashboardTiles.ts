@@ -2,7 +2,7 @@ import {
   BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
   PieChart, Coins, LifeBuoy, Headphones, GraduationCap, Kanban, Activity,
-  HelpCircle, Calendar, UserCog
+  HelpCircle, Calendar, UserCog, Briefcase
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -120,6 +120,17 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'accent',
     group: 'pilotage',
     requiresModule: 'pilotage_agence',
+  },
+  {
+    id: 'MON_COFFRE_RH',
+    title: 'Mon Coffre RH',
+    description: 'Mes documents RH et demandes',
+    icon: Briefcase,
+    route: ROUTES.pilotage.monCoffreRh,
+    scopeSlug: SCOPE_SLUGS.MON_COFFRE_RH,
+    color: 'accent',
+    group: 'pilotage',
+    requiresModule: 'rh_parc',
   },
   // Support
   {

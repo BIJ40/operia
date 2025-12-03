@@ -15,6 +15,7 @@ export const MODULES = {
   support: 'support',
   admin_plateforme: 'admin_plateforme',
   apogee_tickets: 'apogee_tickets',
+  rh_parc: 'rh_parc',
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
@@ -57,6 +58,11 @@ export const MODULE_OPTIONS = {
     kanban: 'apogee_tickets.kanban',
     import: 'apogee_tickets.import',
     manage: 'apogee_tickets.manage',
+  },
+  rh_parc: {
+    rh: 'rh_parc.rh',           // Documents RH, salaires, contrats
+    parc: 'rh_parc.parc',       // Flotte, EPI, équipements
+    coffre: 'rh_parc.coffre',   // Coffre-fort salarié (mon coffre RH)
   },
 } as const;
 
@@ -168,6 +174,19 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'manage', path: 'apogee_tickets.manage', label: 'Gestion', description: 'Créer et gérer les tickets', defaultEnabled: true },
     ],
   },
+  {
+    key: 'rh_parc',
+    label: 'RH & Parc',
+    description: 'Gestion RH et parc véhicules/équipements',
+    icon: 'Briefcase',
+    defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    minRole: 'base_user',
+    options: [
+      { key: 'rh', path: 'rh_parc.rh', label: 'Gestion RH', description: 'Documents RH, salaires, contrats', defaultEnabled: true },
+      { key: 'parc', path: 'rh_parc.parc', label: 'Parc', description: 'Flotte véhicules, EPI, équipements', defaultEnabled: true },
+      { key: 'coffre', path: 'rh_parc.coffre', label: 'Coffre-fort salarié', description: 'Accès aux documents personnels', defaultEnabled: true },
+    ],
+  },
 ];
 
 // Structure de stockage des modules activés (JSONB dans profiles)
@@ -178,6 +197,7 @@ export interface EnabledModules {
   support?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
   apogee_tickets?: boolean | ModuleOptionsState;
+  rh_parc?: boolean | ModuleOptionsState;
 }
 
 export interface ModuleOptionsState {
