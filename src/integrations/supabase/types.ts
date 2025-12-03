@@ -3153,6 +3153,29 @@ export type Database = {
         Returns: boolean
       }
       is_support_agent: { Args: { _user_id: string }; Returns: boolean }
+      request_document: {
+        Args: { p_description?: string; p_request_type: string }
+        Returns: {
+          agency_id: string
+          collaborator_id: string
+          created_at: string
+          description: string | null
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          request_type: string
+          requested_at: string
+          response_document_id: string | null
+          response_note: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "document_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       apogee_ticket_role: "developer" | "tester" | "franchiseur"
