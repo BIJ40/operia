@@ -25,9 +25,11 @@ interface CreateUserDialogProps {
   currentUserAgency: string | null;
   /** Si true, force l'agence courante sans possibilité de choisir (mode agence) */
   forceOwnAgency?: boolean;
+  /** Si true, restreint les postes à ceux valides pour une agence (exclut tete_de_reseau, externe) */
+  agencyMode?: boolean;
 }
 
-export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assignableRoles, agencies, currentUserLevel, currentUserAgency, forceOwnAgency = false }: CreateUserDialogProps) {
+export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assignableRoles, agencies, currentUserLevel, currentUserAgency, forceOwnAgency = false, agencyMode = false }: CreateUserDialogProps) {
   const handleSubmit = (payload: CreateUserPayload) => {
     // Si forceOwnAgency ou N2, forcer l'agence courante
     const shouldForceAgency = forceOwnAgency || currentUserLevel === 2;
@@ -69,6 +71,7 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
           showAgencySelector={showAgencySelector}
           defaultAgency={undefined}
           creatorRoleLevel={currentUserLevel}
+          agencyMode={agencyMode}
         />
 
         <DialogFooter>
