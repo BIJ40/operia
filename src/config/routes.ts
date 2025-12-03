@@ -59,7 +59,7 @@ export const ROUTES = {
     collaborateurs: '/hc-agency/collaborateurs',
     collaborateurProfile: (id: string) => `/hc-agency/collaborateurs/${id}`,
     // Coffre-fort RH (vue salarié)
-    monCoffreRh: '/mon-coffre-rh',
+    monCoffreRh: '/pilotage/mon-coffre-rh',
     // Demandes RH (vue agence - Dirigeant/RH)
     demandesRh: '/hc-agency/demandes-rh',
   },
