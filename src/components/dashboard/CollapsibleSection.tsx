@@ -53,70 +53,57 @@ export const CollapsibleSection = memo(function CollapsibleSection({
     setStoredState(currentState);
   }, [id, isOpen]);
 
-  const toggleOpen = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const toggleOpen = () => {
     setIsOpen(prev => !prev);
   };
 
-  const TitleContent = (
-    <div className="flex items-center gap-4">
-      <div className={cn(
-        "w-12 h-12 rounded-xl flex items-center justify-center",
-        "bg-gradient-to-br from-helpconfort-blue/15 to-helpconfort-blue/5",
-        "border border-helpconfort-blue/20",
-        "group-hover/title:from-helpconfort-blue/25 group-hover/title:to-helpconfort-blue/10",
-        "transition-all duration-300"
-      )}>
-        <Icon className={cn("w-6 h-6", colorClass)} />
-      </div>
-      <h2 className="text-xl font-bold text-foreground tracking-tight">
-        {title}
-      </h2>
+  const IconBox = (
+    <div className={cn(
+      "w-12 h-12 rounded-xl flex items-center justify-center",
+      "bg-gradient-to-br from-helpconfort-blue/15 to-helpconfort-blue/5",
+      "border border-helpconfort-blue/20",
+      "transition-all duration-300",
+      href && "hover:from-helpconfort-blue/25 hover:to-helpconfort-blue/10 hover:border-helpconfort-blue/40 cursor-pointer"
+    )}>
+      <Icon className={cn("w-6 h-6", colorClass)} />
     </div>
   );
-
-  // Si pas de href, tout le header toggle
-  const handleHeaderClick = href ? undefined : toggleOpen;
 
   return (
     <section className="group/section">
       {/* Header - 72px+ imposant */}
       <div
-        onClick={handleHeaderClick}
+        onClick={toggleOpen}
         className={cn(
-          "w-full flex items-center justify-between",
+          "w-full flex items-center justify-between cursor-pointer",
           "min-h-[72px] py-4 px-5 -mx-1 rounded-2xl",
           "border border-transparent",
           "bg-gradient-to-r from-muted/50 via-background to-muted/30",
           "hover:border-border hover:from-muted/80 hover:via-background hover:to-muted/50",
           "hover:shadow-md",
-          "transition-all duration-300",
-          !href && "cursor-pointer"
+          "transition-all duration-300"
         )}
       >
-        {/* Left: Icon + Title - Navigates to section page if href, otherwise part of toggle */}
-        {href ? (
-          <Link 
-            to={href} 
-            className="group/title flex-1 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg"
-          >
-            {TitleContent}
-          </Link>
-        ) : (
-          <div className="flex-1 cursor-pointer">{TitleContent}</div>
-        )}
-
-        {/* Right: Combo barre + chevron - Toggles collapse */}
-        <button
-          onClick={toggleOpen}
-          className={cn(
-            "flex items-center gap-3 cursor-pointer",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg p-1"
+        {/* Left: Icon (navigates if href) + Title */}
+        <div className="flex items-center gap-4">
+          {href ? (
+            <Link 
+              to={href} 
+              onClick={(e) => e.stopPropagation()}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
+            >
+              {IconBox}
+            </Link>
+          ) : (
+            IconBox
           )}
-          aria-expanded={isOpen}
-          aria-label={isOpen ? "Réduire la section" : "Développer la section"}
-        >
+          <h2 className="text-xl font-bold text-foreground tracking-tight">
+            {title}
+          </h2>
+        </div>
+
+        {/* Right: Combo barre + chevron */}
+        <div className="flex items-center gap-3">
           {/* Barre décorative */}
           <div className={cn(
             "hidden sm:block w-16 h-1 rounded-full",
@@ -129,7 +116,6 @@ export const CollapsibleSection = memo(function CollapsibleSection({
           <div className={cn(
             "w-10 h-10 rounded-xl flex items-center justify-center",
             "bg-muted/80 border border-border/50",
-            "hover:bg-helpconfort-blue/10 hover:border-helpconfort-blue/30",
             "transition-all duration-300"
           )}>
             <ChevronDown 
@@ -140,7 +126,7 @@ export const CollapsibleSection = memo(function CollapsibleSection({
               )} 
             />
           </div>
-        </button>
+        </div>
       </div>
 
       {/* Content with fade + slide animation */}
