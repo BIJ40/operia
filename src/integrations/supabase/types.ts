@@ -14,103 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      agency_collaborators: {
-        Row: {
-          address: string | null
-          agency_id: string
-          apogee_user_id: number | null
-          birth_date: string | null
-          created_at: string
-          created_by: string | null
-          email: string | null
-          emergency_contact: string | null
-          emergency_phone: string | null
-          first_name: string
-          hiring_date: string | null
-          id: string
-          is_registered_user: boolean
-          last_name: string
-          leaving_date: string | null
-          notes: string | null
-          phone: string | null
-          role: string
-          social_security_number: string | null
-          type: string | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          address?: string | null
-          agency_id: string
-          apogee_user_id?: number | null
-          birth_date?: string | null
-          created_at?: string
-          created_by?: string | null
-          email?: string | null
-          emergency_contact?: string | null
-          emergency_phone?: string | null
-          first_name: string
-          hiring_date?: string | null
-          id?: string
-          is_registered_user?: boolean
-          last_name: string
-          leaving_date?: string | null
-          notes?: string | null
-          phone?: string | null
-          role?: string
-          social_security_number?: string | null
-          type?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          address?: string | null
-          agency_id?: string
-          apogee_user_id?: number | null
-          birth_date?: string | null
-          created_at?: string
-          created_by?: string | null
-          email?: string | null
-          emergency_contact?: string | null
-          emergency_phone?: string | null
-          first_name?: string
-          hiring_date?: string | null
-          id?: string
-          is_registered_user?: boolean
-          last_name?: string
-          leaving_date?: string | null
-          notes?: string | null
-          phone?: string | null
-          role?: string
-          social_security_number?: string | null
-          type?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agency_collaborators_agency_id_fkey"
-            columns: ["agency_id"]
-            isOneToOne: false
-            referencedRelation: "apogee_agencies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agency_collaborators_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agency_collaborators_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       agency_rh_roles: {
         Row: {
           agency_id: string
@@ -1312,6 +1215,103 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      collaborators: {
+        Row: {
+          address: string | null
+          agency_id: string
+          apogee_user_id: number | null
+          birth_date: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          emergency_contact: string | null
+          emergency_phone: string | null
+          first_name: string
+          hiring_date: string | null
+          id: string
+          is_registered_user: boolean
+          last_name: string
+          leaving_date: string | null
+          notes: string | null
+          phone: string | null
+          role: string
+          social_security_number: string | null
+          type: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          agency_id: string
+          apogee_user_id?: number | null
+          birth_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          emergency_contact?: string | null
+          emergency_phone?: string | null
+          first_name: string
+          hiring_date?: string | null
+          id?: string
+          is_registered_user?: boolean
+          last_name: string
+          leaving_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          role?: string
+          social_security_number?: string | null
+          type?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          agency_id?: string
+          apogee_user_id?: number | null
+          birth_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          emergency_contact?: string | null
+          emergency_phone?: string | null
+          first_name?: string
+          hiring_date?: string | null
+          id?: string
+          is_registered_user?: boolean
+          last_name?: string
+          leaving_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          role?: string
+          social_security_number?: string | null
+          type?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_collaborators_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_collaborators_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_collaborators_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       diffusion_settings: {
         Row: {

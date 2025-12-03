@@ -22,7 +22,7 @@ export function useCollaborators(agencyId?: string) {
       if (!effectiveAgencyId) return [];
 
       const { data, error } = await supabase
-        .from('agency_collaborators')
+        .from('collaborators')
         .select('*')
         .eq('agency_id', effectiveAgencyId)
         .order('last_name', { ascending: true });
@@ -39,7 +39,7 @@ export function useCollaborators(agencyId?: string) {
       if (!effectiveAgencyId) throw new Error('Agency ID required');
 
       const { data, error } = await supabase
-        .from('agency_collaborators')
+        .from('collaborators')
         .insert({
           agency_id: effectiveAgencyId,
           first_name: formData.first_name,
@@ -77,7 +77,7 @@ export function useCollaborators(agencyId?: string) {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CollaboratorFormData> }) => {
       const { data: result, error } = await supabase
-        .from('agency_collaborators')
+        .from('collaborators')
         .update({
           ...data,
           updated_at: new Date().toISOString(),
@@ -102,7 +102,7 @@ export function useCollaborators(agencyId?: string) {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('agency_collaborators')
+        .from('collaborators')
         .delete()
         .eq('id', id);
 
@@ -140,15 +140,13 @@ export function useCollaborators(agencyId?: string) {
 
 // Hook for single collaborator
 export function useCollaborator(id: string | undefined) {
-  const { agencyId } = useAuth();
-
   return useQuery({
     queryKey: ['collaborator', id],
     queryFn: async () => {
       if (!id) return null;
 
       const { data, error } = await supabase
-        .from('agency_collaborators')
+        .from('collaborators')
         .select('*')
         .eq('id', id)
         .single();

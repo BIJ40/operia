@@ -2,7 +2,6 @@
  * Formulaire de création/édition de collaborateur
  */
 
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -43,6 +42,7 @@ const formSchema = z.object({
   role: z.string().min(1, 'Poste requis'),
   notes: z.string().optional(),
   hiring_date: z.string().optional(),
+  leaving_date: z.string().optional(),
   birth_date: z.string().optional(),
   address: z.string().optional(),
   emergency_contact: z.string().optional(),
@@ -78,6 +78,7 @@ export function CollaboratorForm({
       role: collaborator?.role || '',
       notes: collaborator?.notes || '',
       hiring_date: collaborator?.hiring_date || '',
+      leaving_date: collaborator?.leaving_date || '',
       birth_date: collaborator?.birth_date || '',
       address: collaborator?.address || '',
       emergency_contact: collaborator?.emergency_contact || '',
@@ -94,6 +95,7 @@ export function CollaboratorForm({
       phone: values.phone || undefined,
       notes: values.notes || undefined,
       hiring_date: values.hiring_date || undefined,
+      leaving_date: values.leaving_date || undefined,
       birth_date: values.birth_date || undefined,
       address: values.address || undefined,
       emergency_contact: values.emergency_contact || undefined,
@@ -213,14 +215,27 @@ export function CollaboratorForm({
               />
             </div>
 
-            {/* Dates */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Dates RH */}
+            <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="hiring_date"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Date d'embauche</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="leaving_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date de départ</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
