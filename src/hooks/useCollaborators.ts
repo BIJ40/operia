@@ -89,8 +89,9 @@ export function useCollaborators(agencyId?: string) {
       if (error) throw error;
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['collaborators', effectiveAgencyId] });
+      queryClient.invalidateQueries({ queryKey: ['collaborator', variables.id] });
       toast.success('Collaborateur mis à jour');
     },
     onError: (error: Error) => {
