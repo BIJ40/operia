@@ -58,7 +58,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     },
     rh: {
       enabled: true,
-      options: { coffre: true, rh_viewer: true, rh_admin: true }
+      options: { coffre: false, rh_viewer: true, rh_admin: true }
     },
   },
   
