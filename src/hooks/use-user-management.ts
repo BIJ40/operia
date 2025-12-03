@@ -104,7 +104,11 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
   );
 
   // Permission checks
-  const canEditUser = (targetRole: GlobalRole | null, targetAgency: string | null): boolean => {
+  const canEditUser = (targetRole: GlobalRole | null, targetAgency: string | null, targetUserId?: string): boolean => {
+    // ✅ EXCEPTION N6: superadmin peut s'auto-éditer
+    if (isSuperAdmin && targetUserId && user?.id === targetUserId) {
+      return true;
+    }
     return canManageUser(effectiveUserRole, currentUserAgency, targetRole, targetAgency);
   };
   
