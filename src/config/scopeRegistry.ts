@@ -19,6 +19,7 @@ export const SCOPE_SLUGS = {
   RH_TECH: 'rh_tech',
   MON_EQUIPE: 'mon_equipe',
   MON_COFFRE_RH: 'mon_coffre_rh',
+  DEMANDES_RH: 'demandes_rh',
 
   // Support
   MES_DEMANDES: 'mes_demandes',
