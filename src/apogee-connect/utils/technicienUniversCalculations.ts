@@ -1,5 +1,6 @@
-import { parseISO, isWithinInterval } from "date-fns";
+import { isWithinInterval } from "date-fns";
 import { buildTechMap, resolveTech } from "./techTools";
+import { extractFactureMeta } from "@/statia/rules/rules";
 
 /**
  * Normaliser les slugs d'univers de l'API vers nos labels
@@ -140,21 +141,19 @@ export function calculateTechnicienUniversStats(
     };
   } = {};
 
-  // Filtrer les factures par période
+  // Filtrer les factures par période via extractFactureMeta
   const filteredFactures = factures.filter((facture) => {
-    const dateReelle = facture.dateReelle;
-    if (!dateReelle) return false;
+    const meta = extractFactureMeta(facture);
+    if (!meta.date) return false;
 
-    try {
-      const factureDate = parseISO(dateReelle);
-      return isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end });
-    } catch {
-      return false;
-    }
+    return isWithinInterval(meta.date, { start: dateRange.start, end: dateRange.end });
   });
 
   // Traiter chaque facture
   filteredFactures.forEach((facture) => {
+    // Utiliser le helper centralisé
+    const meta = extractFactureMeta(facture);
+    
     // Exclure les factures annulées
     if (facture.state === "canceled") return;
 
@@ -164,9 +163,9 @@ export function calculateTechnicienUniversStats(
     const project = projectsMap.get(projectId);
     if (!project) return;
 
-    // CA de la facture
-    const caFactureHT = Number(facture.data?.totalHT || facture.totalHT || 0);
-    if (caFactureHT <= 0) return;
+    // CORRECTION: Ne plus ignorer les avoirs, utiliser montantNet (signé)
+    const caFactureHT = meta.montantNetHT;
+    if (caFactureHT === 0) return;
 
     // Univers du projet - NORMALISER les slugs
     const universesRaw = project.data?.universes || [];

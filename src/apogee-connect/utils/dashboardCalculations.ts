@@ -1,5 +1,6 @@
 import { isToday, parseISO, differenceInDays, startOfDay, endOfDay, subDays, isWithinInterval } from "date-fns";
 import { logDebug, logWarn } from "@/lib/logger";
+import { extractFactureMeta } from "@/statia/rules/rules";
 
 // ====================================================================
 // FONCTIONS UTILITAIRES
@@ -282,50 +283,47 @@ export const calculateCaJour = (factures: any[], clients: any[], projects: any[]
   const exemplesFactures: any[] = [];
   
   factures.forEach(facture => {
-    const dateEmission = facture.dateEmission || facture.dateReelle || facture.created_at;
-    if (!dateEmission) return;
+    // Utiliser le helper centralisé pour extraction unifiée
+    const meta = extractFactureMeta(facture);
+    
+    // Date valide requise
+    if (!meta.date) return;
     
     try {
-      const factureDate = parseISO(dateEmission);
-      const inRange = isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end });
+      const inRange = isWithinInterval(meta.date, { start: dateRange.start, end: dateRange.end });
       if (!inRange) return;
       facturesDansPeriode++;
       
-      // Extraire et valider le montant
-      const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
-      const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
-      
-      if (isNaN(montant)) {
+      // Vérifier montant valide
+      if (isNaN(meta.montantBrutHT)) {
         facturesAvecMontantInvalide++;
         logWarn('DASHBOARD_CALC', 'Facture avec montant invalide', {
           ref: facture.reference || facture.numeroFacture,
           totalHT: facture.totalHT,
-          dataTotalHT: facture.data?.totalHT,
-          montantRaw
+          dataTotalHT: facture.data?.totalHT
         });
         return;
       }
-      
-      const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
       
       // Garder des exemples pour debug
       if (exemplesFactures.length < 5) {
         exemplesFactures.push({
           ref: facture.reference || facture.numeroFacture,
-          montant,
-          type: typeFacture,
+          montant: meta.montantNetHT,
+          type: meta.typeFacture,
+          isAvoir: meta.isAvoir,
           totalHT: facture.totalHT,
           dataTotalHT: facture.data?.totalHT
         });
       }
       
-      if (typeFacture === "avoir") {
-        totalAvoirs += Math.abs(montant);
-        caTotal -= Math.abs(montant);
+      // Utiliser le montant net (signé) - avoirs sont négatifs
+      if (meta.isAvoir) {
+        totalAvoirs += meta.montantBrutHT;
       } else {
-        totalFactures += montant;
-        caTotal += montant;
+        totalFactures += meta.montantBrutHT;
       }
+      caTotal += meta.montantNetHT;
     } catch (e) {
       logWarn('DASHBOARD_CALC', 'Erreur parsing date facture', { error: e, facture });
     }
