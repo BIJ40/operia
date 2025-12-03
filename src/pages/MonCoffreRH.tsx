@@ -1,25 +1,68 @@
 /**
  * Page Coffre-fort RH - Vue salarié
- * Permet aux employés de consulter leurs documents RH visibles
+ * Permet aux employés de consulter leurs documents RH et demander des documents
  */
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Loader2, FolderOpen, File } from 'lucide-react';
+import { 
+  FileText, Download, Loader2, FolderOpen, File, Send, Plus 
+} from 'lucide-react';
 import { useMyDocuments } from '@/hooks/useCollaboratorDocuments';
+import { useMyDocumentRequests } from '@/hooks/useDocumentRequests';
 import { DOCUMENT_TYPES, DocumentType } from '@/types/collaboratorDocument';
+import { 
+  DOCUMENT_REQUEST_TYPES, 
+  DOCUMENT_REQUEST_STATUS_LABELS,
+  type DocumentRequestType,
+  type DocumentRequestStatus 
+} from '@/types/documentRequest';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { 
+  Select, 
+  SelectTrigger, 
+  SelectValue, 
+  SelectContent, 
+  SelectItem 
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+
+const STATUS_BADGE_VARIANTS: Record<DocumentRequestStatus, 'outline' | 'default' | 'secondary' | 'destructive'> = {
+  PENDING: 'outline',
+  IN_PROGRESS: 'default',
+  COMPLETED: 'secondary',
+  REJECTED: 'destructive',
+};
 
 export default function MonCoffreRH() {
   const queryClient = useQueryClient();
   const { documents, isLoading, error, downloadDocument } = useMyDocuments();
+  const { 
+    requests, 
+    isLoading: isLoadingRequests, 
+    error: requestError, 
+    createRequest 
+  } = useMyDocumentRequests();
+
+  const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [requestType, setRequestType] = useState<DocumentRequestType>('ATTESTATION_EMPLOYEUR');
+  const [description, setDescription] = useState('');
 
   const handleRetry = () => {
     queryClient.invalidateQueries({ queryKey: ['my-documents'] });
+    queryClient.invalidateQueries({ queryKey: ['my-document-requests'] });
   };
 
   const formatDate = (date: string) => {
@@ -45,6 +88,15 @@ export default function MonCoffreRH() {
     return acc;
   }, {} as Record<DocumentType, typeof documents>);
 
+  const handleCreateRequest = async () => {
+    await createRequest.mutateAsync({
+      request_type: requestType,
+      description: description || undefined,
+    });
+    setDescription('');
+    setShowRequestDialog(false);
+  };
+
   if (error) {
     return (
       <MainLayout>
@@ -65,11 +117,12 @@ export default function MonCoffreRH() {
   return (
     <MainLayout>
       <div className="container mx-auto py-8 px-4 space-y-6">
+        {/* Bloc Coffre-fort documents */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FolderOpen className="h-5 w-5" />
-              Mon Coffre-fort RH
+              Mes Documents
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -134,6 +187,138 @@ export default function MonCoffreRH() {
             )}
           </CardContent>
         </Card>
+
+        {/* Bloc Demandes de documents */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5" />
+              Mes demandes de documents
+            </CardTitle>
+            <Button size="sm" onClick={() => setShowRequestDialog(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Demander un document
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {requestError && (
+              <div className="text-sm text-destructive mb-4">
+                Une erreur est survenue lors du chargement de vos demandes.
+              </div>
+            )}
+
+            {isLoadingRequests ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : requests.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Send className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Aucune demande enregistrée pour l'instant.</p>
+                <p className="text-sm mt-2">
+                  Vous pouvez demander une attestation, un duplicata de bulletin, etc.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {requests.map((req) => (
+                  <div
+                    key={req.id}
+                    className="flex items-start justify-between rounded-md border px-3 py-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium">
+                        {DOCUMENT_REQUEST_TYPES.find((t) => t.value === req.request_type)?.label}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Demandé le {formatDate(req.requested_at)}
+                      </div>
+                      {req.description && (
+                        <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                          {req.description}
+                        </div>
+                      )}
+                      {req.response_note && (
+                        <div className="mt-2 text-xs bg-muted p-2 rounded">
+                          <span className="font-semibold">Réponse RH : </span>
+                          {req.response_note}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1 ml-4">
+                      <Badge variant={STATUS_BADGE_VARIANTS[req.status]}>
+                        {DOCUMENT_REQUEST_STATUS_LABELS[req.status]}
+                      </Badge>
+                      {req.response_document && (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-xs"
+                          onClick={() => {
+                            if (req.response_document) {
+                              downloadDocument(req.response_document);
+                            }
+                          }}
+                        >
+                          Voir le document
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Dialog création de demande */}
+        <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Demander un document RH</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Type de document</label>
+                <Select
+                  value={requestType}
+                  onValueChange={(v) => setRequestType(v as DocumentRequestType)}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Choisir un type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    {DOCUMENT_REQUEST_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Précisions (optionnel)</label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Précisez votre besoin, période concernée…"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowRequestDialog(false)}>
+                Annuler
+              </Button>
+              <Button
+                onClick={handleCreateRequest}
+                disabled={createRequest.isPending}
+              >
+                {createRequest.isPending ? 'Envoi…' : 'Envoyer la demande'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );

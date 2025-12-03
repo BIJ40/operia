@@ -1428,6 +1428,80 @@ export type Database = {
         }
         Relationships: []
       }
+      document_requests: {
+        Row: {
+          agency_id: string
+          collaborator_id: string
+          created_at: string
+          description: string | null
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          request_type: string
+          requested_at: string
+          response_document_id: string | null
+          response_note: string | null
+          status: string
+        }
+        Insert: {
+          agency_id: string
+          collaborator_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          request_type: string
+          requested_at?: string
+          response_document_id?: string | null
+          response_note?: string | null
+          status?: string
+        }
+        Update: {
+          agency_id?: string
+          collaborator_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          request_type?: string
+          requested_at?: string
+          response_document_id?: string | null
+          response_note?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_requests_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requests_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requests_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requests_response_document_id_fkey"
+            columns: ["response_document_id"]
+            isOneToOne: false
+            referencedRelation: "collaborator_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           apporteur_block_id: string | null

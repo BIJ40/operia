@@ -53,6 +53,7 @@ const EquipePage = lazy(() => import("./pages/EquipePage"));
 const CollaborateursPage = lazy(() => import("./pages/CollaborateursPage"));
 const CollaborateurProfilePage = lazy(() => import("./pages/CollaborateurProfilePage"));
 const MonCoffreRH = lazy(() => import("./pages/MonCoffreRH"));
+const DemandesRHPage = lazy(() => import("./pages/DemandesRHPage"));
 
 // Lazy loaded pages - Support
 const SupportIndex = lazy(() => import("./pages/SupportIndex"));
@@ -219,6 +220,9 @@ function AppContent() {
           
           {/* Coffre-fort RH - Vue salarié (tous les utilisateurs authentifiés) */}
           <Route path="/mon-coffre-rh" element={<MainLayout><RoleGuard><MonCoffreRH /></RoleGuard></MainLayout>} />
+          
+          {/* Demandes RH - Vue agence (Dirigeant/RH) */}
+          <Route path="/hc-agency/demandes-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><DemandesRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
