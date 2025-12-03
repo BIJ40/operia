@@ -1,6 +1,8 @@
 import { CHANGELOG, CHANGE_TYPE_CONFIG, getCurrentVersion, getPreviousVersions } from '@/config/changelog';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { FileText, Shield } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function Changelog() {
   const currentVersion = getCurrentVersion();
@@ -58,6 +60,31 @@ export default function Changelog() {
               );
             })}
           </div>
+
+          {/* Lien rapport sécurité pour V0.6.2 */}
+          {currentVersion.version === 'V0.6.2' && (
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <a 
+                href="https://github.com/lovable-project/guide-apogee-dev/blob/main/docs/SECURITY-AUDIT-REPORT.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-helpconfort-blue hover:underline"
+              >
+                <Shield className="w-4 h-4" />
+                Voir le rapport d'audit sécurité complet
+              </a>
+              <span className="mx-2 text-muted-foreground">•</span>
+              <a 
+                href="https://github.com/lovable-project/guide-apogee-dev/blob/main/docs/SECURITY.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-helpconfort-blue hover:underline"
+              >
+                <FileText className="w-4 h-4" />
+                Documentation sécurité
+              </a>
+            </div>
+          )}
         </div>
       </section>
 

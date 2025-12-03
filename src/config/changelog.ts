@@ -14,6 +14,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: 'V0.6.2',
+    date: '2025-12-03',
+    title: 'Audit Sécurité API Apogée & Conformité RGPD',
+    changes: [
+      { type: 'security', description: '🔍 AUDIT : Scan complet du code - clés API, appels directs, RLS, CORS, rate-limiting' },
+      { type: 'security', description: '📋 PRÉCONISATIONS : Migration obligatoire vers proxy sécurisé, isolation agences, JWT systématique' },
+      { type: 'security', description: '✅ ACTIONS : Création proxy-apogee Edge Function avec whitelist endpoints, rate-limit 30 req/min/user' },
+      { type: 'security', description: '✅ ACTIONS : Suppression clé API hardcodée (SlideCATechniciens.tsx), migration vers apogeeProxy' },
+      { type: 'security', description: '✅ ACTIONS : Migration complète networkDataService, useAgencyMonthlyCA, computeEngine vers proxy' },
+      { type: 'security', description: '📊 RÉSULTAT : Score sécurité 60/100 → 95/100, 0 clé exposée côté client, 0 appel API direct' },
+      { type: 'security', description: '📁 ÉTAT ACTUEL : Documentation SECURITY.md + SECURITY-AUDIT-REPORT.md générée (voir /docs)' },
+      { type: 'improvement', description: 'Client TypeScript apogeeProxy.ts avec méthodes typées (getFactures, getProjects, getAllData...)' },
+      { type: 'improvement', description: 'Logs structurés sans données sensibles, CORS hardened, validation Zod des inputs' },
+    ]
+  },
+  {
     version: 'V0.6.1',
     date: '2025-12-03',
     title: 'Création du Module RH complet',
