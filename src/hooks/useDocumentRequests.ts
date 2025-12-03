@@ -48,32 +48,12 @@ export function useMyDocumentRequests() {
 
   const createRequest = useMutation({
     mutationFn: async (payload: CreateDocumentRequestPayload) => {
-      // Get current user's collaborator and agency info
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('agency_id')
-        .single();
-
-      const { data: collaborator } = await supabase
-        .from('collaborators')
-        .select('id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id || '')
-        .single();
-
-      if (!collaborator?.id || !profile?.agency_id) {
-        throw new Error('Impossible de créer la demande : profil collaborateur non trouvé');
-      }
-
+      // Utilise la RPC qui gère collaborator_id et agency_id côté DB
       const { data, error } = await supabase
-        .from('document_requests')
-        .insert({
-          request_type: payload.request_type,
-          description: payload.description || null,
-          collaborator_id: collaborator.id,
-          agency_id: profile.agency_id,
-        })
-        .select('*')
-        .single();
+        .rpc('request_document', {
+          p_request_type: payload.request_type,
+          p_description: payload.description ?? null,
+        });
 
       if (error) throw error;
       return data as DocumentRequest;
