@@ -221,6 +221,8 @@ export function UnifiedSidebar() {
         { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
         { title: 'Diffusion', url: ROUTES.pilotage.diffusion, icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
         { title: 'Validation plannings', url: ROUTES.pilotage.rhTech, icon: Calendar, description: 'Validation des plannings hebdomadaires', badge: 'Bientôt', isDisabled: true },
+        { title: 'Mon Coffre RH', url: ROUTES.pilotage.monCoffreRh, icon: FolderOpen, description: 'Mes documents RH personnels' },
+        { title: 'Demandes RH', url: ROUTES.pilotage.demandesRh, icon: FileText, description: 'Traiter les demandes de documents', minRole: 'franchisee_admin' },
       ],
       accessKey: 'canAccessPilotageAgence',
     },
@@ -272,6 +274,8 @@ export function UnifiedSidebar() {
       items: [
         { title: 'Utilisateurs', url: ROUTES.admin.users, icon: Users, description: 'Gérer les comptes utilisateurs' },
         { title: 'Agences', url: ROUTES.admin.agencies, icon: Building2 },
+        { title: 'Annonces', url: ROUTES.admin.announcements, icon: MessageCircle, description: 'Annonces prioritaires' },
+        { title: 'Chatbot RAG', url: ROUTES.admin.chatbotRag, icon: Sparkles, description: 'Configuration IA' },
         { title: 'Sauvegardes', url: ROUTES.admin.backup, icon: Database },
         { title: 'Activité', url: ROUTES.admin.userActivity, icon: Activity },
         { title: 'Paramètres', url: ROUTES.admin.index, icon: Settings, description: 'Configuration du système' },

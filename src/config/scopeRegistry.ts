@@ -27,6 +27,7 @@ export const SCOPE_SLUGS = {
 
   // Réseau Franchiseur
   FRANCHISEUR_DASHBOARD: 'franchiseur_dashboard',
+  FRANCHISEUR_AGENCIES: 'franchiseur_agencies',
   FRANCHISEUR_KPI: 'franchiseur_kpi',
   FRANCHISEUR_ROYALTIES: 'franchiseur_royalties',
 
