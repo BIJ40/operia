@@ -1,5 +1,5 @@
 /**
- * Grille d'affichage des documents avec Drag & Drop - Finder RH
+ * Grille d'affichage des documents avec Drag & Drop et sélection multiple - Finder RH
  */
 
 import { CollaboratorDocument } from '@/types/collaboratorDocument';
@@ -13,6 +13,8 @@ interface DocumentGridProps {
   onDelete: (doc: CollaboratorDocument) => void;
   onRename: (doc: CollaboratorDocument, newTitle: string) => void;
   canManage: boolean;
+  selectedIds: Set<string>;
+  onSelect: (docId: string, e: React.MouseEvent) => void;
 }
 
 export function DocumentGrid({
@@ -22,6 +24,8 @@ export function DocumentGrid({
   onDelete,
   onRename,
   canManage,
+  selectedIds,
+  onSelect,
 }: DocumentGridProps) {
   if (documents.length === 0) {
     return (
@@ -44,6 +48,9 @@ export function DocumentGrid({
           onDelete={() => onDelete(doc)}
           onRename={(newTitle) => onRename(doc, newTitle)}
           canManage={canManage}
+          isSelected={selectedIds.has(doc.id)}
+          onSelect={(e) => onSelect(doc.id, e)}
+          selectedCount={selectedIds.size}
         />
       ))}
     </div>

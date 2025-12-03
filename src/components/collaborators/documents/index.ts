@@ -7,3 +7,4 @@ export { DocumentDropzone } from './DocumentDropzone';
 export { DocumentBreadcrumb } from './DocumentBreadcrumb';
 export { DraggableDocumentItem } from './DraggableDocumentItem';
 export { DroppableFolder, DroppableRoot } from './DroppableFolder';
+export { SubfolderButtons } from './SubfolderButtons';

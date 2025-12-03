@@ -70,16 +70,16 @@ export function DocumentBreadcrumb({
         )}
       </div>
       
-      {/* New folder button */}
-      {canManage && !activeSubfolder && (
+      {/* New folder button only when in subfolder (otherwise shown in SubfolderButtons) */}
+      {canManage && activeSubfolder && (
         <Button
           variant="outline"
           size="sm"
           onClick={onCreateFolder}
-          className="gap-2 flex-shrink-0"
+          className="gap-1.5 flex-shrink-0 border-dashed"
         >
           <FolderPlus className="h-4 w-4" />
-          Nouveau dossier
+          + Nouveau
         </Button>
       )}
     </div>
