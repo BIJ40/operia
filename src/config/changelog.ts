@@ -16,14 +16,17 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: 'V0.6.1',
     date: '2025-12-03',
-    title: 'Module RH - Phase 2 complète & UX améliorée',
+    title: 'Création du Module RH complet',
     changes: [
-      { type: 'feature', description: 'Tuile GED avec dropdown collaborateurs - accès direct à l\'onglet Documents RH' },
-      { type: 'feature', description: 'Phase 2.3 Document Requests - workflow complet lu/non-lu avec pièces jointes' },
-      { type: 'feature', description: 'Coffre-fort RH salarié (/mon-coffre-rh) avec demandes de documents' },
-      { type: 'improvement', description: 'CollapsibleSection - clic sur tout le header pour déplier (sans href)' },
-      { type: 'improvement', description: 'Permissions RH 3-tier : coffre (salarié), rh_viewer (équipe), rh_admin (paie)' },
-      { type: 'improvement', description: 'Navigation directe vers onglet Documents via ?tab=documents' },
+      { type: 'feature', description: 'Module RH (Ressources Humaines) - gestion complète des collaborateurs agence' },
+      { type: 'feature', description: 'Fiches collaborateurs avec informations personnelles, contrats et historique salarial' },
+      { type: 'feature', description: 'GED RH - Gestion Électronique des Documents par collaborateur' },
+      { type: 'feature', description: 'Coffre-fort RH salarié (/mon-coffre-rh) - espace personnel de documents' },
+      { type: 'feature', description: 'Workflow de demandes de documents RH avec suivi lu/non-lu et pièces jointes' },
+      { type: 'feature', description: 'Synchronisation automatique Profil ↔ Collaborateur via triggers DB' },
+      { type: 'improvement', description: 'Permissions RH 3 niveaux : coffre (salarié), rh_viewer (équipe), rh_admin (paie)' },
+      { type: 'improvement', description: 'Tuile GED avec dropdown collaborateurs - accès direct aux documents' },
+      { type: 'security', description: 'RLS strictes - isolation des données RH par agence et niveau d\'accès' },
     ]
   },
   {
