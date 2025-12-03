@@ -116,6 +116,8 @@ const ApogeeTicketsAutoClassify = lazy(() => import("./apogee-tickets/pages/Apog
 const Profile = lazy(() => import("./pages/Profile"));
 const Favorites = lazy(() => import("./pages/Favorites"));
 const Changelog = lazy(() => import("./pages/Changelog"));
+const SecurityAuditReport = lazy(() => import("./pages/SecurityAuditReport"));
+const SecurityDocumentation = lazy(() => import("./pages/SecurityDocumentation"));
 
 // Providers
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -332,6 +334,8 @@ function AppContent() {
           <Route path="/profile" element={<MainLayout><RoleGuard><Profile /></RoleGuard></MainLayout>} />
           <Route path="/favorites" element={<MainLayout><RoleGuard><Favorites /></RoleGuard></MainLayout>} />
           <Route path="/changelog" element={<MainLayout><Changelog /></MainLayout>} />
+          <Route path="/security-audit-report" element={<MainLayout><SecurityAuditReport /></MainLayout>} />
+          <Route path="/security-documentation" element={<MainLayout><SecurityDocumentation /></MainLayout>} />
           
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
