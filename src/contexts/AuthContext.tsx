@@ -147,12 +147,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================================================
   const loadUserData = useCallback(async (userId: string) => {
     try {
-      // Charger le profil avec les champs V2
-      const { data: profile } = await supabase
+      // Charger le profil avec les champs V2 - avec timeout pour éviter blocage infini
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: chargement profil trop long')), 10000)
+      );
+      
+      const queryPromise = supabase
         .from('profiles')
         .select('agence, agency_id, role_agence, must_change_password, global_role, enabled_modules, is_active')
         .eq('id', userId)
         .single();
+      
+      const { data: profile, error } = await Promise.race([queryPromise, timeoutPromise]);
+      
+      if (error) {
+        logAuth.error('Erreur requête profil:', error);
+        throw error;
+      }
       
       setAgence(profile?.agence || null);
       setAgencyId(profile?.agency_id || null);
@@ -228,11 +239,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!isMounted || isLoadingUserData) return;
             isLoadingUserData = true;
             setIsAuthLoading(true);
-            await loadUserData(session.user.id);
-            if (isMounted) {
-              setIsAuthLoading(false);
+            try {
+              await loadUserData(session.user.id);
+            } catch (error) {
+              logAuth.error('Erreur init loadUserData:', error);
+            } finally {
+              if (isMounted) {
+                setIsAuthLoading(false);
+              }
+              isLoadingUserData = false;
             }
-            isLoadingUserData = false;
           }, 0);
         } else {
           setIsAuthLoading(false);
