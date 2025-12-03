@@ -227,12 +227,12 @@ function AppContent() {
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
           {/* ============================================ */}
-          {/* Support HUB */}
-          <Route path="/support" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="support"><SupportIndex /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Support HUB - Accessible à tous les utilisateurs authentifiés */}
+          <Route path="/support" element={<MainLayout><RoleGuard><SupportIndex /></RoleGuard></MainLayout>} />
           {/* Help Center - 3 columns (FAQ | Chat | Demands) */}
-          <Route path="/support/helpcenter" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="support"><SupportUser /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/support/helpcenter" element={<MainLayout><RoleGuard><SupportUser /></RoleGuard></MainLayout>} />
           {/* User Tickets - Full ticket management */}
-          <Route path="/support/mes-demandes" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="support"><UserTickets /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/support/mes-demandes" element={<MainLayout><RoleGuard><UserTickets /></RoleGuard></MainLayout>} />
           {/* Legacy route - redirect */}
           <Route path="/mes-demandes" element={<Navigate to="/support/mes-demandes" replace />} />
           {/* FAQ - accessible à tous, pas de ModuleGuard */}
