@@ -145,6 +145,7 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path === '/hc-agency/rh-tech', pageKey: 'pilotage_rh_tech', defaultTitle: 'RH Tech', defaultSubtitle: 'Planning hebdomadaire des techniciens', icon: 'CalendarDays', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
   { match: (path) => path === '/hc-agency/collaborateurs', pageKey: 'pilotage_collaborateurs', defaultTitle: 'Collaborateurs', defaultSubtitle: 'Gestion RH de l\'équipe', icon: 'Users', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
   { match: (path) => path.startsWith('/hc-agency/collaborateurs/'), pageKey: 'pilotage_collaborateur_profile', defaultTitle: 'Fiche collaborateur', defaultSubtitle: 'Profil 360°', icon: 'User', parentRoute: '/hc-agency/collaborateurs', parentLabel: 'Collaborateurs' },
+  { match: (path) => path === '/mon-coffre-rh', pageKey: 'mon_coffre_rh', defaultTitle: 'Mon Coffre-fort RH', defaultSubtitle: 'Vos documents RH disponibles', icon: 'FolderOpen', parentRoute: '/', parentLabel: 'Accueil' },
   { match: (path) => path === '/hc-agency/equipe', pageKey: 'pilotage_equipe', defaultTitle: 'Mon équipe', defaultSubtitle: 'Gestion des collaborateurs de l\'agence', icon: 'Users', parentRoute: '/hc-agency', parentLabel: 'Mon Agence' },
   { match: (path) => path === '/hc-agency', pageKey: 'pilotage_index', defaultTitle: 'Mon Agence', defaultSubtitle: 'Gérez votre activité au quotidien', icon: 'Gauge', parentRoute: '/', parentLabel: 'Accueil' },
   

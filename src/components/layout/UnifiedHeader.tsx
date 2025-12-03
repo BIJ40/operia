@@ -302,6 +302,12 @@ export function UnifiedHeader() {
                     Mon profil
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/mon-coffre-rh" className="flex items-center gap-2 cursor-pointer">
+                    <FolderOpen className="w-4 h-4" />
+                    Coffre-fort RH
+                  </Link>
+                </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem asChild>
                     <Link to="/admin" className="flex items-center gap-2 cursor-pointer">

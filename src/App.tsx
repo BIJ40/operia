@@ -52,6 +52,7 @@ const EquipePage = lazy(() => import("./pages/EquipePage"));
 // Lazy loaded pages - Collaborateurs (Module RH & Parc)
 const CollaborateursPage = lazy(() => import("./pages/CollaborateursPage"));
 const CollaborateurProfilePage = lazy(() => import("./pages/CollaborateurProfilePage"));
+const MonCoffreRH = lazy(() => import("./pages/MonCoffreRH"));
 
 // Lazy loaded pages - Support
 const SupportIndex = lazy(() => import("./pages/SupportIndex"));
@@ -215,6 +216,9 @@ function AppContent() {
           {/* Collaborateurs (Module RH & Parc - Phase 1) */}
           <Route path="/hc-agency/collaborateurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><CollaborateursPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/hc-agency/collaborateurs/:id" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><CollaborateurProfilePage /></ModuleGuard></RoleGuard></MainLayout>} />
+          
+          {/* Coffre-fort RH - Vue salarié (tous les utilisateurs authentifiés) */}
+          <Route path="/mon-coffre-rh" element={<MainLayout><RoleGuard><MonCoffreRH /></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
