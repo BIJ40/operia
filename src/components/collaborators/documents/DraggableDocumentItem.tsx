@@ -1,5 +1,5 @@
 /**
- * Document Item avec support Drag & Drop - Finder RH
+ * Document Item avec support Drag & Drop et sélection multiple - Finder RH
  */
 
 import { useDraggable } from '@dnd-kit/core';
@@ -15,6 +15,9 @@ interface DraggableDocumentItemProps {
   onDelete: () => void;
   onRename: (newTitle: string) => void;
   canManage: boolean;
+  isSelected?: boolean;
+  onSelect?: (e: React.MouseEvent) => void;
+  selectedCount?: number;
 }
 
 export function DraggableDocumentItem({
@@ -24,10 +27,13 @@ export function DraggableDocumentItem({
   onDelete,
   onRename,
   canManage,
+  isSelected = false,
+  onSelect,
+  selectedCount = 0,
 }: DraggableDocumentItemProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: document.id,
-    data: { document },
+    data: { document, isSelected, selectedCount },
     disabled: !canManage,
   });
 
@@ -42,7 +48,7 @@ export function DraggableDocumentItem({
       {...listeners}
       {...attributes}
       className={cn(
-        'touch-none',
+        'touch-none cursor-grab active:cursor-grabbing',
         isDragging && 'opacity-50 z-50'
       )}
     >
@@ -53,6 +59,8 @@ export function DraggableDocumentItem({
         onDelete={onDelete}
         onRename={onRename}
         canManage={canManage}
+        isSelected={isSelected}
+        onSelect={onSelect}
       />
     </div>
   );

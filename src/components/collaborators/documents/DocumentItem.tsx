@@ -31,6 +31,8 @@ interface DocumentItemProps {
   onDelete: () => void;
   onRename: (newTitle: string) => void;
   canManage: boolean;
+  isSelected?: boolean;
+  onSelect?: (e: React.MouseEvent) => void;
 }
 
 const TYPE_ICONS: Record<DocumentType, React.ElementType> = {
@@ -62,6 +64,8 @@ export function DocumentItem({
   onDelete,
   onRename,
   canManage,
+  isSelected = false,
+  onSelect,
 }: DocumentItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(document.title);
@@ -118,8 +122,10 @@ export function DocumentItem({
         'group relative flex flex-col items-center p-4 rounded-xl border transition-all duration-200',
         'bg-gradient-to-br from-background to-muted/20',
         'hover:border-helpconfort-blue/50 hover:shadow-md hover:shadow-helpconfort-blue/5',
-        isHovered && 'border-helpconfort-blue/30'
+        isHovered && 'border-helpconfort-blue/30',
+        isSelected && 'ring-2 ring-helpconfort-blue border-helpconfort-blue bg-helpconfort-blue/5'
       )}
+      onClick={onSelect}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

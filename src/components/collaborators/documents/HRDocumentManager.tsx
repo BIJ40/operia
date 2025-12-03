@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { FolderOpen, Loader2, Upload } from 'lucide-react';
 import { useCollaboratorDocuments } from '@/hooks/useCollaboratorDocuments';
 import { useSubfolders } from '@/hooks/useSubfolders';
@@ -42,7 +43,7 @@ import { DocumentGrid } from './DocumentGrid';
 import { DocumentDropzone } from './DocumentDropzone';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { DocumentBreadcrumb } from './DocumentBreadcrumb';
-import { DroppableFolder } from './DroppableFolder';
+import { SubfolderButtons } from './SubfolderButtons';
 import { DocumentItem } from './DocumentItem';
 import { toast } from 'sonner';
 
@@ -83,6 +84,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [draggedDocument, setDraggedDocument] = useState<CollaboratorDocument | null>(null);
+  const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
 
   // Compute category counts
   const categoryCounts = useMemo(() => {
@@ -226,42 +228,99 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     updateDocument.mutate({ id: doc.id, data: { title: newTitle } });
   };
 
+  // Handle document selection (Cmd/Ctrl + click for multi-select)
+  const handleDocumentSelect = useCallback((docId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    setSelectedDocIds((prev) => {
+      const newSet = new Set(prev);
+      
+      if (e.metaKey || e.ctrlKey) {
+        // Toggle selection
+        if (newSet.has(docId)) {
+          newSet.delete(docId);
+        } else {
+          newSet.add(docId);
+        }
+      } else if (e.shiftKey && prev.size > 0) {
+        // Range selection
+        const docIds = filteredDocuments.map((d) => d.id);
+        const lastSelected = Array.from(prev).pop();
+        const lastIndex = docIds.indexOf(lastSelected!);
+        const currentIndex = docIds.indexOf(docId);
+        const [start, end] = [Math.min(lastIndex, currentIndex), Math.max(lastIndex, currentIndex)];
+        docIds.slice(start, end + 1).forEach((id) => newSet.add(id));
+      } else {
+        // Single selection
+        if (newSet.has(docId) && newSet.size === 1) {
+          newSet.clear();
+        } else {
+          newSet.clear();
+          newSet.add(docId);
+        }
+      }
+      
+      return newSet;
+    });
+  }, [filteredDocuments]);
+
+  // Clear selection when category or subfolder changes
+  useEffect(() => {
+    setSelectedDocIds(new Set());
+  }, [activeCategory, activeSubfolder]);
+
   // Handle drag start
   const handleDragStart = (event: DragStartEvent) => {
     const doc = event.active.data.current?.document as CollaboratorDocument;
+    const isSelected = event.active.data.current?.isSelected as boolean;
+    
+    // If dragging a non-selected document, select only it
+    if (!isSelected) {
+      setSelectedDocIds(new Set([doc.id]));
+    }
+    
     setDraggedDocument(doc);
   };
 
-  // Handle drag end - move document to new folder
+  // Handle drag end - move document(s) to new folder
   const handleDragEnd = (event: DragEndEvent) => {
     setDraggedDocument(null);
     
     const { active, over } = event;
     if (!over || !active.data.current?.document) return;
 
-    const document = active.data.current.document as CollaboratorDocument;
     const targetData = over.data.current;
-    
     if (!targetData) return;
 
     const newSubfolder = targetData.subfolder as string | null;
     
-    // Don't update if same folder
-    if (document.subfolder === newSubfolder) return;
+    // Get all documents to move (selected or just the dragged one)
+    const docsToMove = selectedDocIds.size > 0 
+      ? filteredDocuments.filter((d) => selectedDocIds.has(d.id))
+      : [active.data.current.document as CollaboratorDocument];
+    
+    // Filter out documents already in target folder
+    const docsNeedingMove = docsToMove.filter((d) => d.subfolder !== newSubfolder);
+    
+    if (docsNeedingMove.length === 0) return;
 
-    // Update document subfolder
-    updateDocument.mutate(
-      { id: document.id, data: { subfolder: newSubfolder } },
-      {
-        onSuccess: () => {
-          toast.success(
-            newSubfolder 
-              ? `Document déplacé vers "${newSubfolder}"` 
-              : 'Document déplacé à la racine'
-          );
-        },
-      }
+    // Move all selected documents
+    docsNeedingMove.forEach((doc) => {
+      updateDocument.mutate({ id: doc.id, data: { subfolder: newSubfolder } });
+    });
+
+    toast.success(
+      docsNeedingMove.length === 1
+        ? newSubfolder 
+          ? `Document déplacé vers "${newSubfolder}"` 
+          : 'Document déplacé à la racine'
+        : newSubfolder
+          ? `${docsNeedingMove.length} documents déplacés vers "${newSubfolder}"`
+          : `${docsNeedingMove.length} documents déplacés à la racine`
     );
+    
+    // Clear selection after move
+    setSelectedDocIds(new Set());
   };
 
   // Update pending upload
@@ -322,24 +381,19 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
             isDragging={!!draggedDocument}
           />
 
-          {/* Subfolders (only when in category root, not in a subfolder) */}
-          {activeCategory !== 'ALL' && !activeSubfolder && subfolders.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {subfolders.map((folder) => (
-                <DroppableFolder
-                  key={folder}
-                  folderId={folder}
-                  folderName={folder}
-                  documentCount={subfolderCounts[folder] || 0}
-                  onClick={() => setActiveSubfolder(folder)}
-                  onDelete={
-                    (subfolderCounts[folder] || 0) === 0 
-                      ? () => handleDeleteSubfolder(folder) 
-                      : undefined
-                  }
+          {/* Subfolder buttons + Dropzone row (only when in category, not in subfolder) */}
+          {activeCategory !== 'ALL' && !activeSubfolder && (
+            <div className="space-y-4">
+              {/* Subfolder buttons inline with "+ Nouveau" */}
+              {(subfolders.length > 0 || canManage) && (
+                <SubfolderButtons
+                  subfolders={subfolders}
+                  subfolderCounts={subfolderCounts}
+                  onFolderClick={setActiveSubfolder}
+                  onCreateFolder={() => setShowNewFolderDialog(true)}
                   canManage={canManage}
                 />
-              ))}
+              )}
             </div>
           )}
 
@@ -352,6 +406,26 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
             />
           )}
 
+          {/* Selection info */}
+          {selectedDocIds.size > 0 && (
+            <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-helpconfort-blue/10 border border-helpconfort-blue/30">
+              <Badge variant="secondary" className="bg-helpconfort-blue text-white">
+                {selectedDocIds.size} sélectionné{selectedDocIds.size > 1 ? 's' : ''}
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                Glissez pour déplacer • Cmd/Ctrl+clic pour sélectionner plusieurs
+              </span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setSelectedDocIds(new Set())}
+                className="ml-auto"
+              >
+                Désélectionner
+              </Button>
+            </div>
+          )}
+
           {/* Document Grid */}
           <DocumentGrid
             documents={filteredDocuments}
@@ -360,6 +434,8 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
             onDelete={setDocumentToDelete}
             onRename={handleRename}
             canManage={canManage}
+            selectedIds={selectedDocIds}
+            onSelect={handleDocumentSelect}
           />
         </CardContent>
       </Card>
@@ -367,7 +443,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
       {/* Drag Overlay */}
       <DragOverlay>
         {draggedDocument && (
-          <div className="opacity-80 scale-105 pointer-events-none">
+          <div className="opacity-90 scale-105 pointer-events-none relative">
             <DocumentItem
               document={draggedDocument}
               onPreview={() => {}}
@@ -376,6 +452,13 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
               onRename={() => {}}
               canManage={false}
             />
+            {selectedDocIds.size > 1 && (
+              <Badge 
+                className="absolute -top-2 -right-2 bg-helpconfort-blue text-white shadow-lg"
+              >
+                {selectedDocIds.size}
+              </Badge>
+            )}
           </div>
         )}
       </DragOverlay>
