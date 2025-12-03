@@ -155,11 +155,11 @@ export const DASHBOARD_TILES: DashboardTile[] = [
   },
   // Gestion de Projet
   {
-    id: 'PROJET_KANBAN',
+    id: 'PROJET_INDEX',
     title: 'Gestion de Projet',
     description: 'Kanban et suivi des tickets développement',
     icon: Kanban,
-    route: ROUTES.projects.kanban,
+    route: ROUTES.projects.index,
     scopeSlug: SCOPE_SLUGS.APOGEE_TICKETS,
     color: 'accent',
     group: 'projects',
