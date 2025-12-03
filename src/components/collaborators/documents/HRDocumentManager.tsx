@@ -525,7 +525,26 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
 
               {/* Type */}
               <div className="space-y-2">
-                <Label>Type de document</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Type de document</Label>
+                  {pendingUploads.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-helpconfort-blue hover:text-helpconfort-blue/80"
+                      onClick={() => {
+                        const newUploads = pendingUploads.map(u => ({
+                          ...u,
+                          doc_type: currentUpload.doc_type
+                        }));
+                        setPendingUploads(newUploads);
+                        toast.success(`Type appliqué aux ${pendingUploads.length} documents`);
+                      }}
+                    >
+                      Tous
+                    </Button>
+                  )}
+                </div>
                 <Select
                   value={currentUpload.doc_type}
                   onValueChange={(v) => updatePendingUpload('doc_type', v as DocumentType)}
@@ -545,7 +564,26 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
 
               {/* Visibility */}
               <div className="space-y-2">
-                <Label>Visibilité</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Visibilité</Label>
+                  {pendingUploads.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-helpconfort-blue hover:text-helpconfort-blue/80"
+                      onClick={() => {
+                        const newUploads = pendingUploads.map(u => ({
+                          ...u,
+                          visibility: currentUpload.visibility
+                        }));
+                        setPendingUploads(newUploads);
+                        toast.success(`Visibilité appliquée aux ${pendingUploads.length} documents`);
+                      }}
+                    >
+                      Tous
+                    </Button>
+                  )}
+                </div>
                 <Select
                   value={currentUpload.visibility}
                   onValueChange={(v) => updatePendingUpload('visibility', v as DocumentVisibility)}
