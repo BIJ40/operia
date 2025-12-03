@@ -525,26 +525,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
 
               {/* Type */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Type de document</Label>
-                  {pendingUploads.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-xs text-helpconfort-blue hover:text-helpconfort-blue/80"
-                      onClick={() => {
-                        const newUploads = pendingUploads.map(u => ({
-                          ...u,
-                          doc_type: currentUpload.doc_type
-                        }));
-                        setPendingUploads(newUploads);
-                        toast.success(`Type appliqué aux ${pendingUploads.length} documents`);
-                      }}
-                    >
-                      Tous
-                    </Button>
-                  )}
-                </div>
+                <Label>Type de document</Label>
                 <Select
                   value={currentUpload.doc_type}
                   onValueChange={(v) => updatePendingUpload('doc_type', v as DocumentType)}
@@ -564,26 +545,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
 
               {/* Visibility */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Visibilité</Label>
-                  {pendingUploads.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-xs text-helpconfort-blue hover:text-helpconfort-blue/80"
-                      onClick={() => {
-                        const newUploads = pendingUploads.map(u => ({
-                          ...u,
-                          visibility: currentUpload.visibility
-                        }));
-                        setPendingUploads(newUploads);
-                        toast.success(`Visibilité appliquée aux ${pendingUploads.length} documents`);
-                      }}
-                    >
-                      Tous
-                    </Button>
-                  )}
-                </div>
+                <Label>Visibilité</Label>
                 <Select
                   value={currentUpload.visibility}
                   onValueChange={(v) => updatePendingUpload('visibility', v as DocumentVisibility)}
@@ -603,10 +565,46 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
               Annuler
             </Button>
+            {pendingUploads.length > 1 && (
+              <Button
+                variant="secondary"
+                onClick={async () => {
+                  if (!currentUpload) return;
+                  // Apply current settings to all and upload all
+                  const uploadsToProcess = pendingUploads.map(u => ({
+                    ...u,
+                    doc_type: currentUpload.doc_type,
+                    visibility: currentUpload.visibility,
+                    subfolder: currentUpload.subfolder
+                  }));
+                  
+                  setShowUploadDialog(false);
+                  
+                  for (const upload of uploadsToProcess) {
+                    await uploadDocument.mutateAsync({
+                      collaborator_id: collaboratorId,
+                      file: upload.file,
+                      title: upload.title,
+                      doc_type: upload.doc_type,
+                      visibility: upload.visibility,
+                      subfolder: upload.subfolder || null,
+                    });
+                  }
+                  
+                  setPendingUploads([]);
+                  setCurrentUploadIndex(0);
+                  toast.success(`${uploadsToProcess.length} documents uploadés`);
+                }}
+                disabled={uploadDocument.isPending}
+              >
+                {uploadDocument.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Valider tous ({pendingUploads.length})
+              </Button>
+            )}
             <Button
               onClick={handleConfirmUpload}
               disabled={uploadDocument.isPending || !currentUpload?.title.trim()}
