@@ -254,18 +254,60 @@ export function parseNLPGroupBy(query: string): string[] {
   return dimensions;
 }
 
+// ============================================
+// HELPER CENTRALISÉ EXTRACTION FACTURE
+// Source de vérité unique pour tous les calculs CA
+// ============================================
+
+export interface FactureMeta {
+  date: Date | null;
+  dateStr: string | null;
+  typeFacture: string;
+  isAvoir: boolean;
+  montantBrutHT: number; // valeur absolue
+  montantNetHT: number;  // signé (facture + / avoir -)
+}
+
 /**
- * Calcule le montant net d'une facture (gestion des avoirs)
+ * Extrait les métadonnées d'une facture de façon unifiée
+ * RÈGLES APPLIQUÉES :
+ * - Date : dateReelle > dateEmission > created_at
+ * - Type : typeFacture > type > data.type > state
+ * - Montant : data.totalHT > totalHT > montantHT
+ * - Avoir : montant négatif si type === "avoir"
  */
-export function calculateNetAmount(facture: any): number {
-  const montant = parseFloat(facture.data?.totalHT || facture.totalHT || 0);
-  const typeFacture = (facture.typeFacture || facture.type || '').toLowerCase();
+export function extractFactureMeta(facture: any): FactureMeta {
+  // Date unifiée avec priorité STATIA_RULES
+  const dateStr = facture.dateReelle || facture.dateEmission || facture.created_at 
+    || facture.data?.dateReelle || facture.data?.dateEmission || null;
   
-  if (STATIA_RULES_JSON.CA.avoir === 'subtract' && typeFacture === 'avoir') {
-    return -Math.abs(montant);
+  let date: Date | null = null;
+  if (dateStr) {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) date = d;
   }
   
-  return montant;
+  // Type facture unifié avec ordre de priorité cohérent
+  const typeFactureRaw = facture.typeFacture || facture.type || facture.data?.type || facture.state || "";
+  const typeFacture = String(typeFactureRaw).toLowerCase();
+  const isAvoir = typeFacture === "avoir";
+  
+  // Montant unifié : data.totalHT > totalHT > montantHT
+  const montantRaw = facture.data?.totalHT ?? facture.totalHT ?? facture.montantHT ?? 0;
+  const montantBrut = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
+  
+  const montantBrutHT = Math.abs(montantBrut);
+  const montantNetHT = isAvoir ? -montantBrutHT : montantBrutHT;
+  
+  return { date, dateStr, typeFacture, isAvoir, montantBrutHT, montantNetHT };
+}
+
+/**
+ * Calcule le montant net d'une facture (gestion des avoirs)
+ * @deprecated Utiliser extractFactureMeta().montantNetHT à la place
+ */
+export function calculateNetAmount(facture: any): number {
+  return extractFactureMeta(facture).montantNetHT;
 }
 
 /**

@@ -13,8 +13,9 @@
  * - Multi-univers : répartition égale entre univers
  */
 
-import { parseISO, isWithinInterval } from "date-fns";
+import { isWithinInterval } from "date-fns";
 import { buildTechMap, resolveTech, TechnicienInfo } from "@/apogee-connect/utils/techTools";
+import { extractFactureMeta } from "@/statia/rules/rules";
 
 // ===============================
 // TYPES
@@ -223,30 +224,33 @@ export function computeTechUniversStatsForAgency(
     universes: Map<string, { caHT: number; heures: number; dossiers: Set<string> }>;
   }>();
 
+  // Variables de contrôle pour logs
+  let totalFacturesNet = 0;
+  let totalCAReparti = 0;
+  let nbFacturesTraitees = 0;
+  let nbAvoirsTraites = 0;
+
   // Traiter chaque facture
   factures.forEach((facture) => {
-    // RÈGLE: Exclure les avoirs
-    const typeFacture = (facture.type || facture.typeFacture || "").toLowerCase();
-    if (typeFacture === "avoir") return;
+    // Utiliser le helper centralisé pour extraction unifiée
+    const meta = extractFactureMeta(facture);
 
     // RÈGLE: Exclure les factures annulées
     if (facture.state === "canceled") return;
 
-    // RÈGLE: Date de facture avec priorité dateReelle > dateEmission > created_at
-    const dateStr = facture.dateReelle || facture.dateEmission || facture.created_at;
-    if (!dateStr) return;
+    // RÈGLE: Date valide requise
+    if (!meta.date) return;
 
     // Filtrer par période si fournie
     if (dateRange) {
-      try {
-        const factureDate = parseISO(dateStr);
-        if (!isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end })) {
-          return;
-        }
-      } catch {
+      if (!isWithinInterval(meta.date, { start: dateRange.start, end: dateRange.end })) {
         return;
       }
     }
+
+    // RÈGLE CORRIGÉE: Ne plus ignorer les avoirs - les traiter comme montants négatifs
+    // Un montant net de 0 n'apporte rien au calcul
+    if (meta.montantNetHT === 0) return;
 
     const projectId = facture.projectId;
     if (!projectId) return;
@@ -254,10 +258,13 @@ export function computeTechUniversStatsForAgency(
     const project = projectsMap.get(projectId);
     if (!project) return;
 
-    // RÈGLE: CA HT de la facture
-    const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
-    const caFactureHT = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
-    if (caFactureHT <= 0) return;
+    // Comptabiliser pour logs de contrôle
+    totalFacturesNet += meta.montantNetHT;
+    nbFacturesTraitees++;
+    if (meta.isAvoir) nbAvoirsTraites++;
+
+    // CA HT de la facture (signé : positif ou négatif pour avoir)
+    const caFactureHT = meta.montantNetHT;
 
     // RÈGLE: Univers du projet avec normalisation
     const universesRaw: string[] = project.data?.universes || project.data?.univers || project.universes || project.univers || [];
@@ -286,6 +293,9 @@ export function computeTechUniversStatsForAgency(
       const partTech = dureeTech / dureeTotale;
       const caTechFacture = caFactureHT * partTech;
       const heuresTech = dureeTech / 60;
+
+      // Comptabiliser CA réparti
+      totalCAReparti += caTechFacture;
 
       // Initialiser le technicien si nécessaire
       if (!statsMap.has(techId)) {
@@ -354,6 +364,16 @@ export function computeTechUniversStatsForAgency(
         nbDossiers: allDossiers.size,
       },
     });
+  });
+
+  // Logs de contrôle pour vérifier la cohérence
+  console.log("[STATIA TECH] Contrôle cohérence CA:", {
+    totalFacturesNet: Math.round(totalFacturesNet * 100) / 100,
+    totalCAReparti: Math.round(totalCAReparti * 100) / 100,
+    ecart: Math.round((totalFacturesNet - totalCAReparti) * 100) / 100,
+    nbFacturesTraitees,
+    nbAvoirsTraites,
+    nbTechniciens: result.length
   });
 
   // Trier par CA total décroissant
