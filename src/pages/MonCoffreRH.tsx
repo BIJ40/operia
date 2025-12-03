@@ -8,11 +8,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  FileText, Download, Loader2, File, Send, Plus, Bell, Eye, Check
+  Loader2, Send, Plus, Bell, Eye, Check, FolderOpen, Download
 } from 'lucide-react';
 import { useMyDocuments } from '@/hooks/useCollaboratorDocuments';
 import { useMyDocumentRequests } from '@/hooks/useDocumentRequests';
-import { DOCUMENT_TYPES, DocumentType } from '@/types/collaboratorDocument';
 import { 
   DOCUMENT_REQUEST_TYPES, 
   DOCUMENT_REQUEST_STATUS_LABELS,
@@ -38,6 +37,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { HRDocumentViewer } from '@/components/collaborators/documents';
 
 const STATUS_BADGE_VARIANTS: Record<DocumentRequestStatus, 'outline' | 'default' | 'secondary' | 'destructive'> = {
   PENDING: 'outline',
@@ -49,7 +49,7 @@ const STATUS_BADGE_VARIANTS: Record<DocumentRequestStatus, 'outline' | 'default'
 export default function MonCoffreRH() {
   const queryClient = useQueryClient();
   const requestsRef = useRef<HTMLDivElement>(null);
-  const { documents, isLoading, error, downloadDocument } = useMyDocuments();
+  const { documents, isLoading, error, downloadDocument, getSignedUrl } = useMyDocuments();
   const { 
     requests, 
     isLoading: isLoadingRequests, 
@@ -71,25 +71,6 @@ export default function MonCoffreRH() {
   const formatDate = (date: string) => {
     return format(new Date(date), 'dd MMM yyyy', { locale: fr });
   };
-
-  const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return '-';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const getDocTypeLabel = (type: DocumentType) => {
-    return DOCUMENT_TYPES.find((t) => t.value === type)?.label || type;
-  };
-
-  // Group documents by type
-  const groupedDocuments = documents.reduce((acc, doc) => {
-    const type = doc.doc_type as DocumentType;
-    if (!acc[type]) acc[type] = [];
-    acc[type].push(doc);
-    return acc;
-  }, {} as Record<DocumentType, typeof documents>);
 
   const handleCreateRequest = async () => {
     await createRequest.mutateAsync({
@@ -147,68 +128,19 @@ export default function MonCoffreRH() {
           </Alert>
         )}
 
-        {/* Bloc Coffre-fort documents */}
+        {/* Bloc Coffre-fort documents - Finder RH */}
         <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
           <CardContent className="pt-6">
-            {isLoading ? (
-              <div className="py-10 flex items-center justify-center">
-                <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                <span>Chargement de vos documents...</span>
-              </div>
-            ) : documents.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun document disponible dans votre coffre-fort.</p>
-                <p className="text-sm mt-2">
-                  Les documents mis à disposition par votre agence apparaîtront ici.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {Object.entries(groupedDocuments).map(([type, docs]) => (
-                  <div key={type}>
-                    <h3 className="font-medium mb-3 flex items-center gap-2">
-                      {getDocTypeLabel(type as DocumentType)}
-                      <Badge variant="secondary">{docs.length}</Badge>
-                    </h3>
-                    <div className="space-y-2">
-                      {docs.map((doc) => (
-                        <div
-                          key={doc.id}
-                          className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <File className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                            <div className="min-w-0">
-                              <p className="font-medium truncate">{doc.title}</p>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <span>{formatDate(doc.created_at)}</span>
-                                <span>·</span>
-                                <span>{formatFileSize(doc.file_size)}</span>
-                                {doc.period_month && doc.period_year && (
-                                  <>
-                                    <span>·</span>
-                                    <span>{`${doc.period_month}/${doc.period_year}`}</span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => downloadDocument(doc)}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="flex items-center gap-2 mb-4">
+              <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
+              <h3 className="font-semibold">Mes documents</h3>
+            </div>
+            <HRDocumentViewer
+              documents={documents}
+              isLoading={isLoading}
+              onDownload={downloadDocument}
+              getSignedUrl={getSignedUrl}
+            />
           </CardContent>
         </Card>
 

@@ -224,10 +224,15 @@ export function useMyDocuments() {
     }
   };
 
+  const getSignedUrl = async (filePath: string): Promise<string | null> => {
+    return createSignedDownloadUrl(filePath);
+  };
+
   return {
     documents,
     isLoading,
     error,
     downloadDocument,
+    getSignedUrl,
   };
 }
