@@ -288,15 +288,26 @@ function PilotageStatsHubContent() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {statsTiles.map((tile) => (
           <Link key={tile.href} to={tile.href}>
-            <Card className="h-full cursor-pointer hover:shadow-md transition-shadow hover:border-primary/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <tile.icon className="h-5 w-5 text-primary" />
-                  {tile.title}
-                </CardTitle>
-                <CardDescription>{tile.description}</CardDescription>
-              </CardHeader>
-            </Card>
+            <div className="group h-full rounded-xl p-5
+              bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))]
+              from-helpconfort-blue/10 via-white to-white
+              dark:via-background dark:to-background
+              border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue
+              shadow-sm transition-all duration-300
+              hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5">
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
+                  bg-white/50 dark:bg-background/50 
+                  group-hover:border-helpconfort-blue group-hover:ring-2 group-hover:ring-helpconfort-blue/30 group-hover:bg-white dark:group-hover:bg-background 
+                  transition-all duration-300">
+                  <tile.icon className="w-5 h-5 text-helpconfort-blue" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground">{tile.title}</h3>
+                  <p className="text-sm text-muted-foreground">{tile.description}</p>
+                </div>
+              </div>
+            </div>
           </Link>
         ))}
       </div>
