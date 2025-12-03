@@ -2,6 +2,10 @@
  * Hooks pour la gestion des documents RH - Phase 2.1
  */
 
+/**
+ * Hooks pour la gestion des documents RH - Phase 2.1
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CollaboratorDocument, CollaboratorDocumentFormData } from '@/types/collaboratorDocument';
@@ -10,6 +14,21 @@ import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { useAuth } from '@/contexts/AuthContext';
 
 const BUCKET_NAME = 'rh-documents';
+
+/**
+ * Génère une URL signée pour télécharger un fichier (partagé entre hooks)
+ */
+async function createSignedDownloadUrl(filePath: string): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from(BUCKET_NAME)
+    .createSignedUrl(filePath, 3600); // 1 hour
+
+  if (error) {
+    toast.error('Erreur lors de la génération du lien');
+    return null;
+  }
+  return data.signedUrl;
+}
 
 export function useCollaboratorDocuments(collaboratorId: string | undefined) {
   const queryClient = useQueryClient();
@@ -138,19 +157,11 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
   });
 
   const getSignedUrl = async (filePath: string): Promise<string | null> => {
-    const { data, error } = await supabase.storage
-      .from(BUCKET_NAME)
-      .createSignedUrl(filePath, 3600); // 1 hour
-
-    if (error) {
-      toast.error('Erreur lors de la génération du lien');
-      return null;
-    }
-    return data.signedUrl;
+    return createSignedDownloadUrl(filePath);
   };
 
   const downloadDocument = async (doc: CollaboratorDocument) => {
-    const url = await getSignedUrl(doc.file_path);
+    const url = await createSignedDownloadUrl(doc.file_path);
     if (url) {
       window.open(url, '_blank');
     }
@@ -188,15 +199,10 @@ export function useMyDocuments() {
   });
 
   const downloadDocument = async (doc: CollaboratorDocument) => {
-    const { data, error } = await supabase.storage
-      .from(BUCKET_NAME)
-      .createSignedUrl(doc.file_path, 3600);
-
-    if (error) {
-      toast.error('Erreur lors du téléchargement');
-      return;
+    const url = await createSignedDownloadUrl(doc.file_path);
+    if (url) {
+      window.open(url, '_blank');
     }
-    window.open(data.signedUrl, '_blank');
   };
 
   return {

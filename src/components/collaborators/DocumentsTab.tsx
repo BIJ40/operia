@@ -45,6 +45,7 @@ import {
   File,
 } from 'lucide-react';
 import { useCollaboratorDocuments } from '@/hooks/useCollaboratorDocuments';
+import { toast } from 'sonner';
 import {
   CollaboratorDocument,
   DocumentType,
@@ -290,10 +291,29 @@ function UploadDocumentDialog({
   const handleSubmit = async () => {
     if (!file) return;
 
+    // Validation taille fichier (max 10 Mo)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      toast.error('Fichier trop volumineux (max 10 Mo)');
+      return;
+    }
+
+    // Validation champs obligatoires
+    if (!formData.title.trim()) {
+      toast.error('Le titre est obligatoire');
+      return;
+    }
+
+    // Validation période pour bulletins de paie
+    if (formData.doc_type === 'PAYSLIP' && (!formData.period_month || !formData.period_year)) {
+      toast.error('La période (mois/année) est obligatoire pour les bulletins de paie');
+      return;
+    }
+
     await onUpload({
       collaborator_id: collaboratorId,
       doc_type: formData.doc_type,
-      title: formData.title,
+      title: formData.title.trim(),
       description: formData.description || undefined,
       period_month: formData.period_month ? parseInt(formData.period_month) : undefined,
       period_year: formData.period_year ? parseInt(formData.period_year) : undefined,
