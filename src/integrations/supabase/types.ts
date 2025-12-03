@@ -2147,6 +2147,121 @@ export type Database = {
         }
         Relationships: []
       }
+      payslip_data: {
+        Row: {
+          agency_id: string
+          brut_cumule: number | null
+          collaborator_id: string
+          cout_global_employeur: number | null
+          created_at: string
+          document_id: string
+          extracted_at: string | null
+          extraction_error: string | null
+          extraction_status: string
+          extraction_warnings: string[] | null
+          heures_base: number | null
+          heures_cumulees: number | null
+          id: string
+          montant_brut_base: number | null
+          montant_net_social: number | null
+          net_a_payer: number | null
+          net_imposable: number | null
+          net_imposable_cumule: number | null
+          periode_annee: number | null
+          periode_date_debut: string | null
+          periode_date_fin: string | null
+          periode_mois: number | null
+          raw_data: Json
+          taux_horaire_brut: number | null
+          total_brut: number | null
+          total_charges_patronales: number | null
+          total_charges_salariales: number | null
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          brut_cumule?: number | null
+          collaborator_id: string
+          cout_global_employeur?: number | null
+          created_at?: string
+          document_id: string
+          extracted_at?: string | null
+          extraction_error?: string | null
+          extraction_status?: string
+          extraction_warnings?: string[] | null
+          heures_base?: number | null
+          heures_cumulees?: number | null
+          id?: string
+          montant_brut_base?: number | null
+          montant_net_social?: number | null
+          net_a_payer?: number | null
+          net_imposable?: number | null
+          net_imposable_cumule?: number | null
+          periode_annee?: number | null
+          periode_date_debut?: string | null
+          periode_date_fin?: string | null
+          periode_mois?: number | null
+          raw_data?: Json
+          taux_horaire_brut?: number | null
+          total_brut?: number | null
+          total_charges_patronales?: number | null
+          total_charges_salariales?: number | null
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          brut_cumule?: number | null
+          collaborator_id?: string
+          cout_global_employeur?: number | null
+          created_at?: string
+          document_id?: string
+          extracted_at?: string | null
+          extraction_error?: string | null
+          extraction_status?: string
+          extraction_warnings?: string[] | null
+          heures_base?: number | null
+          heures_cumulees?: number | null
+          id?: string
+          montant_brut_base?: number | null
+          montant_net_social?: number | null
+          net_a_payer?: number | null
+          net_imposable?: number | null
+          net_imposable_cumule?: number | null
+          periode_annee?: number | null
+          periode_date_debut?: string | null
+          periode_date_fin?: string | null
+          periode_mois?: number | null
+          raw_data?: Json
+          taux_horaire_brut?: number | null
+          total_brut?: number | null
+          total_charges_patronales?: number | null
+          total_charges_salariales?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payslip_data_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payslip_data_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payslip_data_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "collaborator_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planning_signatures: {
         Row: {
           comment: string | null
