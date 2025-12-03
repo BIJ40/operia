@@ -278,38 +278,37 @@ export default function Favorites() {
                         const colorClasses = getColorClasses(favorite.color_preset);
                         const isTips = favorite.content_type === 'tips';
 
-                          return (
+                        return (
                           <AccordionItem 
                             key={favorite.id} 
                             value={favorite.id}
                             className="border-0 mb-3 last:mb-0"
                           >
                             <div className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border-2 border-helpconfort-orange">
-                              <AccordionTrigger className={`${colorClasses} px-6 hover:no-underline [&[data-state=open]>div>svg]:rotate-180`}>
-                                <div className="flex items-center justify-between w-full gap-4 pr-4">
-                                  <div className="flex items-center gap-3 flex-1">
-                                    <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1 shrink-0">
-                                      {getScopeLabel(favorite.scope)}
-                                    </Badge>
-                                    <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1 shrink-0">
-                                      {group.categoryTitle}
-                                    </Badge>
-                                    {isTips && (
-                                      <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1">
-                                        <Lightbulb className="w-3 h-3" />
-                                        TIPS
+                              <div className={`${colorClasses} px-6 py-4`}>
+                                <div className="flex items-center justify-between w-full gap-4">
+                                  <AccordionTrigger className="flex-1 hover:no-underline p-0 [&>svg]:hidden">
+                                    <div className="flex items-center gap-3 flex-1">
+                                      <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1 shrink-0">
+                                        {getScopeLabel(favorite.scope)}
                                       </Badge>
-                                    )}
-                                    <h3 className="text-lg font-semibold text-white text-left">
-                                      {favorite.block_title}
-                                    </h3>
-                                  </div>
-                                  <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                      <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1 shrink-0">
+                                        {group.categoryTitle}
+                                      </Badge>
+                                      {isTips && (
+                                        <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 flex items-center gap-1">
+                                          <Lightbulb className="w-3 h-3" />
+                                          TIPS
+                                        </Badge>
+                                      )}
+                                      <h3 className="text-lg font-semibold text-white text-left hover:underline">
+                                        {favorite.block_title}
+                                      </h3>
+                                    </div>
+                                  </AccordionTrigger>
+                                  <div className="flex items-center gap-2 shrink-0">
                                     <Button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleNavigateToSection(favorite);
-                                      }}
+                                      onClick={() => handleNavigateToSection(favorite)}
                                       variant="ghost"
                                       size="icon"
                                       title="Voir dans la catégorie"
@@ -318,10 +317,7 @@ export default function Favorites() {
                                       <ExternalLink className="w-4 h-4" />
                                     </Button>
                                     <Button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleRemoveFavorite(favorite.id);
-                                      }}
+                                      onClick={() => handleRemoveFavorite(favorite.id)}
                                       variant="ghost"
                                       size="icon"
                                       title="Retirer des favoris"
@@ -329,9 +325,10 @@ export default function Favorites() {
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </Button>
+                                    <ChevronDown className="w-5 h-5 text-white transition-transform [&[data-state=open]]:rotate-180" />
                                   </div>
                                 </div>
-                              </AccordionTrigger>
+                              </div>
                               <AccordionContent className="bg-card border-t-2 border-helpconfort-orange">
                                 <div className="p-6">
                                   <div
