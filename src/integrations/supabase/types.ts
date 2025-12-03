@@ -2844,6 +2844,7 @@ export type Database = {
         Args: { _from_status: string; _to_status: string; _user_id: string }
         Returns: boolean
       }
+      get_current_collaborator_id: { Args: never; Returns: string }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
       get_user_agency_id: { Args: { _user_id: string }; Returns: string }
       get_user_assigned_agencies: {
