@@ -1,11 +1,18 @@
+/**
+ * @deprecated Ce fichier utilise encore des appels directs à l'API Apogée.
+ * Pour les nouveaux développements, utiliser `@/services/apogeeProxy` à la place.
+ * 
+ * Migration en cours vers le proxy sécurisé.
+ */
 import { APOGEE_ENDPOINTS } from '@/apogee-connect/types/endpoints';
 import { logApogee } from '@/lib/logger';
+import { apogeeProxy } from '@/services/apogeeProxy';
 
-const API_KEY = import.meta.env.VITE_APOGEE_API_KEY;
+// ⚠️ SÉCURITÉ: La clé API est maintenant gérée côté serveur uniquement
+// Les appels via ce fichier seront progressivement migrés vers apogeeProxy
+const API_KEY = import.meta.env.VITE_APOGEE_API_KEY || 'DEPRECATED';
 
-if (!API_KEY) {
-  logApogee.warn('VITE_APOGEE_API_KEY non définie - les appels à l\'API Apogée risquent d\'échouer.');
-}
+logApogee.warn('⚠️ api.ts est déprécié. Migrer vers apogeeProxy pour la sécurité.');
 
 // BASE_URL sera définie dynamiquement par AgencyContext via setApiBaseUrl
 // IMPORTANT: Ne JAMAIS hardcoder d'URL d'agence ici pour des raisons de sécurité

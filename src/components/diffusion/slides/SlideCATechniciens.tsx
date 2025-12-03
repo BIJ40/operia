@@ -1,69 +1,34 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { computeTechUniversStatsForAgency } from '@/shared/utils/technicienUniversEngine';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
+import { apogeeProxy } from '@/services/apogeeProxy';
 
 interface SlideCATechniciensProps {
   currentMonthIndex: number;
 }
 
 export const SlideCATechniciens = ({ currentMonthIndex }: SlideCATechniciensProps) => {
-  const { data: profile } = useQuery({
-    queryKey: ['profile'],
+  // Utiliser le proxy sécurisé au lieu d'appels directs
+  const { data: apiData, isLoading } = useQuery({
+    queryKey: ['apogee-data-techniciens'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Non authentifié');
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('agence')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const { data: apiData } = useQuery({
-    queryKey: ['apogee-data', profile?.agence],
-    enabled: !!profile?.agence,
-    queryFn: async () => {
-      const BASE_URL = `https://${profile.agence}.hc-apogee.fr/api/`;
-      const API_KEY = "HC-0fbff339d2a701e86d63f66c1a8c8bf54";
-
       const [projects, interventions, factures, users] = await Promise.all([
-        fetch(`${BASE_URL}getProjects`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ API_KEY })
-        }).then(r => r.json()),
-        fetch(`${BASE_URL}getInterventions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ API_KEY })
-        }).then(r => r.json()),
-        fetch(`${BASE_URL}getFactures`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ API_KEY })
-        }).then(r => r.json()),
-        fetch(`${BASE_URL}getUsers`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ API_KEY })
-        }).then(r => r.json())
+        apogeeProxy.getProjects(),
+        apogeeProxy.getInterventions(),
+        apogeeProxy.getFactures(),
+        apogeeProxy.getUsers(),
       ]);
 
       return { projects, interventions, factures, users };
-    }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  if (!apiData) {
+  if (isLoading || !apiData) {
     return (
       <Card className="shadow-2xl border-2 h-full">
         <CardHeader>
