@@ -925,10 +925,22 @@ function calculateTechTimeByProjectForAgency(
       
       const usersIds = visite.usersIds || [];
 
-      // CRITICAL FIX: Ne compter QUE les techniciens (pas assistants, etc.)
+      // CRITICAL FIX: Ne compter QUE les techniciens actifs
+      // Règle: isTechnicien=true OU type="technicien" OU (type="utilisateur" ET universes non vide)
       const technicienIds = usersIds.filter((userId: number) => {
         const user = usersMap.get(userId);
-        return user && user.type === 'technicien';
+        if (!user) return false;
+        
+        const hasUniverses = Array.isArray(user?.data?.universes) && user.data.universes.length > 0;
+        const isTechnicien = 
+          user?.isTechnicien === true || 
+          user?.type === "technicien" ||
+          (user?.type === "utilisateur" && hasUniverses);
+        
+        // Vérifier aussi que le user est actif
+        const isActive = user?.is_on === true || user?.isActive === true;
+        
+        return isTechnicien && isActive;
       });
 
       // Si aucun technicien sur cette visite, ignorer
