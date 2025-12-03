@@ -7,11 +7,8 @@ import { useNetworkFilters } from "@/franchiseur/contexts/NetworkFiltersContext"
 import { NetworkPeriodSelector } from "@/franchiseur/components/filters/NetworkPeriodSelector";
 import { UniversApporteurMatrix } from "@/apogee-connect/components/widgets/UniversApporteurMatrix";
 import { TechnicienUniversHeatmap } from "@/apogee-connect/components/widgets/TechnicienUniversHeatmap";
-import { 
-  aggregateUniversApporteurMatrix, 
-  aggregateTechnicienUniversStats,
-  type NetworkTechnicienUniversStats 
-} from "@/franchiseur/utils/networkCalculations";
+import { aggregateUniversApporteurMatrix } from "@/franchiseur/utils/networkCalculations";
+import { aggregateTechUniversStatsMultiAgency, type TechUniversStats } from "@/shared/utils/technicienUniversEngine";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -27,29 +24,9 @@ const UNIVERSES = [
   { slug: "serrurerie", label: "Serrurerie", colorHex: "#FF12BD" },
   { slug: "vitrerie", label: "Vitrerie", colorHex: "#7FFE2E" },
   { slug: "menuiserie", label: "Menuiserie", colorHex: "#FF7018" },
+  { slug: "chauffage", label: "Chauffage", colorHex: "#EF4444" },
+  { slug: "climatisation", label: "Climatisation", colorHex: "#06B6D4" },
 ];
-
-// Adapter le type pour le composant TechnicienUniversHeatmap
-type TechnicienUniversStats = {
-  technicienId: string;
-  technicienNom: string;
-  technicienColor: string;
-  technicienActif: boolean;
-  universes: {
-    [universSlug: string]: {
-      caHT: number;
-      heures: number;
-      caParHeure: number;
-      nbDossiers: number;
-    };
-  };
-  totaux: {
-    caHT: number;
-    heures: number;
-    caParHeure: number;
-    nbDossiers: number;
-  };
-};
 
 export default function FranchiseurStats() {
   const { data: agencies, isLoading: isLoadingAgencies } = useAgencies();
@@ -82,14 +59,25 @@ export default function FranchiseurStats() {
         agencyLabel: agencies?.find(a => a.slug === result.agencyId)?.label || result.agencyId,
       }));
 
-      // Calculer les matrices agrégées
+      // Calculer la matrice Univers × Apporteurs
       const universApporteurMatrix = aggregateUniversApporteurMatrix(
         enrichedData,
         { start: dateRange.from, end: dateRange.to }
       );
 
-      const technicienStats = aggregateTechnicienUniversStats(
-        enrichedData,
+      // Calculer les stats Technicien × Univers via le moteur unifié
+      // Préparer les données pour le nouveau format attendu par le moteur
+      const agenciesDataForStats = enrichedData
+        .filter(agency => agency.data?.factures && agency.data?.projects && agency.data?.interventions && agency.data?.users)
+        .map(agency => ({
+          factures: agency.data.factures,
+          projects: agency.data.projects,
+          interventions: agency.data.interventions,
+          users: agency.data.users,
+        }));
+
+      const technicienStats = aggregateTechUniversStatsMultiAgency(
+        agenciesDataForStats,
         { start: dateRange.from, end: dateRange.to }
       );
 
@@ -110,16 +98,8 @@ export default function FranchiseurStats() {
   }
 
   // Adapter les stats technicien pour le composant - TOP 5 uniquement
-  const adaptedTechStats: TechnicienUniversStats[] = (data?.technicienStats || [])
-    .slice(0, 5) // TOP 5 techniciens par CA
-    .map(stat => ({
-      technicienId: stat.technicienId,
-      technicienNom: stat.technicienNom,
-      technicienColor: stat.technicienColor,
-      technicienActif: stat.technicienActif,
-      universes: stat.universes,
-      totaux: stat.totaux,
-    }));
+  const adaptedTechStats: TechUniversStats[] = (data?.technicienStats || [])
+    .slice(0, 5); // TOP 5 techniciens par CA
 
   return (
     <div className="space-y-6">
