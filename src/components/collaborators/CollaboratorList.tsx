@@ -1,5 +1,5 @@
 /**
- * Liste des collaborateurs avec filtres
+ * Liste des collaborateurs groupée par organigramme
  */
 
 import { useState, useMemo } from 'react';
@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Search, UserPlus, Users, Wrench, Headphones, Briefcase } from 'lucide-react';
+import { Search, UserPlus, Users, Wrench, Headphones, Briefcase, Building2, HardHat } from 'lucide-react';
 import { Collaborator, COLLABORATOR_TYPES, CollaboratorType } from '@/types/collaborator';
 import { CollaboratorCard } from './CollaboratorCard';
 
@@ -25,6 +25,41 @@ interface CollaboratorListProps {
   canManage: boolean;
   onCreateClick: () => void;
 }
+
+// Catégories organigramme
+type OrgCategory = 'direction' | 'administratif' | 'terrain';
+
+const ORG_CATEGORIES: Record<OrgCategory, { 
+  label: string; 
+  icon: typeof Users; 
+  types: CollaboratorType[];
+  color: string;
+  bgColor: string;
+}> = {
+  direction: { 
+    label: 'Direction', 
+    icon: Building2, 
+    types: ['DIRIGEANT'],
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-100'
+  },
+  administratif: { 
+    label: 'Administratif', 
+    icon: Headphones, 
+    types: ['ASSISTANTE'],
+    color: 'text-pink-600',
+    bgColor: 'bg-pink-100'
+  },
+  terrain: { 
+    label: 'Terrain', 
+    icon: HardHat, 
+    types: ['TECHNICIEN', 'COMMERCIAL', 'AUTRE'],
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100'
+  },
+};
+
+const ORG_ORDER: OrgCategory[] = ['direction', 'administratif', 'terrain'];
 
 export function CollaboratorList({
   collaborators,
@@ -39,7 +74,6 @@ export function CollaboratorList({
   // Filter collaborators
   const filteredCollaborators = useMemo(() => {
     return collaborators.filter((c) => {
-      // Search filter
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch =
         !searchQuery ||
@@ -48,10 +82,7 @@ export function CollaboratorList({
         c.email?.toLowerCase().includes(searchLower) ||
         c.role?.toLowerCase().includes(searchLower);
 
-      // Type filter
       const matchesType = typeFilter === 'all' || c.type === typeFilter;
-
-      // Active filter
       const isActive = !c.leaving_date;
       const matchesActive = showInactive || isActive;
 
@@ -59,14 +90,44 @@ export function CollaboratorList({
     });
   }, [collaborators, searchQuery, typeFilter, showInactive]);
 
-  // Stats by type
+  // Group by org category
+  const groupedCollaborators = useMemo(() => {
+    const groups: Record<OrgCategory, Collaborator[]> = {
+      direction: [],
+      administratif: [],
+      terrain: [],
+    };
+
+    filteredCollaborators.forEach((c) => {
+      const type = c.type as CollaboratorType;
+      for (const [category, config] of Object.entries(ORG_CATEGORIES)) {
+        if (config.types.includes(type)) {
+          groups[category as OrgCategory].push(c);
+          break;
+        }
+      }
+    });
+
+    // Sort each group by name
+    Object.values(groups).forEach((group) => {
+      group.sort((a, b) => {
+        const nameA = `${a.last_name} ${a.first_name}`.toLowerCase();
+        const nameB = `${b.last_name} ${b.first_name}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+    });
+
+    return groups;
+  }, [filteredCollaborators]);
+
+  // Stats
   const stats = useMemo(() => {
     const active = collaborators.filter(c => !c.leaving_date);
     return {
       total: active.length,
-      techniciens: active.filter(c => c.type === 'TECHNICIEN').length,
-      assistantes: active.filter(c => c.type === 'ASSISTANTE').length,
-      autres: active.filter(c => !['TECHNICIEN', 'ASSISTANTE'].includes(c.type)).length,
+      direction: active.filter(c => c.type === 'DIRIGEANT').length,
+      administratif: active.filter(c => c.type === 'ASSISTANTE').length,
+      terrain: active.filter(c => ['TECHNICIEN', 'COMMERCIAL', 'AUTRE'].includes(c.type)).length,
     };
   }, [collaborators]);
 
@@ -74,7 +135,7 @@ export function CollaboratorList({
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 bg-muted/50 rounded-lg animate-pulse" />
+          <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
         ))}
       </div>
     );
@@ -82,61 +143,49 @@ export function CollaboratorList({
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card border rounded-lg p-4 flex items-center gap-3">
+      {/* Stats compacts */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-card border rounded-lg p-3 flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
-            <Users className="h-5 w-5 text-primary" />
+            <Users className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <p className="text-2xl font-bold">{stats.total}</p>
-            <p className="text-sm text-muted-foreground">Collaborateurs</p>
+            <p className="text-xl font-bold">{stats.total}</p>
+            <p className="text-xs text-muted-foreground">Total</p>
           </div>
         </div>
-        <div className="bg-card border rounded-lg p-4 flex items-center gap-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Wrench className="h-5 w-5 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{stats.techniciens}</p>
-            <p className="text-sm text-muted-foreground">Techniciens</p>
-          </div>
-        </div>
-        <div className="bg-card border rounded-lg p-4 flex items-center gap-3">
-          <div className="p-2 bg-pink-100 rounded-lg">
-            <Headphones className="h-5 w-5 text-pink-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{stats.assistantes}</p>
-            <p className="text-sm text-muted-foreground">Assistantes</p>
-          </div>
-        </div>
-        <div className="bg-card border rounded-lg p-4 flex items-center gap-3">
-          <div className="p-2 bg-gray-100 rounded-lg">
-            <Briefcase className="h-5 w-5 text-gray-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{stats.autres}</p>
-            <p className="text-sm text-muted-foreground">Autres</p>
-          </div>
-        </div>
+        {ORG_ORDER.map((category) => {
+          const config = ORG_CATEGORIES[category];
+          const Icon = config.icon;
+          return (
+            <div key={category} className="bg-card border rounded-lg p-3 flex items-center gap-3">
+              <div className={`p-2 ${config.bgColor} rounded-lg`}>
+                <Icon className={`h-4 w-4 ${config.color}`} />
+              </div>
+              <div>
+                <p className="text-xl font-bold">{stats[category]}</p>
+                <p className="text-xs text-muted-foreground">{config.label}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Rechercher un collaborateur..."
+            placeholder="Rechercher..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-9 h-9"
           />
         </div>
 
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Tous les types" />
+          <SelectTrigger className="w-[160px] h-9">
+            <SelectValue placeholder="Tous" />
           </SelectTrigger>
           <SelectContent className="bg-background z-50">
             <SelectItem value="all">Tous les types</SelectItem>
@@ -154,27 +203,25 @@ export function CollaboratorList({
             checked={showInactive}
             onCheckedChange={setShowInactive}
           />
-          <Label htmlFor="show-inactive" className="text-sm">
-            Afficher les partis
+          <Label htmlFor="show-inactive" className="text-xs">
+            Partis
           </Label>
         </div>
 
         {canManage && (
-          <Button onClick={onCreateClick}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Nouveau collaborateur
+          <Button onClick={onCreateClick} size="sm">
+            <UserPlus className="h-4 w-4 mr-1" />
+            Nouveau
           </Button>
         )}
       </div>
 
       {/* Results count */}
-      <div className="flex items-center gap-2">
-        <Badge variant="outline">
-          {filteredCollaborators.length} résultat{filteredCollaborators.length > 1 ? 's' : ''}
-        </Badge>
-      </div>
+      <Badge variant="outline" className="text-xs">
+        {filteredCollaborators.length} collaborateur{filteredCollaborators.length > 1 ? 's' : ''}
+      </Badge>
 
-      {/* List */}
+      {/* Grouped list by organigramme */}
       {filteredCollaborators.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -187,10 +234,36 @@ export function CollaboratorList({
           )}
         </div>
       ) : (
-        <div className="grid gap-4">
-          {filteredCollaborators.map((collaborator) => (
-            <CollaboratorCard key={collaborator.id} collaborator={collaborator} />
-          ))}
+        <div className="space-y-6">
+          {ORG_ORDER.map((category) => {
+            const config = ORG_CATEGORIES[category];
+            const Icon = config.icon;
+            const group = groupedCollaborators[category];
+            
+            if (group.length === 0) return null;
+
+            return (
+              <div key={category}>
+                {/* Section header */}
+                <div className="flex items-center gap-2 mb-3">
+                  <div className={`p-1.5 ${config.bgColor} rounded-lg`}>
+                    <Icon className={`h-4 w-4 ${config.color}`} />
+                  </div>
+                  <h3 className="font-semibold text-foreground">{config.label}</h3>
+                  <Badge variant="secondary" className="text-xs">
+                    {group.length}
+                  </Badge>
+                </div>
+
+                {/* Grid of cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {group.map((collaborator) => (
+                    <CollaboratorCard key={collaborator.id} collaborator={collaborator} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,18 +1,13 @@
 /**
- * Carte collaborateur pour la liste
+ * Carte collaborateur compacte pour la liste
  */
 
 import { Link } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
   User, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  ChevronRight,
   Wrench,
   Headphones,
   Briefcase,
@@ -20,12 +15,9 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { Collaborator, CollaboratorType } from '@/types/collaborator';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 interface CollaboratorCardProps {
   collaborator: Collaborator;
-  onEdit?: () => void;
 }
 
 const TYPE_CONFIG: Record<CollaboratorType, { icon: typeof User; color: string; bgColor: string }> = {
@@ -36,78 +28,46 @@ const TYPE_CONFIG: Record<CollaboratorType, { icon: typeof User; color: string; 
   AUTRE: { icon: HelpCircle, color: 'text-gray-600', bgColor: 'bg-gray-100' },
 };
 
-export function CollaboratorCard({ collaborator, onEdit }: CollaboratorCardProps) {
+export function CollaboratorCard({ collaborator }: CollaboratorCardProps) {
   const config = TYPE_CONFIG[collaborator.type as CollaboratorType] || TYPE_CONFIG.AUTRE;
   const Icon = config.icon;
   const initials = `${collaborator.first_name?.[0] || ''}${collaborator.last_name?.[0] || ''}`.toUpperCase();
   const isActive = !collaborator.leaving_date;
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start gap-4">
-          {/* Avatar */}
-          <Avatar className={`h-12 w-12 ${config.bgColor}`}>
-            <AvatarFallback className={config.color}>
-              {initials || <User className="h-5 w-5" />}
+    <Link to={`/hc-agency/collaborateurs/${collaborator.id}`}>
+      <Card className={`
+        p-3 hover:shadow-md transition-all cursor-pointer
+        hover:border-helpconfort-blue/30 hover:-translate-y-0.5
+        ${!isActive ? 'opacity-60' : ''}
+      `}>
+        <div className="flex items-center gap-3">
+          {/* Avatar compact */}
+          <Avatar className={`h-10 w-10 ${config.bgColor} flex-shrink-0`}>
+            <AvatarFallback className={`${config.color} text-sm font-medium`}>
+              {initials || <User className="h-4 w-4" />}
             </AvatarFallback>
           </Avatar>
 
-          {/* Info */}
+          {/* Info minimale */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-foreground truncate">
-                {collaborator.first_name} {collaborator.last_name}
-              </h3>
+            <p className="font-medium text-foreground truncate text-sm">
+              {collaborator.first_name} {collaborator.last_name}
+            </p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <Icon className={`h-3 w-3 ${config.color}`} />
+              <span className="text-xs text-muted-foreground truncate">
+                {collaborator.role || collaborator.type}
+              </span>
               {!isActive && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
                   Parti
                 </Badge>
               )}
             </div>
-
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline" className="text-xs flex items-center gap-1">
-                <Icon className="h-3 w-3" />
-                {collaborator.role || collaborator.type}
-              </Badge>
-              {collaborator.is_registered_user && (
-                <Badge variant="default" className="text-xs">
-                  Compte actif
-                </Badge>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
-              {collaborator.email && (
-                <span className="flex items-center gap-1">
-                  <Mail className="h-3 w-3" />
-                  {collaborator.email}
-                </span>
-              )}
-              {collaborator.phone && (
-                <span className="flex items-center gap-1">
-                  <Phone className="h-3 w-3" />
-                  {collaborator.phone}
-                </span>
-              )}
-              {collaborator.hiring_date && (
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  Depuis {format(new Date(collaborator.hiring_date), 'MMM yyyy', { locale: fr })}
-                </span>
-              )}
-            </div>
           </div>
-
-          {/* Action */}
-          <Button variant="ghost" size="icon" asChild>
-            <Link to={`/hc-agency/collaborateurs/${collaborator.id}`}>
-              <ChevronRight className="h-5 w-5" />
-            </Link>
-          </Button>
         </div>
-      </CardContent>
-    </Card>
+      </Card>
+    </Link>
   );
 }
