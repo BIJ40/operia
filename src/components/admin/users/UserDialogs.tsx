@@ -1,11 +1,15 @@
 import { GlobalRole } from '@/types/globalRoles';
 import { UserProfile } from '@/hooks/use-user-management';
+import { ModuleKey, EnabledModules } from '@/types/modules';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Loader2, UserPlus, Pencil, UserX, UserCheck, Trash2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, UserPlus, Pencil, UserX, UserCheck, Trash2, User, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserCreateForm, CreateUserPayload } from '@/components/users/UserCreateForm';
 import { UserEditForm, UpdateUserPayload } from '@/components/users/UserEditForm';
+import { UserModulesTab } from '@/components/users/UserModulesTab';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 interface Agency {
   id: string;
@@ -103,14 +107,35 @@ interface EditUserDialogProps {
   canEditRoleAgence?: boolean;
   assignableRoles?: GlobalRole[];
   readOnlyFields?: string[]; // 🛡️ P1: Liste des champs en lecture seule
+  // Modules management
+  onModuleToggle?: (moduleKey: ModuleKey, enabled: boolean) => void;
+  onModuleOptionToggle?: (moduleKey: ModuleKey, optionKey: string, enabled: boolean) => void;
+  canEdit?: boolean;
 }
 
-export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail, onResetPassword, isPending, isEmailPending, isPasswordPending, agencies = [], canEditRoleAgence = false, assignableRoles = [], readOnlyFields = [] }: EditUserDialogProps) {
+export function EditUserDialog({ 
+  user, 
+  open, 
+  onOpenChange, 
+  onSave, 
+  onUpdateEmail, 
+  onResetPassword, 
+  isPending, 
+  isEmailPending, 
+  isPasswordPending, 
+  agencies = [], 
+  canEditRoleAgence = false, 
+  assignableRoles = [], 
+  readOnlyFields = [],
+  onModuleToggle,
+  onModuleOptionToggle,
+  canEdit = true,
+}: EditUserDialogProps) {
   if (!user) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="w-5 h-5" />
@@ -119,22 +144,55 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, onUpdateEmail
           <DialogDescription>Modifier les informations de {user.email}</DialogDescription>
         </DialogHeader>
         
-        <UserEditForm
-          user={user}
-          onSave={onSave}
-          onUpdateEmail={onUpdateEmail}
-          onResetPassword={onResetPassword}
-          isSubmitting={isPending}
-          isEmailPending={isEmailPending}
-          isPasswordPending={isPasswordPending}
-          availableAgencies={agencies}
-          assignableRoles={assignableRoles}
-          canEditRoleAgence={canEditRoleAgence}
-          readOnlyFields={readOnlyFields}
-        />
+        <TooltipProvider>
+          <Tabs defaultValue="infos" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="infos" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Informations
+              </TabsTrigger>
+              <TabsTrigger value="modules" className="flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                Modules
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="infos" className="mt-4">
+              <UserEditForm
+                user={user}
+                onSave={onSave}
+                onUpdateEmail={onUpdateEmail}
+                onResetPassword={onResetPassword}
+                isSubmitting={isPending}
+                isEmailPending={isEmailPending}
+                isPasswordPending={isPasswordPending}
+                availableAgencies={agencies}
+                assignableRoles={assignableRoles}
+                canEditRoleAgence={canEditRoleAgence}
+                readOnlyFields={readOnlyFields}
+              />
+            </TabsContent>
+            
+            <TabsContent value="modules" className="mt-4">
+              {onModuleToggle && onModuleOptionToggle ? (
+                <UserModulesTab
+                  enabledModules={user.enabled_modules as EnabledModules | null}
+                  userRole={user.global_role}
+                  canEdit={canEdit}
+                  onModuleToggle={onModuleToggle}
+                  onModuleOptionToggle={onModuleOptionToggle}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  La gestion des modules n'est pas disponible dans ce contexte.
+                </p>
+              )}
+            </TabsContent>
+          </Tabs>
+        </TooltipProvider>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

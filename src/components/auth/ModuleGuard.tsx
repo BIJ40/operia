@@ -6,13 +6,15 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { ModuleKey, isModuleEnabled } from '@/types/modules';
+import { ModuleKey, isModuleEnabled, isModuleOptionEnabled } from '@/types/modules';
 import { hasMinimumRole } from '@/types/globalRoles';
 import { Loader2, Lock } from 'lucide-react';
 
 interface ModuleGuardProps {
   /** Module requis pour accéder */
   moduleKey: ModuleKey;
+  /** Option spécifique du module requise (ex: 'coffre' pour rh_parc.coffre) */
+  requiredOption?: string;
   /** Contenu à afficher si autorisé */
   children: ReactNode;
   /** Redirection si non autorisé (défaut: /) */
@@ -27,15 +29,12 @@ interface ModuleGuardProps {
  * Guard de route basé sur les modules V2.0
  * Autorise l'accès si:
  * - L'utilisateur a le module activé dans enabled_modules
+ * - ET l'option spécifique si requiredOption est défini
  * - OU l'utilisateur est platform_admin/superadmin (N5+)
- * 
- * @example
- * <ModuleGuard moduleKey="apogee_tickets">
- *   <ApogeeTicketsKanban />
- * </ModuleGuard>
  */
 export function ModuleGuard({ 
   moduleKey, 
+  requiredOption,
   children, 
   redirectTo = '/',
   showError = false,
@@ -63,8 +62,13 @@ export function ModuleGuard({
   
   // Vérifier si le module est activé
   const hasModule = isModuleEnabled(enabledModules, moduleKey);
+  
+  // Vérifier si l'option spécifique est activée (si requise)
+  const hasOption = requiredOption 
+    ? isModuleOptionEnabled(enabledModules, moduleKey, requiredOption)
+    : true;
 
-  if (!isAdmin && !hasModule) {
+  if (!isAdmin && (!hasModule || !hasOption)) {
     if (showError) {
       return (
         <ModuleAccessDeniedPage 

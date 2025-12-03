@@ -21,6 +21,7 @@ export interface DashboardTile {
   requiresSupport?: boolean;
   requiresFranchisor?: boolean; // N3+ (franchisor_user)
   requiresModule?: ModuleKey; // Requires specific module to be enabled
+  requiresModuleOption?: string; // Requires specific module option (e.g., 'coffre' for rh_parc.coffre)
   badge?: string;
   isDisabled?: boolean; // Tuile grisée "Bientôt disponible"
 }
@@ -131,6 +132,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     color: 'accent',
     group: 'pilotage',
     requiresModule: 'rh_parc',
+    requiresModuleOption: 'coffre', // Nécessite l'option coffre spécifiquement
   },
   // Support
   {
