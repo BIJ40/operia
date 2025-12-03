@@ -169,6 +169,23 @@ export default {
             transform: "translateY(-3px)",
           },
         },
+        "heartbeat": {
+          "0%, 100%": {
+            transform: "scale(1)",
+          },
+          "14%": {
+            transform: "scale(1.15)",
+          },
+          "28%": {
+            transform: "scale(1)",
+          },
+          "42%": {
+            transform: "scale(1.15)",
+          },
+          "70%": {
+            transform: "scale(1)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -180,6 +197,7 @@ export default {
         "pulse-yellow": "pulse-yellow 1.5s ease-in-out infinite",
         "pulse-progress": "pulse-progress 1s ease-in-out",
         "bounce-subtle": "bounce-subtle 0.4s ease-in-out",
+        "heartbeat": "heartbeat 1.5s ease-in-out infinite",
       },
     },
   },

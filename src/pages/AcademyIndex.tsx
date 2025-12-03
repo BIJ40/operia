@@ -90,19 +90,19 @@ export default function AcademyIndex() {
           <Link 
             to={ROUTES.favorites}
             className="group h-full rounded-xl p-5
-              bg-gradient-to-r from-red-50 via-red-25 to-transparent dark:from-red-950/30 dark:via-red-900/10
-              border border-red-200/40 dark:border-red-800/40 border-l-4 border-l-red-500
+              bg-gradient-to-r from-helpconfort-blue-light/20 via-helpconfort-blue-light/10 to-transparent dark:from-helpconfort-blue-dark/30 dark:via-helpconfort-blue-dark/10
+              border border-helpconfort-blue-light/40 dark:border-helpconfort-blue-dark/40 border-l-4 border-l-helpconfort-blue
               shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02]"
           >
             <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-full border-2 border-red-300 dark:border-red-700 flex items-center justify-center bg-red-100 dark:bg-red-900/50 group-hover:scale-110 transition-transform">
-                <Heart className="w-5 h-5 text-red-500 fill-red-500" />
+              <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue-light dark:border-helpconfort-blue-dark flex items-center justify-center bg-helpconfort-blue-light/30 dark:bg-helpconfort-blue-dark/50 group-hover:scale-110 transition-transform">
+                <Heart className="w-5 h-5 text-pink-500 fill-pink-500 animate-heartbeat" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-semibold text-foreground">Mes Favoris</h3>
                   {favoritesCount > 0 && (
-                    <Badge className="bg-red-500 text-white text-xs">
+                    <Badge className="bg-pink-500 text-white text-xs">
                       {favoritesCount}
                     </Badge>
                   )}
