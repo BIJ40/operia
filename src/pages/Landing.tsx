@@ -61,6 +61,7 @@ export default function Landing() {
     const groups: Record<string, DashboardTile[]> = {
       help_academy: [],
       pilotage: [],
+      rh: [],
       support: [],
       projects: [],
       franchiseur: [],
@@ -111,6 +112,21 @@ export default function Landing() {
           href={ROUTES.pilotage.index}
         >
           {tilesByGroup.pilotage.map(tile => (
+            <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+          ))}
+        </CollapsibleSection>
+      )}
+
+      {/* Section RH (Mon Coffre, Demandes) - Indépendant de Pilotage */}
+      {tilesByGroup.rh.length > 0 && (
+        <CollapsibleSection
+          id="rh"
+          title={DASHBOARD_GROUPS.rh.title}
+          icon={DASHBOARD_GROUPS.rh.icon}
+          colorClass={DASHBOARD_GROUPS.rh.colorClass}
+          href={ROUTES.pilotage.monCoffreRh}
+        >
+          {tilesByGroup.rh.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
           ))}
         </CollapsibleSection>

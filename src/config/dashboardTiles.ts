@@ -16,7 +16,7 @@ export interface DashboardTile {
   route: string;
   scopeSlug: string;
   color: 'primary' | 'accent';
-  group: 'help_academy' | 'pilotage' | 'support' | 'projects' | 'franchiseur' | 'admin';
+  group: 'help_academy' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin';
   requiresAdmin?: boolean;
   requiresSupport?: boolean;
   requiresFranchisor?: boolean; // N3+ (franchisor_user)
@@ -131,7 +131,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     route: ROUTES.pilotage.monCoffreRh,
     scopeSlug: SCOPE_SLUGS.MON_COFFRE_RH,
     color: 'accent',
-    group: 'pilotage',
+    group: 'rh', // Groupe dédié RH, indépendant de pilotage
     requiresModule: 'rh',
     requiresModuleOptions: ['coffre', 'rh_viewer', 'rh_admin'], // Toutes les options RH donnent accès
   },
@@ -143,7 +143,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     route: ROUTES.pilotage.demandesRh,
     scopeSlug: SCOPE_SLUGS.DEMANDES_RH,
     color: 'accent',
-    group: 'pilotage',
+    group: 'rh', // Groupe dédié RH, indépendant de pilotage
     requiresModule: 'rh',
     requiresModuleOptions: ['rh_viewer', 'rh_admin'], // OR logic - l'une ou l'autre
   },
@@ -323,6 +323,12 @@ export const DASHBOARD_GROUPS = {
     icon: BarChart3,
     colorClass: 'text-accent',
     indexUrl: ROUTES.pilotage.index,
+  },
+  rh: {
+    title: 'Mon Espace RH',
+    icon: Briefcase,
+    colorClass: 'text-helpconfort-blue',
+    indexUrl: ROUTES.pilotage.monCoffreRh,
   },
   support: {
     title: 'Support',
