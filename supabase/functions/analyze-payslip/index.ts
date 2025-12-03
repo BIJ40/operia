@@ -178,7 +178,7 @@ serve(async (req) => {
 
     // Télécharger le PDF depuis le storage
     const { data: fileData, error: downloadError } = await supabase.storage
-      .from("collaborator-documents")
+      .from("rh-documents")
       .download(filePath);
 
     if (downloadError || !fileData) {
