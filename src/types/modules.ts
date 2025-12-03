@@ -60,9 +60,10 @@ export const MODULE_OPTIONS = {
     manage: 'apogee_tickets.manage',
   },
   rh_parc: {
-    rh: 'rh_parc.rh',           // Documents RH, salaires, contrats
-    parc: 'rh_parc.parc',       // Flotte, EPI, équipements
-    coffre: 'rh_parc.coffre',   // Coffre-fort salarié (mon coffre RH)
+    coffre: 'rh_parc.coffre',       // Coffre-fort salarié (accès perso uniquement)
+    rh_viewer: 'rh_parc.rh_viewer', // Gestion RH opérationnelle (sans paie)
+    rh_admin: 'rh_parc.rh_admin',   // Administration RH complète (paie incluse)
+    parc: 'rh_parc.parc',           // Flotte, EPI, équipements
   },
 } as const;
 
@@ -182,9 +183,10 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'rh', path: 'rh_parc.rh', label: 'Gestion RH', description: 'Documents RH, salaires, contrats', defaultEnabled: true },
-      { key: 'parc', path: 'rh_parc.parc', label: 'Parc', description: 'Flotte véhicules, EPI, équipements', defaultEnabled: true },
-      { key: 'coffre', path: 'rh_parc.coffre', label: 'Coffre-fort salarié', description: 'Accès aux documents personnels', defaultEnabled: true },
+      { key: 'coffre', path: 'rh_parc.coffre', label: 'Mon Coffre RH', description: 'Accès à ses propres documents RH et demandes', defaultEnabled: false },
+      { key: 'rh_viewer', path: 'rh_parc.rh_viewer', label: 'Gestionnaire RH', description: 'Voir/traiter les documents et demandes RH de l\'équipe (sans paie)', defaultEnabled: false },
+      { key: 'rh_admin', path: 'rh_parc.rh_admin', label: 'Admin RH', description: 'Gestion complète RH : salaires, contrats, paramètres paie', defaultEnabled: false },
+      { key: 'parc', path: 'rh_parc.parc', label: 'Parc', description: 'Gestion flotte véhicules, EPI, équipements', defaultEnabled: false },
     ],
   },
 ];

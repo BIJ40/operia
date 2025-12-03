@@ -218,11 +218,11 @@ function AppContent() {
           <Route path="/hc-agency/collaborateurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><CollaborateursPage /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/hc-agency/collaborateurs/:id" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><CollaborateurProfilePage /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* Coffre-fort RH - Vue salarié (tous les utilisateurs authentifiés) */}
-          <Route path="/mon-coffre-rh" element={<MainLayout><RoleGuard><MonCoffreRH /></RoleGuard></MainLayout>} />
+          {/* Coffre-fort RH - Vue salarié (nécessite module rh_parc avec option coffre) */}
+          <Route path="/mon-coffre-rh" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh_parc" requiredOption="coffre"><MonCoffreRH /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* Demandes RH - Vue agence (Dirigeant/RH) */}
-          <Route path="/hc-agency/demandes-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><DemandesRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Demandes RH - Vue agence (Dirigeant/RH avec option rh_viewer ou rh_admin) */}
+          <Route path="/hc-agency/demandes-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh_parc" requiredOption="rh_viewer"><DemandesRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}

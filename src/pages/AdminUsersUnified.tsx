@@ -283,6 +283,13 @@ export default function AdminUsersUnified() {
               ? ['globalRole']
               : []
           }
+          onModuleToggle={(moduleKey, enabled) => {
+            if (editDialog.user) handleModuleToggle(editDialog.user.id, moduleKey, enabled);
+          }}
+          onModuleOptionToggle={(moduleKey, optionKey, enabled) => {
+            if (editDialog.user) handleModuleOptionToggle(editDialog.user.id, moduleKey, optionKey, enabled);
+          }}
+          canEdit={editDialog.user ? canEditUser(editDialog.user.global_role, editDialog.user.agence) : false}
         />
 
         <DeactivateDialog

@@ -4,7 +4,7 @@ import { ArrowRight, ChevronRight, LucideIcon } from 'lucide-react';
 import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashboardTiles';
 import { useMemo, memo } from 'react';
 import { getRoleCapabilities, canAccessTileGroup, canAccessTile, TileGroup } from '@/config/roleMatrix';
-import { isModuleEnabled } from '@/types/modules';
+import { isModuleEnabled, isModuleOptionEnabled, ModuleKey } from '@/types/modules';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
 
 export default function Landing() {
@@ -29,6 +29,13 @@ export default function Landing() {
         const isAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
         if (!isAdmin && !isModuleEnabled(enabledModules, tile.requiresModule)) {
           return false;
+        }
+        
+        // 2b. Vérifier si une option spécifique est requise
+        if (tile.requiresModuleOption && !isAdmin) {
+          if (!isModuleOptionEnabled(enabledModules, tile.requiresModule as ModuleKey, tile.requiresModuleOption)) {
+            return false;
+          }
         }
       }
       
