@@ -587,7 +587,7 @@ export function getAssignableRolesList(assignerRole: GlobalRole | null): GlobalR
 // Mapping pour dashboardTiles et navigation
 // ============================================================================
 
-export type TileGroup = 'help_academy' | 'pilotage' | 'support' | 'projects' | 'franchiseur' | 'admin';
+export type TileGroup = 'help_academy' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin';
 
 /**
  * Vérifie si un groupe de tuiles est visible pour un rôle
@@ -607,6 +607,9 @@ export function canAccessTileGroup(
         return false;
       }
       return caps.canAccessPilotageAgence;
+    case 'rh':
+      // Le groupe RH est toujours accessible - la visibilité est contrôlée par le module RH au niveau de la tuile
+      return true;
     case 'support':
       return caps.canAccessSupport;
     case 'projects':
