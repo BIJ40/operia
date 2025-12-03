@@ -18,6 +18,9 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
   'externe': 'Externe',
 };
 
+// Postes disponibles uniquement en mode agence (pas tete_de_reseau ni externe)
+const AGENCY_MODE_ROLES = ['dirigeant', 'assistante', 'commercial', 'technicien'];
+
 // Validation schema
 const createUserSchema = z.object({
   email: z.string().trim().email({ message: "Email invalide" }).max(255, { message: "Email trop long (max 255 caractères)" }),
@@ -47,6 +50,8 @@ export interface UserCreateFormProps {
   showAgencySelector?: boolean;
   defaultAgency?: string;
   creatorRoleLevel?: number; // Niveau du créateur pour filtrer les postes
+  /** Si true, restreint les postes à ceux valides pour une agence (exclut tete_de_reseau, externe) */
+  agencyMode?: boolean;
 }
 
 export function UserCreateForm({
@@ -57,7 +62,12 @@ export function UserCreateForm({
   showAgencySelector = true,
   defaultAgency,
   creatorRoleLevel = 0,
+  agencyMode = false,
 }: UserCreateFormProps) {
+  // Postes disponibles selon le mode
+  const availableRoleAgence = agencyMode 
+    ? AGENCY_MODE_ROLES 
+    : Object.keys(ROLE_AGENCE_LABELS);
   // N2 créé obligatoirement des utilisateurs agence (N1)
   const isN2Creator = creatorRoleLevel === 2;
   
@@ -199,8 +209,8 @@ export function UserCreateForm({
         >
           <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
           <SelectContent className="bg-background z-50">
-            {Object.entries(ROLE_AGENCE_LABELS).map(([value, label]) => (
-              <SelectItem key={value} value={value}>{label}</SelectItem>
+            {availableRoleAgence.map((value) => (
+              <SelectItem key={value} value={value}>{ROLE_AGENCE_LABELS[value]}</SelectItem>
             ))}
           </SelectContent>
         </Select>
