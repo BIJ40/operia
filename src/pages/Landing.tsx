@@ -7,6 +7,7 @@ import { getRoleCapabilities, canAccessTileGroup, canAccessTile, TileGroup } fro
 import { isModuleEnabled, isModuleOptionEnabled, ModuleKey } from '@/types/modules';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
 import { CollapsibleSection } from '@/components/dashboard/CollapsibleSection';
+import { ROUTES } from '@/config/routes';
 
 export default function Landing() {
   const { agence, globalRole, canAccessSupportConsoleUI, enabledModules } = useAuth();
@@ -107,7 +108,7 @@ export default function Landing() {
           title={DASHBOARD_GROUPS.pilotage.title}
           icon={DASHBOARD_GROUPS.pilotage.icon}
           colorClass={DASHBOARD_GROUPS.pilotage.colorClass}
-          href="/pilotage"
+          href={ROUTES.pilotage.index}
         >
           {tilesByGroup.pilotage.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
