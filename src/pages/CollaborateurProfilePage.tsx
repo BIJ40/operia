@@ -3,15 +3,19 @@
  */
 
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useCollaborator, useCollaborators } from '@/hooks/useCollaborators';
 import { CollaboratorProfile, CollaboratorForm } from '@/components/collaborators';
 import { CollaboratorFormData } from '@/types/collaborator';
+import { CollaboratorTab } from '@/types/collaborator';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CollaborateurProfilePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = (searchParams.get('tab') as CollaboratorTab) || 'identity';
+  
   const { data: collaborator, isLoading } = useCollaborator(id);
   const { updateMutation, deleteMutation, canManage } = useCollaborators();
 
@@ -63,6 +67,7 @@ export default function CollaborateurProfilePage() {
         onEdit={() => setShowEditDialog(true)}
         onDelete={handleDelete}
         isDeleting={deleteMutation.isPending}
+        defaultTab={defaultTab}
       />
 
       <CollaboratorForm
