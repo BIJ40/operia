@@ -4,6 +4,7 @@ import { toast } from '@/hooks/use-toast';
 import type {
   DocumentRequest,
   DocumentRequestWithDoc,
+  DocumentRequestWithUnread,
   DocumentRequestType,
   DocumentRequestStatus,
 } from '@/types/documentRequest';
@@ -42,7 +43,12 @@ export function useMyDocumentRequests() {
         .order('requested_at', { ascending: false });
 
       if (error) throw error;
-      return data as DocumentRequestWithDoc[];
+      
+      // Add computed is_unread field
+      return (data as DocumentRequestWithDoc[]).map((req): DocumentRequestWithUnread => ({
+        ...req,
+        is_unread: (req.status === 'COMPLETED' || req.status === 'REJECTED') && !req.employee_seen_at,
+      }));
     },
   });
 
@@ -75,11 +81,34 @@ export function useMyDocumentRequests() {
     },
   });
 
+  const markAsSeen = useMutation({
+    mutationFn: async (requestId: string) => {
+      const { data, error } = await supabase
+        .rpc('mark_document_request_seen', {
+          p_request_id: requestId,
+        });
+
+      if (error) throw error;
+      return data as DocumentRequest;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-document-requests'] });
+    },
+    onError: (error: Error) => {
+      console.error('Error marking request as seen:', error.message);
+    },
+  });
+
+  // Computed: unread count
+  const unreadCount = requests.filter(r => r.is_unread).length;
+
   return {
     requests,
     isLoading,
     error,
     createRequest,
+    markAsSeen,
+    unreadCount,
   };
 }
 
@@ -112,24 +141,14 @@ export function useAgencyDocumentRequests() {
 
   const updateRequest = useMutation({
     mutationFn: async (payload: UpdateDocumentRequestPayload) => {
-      const updateData: Record<string, unknown> = {
-        status: payload.status,
-        response_note: payload.response_note || null,
-        response_document_id: payload.response_document_id ?? null,
-      };
-
-      if (payload.status === 'COMPLETED' || payload.status === 'REJECTED') {
-        updateData.processed_at = new Date().toISOString();
-        const { data: { user } } = await supabase.auth.getUser();
-        updateData.processed_by = user?.id || null;
-      }
-
+      // Use the new RPC for proper validation
       const { data, error } = await supabase
-        .from('document_requests')
-        .update(updateData)
-        .eq('id', payload.id)
-        .select('*')
-        .single();
+        .rpc('handle_document_request', {
+          p_request_id: payload.id,
+          p_status: payload.status,
+          p_response_note: payload.response_note ?? null,
+          p_response_document_id: payload.response_document_id ?? null,
+        });
 
       if (error) throw error;
       return data as DocumentRequest;
@@ -137,6 +156,7 @@ export function useAgencyDocumentRequests() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agency-document-requests'] });
       queryClient.invalidateQueries({ queryKey: ['my-document-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['agency-document-requests-count'] });
       toast({
         title: 'Demande mise à jour',
         description: 'Le statut de la demande a été enregistré',
