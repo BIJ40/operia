@@ -104,7 +104,12 @@ export default function MonCoffreRH() {
     await markAsSeen.mutateAsync(requestId);
   };
 
-  const scrollToRequests = () => {
+  const scrollToRequests = async () => {
+    // Marquer toutes les demandes non lues comme vues
+    const unreadRequests = requests.filter(r => r.is_unread);
+    for (const req of unreadRequests) {
+      await markAsSeen.mutateAsync(req.id);
+    }
     requestsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 

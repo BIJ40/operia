@@ -115,7 +115,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
   {
     id: 'MON_EQUIPE',
     title: 'Mon équipe',
-    description: 'Gestion des collaborateurs de l\'agence',
+    description: 'Collaborateurs, documents RH et bulletins de salaire',
     icon: UserCog,
     route: ROUTES.pilotage.equipe,
     scopeSlug: SCOPE_SLUGS.MON_EQUIPE,
