@@ -45,7 +45,9 @@ const formSchema = z.object({
   hiring_date: z.string().optional(),
   leaving_date: z.string().optional(),
   birth_date: z.string().optional(),
-  address: z.string().optional(),
+  street: z.string().optional(),
+  postal_code: z.string().optional(),
+  city: z.string().optional(),
   emergency_contact: z.string().optional(),
   emergency_phone: z.string().optional(),
   apogee_user_id: z.number().optional(),
@@ -81,7 +83,9 @@ export function CollaboratorForm({
       hiring_date: '',
       leaving_date: '',
       birth_date: '',
-      address: '',
+      street: '',
+      postal_code: '',
+      city: '',
       emergency_contact: '',
       emergency_phone: '',
       apogee_user_id: undefined,
@@ -102,7 +106,9 @@ export function CollaboratorForm({
         hiring_date: collaborator?.hiring_date || '',
         leaving_date: collaborator?.leaving_date || '',
         birth_date: collaborator?.birth_date || '',
-        address: collaborator?.address || '',
+        street: collaborator?.street || '',
+        postal_code: collaborator?.postal_code || '',
+        city: collaborator?.city || '',
         emergency_contact: collaborator?.emergency_contact || '',
         emergency_phone: collaborator?.emergency_phone || '',
         apogee_user_id: collaborator?.apogee_user_id || undefined,
@@ -120,7 +126,9 @@ export function CollaboratorForm({
       hiring_date: values.hiring_date || undefined,
       leaving_date: values.leaving_date || undefined,
       birth_date: values.birth_date || undefined,
-      address: values.address || undefined,
+      street: values.street || undefined,
+      postal_code: values.postal_code || undefined,
+      city: values.city || undefined,
       emergency_contact: values.emergency_contact || undefined,
       emergency_phone: values.emergency_phone || undefined,
     });
@@ -284,17 +292,45 @@ export function CollaboratorForm({
             {/* Adresse */}
             <FormField
               control={form.control}
-              name="address"
+              name="street"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Adresse</FormLabel>
+                  <FormLabel>Rue</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Adresse complète" {...field} />
+                    <Input placeholder="123 rue de la Paix" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="postal_code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Code postal</FormLabel>
+                    <FormControl>
+                      <Input placeholder="75001" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ville</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Paris" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Contact d'urgence */}
             <div className="grid grid-cols-2 gap-4">
