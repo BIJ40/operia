@@ -12,9 +12,15 @@ import { DOCUMENT_TYPES, DocumentType } from '@/types/collaboratorDocument';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function MonCoffreRH() {
+  const queryClient = useQueryClient();
   const { documents, isLoading, error, downloadDocument } = useMyDocuments();
+
+  const handleRetry = () => {
+    queryClient.invalidateQueries({ queryKey: ['my-documents'] });
+  };
 
   const formatDate = (date: string) => {
     return format(new Date(date), 'dd MMM yyyy', { locale: fr });
@@ -44,8 +50,11 @@ export default function MonCoffreRH() {
       <MainLayout>
         <div className="container mx-auto py-8 px-4">
           <Card>
-            <CardContent className="py-10 text-center text-destructive">
-              Erreur lors du chargement de vos documents.
+            <CardContent className="py-10 text-center space-y-4">
+              <p className="text-destructive">Erreur lors du chargement de vos documents.</p>
+              <Button variant="outline" onClick={handleRetry}>
+                Réessayer
+              </Button>
             </CardContent>
           </Card>
         </div>
