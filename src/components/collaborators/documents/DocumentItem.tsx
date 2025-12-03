@@ -17,6 +17,7 @@ import {
   Download,
   Trash2,
   EyeIcon,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ interface DocumentItemProps {
   onPreview: () => void;
   onDownload: () => void;
   onDelete: () => void;
+  onEdit: () => void;
   onRename: (newTitle: string) => void;
   canManage: boolean;
   isSelected?: boolean;
@@ -62,6 +64,7 @@ export function DocumentItem({
   onPreview,
   onDownload,
   onDelete,
+  onEdit,
   onRename,
   canManage,
   isSelected = false,
@@ -214,15 +217,26 @@ export function DocumentItem({
           <Download className="h-4 w-4" />
         </Button>
         {canManage && (
-          <Button
-            variant="secondary"
-            size="icon"
-            className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-destructive hover:text-white"
-            onClick={onDelete}
-            title="Supprimer"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <>
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-helpconfort-orange hover:text-white"
+              onClick={onEdit}
+              title="Modifier"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-destructive hover:text-white"
+              onClick={onDelete}
+              title="Supprimer"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </>
         )}
       </div>
     </div>

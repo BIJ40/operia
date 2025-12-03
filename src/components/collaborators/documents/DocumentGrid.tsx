@@ -11,6 +11,7 @@ interface DocumentGridProps {
   onPreview: (doc: CollaboratorDocument) => void;
   onDownload: (doc: CollaboratorDocument) => void;
   onDelete: (doc: CollaboratorDocument) => void;
+  onEdit: (doc: CollaboratorDocument) => void;
   onRename: (doc: CollaboratorDocument, newTitle: string) => void;
   canManage: boolean;
   selectedIds: Set<string>;
@@ -22,6 +23,7 @@ export function DocumentGrid({
   onPreview,
   onDownload,
   onDelete,
+  onEdit,
   onRename,
   canManage,
   selectedIds,
@@ -46,6 +48,7 @@ export function DocumentGrid({
           onPreview={() => onPreview(doc)}
           onDownload={() => onDownload(doc)}
           onDelete={() => onDelete(doc)}
+          onEdit={() => onEdit(doc)}
           onRename={(newTitle) => onRename(doc, newTitle)}
           canManage={canManage}
           isSelected={selectedIds.has(doc.id)}
