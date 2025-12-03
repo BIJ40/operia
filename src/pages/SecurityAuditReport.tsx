@@ -56,7 +56,7 @@ export default function SecurityAuditReport() {
         <strong>Problème</strong> : Clé API Apogée en clair dans le code frontend</p>
 
         <pre><code>{`// ❌ AVANT (CRITIQUE)
-const API_KEY = "HC-0fbff339d2a701e86d63f66c1a8c8bf54";`}</code></pre>
+const API_KEY = "HC-****[REDACTED]****";`}</code></pre>
 
         <p><strong>Correctif Appliqué</strong> : Migration vers le proxy sécurisé</p>
 
