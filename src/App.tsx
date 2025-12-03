@@ -49,6 +49,10 @@ const IndicateursSAV = lazy(() => import("./apogee-connect/pages/IndicateursSAV"
 const PlanningHebdo = lazy(() => import("./apogee-connect/pages/PlanningHebdo"));
 const EquipePage = lazy(() => import("./pages/EquipePage"));
 
+// Lazy loaded pages - Collaborateurs (Module RH & Parc)
+const CollaborateursPage = lazy(() => import("./pages/CollaborateursPage"));
+const CollaborateurProfilePage = lazy(() => import("./pages/CollaborateurProfilePage"));
+
 // Lazy loaded pages - Support
 const SupportIndex = lazy(() => import("./pages/SupportIndex"));
 const SupportUser = lazy(() => import("./pages/SupportUser"));
@@ -205,8 +209,12 @@ function AppContent() {
           {/* RH Tech */}
           <Route path="/hc-agency/rh-tech" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><PlanningHebdo /></ModuleGuard></RoleGuard></MainLayout>} />
           
-          {/* Équipe */}
-          <Route path="/hc-agency/equipe" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><EquipePage /></ModuleGuard></RoleGuard></MainLayout>} />
+          {/* Équipe (legacy - redirects to collaborateurs) */}
+          <Route path="/hc-agency/equipe" element={<Navigate to="/hc-agency/collaborateurs" replace />} />
+          
+          {/* Collaborateurs (Module RH & Parc - Phase 1) */}
+          <Route path="/hc-agency/collaborateurs" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><CollaborateursPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/hc-agency/collaborateurs/:id" element={<MainLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="pilotage_agence"><CollaborateurProfilePage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
