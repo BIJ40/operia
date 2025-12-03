@@ -260,7 +260,7 @@ export default function Favorites() {
               }}
             >
               <div className="border-2 border-helpconfort-orange rounded-lg overflow-hidden">
-                <CollapsibleTrigger className="w-full bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white p-4 hover:opacity-90 transition-opacity">
+                <CollapsibleTrigger className="w-full bg-gradient-to-r from-helpconfort-blue-light to-helpconfort-blue-dark text-white p-4 hover:opacity-90 transition-opacity cursor-pointer">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <ChevronDown className={`w-5 h-5 transition-transform ${openCategories.includes(group.categorySlug) ? 'rotate-180' : ''}`} />
