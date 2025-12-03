@@ -10,9 +10,9 @@ export const SecondaryPeriodSelector = () => {
       <UnifiedPeriodSelector
         value={filters.periodLabel}
         onChange={(start, end, label) => setDateRange(start, end, label)}
-        availablePeriods={['all', 'today', 'yesterday', 'week', 'month', 'year', 'year-1']}
+        availablePeriods={['all', 'today', 'yesterday', 'week', 'month', 'month-1', 'year', 'year-1', 'custom']}
         variant="default"
-        showCustomPicker={false}
+        showCustomPicker={true}
       />
     </div>
   );
