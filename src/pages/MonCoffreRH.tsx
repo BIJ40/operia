@@ -3,12 +3,12 @@
  * Permet aux employés de consulter leurs documents RH et demander des documents
  */
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useRef } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  FileText, Download, Loader2, FolderOpen, File, Send, Plus 
+  FileText, Download, Loader2, File, Send, Plus, Bell, Eye, Check
 } from 'lucide-react';
 import { useMyDocuments } from '@/hooks/useCollaboratorDocuments';
 import { useMyDocumentRequests } from '@/hooks/useDocumentRequests';
@@ -37,6 +37,7 @@ import {
   SelectItem 
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const STATUS_BADGE_VARIANTS: Record<DocumentRequestStatus, 'outline' | 'default' | 'secondary' | 'destructive'> = {
   PENDING: 'outline',
@@ -47,12 +48,15 @@ const STATUS_BADGE_VARIANTS: Record<DocumentRequestStatus, 'outline' | 'default'
 
 export default function MonCoffreRH() {
   const queryClient = useQueryClient();
+  const requestsRef = useRef<HTMLDivElement>(null);
   const { documents, isLoading, error, downloadDocument } = useMyDocuments();
   const { 
     requests, 
     isLoading: isLoadingRequests, 
     error: requestError, 
-    createRequest 
+    createRequest,
+    markAsSeen,
+    unreadCount 
   } = useMyDocumentRequests();
 
   const [showRequestDialog, setShowRequestDialog] = useState(false);
@@ -96,6 +100,14 @@ export default function MonCoffreRH() {
     setShowRequestDialog(false);
   };
 
+  const handleMarkAsSeen = async (requestId: string) => {
+    await markAsSeen.mutateAsync(requestId);
+  };
+
+  const scrollToRequests = () => {
+    requestsRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   if (error) {
     return (
       <div className="space-y-6">
@@ -114,6 +126,22 @@ export default function MonCoffreRH() {
   return (
     <>
       <div className="space-y-6">
+        {/* Bannière demandes non lues */}
+        {unreadCount > 0 && (
+          <Alert className="border-helpconfort-orange bg-helpconfort-orange/10">
+            <Bell className="h-4 w-4 text-helpconfort-orange" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>
+                Vous avez <strong>{unreadCount}</strong> demande{unreadCount > 1 ? 's' : ''} RH traitée{unreadCount > 1 ? 's' : ''} non lue{unreadCount > 1 ? 's' : ''}.
+              </span>
+              <Button variant="outline" size="sm" onClick={scrollToRequests}>
+                <Eye className="h-4 w-4 mr-1" />
+                Voir
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Bloc Coffre-fort documents */}
         <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
           <CardContent className="pt-6">
@@ -180,12 +208,20 @@ export default function MonCoffreRH() {
         </Card>
 
         {/* Bloc Demandes de documents */}
-        <Card className="border-l-4 border-l-helpconfort-orange bg-gradient-to-br from-helpconfort-orange/5 via-background to-background">
+        <Card 
+          ref={requestsRef}
+          className="border-l-4 border-l-helpconfort-orange bg-gradient-to-br from-helpconfort-orange/5 via-background to-background"
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold flex items-center gap-2">
                 <Send className="h-5 w-5 text-helpconfort-orange" />
                 Mes demandes de documents
+                {unreadCount > 0 && (
+                  <Badge variant="destructive" className="ml-2">
+                    {unreadCount} non lue{unreadCount > 1 ? 's' : ''}
+                  </Badge>
+                )}
               </h3>
               <Button size="sm" onClick={() => setShowRequestDialog(true)}>
                 <Plus className="h-4 w-4 mr-1" />
@@ -215,11 +251,22 @@ export default function MonCoffreRH() {
                 {requests.map((req) => (
                   <div
                     key={req.id}
-                    className="flex items-start justify-between rounded-md border px-3 py-3"
+                    className={`flex items-start justify-between rounded-md border px-3 py-3 transition-colors ${
+                      req.is_unread 
+                        ? 'bg-helpconfort-orange/5 border-helpconfort-orange/30 font-medium' 
+                        : ''
+                    }`}
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium">
-                        {DOCUMENT_REQUEST_TYPES.find((t) => t.value === req.request_type)?.label}
+                      <div className="flex items-center gap-2">
+                        <span className={req.is_unread ? 'font-semibold' : 'font-medium'}>
+                          {DOCUMENT_REQUEST_TYPES.find((t) => t.value === req.request_type)?.label}
+                        </span>
+                        {req.is_unread && (
+                          <Badge variant="default" className="bg-helpconfort-orange text-white text-[10px] px-1.5">
+                            Nouveau
+                          </Badge>
+                        )}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         Demandé le {formatDate(req.requested_at)}
@@ -251,7 +298,20 @@ export default function MonCoffreRH() {
                             }
                           }}
                         >
+                          <Download className="h-3 w-3 mr-1" />
                           Voir le document
+                        </Button>
+                      )}
+                      {req.is_unread && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => handleMarkAsSeen(req.id)}
+                          disabled={markAsSeen.isPending}
+                        >
+                          <Check className="h-3 w-3 mr-1" />
+                          Marquer comme lu
                         </Button>
                       )}
                     </div>

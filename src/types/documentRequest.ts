@@ -38,7 +38,12 @@ export interface DocumentRequest {
   response_note: string | null;
   response_document_id: string | null;
   processed_by: string | null;
+  employee_seen_at: string | null;
   created_at: string;
+}
+
+export interface DocumentRequestWithUnread extends DocumentRequestWithDoc {
+  is_unread: boolean;
 }
 
 export interface DocumentRequestWithDoc extends DocumentRequest {

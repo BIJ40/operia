@@ -1434,6 +1434,7 @@ export type Database = {
           collaborator_id: string
           created_at: string
           description: string | null
+          employee_seen_at: string | null
           id: string
           processed_at: string | null
           processed_by: string | null
@@ -1448,6 +1449,7 @@ export type Database = {
           collaborator_id: string
           created_at?: string
           description?: string | null
+          employee_seen_at?: string | null
           id?: string
           processed_at?: string | null
           processed_by?: string | null
@@ -1462,6 +1464,7 @@ export type Database = {
           collaborator_id?: string
           created_at?: string
           description?: string | null
+          employee_seen_at?: string | null
           id?: string
           processed_at?: string | null
           processed_by?: string | null
@@ -3204,6 +3207,35 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["apogee_ticket_role"]
       }
+      handle_document_request: {
+        Args: {
+          p_request_id: string
+          p_response_document_id?: string
+          p_response_note?: string
+          p_status: string
+        }
+        Returns: {
+          agency_id: string
+          collaborator_id: string
+          created_at: string
+          description: string | null
+          employee_seen_at: string | null
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          request_type: string
+          requested_at: string
+          response_document_id: string | null
+          response_note: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "document_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_agency_rh_role: {
         Args: { _agency_id: string; _user_id: string }
         Returns: boolean
@@ -3224,6 +3256,30 @@ export type Database = {
         Returns: boolean
       }
       is_support_agent: { Args: { _user_id: string }; Returns: boolean }
+      mark_document_request_seen: {
+        Args: { p_request_id: string }
+        Returns: {
+          agency_id: string
+          collaborator_id: string
+          created_at: string
+          description: string | null
+          employee_seen_at: string | null
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          request_type: string
+          requested_at: string
+          response_document_id: string | null
+          response_note: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "document_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       request_document: {
         Args: { p_description?: string; p_request_type: string }
         Returns: {
@@ -3231,6 +3287,7 @@ export type Database = {
           collaborator_id: string
           created_at: string
           description: string | null
+          employee_seen_at: string | null
           id: string
           processed_at: string | null
           processed_by: string | null

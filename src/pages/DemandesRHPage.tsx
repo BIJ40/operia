@@ -18,13 +18,20 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Inbox, Upload, FileText, X, User } from 'lucide-react';
+import { Loader2, Inbox, Upload, FileText, X, User, Eye, EyeOff, FolderOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import type { CollaboratorDocument } from '@/types/collaboratorDocument';
 
 const STATUS_BADGE_VARIANTS: Record<DocumentRequestStatus, 'outline' | 'default' | 'secondary' | 'destructive'> = {
   PENDING: 'outline',
@@ -44,7 +51,9 @@ export default function DemandesRHPage() {
   const [responseNote, setResponseNote] = useState('');
   const [newStatus, setNewStatus] = useState<DocumentRequestStatus>('COMPLETED');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showDocPicker, setShowDocPicker] = useState(false);
 
   // Fetch collaborator info for each request
   const { data: collaborators = {} } = useQuery({
@@ -68,6 +77,26 @@ export default function DemandesRHPage() {
     enabled: requests.length > 0,
   });
 
+  const currentRequest = requests.find((r) => r.id === selectedRequestId) ?? null;
+
+  // Fetch existing documents for the current collaborator
+  const { data: existingDocs = [] } = useQuery({
+    queryKey: ['collaborator-docs-for-picker', currentRequest?.collaborator_id],
+    queryFn: async () => {
+      if (!currentRequest?.collaborator_id) return [];
+      
+      const { data, error } = await supabase
+        .from('collaborator_documents')
+        .select('*')
+        .eq('collaborator_id', currentRequest.collaborator_id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as CollaboratorDocument[];
+    },
+    enabled: !!currentRequest?.collaborator_id,
+  });
+
   const filteredRequests = useMemo(
     () =>
       statusFilter === 'ALL'
@@ -76,8 +105,6 @@ export default function DemandesRHPage() {
     [requests, statusFilter]
   );
 
-  const currentRequest = filteredRequests.find((r) => r.id === selectedRequestId) ?? null;
-
   const formatDate = (date: string) => {
     return format(new Date(date), "dd MMM yyyy 'à' HH:mm", { locale: fr });
   };
@@ -85,6 +112,7 @@ export default function DemandesRHPage() {
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
+      setSelectedDocumentId(null); // Clear document selection when uploading new file
     }
   }, []);
 
@@ -92,14 +120,28 @@ export default function DemandesRHPage() {
     setSelectedFile(null);
   }, []);
 
+  const handleSelectExistingDoc = (docId: string) => {
+    setSelectedDocumentId(docId);
+    setSelectedFile(null); // Clear file when selecting existing doc
+    setShowDocPicker(false);
+  };
+
+  const handleSelectRequest = (req: typeof requests[0]) => {
+    setSelectedRequestId(req.id);
+    setResponseNote(req.response_note || '');
+    setNewStatus(req.status === 'PENDING' ? 'IN_PROGRESS' : (req.status as DocumentRequestStatus));
+    setSelectedFile(null);
+    setSelectedDocumentId(req.response_document_id || null);
+  };
+
   const handleSubmit = async () => {
     if (!currentRequest || !agencyId || !user?.id) return;
 
     setIsUploading(true);
-    let documentId: string | null = null;
+    let documentId: string | null = selectedDocumentId;
 
     try {
-      // 1) Upload file if provided
+      // 1) Upload file if provided (new file takes precedence)
       if (selectedFile) {
         const fileExt = selectedFile.name.split('.').pop();
         const filePath = `${currentRequest.collaborator_id}/${Date.now()}.${fileExt}`;
@@ -142,7 +184,7 @@ export default function DemandesRHPage() {
         documentId = docData.id;
       }
 
-      // 2) Update request with response
+      // 2) Update request with response via RPC
       await updateRequest.mutateAsync({
         id: currentRequest.id,
         status: newStatus,
@@ -150,31 +192,21 @@ export default function DemandesRHPage() {
         response_document_id: documentId,
       });
 
-      // 3) Create notification for the employee
-      const statusLabel = newStatus === 'COMPLETED' ? 'traitée' : newStatus === 'REJECTED' ? 'refusée' : 'mise à jour';
-      const typeLabel = DOCUMENT_REQUEST_TYPES.find(t => t.value === currentRequest.request_type)?.label || 'document';
-      
-      await supabase.from('rh_notifications').insert({
-        collaborator_id: currentRequest.collaborator_id,
-        agency_id: agencyId,
-        notification_type: 'DOCUMENT_REQUEST_RESPONSE',
-        title: `Demande ${statusLabel}`,
-        message: `Votre demande de "${typeLabel}" a été ${statusLabel}.${responseNote ? ` Message: ${responseNote}` : ''}${documentId ? ' Un document a été joint.' : ''}`,
-        related_request_id: currentRequest.id,
-        related_document_id: documentId,
-      });
-
       // Reset form
       setSelectedRequestId(null);
       setResponseNote('');
       setSelectedFile(null);
-      toast.success('Réponse envoyée et notification créée');
+      setSelectedDocumentId(null);
+      toast.success('Réponse enregistrée');
     } catch (err: any) {
       toast.error(`Erreur: ${err.message}`);
     } finally {
       setIsUploading(false);
     }
   };
+
+  // Get selected document info
+  const selectedDocInfo = existingDocs.find(d => d.id === selectedDocumentId);
 
   if (isLoading) {
     return (
@@ -231,19 +263,13 @@ export default function DemandesRHPage() {
                     DOCUMENT_REQUEST_TYPES.find((t) => t.value === req.request_type)?.label ??
                     req.request_type;
                   const collaboratorName = collaborators[req.collaborator_id] || 'Collaborateur';
+                  const isSeenByEmployee = !!req.employee_seen_at;
 
                   return (
                     <button
                       key={req.id}
                       type="button"
-                      onClick={() => {
-                        setSelectedRequestId(req.id);
-                        setResponseNote(req.response_note || '');
-                        setNewStatus(
-                          req.status === 'PENDING' ? 'IN_PROGRESS' : (req.status as DocumentRequestStatus)
-                        );
-                        setSelectedFile(null);
-                      }}
+                      onClick={() => handleSelectRequest(req)}
                       className={`w-full rounded-md border px-3 py-2 text-left text-sm transition ${
                         selectedRequestId === req.id
                           ? 'border-primary bg-primary/5'
@@ -265,9 +291,20 @@ export default function DemandesRHPage() {
                             </div>
                           )}
                         </div>
-                        <Badge variant={STATUS_BADGE_VARIANTS[req.status]}>
-                          {DOCUMENT_REQUEST_STATUS_LABELS[req.status]}
-                        </Badge>
+                        <div className="flex flex-col items-end gap-1">
+                          <Badge variant={STATUS_BADGE_VARIANTS[req.status]}>
+                            {DOCUMENT_REQUEST_STATUS_LABELS[req.status]}
+                          </Badge>
+                          {(req.status === 'COMPLETED' || req.status === 'REJECTED') && (
+                            <span className={`text-[10px] flex items-center gap-1 ${isSeenByEmployee ? 'text-green-600' : 'text-amber-600'}`}>
+                              {isSeenByEmployee ? (
+                                <><Eye className="h-3 w-3" /> Lu</>
+                              ) : (
+                                <><EyeOff className="h-3 w-3" /> Non lu</>
+                              )}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </button>
                   );
@@ -339,44 +376,68 @@ export default function DemandesRHPage() {
                     />
                   </div>
 
-                  {/* Upload document */}
+                  {/* Document associé */}
                   <div className="space-y-2">
                     <Label className="text-xs font-semibold text-muted-foreground">
-                      Joindre un document (optionnel)
+                      Document associé
                     </Label>
-                    {selectedFile ? (
+                    
+                    {/* Display currently selected document */}
+                    {(selectedFile || selectedDocInfo) && (
                       <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
                         <FileText className="h-4 w-4 text-primary" />
-                        <span className="text-xs flex-1 truncate">{selectedFile.name}</span>
+                        <span className="text-xs flex-1 truncate">
+                          {selectedFile ? selectedFile.name : selectedDocInfo?.title}
+                        </span>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-6 w-6 p-0"
-                          onClick={removeFile}
+                          onClick={() => {
+                            setSelectedFile(null);
+                            setSelectedDocumentId(null);
+                          }}
                         >
                           <X className="h-3 w-3" />
                         </Button>
                       </div>
-                    ) : (
-                      <div className="relative">
-                        <Input
-                          type="file"
-                          onChange={handleFileChange}
-                          className="hidden"
-                          id="file-upload"
-                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                        />
-                        <label
-                          htmlFor="file-upload"
-                          className="flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
+                    )}
+
+                    {!selectedFile && !selectedDocInfo && (
+                      <div className="flex gap-2">
+                        {/* Upload new document */}
+                        <div className="flex-1 relative">
+                          <Input
+                            type="file"
+                            onChange={handleFileChange}
+                            className="hidden"
+                            id="file-upload"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          />
+                          <label
+                            htmlFor="file-upload"
+                            className="flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
+                          >
+                            <Upload className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">
+                              Téléverser
+                            </span>
+                          </label>
+                        </div>
+                        
+                        {/* Choose from existing docs */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-auto py-3"
+                          onClick={() => setShowDocPicker(true)}
                         >
-                          <Upload className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">
-                            Cliquez pour sélectionner un fichier
-                          </span>
-                        </label>
+                          <FolderOpen className="h-4 w-4 mr-1" />
+                          <span className="text-xs">Coffre</span>
+                        </Button>
                       </div>
                     )}
+                    
                     <p className="text-[10px] text-muted-foreground">
                       Le document sera visible dans le coffre-fort du salarié
                     </p>
@@ -390,6 +451,7 @@ export default function DemandesRHPage() {
                         setSelectedRequestId(null);
                         setResponseNote('');
                         setSelectedFile(null);
+                        setSelectedDocumentId(null);
                       }}
                     >
                       Annuler
@@ -408,6 +470,44 @@ export default function DemandesRHPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Document Picker Dialog */}
+      <Dialog open={showDocPicker} onOpenChange={setShowDocPicker}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Choisir un document existant</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[400px] overflow-y-auto space-y-2">
+            {existingDocs.length === 0 ? (
+              <div className="text-sm text-muted-foreground text-center py-8">
+                Aucun document dans le coffre-fort de ce collaborateur.
+              </div>
+            ) : (
+              existingDocs.map((doc) => (
+                <button
+                  key={doc.id}
+                  type="button"
+                  onClick={() => handleSelectExistingDoc(doc.id)}
+                  className="w-full text-left p-3 border rounded-md hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-sm truncate">{doc.title}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(doc.created_at), 'dd MMM yyyy', { locale: fr })}
+                        {doc.visibility === 'EMPLOYEE_VISIBLE' && (
+                          <Badge variant="outline" className="ml-2 text-[10px]">Visible</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
