@@ -1301,6 +1301,7 @@ export type Database = {
           agency_id: string
           apogee_user_id: number | null
           birth_date: string | null
+          birth_place: string | null
           city: string | null
           created_at: string
           created_by: string | null
@@ -1328,6 +1329,7 @@ export type Database = {
           agency_id: string
           apogee_user_id?: number | null
           birth_date?: string | null
+          birth_place?: string | null
           city?: string | null
           created_at?: string
           created_by?: string | null
@@ -1355,6 +1357,7 @@ export type Database = {
           agency_id?: string
           apogee_user_id?: number | null
           birth_date?: string | null
+          birth_place?: string | null
           city?: string | null
           created_at?: string
           created_by?: string | null
