@@ -58,6 +58,8 @@ export const ROUTES = {
     // Collaborateurs (Module RH & Parc - Phase 1)
     collaborateurs: '/hc-agency/collaborateurs',
     collaborateurProfile: (id: string) => `/hc-agency/collaborateurs/${id}`,
+    // Coffre-fort RH (vue salarié)
+    monCoffreRh: '/mon-coffre-rh',
   },
 
   // ============================================
