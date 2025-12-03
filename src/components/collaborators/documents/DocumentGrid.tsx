@@ -1,9 +1,9 @@
 /**
- * Grille d'affichage des documents - Finder RH
+ * Grille d'affichage des documents avec Drag & Drop - Finder RH
  */
 
 import { CollaboratorDocument } from '@/types/collaboratorDocument';
-import { DocumentItem } from './DocumentItem';
+import { DraggableDocumentItem } from './DraggableDocumentItem';
 import { FolderOpen } from 'lucide-react';
 
 interface DocumentGridProps {
@@ -36,7 +36,7 @@ export function DocumentGrid({
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
       {documents.map((doc) => (
-        <DocumentItem
+        <DraggableDocumentItem
           key={doc.id}
           document={doc}
           onPreview={() => onPreview(doc)}
