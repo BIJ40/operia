@@ -1,12 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { TechnicienUniversStats } from "@/apogee-connect/utils/technicienUniversCalculations";
+import { TechUniversStats } from "@/shared/utils/technicienUniversEngine";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 interface TechnicienUniversHeatmapProps {
-  data: TechnicienUniversStats[];
+  data: TechUniversStats[];
   universes: Array<{ slug: string; label: string; colorHex: string }>;
   loading?: boolean;
   mode: "ca" | "heures" | "caParHeure";

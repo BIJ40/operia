@@ -5,7 +5,7 @@ import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
-import { calculateTechnicienUniversStats } from "@/apogee-connect/utils/technicienUniversCalculations";
+import { computeTechUniversStatsForAgency } from "@/shared/utils/technicienUniversEngine";
 import { EnrichmentService } from "@/apogee-connect/services/enrichmentService";
 import { TechnicienUniversHeatmap } from "@/apogee-connect/components/widgets/TechnicienUniversHeatmap";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,8 +25,8 @@ export default function IndicateursTechniciens() {
       // Initialiser le service d'enrichissement
       EnrichmentService.initialize(rawData);
       
-      // Calculer les stats par technicien et univers
-      const stats = calculateTechnicienUniversStats(
+      // Calculer les stats par technicien et univers via le moteur unifié
+      const stats = computeTechUniversStatsForAgency(
         rawData.factures,
         rawData.projects,
         rawData.interventions,

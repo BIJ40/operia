@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { calculateTechnicienUniversStats } from '@/apogee-connect/utils/technicienUniversCalculations';
+import { computeTechUniversStatsForAgency } from '@/shared/utils/technicienUniversEngine';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
 
 interface SlideCATechniciensProps {
@@ -90,7 +90,7 @@ export const SlideCATechniciens = ({ currentMonthIndex }: SlideCATechniciensProp
       end: endOfMonth(month)
     };
 
-    const stats = calculateTechnicienUniversStats(
+    const stats = computeTechUniversStatsForAgency(
       apiData.factures,
       apiData.projects,
       apiData.interventions,
