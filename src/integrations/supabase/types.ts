@@ -1406,6 +1406,73 @@ export type Database = {
           },
         ]
       }
+      employment_contracts: {
+        Row: {
+          agency_id: string
+          collaborator_id: string
+          contract_type: string
+          created_at: string | null
+          created_by: string | null
+          end_date: string | null
+          id: string
+          is_current: boolean | null
+          job_category: string | null
+          job_title: string | null
+          start_date: string
+          weekly_hours: number | null
+        }
+        Insert: {
+          agency_id: string
+          collaborator_id: string
+          contract_type: string
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          is_current?: boolean | null
+          job_category?: string | null
+          job_title?: string | null
+          start_date: string
+          weekly_hours?: number | null
+        }
+        Update: {
+          agency_id?: string
+          collaborator_id?: string
+          contract_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          is_current?: boolean | null
+          job_category?: string | null
+          job_title?: string | null
+          start_date?: string
+          weekly_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employment_contracts_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employment_contracts_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employment_contracts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_requests: {
         Row: {
           amount: number
@@ -2170,6 +2237,57 @@ export type Database = {
           total_documents?: number | null
         }
         Relationships: []
+      }
+      salary_history: {
+        Row: {
+          comment: string | null
+          contract_id: string
+          created_at: string | null
+          decided_by: string | null
+          effective_date: string
+          hourly_rate: number | null
+          id: string
+          monthly_salary: number | null
+          reason_type: string | null
+        }
+        Insert: {
+          comment?: string | null
+          contract_id: string
+          created_at?: string | null
+          decided_by?: string | null
+          effective_date: string
+          hourly_rate?: number | null
+          id?: string
+          monthly_salary?: number | null
+          reason_type?: string | null
+        }
+        Update: {
+          comment?: string | null
+          contract_id?: string
+          created_at?: string | null
+          decided_by?: string | null
+          effective_date?: string
+          hourly_rate?: number | null
+          id?: string
+          monthly_salary?: number | null
+          reason_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salary_history_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "employment_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salary_history_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sections: {
         Row: {
