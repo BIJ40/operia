@@ -48,6 +48,8 @@ const formSchema = z.object({
   street: z.string().optional(),
   postal_code: z.string().optional(),
   city: z.string().optional(),
+  social_security_number: z.string().optional(),
+  birth_place: z.string().optional(),
   emergency_contact: z.string().optional(),
   emergency_phone: z.string().optional(),
   apogee_user_id: z.number().optional(),
@@ -83,10 +85,12 @@ export function CollaboratorForm({
       hiring_date: '',
       leaving_date: '',
       birth_date: '',
-      street: '',
-      postal_code: '',
-      city: '',
-      emergency_contact: '',
+        street: '',
+        postal_code: '',
+        city: '',
+        social_security_number: '',
+        birth_place: '',
+        emergency_contact: '',
       emergency_phone: '',
       apogee_user_id: undefined,
     },
@@ -109,6 +113,8 @@ export function CollaboratorForm({
         street: collaborator?.street || '',
         postal_code: collaborator?.postal_code || '',
         city: collaborator?.city || '',
+        social_security_number: collaborator?.social_security_number || '',
+        birth_place: collaborator?.birth_place || '',
         emergency_contact: collaborator?.emergency_contact || '',
         emergency_phone: collaborator?.emergency_phone || '',
         apogee_user_id: collaborator?.apogee_user_id || undefined,
@@ -129,6 +135,8 @@ export function CollaboratorForm({
       street: values.street || undefined,
       postal_code: values.postal_code || undefined,
       city: values.city || undefined,
+      social_security_number: values.social_security_number || undefined,
+      birth_place: values.birth_place || undefined,
       emergency_contact: values.emergency_contact || undefined,
       emergency_phone: values.emergency_phone || undefined,
     });
@@ -287,7 +295,35 @@ export function CollaboratorForm({
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="birth_place"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lieu de naissance</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Paris" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
+
+            {/* N° Sécurité sociale */}
+            <FormField
+              control={form.control}
+              name="social_security_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>N° de Sécurité sociale</FormLabel>
+                  <FormControl>
+                    <Input placeholder="1 XX XX XX XXX XXX XX" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Adresse */}
             <FormField

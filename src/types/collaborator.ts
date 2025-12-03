@@ -41,6 +41,7 @@ export interface Collaborator {
   postal_code: string | null;
   city: string | null;
   social_security_number: string | null;
+  birth_place: string | null;
   
   // Contact urgence
   emergency_contact: string | null;
@@ -71,6 +72,7 @@ export interface CollaboratorFormData {
   postal_code?: string;
   city?: string;
   social_security_number?: string;
+  birth_place?: string;
   emergency_contact?: string;
   emergency_phone?: string;
   apogee_user_id?: number;

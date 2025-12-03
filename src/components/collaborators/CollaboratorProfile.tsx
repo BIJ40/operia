@@ -154,6 +154,9 @@ export function CollaboratorProfile({
                 <InfoRow icon={Mail} label="Email" value={collaborator.email} />
                 <InfoRow icon={Phone} label="Téléphone" value={collaborator.phone} />
                 <InfoRow icon={Calendar} label="Date de naissance" value={formatDate(collaborator.birth_date)} />
+                <InfoRow icon={MapPin} label="Lieu de naissance" value={collaborator.birth_place} />
+                <InfoRow icon={FileText} label="N° Sécurité sociale" value={collaborator.social_security_number} />
+                <Separator />
                 <InfoRow icon={MapPin} label="Rue" value={collaborator.street} />
                 <InfoRow icon={MapPin} label="Code postal" value={collaborator.postal_code} />
                 <InfoRow icon={MapPin} label="Ville" value={collaborator.city} />
