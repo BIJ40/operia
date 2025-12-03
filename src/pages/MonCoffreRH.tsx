@@ -101,7 +101,7 @@ export default function MonCoffreRH() {
     return (
       <MainLayout>
         <div className="container mx-auto py-8 px-4">
-          <Card>
+          <Card className="border-l-4 border-l-destructive bg-gradient-to-br from-destructive/5 via-background to-background">
             <CardContent className="py-10 text-center space-y-4">
               <p className="text-destructive">Erreur lors du chargement de vos documents.</p>
               <Button variant="outline" onClick={handleRetry}>
@@ -118,10 +118,10 @@ export default function MonCoffreRH() {
     <MainLayout>
       <div className="container mx-auto py-8 px-4 space-y-6">
         {/* Bloc Coffre-fort documents */}
-        <Card>
+        <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FolderOpen className="h-5 w-5" />
+              <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
               Mes Documents
             </CardTitle>
           </CardHeader>
@@ -189,10 +189,10 @@ export default function MonCoffreRH() {
         </Card>
 
         {/* Bloc Demandes de documents */}
-        <Card>
+        <Card className="border-l-4 border-l-helpconfort-orange bg-gradient-to-br from-helpconfort-orange/5 via-background to-background">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Send className="h-5 w-5" />
+              <Send className="h-5 w-5 text-helpconfort-orange" />
               Mes demandes de documents
             </CardTitle>
             <Button size="sm" onClick={() => setShowRequestDialog(true)}>
