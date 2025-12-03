@@ -1,11 +1,12 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronRight, LucideIcon } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { DASHBOARD_TILES, DASHBOARD_GROUPS, DashboardTile } from '@/config/dashboardTiles';
 import { useMemo, memo } from 'react';
 import { getRoleCapabilities, canAccessTileGroup, canAccessTile, TileGroup } from '@/config/roleMatrix';
 import { isModuleEnabled, isModuleOptionEnabled, ModuleKey } from '@/types/modules';
 import { useSupportNotifications } from '@/hooks/use-support-notifications';
+import { CollapsibleSection } from '@/components/dashboard/CollapsibleSection';
 
 export default function Landing() {
   const { agence, globalRole, canAccessSupportConsoleUI, enabledModules } = useAuth();
@@ -23,24 +24,19 @@ export default function Landing() {
       const isAdminUser = globalRole === 'superadmin' || globalRole === 'platform_admin';
       
       // 1. Vérifier si la tuile nécessite un module spécifique
-      // Si le module est activé avec l'option requise, la tuile est visible même sans accès au groupe
       if (tile.requiresModule) {
-        // Admin bypass
         if (isAdminUser) {
-          // Admins voient tout, mais on vérifie quand même le groupe pour le tri
+          // Admins voient tout
         } else {
-          // Vérifier si le module est activé
           const hasModule = isModuleEnabled(enabledModules, tile.requiresModule);
           if (!hasModule) return false;
           
-          // Vérifier si une option spécifique est requise (singulier)
           if (tile.requiresModuleOption) {
             if (!isModuleOptionEnabled(enabledModules, tile.requiresModule as ModuleKey, tile.requiresModuleOption)) {
               return false;
             }
           }
           
-          // Vérifier si l'une des options est requise (pluriel - logique OR)
           if (tile.requiresModuleOptions && tile.requiresModuleOptions.length > 0) {
             const hasAnyOption = tile.requiresModuleOptions.some(opt => 
               isModuleOptionEnabled(enabledModules, tile.requiresModule as ModuleKey, opt)
@@ -48,17 +44,13 @@ export default function Landing() {
             if (!hasAnyOption) return false;
           }
           
-          // Le module est activé avec l'option → tuile visible (skip group check)
-          // Mais on vérifie quand même les tuiles spéciales
           return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsoleUI });
         }
       } else {
-        // 2. Pas de module requis → vérifier l'accès au groupe
         const groupAccess = canAccessTileGroup(globalRole, tile.group as TileGroup, { agence });
         if (!groupAccess) return false;
       }
       
-      // 3. Vérifier l'accès à la tuile spécifique (passer canAccessSupportConsoleUI pour CONSOLE_SUPPORT)
       return canAccessTile(globalRole, tile.id, { agence, canAccessSupportConsoleUI });
     });
   }, [globalRole, agence, canAccessSupportConsoleUI, enabledModules]);
@@ -82,7 +74,7 @@ export default function Landing() {
   }, [visibleTiles]);
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8 sm:space-y-10">
+    <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
       {/* Welcome section */}
       <div className="text-center mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
@@ -95,109 +87,91 @@ export default function Landing() {
 
       {/* HELP Academy Section */}
       {tilesByGroup.help_academy.length > 0 && (
-        <section>
-          <SectionHeader 
-            title={<>Help<span className="text-helpconfort-orange">!</span> Academy</>}
-            icon={DASHBOARD_GROUPS.help_academy.icon}
-            colorClass={DASHBOARD_GROUPS.help_academy.colorClass}
-            indexUrl={DASHBOARD_GROUPS.help_academy.indexUrl}
-          />
-          <div className="grid md:grid-cols-3 gap-4">
-            {tilesByGroup.help_academy.map(tile => (
-              <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
-            ))}
-          </div>
-        </section>
+        <CollapsibleSection
+          id="help_academy"
+          title={<>Help<span className="text-helpconfort-orange">!</span> Academy</>}
+          icon={DASHBOARD_GROUPS.help_academy.icon}
+          colorClass={DASHBOARD_GROUPS.help_academy.colorClass}
+        >
+          {tilesByGroup.help_academy.map(tile => (
+            <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+          ))}
+        </CollapsibleSection>
       )}
 
       {/* Pilotage Section */}
       {tilesByGroup.pilotage.length > 0 && (
-        <section>
-          <SectionHeader 
-            title={DASHBOARD_GROUPS.pilotage.title}
-            icon={DASHBOARD_GROUPS.pilotage.icon}
-            colorClass={DASHBOARD_GROUPS.pilotage.colorClass}
-            indexUrl={DASHBOARD_GROUPS.pilotage.indexUrl}
-          />
-          <div className="grid md:grid-cols-3 gap-4">
-            {tilesByGroup.pilotage.map(tile => (
-              <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
-            ))}
-          </div>
-        </section>
+        <CollapsibleSection
+          id="pilotage"
+          title={DASHBOARD_GROUPS.pilotage.title}
+          icon={DASHBOARD_GROUPS.pilotage.icon}
+          colorClass={DASHBOARD_GROUPS.pilotage.colorClass}
+        >
+          {tilesByGroup.pilotage.map(tile => (
+            <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+          ))}
+        </CollapsibleSection>
       )}
 
       {/* Support Section */}
       {tilesByGroup.support.length > 0 && (
-        <section>
-          <SectionHeader 
-            title={DASHBOARD_GROUPS.support.title}
-            icon={DASHBOARD_GROUPS.support.icon}
-            colorClass={DASHBOARD_GROUPS.support.colorClass}
-            indexUrl={DASHBOARD_GROUPS.support.indexUrl}
-          />
-          <div className="grid md:grid-cols-3 gap-4">
-            {tilesByGroup.support.map(tile => (
-              <DashboardTileCard 
-                key={tile.id} 
-                tile={tile} 
-                isAdmin={isAdmin}
-                dynamicBadge={tile.id === 'CONSOLE_SUPPORT' && newTicketsCount > 0 ? newTicketsCount : undefined}
-              />
-            ))}
-          </div>
-        </section>
+        <CollapsibleSection
+          id="support"
+          title={DASHBOARD_GROUPS.support.title}
+          icon={DASHBOARD_GROUPS.support.icon}
+          colorClass={DASHBOARD_GROUPS.support.colorClass}
+        >
+          {tilesByGroup.support.map(tile => (
+            <DashboardTileCard 
+              key={tile.id} 
+              tile={tile} 
+              isAdmin={isAdmin}
+              dynamicBadge={tile.id === 'CONSOLE_SUPPORT' && newTicketsCount > 0 ? newTicketsCount : undefined}
+            />
+          ))}
+        </CollapsibleSection>
       )}
 
       {/* Gestion de Projet Section */}
       {tilesByGroup.projects.length > 0 && (
-        <section>
-          <SectionHeader 
-            title={DASHBOARD_GROUPS.projects.title}
-            icon={DASHBOARD_GROUPS.projects.icon}
-            colorClass={DASHBOARD_GROUPS.projects.colorClass}
-            indexUrl={DASHBOARD_GROUPS.projects.indexUrl}
-          />
-          <div className="grid md:grid-cols-3 gap-4">
-            {tilesByGroup.projects.map(tile => (
-              <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
-            ))}
-          </div>
-        </section>
+        <CollapsibleSection
+          id="projects"
+          title={DASHBOARD_GROUPS.projects.title}
+          icon={DASHBOARD_GROUPS.projects.icon}
+          colorClass={DASHBOARD_GROUPS.projects.colorClass}
+        >
+          {tilesByGroup.projects.map(tile => (
+            <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+          ))}
+        </CollapsibleSection>
       )}
 
       {/* Franchiseur Section */}
       {tilesByGroup.franchiseur.length > 0 && (
-        <section>
-          <SectionHeader 
-            title={DASHBOARD_GROUPS.franchiseur.title}
-            icon={DASHBOARD_GROUPS.franchiseur.icon}
-            colorClass={DASHBOARD_GROUPS.franchiseur.colorClass}
-            indexUrl={DASHBOARD_GROUPS.franchiseur.indexUrl}
-          />
-          <div className="grid md:grid-cols-3 gap-4">
-            {tilesByGroup.franchiseur.map(tile => (
-              <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
-            ))}
-          </div>
-        </section>
+        <CollapsibleSection
+          id="franchiseur"
+          title={DASHBOARD_GROUPS.franchiseur.title}
+          icon={DASHBOARD_GROUPS.franchiseur.icon}
+          colorClass={DASHBOARD_GROUPS.franchiseur.colorClass}
+        >
+          {tilesByGroup.franchiseur.map(tile => (
+            <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+          ))}
+        </CollapsibleSection>
       )}
 
       {/* Admin Section */}
       {tilesByGroup.admin.length > 0 && (
-        <section>
-          <SectionHeader 
-            title={DASHBOARD_GROUPS.admin.title}
-            icon={DASHBOARD_GROUPS.admin.icon}
-            colorClass={DASHBOARD_GROUPS.admin.colorClass}
-            indexUrl={DASHBOARD_GROUPS.admin.indexUrl}
-          />
-          <div className="grid md:grid-cols-4 gap-4">
-            {tilesByGroup.admin.map(tile => (
-              <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
-            ))}
-          </div>
-        </section>
+        <CollapsibleSection
+          id="admin"
+          title={DASHBOARD_GROUPS.admin.title}
+          icon={DASHBOARD_GROUPS.admin.icon}
+          colorClass={DASHBOARD_GROUPS.admin.colorClass}
+        >
+          {tilesByGroup.admin.map(tile => (
+            <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+          ))}
+        </CollapsibleSection>
       )}
     </div>
   );
@@ -206,17 +180,20 @@ export default function Landing() {
 const DashboardTileCard = memo(function DashboardTileCard({ tile, dynamicBadge, isAdmin }: { tile: DashboardTile; dynamicBadge?: number; isAdmin?: boolean }) {
   const Icon = tile.icon;
   const badgeContent = dynamicBadge ?? tile.badge;
-  // Les admins (N5+) peuvent accéder aux tuiles désactivées
   const isDisabled = tile.isDisabled && !isAdmin;
 
   const content = (
-    <div className={`group relative rounded-xl border border-helpconfort-blue/15 p-4
+    <div className={`
+      group relative rounded-xl border border-helpconfort-blue/15 p-4
       bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
+      dark:via-background dark:to-background
       shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
+      min-w-[280px] md:min-w-0 snap-start
       ${isDisabled 
         ? 'opacity-50 cursor-not-allowed' 
         : 'cursor-pointer hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5'
-      }`}>
+      }
+    `}>
       {badgeContent && (
         <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full z-10 ${
           typeof badgeContent === 'number' 
@@ -245,31 +222,4 @@ const DashboardTileCard = memo(function DashboardTileCard({ tile, dynamicBadge, 
   }
 
   return <Link to={tile.route}>{content}</Link>;
-});
-
-interface SectionHeaderProps {
-  title: React.ReactNode;
-  icon: LucideIcon;
-  colorClass: string;
-  indexUrl: string;
-}
-
-const SectionHeader = memo(function SectionHeader({ title, icon: Icon, colorClass, indexUrl }: SectionHeaderProps) {
-  return (
-    <Link 
-      to={indexUrl}
-      className="group flex items-center justify-between mb-4 py-2 px-4 -mx-4 rounded-xl border border-transparent hover:border-border hover:bg-muted/80 hover:shadow-sm transition-all cursor-pointer"
-    >
-      <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-muted group-hover:bg-background transition-colors`}>
-          <Icon className={`w-4 h-4 ${colorClass}`} />
-        </div>
-        {title}
-      </h2>
-      <div className="flex items-center gap-1.5 text-sm text-muted-foreground group-hover:text-primary transition-colors">
-        <span className="hidden sm:inline text-xs font-medium">Voir tout</span>
-        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
-      </div>
-    </Link>
-  );
 });
