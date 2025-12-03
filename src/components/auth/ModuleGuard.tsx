@@ -96,6 +96,7 @@ function ModuleAccessDeniedPage({
     support: 'Support',
     admin_plateforme: 'Administration',
     apogee_tickets: 'Ticketing Développement',
+    rh_parc: 'RH & Parc',
   };
 
   return (
