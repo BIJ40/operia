@@ -85,6 +85,7 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
           period_month: formData.period_month || null,
           period_year: formData.period_year || null,
           visibility: formData.visibility,
+          subfolder: formData.subfolder || null,
           uploaded_by: user.id,
         })
         .select('*')

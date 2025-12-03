@@ -1,6 +1,6 @@
 /**
  * Finder RH - Gestionnaire de documents collaborateur
- * Interface style Finder avec drag & drop, catégories et preview
+ * Interface style Finder avec drag & drop, catégories, sous-dossiers et preview
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FolderOpen, Loader2, Upload, Grid3X3, List } from 'lucide-react';
+import { FolderOpen, Loader2, Upload, FolderPlus, ChevronRight } from 'lucide-react';
 import { useCollaboratorDocuments } from '@/hooks/useCollaboratorDocuments';
 import { CollaboratorDocument, DocumentType, DocumentVisibility, DOCUMENT_TYPES, DOCUMENT_VISIBILITY } from '@/types/collaboratorDocument';
 import { DocumentCategoryTabs } from './DocumentCategoryTabs';
@@ -51,6 +51,7 @@ interface PendingUpload {
   title: string;
   doc_type: DocumentType;
   visibility: DocumentVisibility;
+  subfolder?: string | null;
 }
 
 export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManagerProps) {
@@ -66,11 +67,14 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
 
   // State
   const [activeCategory, setActiveCategory] = useState<DocumentType | 'ALL'>('ALL');
+  const [activeSubfolder, setActiveSubfolder] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<CollaboratorDocument | null>(null);
   const [documentToDelete, setDocumentToDelete] = useState<CollaboratorDocument | null>(null);
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [currentUploadIndex, setCurrentUploadIndex] = useState(0);
+  const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
 
   // Compute category counts
   const categoryCounts = useMemo(() => {
@@ -80,11 +84,39 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     }, {} as Record<string, number>);
   }, [documents]);
 
-  // Filter documents by active category
-  const filteredDocuments = useMemo(() => {
-    if (activeCategory === 'ALL') return documents;
-    return documents.filter((doc) => doc.doc_type === activeCategory);
+  // Get subfolders for active category
+  const subfolders = useMemo(() => {
+    if (activeCategory === 'ALL') return [];
+    const folderSet = new Set<string>();
+    documents
+      .filter((doc) => doc.doc_type === activeCategory && doc.subfolder)
+      .forEach((doc) => folderSet.add(doc.subfolder!));
+    return Array.from(folderSet).sort();
   }, [documents, activeCategory]);
+
+  // Filter documents by active category and subfolder
+  const filteredDocuments = useMemo(() => {
+    let filtered = documents;
+    
+    if (activeCategory !== 'ALL') {
+      filtered = filtered.filter((doc) => doc.doc_type === activeCategory);
+    }
+    
+    if (activeSubfolder !== null) {
+      filtered = filtered.filter((doc) => doc.subfolder === activeSubfolder);
+    } else if (activeCategory !== 'ALL') {
+      // When in a category but no subfolder selected, show only root docs (no subfolder)
+      filtered = filtered.filter((doc) => !doc.subfolder);
+    }
+    
+    return filtered;
+  }, [documents, activeCategory, activeSubfolder]);
+
+  // Handle category change - reset subfolder
+  const handleCategoryChange = (category: DocumentType | 'ALL') => {
+    setActiveCategory(category);
+    setActiveSubfolder(null);
+  };
 
   // Handle files dropped
   const handleFilesDropped = useCallback((files: File[], suggestedType?: DocumentType) => {
@@ -93,14 +125,15 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     const uploads: PendingUpload[] = files.map((file) => ({
       file,
       title: file.name.replace(/\.[^/.]+$/, ''),
-      doc_type: suggestedType || 'OTHER',
+      doc_type: suggestedType || (activeCategory !== 'ALL' ? activeCategory : 'OTHER'),
       visibility: 'ADMIN_ONLY' as DocumentVisibility,
+      subfolder: activeSubfolder,
     }));
 
     setPendingUploads(uploads);
     setCurrentUploadIndex(0);
     setShowUploadDialog(true);
-  }, [canManage]);
+  }, [canManage, activeCategory, activeSubfolder]);
 
   // Handle upload confirmation
   const handleConfirmUpload = async () => {
@@ -113,6 +146,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
         doc_type: upload.doc_type,
         title: upload.title,
         visibility: upload.visibility,
+        subfolder: upload.subfolder || null,
         file: upload.file,
       });
 
@@ -127,6 +161,17 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     } catch (error) {
       // Error handled by mutation
     }
+  };
+
+  // Handle create new subfolder (placeholder - just creates the subfolder name for future uploads)
+  const handleCreateSubfolder = () => {
+    if (!newFolderName.trim()) return;
+    
+    // Navigate to the new subfolder (documents uploaded here will have this subfolder)
+    setActiveSubfolder(newFolderName.trim());
+    setShowNewFolderDialog(false);
+    setNewFolderName('');
+    toast.success(`Dossier "${newFolderName.trim()}" créé`);
   };
 
   // Handle rename
@@ -172,10 +217,58 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
           {/* Category Tabs */}
           <DocumentCategoryTabs
             activeCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
+            onCategoryChange={handleCategoryChange}
             counts={categoryCounts}
             totalCount={documents.length}
           />
+
+          {/* Breadcrumb + New Folder Button (when in a category) */}
+          {activeCategory !== 'ALL' && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1 text-sm">
+                <button
+                  onClick={() => setActiveSubfolder(null)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {DOCUMENT_TYPES.find((t) => t.value === activeCategory)?.label || activeCategory}
+                </button>
+                {activeSubfolder && (
+                  <>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{activeSubfolder}</span>
+                  </>
+                )}
+              </div>
+              
+              {canManage && !activeSubfolder && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowNewFolderDialog(true)}
+                  className="gap-2"
+                >
+                  <FolderPlus className="h-4 w-4" />
+                  Nouveau dossier
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Subfolders (only when in category root, not in a subfolder) */}
+          {activeCategory !== 'ALL' && !activeSubfolder && subfolders.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {subfolders.map((folder) => (
+                <button
+                  key={folder}
+                  onClick={() => setActiveSubfolder(folder)}
+                  className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border/50 hover:border-helpconfort-blue hover:bg-helpconfort-blue/5 transition-all group"
+                >
+                  <FolderOpen className="h-10 w-10 text-helpconfort-orange group-hover:text-helpconfort-blue transition-colors" />
+                  <span className="text-sm font-medium text-center line-clamp-2">{folder}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Dropzone (only if can manage) */}
           {canManage && (
@@ -321,6 +414,41 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* New Folder Dialog */}
+      <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Nouveau dossier</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="folder-name">Nom du dossier</Label>
+            <Input
+              id="folder-name"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              placeholder="Ex: 2024, CDI, Avenants..."
+              className="mt-2"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newFolderName.trim()) {
+                  handleCreateSubfolder();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewFolderDialog(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleCreateSubfolder}
+              disabled={!newFolderName.trim()}
+            >
+              Créer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
