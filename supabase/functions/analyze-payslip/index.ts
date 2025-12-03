@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -196,16 +197,9 @@ serve(async (req) => {
       );
     }
 
-    // Convertir le PDF en base64 (chunked pour éviter stack overflow)
+    // Convertir le PDF en base64 (utiliser l'encodeur Deno natif pour éviter stack overflow)
     const arrayBuffer = await fileData.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    let binary = '';
-    const chunkSize = 8192;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      const chunk = bytes.subarray(i, i + chunkSize);
-      binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
-    }
-    const base64 = btoa(binary);
+    const base64 = base64Encode(arrayBuffer);
 
     // Appeler Lovable AI avec le PDF
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
