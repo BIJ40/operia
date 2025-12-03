@@ -26,7 +26,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     },
   },
   
-  // N1 - Utilisateur franchisé
+  // N1 - Utilisateur franchisé (salarié agence)
   franchisee_user: {
     help_academy: {
       enabled: true,
@@ -35,6 +35,10 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     support: {
       enabled: true,
       options: { user: true, agent: false, admin: false }
+    },
+    rh: {
+      enabled: true,
+      options: { coffre: true, rh_viewer: false, rh_admin: false }
     },
   },
   
@@ -51,6 +55,10 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     support: {
       enabled: true,
       options: { user: true, agent: false, admin: false }
+    },
+    rh: {
+      enabled: true,
+      options: { coffre: true, rh_viewer: true, rh_admin: true }
     },
   },
   
