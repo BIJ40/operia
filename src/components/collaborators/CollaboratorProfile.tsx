@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { Collaborator, CollaboratorTab, COLLABORATOR_TABS } from '@/types/collaborator';
 import { ContractSalaryTab } from './ContractSalaryTab';
+import { DocumentsTab } from './DocumentsTab';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -209,13 +210,9 @@ export function CollaboratorProfile({
           </div>
         </TabsContent>
 
-        {/* Placeholder tabs for future phases */}
+        {/* Documents RH Tab */}
         <TabsContent value="documents" className="mt-6">
-          <PlaceholderTab
-            icon={FileText}
-            title="Documents RH"
-            description="Cette section sera disponible dans la Phase 2 du module RH & Parc."
-          />
+          <DocumentsTab collaboratorId={collaborator.id} canManage={canManage} />
         </TabsContent>
 
         <TabsContent value="contract" className="mt-6">
