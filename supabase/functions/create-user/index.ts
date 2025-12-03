@@ -239,7 +239,7 @@ serve(async (req) => {
                 .credential-item { margin: 15px 0; }
                 .credential-label { font-weight: bold; color: #666; font-size: 14px; }
                 .credential-value { font-size: 18px; color: #2563eb; font-weight: bold; font-family: monospace; }
-                .button { display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; }
+                .link { color: #2563eb; text-decoration: underline; }
                 .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
               </style>
             </head>
@@ -262,11 +262,7 @@ serve(async (req) => {
                     </div>
                   </div>
                   <p><strong>⚠️ Important :</strong> Ce mot de passe est temporaire. Vous devrez le modifier lors de votre première connexion.</p>
-                  <div style="text-align: center;">
-                    <a href="${Deno.env.get('APP_URL') || 'https://www.helpconfort.services'}" class="button">
-                      Se connecter
-                    </a>
-                  </div>
+                  <p>👉 <a href="${Deno.env.get('APP_URL') || 'https://www.helpconfort.services'}" class="link">Se connecter à HelpConfort Services</a></p>
                   <div class="footer">
                     <p>© ${new Date().getFullYear()} HelpConfort Services</p>
                   </div>
