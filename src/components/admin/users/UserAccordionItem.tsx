@@ -1,5 +1,22 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { GlobalRole, GLOBAL_ROLES, GLOBAL_ROLE_LABELS, GLOBAL_ROLE_COLORS, getAllRolesSorted } from '@/types/globalRoles';
+
+// Mapping rôle global → options RH autorisées (hard constraint)
+const RH_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
+  base_user: ['coffre'],
+  franchisee_user: ['coffre'],
+  franchisee_admin: ['coffre', 'rh_viewer', 'rh_admin'],
+  franchisor_user: ['coffre', 'rh_viewer', 'rh_admin'],
+  franchisor_admin: ['coffre', 'rh_viewer', 'rh_admin'],
+  platform_admin: ['coffre', 'rh_viewer', 'rh_admin'],
+  superadmin: ['coffre', 'rh_viewer', 'rh_admin'],
+};
+
+// Vérifie si une option RH est autorisée pour ce rôle
+function isRhOptionAllowedForRole(userRole: GlobalRole | null, optionKey: string): boolean {
+  if (!userRole) return false;
+  return RH_OPTIONS_BY_ROLE[userRole]?.includes(optionKey) ?? false;
+}
 import { MODULE_DEFINITIONS, EnabledModules, ModuleKey, ModuleOptionsState, canAccessModule } from '@/types/modules';
 import { UserProfile } from '@/hooks/use-user-management';
 import { Badge } from '@/components/ui/badge';
@@ -282,16 +299,32 @@ export const UserAccordionItem = memo(function UserAccordionItem({
                           <PopoverContent className="w-64 bg-background z-50">
                             <p className="text-sm text-muted-foreground mb-2">{moduleDef.description || 'Options du module'}</p>
                             <div className="space-y-2">
-                              {moduleDef.options.map(opt => (
-                                <div key={opt.key} className="flex items-center gap-2">
-                                  <Checkbox
-                                    checked={options[opt.key] ?? opt.defaultEnabled}
-                                    onCheckedChange={(checked) => onModuleOptionToggle(moduleDef.key, opt.key, !!checked)}
-                                    disabled={!isEnabled || !canEdit}
-                                  />
-                                  <span className="text-sm">{opt.label}</span>
-                                </div>
-                              ))}
+                              {moduleDef.options.map(opt => {
+                                // Pour le module RH, vérifier les contraintes de rôle
+                                const isRhModule = moduleDef.key === 'rh';
+                                const isOptionAllowedForRole = isRhModule 
+                                  ? isRhOptionAllowedForRole(effectiveRole, opt.key)
+                                  : true;
+                                const isOptionDisabled = !isEnabled || !canEdit || !isOptionAllowedForRole;
+                                const isOptionChecked = isOptionAllowedForRole && (options[opt.key] ?? opt.defaultEnabled);
+                                
+                                return (
+                                  <div 
+                                    key={opt.key} 
+                                    className={`flex items-center gap-2 ${!isOptionAllowedForRole ? 'opacity-50' : ''}`}
+                                  >
+                                    <Checkbox
+                                      checked={isOptionChecked}
+                                      onCheckedChange={(checked) => onModuleOptionToggle(moduleDef.key, opt.key, !!checked)}
+                                      disabled={isOptionDisabled}
+                                    />
+                                    <span className="text-sm">{opt.label}</span>
+                                    {isRhModule && !isOptionAllowedForRole && (
+                                      <span className="text-xs text-destructive">(N2+ requis)</span>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           </PopoverContent>
                         </Popover>
