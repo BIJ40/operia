@@ -130,7 +130,7 @@ export async function loadSourceData(
   const result: LoadedData = {};
   const debug: LoadDebugInfo = {
     apiUrl: '',
-    apiKeyPresent: !!import.meta.env.VITE_APOGEE_API_KEY,
+    apiKeyPresent: true, // API key is now managed server-side via proxy
     rawCounts: {},
     filteredCounts: {},
     appliedFilters: {},

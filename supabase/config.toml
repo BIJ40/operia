@@ -74,3 +74,6 @@ verify_jwt = true
 
 [functions.auto-classify-modules]
 verify_jwt = true
+
+[functions.proxy-apogee]
+verify_jwt = true
