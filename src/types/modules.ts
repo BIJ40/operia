@@ -15,7 +15,8 @@ export const MODULES = {
   support: 'support',
   admin_plateforme: 'admin_plateforme',
   apogee_tickets: 'apogee_tickets',
-  rh_parc: 'rh_parc',
+  rh: 'rh',     // Module RH séparé
+  parc: 'parc', // Module Parc séparé
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
@@ -59,11 +60,15 @@ export const MODULE_OPTIONS = {
     import: 'apogee_tickets.import',
     manage: 'apogee_tickets.manage',
   },
-  rh_parc: {
-    coffre: 'rh_parc.coffre',       // Coffre-fort salarié (accès perso uniquement)
-    rh_viewer: 'rh_parc.rh_viewer', // Gestion RH opérationnelle (sans paie)
-    rh_admin: 'rh_parc.rh_admin',   // Administration RH complète (paie incluse)
-    parc: 'rh_parc.parc',           // Flotte, EPI, équipements
+  rh: {
+    coffre: 'rh.coffre',       // Coffre-fort salarié (accès perso uniquement)
+    rh_viewer: 'rh.rh_viewer', // Gestion RH opérationnelle (sans paie)
+    rh_admin: 'rh.rh_admin',   // Administration RH complète (paie incluse)
+  },
+  parc: {
+    vehicules: 'parc.vehicules',     // Gestion flotte véhicules
+    epi: 'parc.epi',                 // Gestion EPI
+    equipements: 'parc.equipements', // Autres équipements
   },
 } as const;
 
@@ -176,17 +181,29 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     ],
   },
   {
-    key: 'rh_parc',
-    label: 'RH & Parc',
-    description: 'Gestion RH et parc véhicules/équipements',
+    key: 'rh',
+    label: 'RH',
+    description: 'Gestion des ressources humaines',
     icon: 'Briefcase',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'coffre', path: 'rh_parc.coffre', label: 'Mon Coffre RH', description: 'Accès à ses propres documents RH et demandes', defaultEnabled: false },
-      { key: 'rh_viewer', path: 'rh_parc.rh_viewer', label: 'Gestionnaire RH', description: 'Voir/traiter les documents et demandes RH de l\'équipe (sans paie)', defaultEnabled: false },
-      { key: 'rh_admin', path: 'rh_parc.rh_admin', label: 'Admin RH', description: 'Gestion complète RH : salaires, contrats, paramètres paie', defaultEnabled: false },
-      { key: 'parc', path: 'rh_parc.parc', label: 'Parc', description: 'Gestion flotte véhicules, EPI, équipements', defaultEnabled: false },
+      { key: 'coffre', path: 'rh.coffre', label: 'Mon Coffre RH', description: 'Accès à ses propres documents RH et demandes', defaultEnabled: false },
+      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire RH', description: 'Voir/traiter les documents et demandes RH de l\'équipe (sans paie)', defaultEnabled: false },
+      { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète RH : salaires, contrats, paramètres paie', defaultEnabled: false },
+    ],
+  },
+  {
+    key: 'parc',
+    label: 'Parc',
+    description: 'Gestion flotte véhicules et équipements',
+    icon: 'Truck',
+    defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_user',
+    options: [
+      { key: 'vehicules', path: 'parc.vehicules', label: 'Véhicules', description: 'Gestion de la flotte véhicules', defaultEnabled: true },
+      { key: 'epi', path: 'parc.epi', label: 'EPI', description: 'Équipements de protection individuelle', defaultEnabled: true },
+      { key: 'equipements', path: 'parc.equipements', label: 'Équipements', description: 'Autres équipements professionnels', defaultEnabled: true },
     ],
   },
 ];
@@ -199,7 +216,8 @@ export interface EnabledModules {
   support?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
   apogee_tickets?: boolean | ModuleOptionsState;
-  rh_parc?: boolean | ModuleOptionsState;
+  rh?: boolean | ModuleOptionsState;
+  parc?: boolean | ModuleOptionsState;
 }
 
 export interface ModuleOptionsState {

@@ -13,8 +13,10 @@ import { Loader2, Lock } from 'lucide-react';
 interface ModuleGuardProps {
   /** Module requis pour accéder */
   moduleKey: ModuleKey;
-  /** Option spécifique du module requise (ex: 'coffre' pour rh_parc.coffre) */
+  /** Option spécifique du module requise (ex: 'coffre' pour rh.coffre) */
   requiredOption?: string;
+  /** Liste d'options acceptées (logique OR) - ex: ['rh_viewer', 'rh_admin'] */
+  requiredOptions?: string[];
   /** Contenu à afficher si autorisé */
   children: ReactNode;
   /** Redirection si non autorisé (défaut: /) */
@@ -30,11 +32,13 @@ interface ModuleGuardProps {
  * Autorise l'accès si:
  * - L'utilisateur a le module activé dans enabled_modules
  * - ET l'option spécifique si requiredOption est défini
+ * - OU au moins une des options dans requiredOptions (logique OR)
  * - OU l'utilisateur est platform_admin/superadmin (N5+)
  */
 export function ModuleGuard({ 
   moduleKey, 
   requiredOption,
+  requiredOptions,
   children, 
   redirectTo = '/',
   showError = false,
@@ -63,12 +67,20 @@ export function ModuleGuard({
   // Vérifier si le module est activé
   const hasModule = isModuleEnabled(enabledModules, moduleKey);
   
-  // Vérifier si l'option spécifique est activée (si requise)
-  const hasOption = requiredOption 
-    ? isModuleOptionEnabled(enabledModules, moduleKey, requiredOption)
-    : true;
+  // Vérifier les options (logique OR si requiredOptions, sinon requiredOption simple)
+  let hasRequiredOption = true;
+  
+  if (requiredOptions && requiredOptions.length > 0) {
+    // Logique OR : au moins une des options doit être activée
+    hasRequiredOption = requiredOptions.some(opt => 
+      isModuleOptionEnabled(enabledModules, moduleKey, opt)
+    );
+  } else if (requiredOption) {
+    // Option unique requise
+    hasRequiredOption = isModuleOptionEnabled(enabledModules, moduleKey, requiredOption);
+  }
 
-  if (!isAdmin && (!hasModule || !hasOption)) {
+  if (!isAdmin && (!hasModule || !hasRequiredOption)) {
     if (showError) {
       return (
         <ModuleAccessDeniedPage 
@@ -99,8 +111,9 @@ function ModuleAccessDeniedPage({
     reseau_franchiseur: 'Réseau Franchiseur',
     support: 'Support',
     admin_plateforme: 'Administration',
-    apogee_tickets: 'Ticketing Développement',
-    rh_parc: 'RH & Parc',
+    apogee_tickets: 'Gestion de Projet',
+    rh: 'RH',
+    parc: 'Parc',
   };
 
   return (

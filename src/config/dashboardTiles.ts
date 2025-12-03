@@ -131,7 +131,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.MON_COFFRE_RH,
     color: 'accent',
     group: 'pilotage',
-    requiresModule: 'rh_parc',
+    requiresModule: 'rh',
     requiresModuleOption: 'coffre', // Nécessite l'option coffre spécifiquement
   },
   // Support

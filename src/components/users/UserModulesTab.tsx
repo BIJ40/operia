@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Info, ChevronDown, Lock, Briefcase, FileText, Eye, ShieldCheck } from 'lucide-react';
+import { Info, ChevronDown, Lock, Eye, ShieldCheck, Briefcase, Truck } from 'lucide-react';
 
 interface UserModulesTabProps {
   enabledModules: EnabledModules | null;
@@ -33,12 +33,24 @@ const RH_OPTION_LABELS: Record<string, { label: string; description: string; ico
     description: 'Gestion complète : salaires, contrats, paramètres paie, exports',
     icon: <ShieldCheck className="w-4 h-4 text-red-500" />,
   },
-  parc: {
-    label: 'Parc',
-    description: 'Gestion flotte véhicules, EPI, équipements',
-    icon: <FileText className="w-4 h-4 text-green-500" />,
-  },
 };
+
+// Mapping rôle global → options RH autorisées (hard constraint)
+const RH_OPTIONS_BY_ROLE: Record<GlobalRole, string[]> = {
+  base_user: ['coffre'], // N0 - Seulement coffre perso
+  franchisee_user: ['coffre'], // N1 - Salarié agence = coffre uniquement
+  franchisee_admin: ['coffre', 'rh_viewer', 'rh_admin'], // N2 - Dirigeant = tout
+  franchisor_user: ['coffre', 'rh_viewer', 'rh_admin'], // N3+
+  franchisor_admin: ['coffre', 'rh_viewer', 'rh_admin'], // N4+
+  platform_admin: ['coffre', 'rh_viewer', 'rh_admin'], // N5+
+  superadmin: ['coffre', 'rh_viewer', 'rh_admin'], // N6
+};
+
+// Vérifie si une option RH est autorisée pour ce rôle
+function isRhOptionAllowedForRole(userRole: GlobalRole | null, optionKey: string): boolean {
+  if (!userRole) return false;
+  return RH_OPTIONS_BY_ROLE[userRole]?.includes(optionKey) ?? false;
+}
 
 export const UserModulesTab = memo(function UserModulesTab({
   enabledModules,
@@ -69,19 +81,20 @@ export const UserModulesTab = memo(function UserModulesTab({
     return options[optionKey] ?? optionDef?.defaultEnabled ?? false;
   };
 
-  // Séparer le module RH des autres
-  const rhModule = MODULE_DEFINITIONS.find(m => m.key === 'rh_parc');
-  const otherModules = MODULE_DEFINITIONS.filter(m => m.key !== 'rh_parc');
+  // Séparer les modules RH/Parc des autres
+  const rhModule = MODULE_DEFINITIONS.find(m => m.key === 'rh');
+  const parcModule = MODULE_DEFINITIONS.find(m => m.key === 'parc');
+  const otherModules = MODULE_DEFINITIONS.filter(m => m.key !== 'rh' && m.key !== 'parc');
 
   return (
     <div className="space-y-6">
-      {/* Module RH & Parc - Section dédiée */}
+      {/* Module RH - Section dédiée */}
       {rhModule && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Briefcase className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold">RH & Parc</h3>
-            {!canAccessModule(userRole, 'rh_parc') && (
+            <h3 className="font-semibold">Ressources Humaines</h3>
+            {!canAccessModule(userRole, 'rh') && (
               <Badge variant="outline" className="text-xs text-muted-foreground">
                 Rôle insuffisant
               </Badge>
@@ -91,14 +104,14 @@ export const UserModulesTab = memo(function UserModulesTab({
           <div className="rounded-lg border p-4 space-y-4 bg-muted/20">
             <div className="flex items-center gap-3">
               <Switch
-                checked={isModuleEnabled('rh_parc')}
-                onCheckedChange={(checked) => onModuleToggle('rh_parc', checked)}
-                disabled={!canEdit || !canAccessModule(userRole, 'rh_parc')}
+                checked={isModuleEnabled('rh')}
+                onCheckedChange={(checked) => onModuleToggle('rh', checked)}
+                disabled={!canEdit || !canAccessModule(userRole, 'rh')}
               />
-              <span className="text-sm font-medium">Activer le module RH & Parc</span>
+              <span className="text-sm font-medium">Activer le module RH</span>
             </div>
 
-            {isModuleEnabled('rh_parc') && (
+            {isModuleEnabled('rh') && (
               <div className="pl-4 space-y-3 border-l-2 border-primary/30">
                 <p className="text-xs text-muted-foreground mb-3">
                   Sélectionnez les niveaux d'accès pour cet utilisateur :
@@ -106,29 +119,40 @@ export const UserModulesTab = memo(function UserModulesTab({
                 
                 {rhModule.options.map(opt => {
                   const rhLabel = RH_OPTION_LABELS[opt.key];
-                  const isChecked = isOptionEnabled('rh_parc', opt.key);
+                  const isChecked = isOptionEnabled('rh', opt.key);
+                  const isAllowed = isRhOptionAllowedForRole(userRole, opt.key);
+                  const isDisabled = !canEdit || !isAllowed;
                   
                   return (
                     <div 
                       key={opt.key} 
                       className={`flex items-start gap-3 p-3 rounded-md transition-colors ${
-                        isChecked ? 'bg-primary/5 border border-primary/20' : 'bg-background border border-transparent hover:bg-muted/50'
+                        isChecked && isAllowed 
+                          ? 'bg-primary/5 border border-primary/20' 
+                          : isAllowed 
+                            ? 'bg-background border border-transparent hover:bg-muted/50'
+                            : 'bg-muted/30 border border-muted opacity-50'
                       }`}
                     >
                       <Checkbox
                         id={`rh-opt-${opt.key}`}
-                        checked={isChecked}
-                        onCheckedChange={(checked) => onModuleOptionToggle('rh_parc', opt.key, !!checked)}
-                        disabled={!canEdit}
+                        checked={isChecked && isAllowed}
+                        onCheckedChange={(checked) => onModuleOptionToggle('rh', opt.key, !!checked)}
+                        disabled={isDisabled}
                         className="mt-0.5"
                       />
                       <div className="flex-1 space-y-1">
                         <label 
                           htmlFor={`rh-opt-${opt.key}`}
-                          className="flex items-center gap-2 font-medium text-sm cursor-pointer"
+                          className={`flex items-center gap-2 font-medium text-sm ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         >
                           {rhLabel?.icon}
                           {rhLabel?.label || opt.label}
+                          {!isAllowed && (
+                            <Badge variant="outline" className="text-xs text-destructive ml-2">
+                              Rôle N{GLOBAL_ROLES.franchisee_admin}+ requis
+                            </Badge>
+                          )}
                         </label>
                         <p className="text-xs text-muted-foreground">
                           {rhLabel?.description || opt.description}
@@ -146,6 +170,59 @@ export const UserModulesTab = memo(function UserModulesTab({
                     <li>Dirigeant / Responsable paie → <strong>Admin RH</strong></li>
                   </ul>
                 </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Module Parc - Section dédiée */}
+      {parcModule && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Truck className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold">Parc & Équipements</h3>
+            {!canAccessModule(userRole, 'parc') && (
+              <Badge variant="outline" className="text-xs text-muted-foreground">
+                Rôle insuffisant
+              </Badge>
+            )}
+          </div>
+          
+          <div className="rounded-lg border p-4 space-y-4 bg-muted/20">
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={isModuleEnabled('parc')}
+                onCheckedChange={(checked) => onModuleToggle('parc', checked)}
+                disabled={!canEdit || !canAccessModule(userRole, 'parc')}
+              />
+              <span className="text-sm font-medium">Activer le module Parc</span>
+            </div>
+
+            {isModuleEnabled('parc') && (
+              <div className="pl-4 space-y-2 border-l-2 border-primary/30">
+                {parcModule.options.map(opt => (
+                  <div key={opt.key} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`parc-opt-${opt.key}`}
+                      checked={isOptionEnabled('parc', opt.key)}
+                      onCheckedChange={(checked) => onModuleOptionToggle('parc', opt.key, !!checked)}
+                      disabled={!canEdit}
+                    />
+                    <label 
+                      htmlFor={`parc-opt-${opt.key}`}
+                      className="text-sm cursor-pointer"
+                    >
+                      {opt.label}
+                    </label>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="w-3 h-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>{opt.description}</TooltipContent>
+                    </Tooltip>
+                  </div>
+                ))}
               </div>
             )}
           </div>
