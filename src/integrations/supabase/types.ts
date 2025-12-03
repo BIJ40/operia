@@ -1230,6 +1230,7 @@ export type Database = {
           id: string
           period_month: number | null
           period_year: number | null
+          subfolder: string | null
           title: string
           updated_at: string | null
           uploaded_by: string | null
@@ -1248,6 +1249,7 @@ export type Database = {
           id?: string
           period_month?: number | null
           period_year?: number | null
+          subfolder?: string | null
           title: string
           updated_at?: string | null
           uploaded_by?: string | null
@@ -1266,6 +1268,7 @@ export type Database = {
           id?: string
           period_month?: number | null
           period_year?: number | null
+          subfolder?: string | null
           title?: string
           updated_at?: string | null
           uploaded_by?: string | null

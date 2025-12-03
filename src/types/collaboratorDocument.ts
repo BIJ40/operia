@@ -44,6 +44,7 @@ export interface CollaboratorDocument {
   period_month: number | null;
   period_year: number | null;
   visibility: DocumentVisibility;
+  subfolder: string | null;
   uploaded_by: string | null;
   created_at: string;
   updated_at: string;
@@ -56,5 +57,6 @@ export interface CollaboratorDocumentFormData {
   period_month?: number;
   period_year?: number;
   visibility: DocumentVisibility;
+  subfolder?: string | null;
   file: File;
 }
