@@ -1,25 +1,60 @@
 /**
  * Page de gestion des collaborateurs (Module RH & Parc)
+ * Crée un utilisateur portail (auth + profile) qui devient automatiquement un collaborateur
  */
 
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCollaborators } from '@/hooks/useCollaborators';
-import { CollaboratorList, CollaboratorForm } from '@/components/collaborators';
-import { CollaboratorFormData } from '@/types/collaborator';
+import { useUserManagement } from '@/hooks/use-user-management';
+import { useAdminAgencies } from '@/hooks/use-admin-agencies';
+import { useAuth } from '@/contexts/AuthContext';
+import { CollaboratorList } from '@/components/collaborators';
+import { CreateUserDialog } from '@/components/admin/users';
+import { GlobalRole, getRoleLevel } from '@/types/globalRoles';
+import { getUserManagementCapabilities } from '@/config/roleMatrix';
 
 export default function CollaborateursPage() {
+  const queryClient = useQueryClient();
+  const { agence, agencyId, globalRole } = useAuth();
+  
   const {
     collaborators,
     isLoading,
     canManage,
-    createMutation,
   } = useCollaborators();
+
+  // Hook de gestion utilisateurs pour la création via edge function
+  const { createUserMutation } = useUserManagement({ scope: 'ownAgency' });
+  
+  // Récupération des agences (on n'utilisera que l'agence courante pour le pré-remplissage)
+  const { data: agencies = [] } = useAdminAgencies();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  const handleCreate = (data: CollaboratorFormData) => {
-    createMutation.mutate(data, {
-      onSuccess: () => setShowCreateDialog(false),
+  // Calcul des rôles assignables et du niveau du créateur
+  const currentUserLevel = getRoleLevel(globalRole);
+  const capabilities = getUserManagementCapabilities(globalRole);
+  const assignableRoles = capabilities.canCreateRoles;
+
+  // Handler de création qui invalide les collaborateurs après succès
+  const handleCreate = async (data: { 
+    email: string; 
+    password: string; 
+    firstName: string; 
+    lastName: string; 
+    agence: string; 
+    roleAgence: string;
+    globalRole: GlobalRole; 
+    sendEmail: boolean;
+  }) => {
+    await createUserMutation.mutateAsync(data, {
+      onSuccess: () => {
+        setShowCreateDialog(false);
+        // Invalider la liste des collaborateurs car le trigger auto_create_collaborator
+        // a créé automatiquement l'entrée dans collaborators
+        queryClient.invalidateQueries({ queryKey: ['collaborators', agencyId] });
+      },
     });
   };
 
@@ -32,12 +67,16 @@ export default function CollaborateursPage() {
         onCreateClick={() => setShowCreateDialog(true)}
       />
 
-      <CollaboratorForm
+      {/* Dialog de création d'utilisateur (remplace CollaboratorForm) */}
+      <CreateUserDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onSubmit={handleCreate}
-        isPending={createMutation.isPending}
-        mode="create"
+        isPending={createUserMutation.isPending}
+        assignableRoles={assignableRoles}
+        agencies={agencies}
+        currentUserLevel={currentUserLevel}
+        currentUserAgency={agence}
       />
     </div>
   );
