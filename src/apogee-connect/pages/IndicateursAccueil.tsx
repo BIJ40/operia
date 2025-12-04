@@ -195,7 +195,7 @@ export default function IndicateursAccueil() {
                       <span className="text-white font-bold text-xs">📊</span>
                     </div>
                     <div className="absolute z-50 left-0 top-full mt-1 rounded-md border bg-popover px-2 py-1 text-[10px] text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                      Dossiers avec &gt; 6 interventions ou au moins 2 interventions travaux.
+                      Dossiers avec ≥6 visites ET ≥2500€ HT ET ≥2 univers.
                     </div>
                   </div>
                   <p className="text-xs font-medium text-muted-foreground">Dossiers complexes</p>

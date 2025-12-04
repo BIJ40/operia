@@ -151,6 +151,10 @@ export const tauxDossiersComplexes: StatDefinition = {
       });
     }
     
+    logDebug('STATIA', 'tauxDossiersComplexes - FILTERED', {
+      nbProjectsFiltres: projectsFiltres.length,
+    });
+    
     if (projectsFiltres.length === 0) {
       return {
         value: 0,
@@ -162,15 +166,29 @@ export const tauxDossiersComplexes: StatDefinition = {
       };
     }
     
-    // Analyser chaque projet
+    // Analyser chaque projet avec debug
     let nbComplexes = 0;
+    const debugResults: Array<{ projectId: string; ref?: string; visites: number; caHt: number; univers: number; isComplexe: boolean }> = [];
     
     for (const project of projectsFiltres) {
       const result = isDossierComplexe(project, interventions, factures);
+      debugResults.push({
+        projectId: project.id,
+        ref: project.ref || project.data?.ref,
+        ...result,
+      });
       if (result.isComplexe) {
         nbComplexes++;
       }
     }
+    
+    // Log les 10 premiers résultats pour debug
+    logDebug('STATIA', 'tauxDossiersComplexes - SAMPLES', {
+      sampleResults: debugResults.slice(0, 10),
+      nbMatchingVisites: debugResults.filter(r => r.visites >= DOSSIER_COMPLEXE_RULES.minVisites).length,
+      nbMatchingCaHt: debugResults.filter(r => r.caHt >= DOSSIER_COMPLEXE_RULES.minCaHt).length,
+      nbMatchingUnivers: debugResults.filter(r => r.univers >= DOSSIER_COMPLEXE_RULES.minUnivers).length,
+    });
     
     const tauxComplexite = projectsFiltres.length > 0
       ? (nbComplexes / projectsFiltres.length) * 100
