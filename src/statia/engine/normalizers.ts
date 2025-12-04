@@ -73,8 +73,10 @@ export function normalizeInterventionType(type: string | null | undefined): stri
 const PRODUCTIVE_TYPES = ['depannage', 'repair', 'travaux', 'work'];
 const NON_PRODUCTIVE_TYPES = ['rt', 'rdv', 'rdvtech', 'sav', 'diagnostic', 'th'];
 const VALID_INTERVENTION_STATES = ['validated', 'done', 'finished'];
-// États de facture inclus dans le CA selon STATIA_RULES (exclure draft)
-const INCLUDED_FACTURE_STATES = ['sent', 'paid', 'partial', 'partially_paid', 'overdue'];
+// États de facture EXCLUS du CA (brouillons, annulées, pro-forma)
+const EXCLUDED_FACTURE_STATES = ['draft', 'brouillon', 'cancelled', 'canceled', 'annulee', 'annulée', 'pro_forma', 'proforma', 'pro-forma'];
+// États de facture INCLUS dans le CA (validées, payées, envoyées, clôturées)
+const INCLUDED_FACTURE_STATES = ['sent', 'paid', 'partial', 'partially_paid', 'overdue', 'validee', 'validated', 'payee', 'cloturee', 'closed', 'invoice_sent', 'invoice'];
 
 /**
  * Vérifie si un type d'intervention est productif selon STATIA_RULES
@@ -172,11 +174,26 @@ export function extractProjectUniverses(project: any): string[] {
 }
 
 /**
- * Vérifie si une facture est dans les états inclus selon STATIA_RULES
+ * Vérifie si une facture doit être incluse dans le CA selon STATIA_RULES
+ * Priorité: exclure les états bloquants, puis inclure les états valides
  */
 export function isFactureStateIncluded(state: string | undefined): boolean {
-  if (!state) return true; // Inclure par défaut si pas d'état
-  return INCLUDED_FACTURE_STATES.includes(state.toLowerCase());
+  if (!state) return true; // Inclure par défaut si pas d'état (factures legacy)
+  
+  const stateLower = state.toLowerCase().trim();
+  
+  // D'abord exclure explicitement les brouillons/annulées/pro-forma
+  if (EXCLUDED_FACTURE_STATES.includes(stateLower)) {
+    return false;
+  }
+  
+  // Si état vide ou dans la liste incluse → inclure
+  if (stateLower === '' || INCLUDED_FACTURE_STATES.includes(stateLower)) {
+    return true;
+  }
+  
+  // Par défaut, inclure (factures sans état explicite mais valides)
+  return true;
 }
 
 /**

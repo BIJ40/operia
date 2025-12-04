@@ -30,17 +30,26 @@ export const caGlobalHt: StatDefinition = {
     let totalCA = 0;
     let factureCount = 0;
     let avoirCount = 0;
+    let factureTotal = 0;
+    let avoirTotal = 0;
     
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
       
-      // Filtrer par état si nécessaire
-      if (!isFactureStateIncluded(facture.state)) continue;
+      // Extraire le state depuis plusieurs sources possibles
+      const factureState = facture.state || facture.status || facture.statut 
+        || facture.data?.state || facture.data?.status || facture.paymentStatus || '';
+      
+      // Filtrer par état (exclure brouillons, annulées, pro-forma)
+      if (!isFactureStateIncluded(factureState)) continue;
       
       // Filtrer par date
       if (meta.date) {
         const date = new Date(meta.date);
         if (date < params.dateRange.start || date > params.dateRange.end) continue;
+      } else {
+        // Si pas de date, exclure la facture
+        continue;
       }
       
       // Appliquer le montant net (avoirs = négatifs)
@@ -48,25 +57,9 @@ export const caGlobalHt: StatDefinition = {
       
       if (meta.isAvoir) {
         avoirCount++;
-      } else {
-        factureCount++;
-      }
-    }
-    
-    // Calculer les totaux séparés pour l'explication
-    let factureTotal = 0;
-    let avoirTotal = 0;
-    
-    for (const facture of factures) {
-      const meta = extractFactureMeta(facture);
-      if (!isFactureStateIncluded(facture.state)) continue;
-      if (meta.date) {
-        const date = new Date(meta.date);
-        if (date < params.dateRange.start || date > params.dateRange.end) continue;
-      }
-      if (meta.isAvoir) {
         avoirTotal += Math.abs(meta.montantNetHT);
       } else {
+        factureCount++;
         factureTotal += meta.montantNetHT;
       }
     }
@@ -110,7 +103,11 @@ export const caParMois: StatDefinition = {
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
       
-      if (!isFactureStateIncluded(facture.state)) continue;
+      // Extraire le state depuis plusieurs sources possibles
+      const factureState = facture.state || facture.status || facture.statut 
+        || facture.data?.state || facture.data?.status || facture.paymentStatus || '';
+      
+      if (!isFactureStateIncluded(factureState)) continue;
       
       const date = meta.date ? new Date(meta.date) : null;
       if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;
@@ -200,7 +197,11 @@ export const panierMoyen: StatDefinition = {
       // Exclure les avoirs du calcul du panier moyen
       if (meta.isAvoir) continue;
       
-      if (!isFactureStateIncluded(facture.state)) continue;
+      // Extraire le state depuis plusieurs sources possibles
+      const factureState = facture.state || facture.status || facture.statut 
+        || facture.data?.state || facture.data?.status || facture.paymentStatus || '';
+      
+      if (!isFactureStateIncluded(factureState)) continue;
       
       const date = meta.date ? new Date(meta.date) : null;
       if (!date || date < params.dateRange.start || date > params.dateRange.end) continue;

@@ -17,7 +17,8 @@ export const STATIA_RULES_JSON = {
   },
   CA: {
     source: "apiGetFactures.data.totalHT",
-    includeStates: ["sent", "paid", "partial", "partially_paid", "overdue"],
+    includeStates: ["sent", "paid", "partial", "partially_paid", "overdue", "validee", "validated", "payee", "cloturee", "closed", "invoice_sent", "invoice"],
+    excludeStates: ["draft", "brouillon", "cancelled", "canceled", "annulee", "annulée", "pro_forma", "proforma", "pro-forma"],
     avoir: "subtract",
     duClientSource: "apiGetFactures.data.calcReglementsReste"
   },
