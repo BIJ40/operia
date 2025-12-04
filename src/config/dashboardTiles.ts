@@ -240,7 +240,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     title: 'Statistiques Réseau',
     description: 'Matrices de performance multi-agences',
     icon: PieChart,
-    route: ROUTES.reseau.stats,
+    route: ROUTES.reseau.tableaux,
     scopeSlug: SCOPE_SLUGS.FRANCHISEUR_KPI,
     color: 'accent',
     group: 'franchiseur',
