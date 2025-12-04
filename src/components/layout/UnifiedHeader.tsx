@@ -333,13 +333,13 @@ export function UnifiedHeader() {
         {/* Subtitle bar - below main header */}
         {displaySubtitle && (
           <div 
-            className={`px-4 py-2 border-t border-border/50 ${subtitleBgClass} grid grid-cols-[auto_1fr_auto] items-center gap-4`}
+            className={`px-4 py-1 border-t border-border/50 ${subtitleBgClass} grid grid-cols-[auto_1fr_auto] items-center gap-4`}
           >
             <Link to="/chatbot">
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative rounded-full transition-all duration-200 h-12 w-12"
+                className="relative rounded-full transition-all duration-200 h-10 w-10"
               >
                 <Bot className="w-5 h-5" />
               </Button>
@@ -353,12 +353,12 @@ export function UnifiedHeader() {
         
         {/* Show widgets even if no subtitle */}
         {!displaySubtitle && (
-          <div className="px-4 py-2 border-t border-border/50 bg-background grid grid-cols-[auto_1fr_auto] items-center gap-4">
+          <div className="px-4 py-1 border-t border-border/50 bg-background grid grid-cols-[auto_1fr_auto] items-center gap-4">
             <Link to="/chatbot">
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative rounded-full transition-all duration-200 h-12 w-12"
+                className="relative rounded-full transition-all duration-200 h-10 w-10"
               >
                 <Bot className="w-5 h-5" />
               </Button>
