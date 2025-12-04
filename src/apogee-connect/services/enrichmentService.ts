@@ -252,16 +252,63 @@ export class EnrichmentService {
    */
   private static normalizeUniverseSlug(slug: string): string {
     const normalizationMap: Record<string, string> = {
-      // Ancien slug → Nouveau slug
+      // PMR / Amélioration logement
       'amelioration_logement': 'pmr',
       'amelioration-logement': 'pmr',
       'ame_logement': 'pmr',
+      'pmr_amenagement': 'pmr',
+      'accessibilite': 'pmr',
+      
+      // Volets roulants
       'volets': 'volet_roulant',
       'volet': 'volet_roulant',
+      'volets_roulants': 'volet_roulant',
+      'store': 'volet_roulant',
+      'stores': 'volet_roulant',
+      
+      // Électricité
+      'elec': 'electricite',
+      'électricité': 'electricite',
+      'electrique': 'electricite',
+      
+      // Plomberie
+      'plomb': 'plomberie',
+      'sanitaire': 'plomberie',
+      'sanitaires': 'plomberie',
+      
+      // Serrurerie
+      'serrure': 'serrurerie',
+      'serrurier': 'serrurerie',
+      
+      // Vitrerie
+      'vitre': 'vitrerie',
+      'vitres': 'vitrerie',
+      'vitrier': 'vitrerie',
+      'miroiterie': 'vitrerie',
+      
+      // Menuiserie
+      'menuisier': 'menuiserie',
+      'bois': 'menuiserie',
+      'porte': 'menuiserie',
+      'portes': 'menuiserie',
+      'fenetre': 'menuiserie',
+      'fenetres': 'menuiserie',
+      
+      // Rénovation
+      'reno': 'renovation',
+      'rénovation': 'renovation',
+      'travaux': 'renovation',
+      
+      // Non classé / Autre
+      'non_classe': 'autre',
+      'non classe': 'autre',
+      'divers': 'autre',
+      'inconnu': 'autre',
+      '': 'autre',
     };
 
     const normalized = normalizationMap[slug.toLowerCase()];
-    return normalized || slug.toLowerCase();
+    return normalized || slug.toLowerCase().replace(/[^a-z0-9]/g, '_');
   }
 
   private static formatUniverseLabel(slug: string): string {

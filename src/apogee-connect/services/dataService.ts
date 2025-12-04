@@ -1,9 +1,38 @@
-import { api, getApiBaseUrl } from "./api";
+import { apogeeProxy } from "@/services/apogeeProxy";
 import { GlobalFilters } from "@/apogee-connect/contexts/FiltersContext";
 import { isWithinInterval, parseISO } from "date-fns";
 import { logApogee } from "@/lib/logger";
 import type { User, Client, Project, Intervention, Facture, Devis, InterventionCreneau } from "../types";
+import { z } from "zod";
 
+// Schémas Zod pour validation minimale des réponses API (passthrough pour flexibilité)
+const ProjectSchema = z.object({
+  id: z.union([z.string(), z.number()]).transform(v => String(v)),
+}).passthrough();
+
+const FactureSchema = z.object({
+  id: z.union([z.string(), z.number()]).transform(v => String(v)),
+}).passthrough();
+
+const InterventionSchema = z.object({
+  id: z.union([z.string(), z.number()]).transform(v => String(v)),
+}).passthrough();
+
+// Fonction de validation avec logging des erreurs
+function validateAndCast<T>(data: unknown[], entityName: string, schema: z.ZodSchema): T[] {
+  const validated: T[] = [];
+  data.forEach((item, index) => {
+    const result = schema.safeParse(item);
+    if (result.success) {
+      validated.push(result.data as T);
+    } else {
+      logApogee.warn(`[VALIDATION] ${entityName}[${index}] invalid:`, result.error.issues);
+      // Inclure quand même pour ne pas perdre de données
+      validated.push(item as T);
+    }
+  });
+  return validated;
+}
 // TTL du cache en millisecondes (5 minutes)
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -38,15 +67,15 @@ export class DataService {
   private static cache: Partial<CachedData> = {};
 
   // Vérifier si le cache est valide
-  private static isCacheValid(): boolean {
+  private static isCacheValid(agencySlug?: string): boolean {
     if (!this.cacheEntry) return false;
     
-    const currentUrl = getApiBaseUrl();
+    const currentAgency = agencySlug || 'default';
     const now = Date.now();
     const age = now - this.cacheEntry.timestamp;
     
-    // Cache invalide si : URL différente OU TTL expiré
-    if (this.cacheEntry.agencyUrl !== currentUrl) {
+    // Cache invalide si : agence différente OU TTL expiré
+    if (this.cacheEntry.agencyUrl !== currentAgency) {
       logApogee.debug('Cache invalidé: agence différente');
       return false;
     }
@@ -80,23 +109,8 @@ export class DataService {
     await this.loadAllData(true);
   }
 
-  // Charger toutes les données
-  static async loadAllData(isApiEnabled: boolean = true, forceRefresh: boolean = false) {
-    const baseUrl = getApiBaseUrl();
-    
-    if (!baseUrl) {
-      logApogee.warn('BASE_URL non définie - Aucun appel API ne sera effectué');
-      return {
-        users: [],
-        clients: [],
-        projects: [],
-        interventions: [],
-        factures: [],
-        devis: [],
-        creneaux: []
-      };
-    }
-    
+  // Charger toutes les données via le proxy sécurisé
+  static async loadAllData(isApiEnabled: boolean = true, forceRefresh: boolean = false, agencySlug?: string) {
     // Si l'API est désactivée, utiliser le cache existant s'il existe
     if (!isApiEnabled && Object.keys(this.cache).length > 0 && this.cache.users?.length) {
       logApogee.debug('API désactivée - Utilisation du cache existant');
@@ -109,22 +123,24 @@ export class DataService {
     }
     
     // Vérifier si le cache est valide (TTL non expiré et même agence)
-    if (!forceRefresh && this.isCacheValid() && this.cacheEntry) {
+    if (!forceRefresh && this.isCacheValid(agencySlug) && this.cacheEntry) {
       logApogee.debug('Utilisation du cache (TTL valide)');
       this.cache = this.cacheEntry.data;
       return this.cache;
     }
 
-    logApogee.info('Chargement des données API (cache expiré ou forcé)...');
+    logApogee.info('Chargement des données via proxy sécurisé (cache expiré ou forcé)...');
+    
+    const proxyOptions = agencySlug ? { agencySlug } : undefined;
     
     const results = await Promise.allSettled([
-      api.getUsers(),
-      api.getClients(),
-      api.getProjects(),
-      api.getInterventions(),
-      api.getFactures(),
-      api.getDevis(),
-      api.getInterventionsCreneaux(),
+      apogeeProxy.getUsers(proxyOptions),
+      apogeeProxy.getClients(proxyOptions),
+      apogeeProxy.getProjects(proxyOptions),
+      apogeeProxy.getInterventions(proxyOptions),
+      apogeeProxy.getFactures(proxyOptions),
+      apogeeProxy.getDevis(proxyOptions),
+      apogeeProxy.getInterventionsCreneaux(proxyOptions),
     ]);
 
     const [usersRes, clientsRes, projectsRes, interventionsRes, facturesRes, devisRes, creneauxRes] = results.map((res, index) => {
@@ -134,16 +150,16 @@ export class DataService {
     });
 
     logApogee.debug('Réponses API brutes:', {
-      users: usersRes,
-      clients: clientsRes,
-      projects: projectsRes,
-      interventions: interventionsRes,
-      factures: facturesRes,
-      devis: devisRes,
-      creneaux: creneauxRes,
+      users: Array.isArray(usersRes) ? usersRes.length : 0,
+      clients: Array.isArray(clientsRes) ? clientsRes.length : 0,
+      projects: Array.isArray(projectsRes) ? projectsRes.length : 0,
+      interventions: Array.isArray(interventionsRes) ? interventionsRes.length : 0,
+      factures: Array.isArray(facturesRes) ? facturesRes.length : 0,
+      devis: Array.isArray(devisRes) ? devisRes.length : 0,
+      creneaux: Array.isArray(creneauxRes) ? creneauxRes.length : 0,
     });
 
-    // Extraire les données (l'API peut retourner un objet avec une clé 'data' ou directement un array)
+    // Extraire et valider les données
     const extractData = <T>(response: T[] | ApiResponse<T> | null): T[] => {
       if (!response) return [];
       if (Array.isArray(response)) return response;
@@ -154,12 +170,17 @@ export class DataService {
       return [];
     };
 
+    // Validation Zod des entités critiques
+    const rawProjects = extractData(projectsRes);
+    const rawFactures = extractData(facturesRes);
+    const rawInterventions = extractData(interventionsRes);
+
     this.cache = {
       users: extractData(usersRes),
       clients: extractData(clientsRes),
-      projects: extractData(projectsRes),
-      interventions: extractData(interventionsRes),
-      factures: extractData(facturesRes),
+      projects: validateAndCast<Project>(rawProjects, 'Project', ProjectSchema),
+      interventions: validateAndCast<Intervention>(rawInterventions, 'Intervention', InterventionSchema),
+      factures: validateAndCast<Facture>(rawFactures, 'Facture', FactureSchema),
       devis: extractData(devisRes),
       creneaux: extractData(creneauxRes),
     };
@@ -168,7 +189,7 @@ export class DataService {
     this.cacheEntry = {
       data: this.cache as CacheEntry['data'],
       timestamp: Date.now(),
-      agencyUrl: baseUrl,
+      agencyUrl: agencySlug || 'default',
     };
 
     logApogee.info('Données extraites et mises en cache (TTL: 5min):', {
