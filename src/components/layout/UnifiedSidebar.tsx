@@ -310,6 +310,11 @@ export function UnifiedSidebar() {
       return hasModule('pilotage_agence');
     }
     
+    // ✅ FIX P0: Filtrer Mon Espace RH si module rh non activé
+    if (group.labelKey === 'rh') {
+      return hasModule('rh');
+    }
+    
     if (!group.accessKey) return true;
     if (group.accessKey === 'canAccessPilotageAgence') {
       if (caps.requiresAgencyForPilotage && !agence) return false;
