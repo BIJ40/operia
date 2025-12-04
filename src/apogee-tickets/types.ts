@@ -1,5 +1,5 @@
 /**
- * Types pour le module Ticketing Apogée
+ * Types pour le module Gestion de Projet
  */
 
 export interface ApogeeTicketStatus {

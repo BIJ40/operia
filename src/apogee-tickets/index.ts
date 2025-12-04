@@ -1,6 +1,5 @@
 /**
  * Module Gestion de Projet - Index
- * (anciennement Ticketing Apogée)
  */
 
 // Types
