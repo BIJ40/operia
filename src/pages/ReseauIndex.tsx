@@ -11,7 +11,7 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.reseau.users]: 'reseau_users',
   [ROUTES.reseau.animateurs]: 'reseau_animateurs',
   [ROUTES.reseau.tableaux]: 'reseau_stats',
-  [ROUTES.reseau.comparatifs]: 'reseau_comparatifs',
+  [ROUTES.reseau.periodes]: 'reseau_periodes',
   [ROUTES.reseau.redevances]: 'reseau_redevances',
 };
 
@@ -57,10 +57,10 @@ export default function ReseauIndex() {
       visible: true,
     },
     {
-      title: 'Comparatifs',
+      title: 'Périodes',
       description: 'Comparer les performances',
       icon: GitCompare,
-      href: ROUTES.reseau.comparatifs,
+      href: ROUTES.reseau.periodes,
       visible: true,
     },
     {
