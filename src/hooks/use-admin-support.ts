@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { logError, logWarn } from '@/lib/logger';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
-import { errorToast, successToast } from '@/lib/toastHelpers';
+import { errorToast, successToast, warningToast } from '@/lib/toastHelpers';
 import {
   TICKET_STATUSES,
   type TicketStatus,
@@ -309,8 +309,27 @@ export const useAdminSupport = () => {
     await loadTickets();
   };
 
-  const escalateTicketToNextLevel = async () => {
-    if (!selectedTicket) return;
+  // P2 FIX: Escalation requires confirmation - returns escalation details for confirmation dialog
+  const getEscalationDetails = () => {
+    if (!selectedTicket) return null;
+    const currentLevel = selectedTicket.support_level || 1;
+    const newLevel = Math.min(currentLevel + 1, 3);
+    return {
+      currentLevel,
+      newLevel,
+      ticketId: selectedTicket.id,
+      canEscalate: currentLevel < 3,
+    };
+  };
+
+  const escalateTicketToNextLevel = async (confirmed: boolean = false) => {
+    if (!selectedTicket) return false;
+
+    // P2 FIX: Return false if not confirmed, allowing caller to show confirmation dialog
+    if (!confirmed) {
+      warningToast('Veuillez confirmer l\'escalade du ticket.');
+      return false;
+    }
 
     try {
       const currentLevel = selectedTicket.support_level || 1;
@@ -341,7 +360,7 @@ export const useAdminSupport = () => {
 
       if (!result.success) {
         errorToast("Erreur lors de l'escalade du ticket");
-        return;
+        return false;
       }
 
       // Ajouter un message système
@@ -366,9 +385,11 @@ export const useAdminSupport = () => {
           escalation_history: [...existingHistory, newHistoryEntry],
         } : null);
       }
+      return true;
     } catch (error) {
       logError('[ADMIN-SUPPORT] Error escalating ticket', error);
       errorToast("Erreur lors de l'escalade du ticket");
+      return false;
     }
   };
 
@@ -477,5 +498,6 @@ export const useAdminSupport = () => {
     updatePriority,
     clearFilters,
     escalateTicketToNextLevel,
+    getEscalationDetails, // P2 FIX: Expose for confirmation dialog
   };
 };

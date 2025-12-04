@@ -205,6 +205,20 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
     setActiveTicket(ticket || null);
   };
 
+  // P2 FIX: Définition des transitions autorisées (business logic)
+  const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+    [TICKET_STATUSES.NEW]: [TICKET_STATUSES.IN_PROGRESS, TICKET_STATUSES.WAITING_USER],
+    [TICKET_STATUSES.IN_PROGRESS]: [TICKET_STATUSES.WAITING_USER, TICKET_STATUSES.RESOLVED, TICKET_STATUSES.CLOSED],
+    [TICKET_STATUSES.WAITING_USER]: [TICKET_STATUSES.IN_PROGRESS, TICKET_STATUSES.RESOLVED, TICKET_STATUSES.CLOSED],
+    [TICKET_STATUSES.RESOLVED]: [TICKET_STATUSES.IN_PROGRESS, TICKET_STATUSES.CLOSED], // Réouverture possible
+    [TICKET_STATUSES.CLOSED]: [], // Pas de transition depuis Fermé
+  };
+
+  const isTransitionAllowed = (from: string, to: string): boolean => {
+    const allowed = ALLOWED_TRANSITIONS[from] || [];
+    return allowed.includes(to);
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
@@ -230,6 +244,16 @@ export function KanbanView({ tickets, onSelectTicket, onTicketsUpdate, isCollaps
     const currentStatus = ticket ? normalizeStatus(ticket.status) : null;
 
     if (ticket && currentStatus !== newStatus) {
+      // P2 FIX: Vérifier si la transition est autorisée
+      if (!isTransitionAllowed(currentStatus!, newStatus)) {
+        toast({
+          title: 'Transition non autorisée',
+          description: `Impossible de passer de "${TICKET_STATUS_LABELS[currentStatus!] || currentStatus}" à "${TICKET_STATUS_LABELS[newStatus] || newStatus}"`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
       // Mise à jour optimiste de l'UI
       const isResolved = newStatus === TICKET_STATUSES.RESOLVED || newStatus === TICKET_STATUSES.CLOSED;
       const updatedTicket = {
