@@ -220,8 +220,190 @@ export const topApporteursCA: StatDefinition = {
   }
 };
 
+/**
+ * Taux de transformation par Apporteur
+ * nb devis acceptés / nb devis émis
+ */
+export const tauxTransformationApporteur: StatDefinition = {
+  id: 'taux_transformation_apporteur',
+  label: 'Taux transfo par Apporteur',
+  description: 'Taux de transformation devis→factures par apporteur',
+  category: 'apporteur',
+  source: ['devis', 'projects', 'clients'],
+  dimensions: ['apporteur'],
+  aggregation: 'ratio',
+  unit: '%',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { devis, projects, clients } = data;
+    
+    const projectsById = indexProjectsById(projects);
+    const clientsById = indexClientsById(clients);
+    
+    const statsByApporteur = new Map<string, { 
+      emis: number; 
+      acceptes: number; 
+      caEmis: number;
+      caAcceptes: number;
+      label: string 
+    }>();
+    
+    for (const d of devis) {
+      const dateStr = d.dateReelle || d.date || d.created_at;
+      if (dateStr) {
+        try {
+          const date = new Date(dateStr);
+          if (date < params.dateRange.start || date > params.dateRange.end) continue;
+        } catch {
+          continue;
+        }
+      }
+      
+      const projectId = d.projectId;
+      const project = projectId ? projectsById.get(projectId) : null;
+      const apporteurId = project ? normalizeApporteurId(project) : 'direct';
+      
+      if (apporteurId === 'direct') continue;
+      
+      const client = clientsById.get(apporteurId);
+      const apporteurLabel = client?.name || client?.label || `Apporteur ${apporteurId}`;
+      
+      if (!statsByApporteur.has(apporteurId)) {
+        statsByApporteur.set(apporteurId, { 
+          emis: 0, 
+          acceptes: 0, 
+          caEmis: 0,
+          caAcceptes: 0,
+          label: apporteurLabel 
+        });
+      }
+      
+      const stats = statsByApporteur.get(apporteurId)!;
+      const montant = d.totalHT || d.data?.totalHT || 0;
+      const state = (d.state || '').toLowerCase();
+      
+      // Devis émis (sent, accepted, refused, etc.)
+      if (['sent', 'accepted', 'validated', 'signed', 'order', 'refused'].includes(state)) {
+        stats.emis++;
+        stats.caEmis += montant;
+      }
+      
+      // Devis acceptés
+      if (['accepted', 'validated', 'signed', 'order'].includes(state)) {
+        stats.acceptes++;
+        stats.caAcceptes += montant;
+      }
+    }
+    
+    const result: Record<string, number> = {};
+    const labels: Record<string, string> = {};
+    const details: Record<string, any> = {};
+    
+    statsByApporteur.forEach((stats, apporteurId) => {
+      const tauxNb = stats.emis > 0 ? (stats.acceptes / stats.emis) * 100 : 0;
+      result[apporteurId] = Math.round(tauxNb * 10) / 10;
+      labels[apporteurId] = stats.label;
+      details[apporteurId] = {
+        tauxNb: Math.round(tauxNb * 10) / 10,
+        tauxCa: stats.caEmis > 0 ? Math.round((stats.caAcceptes / stats.caEmis) * 1000) / 10 : 0,
+        emis: stats.emis,
+        acceptes: stats.acceptes,
+      };
+    });
+    
+    return {
+      value: result,
+      metadata: {
+        computedAt: new Date(),
+        source: 'devis',
+        recordCount: statsByApporteur.size,
+      },
+      breakdown: { labels, details }
+    };
+  }
+};
+
+/**
+ * Apporteurs inactifs
+ * Apporteurs sans dossier depuis X jours
+ */
+export const apporteursInactifs: StatDefinition = {
+  id: 'apporteurs_inactifs',
+  label: 'Apporteurs inactifs',
+  description: 'Apporteurs sans nouveau dossier depuis X jours (défaut: 90)',
+  category: 'apporteur',
+  source: ['projects', 'clients'],
+  dimensions: ['apporteur'],
+  aggregation: 'count',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { projects, clients } = data;
+    
+    const clientsById = indexClientsById(clients);
+    const lastActivityByApporteur = new Map<string, { date: Date; label: string }>();
+    
+    // Identifier la dernière activité de chaque apporteur
+    for (const project of projects) {
+      const apporteurId = normalizeApporteurId(project);
+      if (apporteurId === 'direct') continue;
+      
+      const dateStr = project.created_at || project.date;
+      if (!dateStr) continue;
+      
+      try {
+        const date = new Date(dateStr);
+        const current = lastActivityByApporteur.get(apporteurId);
+        
+        if (!current || date > current.date) {
+          const client = clientsById.get(apporteurId);
+          const label = client?.name || client?.label || `Apporteur ${apporteurId}`;
+          lastActivityByApporteur.set(apporteurId, { date, label });
+        }
+      } catch {
+        continue;
+      }
+    }
+    
+    // Filtrer les inactifs (X jours sans activité)
+    const seuilJours = params.filters?.seuilJours || 90;
+    const dateSeuil = new Date();
+    dateSeuil.setDate(dateSeuil.getDate() - seuilJours);
+    
+    const inactifs: Array<{ id: string; label: string; lastActivity: string; joursInactifs: number }> = [];
+    
+    lastActivityByApporteur.forEach((data, apporteurId) => {
+      if (data.date < dateSeuil) {
+        const joursInactifs = Math.floor((Date.now() - data.date.getTime()) / (1000 * 60 * 60 * 24));
+        inactifs.push({
+          id: apporteurId,
+          label: data.label,
+          lastActivity: data.date.toISOString().split('T')[0],
+          joursInactifs,
+        });
+      }
+    });
+    
+    // Trier par jours d'inactivité décroissants
+    inactifs.sort((a, b) => b.joursInactifs - a.joursInactifs);
+    
+    return {
+      value: inactifs.length,
+      metadata: {
+        computedAt: new Date(),
+        source: 'projects',
+        recordCount: inactifs.length,
+      },
+      breakdown: {
+        seuilJours,
+        liste: inactifs,
+        totalApporteurs: lastActivityByApporteur.size,
+      }
+    };
+  }
+};
+
 export const apporteursDefinitions = {
   ca_par_apporteur: caParApporteur,
   dossiers_par_apporteur: dossiersParApporteur,
   top_apporteurs_ca: topApporteursCA,
+  taux_transformation_apporteur: tauxTransformationApporteur,
+  apporteurs_inactifs: apporteursInactifs,
 };
