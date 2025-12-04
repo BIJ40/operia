@@ -95,7 +95,7 @@ export function MetricExplanation({
   dimensions,
   recordCount
 }: MetricExplanationProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   
   const formulaInfo = METRIC_FORMULAS[measureId] || {
     formula: 'Formule personnalisée',
@@ -147,147 +147,136 @@ export function MetricExplanation({
 
   return (
     <div className="mt-4 space-y-3 border-t pt-3">
-      {/* Header avec toggle */}
-      <button 
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between text-xs text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <span className="flex items-center gap-1.5">
-          <Info className="h-3.5 w-3.5" />
-          Détail du calcul
-        </span>
-        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-      </button>
-
-      {isExpanded && (
-        <div className="space-y-3 text-xs animate-in slide-in-from-top-2">
-          {/* Mesure */}
-          <div className="flex items-start gap-2">
-            <Badge variant="outline" className="shrink-0">MESURE</Badge>
-            <span className="font-medium">{measureLabel}</span>
-          </div>
-
-          {/* Contexte sélectionné */}
-          <div className="space-y-1">
-            <Badge variant="outline" className="shrink-0">CONTEXTE</Badge>
-            <ul className="ml-4 space-y-0.5 text-muted-foreground">
-              {getContextDescription().map((line, i) => (
-                <li key={i} className="flex items-center gap-1">
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
-                  {line}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Formule */}
-          <div className="space-y-1">
-            <Badge variant="outline" className="shrink-0">FORMULE</Badge>
-            <div className="ml-4 p-2 bg-muted/50 rounded font-mono text-[10px] border">
-              {formulaInfo.formula}
-            </div>
-            <p className="ml-4 text-muted-foreground italic">
+      {/* Explication principale - TOUJOURS VISIBLE */}
+      <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div className="flex items-start gap-2 mb-2">
+          <Calculator className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium text-sm text-blue-900 dark:text-blue-100">
+              {measureLabel}
+            </p>
+            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
               {formulaInfo.explanation}
             </p>
           </div>
-
-          {/* Calcul détaillé pour CA */}
-          {hasCABreakdown && (
-            <div className="space-y-2">
-              <Badge variant="outline" className="shrink-0">CALCUL DÉTAILLÉ</Badge>
-              <div className="ml-4 p-3 bg-muted/30 rounded-lg border space-y-2">
-                {/* Factures */}
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Receipt className="h-3.5 w-3.5 text-green-600" />
-                    Factures (HT)
-                  </span>
-                  <span className="font-medium text-green-600">
-                    {factureTotal > 0 ? `+${formatCurrency(factureTotal)}` : formatCurrency(factureTotal)}
-                    <span className="text-muted-foreground font-normal ml-1">
-                      ({factureCount} facture{factureCount > 1 ? 's' : ''})
-                    </span>
-                  </span>
-                </div>
-                
-                {/* Avoirs */}
-                {avoirCount > 0 && (
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <Minus className="h-3.5 w-3.5 text-red-600" />
-                      Avoirs (HT)
-                    </span>
-                    <span className="font-medium text-red-600">
-                      {formatCurrency(-Math.abs(avoirTotal))}
-                      <span className="text-muted-foreground font-normal ml-1">
-                        ({avoirCount} avoir{avoirCount > 1 ? 's' : ''})
-                      </span>
-                    </span>
-                  </div>
-                )}
-                
-                {/* Séparateur */}
-                <div className="border-t border-dashed" />
-                
-                {/* Total */}
-                <div className="flex items-center justify-between font-semibold">
-                  <span className="flex items-center gap-2">
-                    <Equal className="h-3.5 w-3.5" />
-                    TOTAL NET
-                  </span>
-                  <span className={cn(
-                    totalValue >= 0 ? 'text-primary' : 'text-red-600'
-                  )}>
-                    {formatCurrency(totalValue)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Enregistrements traités */}
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5" />
-              Enregistrements traités
-            </span>
-            <Badge variant="secondary" className="text-[10px]">
-              {recordCount}
-            </Badge>
+        </div>
+        
+        {/* Formule technique */}
+        <div className="mt-2 p-2 bg-white/50 dark:bg-black/20 rounded font-mono text-[10px] border border-blue-200 dark:border-blue-700">
+          <span className="text-muted-foreground">Formule :</span> {formulaInfo.formula}
+        </div>
+        
+        {/* Contexte appliqué */}
+        <div className="mt-2 text-[10px] text-blue-600 dark:text-blue-400">
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {getContextDescription().map((line, i) => (
+              <span key={i}>• {line}</span>
+            ))}
           </div>
+        </div>
+      </div>
 
-          {/* Breakdown détaillé si disponible */}
-          {breakdown && Object.keys(breakdown).length > 0 && !hasCABreakdown && (
-            <div className="space-y-1">
-              <Badge variant="outline" className="shrink-0">DÉTAILS</Badge>
-              <div className="ml-4 p-2 bg-muted/30 rounded text-[10px] font-mono">
-                {Object.entries(breakdown).map(([key, val]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="text-muted-foreground">{key}:</span>
-                    <span>{typeof val === 'number' ? val.toLocaleString('fr-FR') : String(val)}</span>
-                  </div>
-                ))}
-              </div>
+      {/* Calcul détaillé pour CA - affiché si disponible */}
+      {hasCABreakdown && (
+        <div className="p-3 bg-muted/30 rounded-lg border space-y-2">
+          <div className="text-xs font-medium text-muted-foreground">Détail du calcul :</div>
+          
+          {/* Factures */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-2">
+              <Receipt className="h-3.5 w-3.5 text-green-600" />
+              Factures (HT)
+            </span>
+            <span className="font-medium text-green-600">
+              {factureTotal > 0 ? `+${formatCurrency(factureTotal)}` : formatCurrency(factureTotal)}
+              <span className="text-muted-foreground font-normal ml-1 text-xs">
+                ({factureCount})
+              </span>
+            </span>
+          </div>
+          
+          {/* Avoirs */}
+          {avoirCount > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-2">
+                <Minus className="h-3.5 w-3.5 text-red-600" />
+                Avoirs (HT)
+              </span>
+              <span className="font-medium text-red-600">
+                {formatCurrency(-Math.abs(avoirTotal))}
+                <span className="text-muted-foreground font-normal ml-1 text-xs">
+                  ({avoirCount})
+                </span>
+              </span>
             </div>
           )}
-
-          {/* Lien vers Apogée */}
-          <div className="pt-2 border-t">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs h-7 w-full justify-start text-muted-foreground hover:text-primary"
-              onClick={() => {
-                const apogeeUrl = `https://${agencySlug}.hc-apogee.fr`;
-                window.open(apogeeUrl, '_blank');
-              }}
-            >
-              <ExternalLink className="h-3 w-3 mr-1.5" />
-              Vérifier sur Apogée ({agencySlug})
-            </Button>
+          
+          {/* Séparateur */}
+          <div className="border-t border-dashed" />
+          
+          {/* Total */}
+          <div className="flex items-center justify-between font-semibold text-sm">
+            <span className="flex items-center gap-2">
+              <Equal className="h-3.5 w-3.5" />
+              RÉSULTAT
+            </span>
+            <span className={cn(
+              totalValue >= 0 ? 'text-primary' : 'text-red-600'
+            )}>
+              {formatCurrency(totalValue)}
+            </span>
           </div>
         </div>
       )}
+
+      {/* Enregistrements traités */}
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <FileText className="h-3.5 w-3.5" />
+          {recordCount} enregistrement{recordCount > 1 ? 's' : ''} traité{recordCount > 1 ? 's' : ''}
+        </span>
+      </div>
+
+      {/* Toggle pour détails avancés */}
+      {breakdown && Object.keys(breakdown).length > 0 && !hasCABreakdown && (
+        <>
+          <button 
+            onClick={() => setShowDetails(!showDetails)}
+            className="w-full flex items-center justify-between text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              <Info className="h-3.5 w-3.5" />
+              Détails techniques
+            </span>
+            {showDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+          
+          {showDetails && (
+            <div className="p-2 bg-muted/30 rounded text-[10px] font-mono animate-in slide-in-from-top-2">
+              {Object.entries(breakdown).map(([key, val]) => (
+                <div key={key} className="flex justify-between">
+                  <span className="text-muted-foreground">{key}:</span>
+                  <span>{typeof val === 'number' ? val.toLocaleString('fr-FR') : String(val)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Lien vers Apogée */}
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="text-xs h-7 w-full justify-start text-muted-foreground hover:text-primary"
+        onClick={() => {
+          const apogeeUrl = `https://${agencySlug}.hc-apogee.fr`;
+          window.open(apogeeUrl, '_blank');
+        }}
+      >
+        <ExternalLink className="h-3 w-3 mr-1.5" />
+        Vérifier sur Apogée ({agencySlug})
+      </Button>
     </div>
   );
 }
