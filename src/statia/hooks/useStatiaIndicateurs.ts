@@ -33,7 +33,7 @@ export interface IndicateursData {
   
   // Délais
   delaiDossierFacture: { delaiMoyen: number; nbDossiers: number };
-  delaiDossierPremierDevis: { delaiMoyen: number; mediane?: number; min?: number; max?: number; nbDossiers?: number };
+  delaiDossierPremierDevis: { delaiMoyen: number | null; mediane?: number | null; min?: number | null; max?: number | null; nbDossiers?: number };
   
   // Complexité
   dossiersComplexes: { tauxComplexite: number; nbComplexes: number; nbTotal: number };
@@ -226,11 +226,12 @@ export function useStatiaIndicateurs(selectedYear?: number) {
             nbDossiers: dureeDossier?.breakdown?.nbDossiers ?? delaiDossierFactureLegacy?.nbFactures ?? 0,
           },
           delaiDossierPremierDevis: {
-            delaiMoyen: delaiPremierDevisStat?.value as number ?? 0,
-            mediane: delaiPremierDevisStat?.breakdown?.mediane ?? 0,
-            min: delaiPremierDevisStat?.breakdown?.min ?? 0,
-            max: delaiPremierDevisStat?.breakdown?.max ?? 0,
-            nbDossiers: delaiPremierDevisStat?.breakdown?.nbDossiers ?? 0,
+            // IMPORTANT: null si aucune donnée, pas 0
+            delaiMoyen: delaiPremierDevisStat?.value as number | null ?? null,
+            mediane: delaiPremierDevisStat?.breakdown?.mediane ?? null,
+            min: delaiPremierDevisStat?.breakdown?.min ?? null,
+            max: delaiPremierDevisStat?.breakdown?.max ?? null,
+            nbDossiers: delaiPremierDevisStat?.breakdown?.nbDossiersAvecDevis ?? 0,
           },
           dossiersComplexes: {
             tauxComplexite: dossiersComplexesStat?.value as number ?? 0,

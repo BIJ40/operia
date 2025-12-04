@@ -346,52 +346,60 @@ export const nbMoyenInterventionsParDossier: StatDefinition = {
 };
 
 /**
- * Helper: parser pour dates françaises "dd/MM/yyyy HH:mm:ss" depuis l'historique Apogée
- */
-function parseFrHistoryDate(dateStr: string): Date | null {
-  if (!dateStr) return null;
-  const [dPart, tPart] = dateStr.split(" ");
-  if (!dPart || !tPart) return null;
-
-  const [dayStr, monthStr, yearStr] = dPart.split("/");
-  const [hourStr, minStr, secStr] = tPart.split(":");
-
-  const day = Number(dayStr);
-  const month = Number(monthStr) - 1; // JS: mois 0-11
-  const year = Number(yearStr);
-  const hour = Number(hourStr);
-  const minute = Number(minStr);
-  const second = Number(secStr);
-
-  if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) return null;
-
-  return new Date(year, month, day, hour, minute, second);
-}
-
-/**
  * Délai moyen dossier → premier devis
  * Temps entre l'ouverture du dossier (created_at) et l'envoi du premier devis
- * Basé sur project.data.history (événement "Devis envoyé")
+ * REFACTORÉ: Utilise getDevis avec state === "sent" et dateReelle au lieu de l'historique
  */
 export const delaiDossierPremierDevis: StatDefinition = {
   id: 'delai_dossier_premier_devis',
   label: 'Délai 1er devis',
   description: 'Nombre de jours moyen entre ouverture du dossier et envoi du premier devis',
   category: 'qualite',
-  source: 'projects',
+  source: ['projects', 'devis'],
   aggregation: 'avg',
   unit: 'jours',
-  compute: (data: LoadedData, _params: StatParams): StatResult => {
+  compute: (data: LoadedData, params: StatParams): StatResult => {
     console.log('[StatIA] =============== DELAI 1ER DEVIS COMPUTE START ===============');
-    const { projects } = data;
-    console.log('[StatIA] delai_dossier_premier_devis projects reçus:', projects?.length ?? 'undefined');
+    const { projects, devis } = data;
+    console.log('[StatIA] delai_dossier_premier_devis - projects:', projects?.length ?? 0, 'devis:', devis?.length ?? 0);
+    
+    // Indexer les devis "sent" par projet avec dateReelle
+    const devisByProject = new Map<string | number, Date[]>();
+    
+    for (const d of devis) {
+      // Filtrer: state === "sent" et dateReelle présent
+      const state = (d.state || '').toLowerCase();
+      if (state !== 'sent') continue;
+      
+      const dateReelleStr = d.dateReelle;
+      if (!dateReelleStr) continue;
+      
+      const dateReelle = new Date(dateReelleStr);
+      if (isNaN(dateReelle.getTime())) continue;
+      
+      const projectId = d.projectId;
+      if (!projectId) continue;
+      
+      const list = devisByProject.get(projectId) ?? [];
+      list.push(dateReelle);
+      devisByProject.set(projectId, list);
+    }
+    
+    console.log('[StatIA] delai_dossier_premier_devis - projets avec devis sent:', devisByProject.size);
     
     const delais: number[] = [];
-    let debugStats = { total: 0, canceled: 0, noCreatedAt: 0, noHistory: 0, noDevisEvent: 0, badDateParsing: 0, negative: 0, ok: 0 };
+    let debugStats = { 
+      totalProjets: 0, 
+      canceled: 0, 
+      noCreatedAt: 0, 
+      noDevisSent: 0, 
+      negative: 0, 
+      ok: 0 
+    };
     
-    // Note: Pas de filtre de date - on calcule sur TOUS les projets (comportement legacy)
+    // Filtrer les projets dans la période
     for (const project of projects) {
-      debugStats.total++;
+      debugStats.totalProjets++;
       
       // Ignorer les projets annulés
       if (project.state === 'canceled') {
@@ -399,6 +407,7 @@ export const delaiDossierPremierDevis: StatDefinition = {
         continue;
       }
       
+      // Date de création du dossier
       const createdAtStr = project.created_at;
       if (!createdAtStr) {
         debugStats.noCreatedAt++;
@@ -411,58 +420,53 @@ export const delaiDossierPremierDevis: StatDefinition = {
         continue;
       }
       
-      // Chercher le premier événement "Devis envoyé" dans l'historique
-      const history = project.data?.history ?? [];
-      if (!history || history.length === 0) {
-        debugStats.noHistory++;
+      // Filtre de période sur la date de création du projet
+      if (!isWithinInterval(createdAt, { start: params.dateRange.start, end: params.dateRange.end })) {
         continue;
       }
       
-      const devisEvent = history.find((h: any) =>
-        (h.labelKind || '').toLowerCase().includes('devis envoyé')
-      );
-      
-      if (!devisEvent) {
-        debugStats.noDevisEvent++;
+      // Récupérer les devis "sent" de ce projet
+      const devisDates = devisByProject.get(project.id);
+      if (!devisDates || devisDates.length === 0) {
+        debugStats.noDevisSent++;
         continue;
       }
       
-      const dateDevis = parseFrHistoryDate(devisEvent.dateModif);
-      if (!dateDevis || isNaN(dateDevis.getTime())) {
-        debugStats.badDateParsing++;
-        continue;
-      }
+      // Premier devis envoyé = dateReelle la plus ancienne
+      const firstDevisDate = devisDates.sort((a, b) => a.getTime() - b.getTime())[0];
       
-      const diffMs = dateDevis.getTime() - createdAt.getTime();
+      const diffMs = firstDevisDate.getTime() - createdAt.getTime();
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
       
-      // Ignorer les valeurs négatives
-      if (diffDays >= 0) {
-        delais.push(diffDays);
-        debugStats.ok++;
-      } else {
+      // Ignorer les délais négatifs ou aberrants
+      if (!Number.isFinite(diffDays) || diffDays < 0) {
         debugStats.negative++;
+        continue;
       }
+      
+      delais.push(diffDays);
+      debugStats.ok++;
     }
     
     console.log('[StatIA] delai_dossier_premier_devis debug:', debugStats);
     console.log('[StatIA] delais sample:', delais.slice(0, 5).map(d => Math.round(d)));
     
+    // IMPORTANT: Si aucun dossier avec devis "sent" → renvoyer null, pas 0
     const moyenne = delais.length > 0 
-      ? delais.reduce((a, b) => a + b, 0) / delais.length 
-      : 0;
+      ? Math.round(delais.reduce((a, b) => a + b, 0) / delais.length)
+      : null;
     
     return {
-      value: Math.round(moyenne), // KPI au jour près
+      value: moyenne, // null si aucune donnée exploitable
       metadata: {
         computedAt: new Date(),
-        source: 'projects',
+        source: 'devis',
         recordCount: delais.length,
       },
       breakdown: {
         nbDossiersAvecDevis: delais.length,
-        min: delais.length > 0 ? Math.round(Math.min(...delais)) : 0,
-        max: delais.length > 0 ? Math.round(Math.max(...delais)) : 0,
+        min: delais.length > 0 ? Math.round(Math.min(...delais)) : null,
+        max: delais.length > 0 ? Math.round(Math.max(...delais)) : null,
         debug: debugStats,
       }
     };
