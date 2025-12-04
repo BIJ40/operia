@@ -94,7 +94,8 @@ const AdminApogeeGuides = lazy(() => import("./pages/AdminApogeeGuides"));
 const AdminChatbotRag = lazy(() => import("./pages/AdminChatbotRag"));
 const AdminSystemHealth = lazy(() => import("./pages/AdminSystemHealth"));
 const AdminAnnouncements = lazy(() => import("./pages/admin/AdminAnnouncements"));
-const StatiaAdmin = lazy(() => import("./statia/pages/StatiaAdmin"));
+const StatiaBuilderAdminPage = lazy(() => import("./statia/pages/StatiaBuilderAdminPage"));
+const StatiaBuilderAgencyPage = lazy(() => import("./statia/pages/StatiaBuilderAgencyPage"));
 
 // Lazy loaded pages - Gestion de Projet (ex Apogée Tickets)
 const ProjectsIndex = lazy(() => import("./pages/ProjectsIndex"));
@@ -235,6 +236,9 @@ function AppContent() {
           {/* Dashboard RH - Statistiques RH (Dirigeant/RH avec option rh_admin) */}
           <Route path="/hc-agency/dashboard-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOption="rh_admin"><RHDashboardPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
+          {/* StatIA Builder - Construction de métriques personnalisées (N2+) */}
+          <Route path="/hc-agency/statia-builder" element={<StatiaBuilderAgencyPage />} />
+          
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
           {/* ============================================ */}
@@ -315,7 +319,7 @@ function AppContent() {
           <Route path="/admin/apogee-tickets/review" element={<Navigate to="/projects/review" replace />} />
           <Route path="/admin/apogee-tickets/permissions" element={<Navigate to="/projects/permissions" replace />} />
           <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSystemHealth /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/admin/statia-by-bij" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><StatiaAdmin /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/statia-by-bij" element={<StatiaBuilderAdminPage />} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}

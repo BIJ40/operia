@@ -64,6 +64,8 @@ export const ROUTES = {
     demandesRh: '/hc-agency/demandes-rh',
     // Dashboard RH (statistiques RH - Dirigeant/RH)
     dashboardRh: '/hc-agency/dashboard-rh',
+    // StatIA Builder (N2+)
+    statiaBuilder: '/hc-agency/statia-builder',
   },
 
   // ============================================
