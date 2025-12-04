@@ -114,7 +114,7 @@ export const apogeeProxy = {
    * Récupère les créneaux d'interventions
    */
   getInterventionsCreneaux: (options?: ApogeeProxyOptions) => 
-    callProxy<any[]>('GetInterventionsCreneaux', options),
+    callProxy<any[]>('getInterventionsCreneaux', options),
 
   /**
    * Récupère toutes les données en parallèle
