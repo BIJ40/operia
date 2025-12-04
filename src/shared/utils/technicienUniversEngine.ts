@@ -358,17 +358,20 @@ export function computeTechUniversStatsForAgency(
     });
   });
 
-  // Logs de contrôle pour vérifier la cohérence
+  // Calcul de l'écart pour le lissage
   const ecartBrut = totalFacturesNet - totalCAReparti;
   
-  console.log("[STATIA TECH] Contrôle cohérence CA (avant lissage):", {
-    totalFacturesNet: Math.round(totalFacturesNet * 100) / 100,
-    totalCAReparti: Math.round(totalCAReparti * 100) / 100,
-    ecart: Math.round(ecartBrut * 100) / 100,
-    nbFacturesTraitees,
-    nbAvoirsTraites,
-    nbTechniciens: result.length
-  });
+  // P2-01: Logs conditionnels - uniquement en développement
+  if (import.meta.env.DEV && import.meta.env.VITE_DEBUG_STATIA === 'true') {
+    console.log("[STATIA TECH] Contrôle cohérence CA (avant lissage):", {
+      totalFacturesNet: Math.round(totalFacturesNet * 100) / 100,
+      totalCAReparti: Math.round(totalCAReparti * 100) / 100,
+      ecart: Math.round(ecartBrut * 100) / 100,
+      nbFacturesTraitees,
+      nbAvoirsTraites,
+      nbTechniciens: result.length
+    });
+  }
 
   // RÈGLE DE LISSAGE : Répartir l'écart équitablement entre les techniciens
   // pour que le total CA techniciens = total CA factures net
@@ -400,11 +403,14 @@ export function computeTechUniversStatsForAgency(
     });
     
     const nouveauTotal = result.reduce((sum, t) => sum + t.totaux.caHT, 0);
-    console.log("[STATIA TECH] Après lissage:", {
-      ajustementParTech: Math.round(ajustementParTech * 100) / 100,
-      nouveauTotalCATech: Math.round(nouveauTotal * 100) / 100,
-      ecartResiduel: Math.round((totalFacturesNet - nouveauTotal) * 100) / 100
-    });
+    // P2-01: Logs conditionnels - uniquement en développement
+    if (import.meta.env.DEV && import.meta.env.VITE_DEBUG_STATIA === 'true') {
+      console.log("[STATIA TECH] Après lissage:", {
+        ajustementParTech: Math.round(ajustementParTech * 100) / 100,
+        nouveauTotalCATech: Math.round(nouveauTotal * 100) / 100,
+        ecartResiduel: Math.round((totalFacturesNet - nouveauTotal) * 100) / 100
+      });
+    }
   }
 
   // Trier par CA total décroissant

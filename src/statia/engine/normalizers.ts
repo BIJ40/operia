@@ -68,14 +68,34 @@ export function normalizeInterventionType(type: string | null | undefined): stri
   return mappings[normalized] || normalized;
 }
 
-// Types productifs selon STATIA_RULES
-const PRODUCTIVE_TYPES = ['depannage', 'repair', 'travaux', 'work'];
-const NON_PRODUCTIVE_TYPES = ['rt', 'rdv', 'rdvtech', 'sav', 'diagnostic', 'th'];
-const VALID_INTERVENTION_STATES = ['validated', 'done', 'finished'];
-// États de facture EXCLUS du CA (brouillons, annulées, pro-forma)
-const EXCLUDED_FACTURE_STATES = ['draft', 'brouillon', 'cancelled', 'canceled', 'annulee', 'annulée', 'pro_forma', 'proforma', 'pro-forma'];
-// États de facture INCLUS dans le CA (validées, payées, envoyées, clôturées)
-const INCLUDED_FACTURE_STATES = ['sent', 'paid', 'partial', 'partially_paid', 'overdue', 'validee', 'validated', 'payee', 'cloturee', 'closed', 'invoice_sent', 'invoice'];
+/**
+ * P2-06: Configuration centralisée des états et types
+ * Exportés pour permettre extension/personnalisation
+ */
+
+/** Types productifs selon STATIA_RULES */
+export const PRODUCTIVE_TYPES: readonly string[] = ['depannage', 'repair', 'travaux', 'work'];
+
+/** Types non-productifs selon STATIA_RULES */
+export const NON_PRODUCTIVE_TYPES: readonly string[] = ['rt', 'rdv', 'rdvtech', 'sav', 'diagnostic', 'th'];
+
+/** États d'intervention valides */
+export const VALID_INTERVENTION_STATES: readonly string[] = ['validated', 'done', 'finished'];
+
+/** États de facture EXCLUS du CA (brouillons, annulées, pro-forma) */
+export const EXCLUDED_FACTURE_STATES: readonly string[] = [
+  'draft', 'brouillon', 
+  'cancelled', 'canceled', 'annulee', 'annulée', 
+  'pro_forma', 'proforma', 'pro-forma'
+];
+
+/** États de facture INCLUS dans le CA (validées, payées, envoyées, clôturées) */
+export const INCLUDED_FACTURE_STATES: readonly string[] = [
+  'sent', 'paid', 'partial', 'partially_paid', 'overdue', 
+  'validee', 'validated', 'payee', 
+  'cloturee', 'closed', 
+  'invoice_sent', 'invoice'
+];
 
 /**
  * Vérifie si un type d'intervention est productif selon STATIA_RULES

@@ -156,8 +156,9 @@ export const calculateUniversStats = (
 /**
  * Calculer le taux de SAV par univers
  * Taux SAV = (Nb de dossiers avec au moins 1 SAV / Nb total de dossiers de l'univers) × 100
+ * P2-04: Exporté pour réutilisation dans d'autres modules (SAV dashboard, StatIA)
  */
-const calculateTauxSAVParUnivers = (
+export const calculateTauxSAVParUnivers = (
   interventions: any[],
   projects: any[],
   dateRange: { start: Date; end: Date }
@@ -312,11 +313,11 @@ export const calculateMonthlyUniversCA = (
     }
   });
   
-  // Construire le résultat avec tous les mois
-  const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  // P2-08: Constante pour les mois FR (i18n-ready - peut être externalisée)
+  const MONTHS_FR = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
   const result: MonthlyUniversCA[] = [];
   
-  months.forEach(month => {
+  MONTHS_FR.forEach(month => {
     const monthData = caParMoisEtUnivers.get(month) || new Map();
     const row: MonthlyUniversCA = { month };
     
