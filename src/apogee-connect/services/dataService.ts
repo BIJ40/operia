@@ -140,10 +140,9 @@ export class DataService {
       apogeeProxy.getInterventions(proxyOptions),
       apogeeProxy.getFactures(proxyOptions),
       apogeeProxy.getDevis(proxyOptions),
-      apogeeProxy.getInterventionsCreneaux(proxyOptions),
     ]);
 
-    const [usersRes, clientsRes, projectsRes, interventionsRes, facturesRes, devisRes, creneauxRes] = results.map((res, index) => {
+    const [usersRes, clientsRes, projectsRes, interventionsRes, facturesRes, devisRes] = results.map((res, index) => {
       if (res.status === 'fulfilled') return res.value;
       logApogee.warn(`Erreur lors de l'appel API #${index}:`, res.reason);
       return [];
@@ -156,7 +155,6 @@ export class DataService {
       interventions: Array.isArray(interventionsRes) ? interventionsRes.length : 0,
       factures: Array.isArray(facturesRes) ? facturesRes.length : 0,
       devis: Array.isArray(devisRes) ? devisRes.length : 0,
-      creneaux: Array.isArray(creneauxRes) ? creneauxRes.length : 0,
     });
 
     // Extraire et valider les données
@@ -182,7 +180,7 @@ export class DataService {
       interventions: validateAndCast<Intervention>(rawInterventions, 'Intervention', InterventionSchema),
       factures: validateAndCast<Facture>(rawFactures, 'Facture', FactureSchema),
       devis: extractData(devisRes),
-      creneaux: extractData(creneauxRes),
+      creneaux: [], // No créneaux endpoint in Apogée API
     };
     
     // Sauvegarder dans le cache avec TTL

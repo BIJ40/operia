@@ -26,14 +26,12 @@ const ALLOWED_ENDPOINTS = [
   'apiGetInterventions',
   'apiGetFactures',
   'apiGetDevis',
-  'apiGetInterventionsCreneaux',
   'getUsers',
   'getClients',
   'getProjects',
   'getInterventions',
   'getFactures',
   'getDevis',
-  'getInterventionsCreneaux',
 ];
 
 interface ProxyRequest {
