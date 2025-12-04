@@ -1586,6 +1586,8 @@ export type Database = {
           description: string | null
           employee_seen_at: string | null
           id: string
+          locked_at: string | null
+          locked_by: string | null
           processed_at: string | null
           processed_by: string | null
           request_type: string
@@ -1601,6 +1603,8 @@ export type Database = {
           description?: string | null
           employee_seen_at?: string | null
           id?: string
+          locked_at?: string | null
+          locked_by?: string | null
           processed_at?: string | null
           processed_by?: string | null
           request_type: string
@@ -1616,6 +1620,8 @@ export type Database = {
           description?: string | null
           employee_seen_at?: string | null
           id?: string
+          locked_at?: string | null
+          locked_by?: string | null
           processed_at?: string | null
           processed_by?: string | null
           request_type?: string
@@ -1637,6 +1643,13 @@ export type Database = {
             columns: ["collaborator_id"]
             isOneToOne: false
             referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requests_locked_by_fkey"
+            columns: ["locked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -3644,6 +3657,7 @@ export type Database = {
         Args: { _from_status: string; _to_status: string; _user_id: string }
         Returns: boolean
       }
+      cleanup_expired_request_locks: { Args: never; Returns: number }
       get_current_collaborator_id: { Args: never; Returns: string }
       get_unread_rh_notifications_count: { Args: never; Returns: number }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
@@ -3677,6 +3691,8 @@ export type Database = {
           description: string | null
           employee_seen_at: string | null
           id: string
+          locked_at: string | null
+          locked_by: string | null
           processed_at: string | null
           processed_by: string | null
           request_type: string
@@ -3716,6 +3732,7 @@ export type Database = {
         Returns: boolean
       }
       is_support_agent: { Args: { _user_id: string }; Returns: boolean }
+      lock_document_request: { Args: { p_request_id: string }; Returns: Json }
       mark_document_request_seen: {
         Args: { p_request_id: string }
         Returns: {
@@ -3725,6 +3742,8 @@ export type Database = {
           description: string | null
           employee_seen_at: string | null
           id: string
+          locked_at: string | null
+          locked_by: string | null
           processed_at: string | null
           processed_by: string | null
           request_type: string
@@ -3753,6 +3772,8 @@ export type Database = {
           description: string | null
           employee_seen_at: string | null
           id: string
+          locked_at: string | null
+          locked_by: string | null
           processed_at: string | null
           processed_by: string | null
           request_type: string
@@ -3768,6 +3789,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      unlock_document_request: { Args: { p_request_id: string }; Returns: Json }
     }
     Enums: {
       apogee_ticket_role: "developer" | "tester" | "franchiseur"
