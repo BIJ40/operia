@@ -1,12 +1,15 @@
 import { CHANGELOG, CHANGE_TYPE_CONFIG, getCurrentVersion, getPreviousVersions } from '@/config/changelog';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { FileText, Shield } from 'lucide-react';
+import { FileText, Shield, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export default function Changelog() {
   const currentVersion = getCurrentVersion();
   const previousVersions = getPreviousVersions();
+  const [expandedAudits, setExpandedAudits] = useState<string | null>(currentVersion.version);
 
   // Helper pour obtenir une direction de gradient stable basée sur le hash du titre
   const getGradientClass = (title: string): string => {
@@ -18,6 +21,50 @@ export default function Changelog() {
       'bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))]',
     ];
     return directions[hash % directions.length];
+  };
+
+  const renderAuditLinks = (version: typeof currentVersion) => {
+    if (!version.auditLinks?.length) return null;
+    
+    return (
+      <Collapsible 
+        open={expandedAudits === version.version}
+        onOpenChange={(open) => setExpandedAudits(open ? version.version : null)}
+      >
+        <CollapsibleTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="mt-4 text-purple-600 hover:text-purple-700 hover:bg-purple-50 gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            Rapports d'audit ({version.auditLinks.length})
+            {expandedAudits === version.version ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-3 bg-purple-50/50 rounded-lg border border-purple-100">
+            {version.auditLinks.map((link, idx) => (
+              <a
+                key={idx}
+                href={link.path}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-purple-700 bg-white rounded-md border border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-colors"
+              >
+                <FileText className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{link.label}</span>
+                <ExternalLink className="w-3 h-3 shrink-0 opacity-50" />
+              </a>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    );
   };
 
   return (
@@ -33,7 +80,7 @@ export default function Changelog() {
           className={cn(
             "group relative rounded-xl border border-helpconfort-blue/15 p-6",
             getGradientClass(currentVersion.version),
-            "from-helpconfort-blue/10 via-white to-white",
+            "from-helpconfort-blue/10 via-background to-background",
             "shadow-sm transition-all duration-300",
             "border-l-4 border-l-helpconfort-blue"
           )}
@@ -46,7 +93,7 @@ export default function Changelog() {
             <span className="text-sm font-medium text-muted-foreground">{currentVersion.date}</span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
             {currentVersion.changes.map((change, idx) => {
               const config = CHANGE_TYPE_CONFIG[change.type];
               return (
@@ -61,7 +108,7 @@ export default function Changelog() {
             })}
           </div>
 
-          {/* Lien rapport sécurité pour V0.6.2 */}
+          {/* Liens rapport sécurité pour V0.6.2 */}
           {currentVersion.version === 'V0.6.2' && (
             <div className="mt-4 pt-4 border-t border-border/50">
               <a 
@@ -81,6 +128,9 @@ export default function Changelog() {
               </a>
             </div>
           )}
+
+          {/* Liens audits */}
+          {renderAuditLinks(currentVersion)}
         </div>
       </section>
 
@@ -95,7 +145,7 @@ export default function Changelog() {
                 className={cn(
                   "group relative rounded-xl border border-helpconfort-blue/15 p-5",
                   getGradientClass(version.version),
-                  "from-helpconfort-blue/10 via-white to-white",
+                  "from-helpconfort-blue/10 via-background to-background",
                   "shadow-sm transition-all duration-300",
                   "border-l-4 border-l-helpconfort-blue",
                   "hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5"
@@ -123,6 +173,9 @@ export default function Changelog() {
                     );
                   })}
                 </div>
+
+                {/* Liens audits pour versions précédentes */}
+                {renderAuditLinks(version)}
               </div>
             ))}
           </div>
