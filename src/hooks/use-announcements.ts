@@ -15,10 +15,11 @@ export type AnnouncementWithDetails = Announcement & {
 
 /**
  * Hook pour récupérer les annonces actives non lues par l'utilisateur
+ * Filtre par rôle global et exclude_base_users
  */
-export function useUnreadAnnouncements(userId: string | undefined) {
+export function useUnreadAnnouncements(userId: string | undefined, globalRole?: string) {
   return useQuery({
-    queryKey: ['unread-announcements', userId],
+    queryKey: ['unread-announcements', userId, globalRole],
     queryFn: async () => {
       if (!userId) return [];
 
@@ -43,8 +44,31 @@ export function useUnreadAnnouncements(userId: string | undefined) {
 
       const readAnnouncementIds = new Set(reads?.map(r => r.announcement_id) || []);
 
-      // Filtrer les annonces non lues
-      return activeAnnouncements?.filter(a => !readAnnouncementIds.has(a.id)) || [];
+      // Filtrer les annonces non lues ET par ciblage
+      const filteredAnnouncements = activeAnnouncements?.filter(a => {
+        // Déjà lue
+        if (readAnnouncementIds.has(a.id)) return false;
+
+        // Si target_all = true, tout le monde voit (sauf exclude_base_users)
+        if (a.target_all) {
+          // Exclure les base_user si exclude_base_users = true
+          if (a.exclude_base_users && globalRole === 'base_user') {
+            return false;
+          }
+          return true;
+        }
+
+        // Sinon, vérifier target_global_roles si défini
+        const targetRoles = a.target_global_roles as string[] | null;
+        if (targetRoles && targetRoles.length > 0 && globalRole) {
+          return targetRoles.includes(globalRole);
+        }
+
+        // Si pas de ciblage spécifique et target_all = false, ne pas afficher
+        return false;
+      }) || [];
+
+      return filteredAnnouncements;
     },
     enabled: !!userId,
     refetchOnMount: true,
