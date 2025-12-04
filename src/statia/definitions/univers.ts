@@ -7,7 +7,8 @@ import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
 import { 
   normalizeUniversSlug, 
   extractProjectUniverses,
-  isFactureStateIncluded 
+  isFactureStateIncluded,
+  normalizeApporteurId
 } from '../engine/normalizers';
 import { extractFactureMeta } from '../rules/rules';
 import { indexProjectsById } from '../engine/loaders';
@@ -15,6 +16,7 @@ import { indexProjectsById } from '../engine/loaders';
 /**
  * CA par Univers
  * Conforme à calculateUniversStats de universCalculations.ts
+ * SUPPORTE les filtres croisés: apporteurId
  */
 export const caParUnivers: StatDefinition = {
   id: 'ca_par_univers',
@@ -33,6 +35,11 @@ export const caParUnivers: StatDefinition = {
     let totalCA = 0;
     let recordCount = 0;
     
+    // Filtre apporteur si spécifié
+    const filterApporteurId = params.filters?.apporteurId 
+      ? String(params.filters.apporteurId).toLowerCase().trim()
+      : null;
+    
     for (const facture of factures) {
       const meta = extractFactureMeta(facture);
       
@@ -44,6 +51,17 @@ export const caParUnivers: StatDefinition = {
       // Récupérer le projet lié
       const projectId = facture.projectId || facture.project_id;
       const project = projectId ? projectsById.get(projectId) : null;
+      
+      // FILTRE APPORTEUR: si spécifié, vérifier que la facture correspond à cet apporteur
+      if (filterApporteurId) {
+        const factureApporteurId = project ? normalizeApporteurId(project) : 'direct';
+        const normalizedFactureApporteur = String(factureApporteurId).toLowerCase().trim();
+        
+        // Comparer les IDs normalisés
+        if (normalizedFactureApporteur !== filterApporteurId) {
+          continue; // Skip cette facture, elle n'appartient pas à l'apporteur sélectionné
+        }
+      }
       
       // Extraire les univers du projet
       const universes = project ? extractProjectUniverses(project) : ['non-classe'];
@@ -69,6 +87,7 @@ export const caParUnivers: StatDefinition = {
       breakdown: {
         total: totalCA,
         universCount: Object.keys(byUnivers).length,
+        filterApporteurId,
       }
     };
   }
