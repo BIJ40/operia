@@ -126,7 +126,7 @@ serve(async (req) => {
 
     // Rate limit: 5 req/10min per user (heavy operation)
     const rateLimitKey = `regenerate-apogee-rag:${user.id}`;
-    const rateCheck = checkRateLimit(rateLimitKey, { limit: 5, windowMs: 10 * 60 * 1000 });
+    const rateCheck = await checkRateLimit(rateLimitKey, { limit: 5, windowMs: 10 * 60 * 1000 });
     if (!rateCheck.allowed) {
       console.log(`[RAG] Rate limit exceeded for ${rateLimitKey}`);
       return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);

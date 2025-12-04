@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
 
     // 2. Rate limiting (30 req/min par utilisateur)
     const rateLimitKey = `proxy-apogee:${user.id}`;
-    const rateCheck = checkRateLimit(rateLimitKey, { limit: 30, windowMs: 60 * 1000 });
+    const rateCheck = await checkRateLimit(rateLimitKey, { limit: 30, windowMs: 60 * 1000 });
     if (!rateCheck.allowed) {
       console.log(`[PROXY-APOGEE] Rate limit exceeded for user ${user.id}`);
       return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);

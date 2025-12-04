@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
 
     // Rate limit: 20 req/min per user
     const rateLimitKey = `get-kpis:${user.id}`;
-    const rateCheck = checkRateLimit(rateLimitKey, { limit: 20, windowMs: 60 * 1000 });
+    const rateCheck = await checkRateLimit(rateLimitKey, { limit: 20, windowMs: 60 * 1000 });
     if (!rateCheck.allowed) {
       console.log(`[GET-KPIS] Rate limit exceeded for ${rateLimitKey}`);
       return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
