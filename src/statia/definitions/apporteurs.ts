@@ -63,15 +63,15 @@ export const caParApporteur: StatDefinition = {
         }
       }
       
-      // Identifier l'apporteur
+      // Identifier l'apporteur - UNIQUEMENT les dossiers AVEC commanditaire
       const apporteurId = project ? normalizeApporteurId(project) : 'direct';
       
+      // Exclure les factures sans apporteur (dossiers "Direct")
+      if (apporteurId === 'direct') continue;
+      
       // Récupérer le label de l'apporteur
-      let apporteurLabel = 'Direct';
-      if (apporteurId !== 'direct') {
-        const client = clientsById.get(apporteurId);
-        apporteurLabel = client?.name || client?.label || `Apporteur ${apporteurId}`;
-      }
+      const client = clientsById.get(apporteurId);
+      const apporteurLabel = client?.name || client?.label || `Apporteur ${apporteurId}`;
       
       if (!byApporteur[apporteurId]) {
         byApporteur[apporteurId] = { ca: 0, label: apporteurLabel, count: 0 };
@@ -139,11 +139,11 @@ export const dossiersParApporteur: StatDefinition = {
       
       const apporteurId = normalizeApporteurId(project);
       
-      let apporteurLabel = 'Direct';
-      if (apporteurId !== 'direct') {
-        const client = clientsById.get(apporteurId);
-        apporteurLabel = client?.name || client?.label || `Apporteur ${apporteurId}`;
-      }
+      // Exclure les dossiers sans apporteur (dossiers "Direct")
+      if (apporteurId === 'direct') continue;
+      
+      const client = clientsById.get(apporteurId);
+      const apporteurLabel = client?.name || client?.label || `Apporteur ${apporteurId}`;
       
       if (!byApporteur[apporteurId]) {
         byApporteur[apporteurId] = { count: 0, label: apporteurLabel };
