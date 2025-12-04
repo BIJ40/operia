@@ -266,9 +266,9 @@ export default function AdminUsersUnified() {
               updateEmailMutation.mutate({ userId: editDialog.user.id, newEmail });
             }
           }}
-          onResetPassword={(newPassword) => {
+          onResetPassword={(newPassword, sendEmail) => {
             if (editDialog.user) {
-              resetPasswordMutation.mutate({ userId: editDialog.user.id, newPassword });
+              resetPasswordMutation.mutate({ userId: editDialog.user.id, newPassword, sendEmail });
             }
           }}
           isPending={updateUserMutation.isPending}

@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Mail, KeyRound, AlertCircle, UserX } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, Mail, KeyRound, AlertCircle, UserX, RefreshCw } from 'lucide-react';
+import { generateSecurePassword } from '@/lib/passwordUtils';
 
 const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
@@ -61,7 +63,7 @@ export interface UserEditFormProps {
   user: UserProfile;
   onSave: (payload: UpdateUserPayload) => void;
   onUpdateEmail: (newEmail: string) => void;
-  onResetPassword: (newPassword: string) => void;
+  onResetPassword: (newPassword: string, sendEmail?: boolean) => void;
   isSubmitting: boolean;
   isEmailPending: boolean;
   isPasswordPending: boolean;
@@ -95,6 +97,7 @@ export function UserEditForm({
     globalRole: 'base_user' as GlobalRole,
   });
   const [newPassword, setNewPassword] = useState('');
+  const [sendEmail, setSendEmail] = useState(true);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof formData, string>>>({});
 
   // Synchroniser formData avec user
@@ -290,7 +293,7 @@ export function UserEditForm({
         </div>
       )}
 
-      <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
+      <div className="border rounded-lg p-3 space-y-3 bg-muted/30">
         <Label className="flex items-center gap-2">
           <KeyRound className="w-4 h-4" />
           Réinitialiser le mot de passe
@@ -305,15 +308,38 @@ export function UserEditForm({
             disabled={isPasswordPending}
           />
           <Button 
+            type="button"
+            variant="outline" 
+            size="sm"
+            onClick={() => setNewPassword(generateSecurePassword())}
+            disabled={isPasswordPending}
+            title="Générer un mot de passe sécurisé"
+          >
+            <RefreshCw className="w-4 h-4 mr-1" />
+            Générer
+          </Button>
+          <Button 
             variant="outline" 
             onClick={() => { 
-              onResetPassword(newPassword); 
+              onResetPassword(newPassword, sendEmail); 
               setNewPassword(''); 
             }} 
             disabled={!newPassword || isPasswordPending}
+            title="Appliquer le nouveau mot de passe"
           >
             {isPasswordPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
           </Button>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="sendResetEmail" 
+            checked={sendEmail}
+            onCheckedChange={(checked) => setSendEmail(checked === true)}
+            disabled={isPasswordPending}
+          />
+          <Label htmlFor="sendResetEmail" className="text-sm font-normal cursor-pointer">
+            Envoyer le nouveau mot de passe par email
+          </Label>
         </div>
       </div>
 
