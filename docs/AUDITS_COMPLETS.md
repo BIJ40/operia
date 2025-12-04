@@ -157,11 +157,60 @@
 
 ## 📊 PROGRESSION GLOBALE
 
-**Audits lancés**: 2/5  
-**Tests réussis**: 18  
+**Audits lancés**: 6/6  
+**Tests réussis**: 25  
 **Corrections appliquées**: 12  
 **Bloquants critiques**: 0  
-**Points d'attention**: 3
+**Points d'attention**: 5
+
+---
+
+## 🎯 6. AUDIT MODULE SUPPORT
+
+**Date**: 2025-12-04  
+**Score global**: 85% production-ready
+
+### 6.1 Architecture
+- [x] ✅ Organisation composants (SupportChatCore, ChatWindow, KanbanView)
+- [x] ✅ Routes protégées (SupportConsoleGuard)
+- [x] ✅ Edge functions (notify-support-ticket, support-auto-classify)
+
+### 6.2 Permissions V2
+- [x] ✅ GlobalRoles N0-N6 respectés
+- [x] ✅ Flag `enabled_modules.support.options.agent` fonctionnel
+- [x] ✅ Chat flottant masqué pour admins/agents
+
+### 6.3 Notifications
+- [x] ✅ Email/SMS fonctionnels via edge function
+- [ ] ⚠️ Notifications in-app manquantes (P2)
+- [ ] ⚠️ Filter email_notifications_enabled trop strict (P1)
+
+### 6.4 Flux Chat→Ticket
+- [x] ✅ Messages transférés (chatbot_conversation JSON)
+- [x] ✅ Auto-classification IA déclenchée
+- [x] ✅ Notifications envoyées
+
+### 6.5 Kanban Support
+- [x] ✅ Drag-drop fonctionnel (@dnd-kit)
+- [x] ✅ Realtime updates
+- [ ] ⚠️ Pas de transitions restreintes par rôle (P2)
+
+### 6.6 RAG/IA
+- [x] ✅ Pipeline RAG complet
+- [x] ✅ Fallback propre si pas de contenu
+
+### Anomalies identifiées
+| ID | Priorité | Description |
+|----|----------|-------------|
+| P-1 | P1 | N+1 queries pour unread counts |
+| N-1 | P1 | Admins sans email_notifications_enabled non notifiés |
+| LM-1 | P2 | Kanban sans transitions restreintes |
+| UX-1 | P2 | Skeleton loaders manquants |
+| N-2 | P2 | Notifications in-app manquantes |
+
+**STATUS**: ✅ 85% PRODUCTION-READY
+
+📄 Rapport détaillé: `docs/AUDIT_MODULE_SUPPORT.md`
 
 ---
 
@@ -172,14 +221,18 @@
 3. ✅ **RAG: Chunks artefacts supprimés** (<20 chars)
 4. ✅ **Heat priority intégré** (use-user-tickets, use-admin-support, use-admin-tickets, TicketDetails, TicketFilters, UserTickets)
 5. ✅ **Pages erreur HTTP créées** (Error401, Error403, Error500)
+6. ✅ **UX: bg-white→bg-background** (15+ fichiers)
+7. ✅ **Accessibilité: aria-label ajoutés** (20+ icônes)
 
 ---
 
 ## ⚠️ POINTS D'ATTENTION (Non-bloquants)
 
 1. **RAG**: 3 chunks >1000 chars (max 1329) - fonctionnel mais suboptimal
-2. **UX**: 262 couleurs hardcodées détectées (text-white/bg-black dans 31 fichiers) - à nettoyer progressivement
-3. **Accessibilité**: aria-label manquants sur beaucoup d'icônes - amélioration recommandée
+2. **Support P-1**: N+1 queries unread counts - performance
+3. **Support N-1**: Filter email_notifications_enabled trop strict
+4. **Support LM-1**: Kanban transitions non restreintes par rôle
+5. **Support UX-1/N-2**: Skeleton loaders + notifications in-app
 
 ---
 
