@@ -1,72 +1,38 @@
 /**
  * StatIA V2 - Définitions des métriques Qualité
- * Famille de métriques pour l'analyse qualité et SAV
+ * Famille de métriques pour l'analyse qualité et KPI avancés (hors SAV)
+ * Note: Les métriques SAV sont dans sav.ts
  */
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
-import { parseISO, isWithinInterval } from 'date-fns';
+import { parseISO, isWithinInterval, differenceInDays } from 'date-fns';
 import { extractFactureMeta } from '../rules/rules';
+import { extractProjectUniverses } from '../engine/normalizers';
 
 /**
- * Détecte si une intervention est de type SAV
+ * Taux de dossiers multi-univers
+ * Pourcentage de dossiers impliquant plusieurs univers métiers
  */
-function isSAVIntervention(intervention: any): boolean {
-  const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase();
-  const type = (intervention.data?.type || intervention.type || '').toLowerCase();
-  const pictos = intervention.data?.pictosInterv || [];
-  
-  return (
-    type2.includes('sav') || 
-    type.includes('sav') || 
-    pictos.includes('SAV')
-  );
-}
-
-/**
- * Détecte si un projet a eu un SAV
- */
-function projectHasSAV(project: any, interventions: any[]): boolean {
-  const projectId = project.id;
-  
-  // Via interventions
-  const hasSAVIntervention = interventions.some(
-    i => i.projectId === projectId && isSAVIntervention(i)
-  );
-  
-  // Via picto projet
-  const pictos = project.data?.pictoInterv || [];
-  const hasSAVPicto = pictos.includes('SAV');
-  
-  // Via sinistre
-  const sinistre = (project.data?.sinistre || '').toLowerCase();
-  const hasSAVSinistre = sinistre === 'sav';
-  
-  return hasSAVIntervention || hasSAVPicto || hasSAVSinistre;
-}
-
-/**
- * Taux SAV global
- */
-export const tauxSavGlobal: StatDefinition = {
-  id: 'taux_sav_global',
-  label: 'Taux SAV global',
-  description: 'Pourcentage de dossiers ayant généré un SAV',
-  category: 'sav',
-  source: ['interventions', 'projects'],
+export const tauxDossiersMultiUnivers: StatDefinition = {
+  id: 'taux_dossiers_multi_univers',
+  label: 'Taux multi-univers',
+  description: 'Pourcentage de dossiers impliquant plusieurs univers',
+  category: 'qualite',
+  source: 'projects',
   aggregation: 'ratio',
   unit: '%',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { interventions, projects } = data;
+    const { projects } = data;
     
     let totalProjets = 0;
-    let projetsSAV = 0;
+    let projetsMultiUnivers = 0;
     
     for (const project of projects) {
-      const dateCreation = project.created_at || project.createdAt || project.date;
-      if (dateCreation) {
+      const dateStr = project.date || project.created_at;
+      if (dateStr) {
         try {
-          const projectDate = parseISO(dateCreation);
-          if (!isWithinInterval(projectDate, { start: params.dateRange.start, end: params.dateRange.end })) {
+          const date = parseISO(dateStr);
+          if (!isWithinInterval(date, { start: params.dateRange.start, end: params.dateRange.end })) {
             continue;
           }
         } catch {
@@ -76,12 +42,13 @@ export const tauxSavGlobal: StatDefinition = {
       
       totalProjets++;
       
-      if (projectHasSAV(project, interventions)) {
-        projetsSAV++;
+      const universes = extractProjectUniverses(project);
+      if (universes.length > 1) {
+        projetsMultiUnivers++;
       }
     }
     
-    const taux = totalProjets > 0 ? (projetsSAV / totalProjets) * 100 : 0;
+    const taux = totalProjets > 0 ? (projetsMultiUnivers / totalProjets) * 100 : 0;
     
     return {
       value: Math.round(taux * 10) / 10,
@@ -92,192 +59,225 @@ export const tauxSavGlobal: StatDefinition = {
       },
       breakdown: {
         totalProjets,
-        projetsSAV,
-        projetsSansSAV: totalProjets - projetsSAV,
+        projetsMultiUnivers,
+        projetsMonoUnivers: totalProjets - projetsMultiUnivers,
       }
     };
   }
 };
 
 /**
- * Taux SAV par univers
+ * Taux de dossiers sans devis
+ * Dossiers facturés sans passer par un devis (dépannages directs)
  */
-export const tauxSavParUnivers: StatDefinition = {
-  id: 'taux_sav_par_univers',
-  label: 'Taux SAV par univers',
-  description: 'Taux de SAV ventilé par univers métier',
-  category: 'sav',
-  source: ['interventions', 'projects'],
-  dimensions: ['univers'],
+export const tauxDossiersSansDevis: StatDefinition = {
+  id: 'taux_dossiers_sans_devis',
+  label: 'Taux sans devis',
+  description: 'Pourcentage de dossiers facturés sans devis préalable',
+  category: 'qualite',
+  source: ['projects', 'devis', 'factures'],
   aggregation: 'ratio',
   unit: '%',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { interventions, projects } = data;
+    const { projects, devis, factures } = data;
     
-    const statsByUnivers = new Map<string, { total: number; sav: number }>();
-    
-    for (const project of projects) {
-      const dateCreation = project.created_at || project.createdAt || project.date;
-      if (dateCreation) {
-        try {
-          const projectDate = parseISO(dateCreation);
-          if (!isWithinInterval(projectDate, { start: params.dateRange.start, end: params.dateRange.end })) {
-            continue;
-          }
-        } catch {
-          continue;
-        }
+    // Projets avec factures
+    const projetsAvecFacture = new Set<number | string>();
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      if (!meta.date) continue;
+      if (!isWithinInterval(meta.date, { start: params.dateRange.start, end: params.dateRange.end })) {
+        continue;
       }
-      
-      const universes = project.data?.universes || project.universes || [];
-      if (universes.length === 0) continue;
-      
-      const hasSAV = projectHasSAV(project, interventions);
-      
-      for (const univers of universes) {
-        const normalized = univers.toLowerCase();
-        if (!statsByUnivers.has(normalized)) {
-          statsByUnivers.set(normalized, { total: 0, sav: 0 });
-        }
-        const stats = statsByUnivers.get(normalized)!;
-        stats.total++;
-        if (hasSAV) stats.sav++;
+      if (facture.projectId) {
+        projetsAvecFacture.add(facture.projectId);
       }
     }
     
-    const result: Record<string, number> = {};
-    statsByUnivers.forEach((stats, univers) => {
-      result[univers] = stats.total > 0 
-        ? Math.round((stats.sav / stats.total) * 1000) / 10 
-        : 0;
-    });
-    
-    return {
-      value: result,
-      metadata: {
-        computedAt: new Date(),
-        source: 'projects',
-        recordCount: projects.length,
-      }
-    };
-  }
-};
-
-/**
- * Taux SAV par apporteur
- */
-export const tauxSavParApporteur: StatDefinition = {
-  id: 'taux_sav_par_apporteur',
-  label: 'Taux SAV par apporteur',
-  description: 'Taux de SAV ventilé par apporteur',
-  category: 'sav',
-  source: ['interventions', 'projects', 'clients'],
-  dimensions: ['apporteur'],
-  aggregation: 'ratio',
-  unit: '%',
-  compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { interventions, projects, clients } = data;
-    
-    const clientsMap = new Map(clients.map(c => [c.id, c]));
-    const statsByApporteur = new Map<string, { total: number; sav: number; name: string }>();
-    
-    for (const project of projects) {
-      const dateCreation = project.created_at || project.createdAt || project.date;
-      if (dateCreation) {
-        try {
-          const projectDate = parseISO(dateCreation);
-          if (!isWithinInterval(projectDate, { start: params.dateRange.start, end: params.dateRange.end })) {
-            continue;
-          }
-        } catch {
-          continue;
-        }
-      }
-      
-      const commanditaireId = project.data?.commanditaireId || project.commanditaireId;
-      if (!commanditaireId) continue; // Particulier, pas d'apporteur
-      
-      const client = clientsMap.get(commanditaireId);
-      const apporteurName = client?.nom || client?.prenom || `Apporteur ${commanditaireId}`;
-      const apporteurKey = String(commanditaireId);
-      
-      if (!statsByApporteur.has(apporteurKey)) {
-        statsByApporteur.set(apporteurKey, { total: 0, sav: 0, name: apporteurName });
-      }
-      
-      const stats = statsByApporteur.get(apporteurKey)!;
-      stats.total++;
-      
-      if (projectHasSAV(project, interventions)) {
-        stats.sav++;
+    // Projets avec devis
+    const projetsAvecDevis = new Set<number | string>();
+    for (const d of devis) {
+      if (d.projectId) {
+        projetsAvecDevis.add(d.projectId);
       }
     }
     
-    const result: Record<string, number> = {};
-    const details: Record<string, any> = {};
+    // Compter les projets facturés sans devis
+    let projetsSansDevis = 0;
+    for (const projectId of projetsAvecFacture) {
+      if (!projetsAvecDevis.has(projectId)) {
+        projetsSansDevis++;
+      }
+    }
     
-    statsByApporteur.forEach((stats, apporteurId) => {
-      const taux = stats.total > 0 ? (stats.sav / stats.total) * 100 : 0;
-      result[stats.name] = Math.round(taux * 10) / 10;
-      details[apporteurId] = {
-        name: stats.name,
-        total: stats.total,
-        sav: stats.sav,
-        taux: Math.round(taux * 10) / 10,
-      };
-    });
+    const totalFactures = projetsAvecFacture.size;
+    const taux = totalFactures > 0 ? (projetsSansDevis / totalFactures) * 100 : 0;
     
     return {
-      value: result,
+      value: Math.round(taux * 10) / 10,
       metadata: {
         computedAt: new Date(),
-        source: 'projects',
-        recordCount: projects.length,
+        source: 'factures',
+        recordCount: totalFactures,
       },
-      breakdown: details
+      breakdown: {
+        totalFactures,
+        projetsSansDevis,
+        projetsAvecDevis: totalFactures - projetsSansDevis,
+      }
     };
   }
 };
 
 /**
- * Nb interventions SAV
+ * Délai moyen validation devis
+ * Temps entre émission et validation d'un devis
  */
-export const nbInterventionsSav: StatDefinition = {
-  id: 'nb_interventions_sav',
-  label: 'Nb interventions SAV',
-  description: 'Nombre total d\'interventions SAV sur la période',
-  category: 'sav',
-  source: 'interventions',
-  aggregation: 'count',
-  unit: '',
+export const delaiValidationDevis: StatDefinition = {
+  id: 'delai_validation_devis',
+  label: 'Délai validation devis',
+  description: 'Nombre de jours moyen entre émission et validation du devis',
+  category: 'qualite',
+  source: 'devis',
+  aggregation: 'avg',
+  unit: 'jours',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { interventions } = data;
+    const { devis } = data;
     
+    const delais: number[] = [];
+    
+    for (const d of devis) {
+      const dateEmission = d.dateReelle || d.date || d.created_at;
+      if (!dateEmission) continue;
+      
+      // Seulement les devis validés
+      const state = (d.state || '').toLowerCase();
+      if (!['validated', 'signed', 'order', 'accepted'].includes(state)) continue;
+      
+      const dateValidation = d.dateValidation || d.data?.dateValidation;
+      if (!dateValidation) continue;
+      
+      try {
+        const emissionDate = parseISO(dateEmission);
+        const validationDate = parseISO(dateValidation);
+        
+        if (!isWithinInterval(emissionDate, { start: params.dateRange.start, end: params.dateRange.end })) {
+          continue;
+        }
+        
+        const delai = differenceInDays(validationDate, emissionDate);
+        if (delai >= 0) {
+          delais.push(delai);
+        }
+      } catch {
+        continue;
+      }
+    }
+    
+    const moyenne = delais.length > 0 
+      ? delais.reduce((a, b) => a + b, 0) / delais.length 
+      : 0;
+    
+    return {
+      value: Math.round(moyenne * 10) / 10,
+      metadata: {
+        computedAt: new Date(),
+        source: 'devis',
+        recordCount: delais.length,
+      },
+      breakdown: {
+        nbDevisValides: delais.length,
+        min: delais.length > 0 ? Math.min(...delais) : 0,
+        max: delais.length > 0 ? Math.max(...delais) : 0,
+      }
+    };
+  }
+};
+
+/**
+ * Taux de factures avec avoir
+ * Pourcentage de factures ayant généré un avoir
+ */
+export const tauxFacturesAvecAvoir: StatDefinition = {
+  id: 'taux_factures_avec_avoir',
+  label: 'Taux factures avec avoir',
+  description: 'Pourcentage de factures ayant généré un avoir',
+  category: 'qualite',
+  source: 'factures',
+  aggregation: 'ratio',
+  unit: '%',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures } = data;
+    
+    let totalFactures = 0;
+    let totalAvoirs = 0;
+    
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      if (!meta.date) continue;
+      if (!isWithinInterval(meta.date, { start: params.dateRange.start, end: params.dateRange.end })) {
+        continue;
+      }
+      
+      if (meta.isAvoir) {
+        totalAvoirs++;
+      } else {
+        totalFactures++;
+      }
+    }
+    
+    const taux = totalFactures > 0 ? (totalAvoirs / totalFactures) * 100 : 0;
+    
+    return {
+      value: Math.round(taux * 10) / 10,
+      metadata: {
+        computedAt: new Date(),
+        source: 'factures',
+        recordCount: totalFactures + totalAvoirs,
+      },
+      breakdown: {
+        totalFactures,
+        totalAvoirs,
+      }
+    };
+  }
+};
+
+/**
+ * Montant total des avoirs
+ */
+export const montantTotalAvoirs: StatDefinition = {
+  id: 'montant_total_avoirs',
+  label: 'Montant avoirs',
+  description: 'Montant total HT des avoirs émis',
+  category: 'qualite',
+  source: 'factures',
+  aggregation: 'sum',
+  unit: '€',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { factures } = data;
+    
+    let totalAvoirs = 0;
     let count = 0;
     
-    for (const intervention of interventions) {
-      const date = intervention.date || intervention.created_at;
-      if (date) {
-        try {
-          const interventionDate = parseISO(date);
-          if (!isWithinInterval(interventionDate, { start: params.dateRange.start, end: params.dateRange.end })) {
-            continue;
-          }
-        } catch {
-          continue;
-        }
+    for (const facture of factures) {
+      const meta = extractFactureMeta(facture);
+      if (!meta.date) continue;
+      if (!isWithinInterval(meta.date, { start: params.dateRange.start, end: params.dateRange.end })) {
+        continue;
       }
       
-      if (isSAVIntervention(intervention)) {
+      if (meta.isAvoir) {
+        totalAvoirs += Math.abs(meta.montantNetHT);
         count++;
       }
     }
     
     return {
-      value: count,
+      value: Math.round(totalAvoirs * 100) / 100,
       metadata: {
         computedAt: new Date(),
-        source: 'interventions',
+        source: 'factures',
         recordCount: count,
       }
     };
@@ -285,66 +285,71 @@ export const nbInterventionsSav: StatDefinition = {
 };
 
 /**
- * CA impacté par SAV (estimation)
- * CA des dossiers ayant eu un SAV (potentiel impacté)
+ * Nb moyen d'interventions par dossier
  */
-export const caImpacteSav: StatDefinition = {
-  id: 'ca_impacte_sav',
-  label: 'CA impacté par SAV',
-  description: 'Chiffre d\'affaires des dossiers ayant généré un SAV',
-  category: 'sav',
-  source: ['factures', 'projects', 'interventions'],
-  aggregation: 'sum',
-  unit: '€',
+export const nbMoyenInterventionsParDossier: StatDefinition = {
+  id: 'nb_moyen_interventions_dossier',
+  label: 'Nb interventions/dossier',
+  description: 'Nombre moyen d\'interventions par dossier',
+  category: 'qualite',
+  source: ['interventions', 'projects'],
+  aggregation: 'avg',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { factures, projects, interventions } = data;
+    const { interventions, projects } = data;
     
-    const projectsMap = new Map(projects.map(p => [p.id, p]));
+    const interventionsParProjet = new Map<string | number, number>();
+    const projetsInPeriod = new Set<string | number>();
     
-    // Identifier les projets avec SAV
-    const projetsSAV = new Set<number | string>();
+    // Identifier les projets dans la période
     for (const project of projects) {
-      if (projectHasSAV(project, interventions)) {
-        projetsSAV.add(project.id);
+      const dateStr = project.date || project.created_at;
+      if (dateStr) {
+        try {
+          const date = parseISO(dateStr);
+          if (isWithinInterval(date, { start: params.dateRange.start, end: params.dateRange.end })) {
+            projetsInPeriod.add(project.id);
+          }
+        } catch {
+          continue;
+        }
       }
     }
     
-    let caImpacte = 0;
-    let nbFactures = 0;
-    
-    for (const facture of factures) {
-      const meta = extractFactureMeta(facture);
+    // Compter les interventions par projet
+    for (const intervention of interventions) {
+      const projectId = intervention.projectId;
+      if (!projectId || !projetsInPeriod.has(projectId)) continue;
       
-      if (!meta.date) continue;
-      if (!isWithinInterval(meta.date, { start: params.dateRange.start, end: params.dateRange.end })) {
-        continue;
-      }
-      
-      if (projetsSAV.has(facture.projectId)) {
-        caImpacte += meta.montantNetHT;
-        nbFactures++;
-      }
+      interventionsParProjet.set(
+        projectId, 
+        (interventionsParProjet.get(projectId) || 0) + 1
+      );
     }
+    
+    const nbProjets = projetsInPeriod.size;
+    const totalInterventions = Array.from(interventionsParProjet.values()).reduce((a, b) => a + b, 0);
+    const moyenne = nbProjets > 0 ? totalInterventions / nbProjets : 0;
     
     return {
-      value: Math.round(caImpacte * 100) / 100,
+      value: Math.round(moyenne * 100) / 100,
       metadata: {
         computedAt: new Date(),
-        source: 'factures',
-        recordCount: nbFactures,
+        source: 'interventions',
+        recordCount: nbProjets,
       },
       breakdown: {
-        nbProjetsSAV: projetsSAV.size,
-        nbFactures,
+        totalInterventions,
+        nbProjets,
       }
     };
   }
 };
 
 export const qualiteDefinitions = {
-  taux_sav_global: tauxSavGlobal,
-  taux_sav_par_univers: tauxSavParUnivers,
-  taux_sav_par_apporteur: tauxSavParApporteur,
-  nb_interventions_sav: nbInterventionsSav,
-  ca_impacte_sav: caImpacteSav,
+  taux_dossiers_multi_univers: tauxDossiersMultiUnivers,
+  taux_dossiers_sans_devis: tauxDossiersSansDevis,
+  delai_validation_devis: delaiValidationDevis,
+  taux_factures_avec_avoir: tauxFacturesAvecAvoir,
+  montant_total_avoirs: montantTotalAvoirs,
+  nb_moyen_interventions_dossier: nbMoyenInterventionsParDossier,
 };

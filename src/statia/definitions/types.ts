@@ -9,7 +9,10 @@ export type StatCategory =
   | 'apporteur' 
   | 'technicien' 
   | 'sav' 
-  | 'recouvrement';
+  | 'recouvrement'
+  | 'qualite'
+  | 'dossiers'
+  | 'productivite';
 
 export type DataSource = 'factures' | 'devis' | 'interventions' | 'projects' | 'users' | 'clients';
 
