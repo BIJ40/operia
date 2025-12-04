@@ -127,9 +127,24 @@ export const tauxDossiersComplexes: StatDefinition = {
     const { projects, interventions, factures } = data;
     const { dateRange } = params;
     
-    // Construire un Set des projectIds qui ont au moins une facture (dossiers facturés)
+    // 1. Filtrer les factures de la période
+    let facturesFiltrees = factures;
+    if (dateRange) {
+      facturesFiltrees = factures.filter(f => {
+        const dateStr = f.dateReelle || f.date || f.data?.dateReelle || f.data?.date || f.created_at;
+        if (!dateStr) return false;
+        try {
+          const date = parseISO(dateStr);
+          return isWithinInterval(date, dateRange);
+        } catch {
+          return false;
+        }
+      });
+    }
+    
+    // 2. Identifier les projectIds uniques ayant au moins une facture dans la période
     const projectIdsFactures = new Set<string>();
-    for (const facture of factures) {
+    for (const facture of facturesFiltrees) {
       const projectId = facture.projectId || facture.data?.projectId;
       if (projectId) {
         projectIdsFactures.add(projectId);
@@ -137,38 +152,20 @@ export const tauxDossiersComplexes: StatDefinition = {
     }
     
     logDebug('STATIA', 'tauxDossiersComplexes - START', {
-      nbProjects: projects.length,
-      nbInterventions: interventions.length,
-      nbFactures: factures.length,
+      nbFacturesTotal: factures.length,
+      nbFacturesPeriode: facturesFiltrees.length,
       nbProjectsFactures: projectIdsFactures.size,
       dateRange: dateRange ? { start: dateRange.start.toISOString(), end: dateRange.end.toISOString() } : 'none'
     });
     
-    // Filtrer les projets : uniquement les FACTURÉS et dans la période
-    let projectsFiltres = projects.filter(project => {
+    // 3. Récupérer les projets correspondants
+    const projectsFiltres = projects.filter(project => {
       const projectId = project.id || project.data?.id;
-      // Doit avoir au moins une facture
-      if (!projectIdsFactures.has(projectId)) return false;
-      
-      // Filtre par période si fournie
-      if (dateRange) {
-        const date = project.date || project.data?.date || project.createdAt;
-        if (!date) return false;
-        
-        try {
-          const projectDate = parseISO(date);
-          return isWithinInterval(projectDate, dateRange);
-        } catch {
-          return false;
-        }
-      }
-      
-      return true;
+      return projectIdsFactures.has(projectId);
     });
     
     logDebug('STATIA', 'tauxDossiersComplexes - FILTERED', {
-      nbProjectsFiltres: projectsFiltres.length,
-      info: 'Uniquement dossiers FACTURÉS'
+      nbProjectsFactures: projectsFiltres.length,
     });
     
     if (projectsFiltres.length === 0) {
@@ -182,7 +179,7 @@ export const tauxDossiersComplexes: StatDefinition = {
       };
     }
     
-    // Analyser chaque projet facturé avec debug
+    // 4. Analyser chaque projet facturé
     let nbComplexes = 0;
     const debugResults: Array<{ projectId: string; ref?: string; visites: number; caHt: number; univers: number; isComplexe: boolean }> = [];
     
@@ -206,7 +203,7 @@ export const tauxDossiersComplexes: StatDefinition = {
       nbMatchingUnivers: debugResults.filter(r => r.univers >= DOSSIER_COMPLEXE_RULES.minUnivers).length,
     });
     
-    // Taux calculé sur les dossiers FACTURÉS uniquement
+    // Taux calculé sur les dossiers FACTURÉS de la période
     const tauxComplexite = projectsFiltres.length > 0
       ? (nbComplexes / projectsFiltres.length) * 100
       : 0;
