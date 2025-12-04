@@ -124,10 +124,10 @@
 
 ### 4.5 Points P1 identifiés (Fort irritant)
 
-- [ ] **SUP-P1-01**: Notifications popup désactivées (commentées) - UX à rediscuter
+- [x] **SUP-P1-01**: ~~Notifications popup désactivées~~ → ✅ CORRIGÉ - Réactivées dans use-support-notifications.ts
 - [x] **SUP-P1-02**: ~~Pas d'index support_tickets~~ → ✅ CORRIGÉ - 4 indexes créés
-- [ ] **SUP-P1-03**: Pas de pagination côté serveur sur loadTickets (charge 100% en mémoire)
-- [ ] **SUP-P1-04**: `assigned_to` affiché comme UUID tronqué au lieu du nom
+- [x] **SUP-P1-03**: ~~Pas de pagination côté serveur~~ → ✅ CORRIGÉ - Pagination serveur avec range() dans use-admin-tickets.ts
+- [x] **SUP-P1-04**: ~~UUID tronqué~~ → ✅ CORRIGÉ - getAgentName() helper dans TicketDetails.tsx
 - [ ] **SUP-P1-05**: Pas de validation schema Zod sur chatbot_conversation JSONB
 - [x] **SUP-P1-06**: ~~Messages internes visibles~~ → ✅ CORRIGÉ - RLS renforcé avec filtre is_internal_note
 
@@ -159,13 +159,13 @@
 | Critère | Score | Commentaire |
 |---------|-------|-------------|
 | Fonctionnel | 90% | Chat, tickets, console fonctionnels |
-| Sécurité RLS | 85% | Policies correctes mais notes internes exposées |
-| Performance | 70% | Pas de pagination, indexes manquants |
-| Notifications | 80% | Realtime OK mais popups désactivées |
+| Sécurité RLS | 90% | Policies correctes, notes internes protégées |
+| Performance | 85% | Pagination serveur + indexes |
+| Notifications | 90% | Realtime + popups réactivées |
 | IA/RAG | 85% | Classification auto + suggestions FAQ |
-| UX Agent | 80% | Kanban + filtres, mais UUID au lieu noms |
+| UX Agent | 90% | Kanban + filtres + noms agents affichés |
 
-**Score Global Module Support: 85% - UTILISABLE AVEC RISQUES MINEURS**
+**Score Global Module Support: 90% - PRODUCTION READY**
 
 ---
 
@@ -176,12 +176,13 @@
 2. ⏳ Corriger P0-02 (RLS rh_notifications)
 3. ⏳ Implémenter Dashboard RH stats complet
 
-### Module Support ✅ P0 CORRIGÉS
+### Module Support ✅ P0 + P1 CORRIGÉS
 4. ✅ ~~Corriger SUP-P0-02 (cleanup channels Realtime)~~ - DÉJÀ PRÉSENT
 5. ✅ ~~Ajouter indexes support_tickets~~ - 4 indexes créés
 6. ✅ ~~Corriger SUP-P1-06 (RLS notes internes)~~ - Policy mise à jour
-7. ⏳ Afficher nom assigné au lieu UUID tronqué (SUP-P1-04)
-8. ⏳ Pagination serveur (SUP-P1-03)
+7. ✅ ~~Afficher nom assigné au lieu UUID tronqué (SUP-P1-04)~~ - getAgentName helper
+8. ✅ ~~Pagination serveur (SUP-P1-03)~~ - range() avec page/pageSize
+9. ✅ ~~Notifications popup (SUP-P1-01)~~ - Réactivées
 
 ---
 
@@ -198,6 +199,9 @@
 | 2024-12-04 | **Fix SUP-P0-01/P1-02**: 4 indexes support_tickets |
 | 2024-12-04 | **Fix SUP-P0-03**: Edge function error handling + timeout |
 | 2024-12-04 | **Fix SUP-P1-06**: RLS notes internes renforcé |
+| 2024-12-04 | **Fix SUP-P1-01**: Notifications popup réactivées |
+| 2024-12-04 | **Fix SUP-P1-03**: Pagination serveur use-admin-tickets.ts |
+| 2024-12-04 | **Fix SUP-P1-04**: Affichage nom agent (getAgentName) |
 
 ---
 

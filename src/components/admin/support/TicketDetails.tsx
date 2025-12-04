@@ -24,6 +24,12 @@ import {
   type TicketStatus,
 } from '@/services/supportService';
 
+interface SupportUser {
+  id: string;
+  first_name: string;
+  last_name: string;
+}
+
 interface TicketDetailsProps {
   ticket: SupportTicket;
   onResolve: () => void;
@@ -31,6 +37,7 @@ interface TicketDetailsProps {
   onStatusChange?: (status: TicketStatus) => void;
   onPriorityChange?: (priority: number) => void;
   onEscalate?: () => void;
+  supportUsers?: SupportUser[];
 }
 
 export function TicketDetails({
@@ -40,9 +47,17 @@ export function TicketDetails({
   onStatusChange,
   onPriorityChange,
   onEscalate,
+  supportUsers = [],
 }: TicketDetailsProps) {
   const canEscalate = ticket.support_level && ticket.support_level < 3;
   const isResolved = ticket.status === 'resolved' || ticket.status === 'closed';
+  
+  // P1-04: Afficher le nom de l'agent au lieu de l'UUID tronqué
+  const getAgentName = (userId: string | null | undefined): string => {
+    if (!userId) return '';
+    const agent = supportUsers.find(u => u.id === userId);
+    return agent ? `${agent.first_name} ${agent.last_name}` : userId.slice(0, 8) + '...';
+  };
 
   return (
     <Card>
@@ -146,7 +161,7 @@ export function TicketDetails({
           {ticket.assigned_to && (
             <div>
               <p className="text-muted-foreground">Assigné à</p>
-              <p className="font-medium">{ticket.assigned_to.slice(0, 8)}...</p>
+              <p className="font-medium">{getAgentName(ticket.assigned_to)}</p>
             </div>
           )}
           {ticket.resolved_at && (
