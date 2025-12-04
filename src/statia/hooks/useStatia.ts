@@ -2,8 +2,8 @@
  * StatIA V1 - React Hook pour l'utilisation dans les composants
  */
 
-import { useCallback, useMemo } from 'react';
-import { useQuery, useQueries } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { StatParams, StatResult, DateRange } from '../definitions/types';
 import { getMetric, getMetrics, listAvailableMetrics } from '../api/getMetric';
 import { getMetricForAgency, AgencyMetricParams } from '../api/getMetricForAgency';

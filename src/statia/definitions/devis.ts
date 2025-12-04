@@ -4,8 +4,7 @@
  */
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
-import { isDevisValidated, normalizeDate } from '../engine/normalizers';
-import { STATIA_RULES } from '../domain/rules';
+import { isDevisValidated } from '../engine/normalizers';
 
 /**
  * Taux de Transformation Devis (en nombre)
