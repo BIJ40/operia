@@ -114,6 +114,7 @@ function ModuleAccessDeniedPage({
     apogee_tickets: 'Gestion de Projet',
     rh: 'RH',
     parc: 'Parc',
+    messaging: 'Messagerie interne',
   };
 
   return (
