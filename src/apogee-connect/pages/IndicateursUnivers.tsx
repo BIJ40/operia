@@ -1,16 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { DataService } from "@/apogee-connect/services/dataService";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
-import { calculateUniversStats, calculateMonthlyUniversCA } from "@/apogee-connect/utils/universCalculations";
-import {
-  calculateDossiersParUnivers,
-  calculateTransfoParUnivers,
-  calculateUniversApporteurMatrix,
-} from "@/apogee-connect/utils/universExtendedCalculations";
-import { EnrichmentService } from "@/apogee-connect/services/enrichmentService";
+import { useIndicateursUniversStatia } from "@/apogee-connect/hooks/useIndicateursUniversStatia";
 import { UniversKpiCard } from "@/apogee-connect/components/widgets/UniversKpiCard";
 import { UniversStackedChart } from "@/apogee-connect/components/widgets/UniversStackedChart";
 import { UniversDossiersChart } from "@/apogee-connect/components/widgets/UniversDossiersChart";
@@ -21,62 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function IndicateursUnivers() {
   const { isAgencyReady } = useAgency();
   const { isAuthLoading } = useAuth();
-  const { filters } = useSecondaryFilters();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["apogee-univers-stats", filters.dateRange],
-    queryFn: async () => {
-      const rawData = await DataService.loadAllData();
-      
-      // Initialiser le service d'enrichissement
-      EnrichmentService.initialize(rawData);
-      
-      // Calculer les stats par univers
-      const stats = calculateUniversStats(
-        rawData.factures,
-        rawData.projects,
-        rawData.interventions,
-        filters.dateRange
-      );
-      
-      // Calculer le CA mensuel par univers
-      const monthlyCA = calculateMonthlyUniversCA(
-        rawData.factures,
-        rawData.projects,
-        filters.dateRange
-      );
-
-      // Calculer les nouvelles métriques
-      const dossiersParUnivers = calculateDossiersParUnivers(
-        rawData.projects,
-        filters.dateRange
-      );
-
-      const transfoParUnivers = calculateTransfoParUnivers(
-        rawData.projects,
-        rawData.devis,
-        rawData.factures,
-        filters.dateRange
-      );
-
-      const matrixUniversApporteur = calculateUniversApporteurMatrix(
-        rawData.projects,
-        rawData.clients,
-        rawData.factures,
-        filters.dateRange
-      );
-      
-      return {
-        stats,
-        monthlyCA,
-        dossiersParUnivers,
-        transfoParUnivers,
-        matrixUniversApporteur,
-        universes: EnrichmentService.getAllUniverses(),
-      };
-    },
-    enabled: isAgencyReady && !isAuthLoading,
-  });
+  // Hook StatIA pour les indicateurs univers
+  const { data, isLoading } = useIndicateursUniversStatia();
 
   if (isAuthLoading || !isAgencyReady) {
     return (
