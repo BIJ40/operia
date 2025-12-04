@@ -382,7 +382,9 @@ export const delaiDossierPremierDevis: StatDefinition = {
   aggregation: 'avg',
   unit: 'jours',
   compute: (data: LoadedData, _params: StatParams): StatResult => {
+    console.log('[StatIA] =============== DELAI 1ER DEVIS COMPUTE START ===============');
     const { projects } = data;
+    console.log('[StatIA] delai_dossier_premier_devis projects reçus:', projects?.length ?? 'undefined');
     
     const delais: number[] = [];
     let debugStats = { total: 0, canceled: 0, noCreatedAt: 0, noHistory: 0, noDevisEvent: 0, badDateParsing: 0, negative: 0, ok: 0 };
