@@ -142,7 +142,7 @@ export function useStatiaIndicateurs(selectedYear?: number) {
           computeStatSafe('duree_moyenne_dossier', loadedData, params),
           computeStatSafe('nb_dossiers_crees', loadedData, params),
           computeStatSafe('taux_dossiers_complexes', loadedData, params),
-          computeStatSafe('delai_premier_devis', loadedData, params), // Nouvelle métrique: délai intervention initiale → premier devis
+          computeStatSafe('delai_dossier_premier_devis', loadedData, params), // Utilise project.history "Devis envoyé"
         ]);
 
         // Calculs legacy pour les métriques non encore migrées
