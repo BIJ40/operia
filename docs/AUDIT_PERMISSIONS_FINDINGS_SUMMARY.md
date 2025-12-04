@@ -8,11 +8,11 @@
 **Cause**: ROLE_MATRIX définissait N5+ mais AuthContext calculait via module option  
 **Fix appliqué**: `canAccessSupportConsole` respecte strictement ROLE_MATRIX (N5+ seulement), pas de bypass via module option
 
-### F-EDIT-1 – EditUserDialog ne modifie PAS global_role/modules
+### F-EDIT-1 – EditUserDialog ne modifie PAS global_role/modules ✅ VALIDÉ
 **Impact**: Workflow fragmenté, admin doit utiliser 2 interfaces pour éditer 1 user  
 **Fichiers**: `UserDialogs.tsx`, `UserAccordionItem.tsx`  
 **Cause**: EditUserDialog = infos basiques, accordion = permissions  
-**Fix**: Unifier interface OU clarifier séparation
+**Status**: EditUserDialog a déjà des tabs (Infos | Modules) avec gestion complète des modules via onModuleToggle/onModuleOptionToggle
 
 ---
 
@@ -36,11 +36,11 @@
 **Cause**: Switch module ne vérifie pas moduleDef.minRole vs effectiveRole  
 **Fix appliqué**: Validation canAccessModule() avant toggle, Switch désactivé si rôle insuffisant, tooltip explicatif
 
-### F-NAV-1 – Tile CONSOLE_SUPPORT filtre incohérent
+### F-NAV-1 – Tile CONSOLE_SUPPORT filtre incohérent ✅ CORRIGÉ
 **Impact**: Flag requiresSupport inutilisé, confusion code  
 **Fichiers**: `dashboardTiles.ts`, `Landing.tsx`, `roleMatrix.ts`  
 **Cause**: Tile a requiresSupport mais filtre utilise canAccessSupportConsole  
-**Fix**: Supprimer requiresSupport, unifier via canAccessSupportConsole
+**Fix appliqué**: Supprimé requiresSupport du type et de la tile, filtrage unifié via canAccessSupportConsole
 
 ---
 
@@ -50,13 +50,14 @@
 **Fichiers**: `App.tsx` (ligne 217), `SupportConsoleGuard.tsx`  
 **Fix appliqué**: Créé SupportConsoleGuard dédié vérifiant canAccessSupportConsole (N5+ strictement)
 
-### F-PERM-4 – base_user (N0) voit tiles Support
+### F-PERM-4 – base_user (N0) voit tiles Support ✅ VALIDÉ
 **Question**: Est-ce que N0 DOIT pouvoir créer tickets support ?  
-**Fix**: Si non, canAccessSupport: false pour N0
+**Réponse**: OUI - Tous les utilisateurs authentifiés peuvent créer des tickets support  
+**Status**: Comportement actuel confirmé comme correct (canAccessSupport: true pour N0)
 
-### F-EDIT-3 – role_agence toujours disabled
+### F-EDIT-3 – role_agence toujours disabled ✅ CORRIGÉ
 **Cause**: canEditRoleAgence prop non passé  
-**Fix**: Passer flag dans AdminUsersUnified → EditUserDialog
+**Fix appliqué**: Prop correctement passé dans AdminUsersUnified.tsx ligne 278
 
 ### F-NAV-2 – Route guard cohérence
 **Duplication de F-PERM-3**
@@ -64,13 +65,13 @@
 ### F-NAV-3 – Groupe projects sans check module
 **Duplication de F-PERM-2**
 
-### F-NAV-4 – requiresFranchisor non vérifié
+### F-NAV-4 – requiresFranchisor non vérifié ✅ CORRIGÉ
 **Cause**: Flag requiresFranchisor ignoré dans Landing filter  
-**Fix**: Ajouter vérification GLOBAL_ROLES >= franchisor_user
+**Fix appliqué**: Ajouté vérification explicite de requiresFranchisor dans Landing.tsx filter
 
-### F-NAV-6 – Tiles admin visibles N5+ mais routes N3+
+### F-NAV-6 – Tiles admin visibles N5+ mais routes N3+ ✅ CORRIGÉ
 **Question**: Est-ce que N3-N4 doivent voir section Admin réduite ?  
-**Fix**: Option A (restrict N5+) ou Option B (visibilité partielle N3+)
+**Fix appliqué**: N3-N4 voient ADMIN_USERS (requiresFranchisor), autres tiles admin réservées N5+
 
 ### F-MISC-1 – Documents scopeSlug incorrect ✅ CORRIGÉ
 **Fix appliqué**: Changé 'helpconfort' → 'base_documentaire'
@@ -87,22 +88,27 @@
 2. ✅ **CORRIGÉ** - Implémenter validation minRole dans module activation (F-EDIT-4)
 3. ✅ **CORRIGÉ** - Filtrer agences selon manageScope dans EditUserDialog (F-EDIT-2)
 
-### Phase 2 – Cohérence Navigation (3h)
+### Phase 2 – Cohérence Navigation (3h) ✅ TERMINÉE
 4. ✅ **CORRIGÉ** - Ajouter requiresModule check pour groupe Projects (F-PERM-2, F-NAV-3)
 5. ✅ **CORRIGÉ** - Créer SupportConsoleGuard pour /support/console (F-PERM-3, F-NAV-2)
 6. ✅ **CORRIGÉ** - Corriger scopeSlug tiles (F-MISC-1, F-MISC-2)
+7. ✅ **CORRIGÉ** - Supprimer requiresSupport inutilisé (F-NAV-1)
+8. ✅ **CORRIGÉ** - Ajouter vérification requiresFranchisor (F-NAV-4)
+9. ✅ **CORRIGÉ** - Visibilité admin partielle pour N3-N4 (F-NAV-6)
 
-### Phase 3 – UX Admin (6h)
-7. ⏳ Unifier EditUserDialog + UserAccordionItem (F-EDIT-1)
-8. ⏳ Passer canEditRoleAgence prop (F-EDIT-3)
-9. ⏳ Décider visibilité admin tiles pour N3-N4 (F-NAV-6)
+### Phase 3 – UX Admin (6h) ✅ TERMINÉE
+10. ✅ **VALIDÉ** - EditUserDialog a déjà des tabs (Infos | Modules) - F-EDIT-1 résolu
+11. ✅ **CORRIGÉ** - canEditRoleAgence prop passé correctement (F-EDIT-3)
+12. ✅ **VALIDÉ** - N0 peut créer tickets support (F-PERM-4 - comportement correct confirmé)
 
 ### Phase 4 – Documentation (2h)
-10. ⏳ Créer table de vérité permissions par rôle
-11. ⏳ Documenter guards et leur usage
-12. ⏳ Mettre à jour DOC_PERMISSIONS.md
+13. ⏳ Créer table de vérité permissions par rôle
+14. ⏳ Documenter guards et leur usage
+15. ⏳ Mettre à jour DOC_PERMISSIONS.md
 
 ---
 
 **Total findings**: 12 (dont 3 duplications, donc 9 uniques)  
-**Effort estimé**: 15h-22h selon décisions architecturales
+**Phases 1-3 terminées**: 12/15 actions complétées ✅  
+**Reste**: Phase 4 Documentation (3 items)  
+**Effort restant estimé**: ~2h
