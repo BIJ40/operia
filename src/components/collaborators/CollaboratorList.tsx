@@ -69,7 +69,7 @@ export function CollaboratorList({
 }: CollaboratorListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [showInactive, setShowInactive] = useState(false);
+  const [showInactive, setShowInactive] = useState(true);
 
   // Filter collaborators
   const filteredCollaborators = useMemo(() => {
