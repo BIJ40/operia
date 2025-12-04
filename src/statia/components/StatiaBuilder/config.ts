@@ -1,9 +1,12 @@
 /**
- * StatIA Builder - Types et configurations
+ * StatIA Builder - Configuration dynamique
+ * Génère automatiquement les mesures depuis STAT_DEFINITIONS
  */
 
+import { STAT_DEFINITIONS, listStatDefinitions, listCategories } from '../../definitions';
+import { StatDefinition } from '../../definitions/types';
+
 export type DimensionType = 'technicien' | 'apporteur' | 'univers' | 'mois' | 'agence';
-export type MeasureType = 'ca' | 'ca_par_heure' | 'taux_sav' | 'nb_dossiers' | 'duree' | 'nb_interventions';
 export type FilterType = 'date_range' | 'univers' | 'apporteur' | 'technicien';
 
 export interface DimensionConfig {
@@ -22,6 +25,9 @@ export interface MeasureConfig {
   unit: string;
   description: string;
   category: string;
+  dimensions: string[];
+  source: string | string[];
+  aggregation: string;
 }
 
 export interface FilterConfig {
@@ -74,123 +80,6 @@ export const DIMENSIONS: DimensionConfig[] = [
   },
 ];
 
-// Configuration des mesures disponibles (groupées par catégorie)
-export const MEASURES: MeasureConfig[] = [
-  // CA
-  {
-    id: 'ca_global_ht',
-    label: 'CA Global HT',
-    icon: 'Euro',
-    color: 'bg-emerald-500',
-    unit: '€',
-    description: 'Chiffre d\'affaires total',
-    category: 'CA',
-  },
-  {
-    id: 'panier_moyen',
-    label: 'Panier Moyen',
-    icon: 'ShoppingCart',
-    color: 'bg-emerald-400',
-    unit: '€',
-    description: 'Montant moyen par facture',
-    category: 'CA',
-  },
-  {
-    id: 'du_client',
-    label: 'Dû Client',
-    icon: 'Clock',
-    color: 'bg-red-500',
-    unit: '€',
-    description: 'Reste à encaisser',
-    category: 'CA',
-  },
-  // Productivité
-  {
-    id: 'ca_par_heure_global',
-    label: 'CA/heure',
-    icon: 'TrendingUp',
-    color: 'bg-blue-500',
-    unit: '€/h',
-    description: 'Productivité horaire',
-    category: 'Productivité',
-  },
-  {
-    id: 'nb_heures_productives',
-    label: 'Heures productives',
-    icon: 'Timer',
-    color: 'bg-blue-400',
-    unit: 'h',
-    description: 'Heures facturables',
-    category: 'Productivité',
-  },
-  {
-    id: 'taux_utilisation_techniciens',
-    label: 'Taux utilisation',
-    icon: 'Activity',
-    color: 'bg-blue-300',
-    unit: '%',
-    description: 'Productif vs théorique',
-    category: 'Productivité',
-  },
-  // Qualité
-  {
-    id: 'taux_sav_global',
-    label: 'Taux SAV',
-    icon: 'AlertTriangle',
-    color: 'bg-amber-500',
-    unit: '%',
-    description: 'Dossiers avec SAV',
-    category: 'Qualité',
-  },
-  {
-    id: 'nb_interventions_sav',
-    label: 'Nb SAV',
-    icon: 'Wrench',
-    color: 'bg-amber-400',
-    unit: '',
-    description: 'Interventions SAV',
-    category: 'Qualité',
-  },
-  // Dossiers
-  {
-    id: 'nb_dossiers_crees',
-    label: 'Dossiers créés',
-    icon: 'FolderPlus',
-    color: 'bg-violet-500',
-    unit: '',
-    description: 'Nouveaux dossiers',
-    category: 'Dossiers',
-  },
-  {
-    id: 'duree_moyenne_dossier',
-    label: 'Durée moyenne',
-    icon: 'Hourglass',
-    color: 'bg-violet-400',
-    unit: 'jours',
-    description: 'Création → facturation',
-    category: 'Dossiers',
-  },
-  {
-    id: 'taux_multi_visites',
-    label: 'Multi-visites',
-    icon: 'Users',
-    color: 'bg-violet-300',
-    unit: '%',
-    description: 'Dossiers >1 visite',
-    category: 'Dossiers',
-  },
-  // Devis
-  {
-    id: 'taux_transformation_devis',
-    label: 'Taux transfo',
-    icon: 'FileCheck',
-    color: 'bg-cyan-500',
-    unit: '%',
-    description: 'Devis → Facture',
-    category: 'Devis',
-  },
-];
-
 // Configuration des filtres disponibles
 export const FILTERS: FilterConfig[] = [
   {
@@ -219,11 +108,88 @@ export const FILTERS: FilterConfig[] = [
   },
 ];
 
-// Grouper les mesures par catégorie
+// Map des icônes par catégorie
+const CATEGORY_ICONS: Record<string, string> = {
+  ca: 'Euro',
+  devis: 'FileCheck',
+  univers: 'Layers',
+  apporteur: 'Building2',
+  technicien: 'User',
+  sav: 'AlertTriangle',
+  recouvrement: 'Wallet',
+  dossiers: 'FolderOpen',
+  qualite: 'Shield',
+  productivite: 'TrendingUp',
+  custom: 'Sparkles',
+};
+
+// Map des couleurs par catégorie
+const CATEGORY_COLORS: Record<string, string> = {
+  ca: 'bg-emerald-500',
+  devis: 'bg-cyan-500',
+  univers: 'bg-purple-500',
+  apporteur: 'bg-green-500',
+  technicien: 'bg-blue-500',
+  sav: 'bg-amber-500',
+  recouvrement: 'bg-red-500',
+  dossiers: 'bg-violet-500',
+  qualite: 'bg-yellow-500',
+  productivite: 'bg-indigo-500',
+  custom: 'bg-pink-500',
+};
+
+// Labels des catégories
+const CATEGORY_LABELS: Record<string, string> = {
+  ca: 'Chiffre d\'Affaires',
+  devis: 'Devis',
+  univers: 'Univers',
+  apporteur: 'Apporteurs',
+  technicien: 'Techniciens',
+  sav: 'SAV',
+  recouvrement: 'Recouvrement',
+  dossiers: 'Dossiers',
+  qualite: 'Qualité',
+  productivite: 'Productivité',
+  custom: 'Personnalisé',
+};
+
+/**
+ * Convertit une StatDefinition en MeasureConfig pour le Builder
+ */
+function statDefinitionToMeasureConfig(def: StatDefinition): MeasureConfig {
+  const category = def.category || 'custom';
+  
+  return {
+    id: def.id,
+    label: def.label,
+    icon: CATEGORY_ICONS[category] || 'Calculator',
+    color: CATEGORY_COLORS[category] || 'bg-gray-500',
+    unit: def.unit || (def.aggregation === 'ratio' ? '%' : '€'),
+    description: def.description || def.label,
+    category: CATEGORY_LABELS[category] || category,
+    dimensions: def.dimensions || [],
+    source: def.source,
+    aggregation: def.aggregation,
+  };
+}
+
+/**
+ * Récupère TOUTES les mesures depuis STAT_DEFINITIONS
+ * C'est la source de vérité unique pour le Builder
+ */
+export function getMeasuresFromRegistry(): MeasureConfig[] {
+  const definitions = listStatDefinitions();
+  return definitions.map(statDefinitionToMeasureConfig);
+}
+
+/**
+ * Récupère les mesures groupées par catégorie depuis le registre
+ */
 export function getMeasuresByCategory(): Record<string, MeasureConfig[]> {
+  const measures = getMeasuresFromRegistry();
   const grouped: Record<string, MeasureConfig[]> = {};
   
-  for (const measure of MEASURES) {
+  for (const measure of measures) {
     if (!grouped[measure.category]) {
       grouped[measure.category] = [];
     }
@@ -232,3 +198,31 @@ export function getMeasuresByCategory(): Record<string, MeasureConfig[]> {
   
   return grouped;
 }
+
+/**
+ * Récupère une mesure par son ID
+ */
+export function getMeasureById(id: string): MeasureConfig | undefined {
+  const def = STAT_DEFINITIONS[id];
+  if (!def) return undefined;
+  return statDefinitionToMeasureConfig(def);
+}
+
+/**
+ * Liste toutes les catégories disponibles
+ */
+export function getAvailableCategories(): string[] {
+  return listCategories().map(cat => CATEGORY_LABELS[cat] || cat);
+}
+
+/**
+ * Vérifie si une métrique supporte une dimension donnée
+ */
+export function measureSupportsDimension(measureId: string, dimension: DimensionType): boolean {
+  const def = STAT_DEFINITIONS[measureId];
+  if (!def) return false;
+  return def.dimensions?.includes(dimension) || false;
+}
+
+// Export legacy pour compatibilité
+export const MEASURES = getMeasuresFromRegistry();
