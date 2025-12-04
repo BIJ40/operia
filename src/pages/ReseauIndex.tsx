@@ -22,7 +22,8 @@ export default function ReseauIndex() {
   const menuLabels = useMenuLabels();
   const isFranchisorAdmin = hasMinimumRole(globalRole, 'franchisor_admin');
 
-  const reseauModules = [
+  // Tuiles statistiques (en haut)
+  const statsModules = [
     {
       title: 'Dashboard Réseau',
       description: 'Vue d\'ensemble du réseau',
@@ -31,29 +32,8 @@ export default function ReseauIndex() {
       visible: true,
     },
     {
-      title: 'Agences',
-      description: 'Gestion des agences du réseau',
-      icon: Building2,
-      href: ROUTES.reseau.agences,
-      visible: true,
-    },
-    {
-      title: 'Utilisateurs',
-      description: 'Gestion des utilisateurs du réseau',
-      icon: Users,
-      href: ROUTES.reseau.users,
-      visible: true,
-    },
-    {
-      title: 'Animateurs',
-      description: 'Gestion des animateurs réseau',
-      icon: UserCog,
-      href: ROUTES.reseau.animateurs,
-      visible: isFranchisorAdmin,
-    },
-    {
       title: 'Statistiques',
-      description: 'Statistiques consolidées du réseau',
+      description: 'Les chiffres du réseau',
       icon: PieChart,
       href: ROUTES.reseau.tableaux,
       visible: true,
@@ -79,6 +59,31 @@ export default function ReseauIndex() {
       href: ROUTES.reseau.graphiques,
       visible: true,
     },
+  ];
+
+  // Autres tuiles (en dessous)
+  const otherModules = [
+    {
+      title: 'Agences',
+      description: 'Gestion des agences du réseau',
+      icon: Building2,
+      href: ROUTES.reseau.agences,
+      visible: true,
+    },
+    {
+      title: 'Utilisateurs',
+      description: 'Gestion des utilisateurs du réseau',
+      icon: Users,
+      href: ROUTES.reseau.users,
+      visible: true,
+    },
+    {
+      title: 'Animateurs',
+      description: 'Gestion des animateurs réseau',
+      icon: UserCog,
+      href: ROUTES.reseau.animateurs,
+      visible: isFranchisorAdmin,
+    },
     {
       title: 'Redevances',
       description: 'Gestion des redevances',
@@ -96,7 +101,7 @@ export default function ReseauIndex() {
     },
   ];
 
-  const getModuleTitle = (module: typeof reseauModules[0]): string => {
+  const getModuleTitle = (module: { href: string; title: string }): string => {
     const pageKey = ROUTE_TO_PAGE_KEY[module.href];
     if (pageKey && menuLabels.has(pageKey)) {
       return menuLabels.get(pageKey)!;
@@ -104,23 +109,46 @@ export default function ReseauIndex() {
     return module.title;
   };
 
-  const visibleModules = reseauModules.filter(m => m.visible);
+  const visibleStatsModules = statsModules.filter(m => m.visible);
+  const visibleOtherModules = otherModules.filter(m => m.visible);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {visibleModules.map((module, index) => (
-          <IndexTile
-            key={module.href}
-            title={getModuleTitle(module)}
-            description={module.description}
-            icon={module.icon}
-            href={module.href}
-            badge={module.badge}
-            variant={getVariantForIndex(index)}
-          />
-        ))}
-      </div>
+    <div className="container mx-auto py-8 px-4 space-y-8">
+      {/* Section Statistiques */}
+      <section>
+        <h2 className="text-lg font-semibold text-muted-foreground mb-4">Statistiques & Analyse</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {visibleStatsModules.map((module, index) => (
+            <IndexTile
+              key={module.href}
+              title={getModuleTitle(module)}
+              description={module.description}
+              icon={module.icon}
+              href={module.href}
+              badge={(module as any).badge}
+              variant={getVariantForIndex(index)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Section Gestion */}
+      <section>
+        <h2 className="text-lg font-semibold text-muted-foreground mb-4">Gestion du Réseau</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {visibleOtherModules.map((module, index) => (
+            <IndexTile
+              key={module.href}
+              title={getModuleTitle(module)}
+              description={module.description}
+              icon={module.icon}
+              href={module.href}
+              badge={module.badge}
+              variant={getVariantForIndex(index + visibleStatsModules.length)}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
