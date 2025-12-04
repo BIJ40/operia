@@ -14,6 +14,20 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: 'V0.6.3',
+    date: '2025-12-04',
+    title: 'Messagerie interne intra-agence',
+    changes: [
+      { type: 'feature', description: 'Système de messagerie instantanée interne entre collaborateurs d\'une même agence' },
+      { type: 'feature', description: 'Widget messagerie intégré au header avec badge notifications non-lues' },
+      { type: 'feature', description: 'Conversations privées (1:1) et groupes de discussion' },
+      { type: 'feature', description: 'Widget chatbot "Aide en direct" intégré au header avec sélection de thèmes' },
+      { type: 'improvement', description: 'Interface unifiée header : AIDE EN DIRECT (gauche) et MESSAGERIE INTERNE (droite)' },
+      { type: 'improvement', description: 'Suppression de la bulle flottante chatbot au profit du widget header' },
+      { type: 'improvement', description: 'Indicateurs temps réel de présence et messages non-lus' },
+    ]
+  },
+  {
     version: 'V0.6.2',
     date: '2025-12-03',
     title: 'Audit Sécurité API Apogée & Conformité RGPD',
