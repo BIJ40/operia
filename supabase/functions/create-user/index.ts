@@ -148,9 +148,15 @@ serve(async (req) => {
     }
 
     // Validation du mot de passe si fourni
+    // Symboles acceptés alignés avec le générateur frontend: !@#$%&*_+-=
     if (bodyRaw.password) {
-      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/])[A-Za-z\d!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]{8,100}$/;
-      if (!passwordRegex.test(password)) {
+      const hasLower = /[a-z]/.test(password)
+      const hasUpper = /[A-Z]/.test(password)
+      const hasDigit = /\d/.test(password)
+      const hasSymbol = /[!@#$%&*_+\-=]/.test(password)
+      const validLength = password.length >= 8 && password.length <= 100
+      
+      if (!hasLower || !hasUpper || !hasDigit || !hasSymbol || !validLength) {
         throw new Error('Le mot de passe doit contenir au moins 8 caractères avec au moins une majuscule, une minuscule, un chiffre et un symbole')
       }
     }
