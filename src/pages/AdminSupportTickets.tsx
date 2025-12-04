@@ -379,8 +379,23 @@ export default function AdminSupportTickets() {
                   <TabsContent value="actifs" className="mt-2">
                     <ScrollArea className="h-[550px]">
                       {isLoading ? (
-                        <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <div className="space-y-3 p-2">
+                          {/* P2 FIX: Skeleton loaders instead of spinner */}
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <div key={i} className="animate-pulse">
+                              <div className="bg-muted rounded-lg p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="h-4 bg-muted-foreground/20 rounded w-24" />
+                                  <div className="h-5 bg-muted-foreground/20 rounded w-16" />
+                                </div>
+                                <div className="h-3 bg-muted-foreground/20 rounded w-3/4" />
+                                <div className="flex gap-2">
+                                  <div className="h-5 bg-muted-foreground/20 rounded w-14" />
+                                  <div className="h-5 bg-muted-foreground/20 rounded w-20" />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       ) : tickets.filter(t => !['resolved', 'closed'].includes(t.status)).length === 0 ? (
                         <p className="text-center text-muted-foreground py-8">Aucune demande active</p>
