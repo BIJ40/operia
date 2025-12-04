@@ -385,28 +385,51 @@ export const delaiDossierPremierDevis: StatDefinition = {
     const { projects } = data;
     
     const delais: number[] = [];
+    let debugStats = { total: 0, canceled: 0, noCreatedAt: 0, noHistory: 0, noDevisEvent: 0, badDateParsing: 0, negative: 0, ok: 0 };
     
     // Note: Pas de filtre de date - on calcule sur TOUS les projets (comportement legacy)
     for (const project of projects) {
+      debugStats.total++;
+      
       // Ignorer les projets annulés
-      if (project.state === 'canceled') continue;
+      if (project.state === 'canceled') {
+        debugStats.canceled++;
+        continue;
+      }
       
       const createdAtStr = project.created_at;
-      if (!createdAtStr) continue;
+      if (!createdAtStr) {
+        debugStats.noCreatedAt++;
+        continue;
+      }
       
       const createdAt = new Date(createdAtStr);
-      if (isNaN(createdAt.getTime())) continue;
+      if (isNaN(createdAt.getTime())) {
+        debugStats.noCreatedAt++;
+        continue;
+      }
       
       // Chercher le premier événement "Devis envoyé" dans l'historique
       const history = project.data?.history ?? [];
+      if (!history || history.length === 0) {
+        debugStats.noHistory++;
+        continue;
+      }
+      
       const devisEvent = history.find((h: any) =>
         (h.labelKind || '').toLowerCase().includes('devis envoyé')
       );
       
-      if (!devisEvent) continue;
+      if (!devisEvent) {
+        debugStats.noDevisEvent++;
+        continue;
+      }
       
       const dateDevis = parseFrHistoryDate(devisEvent.dateModif);
-      if (!dateDevis || isNaN(dateDevis.getTime())) continue;
+      if (!dateDevis || isNaN(dateDevis.getTime())) {
+        debugStats.badDateParsing++;
+        continue;
+      }
       
       const diffMs = dateDevis.getTime() - createdAt.getTime();
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
@@ -414,8 +437,14 @@ export const delaiDossierPremierDevis: StatDefinition = {
       // Ignorer les valeurs négatives
       if (diffDays >= 0) {
         delais.push(diffDays);
+        debugStats.ok++;
+      } else {
+        debugStats.negative++;
       }
     }
+    
+    console.log('[StatIA] delai_dossier_premier_devis debug:', debugStats);
+    console.log('[StatIA] delais sample:', delais.slice(0, 5).map(d => Math.round(d)));
     
     const moyenne = delais.length > 0 
       ? delais.reduce((a, b) => a + b, 0) / delais.length 
@@ -432,6 +461,7 @@ export const delaiDossierPremierDevis: StatDefinition = {
         nbDossiersAvecDevis: delais.length,
         min: delais.length > 0 ? Math.round(Math.min(...delais)) : 0,
         max: delais.length > 0 ? Math.round(Math.max(...delais)) : 0,
+        debug: debugStats,
       }
     };
   }
