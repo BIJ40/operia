@@ -135,8 +135,7 @@ export function formatUniverseLabel(slug: string | undefined | null): string {
     'serrurerie': 'Serrurerie',
     'vitrerie': 'Vitrerie',
     'menuiserie': 'Menuiserie',
-    'chauffage': 'Chauffage',
-    'climatisation': 'Climatisation',
+    // RÈGLE STRICTE: chauffage et climatisation N'EXISTENT PAS dans l'API Apogée
     'autre': 'Autre',
   };
   

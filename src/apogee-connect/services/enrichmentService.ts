@@ -151,8 +151,7 @@ export class EnrichmentService {
       'serrurerie': '#FF12BD',     // rose
       'vitrerie': '#7FFE2E',       // vert
       'menuiserie': '#FF7018',     // rouge orangé
-      'chauffage': '#EF4444',      // rouge
-      'climatisation': '#06B6D4',  // cyan/blue
+      // RÈGLE STRICTE: chauffage et climatisation N'EXISTENT PAS dans l'API Apogée
       'autre': '#6B7280',          // gris moyen
       'non_renseigne': '#9CA3AF',  // gris clair
     };
@@ -167,8 +166,7 @@ export class EnrichmentService {
       'serrurerie': 'KeyRound',
       'vitrerie': 'Frame',
       'menuiserie': 'DoorOpen',
-      'chauffage': 'Flame',
-      'climatisation': 'Snowflake',
+      // RÈGLE STRICTE: chauffage et climatisation N'EXISTENT PAS dans l'API Apogée
       'autre': 'HelpCircle',
       'non_renseigne': 'HelpCircle',
     };
@@ -276,8 +274,7 @@ export class EnrichmentService {
       'serrurerie': 'Serrurerie',
       'vitrerie': 'Vitrerie',
       'menuiserie': 'Menuiserie',
-      'chauffage': 'Chauffage',
-      'climatisation': 'Climatisation',
+      // RÈGLE STRICTE: chauffage et climatisation N'EXISTENT PAS dans l'API Apogée
       'autre': 'Autre',
     };
 
