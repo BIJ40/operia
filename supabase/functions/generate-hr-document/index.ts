@@ -301,44 +301,56 @@ serve(async (req) => {
     const maxLineWidth = width - 100;
     const fontSize = 11;
     const lineHeight = 16;
-    const words = content.split(' ');
-    let currentLine = '';
     const lines: string[] = [];
 
-    for (const word of words) {
-      const testLine = currentLine ? `${currentLine} ${word}` : word;
-      const testWidth = helvetica.widthOfTextAtSize(testLine, fontSize);
-      
-      if (testWidth > maxLineWidth && currentLine) {
-        lines.push(currentLine);
-        currentLine = word;
-      } else {
-        currentLine = testLine;
+    // First split by explicit newlines to preserve paragraph structure
+    const paragraphs = content.split('\n');
+    
+    for (const paragraph of paragraphs) {
+      if (paragraph.trim() === '') {
+        // Empty line = paragraph break
+        lines.push('');
+        continue;
       }
-    }
-    if (currentLine) {
-      lines.push(currentLine);
+      
+      const words = paragraph.split(' ');
+      let currentLine = '';
+
+      for (const word of words) {
+        // Sanitize word by removing any remaining newline characters
+        const cleanWord = word.replace(/[\n\r]/g, '');
+        if (!cleanWord) continue;
+        
+        const testLine = currentLine ? `${currentLine} ${cleanWord}` : cleanWord;
+        const testWidth = helvetica.widthOfTextAtSize(testLine, fontSize);
+        
+        if (testWidth > maxLineWidth && currentLine) {
+          lines.push(currentLine);
+          currentLine = cleanWord;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      if (currentLine) {
+        lines.push(currentLine);
+      }
     }
 
     // Draw content lines
     for (const line of lines) {
-      // Handle line breaks in original content
-      const subLines = line.split('\n');
-      for (const subLine of subLines) {
-        if (yPosition < 150) {
-          // Add new page if needed
-          const newPage = pdfDoc.addPage([595.28, 841.89]);
-          yPosition = height - 50;
-        }
-        page.drawText(subLine, {
-          x: 50,
-          y: yPosition,
-          size: fontSize,
-          font: helvetica,
-          color: textColor,
-        });
-        yPosition -= lineHeight;
+      if (yPosition < 150) {
+        // Add new page if needed
+        const newPage = pdfDoc.addPage([595.28, 841.89]);
+        yPosition = height - 50;
       }
+      page.drawText(line, {
+        x: 50,
+        y: yPosition,
+        size: fontSize,
+        font: helvetica,
+        color: textColor,
+      });
+      yPosition -= lineHeight;
     }
 
     // === SIGNATURE SECTION ===
