@@ -3550,6 +3550,10 @@ export type Database = {
         Args: { _agency_id: string; _user_id: string }
         Returns: boolean
       }
+      is_conversation_member: {
+        Args: { conv_id: string; uid: string }
+        Returns: boolean
+      }
       is_support_agent: { Args: { _user_id: string }; Returns: boolean }
       mark_document_request_seen: {
         Args: { p_request_id: string }
