@@ -81,7 +81,7 @@ export function MessagingWidget() {
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "relative rounded-full transition-all duration-200",
+          "relative rounded-full transition-all duration-200 h-12 w-12",
           isOpen && "bg-primary text-primary-foreground"
         )}
       >
