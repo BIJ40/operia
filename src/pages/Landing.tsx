@@ -87,122 +87,131 @@ export default function Landing() {
         </p>
       </div>
 
-      {/* HELP Academy Section */}
-      {tilesByGroup.help_academy.length > 0 && (
-        <CollapsibleSection
-          id="help_academy"
-          title={<>Help<span className="text-helpconfort-orange">!</span> Academy</>}
-          icon={DASHBOARD_GROUPS.help_academy.icon}
-          colorClass={DASHBOARD_GROUPS.help_academy.colorClass}
-          href="/academy"
-          defaultOpen={false}
-        >
-          {tilesByGroup.help_academy.map(tile => (
-            <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
-          ))}
-        </CollapsibleSection>
-      )}
+      {/* 2-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Colonne gauche */}
+        <div className="space-y-6">
+          {/* HELP Academy Section */}
+          {tilesByGroup.help_academy.length > 0 && (
+            <CollapsibleSection
+              id="help_academy"
+              title={<>Help<span className="text-helpconfort-orange">!</span> Academy</>}
+              icon={DASHBOARD_GROUPS.help_academy.icon}
+              colorClass={DASHBOARD_GROUPS.help_academy.colorClass}
+              href="/academy"
+              defaultOpen={false}
+            >
+              {tilesByGroup.help_academy.map(tile => (
+                <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+              ))}
+            </CollapsibleSection>
+          )}
 
-      {/* Pilotage Section */}
-      {tilesByGroup.pilotage.length > 0 && (
-        <CollapsibleSection
-          id="pilotage"
-          title={DASHBOARD_GROUPS.pilotage.title}
-          icon={DASHBOARD_GROUPS.pilotage.icon}
-          colorClass={DASHBOARD_GROUPS.pilotage.colorClass}
-          href={ROUTES.pilotage.index}
-          defaultOpen={false}
-        >
-          {tilesByGroup.pilotage.map(tile => (
-            <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
-          ))}
-        </CollapsibleSection>
-      )}
+          {/* Support Section */}
+          {tilesByGroup.support.length > 0 && (
+            <CollapsibleSection
+              id="support"
+              title={DASHBOARD_GROUPS.support.title}
+              icon={DASHBOARD_GROUPS.support.icon}
+              colorClass={DASHBOARD_GROUPS.support.colorClass}
+              href="/support"
+              defaultOpen={false}
+            >
+              {tilesByGroup.support.map(tile => (
+                <DashboardTileCard 
+                  key={tile.id} 
+                  tile={tile} 
+                  isAdmin={isAdmin}
+                  dynamicBadge={tile.id === 'CONSOLE_SUPPORT' && newTicketsCount > 0 ? newTicketsCount : undefined}
+                />
+              ))}
+            </CollapsibleSection>
+          )}
 
-      {/* Section RH (Mon Coffre, Demandes) - Indépendant de Pilotage */}
-      {tilesByGroup.rh.length > 0 && (
-        <CollapsibleSection
-          id="rh"
-          title={DASHBOARD_GROUPS.rh.title}
-          icon={DASHBOARD_GROUPS.rh.icon}
-          colorClass={DASHBOARD_GROUPS.rh.colorClass}
-          href={ROUTES.pilotage.monCoffreRh}
-          defaultOpen={false}
-        >
-          {tilesByGroup.rh.map(tile => (
-            <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
-          ))}
-        </CollapsibleSection>
-      )}
+          {/* Gestion de Projet Section */}
+          {tilesByGroup.projects.length > 0 && (
+            <CollapsibleSection
+              id="projects"
+              title={DASHBOARD_GROUPS.projects.title}
+              icon={DASHBOARD_GROUPS.projects.icon}
+              colorClass={DASHBOARD_GROUPS.projects.colorClass}
+              href="/projects"
+              defaultOpen={false}
+            >
+              {tilesByGroup.projects.map(tile => (
+                <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+              ))}
+            </CollapsibleSection>
+          )}
 
-      {/* Support Section */}
-      {tilesByGroup.support.length > 0 && (
-        <CollapsibleSection
-          id="support"
-          title={DASHBOARD_GROUPS.support.title}
-          icon={DASHBOARD_GROUPS.support.icon}
-          colorClass={DASHBOARD_GROUPS.support.colorClass}
-          href="/support"
-          defaultOpen={false}
-        >
-          {tilesByGroup.support.map(tile => (
-            <DashboardTileCard 
-              key={tile.id} 
-              tile={tile} 
-              isAdmin={isAdmin}
-              dynamicBadge={tile.id === 'CONSOLE_SUPPORT' && newTicketsCount > 0 ? newTicketsCount : undefined}
-            />
-          ))}
-        </CollapsibleSection>
-      )}
+          {/* Admin Section */}
+          {tilesByGroup.admin.length > 0 && (
+            <CollapsibleSection
+              id="admin"
+              title={DASHBOARD_GROUPS.admin.title}
+              icon={DASHBOARD_GROUPS.admin.icon}
+              colorClass={DASHBOARD_GROUPS.admin.colorClass}
+              href="/admin"
+              defaultOpen={false}
+            >
+              {tilesByGroup.admin.map(tile => (
+                <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+              ))}
+            </CollapsibleSection>
+          )}
+        </div>
 
-      {/* Gestion de Projet Section */}
-      {tilesByGroup.projects.length > 0 && (
-        <CollapsibleSection
-          id="projects"
-          title={DASHBOARD_GROUPS.projects.title}
-          icon={DASHBOARD_GROUPS.projects.icon}
-          colorClass={DASHBOARD_GROUPS.projects.colorClass}
-          href="/projects"
-          defaultOpen={false}
-        >
-          {tilesByGroup.projects.map(tile => (
-            <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
-          ))}
-        </CollapsibleSection>
-      )}
+        {/* Colonne droite */}
+        <div className="space-y-6">
+          {/* Pilotage Section */}
+          {tilesByGroup.pilotage.length > 0 && (
+            <CollapsibleSection
+              id="pilotage"
+              title={DASHBOARD_GROUPS.pilotage.title}
+              icon={DASHBOARD_GROUPS.pilotage.icon}
+              colorClass={DASHBOARD_GROUPS.pilotage.colorClass}
+              href={ROUTES.pilotage.index}
+              defaultOpen={false}
+            >
+              {tilesByGroup.pilotage.map(tile => (
+                <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+              ))}
+            </CollapsibleSection>
+          )}
 
-      {/* Franchiseur Section */}
-      {tilesByGroup.franchiseur.length > 0 && (
-        <CollapsibleSection
-          id="franchiseur"
-          title={DASHBOARD_GROUPS.franchiseur.title}
-          icon={DASHBOARD_GROUPS.franchiseur.icon}
-          colorClass={DASHBOARD_GROUPS.franchiseur.colorClass}
-          href="/hc-reseau"
-          defaultOpen={false}
-        >
-          {tilesByGroup.franchiseur.map(tile => (
-            <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
-          ))}
-        </CollapsibleSection>
-      )}
+          {/* Section RH */}
+          {tilesByGroup.rh.length > 0 && (
+            <CollapsibleSection
+              id="rh"
+              title={DASHBOARD_GROUPS.rh.title}
+              icon={DASHBOARD_GROUPS.rh.icon}
+              colorClass={DASHBOARD_GROUPS.rh.colorClass}
+              href={ROUTES.pilotage.monCoffreRh}
+              defaultOpen={false}
+            >
+              {tilesByGroup.rh.map(tile => (
+                <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+              ))}
+            </CollapsibleSection>
+          )}
 
-      {/* Admin Section */}
-      {tilesByGroup.admin.length > 0 && (
-        <CollapsibleSection
-          id="admin"
-          title={DASHBOARD_GROUPS.admin.title}
-          icon={DASHBOARD_GROUPS.admin.icon}
-          colorClass={DASHBOARD_GROUPS.admin.colorClass}
-          href="/admin"
-          defaultOpen={false}
-        >
-          {tilesByGroup.admin.map(tile => (
-            <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
-          ))}
-        </CollapsibleSection>
-      )}
+          {/* Franchiseur Section */}
+          {tilesByGroup.franchiseur.length > 0 && (
+            <CollapsibleSection
+              id="franchiseur"
+              title={DASHBOARD_GROUPS.franchiseur.title}
+              icon={DASHBOARD_GROUPS.franchiseur.icon}
+              colorClass={DASHBOARD_GROUPS.franchiseur.colorClass}
+              href="/hc-reseau"
+              defaultOpen={false}
+            >
+              {tilesByGroup.franchiseur.map(tile => (
+                <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
+              ))}
+            </CollapsibleSection>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
