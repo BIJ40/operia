@@ -746,7 +746,7 @@ export function TicketDetailDrawer({
                         <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                           Titre original
                         </label>
-                        <p className="mt-1 p-3 bg-white border rounded-md text-sm">
+                        <p className="mt-1 p-3 bg-background border rounded-md text-sm">
                           {ticket.original_title || '—'}
                         </p>
                       </div>
@@ -755,7 +755,7 @@ export function TicketDetailDrawer({
                         <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                           Description originale
                         </label>
-                        <p className="mt-1 p-3 bg-white border rounded-md text-sm whitespace-pre-wrap">
+                        <p className="mt-1 p-3 bg-background border rounded-md text-sm whitespace-pre-wrap">
                           {ticket.original_description || '—'}
                         </p>
                       </div>

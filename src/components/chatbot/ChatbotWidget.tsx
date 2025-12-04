@@ -272,11 +272,11 @@ export function ChatbotWidget() {
           </h3>
           <div className="flex items-center gap-1">
             {messages.length > 0 && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={resetConversation}>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={resetConversation} aria-label="Nouvelle conversation">
                 <RotateCcw className="w-4 h-4" />
               </Button>
             )}
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)} aria-label="Fermer">
               <X className="w-4 h-4" />
             </Button>
           </div>
@@ -380,7 +380,7 @@ export function ChatbotWidget() {
                     disabled={isLoading}
                     className="flex-1"
                   />
-                  <Button onClick={sendMessage} disabled={!input.trim() || isLoading} size="icon">
+                  <Button onClick={sendMessage} disabled={!input.trim() || isLoading} size="icon" aria-label="Envoyer">
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>

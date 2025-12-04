@@ -269,6 +269,7 @@ export default function ApogeeTicketsIncomplete() {
                   className="h-8 w-8"
                   onClick={() => setDrawerOpen(true)}
                   title="Voir / Éditer le ticket"
+                  aria-label="Voir / Éditer le ticket"
                 >
                   <Eye className="h-4 w-4" />
                 </Button>

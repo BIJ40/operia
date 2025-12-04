@@ -95,7 +95,7 @@ export function MessagingWidget() {
 
     return (
       <div className="flex items-center gap-2 p-2 border-b bg-muted/30">
-        <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8 shrink-0">
+        <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8 shrink-0" aria-label="Retour">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <Avatar className="h-8 w-8">
@@ -206,6 +206,7 @@ export function MessagingWidget() {
                 size="icon" 
                 className="h-8 w-8" 
                 onClick={() => setShowSidePanel(!showSidePanel)}
+                aria-label={showSidePanel ? "Masquer le panneau" : "Afficher le panneau"}
               >
                 <ChevronRight className={cn(
                   "w-4 h-4 transition-transform duration-200",
@@ -217,7 +218,7 @@ export function MessagingWidget() {
                 Messages
               </h3>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)} aria-label="Fermer">
               <X className="w-4 h-4" />
             </Button>
           </div>

@@ -308,6 +308,7 @@ export function TicketTableRow({
                   e.stopPropagation();
                   onOpenDetail();
                 }}
+                aria-label="Voir détail"
               >
                 <Eye className="h-4 w-4" />
               </Button>
@@ -327,6 +328,7 @@ export function TicketTableRow({
                     onQualify();
                   }}
                   disabled={isQualifying}
+                  aria-label="Qualifier le ticket"
                 >
                   <Sparkles className={cn("h-4 w-4", isQualifying && "animate-pulse")} />
                 </Button>

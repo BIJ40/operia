@@ -38,7 +38,7 @@ export const NetworkMonthlyCAChart = ({ data }: NetworkMonthlyCAChartProps) => {
               if (active && payload && payload.length) {
                 const data = payload[0].payload;
                 return (
-                  <div className="bg-white dark:bg-gray-800 border-2 border-primary p-3 rounded-lg shadow-xl z-50">
+                  <div className="bg-background border-2 border-primary p-3 rounded-lg shadow-xl z-50">
                     <p className="font-semibold mb-1 text-foreground">{data.month}</p>
                     <p className="text-sm text-primary font-bold">
                       {formatEuros(data.ca)}
