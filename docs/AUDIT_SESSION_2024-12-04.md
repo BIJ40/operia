@@ -81,12 +81,106 @@
 
 ---
 
+## 4. MODULE SUPPORT 🟡 85%
+
+### 4.1 Architecture Générale
+
+| Composant | Status | Notes |
+|-----------|--------|-------|
+| Chat IA (Mme MICHU) | ✅ | SupportChatCore + RAG + streaming SSE |
+| Conversion chat → ticket | ✅ | `type` unique (chat_ai/chat_human/ticket) |
+| Console Support | ✅ | AdminSupportTickets avec Kanban/Liste |
+| Accès SU (agent support) | ✅ | enabled_modules.support.options.agent |
+| RLS policies | ✅ | Policies complètes (is_support_agent, has_min_global_role) |
+| Système de priorité Heat 0-12 | ✅ | HeatPriorityBadge + HeatPrioritySelector |
+| SLA automatique | ✅ | Trigger calculate_ticket_due_at |
+| Classification IA auto | ✅ | support-auto.ts + edge function |
+| Escalade N1→N2→N3 | ✅ | escalation_history JSONB |
+| Notes internes | ✅ | is_internal_note sur messages |
+
+### 4.2 Tables & Schéma
+
+| Table | Colonnes clés | RLS |
+|-------|---------------|-----|
+| support_tickets | id, user_id, assigned_to, status, type, heat_priority, due_at, sla_status, ai_* | ✅ 6 policies |
+| support_messages | id, ticket_id, sender_id, is_from_support, is_internal_note, read_at | ✅ 6 policies |
+| support_attachments | id, ticket_id, file_path, file_name | ✅ 4 policies |
+
+### 4.3 Notifications (useSupportNotifications)
+
+| Fonctionnalité | Status | Notes |
+|----------------|--------|-------|
+| Badge header (compteur) | ✅ | newTicketsCount + chatHumanCount |
+| Realtime tickets INSERT | ✅ | Subscription postgres_changes |
+| Realtime messages INSERT | ✅ | Filtre is_from_support=false |
+| Son notification | ✅ | AudioContext triple tone |
+| Séparation chat_human / ticket | ✅ | Compteurs distincts V2.5 |
+
+### 4.4 Points P0 identifiés (CRITIQUES)
+
+- [ ] **SUP-P0-01**: `or()` RLS potentiellement inefficace sur viewed_by_support_at/assigned_to - performance queries
+- [ ] **SUP-P0-02**: Pas de cleanup des channels Realtime si changement rapide de route (memory leak)
+- [ ] **SUP-P0-03**: Edge function `notify-support-ticket` non testée si webhook down (silent failure)
+
+### 4.5 Points P1 identifiés (Fort irritant)
+
+- [ ] **SUP-P1-01**: Notifications popup désactivées (commentées) - UX à rediscuter
+- [ ] **SUP-P1-02**: Pas d'index sur support_tickets(type, status) pour queries fréquentes
+- [ ] **SUP-P1-03**: Pas de pagination côté serveur sur loadTickets (charge 100% en mémoire)
+- [ ] **SUP-P1-04**: `assigned_to` affiché comme UUID tronqué au lieu du nom
+- [ ] **SUP-P1-05**: Pas de validation schema Zod sur chatbot_conversation JSONB
+- [ ] **SUP-P1-06**: Messages internes visibles si user examine la DB directement (RLS insuffisant)
+
+### 4.6 Points P2 identifiés (Amélioration)
+
+- [ ] **SUP-P2-01**: Ajouter indicateur typing en temps réel
+- [ ] **SUP-P2-02**: Ajouter historique d'actions (status changes, assignments) visible
+- [ ] **SUP-P2-03**: Export CSV des tickets
+- [ ] **SUP-P2-04**: Dark mode couleurs badges à ajuster
+
+### 4.7 Workflow Chat → Ticket
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Chat IA       │────▶│  Request Human  │────▶│  Ticket créé    │
+│ (SupportChatCore)│     │  type=chat_ai   │     │  type=ticket    │
+└─────────────────┘     │  heat=8         │     │  ou chat_human  │
+                        └─────────────────┘     └─────────────────┘
+                                                         │
+                                                         ▼
+                        ┌─────────────────┐     ┌─────────────────┐
+                        │  Agent répond   │────▶│  Status change  │
+                        │  addSupportMsg  │     │  → in_progress  │
+                        └─────────────────┘     └─────────────────┘
+```
+
+### 4.8 Évaluation Maturité Module Support
+
+| Critère | Score | Commentaire |
+|---------|-------|-------------|
+| Fonctionnel | 90% | Chat, tickets, console fonctionnels |
+| Sécurité RLS | 85% | Policies correctes mais notes internes exposées |
+| Performance | 70% | Pas de pagination, indexes manquants |
+| Notifications | 80% | Realtime OK mais popups désactivées |
+| IA/RAG | 85% | Classification auto + suggestions FAQ |
+| UX Agent | 80% | Kanban + filtres, mais UUID au lieu noms |
+
+**Score Global Module Support: 85% - UTILISABLE AVEC RISQUES MINEURS**
+
+---
+
 ## 5. PROCHAINES ÉTAPES
 
+### Module RH
 1. ⏳ Corriger P0-01 (double génération PDF)
 2. ⏳ Corriger P0-02 (RLS rh_notifications)
 3. ⏳ Implémenter Dashboard RH stats complet
-4. ⏳ Créer indexes P1-02
+
+### Module Support
+4. ⏳ Corriger SUP-P0-02 (cleanup channels Realtime)
+5. ⏳ Ajouter indexes support_tickets(type, status)
+6. ⏳ Corriger SUP-P1-06 (RLS notes internes)
+7. ⏳ Afficher nom assigné au lieu UUID tronqué
 
 ---
 
@@ -99,6 +193,7 @@
 | 2024-12-04 | Audit Navigation UX ✅ |
 | 2024-12-04 | Audit Module RH (85%) |
 | 2024-12-04 | Fix container RHDashboardPage |
+| 2024-12-04 | **Audit Module Support (85%)** |
 
 ---
 
