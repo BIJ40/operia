@@ -101,6 +101,7 @@ export class NetworkDataService {
 
   /**
    * Aggregate CA across multiple agencies for a given date range
+   * IMPORTANT: Avoirs are treated as negative amounts per STATIA_RULES
    */
   static aggregateCA(agencyData: any[], range: { start: Date; end: Date }): number {
     const parseDate = (value: string): Date | null => {
@@ -119,7 +120,6 @@ export class NetworkDataService {
     return agencyData.reduce((sum, agency) => {
       if (!agency.data?.factures) return sum;
       const agencyCA = agency.data.factures
-        .filter((f: any) => f.type !== 'avoir')
         .reduce((total: number, f: any) => {
           const dateStr = f.dateReelle || f.dateEmission || f.created_at;
           const d = dateStr ? parseDate(dateStr) : null;
@@ -127,7 +127,11 @@ export class NetworkDataService {
 
           const montantRaw = f.data?.totalHT || f.totalHT || f.montantHT || 0;
           const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
-          return total + montant;
+          
+          // STATIA_RULES: Avoirs traités comme montants négatifs
+          const typeFacture = (f.type || f.typeFacture || '').toLowerCase();
+          const montantNet = typeFacture === 'avoir' ? -Math.abs(montant) : montant;
+          return total + montantNet;
         }, 0);
       return sum + agencyCA;
     }, 0);
