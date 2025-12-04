@@ -1,0 +1,309 @@
+import { useState, useRef, useEffect } from 'react';
+import { Bot, X, Send, RotateCcw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
+import { getApogeeContext, getNoContentResponse } from '@/lib/rag-michu';
+import { safeQuery } from '@/lib/safeQuery';
+import { logError, logDebug } from '@/lib/logger';
+
+type Message = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+export function ChatbotWidget() {
+  const { user } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Reset conversation
+  const resetConversation = () => {
+    setMessages([]);
+  };
+
+  // Build contextual query
+  const buildContextualQuery = (currentQuery: string, conversationHistory: Message[]): string => {
+    if (conversationHistory.length < 2 || currentQuery.length > 50) {
+      return currentQuery;
+    }
+    
+    const previousUserMessages = conversationHistory
+      .filter(m => m.role === 'user')
+      .map(m => m.content)
+      .filter(c => c.length > 15);
+    
+    if (previousUserMessages.length === 0) {
+      return currentQuery;
+    }
+    
+    const lastTopic = previousUserMessages[previousUserMessages.length - 1];
+    
+    if (currentQuery.length < 10) {
+      return lastTopic;
+    }
+    
+    const followUpIndicators = [
+      'étape', 'détail', 'plus', 'comment', 'pourquoi', 'exemple', 
+      'précis', 'expliqu', 's\'il te', 's\'il vous', 'merci', 'ok',
+      '?', 'oui', 'non', 'suite', 'encore', 'autre'
+    ];
+    
+    const isFollowUp = currentQuery.length < 50 && 
+      followUpIndicators.some(ind => currentQuery.toLowerCase().includes(ind));
+    
+    if (isFollowUp) {
+      return `${lastTopic} - ${currentQuery}`;
+    }
+    
+    return currentQuery;
+  };
+
+  // Send message
+  const sendMessage = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: Message = { role: 'user', content: input };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const contextualQuery = buildContextualQuery(input, messages);
+      const ragResult = await getApogeeContext(contextualQuery);
+
+      if (!ragResult.hasContent) {
+        const noContentMessage = getNoContentResponse();
+        setMessages((prev) => [...prev, { role: 'assistant', content: noContentMessage }]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Get user name
+      let userName = 'Utilisateur';
+      if (user) {
+        const profileResult = await safeQuery<{ first_name: string | null }>(
+          supabase
+            .from('profiles')
+            .select('first_name')
+            .eq('id', user.id)
+            .maybeSingle(),
+          'CHATBOT_WIDGET_PROFILE'
+        );
+        
+        if (profileResult.success && profileResult.data?.first_name) {
+          userName = profileResult.data.first_name;
+        }
+      }
+
+      // Get session token
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      if (!token) {
+        setMessages((prev) => [...prev, { role: 'assistant', content: 'Erreur: utilisateur non authentifié' }]);
+        setIsLoading(false);
+        return;
+      }
+
+      // SSE streaming call
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-guide`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            messages: [...messages, userMessage],
+            guideContent: ragResult.formattedDocs,
+            userId: user?.id || null,
+            userName: userName,
+            chatContext: 'apogee',
+            hasRagContent: true,
+          }),
+        }
+      );
+
+      if (!response.ok || !response.body) {
+        throw new Error('Erreur de connexion');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+      let textBuffer = '';
+
+      setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          if (!line.startsWith('data: ')) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantContent += content;
+              setMessages((prev) => {
+                const newMessages = [...prev];
+                newMessages[newMessages.length - 1] = {
+                  role: 'assistant',
+                  content: assistantContent,
+                };
+                return newMessages;
+              });
+            }
+          } catch {
+            textBuffer = line + '\n' + textBuffer;
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      logError('chatbot-widget', 'Chat error', error);
+      setMessages((prev) => [...prev, { role: 'assistant', content: 'Désolé, une erreur est survenue.' }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  return (
+    <div className="relative">
+      {/* Bubble button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "relative rounded-full transition-all duration-200 h-10 w-10",
+          isOpen && "bg-primary text-primary-foreground"
+        )}
+      >
+        {isOpen ? (
+          <X className="w-5 h-5" />
+        ) : (
+          <Bot className="w-5 h-5" />
+        )}
+      </Button>
+
+      {/* Dropdown panel */}
+      <div
+        className={cn(
+          "absolute top-full left-0 mt-2 w-[380px] bg-background border rounded-xl shadow-2xl overflow-hidden z-50",
+          "transition-all duration-300 ease-out origin-top-left",
+          isOpen 
+            ? "opacity-100 scale-100 translate-y-0" 
+            : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+        )}
+        style={{ maxHeight: 'calc(100vh - 200px)' }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-3 border-b bg-muted/30">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Bot className="w-4 h-4 text-primary" />
+            Mme Michu
+          </h3>
+          <div className="flex items-center gap-1">
+            {messages.length > 0 && (
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={resetConversation}>
+                <RotateCcw className="w-4 h-4" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Messages */}
+        <ScrollArea className="h-[320px] p-4">
+          {messages.length === 0 && (
+            <div className="text-center text-muted-foreground text-sm py-8">
+              Posez votre question à Mme Michu !
+            </div>
+          )}
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`mb-4 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}
+            >
+              <div
+                className={cn(
+                  "inline-block max-w-[85%] p-3 rounded-lg text-sm",
+                  msg.role === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted'
+                )}
+              >
+                <div className="whitespace-pre-wrap">{msg.content}</div>
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="text-left">
+              <div className="inline-block bg-muted p-3 rounded-lg">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
+                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </ScrollArea>
+
+        {/* Input */}
+        <div className="p-3 border-t">
+          <div className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Tapez votre message..."
+              disabled={isLoading}
+              className="flex-1"
+            />
+            <Button onClick={sendMessage} disabled={!input.trim() || isLoading} size="icon">
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
