@@ -93,11 +93,18 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
     const universSet = new Set<string>();
     apogeeData.projects.forEach((p: any) => {
       const projectUniverses = p.data?.universes || p.universes || [];
-      projectUniverses.forEach((u: string) => universSet.add(u));
+      projectUniverses.forEach((u: string) => {
+        if (u && u !== 'null') {
+          // Normaliser l'ID pour correspondre aux clés du calcul StatIA
+          universSet.add(u.toLowerCase().trim());
+        }
+      });
     });
     return Array.from(universSet)
-      .filter(u => u && u !== 'null')
-      .map(u => ({ id: u, name: u.charAt(0).toUpperCase() + u.slice(1).replace(/_/g, ' ') }))
+      .map(u => ({ 
+        id: u, // ID normalisé (minuscule)
+        name: u.charAt(0).toUpperCase() + u.slice(1).replace(/_/g, ' ') 
+      }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [apogeeData?.projects]);
 
