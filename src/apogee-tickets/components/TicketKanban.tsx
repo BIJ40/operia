@@ -238,6 +238,35 @@ function DraggableTicketCard({
   );
 }
 
+// Helper pour calculer le multiplicateur PEC
+function getPECMultiplier(ownerSideId: string | null): number {
+  if (!ownerSideId) return 0;
+  const id = ownerSideId.toUpperCase();
+  if (id === 'APOGEE' || id === 'APOGÉE') return 0;
+  if (id === '75_25' || id === '75/25') return 0.25;
+  if (id === '50_50' || id === '50/50') return 0.50;
+  if (id === '25_75' || id === '25/75') return 0.75;
+  if (id === 'HC' || id === 'HELPCONFORT') return 1;
+  return 0;
+}
+
+// Helper pour calculer le temps total pondéré par PEC pour une liste de tickets
+function calculatePECWeightedTime(tickets: ApogeeTicket[]): { totalHours: number; pecHours: number } {
+  let totalHours = 0;
+  let pecHours = 0;
+  
+  for (const ticket of tickets) {
+    // Utiliser h_max si disponible, sinon h_min, sinon 0
+    const hours = ticket.h_max || ticket.h_min || 0;
+    totalHours += hours;
+    
+    const multiplier = getPECMultiplier(ticket.owner_side);
+    pecHours += hours * multiplier;
+  }
+  
+  return { totalHours, pecHours };
+}
+
 // Composant colonne droppable
 function DroppableColumn({
   status,
@@ -249,6 +278,7 @@ function DroppableColumn({
   isCollapsed,
   onToggleCollapse,
   getTicketShouldBlink,
+  showPECSummary = false,
 }: {
   status: ApogeeTicketStatus;
   tickets: ApogeeTicket[];
@@ -259,8 +289,15 @@ function DroppableColumn({
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   getTicketShouldBlink: (ticket: ApogeeTicket) => boolean;
+  showPECSummary?: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status.id });
+
+  // Calcul PEC pour la colonne
+  const pecStats = useMemo(() => {
+    if (!showPECSummary) return null;
+    return calculatePECWeightedTime(tickets);
+  }, [tickets, showPECSummary]);
 
   // Colonne repliée
   if (isCollapsed) {
@@ -301,6 +338,21 @@ function DroppableColumn({
       style={{ ...getColumnStyle(status.color), width: columnWidth, minWidth: columnWidth }}
       className={`flex flex-col rounded-lg border-2 ${isOver ? 'ring-2 ring-primary ring-offset-2' : ''} transition-all`}
     >
+      {/* PEC Summary - affiché au-dessus de l'en-tête si activé */}
+      {showPECSummary && pecStats && (
+        <div className="px-3 pt-2 pb-1 border-b bg-amber-50 dark:bg-amber-950/30">
+          <div className="flex items-center gap-2 text-xs">
+            <Clock className="h-3 w-3 text-amber-600" />
+            <span className="text-muted-foreground">
+              Total: <span className="font-semibold text-foreground">{pecStats.totalHours.toFixed(1)}h</span>
+            </span>
+            <span className="text-muted-foreground">
+              × PEC: <span className="font-bold text-amber-600">{pecStats.pecHours.toFixed(1)}h</span>
+            </span>
+          </div>
+        </div>
+      )}
+      
       <div className="p-3 border-b">
         <div className="flex items-center justify-between gap-2">
           <Button
@@ -483,6 +535,7 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
             isCollapsed={collapsedColumns.has(status.id)}
             onToggleCollapse={() => toggleColumnCollapse(status.id)}
             getTicketShouldBlink={getTicketShouldBlink}
+            showPECSummary={status.id === 'DEVIS'}
           />
         ))}
       </div>
