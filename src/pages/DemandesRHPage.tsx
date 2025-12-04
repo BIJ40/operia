@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useAgencyDocumentRequests } from '@/hooks/useDocumentRequests';
 import { 
   DOCUMENT_REQUEST_TYPES, 
@@ -132,11 +132,17 @@ export default function DemandesRHPage() {
   const lockMutation = useLockDocumentRequest();
   const unlockMutation = useUnlockDocumentRequest();
 
-  // Cleanup: unlock on unmount or deselect
+  // Cleanup: unlock on unmount - use ref to avoid stale closure
+  const selectedRequestIdRef = useRef<string | null>(null);
+  
+  useEffect(() => {
+    selectedRequestIdRef.current = selectedRequestId;
+  }, [selectedRequestId]);
+
   useEffect(() => {
     return () => {
-      if (selectedRequestId) {
-        unlockMutation.mutate(selectedRequestId);
+      if (selectedRequestIdRef.current) {
+        unlockMutation.mutate(selectedRequestIdRef.current);
       }
     };
   }, []);
