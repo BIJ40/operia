@@ -26,6 +26,7 @@ const ALLOWED_ENDPOINTS = [
   'apiGetInterventions',
   'apiGetFactures',
   'apiGetDevis',
+  'GetInterventionsCreneaux',
   'getUsers',
   'getClients',
   'getProjects',
