@@ -64,6 +64,8 @@ export const ROUTES = {
     faireUneDemande: '/faire-une-demande',
     // Demandes RH (vue agence - Dirigeant/RH)
     demandesRh: '/hc-agency/demandes-rh',
+    // Gestion des congés (vue agence - N2)
+    gestionConges: '/hc-agency/gestion-conges',
     // Dashboard RH (statistiques RH - Dirigeant/RH)
     dashboardRh: '/hc-agency/dashboard-rh',
     // StatIA Builder (N2+)

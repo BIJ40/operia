@@ -1331,6 +1331,7 @@ export type Database = {
           file_size: number | null
           file_type: string | null
           id: string
+          leave_request_id: string | null
           period_month: number | null
           period_year: number | null
           search_vector: unknown
@@ -1351,6 +1352,7 @@ export type Database = {
           file_size?: number | null
           file_type?: string | null
           id?: string
+          leave_request_id?: string | null
           period_month?: number | null
           period_year?: number | null
           search_vector?: unknown
@@ -1371,6 +1373,7 @@ export type Database = {
           file_size?: number | null
           file_type?: string | null
           id?: string
+          leave_request_id?: string | null
           period_month?: number | null
           period_year?: number | null
           search_vector?: unknown
@@ -1393,6 +1396,13 @@ export type Database = {
             columns: ["collaborator_id"]
             isOneToOne: false
             referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_documents_leave_request_id_fkey"
+            columns: ["leave_request_id"]
+            isOneToOne: false
+            referencedRelation: "leave_requests"
             referencedColumns: ["id"]
           },
           {
@@ -2147,6 +2157,27 @@ export type Database = {
         }
         Relationships: []
       }
+      french_holidays: {
+        Row: {
+          date: string
+          id: string
+          name: string
+          year: number | null
+        }
+        Insert: {
+          date: string
+          id?: string
+          name: string
+          year?: number | null
+        }
+        Update: {
+          date?: string
+          id?: string
+          name?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
       guide_chunks: {
         Row: {
           block_id: string
@@ -2334,6 +2365,105 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      leave_requests: {
+        Row: {
+          agency_id: string
+          collaborator_id: string
+          created_at: string | null
+          created_by: string | null
+          days_count: number | null
+          end_date: string | null
+          event_subtype: string | null
+          id: string
+          justification_document_id: string | null
+          manager_comment: string | null
+          refusal_reason: string | null
+          requires_justification: boolean | null
+          start_date: string
+          status: string
+          type: string
+          updated_at: string | null
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          agency_id: string
+          collaborator_id: string
+          created_at?: string | null
+          created_by?: string | null
+          days_count?: number | null
+          end_date?: string | null
+          event_subtype?: string | null
+          id?: string
+          justification_document_id?: string | null
+          manager_comment?: string | null
+          refusal_reason?: string | null
+          requires_justification?: boolean | null
+          start_date: string
+          status?: string
+          type: string
+          updated_at?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          agency_id?: string
+          collaborator_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          days_count?: number | null
+          end_date?: string | null
+          event_subtype?: string | null
+          id?: string
+          justification_document_id?: string | null
+          manager_comment?: string | null
+          refusal_reason?: string | null
+          requires_justification?: boolean | null
+          start_date?: string
+          status?: string
+          type?: string
+          updated_at?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_justification_document_id_fkey"
+            columns: ["justification_document_id"]
+            isOneToOne: false
+            referencedRelation: "collaborator_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_validated_by_fkey"
+            columns: ["validated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -3890,6 +4020,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_leave_days: {
+        Args: { p_end_date: string; p_start_date: string; p_type: string }
+        Returns: number
+      }
       calculate_sla_status: {
         Args: { p_due_at: string; p_status: string }
         Returns: string
@@ -4075,6 +4209,7 @@ export type Database = {
           file_size: number | null
           file_type: string | null
           id: string
+          leave_request_id: string | null
           period_month: number | null
           period_year: number | null
           search_vector: unknown
