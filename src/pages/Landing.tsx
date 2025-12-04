@@ -223,35 +223,34 @@ const DashboardTileCard = memo(function DashboardTileCard({ tile, dynamicBadge, 
 
   const content = (
     <div className={`
-      group relative rounded-xl border border-helpconfort-blue/15 p-4
+      group relative rounded-lg border border-helpconfort-blue/15 px-3 py-2
       bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-helpconfort-blue/10 via-white to-white
       dark:via-background dark:to-background
-      shadow-sm transition-all duration-300 border-l-4 border-l-helpconfort-blue
-      min-w-[280px] md:min-w-0 snap-start
+      shadow-sm transition-all duration-300 border-l-3 border-l-helpconfort-blue
       ${isDisabled 
         ? 'opacity-50 cursor-not-allowed' 
-        : 'cursor-pointer hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5'
+        : 'cursor-pointer hover:from-helpconfort-blue/20 hover:shadow-md hover:-translate-y-0.5'
       }
     `}>
       {badgeContent && (
-        <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full z-10 ${
+        <span className={`absolute top-1 right-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10 ${
           typeof badgeContent === 'number' 
-            ? 'bg-red-500 text-white animate-pulse min-w-[20px] text-center' 
-            : 'bg-helpconfort-blue text-white text-[10px]'
+            ? 'bg-red-500 text-white animate-pulse min-w-[18px] text-center' 
+            : 'bg-helpconfort-blue text-white'
         }`}>
           {badgeContent}
         </span>
       )}
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-full border-2 border-helpconfort-blue/30 flex-shrink-0 flex items-center justify-center bg-helpconfort-blue/10
+      <div className="flex items-center gap-2">
+        <div className={`w-8 h-8 rounded-full border border-helpconfort-blue/30 flex-shrink-0 flex items-center justify-center bg-helpconfort-blue/10
           ${!isDisabled && 'group-hover:border-helpconfort-blue'} transition-all`}>
-          <Icon className="w-5 h-5 text-helpconfort-blue" />
+          <Icon className="w-4 h-4 text-helpconfort-blue" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-base font-semibold text-foreground truncate">{tile.title}</p>
-          <p className="text-xs text-muted-foreground truncate">{tile.description}</p>
+          <p className="text-sm font-semibold text-foreground truncate">{tile.title}</p>
+          <p className="text-[11px] text-muted-foreground truncate">{tile.description}</p>
         </div>
-        <ArrowRight className={`w-4 h-4 flex-shrink-0 text-muted-foreground ${!isDisabled && 'group-hover:text-helpconfort-blue group-hover:translate-x-0.5'} transition-all`} aria-hidden="true" />
+        <ArrowRight className={`w-3.5 h-3.5 flex-shrink-0 text-muted-foreground ${!isDisabled && 'group-hover:text-helpconfort-blue group-hover:translate-x-0.5'} transition-all`} aria-hidden="true" />
       </div>
     </div>
   );
