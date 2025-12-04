@@ -345,10 +345,112 @@ export const nbMoyenInterventionsParDossier: StatDefinition = {
   }
 };
 
+/**
+ * Helper: parser pour dates françaises "dd/MM/yyyy HH:mm:ss" depuis l'historique Apogée
+ */
+function parseFrHistoryDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const [dPart, tPart] = dateStr.split(" ");
+  if (!dPart || !tPart) return null;
+
+  const [dayStr, monthStr, yearStr] = dPart.split("/");
+  const [hourStr, minStr, secStr] = tPart.split(":");
+
+  const day = Number(dayStr);
+  const month = Number(monthStr) - 1; // JS: mois 0-11
+  const year = Number(yearStr);
+  const hour = Number(hourStr);
+  const minute = Number(minStr);
+  const second = Number(secStr);
+
+  if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) return null;
+
+  return new Date(year, month, day, hour, minute, second);
+}
+
+/**
+ * Délai moyen dossier → premier devis
+ * Temps entre l'ouverture du dossier (created_at) et l'envoi du premier devis
+ * Basé sur project.data.history (événement "Devis envoyé")
+ */
+export const delaiDossierPremierDevis: StatDefinition = {
+  id: 'delai_dossier_premier_devis',
+  label: 'Délai 1er devis',
+  description: 'Nombre de jours moyen entre ouverture du dossier et envoi du premier devis',
+  category: 'qualite',
+  source: 'projects',
+  aggregation: 'avg',
+  unit: 'jours',
+  compute: (data: LoadedData, params: StatParams): StatResult => {
+    const { projects } = data;
+    
+    const delais: number[] = [];
+    
+    for (const project of projects) {
+      // Ignorer les projets annulés
+      if (project.state === 'canceled') continue;
+      
+      // Filtre par date de création dans la période
+      const createdAtStr = project.created_at;
+      if (!createdAtStr) continue;
+      
+      let createdAt: Date;
+      try {
+        createdAt = new Date(createdAtStr);
+        if (isNaN(createdAt.getTime())) continue;
+        
+        if (!isWithinInterval(createdAt, { start: params.dateRange.start, end: params.dateRange.end })) {
+          continue;
+        }
+      } catch {
+        continue;
+      }
+      
+      // Chercher le premier événement "Devis envoyé" dans l'historique
+      const history = project.data?.history ?? [];
+      const devisEvent = history.find((h: any) =>
+        (h.labelKind || '').toLowerCase().includes('devis envoyé')
+      );
+      
+      if (!devisEvent) continue;
+      
+      const dateDevis = parseFrHistoryDate(devisEvent.dateModif);
+      if (!dateDevis || isNaN(dateDevis.getTime())) continue;
+      
+      const diffMs = dateDevis.getTime() - createdAt.getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      
+      // Ignorer les valeurs négatives ou aberrantes
+      if (diffDays >= 0) {
+        delais.push(diffDays);
+      }
+    }
+    
+    const moyenne = delais.length > 0 
+      ? delais.reduce((a, b) => a + b, 0) / delais.length 
+      : 0;
+    
+    return {
+      value: Math.round(moyenne), // KPI au jour près
+      metadata: {
+        computedAt: new Date(),
+        source: 'projects',
+        recordCount: delais.length,
+      },
+      breakdown: {
+        nbDossiersAvecDevis: delais.length,
+        min: delais.length > 0 ? Math.round(Math.min(...delais)) : 0,
+        max: delais.length > 0 ? Math.round(Math.max(...delais)) : 0,
+      }
+    };
+  }
+};
+
 export const qualiteDefinitions = {
   taux_dossiers_multi_univers: tauxDossiersMultiUnivers,
   taux_dossiers_sans_devis: tauxDossiersSansDevis,
   delai_validation_devis: delaiValidationDevis,
+  delai_dossier_premier_devis: delaiDossierPremierDevis,
   taux_factures_avec_avoir: tauxFacturesAvecAvoir,
   montant_total_avoirs: montantTotalAvoirs,
   nb_moyen_interventions_dossier: nbMoyenInterventionsParDossier,

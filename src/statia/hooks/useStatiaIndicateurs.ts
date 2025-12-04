@@ -130,6 +130,7 @@ export function useStatiaIndicateurs(selectedYear?: number) {
           dureeDossier,
           nbDossiers,
           dossiersComplexesStat,
+          delaiPremierDevisStat,
         ] = await Promise.all([
           computeStatSafe('ca_global_ht', loadedData, params),
           computeStatSafe('taux_sav_global', loadedData, params),
@@ -140,6 +141,7 @@ export function useStatiaIndicateurs(selectedYear?: number) {
           computeStatSafe('duree_moyenne_dossier', loadedData, params),
           computeStatSafe('nb_dossiers_crees', loadedData, params),
           computeStatSafe('taux_dossiers_complexes', loadedData, params),
+          computeStatSafe('delai_dossier_premier_devis', loadedData, params),
         ]);
 
         // Calculs legacy pour les métriques non encore migrées
@@ -152,7 +154,6 @@ export function useStatiaIndicateurs(selectedYear?: number) {
           calculateTauxDossiersSansDevis,
           calculateTauxDossiersMultiTechniciens,
           calculatePolyvalenceTechniciens,
-          calculateDelaiMoyenDossierPremierDevis
         } = await import('@/apogee-connect/utils/dashboardCalculations');
         
         const legacyStats = calculateDashboardStats({
@@ -191,10 +192,6 @@ export function useStatiaIndicateurs(selectedYear?: number) {
         const polyvalenceTechniciens = calculatePolyvalenceTechniciens(
           loadedData.interventions, loadedData.projects, loadedData.users
         );
-        
-        const delaiDossierPremierDevis = calculateDelaiMoyenDossierPremierDevis(
-          loadedData.projects, loadedData.devis
-        );
 
         return {
           // StatIA values
@@ -222,7 +219,9 @@ export function useStatiaIndicateurs(selectedYear?: number) {
             delaiMoyen: dureeDossier?.value as number ?? delaiDossierFactureLegacy?.delaiMoyen ?? 0,
             nbDossiers: dureeDossier?.breakdown?.nbDossiers ?? delaiDossierFactureLegacy?.nbFactures ?? 0,
           },
-          delaiDossierPremierDevis,
+          delaiDossierPremierDevis: {
+            delaiMoyen: delaiPremierDevisStat?.value as number ?? 0,
+          },
           dossiersComplexes: {
             tauxComplexite: dossiersComplexesStat?.value as number ?? 0,
             nbComplexes: dossiersComplexesStat?.breakdown?.nbComplexes ?? 0,
