@@ -123,15 +123,19 @@
 
 ## 5. PLAN DE MIGRATION
 
-### Phase 1: Extension StatIA V2 (Cette tâche)
+### Phase 1: Extension StatIA V2 ✅ TERMINÉE
 1. ✅ Audit complet
-2. Ajouter nouvelles familles de métriques
-3. Corriger classe B (avoirs franchiseur)
-4. Créer StatIA Builder UI
+2. ✅ Nouvelles familles de métriques (dossiers, qualite, productivite, complexite, reseau)
+3. ✅ Classe B corrigée (avoirs franchiseur → montants négatifs)
+4. ✅ StatIA Builder UI créé
+5. ✅ Rules.ts enrichi avec règles métier complètes
 
-### Phase 2: Migration Agence
-1. Remplacer appels directs par `getMetric()`
-2. Supprimer code dupliqué
+### Phase 2: Migration Agence 🔄 EN COURS
+1. ✅ Adaptateur DataService → ApogeeDataServices créé
+2. ✅ Hooks useStatiaAgency* créés (contexte agence intégré)
+3. ⏳ Migration Dashboard.tsx vers StatIA
+4. ⏳ Migration IndicateursUnivers.tsx vers StatIA
+5. ⏳ Migration use-recouvrement-stats.ts vers StatIA
 
 ### Phase 3: Migration Franchiseur
 1. Utiliser `getMetricForNetwork()`

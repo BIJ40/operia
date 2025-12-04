@@ -69,6 +69,25 @@ export type { ApogeeDataServices } from './engine/loaders';
 export { useStatiaMetric, useStatiaMetrics, useStatiaForAgency, useStatiaForNetwork } from './hooks/useStatia';
 export { useStatiaIndicateurs, useStatiaKpi, type IndicateursData } from './hooks/useStatiaIndicateurs';
 
+// === Hooks Phase 2 (contexte Agence intégré) ===
+export { 
+  useStatiaAgencyMetric,
+  useStatiaAgencyMetrics, 
+  useStatiaDashboard,
+  useStatiaCA,
+  useStatiaCAParUnivers,
+  useStatiaTauxSAV,
+  useStatiaTauxTransformation,
+  useStatiaTauxRecouvrement
+} from './hooks/useStatiaAgency';
+
+// === Adapters ===
+export { 
+  createApogeeDataServicesAdapter, 
+  getGlobalApogeeDataServices, 
+  resetApogeeDataServicesAdapter 
+} from './adapters/dataServiceAdapter';
+
 // === Components ===
 export { StatiaBuilder } from './components/StatiaBuilder';
 
