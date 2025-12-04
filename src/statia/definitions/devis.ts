@@ -251,60 +251,44 @@ export const montantDevis: StatDefinition = {
 
 /**
  * Délai Premier Devis
- * Délai entre intervention initiale du dossier et premier devis émis
+ * Délai moyen entre CRÉATION DU DOSSIER et DATE D'ENVOI du premier devis
  */
 export const delaiPremierDevis: StatDefinition = {
   id: 'delai_premier_devis',
   label: 'Délai Premier Devis',
-  description: 'Délai moyen entre intervention initiale et premier devis (en jours)',
+  description: 'Délai moyen entre création dossier et envoi premier devis (en jours)',
   category: 'devis',
-  source: ['interventions', 'devis'],
+  source: ['projects', 'devis'],
   aggregation: 'avg',
-  unit: 'jours',
+  unit: 'j',
   compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { interventions, devis } = data;
+    const { projects, devis } = data;
     
     console.log('[StatIA] DELAI_PREMIER_DEVIS - START', { 
-      nbInterventions: interventions.length,
+      nbProjects: projects.length,
       nbDevis: devis.length 
     });
     
-    // 1. Trouver intervention initiale par dossier (min date réalisée)
-    const interventionInitialeParDossier = new Map<string | number, { date: Date, intervention: any }>();
+    // 1. Indexer projets par ID avec leur date de création
+    const projectDateCreation = new Map<string | number, Date>();
     
-    for (const intervention of interventions) {
-      const projectId = intervention.projectId || intervention.project_id;
-      if (!projectId) continue;
-      
-      // Vérifier état réalisé
-      const state = (intervention.state || intervention.statut || intervention.data?.state || '').toLowerCase();
-      const isRealise = ['done', 'finished', 'validated', 'completed', 'réalisée', 'terminée'].includes(state);
-      if (!isRealise) continue;
-      
-      const dateStr = intervention.dateReelle || intervention.date || intervention.data?.dateReelle;
+    for (const project of projects) {
+      const dateStr = project.date || project.created_at || project.data?.date;
       if (!dateStr) continue;
       
-      let date: Date;
       try {
-        date = new Date(dateStr);
+        const date = new Date(dateStr);
         if (isNaN(date.getTime())) continue;
+        projectDateCreation.set(project.id, date);
       } catch {
         continue;
       }
-      
-      // Filtrer par période
-      if (date < params.dateRange.start || date > params.dateRange.end) continue;
-      
-      const existing = interventionInitialeParDossier.get(projectId);
-      if (!existing || date < existing.date) {
-        interventionInitialeParDossier.set(projectId, { date, intervention });
-      }
     }
     
-    console.log('[StatIA] DELAI_PREMIER_DEVIS - Dossiers avec intervention initiale:', interventionInitialeParDossier.size);
+    console.log('[StatIA] DELAI_PREMIER_DEVIS - Projets avec date création:', projectDateCreation.size);
     
     // 2. Trouver premier devis par dossier (exclure brouillons/annulés)
-    const premierDevisParDossier = new Map<string | number, { date: Date, devis: any }>();
+    const premierDevisParDossier = new Map<string | number, Date>();
     
     for (const d of devis) {
       const projectId = d.projectId || d.project_id;
@@ -328,31 +312,36 @@ export const delaiPremierDevis: StatDefinition = {
       }
       
       const existing = premierDevisParDossier.get(projectId);
-      if (!existing || date < existing.date) {
-        premierDevisParDossier.set(projectId, { date, devis: d });
+      if (!existing || date < existing) {
+        premierDevisParDossier.set(projectId, date);
       }
     }
     
     console.log('[StatIA] DELAI_PREMIER_DEVIS - Dossiers avec devis:', premierDevisParDossier.size);
     
-    // 3. Calculer délais pour les dossiers ayant les deux
+    // 3. Calculer délais : date création dossier → date envoi devis
     const delais: number[] = [];
     
-    for (const [projectId, interventionData] of interventionInitialeParDossier) {
-      const devisData = premierDevisParDossier.get(projectId);
-      if (!devisData) continue;
+    for (const [projectId, dateDevis] of premierDevisParDossier) {
+      const dateCreation = projectDateCreation.get(projectId);
+      if (!dateCreation) continue;
+      
+      // Filtre période sur date du devis
+      if (dateDevis < params.dateRange.start || dateDevis > params.dateRange.end) {
+        continue;
+      }
       
       // Délai en jours
-      const diffMs = devisData.date.getTime() - interventionData.date.getTime();
+      const diffMs = dateDevis.getTime() - dateCreation.getTime();
       const delaiJours = diffMs / (1000 * 60 * 60 * 24);
       
-      // Ignorer délais négatifs (devis avant intervention)
+      // Ignorer délais négatifs (devis avant création dossier - impossible normalement)
       if (delaiJours >= 0) {
         delais.push(delaiJours);
       }
     }
     
-    console.log('[StatIA] DELAI_PREMIER_DEVIS - Délais calculés:', delais.length);
+    console.log('[StatIA] DELAI_PREMIER_DEVIS - Délais calculés:', delais.length, 'exemples:', delais.slice(0, 10));
     
     // 4. Calculer stats
     if (delais.length === 0) {
@@ -382,10 +371,10 @@ export const delaiPremierDevis: StatDefinition = {
     const min = delais[0];
     const max = delais[delais.length - 1];
     
-    console.log('[StatIA] DELAI_PREMIER_DEVIS - Résultat:', { moyenne, mediane, min, max });
+    console.log('[StatIA] DELAI_PREMIER_DEVIS - Résultat:', { moyenne, mediane, min, max, nbDossiers: delais.length });
     
     return {
-      value: Math.round(moyenne * 10) / 10,
+      value: Math.round(moyenne),
       metadata: {
         computedAt: new Date(),
         source: 'devis',
