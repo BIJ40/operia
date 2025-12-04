@@ -136,9 +136,9 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     requiresModuleOptions: ['coffre', 'rh_viewer', 'rh_admin'],
   },
   {
-    id: 'FAIRE_UNE_DEMANDE',
-    title: 'Faire une demande',
-    description: 'Demander un document RH',
+    id: 'DEMANDE_CONGE',
+    title: 'Demande de congé',
+    description: 'Soumettre une demande de congé',
     icon: Inbox,
     route: ROUTES.pilotage.faireUneDemande,
     scopeSlug: SCOPE_SLUGS.MON_COFFRE_RH,

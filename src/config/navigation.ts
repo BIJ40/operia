@@ -172,6 +172,13 @@ export const NAV_GROUPS: NavGroup[] = [
         badge: 'Bientôt',
         isDisabled: true,
       },
+      { 
+        title: 'Demande de congé', 
+        url: ROUTES.pilotage.faireUneDemande, 
+        icon: Calendar, 
+        scope: 'mes_indicateurs', 
+        description: 'Soumettre une demande de congé'
+      },
     ],
   },
   {
@@ -448,6 +455,9 @@ export const PAGE_TITLES: Record<string, string> = {
   
   // Legacy admin apogee-tickets (redirects)
   [ROUTES.admin.apogeeTickets]: 'Gestion de Projet',
+  
+  // RH
+  [ROUTES.pilotage.faireUneDemande]: 'Demande de congé',
   
   // User
   [ROUTES.profile]: 'Mon Profil',
