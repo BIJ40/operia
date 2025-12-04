@@ -93,7 +93,7 @@ serve(async (req) => {
 
     // Valider les paramètres d'entrée
     const bodyRaw = await req.json()
-    const targetUserId = validateUUID(bodyRaw.userId, 'userId')
+    const targetUserId = validateUUID(bodyRaw.targetUserId, 'targetUserId')
     const newEmail = validateString(bodyRaw.newEmail, 'newEmail', { email: true, maxLength: 255 })
 
     // Récupérer le profil de l'appelant
