@@ -12,7 +12,8 @@ export type StatCategory =
   | 'recouvrement'
   | 'qualite'
   | 'dossiers'
-  | 'productivite';
+  | 'productivite'
+  | 'complexite';
 
 export type DataSource = 'factures' | 'devis' | 'interventions' | 'projects' | 'users' | 'clients';
 

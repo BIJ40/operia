@@ -129,6 +129,7 @@ export function useStatiaIndicateurs(selectedYear?: number) {
           panierMoyen,
           dureeDossier,
           nbDossiers,
+          dossiersComplexesStat,
         ] = await Promise.all([
           computeStatSafe('ca_global_ht', loadedData, params),
           computeStatSafe('taux_sav_global', loadedData, params),
@@ -138,14 +139,13 @@ export function useStatiaIndicateurs(selectedYear?: number) {
           computeStatSafe('panier_moyen', loadedData, params),
           computeStatSafe('duree_moyenne_dossier', loadedData, params),
           computeStatSafe('nb_dossiers_crees', loadedData, params),
+          computeStatSafe('taux_dossiers_complexes', loadedData, params),
         ]);
 
         // Calculs legacy pour les métriques non encore migrées
         const { 
           calculateDashboardStats,
           calculateDelaiMoyenDossierFacture, 
-          calculateTauxDossiersComplexes, 
-          calculateTauxTransformationDevis,
           calculateNbMoyenInterventionsParDossier,
           calculateNbMoyenVisitesParIntervention,
           calculateTauxDossiersMultiUnivers,
@@ -166,10 +166,6 @@ export function useStatiaIndicateurs(selectedYear?: number) {
 
         const delaiDossierFactureLegacy = calculateDelaiMoyenDossierFacture(
           loadedData.factures, loadedData.projects, undefined
-        );
-        
-        const dossiersComplexes = calculateTauxDossiersComplexes(
-          loadedData.interventions, filters.dateRange
         );
         
         const nbMoyenInterventionsParDossier = calculateNbMoyenInterventionsParDossier(
@@ -227,7 +223,11 @@ export function useStatiaIndicateurs(selectedYear?: number) {
             nbDossiers: dureeDossier?.breakdown?.nbDossiers ?? delaiDossierFactureLegacy?.nbFactures ?? 0,
           },
           delaiDossierPremierDevis,
-          dossiersComplexes,
+          dossiersComplexes: {
+            tauxComplexite: dossiersComplexesStat?.value as number ?? 0,
+            nbComplexes: dossiersComplexesStat?.breakdown?.nbComplexes ?? 0,
+            nbTotal: dossiersComplexesStat?.breakdown?.nbTotal ?? 0,
+          },
           nbMoyenInterventionsParDossier,
           nbMoyenVisitesParIntervention,
           tauxDossiersMultiUnivers,
