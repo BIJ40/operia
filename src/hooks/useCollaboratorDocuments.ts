@@ -14,18 +14,37 @@ import { handleRHError, showRHSuccess, showRHInfo } from '@/utils/rhErrorHandler
 
 const BUCKET_NAME = 'rh-documents';
 
+// P0-04: Expiration réduite à 15 minutes pour sécurité renforcée
+const SIGNED_URL_EXPIRATION = 900; // 15 minutes
+
 /**
  * Génère une URL signée pour télécharger un fichier (partagé entre hooks)
+ * P0-04: Expiration 15 min + logging accès
  */
-async function createSignedDownloadUrl(filePath: string): Promise<string | null> {
+async function createSignedDownloadUrl(
+  filePath: string,
+  documentId?: string,
+  accessType: 'view' | 'download' | 'preview' = 'view'
+): Promise<string | null> {
   const { data, error } = await supabase.storage
     .from(BUCKET_NAME)
-    .createSignedUrl(filePath, 3600); // 1 hour
+    .createSignedUrl(filePath, SIGNED_URL_EXPIRATION);
 
   if (error) {
     handleRHError(error, 'DOWNLOAD_FAILED', { filePath });
     return null;
   }
+
+  // Log access if documentId provided (fire-and-forget)
+  if (documentId) {
+    supabase.rpc('log_document_access', {
+      p_document_id: documentId,
+      p_access_type: accessType,
+    }).then(({ error: logError }) => {
+      if (logError) console.warn('Failed to log document access:', logError);
+    });
+  }
+
   return data.signedUrl;
 }
 
@@ -222,12 +241,12 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
     },
   });
 
-  const getSignedUrl = async (filePath: string): Promise<string | null> => {
-    return createSignedDownloadUrl(filePath);
+  const getSignedUrl = async (filePath: string, documentId?: string): Promise<string | null> => {
+    return createSignedDownloadUrl(filePath, documentId, 'preview');
   };
 
   const downloadDocument = async (doc: CollaboratorDocument) => {
-    const url = await createSignedDownloadUrl(doc.file_path);
+    const url = await createSignedDownloadUrl(doc.file_path, doc.id, 'download');
     if (url) {
       window.open(url, '_blank');
     }
@@ -283,14 +302,14 @@ export function useMyDocuments() {
   });
 
   const downloadDocument = async (doc: CollaboratorDocument) => {
-    const url = await createSignedDownloadUrl(doc.file_path);
+    const url = await createSignedDownloadUrl(doc.file_path, doc.id, 'download');
     if (url) {
       window.open(url, '_blank');
     }
   };
 
-  const getSignedUrl = async (filePath: string): Promise<string | null> => {
-    return createSignedDownloadUrl(filePath);
+  const getSignedUrl = async (filePath: string, documentId?: string): Promise<string | null> => {
+    return createSignedDownloadUrl(filePath, documentId, 'preview');
   };
 
   return {

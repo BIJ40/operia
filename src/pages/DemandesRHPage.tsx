@@ -515,6 +515,40 @@ export default function DemandesRHPage() {
                     </p>
                   </div>
 
+                  {/* P1-03: Bouton "Prendre en charge" pour passer rapidement en IN_PROGRESS */}
+                  {currentRequest.status === 'PENDING' && (
+                    <div className="pt-2 border-t">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="w-full gap-2 bg-amber-600 hover:bg-amber-700"
+                        onClick={async () => {
+                          try {
+                            await updateRequest.mutateAsync({
+                              id: currentRequest.id,
+                              status: 'IN_PROGRESS',
+                            });
+                            setNewStatus('IN_PROGRESS');
+                            toast.success('Demande prise en charge');
+                          } catch (err: any) {
+                            toast.error(`Erreur: ${err.message}`);
+                          }
+                        }}
+                        disabled={updateRequest.isPending}
+                      >
+                        {updateRequest.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Lock className="h-4 w-4" />
+                        )}
+                        Prendre en charge
+                      </Button>
+                      <p className="text-[10px] text-muted-foreground mt-1 text-center">
+                        Le collaborateur sera notifié que sa demande est en cours de traitement
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex justify-end gap-2 pt-2">
                     <Button
                       size="sm"
