@@ -1,0 +1,644 @@
+/**
+ * StatIA V2 - Engine pour le Dashboard Réseau Franchiseur
+ * Orchestre le calcul de toutes les métriques du dashboard réseau
+ */
+
+import { startOfYear, endOfYear, format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { NetworkDataService } from '@/franchiseur/services/networkDataService';
+import { extractFactureMeta } from '../rules/rules';
+import { isFactureStateIncluded } from '../engine/normalizers';
+import { logNetwork } from '@/lib/logger';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface ReseauDashboardParams {
+  dateStart: Date;
+  dateEnd: Date;
+  scopeAgences?: string[]; // IDs des agences sélectionnées (vide = toutes)
+}
+
+export interface ReseauDashboardData {
+  tuilesHautes: {
+    caAnneeEnCours: number;
+    caPeriode: number;
+    dossiersPeriode: number;
+    interventionsPeriode: number;
+    redevancesMois: number;
+    delaiMoyenTraitement: number;
+    tauxOneShot: number;
+    delaiDossierDevis: number;
+    visitesParDossier: number;
+    tauxMultiUnivers: number;
+  };
+  blocSav: {
+    tauxSavGlobalReseau: number;
+    nbSavGlobal: number;
+    nbDossiersBaseSav: number;
+    tauxSavMoyenAgences: number;
+    serieTauxSavMensuel: Array<{ month: string; tauxSAV: number }>;
+  };
+  blocCA: {
+    serieCAMensuel: Array<{ month: string; ca: number }>;
+    partCAParAgence: Array<{ agencyLabel: string; ca: number; percentage: number }>;
+    top5AgencesCA: Array<{ agencyId: string; agencyLabel: string; ca: number; rank: number }>;
+  };
+  blocApporteurs: {
+    top3ApporteursCA: Array<{ name: string; ca: number; nbDossiers: number; rank: number }>;
+  };
+}
+
+interface AgencyData {
+  agencyId: string;
+  agencyLabel: string;
+  data: {
+    factures: any[];
+    projects: any[];
+    interventions: any[];
+    devis: any[];
+    clients: any[];
+  } | null;
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+function parseDate(dateString: string | undefined | null): Date | null {
+  if (!dateString) return null;
+  try {
+    const d = new Date(dateString);
+    return isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
+}
+
+function isInterventionRealisee(intervention: any): boolean {
+  const state = (intervention.state || intervention.statut || intervention.data?.state || '').toLowerCase();
+  return ['done', 'finished', 'validated', 'completed', 'réalisée', 'terminée'].includes(state);
+}
+
+function isSAVIntervention(intervention: any): boolean {
+  const type2 = (intervention.data?.type2 || intervention.type2 || '').toLowerCase();
+  const type = (intervention.data?.type || intervention.type || '').toLowerCase();
+  return type2.includes('sav') || type.includes('sav');
+}
+
+// ============================================================================
+// ENGINE PRINCIPAL
+// ============================================================================
+
+export async function computeReseauDashboard(params: ReseauDashboardParams): Promise<ReseauDashboardData> {
+  logNetwork.info('[StatIA] computeReseauDashboard - START', { params });
+  
+  const now = new Date();
+  const yearStart = startOfYear(now);
+  const yearEnd = endOfYear(now);
+  
+  // 1. Charger les agences
+  const { data: agencies, error: agenciesError } = await supabase
+    .from('apogee_agencies')
+    .select('id, slug, label')
+    .eq('is_active', true);
+  
+  if (agenciesError || !agencies?.length) {
+    logNetwork.error('[StatIA] Erreur chargement agences', agenciesError);
+    return getEmptyDashboard();
+  }
+  
+  // 2. Filtrer par scope si nécessaire
+  const filteredAgencies = params.scopeAgences?.length
+    ? agencies.filter(a => params.scopeAgences!.includes(a.id))
+    : agencies;
+  
+  logNetwork.debug(`[StatIA] Chargement de ${filteredAgencies.length} agences...`);
+  
+  // 3. Charger les données de chaque agence séquentiellement
+  const agencyData: AgencyData[] = [];
+  for (const agency of filteredAgencies) {
+    try {
+      const data = await NetworkDataService.loadAgencyData(agency.slug);
+      agencyData.push({
+        agencyId: agency.slug,
+        agencyLabel: agency.label,
+        data,
+      });
+    } catch (err) {
+      logNetwork.warn(`[StatIA] Erreur chargement ${agency.slug}`, err);
+    }
+  }
+  
+  logNetwork.info(`[StatIA] ${agencyData.length} agences chargées`);
+  
+  // 4. Agréger toutes les données
+  const allFactures: any[] = [];
+  const allProjects: any[] = [];
+  const allInterventions: any[] = [];
+  const allDevis: any[] = [];
+  const allClients: any[] = [];
+  
+  for (const agency of agencyData) {
+    if (agency.data) {
+      allFactures.push(...(agency.data.factures || []));
+      allProjects.push(...(agency.data.projects || []));
+      allInterventions.push(...(agency.data.interventions || []));
+      allDevis.push(...(agency.data.devis || []));
+      allClients.push(...(agency.data.clients || []));
+    }
+  }
+  
+  // 5. Calculer les métriques
+  const tuilesHautes = computeTuilesHautes(allFactures, allProjects, allInterventions, allDevis, params, yearStart, yearEnd);
+  const blocSav = computeBlocSav(allProjects, allInterventions, params, agencyData);
+  const blocCA = computeBlocCA(allFactures, agencyData, params, yearStart, yearEnd);
+  const blocApporteurs = computeBlocApporteurs(allFactures, allProjects, allClients, params);
+  
+  return {
+    tuilesHautes,
+    blocSav,
+    blocCA,
+    blocApporteurs,
+  };
+}
+
+// ============================================================================
+// CALCUL TUILES HAUTES
+// ============================================================================
+
+function computeTuilesHautes(
+  factures: any[],
+  projects: any[],
+  interventions: any[],
+  devis: any[],
+  params: ReseauDashboardParams,
+  yearStart: Date,
+  yearEnd: Date
+) {
+  // CA Année en cours
+  let caAnneeEnCours = 0;
+  for (const facture of factures) {
+    const meta = extractFactureMeta(facture);
+    const factureState = facture.state || facture.status || facture.data?.state || '';
+    if (!isFactureStateIncluded(factureState)) continue;
+    const date = meta.date ? new Date(meta.date) : null;
+    if (!date || date < yearStart || date > yearEnd) continue;
+    caAnneeEnCours += meta.montantNetHT;
+  }
+  
+  // CA Période
+  let caPeriode = 0;
+  for (const facture of factures) {
+    const meta = extractFactureMeta(facture);
+    const factureState = facture.state || facture.status || facture.data?.state || '';
+    if (!isFactureStateIncluded(factureState)) continue;
+    const date = meta.date ? new Date(meta.date) : null;
+    if (!date || date < params.dateStart || date > params.dateEnd) continue;
+    caPeriode += meta.montantNetHT;
+  }
+  
+  // Dossiers Période
+  let dossiersPeriode = 0;
+  for (const project of projects) {
+    const dateStr = project.date || project.created_at || project.createdAt;
+    const date = parseDate(dateStr);
+    if (!date || date < params.dateStart || date > params.dateEnd) continue;
+    dossiersPeriode++;
+  }
+  
+  // Interventions Période
+  let interventionsPeriode = 0;
+  for (const intervention of interventions) {
+    if (!isInterventionRealisee(intervention)) continue;
+    const dateStr = intervention.dateReelle || intervention.date || intervention.created_at;
+    const date = parseDate(dateStr);
+    if (!date || date < params.dateStart || date > params.dateEnd) continue;
+    interventionsPeriode++;
+  }
+  
+  // Délai moyen traitement
+  const delaiMoyenTraitement = computeDelaiMoyenTraitement(projects, factures, params);
+  
+  // Taux One-Shot
+  const tauxOneShot = computeTauxOneShot(projects, interventions, params);
+  
+  // Délai Dossier > Devis
+  const delaiDossierDevis = computeDelaiDossierDevis(projects, devis, params);
+  
+  // Visites par dossier
+  const visitesParDossier = computeVisitesParDossier(interventions, params);
+  
+  // Taux Multi-Univers
+  const tauxMultiUnivers = computeTauxMultiUnivers(projects, params);
+  
+  return {
+    caAnneeEnCours,
+    caPeriode,
+    dossiersPeriode,
+    interventionsPeriode,
+    redevancesMois: 0, // Placeholder - calculé ailleurs via agency_royalty_calculations
+    delaiMoyenTraitement,
+    tauxOneShot,
+    delaiDossierDevis,
+    visitesParDossier,
+    tauxMultiUnivers,
+  };
+}
+
+function computeDelaiMoyenTraitement(projects: any[], factures: any[], params: ReseauDashboardParams): number {
+  const projectsMap = new Map(projects.map(p => [p.id, p]));
+  const firstFactureByProject = new Map<any, Date>();
+  
+  for (const facture of factures) {
+    const meta = extractFactureMeta(facture);
+    if (!meta.date) continue;
+    const projectId = facture.projectId;
+    if (!projectId) continue;
+    const factureDate = new Date(meta.date);
+    const existing = firstFactureByProject.get(projectId);
+    if (!existing || factureDate < existing) {
+      firstFactureByProject.set(projectId, factureDate);
+    }
+  }
+  
+  let totalDays = 0;
+  let validCount = 0;
+  
+  for (const [projectId, factureDate] of firstFactureByProject) {
+    const project = projectsMap.get(projectId);
+    if (!project) continue;
+    
+    const projectDate = parseDate(project.date || project.created_at || project.createdAt);
+    if (!projectDate) continue;
+    if (factureDate < params.dateStart || factureDate > params.dateEnd) continue;
+    
+    const diffDays = Math.floor((factureDate.getTime() - projectDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) continue;
+    
+    totalDays += diffDays;
+    validCount++;
+  }
+  
+  return validCount > 0 ? Math.round(totalDays / validCount) : 0;
+}
+
+function computeTauxOneShot(projects: any[], interventions: any[], params: ReseauDashboardParams): number {
+  const interventionsByProject = new Map<any, number>();
+  
+  for (const intervention of interventions) {
+    if (!isInterventionRealisee(intervention)) continue;
+    if (isSAVIntervention(intervention)) continue;
+    const projectId = intervention.projectId || intervention.project_id;
+    if (!projectId) continue;
+    interventionsByProject.set(projectId, (interventionsByProject.get(projectId) || 0) + 1);
+  }
+  
+  let total = 0;
+  let oneShot = 0;
+  
+  for (const project of projects) {
+    const date = parseDate(project.date || project.created_at || project.createdAt);
+    if (!date || date < params.dateStart || date > params.dateEnd) continue;
+    
+    const nbInterventions = interventionsByProject.get(project.id) || 0;
+    if (nbInterventions === 0) continue;
+    
+    total++;
+    if (nbInterventions === 1) oneShot++;
+  }
+  
+  return total > 0 ? Math.round((oneShot / total) * 1000) / 10 : 0;
+}
+
+function computeDelaiDossierDevis(projects: any[], devis: any[], params: ReseauDashboardParams): number {
+  const projectsMap = new Map(projects.map(p => [p.id, p]));
+  const firstDevisByProject = new Map<any, Date>();
+  
+  for (const d of devis) {
+    const dateStr = d.dateReelle || d.date || d.created_at || d.createdAt;
+    const date = parseDate(dateStr);
+    if (!date) continue;
+    const projectId = d.projectId || d.project_id;
+    if (!projectId) continue;
+    const existing = firstDevisByProject.get(projectId);
+    if (!existing || date < existing) {
+      firstDevisByProject.set(projectId, date);
+    }
+  }
+  
+  let totalDays = 0;
+  let validCount = 0;
+  
+  for (const [projectId, devisDate] of firstDevisByProject) {
+    const project = projectsMap.get(projectId);
+    if (!project) continue;
+    
+    const projectDate = parseDate(project.date || project.created_at || project.createdAt);
+    if (!projectDate) continue;
+    if (devisDate < params.dateStart || devisDate > params.dateEnd) continue;
+    
+    const diffDays = Math.floor((devisDate.getTime() - projectDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) continue;
+    
+    totalDays += diffDays;
+    validCount++;
+  }
+  
+  return validCount > 0 ? Math.round(totalDays / validCount) : 0;
+}
+
+function computeVisitesParDossier(interventions: any[], params: ReseauDashboardParams): number {
+  const interventionsByProject = new Map<any, number>();
+  
+  for (const intervention of interventions) {
+    if (!isInterventionRealisee(intervention)) continue;
+    const dateStr = intervention.dateReelle || intervention.date || intervention.created_at;
+    const date = parseDate(dateStr);
+    if (!date || date < params.dateStart || date > params.dateEnd) continue;
+    
+    const projectId = intervention.projectId || intervention.project_id;
+    if (!projectId) continue;
+    interventionsByProject.set(projectId, (interventionsByProject.get(projectId) || 0) + 1);
+  }
+  
+  let totalDossiers = 0;
+  let totalInterventions = 0;
+  for (const count of interventionsByProject.values()) {
+    totalDossiers++;
+    totalInterventions += count;
+  }
+  
+  return totalDossiers > 0 ? Math.round((totalInterventions / totalDossiers) * 10) / 10 : 0;
+}
+
+function computeTauxMultiUnivers(projects: any[], params: ReseauDashboardParams): number {
+  let total = 0;
+  let multiUnivers = 0;
+  
+  for (const project of projects) {
+    const date = parseDate(project.date || project.created_at || project.createdAt);
+    if (!date || date < params.dateStart || date > params.dateEnd) continue;
+    
+    total++;
+    const universes = project.data?.universes || project.universes || [];
+    if (Array.isArray(universes) && universes.length > 1) {
+      multiUnivers++;
+    }
+  }
+  
+  return total > 0 ? Math.round((multiUnivers / total) * 1000) / 10 : 0;
+}
+
+// ============================================================================
+// CALCUL BLOC SAV
+// ============================================================================
+
+function computeBlocSav(
+  projects: any[],
+  interventions: any[],
+  params: ReseauDashboardParams,
+  agencyData: AgencyData[]
+) {
+  // Identifier projets avec SAV
+  const projectsWithSAV = new Set<any>();
+  for (const intervention of interventions) {
+    if (isSAVIntervention(intervention)) {
+      const projectId = intervention.projectId || intervention.project_id;
+      if (projectId) projectsWithSAV.add(projectId);
+    }
+  }
+  
+  let totalDossiers = 0;
+  let savDossiers = 0;
+  const byMonth = new Map<string, { total: number; sav: number }>();
+  
+  for (const project of projects) {
+    const dateStr = project.date || project.created_at || project.createdAt;
+    const date = parseDate(dateStr);
+    if (!date || date < params.dateStart || date > params.dateEnd) continue;
+    
+    totalDossiers++;
+    const hasSav = projectsWithSAV.has(project.id);
+    if (hasSav) savDossiers++;
+    
+    const monthKey = format(date, 'yyyy-MM');
+    if (!byMonth.has(monthKey)) {
+      byMonth.set(monthKey, { total: 0, sav: 0 });
+    }
+    const stats = byMonth.get(monthKey)!;
+    stats.total++;
+    if (hasSav) stats.sav++;
+  }
+  
+  // Taux moyen par agence
+  const agencyRates: number[] = [];
+  for (const agency of agencyData) {
+    if (!agency.data?.projects?.length) continue;
+    
+    const agencySAV = new Set<any>();
+    for (const intervention of agency.data.interventions || []) {
+      if (isSAVIntervention(intervention)) {
+        const projectId = intervention.projectId || intervention.project_id;
+        if (projectId) agencySAV.add(projectId);
+      }
+    }
+    
+    const agencyProjects = agency.data.projects.filter((p: any) => {
+      const d = parseDate(p.date || p.created_at || p.createdAt);
+      return d && d >= params.dateStart && d <= params.dateEnd;
+    });
+    
+    if (agencyProjects.length > 0) {
+      const agencySAVCount = agencyProjects.filter((p: any) => agencySAV.has(p.id)).length;
+      agencyRates.push((agencySAVCount / agencyProjects.length) * 100);
+    }
+  }
+  
+  const tauxSavMoyenAgences = agencyRates.length > 0
+    ? Math.round((agencyRates.reduce((a, b) => a + b, 0) / agencyRates.length) * 10) / 10
+    : 0;
+  
+  // Série mensuelle
+  const serieTauxSavMensuel: Array<{ month: string; tauxSAV: number }> = [];
+  const sortedMonths = Array.from(byMonth.keys()).sort();
+  for (const month of sortedMonths) {
+    const stats = byMonth.get(month)!;
+    const taux = stats.total > 0 ? (stats.sav / stats.total) * 100 : 0;
+    serieTauxSavMensuel.push({ month, tauxSAV: Math.round(taux * 10) / 10 });
+  }
+  
+  return {
+    tauxSavGlobalReseau: totalDossiers > 0 ? Math.round((savDossiers / totalDossiers) * 1000) / 10 : 0,
+    nbSavGlobal: savDossiers,
+    nbDossiersBaseSav: totalDossiers,
+    tauxSavMoyenAgences,
+    serieTauxSavMensuel,
+  };
+}
+
+// ============================================================================
+// CALCUL BLOC CA
+// ============================================================================
+
+function computeBlocCA(
+  factures: any[],
+  agencyData: AgencyData[],
+  params: ReseauDashboardParams,
+  yearStart: Date,
+  yearEnd: Date
+) {
+  // Série CA mensuel
+  const byMonth = new Map<string, number>();
+  for (const facture of factures) {
+    const meta = extractFactureMeta(facture);
+    const factureState = facture.state || facture.status || facture.data?.state || '';
+    if (!isFactureStateIncluded(factureState)) continue;
+    const date = meta.date ? new Date(meta.date) : null;
+    if (!date || date < yearStart || date > yearEnd) continue;
+    
+    const monthKey = format(date, 'MMM');
+    byMonth.set(monthKey, (byMonth.get(monthKey) || 0) + meta.montantNetHT);
+  }
+  
+  const monthOrder = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+  const serieCAMensuel = monthOrder.map(month => ({
+    month,
+    ca: byMonth.get(month) || 0,
+  }));
+  
+  // CA par agence
+  const caByAgency: Array<{ agencyLabel: string; ca: number; percentage: number }> = [];
+  let totalCA = 0;
+  
+  for (const agency of agencyData) {
+    if (!agency.data?.factures) continue;
+    
+    let agencyCA = 0;
+    for (const facture of agency.data.factures) {
+      const meta = extractFactureMeta(facture);
+      const factureState = facture.state || facture.status || facture.data?.state || '';
+      if (!isFactureStateIncluded(factureState)) continue;
+      const date = meta.date ? new Date(meta.date) : null;
+      if (!date || date < yearStart || date > yearEnd) continue;
+      agencyCA += meta.montantNetHT;
+    }
+    
+    totalCA += agencyCA;
+    caByAgency.push({ agencyLabel: agency.agencyLabel, ca: agencyCA, percentage: 0 });
+  }
+  
+  // Calculer pourcentages
+  for (const item of caByAgency) {
+    item.percentage = totalCA > 0 ? Math.round((item.ca / totalCA) * 1000) / 10 : 0;
+  }
+  
+  // Top 5 agences
+  const top5AgencesCA = caByAgency
+    .sort((a, b) => b.ca - a.ca)
+    .slice(0, 5)
+    .map((item, index) => ({
+      agencyId: item.agencyLabel,
+      agencyLabel: item.agencyLabel,
+      ca: item.ca,
+      rank: index + 1,
+    }));
+  
+  return {
+    serieCAMensuel,
+    partCAParAgence: caByAgency.sort((a, b) => b.ca - a.ca),
+    top5AgencesCA,
+  };
+}
+
+// ============================================================================
+// CALCUL BLOC APPORTEURS
+// ============================================================================
+
+function computeBlocApporteurs(
+  factures: any[],
+  projects: any[],
+  clients: any[],
+  params: ReseauDashboardParams
+) {
+  const clientsMap = new Map(clients.map(c => [c.id, c]));
+  const projectsMap = new Map(projects.map(p => [p.id, p]));
+  
+  const apporteurStats = new Map<any, { name: string; ca: number; projectIds: Set<any> }>();
+  
+  for (const facture of factures) {
+    const meta = extractFactureMeta(facture);
+    const factureState = facture.state || facture.status || facture.data?.state || '';
+    if (!isFactureStateIncluded(factureState)) continue;
+    
+    const date = meta.date ? new Date(meta.date) : null;
+    if (!date || date < params.dateStart || date > params.dateEnd) continue;
+    
+    const project = projectsMap.get(facture.projectId);
+    if (!project) continue;
+    
+    const commanditaireId = project.data?.commanditaireId;
+    if (!commanditaireId) continue;
+    
+    const client = clientsMap.get(commanditaireId);
+    const name = client?.nom || client?.name || `Apporteur ${commanditaireId}`;
+    
+    if (!apporteurStats.has(commanditaireId)) {
+      apporteurStats.set(commanditaireId, { name, ca: 0, projectIds: new Set() });
+    }
+    
+    const stats = apporteurStats.get(commanditaireId)!;
+    stats.ca += meta.montantNetHT;
+    stats.projectIds.add(facture.projectId);
+  }
+  
+  const top3ApporteursCA = Array.from(apporteurStats.values())
+    .map(stats => ({
+      name: stats.name,
+      ca: stats.ca,
+      nbDossiers: stats.projectIds.size,
+      rank: 0,
+    }))
+    .sort((a, b) => b.ca - a.ca)
+    .slice(0, 3)
+    .map((item, index) => ({ ...item, rank: index + 1 }));
+  
+  return { top3ApporteursCA };
+}
+
+// ============================================================================
+// EMPTY DASHBOARD
+// ============================================================================
+
+function getEmptyDashboard(): ReseauDashboardData {
+  return {
+    tuilesHautes: {
+      caAnneeEnCours: 0,
+      caPeriode: 0,
+      dossiersPeriode: 0,
+      interventionsPeriode: 0,
+      redevancesMois: 0,
+      delaiMoyenTraitement: 0,
+      tauxOneShot: 0,
+      delaiDossierDevis: 0,
+      visitesParDossier: 0,
+      tauxMultiUnivers: 0,
+    },
+    blocSav: {
+      tauxSavGlobalReseau: 0,
+      nbSavGlobal: 0,
+      nbDossiersBaseSav: 0,
+      tauxSavMoyenAgences: 0,
+      serieTauxSavMensuel: [],
+    },
+    blocCA: {
+      serieCAMensuel: [],
+      partCAParAgence: [],
+      top5AgencesCA: [],
+    },
+    blocApporteurs: {
+      top3ApporteursCA: [],
+    },
+  };
+}

@@ -13,7 +13,8 @@ export type StatCategory =
   | 'qualite'
   | 'dossiers'
   | 'productivite'
-  | 'complexite';
+  | 'complexite'
+  | 'reseau';
 
 export type DataSource = 'factures' | 'devis' | 'interventions' | 'projects' | 'users' | 'clients';
 

@@ -10,7 +10,7 @@ import { TopApporteurWidget } from "../components/widgets/TopApporteurWidget";
 import { NetworkMonthlyCAChart } from "../components/widgets/NetworkMonthlyCAChart";
 import { NetworkCAPieChart } from "../components/widgets/NetworkCAPieChart";
 import { NetworkSAVChart } from "../components/widgets/NetworkSAVChart";
-import { useNetworkStats } from "../hooks/useNetworkStats";
+import { useStatiaReseauDashboard } from "@/statia/hooks/useStatiaReseauDashboard";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
 import { useNetworkFilters } from "../contexts/NetworkFiltersContext";
 
@@ -45,12 +45,11 @@ function SkeletonChart() {
 export default function FranchiseurHome() {
   const { permissions } = useFranchiseur();
   const { dateRange } = useNetworkFilters();
-  const { data: stats, isLoading } = useNetworkStats();
+  
+  // Nouveau hook StatIA unifié
+  const { data, isLoading } = useStatiaReseauDashboard();
 
-  // Note: L'accès à cette page est déjà contrôlé par RoleGuard dans App.tsx
-  // Pas besoin de vérification supplémentaire ici
-
-  if (isLoading) {
+  if (isLoading || !data) {
     return (
       <div className="space-y-6">
         <div>
@@ -75,6 +74,26 @@ export default function FranchiseurHome() {
     );
   }
 
+  // Extraction des données StatIA
+  const { tuilesHautes, blocSav, blocCA, blocApporteurs } = data;
+
+  // Conversion pour les widgets existants
+  const monthlyCAEvolution = blocCA.serieCAMensuel.map(item => ({
+    month: item.month,
+    ca: item.ca,
+    nbFactures: 0, // Non utilisé dans le graphique
+  }));
+
+  const caByAgency = blocCA.partCAParAgence.map(item => ({
+    agencyLabel: item.agencyLabel,
+    ca: item.ca,
+  }));
+
+  const monthlySAVEvolution = blocSav.serieTauxSavMensuel.map(item => ({
+    month: item.month,
+    tauxSAV: item.tauxSAV,
+  }));
+
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 items-start">
@@ -86,14 +105,14 @@ export default function FranchiseurHome() {
       <div className="grid gap-4 md:grid-cols-4">
         <NetworkKpiTile
           title="CA Année en cours"
-          value={stats?.totalCAYear || 0}
+          value={tuilesHautes.caAnneeEnCours}
           icon={TrendingUp}
           format="currency"
         />
 
         <NetworkKpiTile
           title="CA Période"
-          value={stats?.totalCAPeriod || 0}
+          value={tuilesHautes.caPeriode}
           icon={TrendingUp}
           format="currency"
           subtitle={
@@ -105,13 +124,13 @@ export default function FranchiseurHome() {
 
         <NetworkKpiTile
           title="Dossiers Période"
-          value={stats?.totalProjectsPeriod || 0}
+          value={tuilesHautes.dossiersPeriode}
           icon={FileText}
         />
 
         <NetworkKpiTile
           title="Interventions"
-          value={stats?.totalInterventions || 0}
+          value={tuilesHautes.interventionsPeriode}
           icon={Wrench}
         />
       </div>
@@ -121,7 +140,7 @@ export default function FranchiseurHome() {
         {permissions.canViewRoyalties && (
           <NetworkKpiTile
             title="Redevances Mois"
-            value={stats?.monthlyRoyalties || 0}
+            value={tuilesHautes.redevancesMois}
             icon={Euro}
             format="currency"
           />
@@ -129,14 +148,14 @@ export default function FranchiseurHome() {
 
         <NetworkKpiTile
           title="Délai moyen traitement"
-          value={stats?.averageProcessingTime || 0}
+          value={tuilesHautes.delaiMoyenTraitement}
           icon={Clock}
           subtitle="jours"
         />
 
         <NetworkKpiTile
           title="Taux One-Shot"
-          value={stats?.oneShotRate || 0}
+          value={tuilesHautes.tauxOneShot}
           icon={Zap}
           format="percentage"
           subtitle="1 seule intervention"
@@ -144,21 +163,21 @@ export default function FranchiseurHome() {
 
         <NetworkKpiTile
           title="Délai Dossier > Devis"
-          value={stats?.projectToQuoteDelay || 0}
+          value={tuilesHautes.delaiDossierDevis}
           icon={Timer}
           subtitle="jours en moyenne"
         />
 
         <NetworkKpiTile
           title="Visites/RDV"
-          value={stats?.visitsPerProject || 0}
+          value={tuilesHautes.visitesParDossier}
           icon={Calendar}
           subtitle="par dossier"
         />
 
         <NetworkKpiTile
           title="Multi Univers"
-          value={stats?.multiUniversRate || 0}
+          value={tuilesHautes.tauxMultiUnivers}
           icon={Network}
           format="percentage"
           subtitle="plusieurs univers"
@@ -179,17 +198,17 @@ export default function FranchiseurHome() {
             <div>
               <p className="text-xs text-muted-foreground">Global Réseau</p>
               <p className="text-2xl font-bold text-foreground">
-                {stats?.savRateGlobal?.toFixed(1) || 0}%
+                {blocSav.tauxSavGlobalReseau.toFixed(1)}%
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                {stats?.nbTotalSAVProjects || 0} SAV / {stats?.totalProjects || 0} dossiers
+                {blocSav.nbSavGlobal} SAV / {blocSav.nbDossiersBaseSav} dossiers
               </p>
             </div>
             <Separator />
             <div>
               <p className="text-xs text-muted-foreground">Moyenne Agences</p>
               <p className="text-lg font-semibold text-helpconfort-blue">
-                {stats?.savRateMoyenne?.toFixed(1) || 0}%
+                {blocSav.tauxSavMoyenAgences.toFixed(1)}%
               </p>
             </div>
           </div>
@@ -197,15 +216,15 @@ export default function FranchiseurHome() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <NetworkMonthlyCAChart data={stats?.monthlyCAEvolution || []} />
-        <NetworkCAPieChart data={stats?.caByAgency || []} />
+        <NetworkMonthlyCAChart data={monthlyCAEvolution} />
+        <NetworkCAPieChart data={caByAgency} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <NetworkSAVChart data={stats?.monthlySAVEvolution || []} />
+        <NetworkSAVChart data={monthlySAVEvolution} />
         <div className="grid gap-4 md:grid-cols-2">
-          <TopAgenciesWidget agencies={stats?.top5Agencies || []} />
-          <TopApporteurWidget apporteurs={stats?.top3Apporteurs || []} />
+          <TopAgenciesWidget agencies={blocCA.top5AgencesCA} />
+          <TopApporteurWidget apporteurs={blocApporteurs.top3ApporteursCA} />
         </div>
       </div>
     </div>
