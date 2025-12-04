@@ -18,7 +18,7 @@ export function RtRunnerPage() {
   const navigate = useNavigate();
   const mode = (searchParams.get('mode') as InterventionMode) || 'rt';
   
-  const { getIntervention, updateRtStatus } = useTechPlanning();
+  const { interventions, isLoading: isLoadingInterventions, getIntervention, updateRtStatus } = useTechPlanning();
   const {
     session,
     isLoading,
@@ -39,25 +39,37 @@ export function RtRunnerPage() {
 
   const [pageState, setPageState] = useState<PageState>('loading');
   const [intervention, setIntervention] = useState<TechIntervention | null>(null);
+  const [sessionStarted, setSessionStarted] = useState(false);
 
-  // Initialize session on mount
+  // Initialize session on mount - wait for interventions to load
   useEffect(() => {
     if (!interventionId) {
       navigate('/hc-agency/tech-interventions');
       return;
     }
 
+    // Wait for interventions to load
+    if (isLoadingInterventions) {
+      return;
+    }
+
+    // Try to find intervention
     const int = getIntervention(interventionId);
-    if (!int) {
+    
+    if (!int && interventions.length > 0) {
+      // Interventions loaded but not found
       toast.error('Intervention non trouvée');
       navigate('/hc-agency/tech-interventions');
       return;
     }
 
-    setIntervention(int);
-    startSession(interventionId, mode);
-    setPageState('runner');
-  }, [interventionId, mode]);
+    if (int && !sessionStarted) {
+      setIntervention(int);
+      startSession(interventionId, mode);
+      setSessionStarted(true);
+      setPageState('runner');
+    }
+  }, [interventionId, mode, isLoadingInterventions, interventions, sessionStarted]);
 
   // Handle navigation to summary when at end
   const handleComplete = () => {
