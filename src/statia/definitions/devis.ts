@@ -1,14 +1,14 @@
 /**
  * StatIA V1 - Définitions des métriques Devis
- * Réutilise les formules existantes de devisCalculations
+ * Aligné sur la logique legacy de dashboardCalculations
  */
 
 import { StatDefinition, LoadedData, StatParams, StatResult } from './types';
-import { isDevisValidated } from '../engine/normalizers';
+// Note: isDevisValidated n'est plus utilisé, logique inline pour clarté
 
 /**
  * Taux de Transformation Devis (en nombre)
- * Conforme STATIA_RULES: count(devis_facturés) / count(devis_émis)
+ * Aligné sur la logique legacy : envoyés = sent/accepted/invoice, acceptés = accepted/invoice
  */
 export const tauxTransformationDevisNombre: StatDefinition = {
   id: 'taux_transformation_devis_nombre',
@@ -21,40 +21,44 @@ export const tauxTransformationDevisNombre: StatDefinition = {
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { devis } = data;
     
-    let totalDevis = 0;
-    let devisTransformes = 0;
+    let devisEnvoyes = 0;
+    let devisAcceptes = 0;
     
     for (const d of devis) {
-      const dateStr = d.dateReelle || d.date || d.created_at;
+      const dateStr = d.dateReelle || d.date || d.dateCreation || d.data?.dateReelle || d.data?.date || d.created_at;
       if (dateStr) {
         const date = new Date(dateStr);
+        if (isNaN(date.getTime())) continue;
         if (date < params.dateRange.start || date > params.dateRange.end) continue;
       }
       
-      // Exclure les devis annulés
-      const state = (d.state || '').toLowerCase();
-      if (state === 'cancelled' || state === 'canceled' || state === 'refused') continue;
+      // Récupérer l'état du devis
+      const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
       
-      totalDevis++;
-      
-      if (isDevisValidated(d)) {
-        devisTransformes++;
+      // Devis envoyés = sent, accepted, invoice (ceux qui ont été présentés au client)
+      if (state === 'sent' || state === 'accepted' || state === 'invoice') {
+        devisEnvoyes++;
+        
+        // Devis acceptés = accepted ou invoice (facturé)
+        if (state === 'accepted' || state === 'invoice') {
+          devisAcceptes++;
+        }
       }
     }
     
-    const taux = totalDevis > 0 ? (devisTransformes / totalDevis) * 100 : 0;
+    const taux = devisEnvoyes > 0 ? (devisAcceptes / devisEnvoyes) * 100 : 0;
     
     return {
-      value: taux,
+      value: Math.round(taux * 10) / 10, // Arrondir à 1 décimale
       metadata: {
         computedAt: new Date(),
         source: 'devis',
-        recordCount: totalDevis,
+        recordCount: devisEnvoyes,
       },
       breakdown: {
-        totalDevis,
-        devisTransformes,
-        devisNonTransformes: totalDevis - devisTransformes,
+        totalDevis: devisEnvoyes,
+        devisTransformes: devisAcceptes,
+        devisNonTransformes: devisEnvoyes - devisAcceptes,
       }
     };
   }
@@ -62,7 +66,7 @@ export const tauxTransformationDevisNombre: StatDefinition = {
 
 /**
  * Taux de Transformation Devis (en montant)
- * Conforme STATIA_RULES: sum(HT_facturé) / sum(HT_devisé)
+ * Aligné sur la logique legacy : envoyés = sent/accepted/invoice, acceptés = accepted/invoice
  */
 export const tauxTransformationDevisMontant: StatDefinition = {
   id: 'taux_transformation_devis_montant',
@@ -75,53 +79,57 @@ export const tauxTransformationDevisMontant: StatDefinition = {
   compute: (data: LoadedData, params: StatParams): StatResult => {
     const { devis } = data;
     
-    let totalMontantDevise = 0;
-    let totalMontantTransforme = 0;
+    let totalMontantEnvoye = 0;
+    let totalMontantAccepte = 0;
     
     for (const d of devis) {
-      const dateStr = d.dateReelle || d.date || d.created_at;
+      const dateStr = d.dateReelle || d.date || d.dateCreation || d.data?.dateReelle || d.data?.date || d.created_at;
       if (dateStr) {
         const date = new Date(dateStr);
+        if (isNaN(date.getTime())) continue;
         if (date < params.dateRange.start || date > params.dateRange.end) continue;
       }
       
-      // Exclure les devis annulés
-      const state = (d.state || '').toLowerCase();
-      if (state === 'cancelled' || state === 'canceled' || state === 'refused') continue;
-      
+      // Récupérer l'état du devis
+      const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
       const montantHT = d.data?.totalHT ?? d.totalHT ?? 0;
-      totalMontantDevise += montantHT;
       
-      if (isDevisValidated(d)) {
-        totalMontantTransforme += montantHT;
+      // Devis envoyés = sent, accepted, invoice
+      if (state === 'sent' || state === 'accepted' || state === 'invoice') {
+        totalMontantEnvoye += montantHT;
+        
+        // Devis acceptés = accepted ou invoice
+        if (state === 'accepted' || state === 'invoice') {
+          totalMontantAccepte += montantHT;
+        }
       }
     }
     
-    const taux = totalMontantDevise > 0 ? (totalMontantTransforme / totalMontantDevise) * 100 : 0;
+    const taux = totalMontantEnvoye > 0 ? (totalMontantAccepte / totalMontantEnvoye) * 100 : 0;
     
     return {
-      value: taux,
+      value: Math.round(taux * 10) / 10,
       metadata: {
         computedAt: new Date(),
         source: 'devis',
         recordCount: devis.length,
       },
       breakdown: {
-        totalMontantDevise,
-        totalMontantTransforme,
-        montantNonTransforme: totalMontantDevise - totalMontantTransforme,
+        totalMontantDevise: totalMontantEnvoye,
+        totalMontantTransforme: totalMontantAccepte,
+        montantNonTransforme: totalMontantEnvoye - totalMontantAccepte,
       }
     };
   }
 };
 
 /**
- * Nombre de Devis émis
+ * Nombre de Devis émis (envoyés au client)
  */
 export const nombreDevis: StatDefinition = {
   id: 'nombre_devis',
   label: 'Nombre de Devis',
-  description: 'Nombre total de devis émis (hors annulés)',
+  description: 'Nombre total de devis envoyés (sent/accepted/invoice)',
   category: 'devis',
   source: 'devis',
   aggregation: 'count',
@@ -131,16 +139,18 @@ export const nombreDevis: StatDefinition = {
     let count = 0;
     
     for (const d of devis) {
-      const dateStr = d.dateReelle || d.date || d.created_at;
+      const dateStr = d.dateReelle || d.date || d.dateCreation || d.data?.dateReelle || d.data?.date || d.created_at;
       if (dateStr) {
         const date = new Date(dateStr);
+        if (isNaN(date.getTime())) continue;
         if (date < params.dateRange.start || date > params.dateRange.end) continue;
       }
       
-      const state = (d.state || '').toLowerCase();
-      if (state === 'cancelled' || state === 'canceled' || state === 'refused') continue;
-      
-      count++;
+      // Compter uniquement les devis envoyés (sent, accepted, invoice)
+      const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
+      if (state === 'sent' || state === 'accepted' || state === 'invoice') {
+        count++;
+      }
     }
     
     return {
@@ -155,12 +165,12 @@ export const nombreDevis: StatDefinition = {
 };
 
 /**
- * Montant total des Devis émis
+ * Montant total des Devis émis (envoyés au client)
  */
 export const montantDevis: StatDefinition = {
   id: 'montant_devis',
   label: 'Montant Devis HT',
-  description: 'Montant total HT des devis émis',
+  description: 'Montant total HT des devis envoyés',
   category: 'devis',
   source: 'devis',
   aggregation: 'sum',
@@ -172,18 +182,20 @@ export const montantDevis: StatDefinition = {
     let count = 0;
     
     for (const d of devis) {
-      const dateStr = d.dateReelle || d.date || d.created_at;
+      const dateStr = d.dateReelle || d.date || d.dateCreation || d.data?.dateReelle || d.data?.date || d.created_at;
       if (dateStr) {
         const date = new Date(dateStr);
+        if (isNaN(date.getTime())) continue;
         if (date < params.dateRange.start || date > params.dateRange.end) continue;
       }
       
-      const state = (d.state || '').toLowerCase();
-      if (state === 'cancelled' || state === 'canceled' || state === 'refused') continue;
-      
-      const montant = d.data?.totalHT ?? d.totalHT ?? 0;
-      totalHT += montant;
-      count++;
+      // Compter uniquement les devis envoyés (sent, accepted, invoice)
+      const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
+      if (state === 'sent' || state === 'accepted' || state === 'invoice') {
+        const montant = d.data?.totalHT ?? d.totalHT ?? 0;
+        totalHT += montant;
+        count++;
+      }
     }
     
     return {

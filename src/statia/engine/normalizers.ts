@@ -73,7 +73,8 @@ export function normalizeInterventionType(type: string | null | undefined): stri
 const PRODUCTIVE_TYPES = ['depannage', 'repair', 'travaux', 'work'];
 const NON_PRODUCTIVE_TYPES = ['rt', 'rdv', 'rdvtech', 'sav', 'diagnostic', 'th'];
 const VALID_INTERVENTION_STATES = ['validated', 'done', 'finished'];
-const INCLUDED_FACTURE_STATES = ['sent', 'paid', 'partial', 'partially_paid', 'overdue', 'draft'];
+// États de facture inclus dans le CA selon STATIA_RULES (exclure draft)
+const INCLUDED_FACTURE_STATES = ['sent', 'paid', 'partial', 'partially_paid', 'overdue'];
 
 /**
  * Vérifie si un type d'intervention est productif selon STATIA_RULES
