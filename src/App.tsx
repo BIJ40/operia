@@ -320,6 +320,7 @@ function AppContent() {
           <Route path="/admin/apogee-tickets/permissions" element={<Navigate to="/projects/permissions" replace />} />
           <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSystemHealth /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/admin/statia-by-bij" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><StatiaBuilderAdminPage /></ModuleGuard></RoleGuard></MainLayout>} />
+          <Route path="/admin/statia-builder" element={<Navigate to="/admin/statia-by-bij" replace />} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}
