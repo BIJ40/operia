@@ -21,7 +21,7 @@ type ChatContext = 'apogee' | 'apporteurs' | 'helpconfort' | 'autre' | 'support'
 const themes = [
   { id: 'apogee' as ChatContext, label: 'Apogée', icon: BookOpen },
   { id: 'apporteurs' as ChatContext, label: 'Apporteurs', icon: Users },
-  { id: 'helpconfort' as ChatContext, label: 'HelpConfort', icon: Building2 },
+  { id: 'helpconfort' as ChatContext, label: 'Docs', icon: Building2 },
   { id: 'autre' as ChatContext, label: 'Autre', icon: HelpCircle },
   { id: 'support' as ChatContext, label: 'Support en direct', icon: Headphones },
 ];
