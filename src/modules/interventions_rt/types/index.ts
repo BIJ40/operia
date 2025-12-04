@@ -49,7 +49,7 @@ export interface RtQuestionSuggestion {
 // Planning types
 export interface TechIntervention {
   id: string;
-  projectId: number;
+  projectId: number | string;
   clientName: string;
   clientPhone?: string;
   address: string;
@@ -61,6 +61,7 @@ export interface TechIntervention {
   type: string; // dépannage, RT, travaux
   dossierRef: string;
   rtStatus: RtStatus;
+  date?: string; // ISO date string
 }
 
 // Question Tree types
