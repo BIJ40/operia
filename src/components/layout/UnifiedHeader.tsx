@@ -4,7 +4,7 @@ import {
   LogOut, User, Settings, Headset, Loader2, Menu, Pencil, FileEdit, ArrowLeft,
   BarChart3, CheckSquare, Tv, CalendarDays, Users, Gauge,
   BookOpen, Handshake, FolderOpen, GraduationCap,
-  MessageSquare, LifeBuoy, HelpCircle, Bot,
+  MessageSquare, LifeBuoy, HelpCircle,
   LayoutDashboard, Building2, UserCog, PieChart, GitCompare, Calculator, Network,
   Building, Database, FileText, Home, ListTodo, Activity,
   Upload, Bug, AlertCircle, Tags, Eye, Shield, UserMinus, ArrowUpCircle, HardDrive, Star, Heart,
@@ -47,6 +47,7 @@ import { ROUTES } from '@/config/routes';
 import { logError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { MessagingWidget } from '@/components/messaging';
+import { ChatbotWidget } from '@/components/chatbot/ChatbotWidget';
 
 // Mapping des noms d'icônes vers les composants
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -335,15 +336,7 @@ export function UnifiedHeader() {
           <div 
             className={`px-4 py-1 border-t border-border/50 ${subtitleBgClass} grid grid-cols-[auto_1fr_auto] items-center gap-4`}
           >
-            <Link to="/chatbot">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative rounded-full transition-all duration-200 h-10 w-10"
-              >
-                <Bot className="w-5 h-5" />
-              </Button>
-            </Link>
+            <ChatbotWidget />
             <p className={`${subtitleTextSizeClass} text-muted-foreground truncate text-center`}>
               {displaySubtitle}
             </p>
@@ -354,15 +347,7 @@ export function UnifiedHeader() {
         {/* Show widgets even if no subtitle */}
         {!displaySubtitle && (
           <div className="px-4 py-1 border-t border-border/50 bg-background grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            <Link to="/chatbot">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative rounded-full transition-all duration-200 h-10 w-10"
-              >
-                <Bot className="w-5 h-5" />
-              </Button>
-            </Link>
+            <ChatbotWidget />
             <div /> {/* Empty center */}
             <MessagingWidget />
           </div>
