@@ -25,7 +25,7 @@ const contexts = [
   },
   { 
     id: 'helpconfort' as ChatContext, 
-    label: 'HelpConfort', 
+    label: 'Docs', 
     description: 'Réseau & procédures',
     icon: Building2,
     color: 'text-orange-500'
