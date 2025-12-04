@@ -237,7 +237,7 @@ function AppContent() {
           <Route path="/hc-agency/dashboard-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOption="rh_admin"><RHDashboardPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* StatIA Builder - Construction de métriques personnalisées (N2+) */}
-          <Route path="/hc-agency/statia-builder" element={<StatiaBuilderAgencyPage />} />
+          <Route path="/hc-agency/statia-builder" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage_agence"><StatiaBuilderAgencyPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* SUPPORT V2 - Unified Support System */}
@@ -319,7 +319,7 @@ function AppContent() {
           <Route path="/admin/apogee-tickets/review" element={<Navigate to="/projects/review" replace />} />
           <Route path="/admin/apogee-tickets/permissions" element={<Navigate to="/projects/permissions" replace />} />
           <Route path="/admin/system-health" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><AdminSystemHealth /></ModuleGuard></RoleGuard></MainLayout>} />
-          <Route path="/admin/statia-by-bij" element={<StatiaBuilderAdminPage />} />
+          <Route path="/admin/statia-by-bij" element={<MainLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><StatiaBuilderAdminPage /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* ============================================ */}
           {/* GESTION DE PROJET (ex Apogée Tickets) */}
