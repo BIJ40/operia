@@ -10,8 +10,9 @@ export interface UniversStats {
 }
 
 export interface MonthlyUniversCA {
-  month: string;
-  [key: string]: number | string; // Clés dynamiques pour chaque univers
+  month: string;      // Clé technique: "2024-01"
+  monthLabel: string; // Affichage: "Janv." ou "Janv. 24"
+  [key: string]: number | string;
 }
 
 /**
@@ -256,6 +257,41 @@ const calculateTauxSAVParUnivers = (
 };
 
 /**
+ * Générer tous les mois entre deux dates (format "YYYY-MM")
+ */
+const generateMonthsInRange = (start: Date, end: Date): string[] => {
+  const months: string[] = [];
+  const current = new Date(start.getFullYear(), start.getMonth(), 1);
+  const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+  
+  while (current <= endMonth) {
+    const year = current.getFullYear();
+    const monthNum = String(current.getMonth() + 1).padStart(2, '0');
+    months.push(`${year}-${monthNum}`);
+    current.setMonth(current.getMonth() + 1);
+  }
+  return months;
+};
+
+/**
+ * Convertir une clé "YYYY-MM" en label lisible
+ * Si période multi-années ou > 12 mois : "Janv. 24"
+ * Sinon : "Janv."
+ */
+const monthKeyToLabel = (key: string, isMultiYear: boolean): string => {
+  const monthNames = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
+  const [yearStr, monthStr] = key.split('-');
+  const monthIndex = parseInt(monthStr, 10) - 1;
+  const monthName = monthNames[monthIndex] || key;
+  
+  if (isMultiYear) {
+    const shortYear = yearStr.slice(-2);
+    return `${monthName} ${shortYear}`;
+  }
+  return monthName;
+};
+
+/**
  * Calculer le CA mensuel empilé par univers
  */
 export const calculateMonthlyUniversCA = (
@@ -265,11 +301,19 @@ export const calculateMonthlyUniversCA = (
 ): MonthlyUniversCA[] => {
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
+  // Générer dynamiquement les mois couverts par la période
+  const monthsInRange = generateMonthsInRange(dateRange.start, dateRange.end);
+  const isMultiYear = dateRange.start.getFullYear() !== dateRange.end.getFullYear() || monthsInRange.length > 12;
+  
   // Map pour agréger le CA par mois et par univers
   const caParMoisEtUnivers = new Map<string, Map<string, number>>();
   
+  // Initialiser tous les mois de la période
+  monthsInRange.forEach(monthKey => {
+    caParMoisEtUnivers.set(monthKey, new Map());
+  });
+  
   factures.forEach(facture => {
-    // Filtrer par période
     const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
     if (!dateReelle) return;
     
@@ -277,7 +321,12 @@ export const calculateMonthlyUniversCA = (
       const factureDate = parseISO(dateReelle);
       if (!isWithinInterval(factureDate, { start: dateRange.start, end: dateRange.end })) return;
       
-      // Déterminer le type de facture et le montant net (aligné sur calculateCaJour)
+      // Clé mois avec année : "2024-01"
+      const year = factureDate.getFullYear();
+      const monthNum = String(factureDate.getMonth() + 1).padStart(2, '0');
+      const monthKey = `${year}-${monthNum}`;
+      
+      // Déterminer le type de facture et le montant net
       const rawType = facture.typeFacture || facture.data?.type || facture.state || "";
       const typeFacture = String(rawType).toLowerCase();
 
@@ -296,14 +345,11 @@ export const calculateMonthlyUniversCA = (
       // Extraire les univers du projet, normaliser ET dédupliquer
       const rawUniverses = project.data?.universes || project.universes || [];
       const normalizedUniverses = rawUniverses.map((u: string) => normalizeUniverseSlug(u));
-      const universes = [...new Set(normalizedUniverses)]; // Dédupliquer
+      const universes = [...new Set(normalizedUniverses)];
       if (universes.length === 0) return;
       
       // Diviser le CA (net) équitablement entre les univers
       const caParUnivers = montantNet / universes.length;
-      
-      // Récupérer le mois (format: "Jan", "Fév", etc.)
-      const monthKey = factureDate.toLocaleDateString('fr-FR', { month: 'short' });
       
       if (!caParMoisEtUnivers.has(monthKey)) {
         caParMoisEtUnivers.set(monthKey, new Map());
@@ -320,13 +366,15 @@ export const calculateMonthlyUniversCA = (
     }
   });
   
-  // Construire le résultat avec tous les mois
-  const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  // Construire le résultat avec les mois de la période
   const result: MonthlyUniversCA[] = [];
   
-  months.forEach(month => {
-    const monthData = caParMoisEtUnivers.get(month) || new Map();
-    const row: MonthlyUniversCA = { month };
+  monthsInRange.forEach(monthKey => {
+    const monthData = caParMoisEtUnivers.get(monthKey) || new Map();
+    const row: MonthlyUniversCA = { 
+      month: monthKey,
+      monthLabel: monthKeyToLabel(monthKey, isMultiYear)
+    };
     
     monthData.forEach((ca, univers) => {
       row[univers] = ca;
