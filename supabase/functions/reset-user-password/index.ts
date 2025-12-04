@@ -52,7 +52,10 @@ serve(async (req) => {
     console.log(`[reset-user-password] Appelant: ${userId}, N${callerLevel}`)
 
     // Récupérer les données de la requête
-    const { userId: targetUserId, newPassword, sendEmail } = await req.json()
+    const body = await req.json()
+    const targetUserId = body.targetUserId || body.userId
+    const newPassword = body.newPassword
+    const sendEmail = body.sendEmail
 
     console.log(`[reset-user-password] Requête reçue pour userId: ${targetUserId}, password length: ${newPassword?.length || 0}`)
 
