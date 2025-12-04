@@ -137,18 +137,44 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
   
   // 3. Charger les données de chaque agence séquentiellement
   const agencyData: AgencyData[] = [];
+  const failedAgencies: string[] = [];
+  
+  console.log(`[StatIA] Début chargement de ${filteredAgencies.length} agences:`, filteredAgencies.map(a => a.slug));
+  
   for (const agency of filteredAgencies) {
     try {
+      console.log(`[StatIA] Chargement agence: ${agency.slug}...`);
       const data = await NetworkDataService.loadAgencyData(agency.slug);
-      agencyData.push({
-        agencyId: agency.slug,
-        agencyLabel: agency.label,
-        data,
-      });
+      
+      if (data) {
+        console.log(`[StatIA] ✅ ${agency.slug} chargée:`, {
+          factures: data.factures?.length || 0,
+          projects: data.projects?.length || 0,
+          interventions: data.interventions?.length || 0,
+        });
+        agencyData.push({
+          agencyId: agency.slug,
+          agencyLabel: agency.label,
+          data,
+        });
+      } else {
+        console.log(`[StatIA] ⚠️ ${agency.slug} retourne null`);
+        failedAgencies.push(agency.slug);
+      }
     } catch (err) {
+      console.error(`[StatIA] ❌ ${agency.slug} erreur:`, err);
+      failedAgencies.push(agency.slug);
       logNetwork.warn(`[StatIA] Erreur chargement ${agency.slug}`, err);
     }
   }
+  
+  console.log('[StatIA] Résumé chargement:', {
+    total: filteredAgencies.length,
+    success: agencyData.length,
+    failed: failedAgencies.length,
+    failedList: failedAgencies,
+    loadedAgencies: agencyData.map(a => a.agencyId),
+  });
   
   logNetwork.info(`[StatIA] ${agencyData.length} agences chargées`);
   
