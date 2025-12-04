@@ -44,7 +44,7 @@ export default function ApogeeTicketsAdmin() {
       <div className="flex items-center gap-3">
         <Shield className="h-8 w-8 text-primary" />
         <div>
-          <h1 className="text-2xl font-bold">Administration Ticketing</h1>
+          <h1 className="text-2xl font-bold">Administration Projet</h1>
           <p className="text-muted-foreground">Gestion des rôles, transitions et historique</p>
         </div>
       </div>
@@ -135,7 +135,7 @@ function UserRolesTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Rôles Utilisateurs Ticketing</CardTitle>
+        <CardTitle>Rôles Utilisateurs</CardTitle>
         <CardDescription>
           Assignez un rôle à chaque utilisateur pour définir ses permissions de déplacement de tickets.
           Les admins (vous) ont tous les droits par défaut.
