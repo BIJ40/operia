@@ -95,6 +95,7 @@ export default function Landing() {
           icon={DASHBOARD_GROUPS.help_academy.icon}
           colorClass={DASHBOARD_GROUPS.help_academy.colorClass}
           href="/academy"
+          defaultOpen={false}
         >
           {tilesByGroup.help_academy.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
@@ -110,6 +111,7 @@ export default function Landing() {
           icon={DASHBOARD_GROUPS.pilotage.icon}
           colorClass={DASHBOARD_GROUPS.pilotage.colorClass}
           href={ROUTES.pilotage.index}
+          defaultOpen={false}
         >
           {tilesByGroup.pilotage.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
@@ -125,6 +127,7 @@ export default function Landing() {
           icon={DASHBOARD_GROUPS.rh.icon}
           colorClass={DASHBOARD_GROUPS.rh.colorClass}
           href={ROUTES.pilotage.monCoffreRh}
+          defaultOpen={false}
         >
           {tilesByGroup.rh.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
@@ -140,6 +143,7 @@ export default function Landing() {
           icon={DASHBOARD_GROUPS.support.icon}
           colorClass={DASHBOARD_GROUPS.support.colorClass}
           href="/support"
+          defaultOpen={false}
         >
           {tilesByGroup.support.map(tile => (
             <DashboardTileCard 
@@ -160,6 +164,7 @@ export default function Landing() {
           icon={DASHBOARD_GROUPS.projects.icon}
           colorClass={DASHBOARD_GROUPS.projects.colorClass}
           href="/projects"
+          defaultOpen={false}
         >
           {tilesByGroup.projects.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
@@ -175,6 +180,7 @@ export default function Landing() {
           icon={DASHBOARD_GROUPS.franchiseur.icon}
           colorClass={DASHBOARD_GROUPS.franchiseur.colorClass}
           href="/hc-reseau"
+          defaultOpen={false}
         >
           {tilesByGroup.franchiseur.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
@@ -190,6 +196,7 @@ export default function Landing() {
           icon={DASHBOARD_GROUPS.admin.icon}
           colorClass={DASHBOARD_GROUPS.admin.colorClass}
           href="/admin"
+          defaultOpen={false}
         >
           {tilesByGroup.admin.map(tile => (
             <DashboardTileCard key={tile.id} tile={tile} isAdmin={isAdmin} />
