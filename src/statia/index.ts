@@ -1,4 +1,31 @@
 /**
+ * StatIA V2 - Module principal
+ * Exports publics du moteur de statistiques centralisé
+ */
+
+// API
+export { getMetric, getMetrics, isValidMetric, getMetricInfo, listAvailableMetrics } from './api/getMetric';
+export { getMetricForAgency, getMetricsForAgency } from './api/getMetricForAgency';
+export { getMetricForNetwork, getMetricsForNetwork } from './api/getMetricForNetwork';
+
+// Definitions
+export { STAT_DEFINITIONS, getStatDefinition, hasStatDefinition, listStatDefinitions, listCategories, getRegistrySummary } from './definitions';
+export type { StatDefinition, StatParams, StatResult, LoadedData, DateRange } from './definitions/types';
+
+// Engine
+export { computeStat, computeMultipleStats, clearComputeCache } from './engine/computeStat';
+export type { ApogeeDataServices } from './engine/loaders';
+
+// Hooks
+export { useStatiaMetric, useStatiaMetrics, useStatiaForAgency, useStatiaForNetwork } from './hooks/useStatia';
+
+// Components
+export { StatiaBuilder } from './components/StatiaBuilder';
+
+// Domain Rules
+export { STATIA_RULES } from './domain/rules';
+
+/**
  * STATiA-BY-BIJ - Module central de métriques
  * 
  * Export principal du moteur de statistiques centralisé.

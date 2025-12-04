@@ -1,5 +1,5 @@
 /**
- * StatIA V1 - Registre central des définitions de métriques
+ * StatIA V2 - Registre central des définitions de métriques
  */
 
 import { StatDefinition, StatDefinitionRegistry } from './types';
@@ -10,12 +10,16 @@ import { techniciensDefinitions } from './techniciens';
 import { savDefinitions } from './sav';
 import { devisDefinitions } from './devis';
 import { recouvrementDefinitions } from './recouvrement';
+// V2: Nouvelles familles de métriques
+import { dossiersDefinitions } from './dossiers';
+import { qualiteDefinitions } from './qualite';
+import { productiviteDefinitions } from './productivite';
 
 // Export types
 export * from './types';
 
 /**
- * Registre central de toutes les définitions StatIA
+ * Registre central de toutes les définitions StatIA V2
  */
 export const STAT_DEFINITIONS: StatDefinitionRegistry = {
   // CA
@@ -38,6 +42,15 @@ export const STAT_DEFINITIONS: StatDefinitionRegistry = {
   
   // Recouvrement
   ...recouvrementDefinitions,
+  
+  // V2: Dossiers
+  ...dossiersDefinitions,
+  
+  // V2: Qualité
+  ...qualiteDefinitions,
+  
+  // V2: Productivité
+  ...productiviteDefinitions,
 };
 
 /**
