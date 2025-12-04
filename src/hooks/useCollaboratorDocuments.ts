@@ -6,11 +6,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CollaboratorDocument, CollaboratorDocumentFormData } from '@/types/collaboratorDocument';
-import { toast } from 'sonner';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogRHAction } from '@/hooks/rh/useRHAuditLog';
 import { validateFile } from '@/utils/fileValidation';
+import { handleRHError, showRHSuccess, showRHInfo } from '@/utils/rhErrorHandler';
 
 const BUCKET_NAME = 'rh-documents';
 
@@ -23,7 +23,7 @@ async function createSignedDownloadUrl(filePath: string): Promise<string | null>
     .createSignedUrl(filePath, 3600); // 1 hour
 
   if (error) {
-    toast.error('Erreur lors de la génération du lien');
+    handleRHError(error, 'DOWNLOAD_FAILED', { filePath });
     return null;
   }
   return data.signedUrl;
@@ -133,7 +133,7 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
       // 3) Si c'est un bulletin de paie PDF, déclencher l'analyse automatique
       if (formData.doc_type === 'PAYSLIP' && formData.file.type === 'application/pdf') {
         triggerPayslipAnalysis(doc.id, filePath, formData.collaborator_id, agencyId);
-        toast.info('Analyse du bulletin en cours...', { duration: 3000 });
+        showRHInfo('Analyse du bulletin en cours...');
       }
 
       return doc;
@@ -149,10 +149,10 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
         newValues: { title: doc.title, doc_type: doc.doc_type },
         metadata: { filename: doc.file_name, fileSize: doc.file_size },
       });
-      toast.success('Document ajouté');
+      showRHSuccess('Document ajouté');
     },
     onError: (error: Error) => {
-      toast.error(`Erreur upload: ${error.message}`);
+      handleRHError(error, 'UPLOAD_FAILED', { showToast: true });
     },
   });
 
@@ -178,10 +178,10 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
         entityId: variables.id,
         newValues: variables.data,
       });
-      toast.success('Document mis à jour');
+      showRHSuccess('Document mis à jour');
     },
     onError: (error: Error) => {
-      toast.error(`Erreur: ${error.message}`);
+      handleRHError(error, 'UPDATE_FAILED', { showToast: true });
     },
   });
 
@@ -215,10 +215,10 @@ export function useCollaboratorDocuments(collaboratorId: string | undefined) {
         oldValues: { title: doc.title, doc_type: doc.doc_type },
         metadata: { filename: doc.file_name },
       });
-      toast.success('Document supprimé');
+      showRHSuccess('Document supprimé');
     },
     onError: (error: Error) => {
-      toast.error(`Erreur suppression: ${error.message}`);
+      handleRHError(error, 'DELETE_FAILED', { showToast: true });
     },
   });
 
