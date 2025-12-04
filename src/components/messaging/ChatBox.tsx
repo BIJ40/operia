@@ -76,10 +76,10 @@ export function ChatBox({ onSend, onTyping, isLoading, disabled, placeholder }: 
           placeholder={placeholder || 'Écrivez votre message...'}
           disabled={disabled || isLoading}
           className={cn(
-            'min-h-[40px] max-h-[120px] resize-none py-2.5 pr-12',
+            'min-h-[80px] max-h-[120px] resize-none py-2.5 pr-12',
             'rounded-2xl border-muted-foreground/20'
           )}
-          rows={1}
+          rows={3}
         />
       </div>
 
