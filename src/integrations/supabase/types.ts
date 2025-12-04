@@ -193,6 +193,57 @@ export type Database = {
           },
         ]
       }
+      agency_stamps: {
+        Row: {
+          agency_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          is_active: boolean
+          stamp_type: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          is_active?: boolean
+          stamp_type?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          is_active?: boolean
+          stamp_type?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_stamps_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_stamps_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       animator_visits: {
         Row: {
           agency_id: string
@@ -2069,6 +2120,77 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      hr_generated_documents: {
+        Row: {
+          agency_id: string
+          collaborator_id: string
+          content: string | null
+          document_type: string
+          file_path: string
+          generated_at: string
+          generated_by: string
+          id: string
+          metadata: Json | null
+          request_id: string | null
+          title: string
+        }
+        Insert: {
+          agency_id: string
+          collaborator_id: string
+          content?: string | null
+          document_type: string
+          file_path: string
+          generated_at?: string
+          generated_by: string
+          id?: string
+          metadata?: Json | null
+          request_id?: string | null
+          title: string
+        }
+        Update: {
+          agency_id?: string
+          collaborator_id?: string
+          content?: string | null
+          document_type?: string
+          file_path?: string
+          generated_at?: string
+          generated_by?: string
+          id?: string
+          metadata?: Json | null
+          request_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_generated_documents_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_generated_documents_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_generated_documents_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_generated_documents_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "document_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       knowledge_base: {
         Row: {

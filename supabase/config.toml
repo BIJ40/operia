@@ -1,5 +1,8 @@
 project_id = "uxcovgqhgjsuibgdvcof"
 
+[functions.generate-hr-document]
+verify_jwt = true
+
 [functions.chat-guide]
 verify_jwt = true
 

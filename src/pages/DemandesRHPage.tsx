@@ -18,7 +18,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Inbox, Upload, FileText, X, User, Eye, EyeOff, FolderOpen } from 'lucide-react';
+import { Loader2, Inbox, Upload, FileText, X, User, Eye, EyeOff, FolderOpen, FileSignature } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +32,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { CollaboratorDocument } from '@/types/collaboratorDocument';
+import { GenerateDocumentDialog } from '@/components/rh/GenerateDocumentDialog';
 
 const STATUS_BADGE_VARIANTS: Record<DocumentRequestStatus, 'outline' | 'default' | 'secondary' | 'destructive'> = {
   PENDING: 'outline',
@@ -54,6 +55,7 @@ export default function DemandesRHPage() {
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [showDocPicker, setShowDocPicker] = useState(false);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
 
   // Fetch collaborator info for each request
   const { data: collaborators = {} } = useQuery({
@@ -404,36 +406,49 @@ export default function DemandesRHPage() {
                     )}
 
                     {!selectedFile && !selectedDocInfo && (
-                      <div className="flex gap-2">
-                        {/* Upload new document */}
-                        <div className="flex-1 relative">
-                          <Input
-                            type="file"
-                            onChange={handleFileChange}
-                            className="hidden"
-                            id="file-upload"
-                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                          />
-                          <label
-                            htmlFor="file-upload"
-                            className="flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          {/* Upload new document */}
+                          <div className="flex-1 relative">
+                            <Input
+                              type="file"
+                              onChange={handleFileChange}
+                              className="hidden"
+                              id="file-upload"
+                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            />
+                            <label
+                              htmlFor="file-upload"
+                              className="flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
+                            >
+                              <Upload className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">
+                                Téléverser
+                              </span>
+                            </label>
+                          </div>
+                          
+                          {/* Choose from existing docs */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-auto py-3"
+                            onClick={() => setShowDocPicker(true)}
                           >
-                            <Upload className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">
-                              Téléverser
-                            </span>
-                          </label>
+                            <FolderOpen className="h-4 w-4 mr-1" />
+                            <span className="text-xs">Coffre</span>
+                          </Button>
                         </div>
-                        
-                        {/* Choose from existing docs */}
+
+                        {/* Generate PDF button */}
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
-                          className="h-auto py-3"
-                          onClick={() => setShowDocPicker(true)}
+                          className="w-full gap-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20"
+                          onClick={() => setShowGenerateDialog(true)}
                         >
-                          <FolderOpen className="h-4 w-4 mr-1" />
-                          <span className="text-xs">Coffre</span>
+                          <FileSignature className="h-4 w-4" />
+                          <span className="text-xs">Générer un document officiel (PDF tamponné)</span>
                         </Button>
                       </div>
                     )}
@@ -508,6 +523,21 @@ export default function DemandesRHPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Generate Document Dialog */}
+      {currentRequest && (
+        <GenerateDocumentDialog
+          open={showGenerateDialog}
+          onOpenChange={setShowGenerateDialog}
+          requestId={currentRequest.id}
+          requestType={currentRequest.request_type}
+          collaboratorId={currentRequest.collaborator_id}
+          collaboratorName={collaborators[currentRequest.collaborator_id] || 'Collaborateur'}
+          onSuccess={(documentId) => {
+            setSelectedDocumentId(documentId);
+          }}
+        />
+      )}
     </div>
   );
 }
