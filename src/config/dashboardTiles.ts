@@ -126,14 +126,26 @@ export const DASHBOARD_TILES: DashboardTile[] = [
   {
     id: 'MON_COFFRE_RH',
     title: 'Mon Coffre RH',
-    description: 'Mes documents RH et demandes',
+    description: 'Mes documents RH personnels',
     icon: Briefcase,
     route: ROUTES.pilotage.monCoffreRh,
     scopeSlug: SCOPE_SLUGS.MON_COFFRE_RH,
     color: 'accent',
-    group: 'rh', // Groupe dédié RH, indépendant de pilotage
+    group: 'rh',
     requiresModule: 'rh',
-    requiresModuleOptions: ['coffre', 'rh_viewer', 'rh_admin'], // Toutes les options RH donnent accès
+    requiresModuleOptions: ['coffre', 'rh_viewer', 'rh_admin'],
+  },
+  {
+    id: 'FAIRE_UNE_DEMANDE',
+    title: 'Faire une demande',
+    description: 'Demander un document RH',
+    icon: Inbox,
+    route: ROUTES.pilotage.faireUneDemande,
+    scopeSlug: SCOPE_SLUGS.MON_COFFRE_RH,
+    color: 'accent',
+    group: 'rh',
+    requiresModule: 'rh',
+    requiresModuleOptions: ['coffre', 'rh_viewer', 'rh_admin'],
   },
   {
     id: 'DEMANDES_RH',
