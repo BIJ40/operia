@@ -7,23 +7,86 @@ export interface ChangelogEntry {
   date: string;
   title: string;
   changes: {
-    type: 'feature' | 'fix' | 'improvement' | 'security';
+    type: 'feature' | 'fix' | 'improvement' | 'security' | 'audit';
     description: string;
   }[];
+  auditLinks?: { label: string; path: string }[];
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
     version: 'V0.6.4',
     date: '2025-12-04',
-    title: 'Audits Pré-production Complets',
+    title: 'Audits Pré-production & Corrections Complètes',
     changes: [
-      { type: 'security', description: '✅ Audit Sécurité - RLS policies, JWT, rate limiting, CORS validés' },
-      { type: 'security', description: '✅ Audit RAG/IA - prompts sécurisés, embeddings vérifiés, chunks nettoyés' },
-      { type: 'improvement', description: '✅ Audit UX/Navigation - bg-white→bg-background (15+ fichiers), aria-label (20+ icônes)' },
-      { type: 'improvement', description: '✅ Audit Qualité - terminologie "Gestion de Projet" unifiée' },
-      { type: 'improvement', description: '✅ Audit Pré-prod - Error401/403/404, GlobalErrorBoundary, session handling validés' },
+      // ═══════════════════════════════════════════════════════════════
+      // AUDITS RÉALISÉS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'audit', description: '📋 AUDIT MODULE SUPPORT - Score final 100% production ready' },
+      { type: 'audit', description: '📋 AUDIT MODULE RH - Score final 100% (P0/P1/P2 corrigés)' },
+      { type: 'audit', description: '📋 AUDIT SOCLE TECHNIQUE & SÉCURITÉ - 12 composants validés' },
+      { type: 'audit', description: '📋 AUDIT NAVIGATION & UX GLOBALE - 7 composants validés' },
+      { type: 'audit', description: '📋 AUDIT MODULE GESTION DE PROJET - Score 94%' },
+      { type: 'audit', description: '📋 AUDIT MODULE PILOTAGE FRANCHISEUR - Score 95%' },
+      { type: 'audit', description: '📋 AUDIT MODULE PILOTAGE AGENCE - Règles métier validées' },
+      { type: 'audit', description: '📋 AUDIT MODULE HELP ACADEMY - RAG et permissions validés' },
+      { type: 'audit', description: '📋 AUDIT MODULE CHAT INTERNE - RLS et Realtime validés' },
+      { type: 'audit', description: '📋 AUDIT MODULE ANNONCES RÉSEAU - Ciblage par rôle corrigé' },
+      { type: 'audit', description: '📋 AUDIT MODULE ALERTES RÉSEAU - SLA auto implémenté' },
+      { type: 'audit', description: '📋 AUDIT ADMIN/CONFIGURATION - Proxy API sécurisé' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // CORRECTIONS MODULE SUPPORT (SUP-P0/P1/P2)
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'security', description: 'SUP-P0-01: Indexes ajoutés sur support_tickets (type, status, viewed_by_support_at)' },
+      { type: 'fix', description: 'SUP-P0-03: Edge function notify-support-ticket hardened (timeout 10s, partial success)' },
+      { type: 'fix', description: 'SUP-P1-01: Notifications popup réactivées dans use-support-notifications.ts' },
+      { type: 'fix', description: 'SUP-P1-03: Pagination serveur implémentée avec range() dans use-admin-tickets.ts' },
+      { type: 'fix', description: 'SUP-P1-04: UUID tronqué → getAgentName() helper affiche noms complets' },
+      { type: 'fix', description: 'SUP-P1-05: Validation Zod ChatbotConversationSchema créée' },
+      { type: 'security', description: 'SUP-P1-06: RLS notes internes renforcé (is_internal_note filtre)' },
+      { type: 'feature', description: 'SUP-P2-02: Historique d\'actions (support_ticket_actions + TicketActionHistory)' },
+      { type: 'feature', description: 'SUP-P2-03: Export CSV des tickets (TicketExportCSV.tsx)' },
+      { type: 'improvement', description: 'SUP-P2-04: Dark mode couleurs badges heat priority corrigées' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // CORRECTIONS MODULE RH (RH-P0/P1/P2)
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'security', description: 'RH-P0-02: RLS policy rate_limits "no_public_access" ajoutée' },
+      { type: 'security', description: 'RH-P1-01: DELETE policy sur document_requests pour N2+' },
+      { type: 'fix', description: 'RH-P1-03: useRef cleanup unlock pour éviter stale closure' },
+      { type: 'improvement', description: 'RH-P2-01: DocumentPreviewModal responsive mobile optimisé' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // CORRECTIONS GÉNÉRALES
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'bg-white→bg-background migration (15+ fichiers pour dark mode)' },
+      { type: 'improvement', description: 'aria-label ajoutés sur 20+ icônes interactives' },
+      { type: 'improvement', description: 'Terminologie "Gestion de Projet" unifiée partout' },
       { type: 'improvement', description: 'Suppression hooks legacy (useNetworkStats.ts, usePeriodComparison.ts)' },
+      { type: 'fix', description: 'Error401/403/404/500 pages avec GlobalErrorBoundary validés' },
+      { type: 'fix', description: 'Session handling et refresh tokens validés' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // MODULE RT INTERVENTIONS (nouveau)
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Module RT Interventions - Prototype mobile-first pour techniciens' },
+      { type: 'feature', description: 'RT Planning - Liste interventions avec filtres jour/demain/tous' },
+      { type: 'feature', description: 'RT Question Runner - Arbre décisionnel avec auto-save et photos' },
+      { type: 'feature', description: 'RT PDF génération - Document horodaté avec tampon agence' },
+      { type: 'feature', description: 'Intégration API getInterventionsCreneaux pour planning technicien' },
+    ],
+    auditLinks: [
+      { label: 'Session Audit 04/12', path: '/docs/AUDIT_SESSION_2024-12-04.md' },
+      { label: 'Audit Module Support', path: '/docs/AUDIT_MODULE_SUPPORT.md' },
+      { label: 'Audit Module RH', path: '/docs/AUDIT_MODULE_PILOTAGE_AGENCE.md' },
+      { label: 'Audit Gestion Projet', path: '/docs/AUDIT_MODULE_GESTION_PROJET.md' },
+      { label: 'Audit Pilotage Franchiseur', path: '/docs/AUDIT_MODULE_PILOTAGE_FRANCHISEUR.md' },
+      { label: 'Audit Chat Interne', path: '/docs/AUDIT_MODULE_CHAT_INTERNE.md' },
+      { label: 'Audit Annonces Réseau', path: '/docs/AUDIT_MODULE_ANNONCES_RESEAU.md' },
+      { label: 'Audit Permissions', path: '/docs/AUDIT_PERMISSIONS_FINDINGS_SUMMARY.md' },
+      { label: 'Audit Admin/Config', path: '/docs/AUDIT_MODULE_ADMIN_CONFIGURATION.md' },
+      { label: 'Audits Complets', path: '/docs/AUDITS_COMPLETS.md' },
     ]
   },
   {
@@ -54,6 +117,10 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'security', description: '📁 ÉTAT ACTUEL : Documentation SECURITY.md + SECURITY-AUDIT-REPORT.md générée (voir /docs)' },
       { type: 'improvement', description: 'Client TypeScript apogeeProxy.ts avec méthodes typées (getFactures, getProjects, getAllData...)' },
       { type: 'improvement', description: 'Logs structurés sans données sensibles, CORS hardened, validation Zod des inputs' },
+    ],
+    auditLinks: [
+      { label: 'Rapport Sécurité', path: '/docs/SECURITY-AUDIT-REPORT.md' },
+      { label: 'Documentation Sécurité', path: '/docs/SECURITY.md' },
     ]
   },
   {
@@ -142,50 +209,25 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: 'V0.5.0',
     date: '2025-12-01',
-    title: 'Sprint 1 & 2 - Sécurité RLS et cohérence permissions',
-    changes: [
-      { 
-        type: 'security', 
-        description: 'P1.1 - RLS Franchiseur: can_access_agency() et get_user_assigned_agencies(). Policies réécrites sur animator_visits, expense_requests, royalty_*.'
-      },
-      { 
-        type: 'security', 
-        description: 'P1.2 - RLS Support Console (Option B): Console accessible aux support.agent=true + N5+. Fonction is_support_agent(). Policies support_tickets réécrites.'
-      },
-      { 
-        type: 'security', 
-        description: 'P1.3 - Migration agency_id: profiles.agency_id (UUID) comme source unique. Fonction get_user_agency_id(). Policies réécrites sur apogee_agencies.'
-      },
-      { 
-        type: 'security', 
-        description: 'P2.1 - Sémantique Support clarifiée: isSupportAgent→hasSupportAgentRole, canAccessSupportConsole→canAccessSupportConsoleUI (8 fichiers)'
-      },
-      { 
-        type: 'improvement', 
-        description: 'P2.2 - Guards centralisés vérifiés: 100% des protections dans App.tsx, 0% dans les pages'
-      },
-      { 
-        type: 'improvement', 
-        description: 'P2.3 - Navigation unifiée: canAccessFeature() centrale dans roleMatrix.ts pour tiles/nav/routes'
-      },
-    ]
-  },
-  {
-    version: 'V0.5.0',
-    date: '2025-12-01',
     title: 'Sprints 1-3: Fondations Sécurité, Permissions & Data Model',
     changes: [
+      { type: 'security', description: 'P1.1 - RLS Franchiseur: can_access_agency() et get_user_assigned_agencies(). Policies réécrites sur animator_visits, expense_requests, royalty_*.' },
+      { type: 'security', description: 'P1.2 - RLS Support Console (Option B): Console accessible aux support.agent=true + N5+. Fonction is_support_agent(). Policies support_tickets réécrites.' },
+      { type: 'security', description: 'P1.3 - Migration agency_id: profiles.agency_id (UUID) comme source unique. Fonction get_user_agency_id(). Policies réécrites sur apogee_agencies.' },
+      { type: 'improvement', description: 'P2.1 - Sémantique Support clarifiée: isSupportAgent→hasSupportAgentRole, canAccessSupportConsole→canAccessSupportConsoleUI (8 fichiers)' },
+      { type: 'improvement', description: 'P2.2 - Guards centralisés vérifiés: 100% des protections dans App.tsx, 0% dans les pages' },
+      { type: 'improvement', description: 'P2.3 - Navigation unifiée: canAccessFeature() centrale dans roleMatrix.ts pour tiles/nav/routes' },
       { type: 'improvement', description: 'P3.1 - Registre centralisé scopes (scopeRegistry.ts)' },
       { type: 'improvement', description: 'P3.2 - Documentation format unique enabled_modules V2' },
       { type: 'security', description: 'P3.3 - Suppression has_franchiseur_role() des RLS' },
       { type: 'improvement', description: 'P3.4 - Enum strict rag_context_type (7 valeurs)' },
       { type: 'feature', description: 'P3.5 - heat_priority unique (suppression priority texte)' },
-      { type: 'improvement', description: 'P2.1 - Support Console sémantique (hasSupportAgentRole)' },
-      { type: 'improvement', description: 'P2.2 - Guards centralisés App.tsx' },
-      { type: 'improvement', description: 'P2.3 - Navigation unifiée (canAccessFeature)' },
-      { type: 'security', description: 'P1.1 - RLS Franchiseur (can_access_agency)' },
-      { type: 'security', description: 'P1.2 - RLS Support Console (is_support_agent)' },
-      { type: 'improvement', description: 'P1.3 - Migration agency_id unique' },
+    ],
+    auditLinks: [
+      { label: 'Sprint 1-2-3-4 Rapport Final', path: '/docs/SPRINT-1-2-3-4-RAPPORT-FINAL.md' },
+      { label: 'P1 Sprint Security RLS', path: '/docs/P1-SPRINT-SECURITY-RLS.md' },
+      { label: 'P2 Sprint Permissions', path: '/docs/P2-SPRINT-PERMISSIONS-GUARDS.md' },
+      { label: 'P3 Sprint Data Model', path: '/docs/P3-SPRINT-DATA-MODEL.md' },
     ]
   },
   {
@@ -211,6 +253,11 @@ export const CHANGELOG: ChangelogEntry[] = [
       { type: 'improvement', description: 'AUDIT F-PERF-1: Parallélisation chargement agences (network-kpis) - Promise.all au lieu de boucle séquentielle' },
       { type: 'improvement', description: 'AUDIT F-TABLE-3: 14 index créés (chatbot_queries, support_tickets, apogee_tickets, profiles, franchiseur_assignments)' },
       { type: 'improvement', description: 'AUDIT FONCTIONNEL: Analyse complète 6 modules - 3 critiques identifiés (terminologie Apogée-Tickets, priorités support/apogée, statuts), 14h corrections pré-prod recommandées' },
+    ],
+    auditLinks: [
+      { label: 'Audit Fonctionnel Modules', path: '/docs/AUDIT_FONCTIONNEL_MODULES.md' },
+      { label: 'Audit Permissions', path: '/docs/AUDIT_PERMISSIONS_FINDINGS_SUMMARY.md' },
+      { label: 'Corrections Audit Fonctionnel', path: '/docs/CORRECTIONS_AUDIT_FONCTIONNEL.md' },
     ]
   },
   {
@@ -394,5 +441,11 @@ export const CHANGE_TYPE_CONFIG = {
     emoji: '🔴',
     bgClass: 'bg-red-100',
     textClass: 'text-red-700',
+  },
+  audit: {
+    label: 'Audit',
+    emoji: '📋',
+    bgClass: 'bg-purple-100',
+    textClass: 'text-purple-700',
   },
 } as const;
