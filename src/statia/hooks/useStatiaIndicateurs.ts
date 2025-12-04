@@ -251,6 +251,7 @@ async function computeStatSafe(
   params: StatParams
 ) {
   try {
+    console.log('[StatIA] computeStatSafe called for:', statId);
     return await computeStat(statId, params, {
       getFactures: async () => loadedData.factures,
       getDevis: async () => loadedData.devis,
@@ -258,7 +259,7 @@ async function computeStatSafe(
       getProjects: async () => loadedData.projects,
       getUsers: async () => loadedData.users,
       getClients: async () => loadedData.clients,
-    });
+    }, { useCache: false }); // Disable cache for debugging
   } catch (error) {
     logError('STATIA', `Erreur calcul métrique ${statId}`, { error });
     return null;
