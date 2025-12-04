@@ -543,8 +543,8 @@ function computeBlocCA(
   yearStart: Date,
   yearEnd: Date
 ) {
-  // Série CA mensuel
-  const byMonth = new Map<string, number>();
+  // Série CA mensuel - utiliser index numérique pour éviter les problèmes de locale
+  const byMonthIndex = new Map<number, { ca: number; nbFactures: number }>();
   for (const facture of factures) {
     const meta = extractFactureMeta(facture);
     const factureState = facture.state || facture.status || facture.data?.state || '';
@@ -552,14 +552,18 @@ function computeBlocCA(
     const date = meta.date ? new Date(meta.date) : null;
     if (!date || date < yearStart || date > yearEnd) continue;
     
-    const monthKey = format(date, 'MMM');
-    byMonth.set(monthKey, (byMonth.get(monthKey) || 0) + meta.montantNetHT);
+    const monthIndex = date.getMonth(); // 0-11
+    const existing = byMonthIndex.get(monthIndex) || { ca: 0, nbFactures: 0 };
+    existing.ca += meta.montantNetHT;
+    existing.nbFactures += 1;
+    byMonthIndex.set(monthIndex, existing);
   }
   
-  const monthOrder = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-  const serieCAMensuel = monthOrder.map(month => ({
+  const monthLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+  const serieCAMensuel = monthLabels.map((month, index) => ({
     month,
-    ca: byMonth.get(month) || 0,
+    ca: byMonthIndex.get(index)?.ca || 0,
+    nbFactures: byMonthIndex.get(index)?.nbFactures || 0,
   }));
   
   // CA par agence
