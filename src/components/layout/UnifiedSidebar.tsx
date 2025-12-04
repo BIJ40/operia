@@ -1,7 +1,7 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
-  BookOpen, FileText, FolderOpen, BarChart3, ListTodo, Tv,
-  Headset, Network, Building2, PieChart, GitCompare,
+  GraduationCap, FileText, FolderOpen, BarChart3, ListTodo, Tv,
+  Headset, Network, Building2, PieChart, GitCompare, Briefcase,
   Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, HelpCircle, Sparkles
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
@@ -124,6 +124,7 @@ export function UnifiedSidebar() {
   // Auto-open groups based on current route
   const getActiveGroup = (): string | null => {
     if (location.pathname.startsWith('/academy')) return 'help-academy';
+    if (location.pathname === '/mon-coffre-rh' || location.pathname.startsWith('/hc-agency/demandes-rh')) return 'rh';
     if (location.pathname.startsWith('/hc-agency')) return 'pilotage';
     if (location.pathname.startsWith('/support')) return 'support';
     if (location.pathname.startsWith('/projects')) return 'projects';
@@ -191,9 +192,9 @@ export function UnifiedSidebar() {
       label: <>Help<span className="text-helpconfort-orange font-black">!</span> Academy</>,
       labelKey: 'help-academy',
       indexUrl: ROUTES.academy.index,
-      icon: BookOpen,
+      icon: GraduationCap,
       items: [
-        { title: 'Guide Apogée', url: ROUTES.academy.apogee, icon: BookOpen, description: 'Guide complet pour maîtriser le logiciel Apogée' },
+        { title: 'Guide Apogée', url: ROUTES.academy.apogee, icon: GraduationCap, description: 'Guide complet pour maîtriser le logiciel Apogée' },
         { title: 'Guide Apporteurs', url: ROUTES.academy.apporteurs, icon: FileText, description: 'Ressources pour les apporteurs d\'affaires', badge: 'Bientôt', isDisabled: true },
         { title: 'Base Documentaire', url: ROUTES.academy.documents, icon: FolderOpen, description: 'Documents et ressources HelpConfort' },
       ],
@@ -221,6 +222,15 @@ export function UnifiedSidebar() {
         { title: 'Actions à Mener', url: ROUTES.pilotage.actions, icon: ListTodo, description: 'Suivi des actions et tâches en cours' },
         { title: 'Diffusion', url: ROUTES.pilotage.diffusion, icon: Tv, description: 'Mode affichage TV agence', badge: 'En cours' },
         { title: 'Validation plannings', url: ROUTES.pilotage.rhTech, icon: Calendar, description: 'Validation des plannings hebdomadaires', badge: 'Bientôt', isDisabled: true },
+      ],
+      accessKey: 'canAccessPilotageAgence',
+    },
+    {
+      label: 'Mon Espace RH',
+      labelKey: 'rh',
+      indexUrl: ROUTES.pilotage.monCoffreRh,
+      icon: Briefcase,
+      items: [
         { title: 'Mon Coffre RH', url: ROUTES.pilotage.monCoffreRh, icon: FolderOpen, description: 'Mes documents RH personnels' },
         { title: 'Demandes RH', url: ROUTES.pilotage.demandesRh, icon: FileText, description: 'Traiter les demandes de documents', minRole: 'franchisee_admin' },
       ],

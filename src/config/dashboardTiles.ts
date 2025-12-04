@@ -334,7 +334,7 @@ export const DASHBOARD_GROUPS = {
   },
   pilotage: {
     title: 'Mon Agence',
-    icon: BarChart3,
+    icon: Building2,
     colorClass: 'text-accent',
     indexUrl: ROUTES.pilotage.index,
   },
@@ -346,7 +346,7 @@ export const DASHBOARD_GROUPS = {
   },
   support: {
     title: 'Support',
-    icon: MessageSquare,
+    icon: Headphones,
     colorClass: 'text-primary',
     indexUrl: ROUTES.support.index,
   },
