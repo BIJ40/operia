@@ -24,8 +24,7 @@ const UNIVERSES = [
   { slug: "serrurerie", label: "Serrurerie", colorHex: "#FF12BD" },
   { slug: "vitrerie", label: "Vitrerie", colorHex: "#7FFE2E" },
   { slug: "menuiserie", label: "Menuiserie", colorHex: "#FF7018" },
-  { slug: "chauffage", label: "Chauffage", colorHex: "#EF4444" },
-  { slug: "climatisation", label: "Climatisation", colorHex: "#06B6D4" },
+  // RÈGLE STRICTE: chauffage et climatisation N'EXISTENT PAS dans l'API Apogée
 ];
 
 export default function FranchiseurStats() {

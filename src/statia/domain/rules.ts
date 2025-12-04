@@ -55,7 +55,10 @@ export const STATIA_RULES = {
   },
   univers: {
     source: "apiGetProjects.universes",
-    multiUniverseAllocation: "uniform_or_time_weighted"
+    multiUniverseAllocation: "uniform_or_time_weighted",
+    // RÈGLE STRICTE: Ces univers N'EXISTENT PAS dans l'API Apogée
+    excluded: ["chauffage", "climatisation"],
+    excludedReason: "Ces univers ne sont pas présents dans l'API Apogée - ne jamais les utiliser"
   },
   dates: {
     use: "depends_on_metric",

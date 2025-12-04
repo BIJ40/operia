@@ -18,10 +18,9 @@ export function normalizeUniversSlug(slug: string | null | undefined): string {
     'electricite': 'electricite',
     'elec': 'electricite',
     'électricité': 'electricite',
-    'chauffage': 'chauffage',
-    'chauf': 'chauffage',
-    'climatisation': 'climatisation',
-    'clim': 'climatisation',
+    // RÈGLE STRICTE: chauffage et climatisation N'EXISTENT PAS dans l'API Apogée
+    // 'chauffage': EXCLU - n'existe pas
+    // 'climatisation': EXCLU - n'existe pas
     'serrurerie': 'serrurerie',
     'serr': 'serrurerie',
     'vitrerie': 'vitrerie',
