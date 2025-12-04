@@ -15,6 +15,9 @@ interface SupportUser {
   franchiseur_role?: string;
 }
 
+// P1-03: Configuration pagination serveur
+const DEFAULT_PAGE_SIZE = 50;
+
 export const useAdminTickets = () => {
   const { canManageTickets, user } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -24,6 +27,12 @@ export const useAdminTickets = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [supportUsers, setSupportUsers] = useState<SupportUser[]>([]);
+  
+  // P1-03: État pagination
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [totalCount, setTotalCount] = useState(0);
+  
   const [filters, setFilters] = useState({
     status: 'all',
     category: 'all',
@@ -39,7 +48,7 @@ export const useAdminTickets = () => {
 
     setIsLoading(true);
     
-    // Charger d'abord tous les tickets pour les stats
+    // Charger d'abord tous les tickets pour les stats (sans pagination)
     const allResult = await safeQuery<Ticket[]>(
       supabase
         .from('support_tickets')
@@ -55,53 +64,73 @@ export const useAdminTickets = () => {
     }
     setAllTickets(allResult.data || []);
 
-    // Puis charger les tickets filtrés
-    let query = supabase
+    // P1-03: Construire la requête filtrée avec count exact
+    let countQuery = supabase
+      .from('support_tickets')
+      .select('*', { count: 'exact', head: true });
+
+    let dataQuery = supabase
       .from('support_tickets')
       .select('*')
       .order('created_at', { ascending: false });
 
-    // Apply filters
-    if (filters.status !== 'all') {
-      query = query.eq('status', filters.status);
-    }
-    if (filters.category !== 'all') {
-      query = query.eq('category', filters.category);
-    }
-    if (filters.source !== 'all') {
-      // Filter by demand type (V2.5)
-      if (filters.source === 'chat_ai') {
-        query = query.eq('type', 'chat_ai');
-      } else if (filters.source === 'chat_human') {
-        query = query.eq('type', 'chat_human');
-      } else if (filters.source === 'ticket') {
-        query = query.eq('type', 'ticket');
+    // Apply filters to both queries
+    const applyFilters = (q: any) => {
+      if (filters.status !== 'all') {
+        q = q.eq('status', filters.status);
       }
-    }
-    if (filters.agency !== 'all') {
-      query = query.eq('agency_slug', filters.agency);
-    }
-    if (filters.heatPriorityMin > 0) {
-      query = query.gte('heat_priority', filters.heatPriorityMin);
-    }
-    if (filters.heatPriorityMax < 12) {
-      query = query.lte('heat_priority', filters.heatPriorityMax);
-    }
-    
-    // Filtre par assignation
-    if (filters.assignment === 'mine' && user?.id) {
-      query = query.eq('assigned_to', user.id);
-    } else if (filters.assignment === 'unassigned') {
-      query = query.is('assigned_to', null);
+      if (filters.category !== 'all') {
+        q = q.eq('category', filters.category);
+      }
+      if (filters.source !== 'all') {
+        if (filters.source === 'chat_ai') {
+          q = q.eq('type', 'chat_ai');
+        } else if (filters.source === 'chat_human') {
+          q = q.eq('type', 'chat_human');
+        } else if (filters.source === 'ticket') {
+          q = q.eq('type', 'ticket');
+        }
+      }
+      if (filters.agency !== 'all') {
+        q = q.eq('agency_slug', filters.agency);
+      }
+      if (filters.heatPriorityMin > 0) {
+        q = q.gte('heat_priority', filters.heatPriorityMin);
+      }
+      if (filters.heatPriorityMax < 12) {
+        q = q.lte('heat_priority', filters.heatPriorityMax);
+      }
+      if (filters.assignment === 'mine' && user?.id) {
+        q = q.eq('assigned_to', user.id);
+      } else if (filters.assignment === 'unassigned') {
+        q = q.is('assigned_to', null);
+      }
+      return q;
+    };
+
+    countQuery = applyFilters(countQuery);
+    dataQuery = applyFilters(dataQuery);
+
+    // P1-03: Appliquer la pagination serveur
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+    dataQuery = dataQuery.range(from, to);
+
+    // Exécuter count et data en parallèle
+    const [countResult, dataResult] = await Promise.all([
+      safeQuery<any>(countQuery, 'ADMIN_TICKETS_COUNT'),
+      safeQuery<Ticket[]>(dataQuery, 'ADMIN_TICKETS_LOAD_FILTERED'),
+    ]);
+
+    if (countResult.success) {
+      setTotalCount((countResult as any).count ?? 0);
     }
 
-    const filteredResult = await safeQuery<Ticket[]>(query, 'ADMIN_TICKETS_LOAD_FILTERED');
-
-    if (!filteredResult.success) {
-      errorToast(filteredResult.error!);
+    if (!dataResult.success) {
+      errorToast(dataResult.error!);
       setTickets([]);
     } else {
-      setTickets(filteredResult.data || []);
+      setTickets(dataResult.data || []);
     }
     
     setIsLoading(false);
@@ -665,10 +694,15 @@ export const useAdminTickets = () => {
     return true;
   };
 
+  // P1-03: Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [filters]);
+
   useEffect(() => {
     loadTickets();
     loadSupportUsers();
-  }, [filters]);
+  }, [filters, page, pageSize]);
 
   // Real-time subscriptions for live updates (SUPPORT_V2)
   useEffect(() => {
@@ -766,5 +800,12 @@ export const useAdminTickets = () => {
     takeOverChat,
     getStats,
     deleteTicket,
+    // P1-03: Pagination controls
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalCount,
+    totalPages: Math.ceil(totalCount / pageSize),
   };
 };
