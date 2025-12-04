@@ -54,6 +54,7 @@ const Messages = lazy(() => import("./pages/Messages"));
 const CollaborateursPage = lazy(() => import("./pages/CollaborateursPage"));
 const CollaborateurProfilePage = lazy(() => import("./pages/CollaborateurProfilePage"));
 const MonCoffreRH = lazy(() => import("./pages/MonCoffreRH"));
+const FaireUneDemande = lazy(() => import("./pages/FaireUneDemande"));
 const DemandesRHPage = lazy(() => import("./pages/DemandesRHPage"));
 const RHDashboardPage = lazy(() => import("./pages/RHDashboardPage"));
 
@@ -231,6 +232,9 @@ function AppContent() {
           {/* Coffre-fort RH - Vue salarié (nécessite module rh avec option coffre) */}
           <Route path="/pilotage/mon-coffre-rh" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh" requiredOption="coffre"><MonCoffreRH /></ModuleGuard></RoleGuard></MainLayout>} />
           <Route path="/mon-coffre-rh" element={<Navigate to="/pilotage/mon-coffre-rh" replace />} />
+          
+          {/* Faire une demande RH - Vue salarié (nécessite module rh avec option coffre) */}
+          <Route path="/faire-une-demande" element={<MainLayout><RoleGuard><ModuleGuard moduleKey="rh" requiredOption="coffre"><FaireUneDemande /></ModuleGuard></RoleGuard></MainLayout>} />
           
           {/* Demandes RH - Vue agence (Dirigeant/RH avec option rh_viewer OU rh_admin) */}
           <Route path="/hc-agency/demandes-rh" element={<MainLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}><DemandesRHPage /></ModuleGuard></RoleGuard></MainLayout>} />
