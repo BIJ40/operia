@@ -24,7 +24,6 @@ const UNIVERSES = [
   { slug: "serrurerie", label: "Serrurerie", colorHex: "#FF12BD" },
   { slug: "vitrerie", label: "Vitrerie", colorHex: "#7FFE2E" },
   { slug: "menuiserie", label: "Menuiserie", colorHex: "#FF7018" },
-  { slug: "non_renseigne", label: "Non renseigné", colorHex: "#9CA3AF" },
   // RÈGLE STRICTE: chauffage et climatisation N'EXISTENT PAS dans l'API Apogée
 ];
 

@@ -805,12 +805,14 @@ export function aggregateUniversApporteurMatrix(
   const matrix: Record<string, Record<string, { ca: number; nbDossiers: number }>> = {};
 
   agencyData.forEach((agency) => {
-    if (!agency.data?.factures || !agency.data?.projects) return;
+    if (!agency.data?.factures || !agency.data?.projects || !agency.data?.clients) return;
 
     const projectsMap = new Map(agency.data.projects.map((p: any) => [p.id, p]));
-    const clientsMap = new Map((agency.data.clients || []).map((c: any) => [c.id, c]));
+    const clientsMap = new Map(agency.data.clients.map((c: any) => [c.id, c]));
 
     agency.data.factures.forEach((facture: any) => {
+      if (facture.type === 'avoir') return;
+
       const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
       const factureDate = parseDate(dateReelle);
       if (!factureDate) return;
@@ -819,27 +821,22 @@ export function aggregateUniversApporteurMatrix(
       const project = projectsMap.get(facture.projectId) as any;
       if (!project) return;
 
+      const commanditaireId = project.data?.commanditaireId;
+      if (!commanditaireId) return;
+
+      const client = clientsMap.get(commanditaireId) as any;
+      if (!client) return;
+
       // API returns "universes" (plural) not "univers" (singular)
       const universList = project.data?.universes || project.data?.univers || project.universes || project.univers || [];
       const montantRaw = facture.data?.totalHT || facture.totalHT || facture.montantHT || 0;
       const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, '')) || 0;
-      
-      // STATIA_RULES: Avoirs soustraits comme montants négatifs
-      const typeFacture = (facture.type || facture.typeFacture || '').toLowerCase();
-      const montantNet = typeFacture === 'avoir' ? -Math.abs(montant) : montant;
 
-      // Déterminer le type d'apporteur - "direct" si pas de commanditaire
-      let apporteurType = 'direct';
-      const commanditaireId = project.data?.commanditaireId;
-      if (commanditaireId) {
-        const client = clientsMap.get(commanditaireId) as any;
-        if (client) {
-          apporteurType = client.data?.type || client.type || 'particulier';
-        }
-      }
+      // Get apporteur type from client
+      const apporteurType = client.data?.type || client.type || 'particulier';
 
       if (Array.isArray(universList) && universList.length > 0) {
-        const caPerUnivers = montantNet / universList.length;
+        const caPerUnivers = montant / universList.length;
         universList.forEach((univers: string) => {
           if (!matrix[univers]) {
             matrix[univers] = {};
@@ -850,17 +847,6 @@ export function aggregateUniversApporteurMatrix(
           matrix[univers][apporteurType].ca += caPerUnivers;
           matrix[univers][apporteurType].nbDossiers += 1 / universList.length;
         });
-      } else {
-        // Factures sans univers - les classifier sous "non_renseigne"
-        const univers = 'non_renseigne';
-        if (!matrix[univers]) {
-          matrix[univers] = {};
-        }
-        if (!matrix[univers][apporteurType]) {
-          matrix[univers][apporteurType] = { ca: 0, nbDossiers: 0 };
-        }
-        matrix[univers][apporteurType].ca += montantNet;
-        matrix[univers][apporteurType].nbDossiers += 1;
       }
     });
   });
