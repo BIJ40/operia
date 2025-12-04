@@ -8,19 +8,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Loader2, Calendar, Plus, Clock, CheckCircle, XCircle, AlertCircle, Eye
+  Loader2, Calendar, Plus, Clock, CheckCircle, XCircle, AlertCircle, Eye, Upload
 } from 'lucide-react';
-import { useMyLeaveRequests } from '@/hooks/useLeaveRequests';
+import { useMyLeaveRequests, useUpdateLeaveRequest } from '@/hooks/useLeaveRequests';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   LEAVE_TYPE_LABELS, 
   LEAVE_STATUS_LABELS,
   LEAVE_STATUS_COLORS,
   EVENT_SUBTYPE_LABELS,
-  type LeaveStatus
+  type LeaveStatus,
+  type LeaveType
 } from '@/types/leaveRequest';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { LeaveRequestWizard } from '@/components/leave/LeaveRequestWizard';
+import { JustificationUpload } from '@/components/leave/JustificationUpload';
 
 const STATUS_ICONS: Record<LeaveStatus, typeof Clock> = {
   DRAFT: Clock,
@@ -34,7 +37,9 @@ const STATUS_ICONS: Record<LeaveStatus, typeof Clock> = {
 
 export default function FaireUneDemande() {
   const { data: requests = [], isLoading, error } = useMyLeaveRequests();
+  const updateMutation = useUpdateLeaveRequest();
   const [showWizard, setShowWizard] = useState(false);
+  const [uploadingForId, setUploadingForId] = useState<string | null>(null);
 
   const formatDate = (date: string) => {
     return format(new Date(date), 'dd MMM yyyy', { locale: fr });
@@ -42,6 +47,16 @@ export default function FaireUneDemande() {
 
   // Compter les demandes en attente de justificatif
   const pendingJustificativeCount = requests.filter(r => r.status === 'PENDING_JUSTIFICATIVE').length;
+
+  // Callback pour quand un justificatif est uploadé
+  const handleJustificationUploaded = async (leaveRequestId: string, documentId: string) => {
+    await updateMutation.mutateAsync({
+      id: leaveRequestId,
+      justification_document_id: documentId,
+      status: 'ACKNOWLEDGED', // Mark as acknowledged after justification uploaded
+    });
+    setUploadingForId(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -172,6 +187,31 @@ export default function FaireUneDemande() {
                           <div className="mt-3 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-md text-red-700 dark:text-red-400">
                             <span className="font-semibold">Motif du refus : </span>
                             {req.refusal_reason}
+                          </div>
+                        )}
+                        
+                        {/* Upload justificatif si nécessaire */}
+                        {req.status === 'PENDING_JUSTIFICATIVE' && !req.justification_document_id && (
+                          <div className="mt-4">
+                            {uploadingForId === req.id ? (
+                              <JustificationUpload
+                                leaveRequestId={req.id}
+                                leaveType={req.type as LeaveType}
+                                collaboratorId={req.collaborator_id}
+                                agencyId={req.agency_id}
+                                onUploadComplete={(docId) => handleJustificationUploaded(req.id, docId)}
+                              />
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setUploadingForId(req.id)}
+                                className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Ajouter le justificatif
+                              </Button>
+                            )}
                           </div>
                         )}
                       </div>
