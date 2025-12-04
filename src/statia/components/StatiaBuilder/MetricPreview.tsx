@@ -193,13 +193,33 @@ export function MetricPreview({ definition, agencySlug, measureLabel }: MetricPr
       if (typeof result.value === 'number') {
         displayValue = result.value;
       } else if (typeof result.value === 'object') {
+        // Normaliser les clés pour la correspondance (univers sont stockés en minuscules)
+        const normalizeKey = (key: string) => key.toLowerCase().trim();
+        const findValue = (key: string) => {
+          const normalized = normalizeKey(key);
+          // Chercher la clé exacte ou normalisée
+          if (result.value[key] !== undefined) return result.value[key];
+          if (result.value[normalized] !== undefined) return result.value[normalized];
+          // Chercher parmi toutes les clés normalisées
+          for (const k of Object.keys(result.value)) {
+            if (normalizeKey(k) === normalized) return result.value[k];
+          }
+          return undefined;
+        };
+        
         // Si c'est un objet avec des ventilations, filtrer selon les dimensions sélectionnées
-        if (hasDimension('technicien') && selectedTechnician && result.value[selectedTechnician] !== undefined) {
-          displayValue = result.value[selectedTechnician];
-        } else if (hasDimension('univers') && selectedUnivers && result.value[selectedUnivers] !== undefined) {
-          displayValue = result.value[selectedUnivers];
-        } else if (hasDimension('apporteur') && selectedApporteur && result.value[selectedApporteur] !== undefined) {
-          displayValue = result.value[selectedApporteur];
+        if (hasDimension('technicien') && selectedTechnician) {
+          const val = findValue(selectedTechnician);
+          if (val !== undefined) displayValue = val;
+          else displayValue = result.value;
+        } else if (hasDimension('univers') && selectedUnivers) {
+          const val = findValue(selectedUnivers);
+          if (val !== undefined) displayValue = val;
+          else displayValue = result.value;
+        } else if (hasDimension('apporteur') && selectedApporteur) {
+          const val = findValue(selectedApporteur);
+          if (val !== undefined) displayValue = val;
+          else displayValue = result.value;
         } else if (hasDimension('mois') && selectedMonth && result.value[selectedMonth] !== undefined) {
           displayValue = result.value[selectedMonth];
         } else {
