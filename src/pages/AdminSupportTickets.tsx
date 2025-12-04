@@ -12,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { TicketCategoryBadge } from '@/components/tickets/TicketCategoryBadge';
 import { ServiceBadge } from '@/components/tickets/ServiceBadge';
 import { HeatPriorityBadge } from '@/components/support/HeatPriorityBadge';
-import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, TicketPlus, MessageSquare, XCircle } from 'lucide-react';
+import { Loader2, Send, Download, AlertCircle, Clock, CheckCircle2, User, LayoutGrid, List, TicketPlus, MessageSquare, XCircle, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
@@ -27,7 +27,7 @@ import { SupportLevelBadge } from '@/components/SupportLevelBadge';
 import { ROUTES } from '@/config/routes';
 
 export default function AdminSupportTickets() {
-  const { canManageTickets, user } = useAuth();
+  const { canManageTickets, user, globalRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -51,7 +51,10 @@ export default function AdminSupportTickets() {
     convertChatToTicket,
     takeOverChat,
     getStats,
+    deleteTicket,
   } = useAdminTickets();
+
+  const canDelete = globalRole === 'platform_admin' || globalRole === 'superadmin';
 
   const [newMessage, setNewMessage] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
@@ -604,6 +607,23 @@ export default function AdminSupportTickets() {
                             className="ml-auto"
                           >
                             Réouvrir le ticket
+                          </Button>
+                        )}
+
+                        {/* N5+ Delete button */}
+                        {canDelete && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm('Supprimer définitivement ce ticket ?')) {
+                                deleteTicket(selectedTicket.id);
+                              }
+                            }}
+                            className="ml-auto"
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Supprimer
                           </Button>
                         )}
                       </div>

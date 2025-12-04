@@ -718,6 +718,31 @@ export const useAdminTickets = () => {
     }
   }, [selectedTicket]);
 
+  // Delete ticket (N5+ only - checked in UI)
+  const deleteTicket = async (ticketId: string) => {
+    // First delete related messages
+    await safeMutation(
+      supabase.from('support_messages').delete().eq('ticket_id', ticketId),
+      'ADMIN_TICKETS_DELETE_MESSAGES'
+    );
+    
+    // Then delete the ticket
+    const result = await safeMutation(
+      supabase.from('support_tickets').delete().eq('id', ticketId),
+      'ADMIN_TICKETS_DELETE'
+    );
+
+    if (!result.success) {
+      errorToast(result.error!);
+      return false;
+    }
+
+    successToast('Ticket supprimé');
+    setSelectedTicket(null);
+    await loadTickets();
+    return true;
+  };
+
   return {
     tickets,
     selectedTicket,
@@ -740,5 +765,6 @@ export const useAdminTickets = () => {
     convertChatToTicket,
     takeOverChat,
     getStats,
+    deleteTicket,
   };
 };
