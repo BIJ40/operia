@@ -41,6 +41,14 @@ export {
   getRegistrySummary
 } from './definitions';
 
+// === Merged Definitions (Core + Custom) ===
+export {
+  getMergedDefinitions,
+  listAllDefinitions,
+  getDefinition,
+  customMetricToStatDefinition
+} from './utils/mergedDefinitions';
+
 export type { 
   StatDefinition, 
   StatParams, 
