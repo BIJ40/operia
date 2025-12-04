@@ -111,7 +111,7 @@ serve(async (req) => {
           : targetProfile.email
 
         await resend.emails.send({
-          from: 'HelpConfort Services <support@helpconfort.services>',
+          from: 'HelpConfort Services <onboarding@resend.dev>',
           to: [targetProfile.email],
           subject: 'Votre nouveau mot de passe temporaire',
           html: `

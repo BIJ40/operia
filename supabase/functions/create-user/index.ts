@@ -308,7 +308,7 @@ function generateSecurePassword(): string {
   const lowercase = 'abcdefghijklmnopqrstuvwxyz'
   const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
   const numbers = '0123456789'
-  const symbols = '!@#$%^&*()_+-='
+  const symbols = '!@#$%&*_+-'
   const all = lowercase + uppercase + numbers + symbols
   
   let password = ''
