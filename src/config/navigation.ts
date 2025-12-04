@@ -294,6 +294,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: 'Tableaux', url: ROUTES.reseau.tableaux, icon: PieChart, scope: 'franchiseur_kpi' },
       { title: 'Périodes', url: ROUTES.reseau.periodes, icon: GitCompare, scope: 'franchiseur_kpi' },
       { title: 'Comparatif', url: ROUTES.reseau.comparatif, icon: BarChart3, scope: 'franchiseur_kpi' },
+      { title: 'Graphiques', url: ROUTES.reseau.graphiques, icon: BarChart3, scope: 'franchiseur_kpi' },
       { title: 'Redevances', url: ROUTES.reseau.redevances, icon: Coins, scope: 'franchiseur_royalties' },
       { title: 'Paramètres', url: ROUTES.reseau.parametres, icon: Settings, scope: 'franchiseur_dashboard' },
     ],
