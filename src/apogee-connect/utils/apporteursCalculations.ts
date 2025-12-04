@@ -10,7 +10,12 @@ export interface ApporteurStats {
   tauxTransformation: number;
 }
 
-// Créer le référentiel des clients/apporteurs
+/**
+ * Créer le référentiel des clients/apporteurs
+ * P2-03: Note d'optimisation - Cette map est recréée à chaque appel de filterFacturesPeriode.
+ * Pour des raisons de performance en production avec gros volumes, envisager un cache global
+ * ou un hook dédié (useClientsMap). Pour l'instant, la création est O(n) et acceptable.
+ */
 const createClientsMap = (clients: any[]): Map<number, any> => {
   const map = new Map();
   clients.forEach(client => {

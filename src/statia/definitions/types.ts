@@ -27,12 +27,40 @@ export interface DateRange {
   end: Date;
 }
 
+/**
+ * P2-05: Filtres typés pour StatIA
+ * Permet une meilleure validation et autocomplétion
+ */
+export interface StatFilters {
+  /** Filtrer par univers spécifiques */
+  univers?: string[];
+  /** Filtrer par apporteur(s) - peut être un ID unique ou plusieurs */
+  apporteurs?: (string | number)[];
+  /** Alias pour compatibilité - ID apporteur unique */
+  apporteurId?: string | number;
+  /** Filtrer par technicien(s) */
+  techniciens?: (string | number)[];
+  /** Filtrer par type d'intervention */
+  interventionTypes?: string[];
+  /** Exclure les SAV */
+  excludeSAV?: boolean;
+  /** Exclure les RT */
+  excludeRT?: boolean;
+  /** Inclure uniquement les factures payées */
+  paidOnly?: boolean;
+  /** Nombre de résultats pour les Top N */
+  topN?: number;
+  /** Seuil en jours (ex: apporteurs inactifs) */
+  seuilJours?: number;
+}
+
 export interface StatParams {
   dateRange: DateRange;
   agencySlug?: string;
   agencyId?: string;
   groupBy?: Dimension[];
-  filters?: Record<string, any>;
+  /** P2-05: Filtres typés (remplace Record<string, any>) */
+  filters?: StatFilters;
 }
 
 export interface LoadedData {
