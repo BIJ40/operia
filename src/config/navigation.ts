@@ -179,6 +179,13 @@ export const NAV_GROUPS: NavGroup[] = [
         scope: 'mes_indicateurs', 
         description: 'Soumettre une demande de congé'
       },
+      { 
+        title: 'Gestion des congés', 
+        url: ROUTES.pilotage.gestionConges, 
+        icon: Calendar, 
+        scope: 'mes_indicateurs', 
+        description: 'Valider les demandes de congés'
+      },
     ],
   },
   {

@@ -83,3 +83,6 @@ verify_jwt = true
 
 [functions.export-rh-documents]
 verify_jwt = true
+
+[functions.generate-leave-decision]
+verify_jwt = true

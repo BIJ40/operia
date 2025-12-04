@@ -8,16 +8,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Loader2, Calendar, Check, X, Clock, AlertCircle, Eye, User, MessageSquare
+  Loader2, Calendar, Check, X, Clock, AlertCircle, Eye, User, MessageSquare, FileText, Upload
 } from 'lucide-react';
 import { useAgencyLeaveRequests, useUpdateLeaveRequest } from '@/hooks/useLeaveRequests';
+import { useProcessLeaveRequest } from '@/hooks/useLeaveDecision';
 import { 
   LEAVE_TYPE_LABELS, 
   LEAVE_STATUS_LABELS,
   LEAVE_STATUS_COLORS,
   EVENT_SUBTYPE_LABELS,
   type LeaveStatus,
-  type LeaveRequest
+  type LeaveRequest,
+  type LeaveType
 } from '@/types/leaveRequest';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -31,6 +33,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { JustificationUpload } from '@/components/leave/JustificationUpload';
 
 const STATUS_ICONS: Record<LeaveStatus, typeof Clock> = {
   DRAFT: Clock,
@@ -54,11 +57,13 @@ interface LeaveRequestWithCollaborator extends LeaveRequest {
 export default function GestionConges() {
   const { data: requests = [], isLoading, error } = useAgencyLeaveRequests();
   const updateMutation = useUpdateLeaveRequest();
+  const processLeaveRequest = useProcessLeaveRequest();
   
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequestWithCollaborator | null>(null);
-  const [actionType, setActionType] = useState<'approve' | 'refuse' | 'acknowledge' | null>(null);
+  const [actionType, setActionType] = useState<'approve' | 'refuse' | 'acknowledge' | 'close' | null>(null);
   const [comment, setComment] = useState('');
   const [refusalReason, setRefusalReason] = useState('');
+  const [endDateInput, setEndDateInput] = useState('');
 
   const formatDate = (date: string) => {
     return format(new Date(date), 'dd MMM yyyy', { locale: fr });
@@ -69,7 +74,10 @@ export default function GestionConges() {
     r => r.status === 'PENDING_MANAGER'
   );
   const sicknessRequests = (requests as LeaveRequestWithCollaborator[]).filter(
-    r => r.type === 'MALADIE' && r.status !== 'CLOSED'
+    r => r.type === 'MALADIE' && ['PENDING_MANAGER', 'PENDING_JUSTIFICATIVE', 'ACKNOWLEDGED'].includes(r.status)
+  );
+  const justificationRequests = (requests as LeaveRequestWithCollaborator[]).filter(
+    r => r.status === 'PENDING_JUSTIFICATIVE'
   );
   const processedRequests = (requests as LeaveRequestWithCollaborator[]).filter(
     r => r.status === 'APPROVED' || r.status === 'REFUSED' || r.status === 'CLOSED'
@@ -90,6 +98,11 @@ export default function GestionConges() {
       // For sickness: acknowledge and request justification
       updates.status = 'PENDING_JUSTIFICATIVE';
       updates.manager_comment = comment || 'Merci de fournir votre arrêt maladie.';
+    } else if (actionType === 'close') {
+      // Close sickness with end date
+      updates.status = 'CLOSED';
+      updates.end_date = endDateInput || null;
+      updates.manager_comment = comment || null;
     }
 
     await updateMutation.mutateAsync({
@@ -97,13 +110,32 @@ export default function GestionConges() {
       ...updates,
     });
 
+    // Process: generate PDF and send notification for final statuses
+    if (['APPROVED', 'REFUSED', 'CLOSED'].includes(updates.status as string)) {
+      await processLeaveRequest.mutateAsync({
+        leaveRequestId: selectedRequest.id,
+        collaboratorId: selectedRequest.collaborator_id,
+        status: updates.status as LeaveStatus,
+        message: actionType === 'refuse' ? refusalReason : comment,
+      });
+    } else if (actionType === 'acknowledge') {
+      // Send notification for justification request
+      await processLeaveRequest.mutateAsync({
+        leaveRequestId: selectedRequest.id,
+        collaboratorId: selectedRequest.collaborator_id,
+        status: 'PENDING_JUSTIFICATIVE',
+        message: comment || 'Merci de fournir votre arrêt maladie.',
+      });
+    }
+
     setSelectedRequest(null);
     setActionType(null);
     setComment('');
     setRefusalReason('');
+    setEndDateInput('');
   };
 
-  const openActionDialog = (request: LeaveRequestWithCollaborator, action: 'approve' | 'refuse' | 'acknowledge') => {
+  const openActionDialog = (request: LeaveRequestWithCollaborator, action: 'approve' | 'refuse' | 'acknowledge' | 'close') => {
     setSelectedRequest(request);
     setActionType(action);
   };
@@ -203,6 +235,19 @@ export default function GestionConges() {
               >
                 <Eye className="h-3 w-3 mr-1" />
                 J'ai pris connaissance
+              </Button>
+            )}
+
+            {/* Close sickness after justification received */}
+            {(req.status === 'PENDING_JUSTIFICATIVE' || req.status === 'ACKNOWLEDGED') && req.type === 'MALADIE' && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-green-600 border-green-200 hover:bg-green-50 mt-2"
+                onClick={() => openActionDialog(req, 'close')}
+              >
+                <Check className="h-3 w-3 mr-1" />
+                Clôturer
               </Button>
             )}
           </div>
@@ -340,6 +385,7 @@ export default function GestionConges() {
         setActionType(null);
         setComment('');
         setRefusalReason('');
+        setEndDateInput('');
       }}>
         <DialogContent>
           <DialogHeader>
@@ -347,6 +393,7 @@ export default function GestionConges() {
               {actionType === 'approve' && 'Accepter la demande'}
               {actionType === 'refuse' && 'Refuser la demande'}
               {actionType === 'acknowledge' && 'Prise en connaissance'}
+              {actionType === 'close' && 'Clôturer l\'arrêt maladie'}
             </DialogTitle>
             <DialogDescription>
               {selectedRequest && (
@@ -375,6 +422,30 @@ export default function GestionConges() {
                   rows={3}
                 />
               </div>
+            ) : actionType === 'close' ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Date de fin de l'arrêt</label>
+                  <input
+                    type="date"
+                    value={endDateInput}
+                    onChange={(e) => setEndDateInput(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md bg-background"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Commentaire (optionnel)
+                  </label>
+                  <Textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Ajouter un commentaire..."
+                    rows={2}
+                  />
+                </div>
+              </div>
             ) : (
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center gap-2">
@@ -398,19 +469,21 @@ export default function GestionConges() {
             <Button variant="outline" onClick={() => {
               setSelectedRequest(null);
               setActionType(null);
+              setEndDateInput('');
             }}>
               Annuler
             </Button>
             <Button
               onClick={handleAction}
-              disabled={updateMutation.isPending || (actionType === 'refuse' && !refusalReason.trim())}
+              disabled={updateMutation.isPending || processLeaveRequest.isPending || (actionType === 'refuse' && !refusalReason.trim())}
               className={
                 actionType === 'approve' ? 'bg-green-600 hover:bg-green-700' :
                 actionType === 'refuse' ? 'bg-red-600 hover:bg-red-700' :
+                actionType === 'close' ? 'bg-green-600 hover:bg-green-700' :
                 'bg-blue-600 hover:bg-blue-700'
               }
             >
-              {updateMutation.isPending ? 'Traitement...' : 'Confirmer'}
+              {(updateMutation.isPending || processLeaveRequest.isPending) ? 'Traitement...' : 'Confirmer'}
             </Button>
           </DialogFooter>
         </DialogContent>
