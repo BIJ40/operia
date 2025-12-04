@@ -41,7 +41,8 @@ const BreadcrumbLink = React.forwardRef<
 >(({ asChild, className, ...props }, ref) => {
   const Comp = asChild ? Slot : "a";
 
-  return <Comp ref={ref} className={cn("transition-colors hover:text-foreground", className)} {...props} />;
+  // P2 FIX: Focus visible amélioré pour accessibilité clavier
+  return <Comp ref={ref} className={cn("transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:rounded-sm", className)} {...props} />;
 });
 BreadcrumbLink.displayName = "BreadcrumbLink";
 

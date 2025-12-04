@@ -175,11 +175,19 @@ export function UnifiedHeader() {
 
   return (
     <>
+      {/* P2 FIX: Skip link pour accessibilité clavier */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        Aller au contenu principal
+      </a>
+
       {/* Logout overlay */}
       {isLoggingOut && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center animate-fade-in">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center animate-fade-in" role="alert" aria-live="assertive">
           <div className="bg-card border-2 border-primary/20 rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4">
-            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            <Loader2 className="w-12 h-12 text-primary animate-spin" aria-hidden="true" />
             <div className="text-center">
               <h3 className="text-xl font-bold text-foreground mb-2">Déconnexion en cours...</h3>
               <p className="text-sm text-muted-foreground">À bientôt !</p>
@@ -188,26 +196,32 @@ export function UnifiedHeader() {
         </div>
       )}
 
-      <header className={cn(
-        "border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40",
-        getHeaderBlinkClass()
-      )}>
+      <header 
+        className={cn(
+          "border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40",
+          getHeaderBlinkClass()
+        )}
+        role="banner"
+      >
         <div className="h-14 sm:h-16 md:h-20 px-3 sm:px-4 flex items-center gap-2 sm:gap-3">
           {/* Left: Sidebar toggle + Back button */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* P2 FIX: Touch target amélioré pour mobile (min 44x44px) */}
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={toggleSidebar}
               aria-label="Basculer le menu latéral"
+              aria-expanded="false"
+              className="min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <Menu className="w-5 h-5" />
             </Button>
             
             {showBackButton && (
-              <Link to={parentRoute!}>
-                <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground hover:text-foreground">
-                  <ArrowLeft className="w-4 h-4" />
+              <Link to={parentRoute!} aria-label={`Retour à ${parentLabel}`}>
+                <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground hover:text-foreground min-h-[44px] focus-visible:ring-2 focus-visible:ring-ring">
+                  <ArrowLeft className="w-4 h-4" aria-hidden="true" />
                   <span className="hidden sm:inline">{parentLabel}</span>
                 </Button>
               </Link>
@@ -293,7 +307,7 @@ export function UnifiedHeader() {
             {/* User menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Menu utilisateur">
+                <Button variant="ghost" size="icon" className="rounded-full min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-ring" aria-label="Menu utilisateur" aria-haspopup="menu">
                   <User className="w-5 h-5" />
                 </Button>
               </DropdownMenuTrigger>
