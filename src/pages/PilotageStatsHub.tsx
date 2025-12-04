@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { ROUTES } from '@/config/routes';
 import { Link } from 'react-router-dom';
 import { BarChart3, Users, Building2, Calendar, LifeBuoy, Settings2, Euro, Clock, FileText, TrendingUp, Check } from 'lucide-react';
@@ -7,14 +7,15 @@ import { DataService } from '@/apogee-connect/services/dataService';
 import { FiltersProvider } from '@/apogee-connect/contexts/FiltersContext';
 import { ApiToggleProvider, useApiToggle } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider, useAgency } from '@/apogee-connect/contexts/AgencyContext';
-import { calculateDashboardStats, calculateDelaiMoyenDossierFacture, calculatePanierMoyen, calculateDelaiMoyenDossierPremierDevis, calculateTauxTransformationDevis } from '@/apogee-connect/utils/dashboardCalculations';
-import { calculateTauxSAVGlobal } from '@/apogee-connect/utils/apporteursCalculations';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
 import { useState, useEffect, useMemo } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { startOfMonth, endOfMonth } from 'date-fns';
+import { computeStat } from '@/statia/engine/computeStat';
+import { LoadedData, StatParams } from '@/statia/definitions/types';
+import { logError } from '@/lib/logger';
 
 // Définition des KPI disponibles
 const AVAILABLE_KPIS = [
@@ -89,10 +90,26 @@ export default function PilotageStatsHub() {
   );
 }
 
+/** Safe wrapper for computeStat */
+async function computeStatSafe(statId: string, loadedData: LoadedData, params: StatParams) {
+  try {
+    return await computeStat(statId, params, {
+      getFactures: async () => loadedData.factures,
+      getDevis: async () => loadedData.devis,
+      getInterventions: async () => loadedData.interventions,
+      getProjects: async () => loadedData.projects,
+      getUsers: async () => loadedData.users,
+      getClients: async () => loadedData.clients,
+    });
+  } catch (error) {
+    logError('STATIA', `Erreur calcul métrique ${statId}`, { error });
+    return null;
+  }
+}
+
 function PilotageStatsHubContent() {
   const { isApiEnabled } = useApiToggle();
   const { agencyChangeCounter, currentAgency, isAgencyReady } = useAgency();
-  const userAgency = currentAgency?.id || '';
   
   const [selectedKpis, setSelectedKpis] = useState<KpiId[]>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -116,66 +133,57 @@ function PilotageStatsHubContent() {
     end: endOfMonth(new Date())
   }), []);
 
+  // StatIA-powered KPIs
   const { data, isLoading } = useQuery({
-    queryKey: ['stats-hub-kpis', isApiEnabled, agencyChangeCounter],
+    queryKey: ['stats-hub-kpis-statia', isApiEnabled, agencyChangeCounter, currentMonthRange],
     enabled: isAgencyReady && isApiEnabled,
     queryFn: async () => {
       if (!currentAgency?.id) return null;
       
       const apiData = await DataService.loadAllData(isApiEnabled);
       
-      // Stats du mois en cours pour le CA
-      const statsMonth = calculateDashboardStats({
-        projects: apiData.projects || [],
-        interventions: apiData.interventions || [],
+      const loadedData: LoadedData = {
         factures: apiData.factures || [],
         devis: apiData.devis || [],
-        clients: apiData.clients || [],
+        interventions: apiData.interventions || [],
+        projects: apiData.projects || [],
         users: apiData.users || [],
-      }, currentMonthRange, userAgency);
-      
-      const delaiDossierFacture = calculateDelaiMoyenDossierFacture(
-        apiData.factures || [],
-        apiData.projects || [],
-        undefined
-      );
-      
-      const panierMoyen = calculatePanierMoyen(
-        apiData.factures || [],
-        currentMonthRange
-      );
-      
-      const tauxTransformationDevis = calculateTauxTransformationDevis(
-        apiData.devis || [],
-        currentMonthRange
-      );
-      
-      const delaiDossierPremierDevis = calculateDelaiMoyenDossierPremierDevis(
-        apiData.projects || [],
-        apiData.devis || []
-      );
-      
-      // Large plage pour le taux SAV global (toutes données)
-      const globalRange = {
-        start: new Date(2020, 0, 1),
-        end: new Date(2030, 11, 31)
+        clients: apiData.clients || [],
       };
       
-      const tauxSAVGlobal = calculateTauxSAVGlobal(
-        apiData.interventions || [],
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        globalRange
-      );
-      
+      const params: StatParams = {
+        dateRange: currentMonthRange,
+        agencySlug: currentAgency.id
+      };
+
+      // Compute all KPIs via StatIA
+      const [
+        caResult,
+        tauxSavResult,
+        tauxTransfoResult,
+        nbDevisResult,
+        panierMoyenResult,
+        dureeDossierResult,
+        nbDossiersResult
+      ] = await Promise.all([
+        computeStatSafe('ca_global_ht', loadedData, params),
+        computeStatSafe('taux_sav_global', loadedData, params),
+        computeStatSafe('taux_transformation_devis_nombre', loadedData, params),
+        computeStatSafe('nombre_devis', loadedData, params),
+        computeStatSafe('panier_moyen', loadedData, params),
+        computeStatSafe('duree_moyenne_dossier', loadedData, params),
+        computeStatSafe('nb_dossiers_crees', loadedData, params)
+      ]);
+
       return {
-        ...statsMonth,
-        delaiDossierFacture,
-        panierMoyen,
-        tauxTransformationDevis,
-        delaiDossierPremierDevis,
-        tauxSAVGlobal,
+        caMois: (caResult?.value as number) ?? 0,
+        tauxSAV: (tauxSavResult?.value as number) ?? 0,
+        tauxTransfo: (tauxTransfoResult?.value as number) ?? 0,
+        nbDevis: (nbDevisResult?.value as number) ?? 0,
+        panierMoyen: (panierMoyenResult?.value as number) ?? 0,
+        delaiDossier: (dureeDossierResult?.value as number) ?? 0,
+        nbDossiers: (nbDossiersResult?.value as number) ?? 0,
+        delaiPremierDevis: 0 // TODO: migrate
       };
     },
   });
@@ -185,21 +193,21 @@ function PilotageStatsHubContent() {
     
     switch (kpiId) {
       case 'ca_mois':
-        return formatEuros(data.caJour || 0);
+        return formatEuros(data.caMois || 0);
       case 'delai_dossier_facture':
-        return `${data.delaiDossierFacture?.delaiMoyen || 0}j`;
+        return `${data.delaiDossier || 0}j`;
       case 'taux_sav':
-        return `${(data.tauxSAVGlobal || 0).toFixed(1)}%`;
+        return `${(data.tauxSAV || 0).toFixed(1)}%`;
       case 'delai_devis':
-        return `${data.delaiDossierPremierDevis?.delaiMoyen || 0}j`;
+        return `${data.delaiPremierDevis || 0}j`;
       case 'panier_moyen':
-        return formatEuros(data.panierMoyen?.panierMoyen || 0);
+        return formatEuros(data.panierMoyen || 0);
       case 'taux_transfo':
-        return `${data.tauxTransformationDevis?.tauxTransformation || 0}%`;
+        return `${data.tauxTransfo || 0}%`;
       case 'dossiers_recus':
-        return `${data.dossiersJour || 0}`;
+        return `${data.nbDossiers || 0}`;
       case 'devis_emis':
-        return `${data.devisJour || 0}`;
+        return `${data.nbDevis || 0}`;
       default:
         return '-';
     }
