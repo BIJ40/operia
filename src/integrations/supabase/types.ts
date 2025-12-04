@@ -1578,6 +1578,51 @@ export type Database = {
         }
         Relationships: []
       }
+      document_access_logs: {
+        Row: {
+          access_type: string
+          accessed_by: string
+          created_at: string | null
+          document_id: string | null
+          id: string
+          ip_address: unknown
+          user_agent: string | null
+        }
+        Insert: {
+          access_type: string
+          accessed_by: string
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+        }
+        Update: {
+          access_type?: string
+          accessed_by?: string
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_access_logs_accessed_by_fkey"
+            columns: ["accessed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_access_logs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "collaborator_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_requests: {
         Row: {
           agency_id: string
@@ -3803,6 +3848,10 @@ export type Database = {
       }
       is_support_agent: { Args: { _user_id: string }; Returns: boolean }
       lock_document_request: { Args: { p_request_id: string }; Returns: Json }
+      log_document_access: {
+        Args: { p_access_type: string; p_document_id: string }
+        Returns: undefined
+      }
       log_rh_action: {
         Args: {
           p_action_type: string
