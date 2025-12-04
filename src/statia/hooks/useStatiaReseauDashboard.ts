@@ -67,6 +67,15 @@ export function useStatiaReseauDashboard(params?: UseStatiaReseauDashboardParams
   const effectiveDateEnd = params?.dateEnd || dateRange?.to || endOfYear(now);
   const effectiveScopeAgences = params?.scopeAgences || selectedAgencies;
   
+  console.log('[useStatiaReseauDashboard] Params:', {
+    selectedAgencies,
+    selectedAgenciesLength: selectedAgencies.length,
+    effectiveScopeAgences,
+    effectiveScopeAgencesLength: effectiveScopeAgences.length,
+    willPassUndefined: effectiveScopeAgences.length === 0,
+    dateRange,
+  });
+  
   const query = useQuery<ReseauDashboardData>({
     queryKey: [
       'statia-reseau-dashboard',

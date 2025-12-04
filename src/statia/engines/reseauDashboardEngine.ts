@@ -92,6 +92,11 @@ function isSAVIntervention(intervention: any): boolean {
 // ============================================================================
 
 export async function computeReseauDashboard(params: ReseauDashboardParams): Promise<ReseauDashboardData> {
+  console.log('[StatIA] computeReseauDashboard - START', { 
+    params,
+    scopeAgencesLength: params.scopeAgences?.length,
+    scopeAgencesValue: params.scopeAgences 
+  });
   logNetwork.info('[StatIA] computeReseauDashboard - START', { params });
   
   const now = new Date();
@@ -104,6 +109,12 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
     .select('id, slug, label')
     .eq('is_active', true);
   
+  console.log('[StatIA] Agences chargées depuis Supabase:', {
+    count: agencies?.length,
+    agencies: agencies?.map(a => ({ id: a.id, slug: a.slug, label: a.label })),
+    error: agenciesError
+  });
+  
   if (agenciesError || !agencies?.length) {
     logNetwork.error('[StatIA] Erreur chargement agences', agenciesError);
     return getEmptyDashboard();
@@ -113,6 +124,14 @@ export async function computeReseauDashboard(params: ReseauDashboardParams): Pro
   const filteredAgencies = params.scopeAgences?.length
     ? agencies.filter(a => params.scopeAgences!.includes(a.id))
     : agencies;
+  
+  console.log('[StatIA] Agences après filtrage:', {
+    filteredCount: filteredAgencies.length,
+    agencies: filteredAgencies.map(a => a.slug),
+    scopeAgences: params.scopeAgences,
+    scopeAgencesIsArray: Array.isArray(params.scopeAgences),
+    scopeAgencesLength: params.scopeAgences?.length
+  });
   
   logNetwork.debug(`[StatIA] Chargement de ${filteredAgencies.length} agences...`);
   
