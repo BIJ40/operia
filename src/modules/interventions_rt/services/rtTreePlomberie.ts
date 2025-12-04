@@ -1,0 +1,282 @@
+// Placeholder - L'arbre complet sera fourni par l'utilisateur
+// Structure de base pour tester le moteur
+
+import { QuestionTree } from '../types';
+
+export const rtTreePlomberie: QuestionTree = {
+  univers: 'plomberie',
+  version: '1.0.0',
+  startNode: 'COM-01',
+  nodes: {
+    // === CONTEXTE COMMUN ===
+    'COM-01': {
+      id: 'COM-01',
+      branch: 'contexte',
+      question: 'Type de rendez-vous ?',
+      type: 'single_choice',
+      options: [
+        { value: 'depannage', label: 'Dépannage' },
+        { value: 'dde', label: 'DDE (Devis Demandé par Expert)' },
+        { value: 'diagnostic', label: 'Diagnostic seul' },
+        { value: 'travaux', label: 'Travaux suite devis' },
+      ],
+      required: true,
+      next: { default: 'COM-02' },
+    },
+    'COM-02': {
+      id: 'COM-02',
+      branch: 'contexte',
+      question: 'Le client est-il présent sur place ?',
+      type: 'boolean',
+      next: { default: 'COM-03' },
+    },
+    'COM-03': {
+      id: 'COM-03',
+      branch: 'contexte',
+      question: 'Accès au logement / local ?',
+      type: 'single_choice',
+      options: [
+        { value: 'ok', label: 'Accès OK' },
+        { value: 'difficile', label: 'Accès difficile' },
+        { value: 'impossible', label: 'Accès impossible' },
+      ],
+      next: {
+        default: 'COM-04',
+        byAnswer: { impossible: 'COM-END-ACCES' },
+      },
+    },
+    'COM-04': {
+      id: 'COM-04',
+      branch: 'contexte',
+      question: 'Origine du sinistre connue ?',
+      type: 'boolean',
+      next: {
+        byAnswer: {
+          true: 'COM-05',
+          false: 'COM-05',
+        },
+        default: 'COM-05',
+      },
+    },
+    'COM-05': {
+      id: 'COM-05',
+      branch: 'contexte',
+      question: 'Description rapide du problème constaté',
+      type: 'text_long',
+      placeholder: 'Décrivez le problème...',
+      next: { default: 'COM-06' },
+    },
+    'COM-06': {
+      id: 'COM-06',
+      branch: 'contexte',
+      question: 'Quelle est la nature principale du problème ?',
+      type: 'single_choice',
+      isBranchStart: true,
+      options: [
+        { value: 'fuite', label: 'Fuite d\'eau' },
+        { value: 'bouchage', label: 'Bouchage / Engorgement' },
+        { value: 'robinetterie', label: 'Robinetterie défectueuse' },
+        { value: 'chauffe_eau', label: 'Chauffe-eau / Ballon' },
+        { value: 'wc', label: 'WC / Sanitaires' },
+        { value: 'autre', label: 'Autre problème' },
+      ],
+      next: {
+        byAnswer: {
+          fuite: 'PLO-F1-01',
+          bouchage: 'PLO-B1-01',
+          robinetterie: 'PLO-R1-01',
+          chauffe_eau: 'PLO-CE-01',
+          wc: 'PLO-WC-01',
+          autre: 'PLO-AUTRE-01',
+        },
+        default: 'PLO-F1-01',
+      },
+    },
+    'COM-END-ACCES': {
+      id: 'COM-END-ACCES',
+      branch: 'contexte',
+      question: 'Fin du relevé - Accès impossible. Veuillez noter les raisons.',
+      type: 'text_long',
+      isEnd: true,
+      next: { default: null },
+    },
+
+    // === BRANCHE FUITE (exemple) ===
+    'PLO-F1-01': {
+      id: 'PLO-F1-01',
+      branch: 'fuite',
+      question: 'Localisation de la fuite ?',
+      type: 'single_choice',
+      options: [
+        { value: 'visible', label: 'Fuite visible / apparente' },
+        { value: 'encastree', label: 'Fuite encastrée / derrière cloison' },
+        { value: 'enterree', label: 'Fuite enterrée / sous dalle' },
+        { value: 'recherche', label: 'Recherche de fuite nécessaire' },
+      ],
+      next: { default: 'PLO-F1-02' },
+    },
+    'PLO-F1-02': {
+      id: 'PLO-F1-02',
+      branch: 'fuite',
+      question: 'Type de canalisation concernée ?',
+      type: 'single_choice',
+      options: [
+        { value: 'cuivre', label: 'Cuivre' },
+        { value: 'per', label: 'PER' },
+        { value: 'multicouche', label: 'Multicouche' },
+        { value: 'pvc', label: 'PVC' },
+        { value: 'acier', label: 'Acier / Galva' },
+        { value: 'plomb', label: 'Plomb' },
+        { value: 'inconnu', label: 'Non identifiable' },
+      ],
+      next: { default: 'PLO-F1-03' },
+    },
+    'PLO-F1-03': {
+      id: 'PLO-F1-03',
+      branch: 'fuite',
+      question: 'Diamètre approximatif ?',
+      type: 'single_choice',
+      options: [
+        { value: '12', label: '12mm' },
+        { value: '14', label: '14mm' },
+        { value: '16', label: '16mm' },
+        { value: '20', label: '20mm' },
+        { value: '25', label: '25mm' },
+        { value: '32', label: '32mm' },
+        { value: 'autre', label: 'Autre / Non mesuré' },
+      ],
+      next: { default: 'PLO-MAT-01' },
+    },
+
+    // === BRANCHE BOUCHAGE (stub) ===
+    'PLO-B1-01': {
+      id: 'PLO-B1-01',
+      branch: 'bouchage',
+      question: 'Localisation du bouchage ?',
+      type: 'single_choice',
+      options: [
+        { value: 'evier', label: 'Évier / Lavabo' },
+        { value: 'douche', label: 'Douche / Baignoire' },
+        { value: 'wc', label: 'WC' },
+        { value: 'regard', label: 'Regard extérieur' },
+        { value: 'colonne', label: 'Colonne d\'immeuble' },
+      ],
+      next: { default: 'PLO-MAT-01' },
+    },
+
+    // === STUBS pour autres branches ===
+    'PLO-R1-01': {
+      id: 'PLO-R1-01',
+      branch: 'robinetterie',
+      question: 'Type d\'équipement concerné ?',
+      type: 'single_choice',
+      options: [
+        { value: 'mitigeur', label: 'Mitigeur' },
+        { value: 'melangeur', label: 'Mélangeur' },
+        { value: 'robinet', label: 'Robinet simple' },
+        { value: 'thermostatique', label: 'Thermostatique' },
+      ],
+      next: { default: 'PLO-MAT-01' },
+    },
+    'PLO-CE-01': {
+      id: 'PLO-CE-01',
+      branch: 'chauffe_eau',
+      question: 'Type de chauffe-eau ?',
+      type: 'single_choice',
+      options: [
+        { value: 'electrique', label: 'Électrique (cumulus)' },
+        { value: 'gaz', label: 'Gaz' },
+        { value: 'thermodynamique', label: 'Thermodynamique' },
+        { value: 'solaire', label: 'Solaire' },
+      ],
+      next: { default: 'PLO-MAT-01' },
+    },
+    'PLO-WC-01': {
+      id: 'PLO-WC-01',
+      branch: 'wc',
+      question: 'Nature du problème WC ?',
+      type: 'single_choice',
+      options: [
+        { value: 'fuite_reservoir', label: 'Fuite réservoir' },
+        { value: 'chasse', label: 'Chasse d\'eau défectueuse' },
+        { value: 'bouchage', label: 'WC bouché' },
+        { value: 'fixation', label: 'Problème de fixation' },
+      ],
+      next: { default: 'PLO-MAT-01' },
+    },
+    'PLO-AUTRE-01': {
+      id: 'PLO-AUTRE-01',
+      branch: 'autre',
+      question: 'Décrivez le problème rencontré',
+      type: 'text_long',
+      placeholder: 'Description détaillée...',
+      next: { default: 'PLO-MAT-01' },
+    },
+
+    // === BLOC MATÉRIEL (commun à toutes les branches) ===
+    'PLO-MAT-01': {
+      id: 'PLO-MAT-01',
+      branch: 'materiel',
+      question: 'Matériel nécessaire pour la réparation / travaux ?',
+      type: 'boolean',
+      next: {
+        byAnswer: {
+          true: 'PLO-MAT-02',
+          false: 'PLO-END',
+        },
+        default: 'PLO-END',
+      },
+    },
+    'PLO-MAT-02': {
+      id: 'PLO-MAT-02',
+      branch: 'materiel',
+      question: 'Matériel standard à prévoir',
+      type: 'multi_choice',
+      options: [
+        { value: 'raccords_per', label: 'Raccords PER' },
+        { value: 'raccords_cuivre', label: 'Raccords cuivre' },
+        { value: 'raccords_multicouche', label: 'Raccords multicouche' },
+        { value: 'raccords_pvc', label: 'Raccords PVC' },
+        { value: 'robinets', label: 'Robinets / Mitigeurs' },
+        { value: 'flexibles', label: 'Flexibles' },
+        { value: 'siphons', label: 'Siphons / Bondes' },
+        { value: 'tubes', label: 'Tubes (préciser matériau)' },
+        { value: 'joints', label: 'Joints / Manchons / Colliers' },
+        { value: 'autre', label: 'Autre (préciser)' },
+      ],
+      next: { default: 'PLO-MAT-03' },
+    },
+    'PLO-MAT-03': {
+      id: 'PLO-MAT-03',
+      branch: 'materiel',
+      question: 'Matériel spécifique / Référence à commander ?',
+      type: 'text_long',
+      placeholder: 'Références, marques, dimensions particulières...',
+      next: { default: 'PLO-MAT-04' },
+    },
+    'PLO-MAT-04': {
+      id: 'PLO-MAT-04',
+      branch: 'materiel',
+      question: 'Urgence d\'approvisionnement ?',
+      type: 'single_choice',
+      options: [
+        { value: 'stock', label: 'Stock dépôt' },
+        { value: 'standard', label: 'Commande standard' },
+        { value: 'urgent', label: 'Commande urgente' },
+      ],
+      next: { default: 'PLO-END' },
+    },
+
+    // === FIN ===
+    'PLO-END': {
+      id: 'PLO-END',
+      branch: 'fin',
+      question: 'Relevé technique terminé. Vous pouvez maintenant valider et générer le PDF.',
+      type: 'info',
+      isEnd: true,
+      next: { default: null },
+    },
+  },
+};
+
+export default rtTreePlomberie;
