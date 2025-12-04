@@ -165,12 +165,13 @@ export const nombreDevis: StatDefinition = {
 };
 
 /**
- * Montant total des Devis émis (envoyés au client)
+ * Montant total des Devis émis (TOUS les devis de la période)
+ * Somme de tous les HT des devis, sans filtrage par état
  */
 export const montantDevis: StatDefinition = {
   id: 'montant_devis',
   label: 'Montant Devis HT',
-  description: 'Montant total HT des devis envoyés',
+  description: 'Montant total HT de tous les devis émis sur la période',
   category: 'devis',
   source: 'devis',
   aggregation: 'sum',
@@ -182,20 +183,24 @@ export const montantDevis: StatDefinition = {
     let count = 0;
     
     for (const d of devis) {
+      // Filtre par date
       const dateStr = d.dateReelle || d.date || d.dateCreation || d.data?.dateReelle || d.data?.date || d.created_at;
-      if (dateStr) {
+      if (dateStr && params.dateRange) {
         const date = new Date(dateStr);
         if (isNaN(date.getTime())) continue;
         if (date < params.dateRange.start || date > params.dateRange.end) continue;
       }
       
-      // Compter uniquement les devis envoyés (sent, accepted, invoice)
+      // Exclure uniquement les brouillons et annulés
       const state = (d.state || d.statut || d.data?.state || d.data?.statut || '').toString().toLowerCase();
-      if (state === 'sent' || state === 'accepted' || state === 'invoice') {
-        const montant = d.data?.totalHT ?? d.totalHT ?? 0;
-        totalHT += montant;
-        count++;
+      if (state === 'draft' || state === 'brouillon' || state === 'cancelled' || state === 'annule') {
+        continue;
       }
+      
+      // Sommer le montant HT
+      const montant = d.data?.totalHT ?? d.totalHT ?? 0;
+      totalHT += montant;
+      count++;
     }
     
     return {
@@ -204,6 +209,10 @@ export const montantDevis: StatDefinition = {
         computedAt: new Date(),
         source: 'devis',
         recordCount: count,
+      },
+      breakdown: {
+        nbDevis: count,
+        totalHT: totalHT,
       }
     };
   }
