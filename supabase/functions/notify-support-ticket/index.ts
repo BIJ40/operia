@@ -309,38 +309,46 @@ serve(async (req) => {
 
     let emailsSent = 0;
     let emailData = null;
+    let emailError: Error | null = null;
     
     // Send emails only if email notifications are enabled
     if (notificationSettings.email_enabled) {
-      const { data, error } = await resend.emails.send({
-        from: 'HelpConfort Services <support@helpconfort.services>',
-        to: supportEmails,
-        subject: `🚨 Nouveau ticket ${sourceBadge} #${ticketId.substring(0, 8)} - ${userName}`,
-        html: emailHtml,
-      });
+      try {
+        const { data, error } = await resend.emails.send({
+          from: 'HelpConfort Services <support@helpconfort.services>',
+          to: supportEmails,
+          subject: `🚨 Nouveau ticket ${sourceBadge} #${ticketId.substring(0, 8)} - ${userName}`,
+          html: emailHtml,
+        });
 
-      if (error) {
-        console.error('Error sending email:', error);
-        throw error;
+        if (error) {
+          console.error('[NOTIFY-SUPPORT-TICKET] Email send error:', error);
+          emailError = new Error(error.message || 'Email send failed');
+        } else {
+          console.log('[NOTIFY-SUPPORT-TICKET] Email sent successfully:', data);
+          emailsSent = supportEmails.length;
+          emailData = data;
+        }
+      } catch (err) {
+        console.error('[NOTIFY-SUPPORT-TICKET] Email exception:', err);
+        emailError = err instanceof Error ? err : new Error('Unknown email error');
       }
-
-      console.log('Notification emails sent successfully:', data);
-      emailsSent = supportEmails.length;
-      emailData = data;
     } else {
       console.log('[NOTIFY-SUPPORT-TICKET] Email notifications disabled, skipping');
     }
 
     // Envoyer les SMS aux supports via AllMySMS
     let smsSent = 0;
+    let smsError: Error | null = null;
+    
     if (notificationSettings.sms_enabled && ALLMYSMS_LOGIN && ALLMYSMS_API_KEY && ALLMYSMS_SUPPORT_PHONES) {
       try {
         const supportPhones = ALLMYSMS_SUPPORT_PHONES.split(',').map(p => p.trim());
         const smsMessage = `🚨 Nouveau ticket ${sourceBadge} de ${userName}${agencySlug ? ` (${agencySlug})` : ''}: "${lastQuestion.substring(0, 80)}${lastQuestion.length > 80 ? '...' : ''}"`;
         
-        console.log(`Sending SMS to ${supportPhones.length} support phone(s)`);
+        console.log(`[NOTIFY-SUPPORT-TICKET] Sending SMS to ${supportPhones.length} phone(s)`);
         
-        // Envoyer un SMS à chaque numéro de support
+        // Envoyer un SMS à chaque numéro de support avec timeout
         const smsPromises = supportPhones.map(async (phone) => {
           const smsData = {
             DATA: {
@@ -361,59 +369,99 @@ serve(async (req) => {
 
           console.log(`[AllMySMS] Sending to ${phone.substring(0, 4)}***`);
           
-          const response = await fetch(`${ALLMYSMS_API_URL}sendSms?${params.toString()}`, {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json'
-            }
-          });
-
-          const responseText = await response.text();
-          console.log(`[AllMySMS] Response for ${phone.substring(0, 4)}***:`, responseText);
-
-          if (!response.ok) {
-            console.error(`Failed to send SMS to ${phone}:`, responseText);
-            return false;
-          }
-
+          // Add timeout to SMS requests (10 seconds)
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          
           try {
-            const result = JSON.parse(responseText);
-            console.log(`SMS sent to ${phone}:`, result);
-            // AllMySMS returns status code in response
-            return result.status === 100 || result.status === '100' || response.ok;
-          } catch {
-            // Si la réponse n'est pas JSON, considérer comme succès si HTTP ok
-            return response.ok;
+            const response = await fetch(`${ALLMYSMS_API_URL}sendSms?${params.toString()}`, {
+              method: 'GET',
+              headers: { 'Accept': 'application/json' },
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            const responseText = await response.text();
+            console.log(`[AllMySMS] Response for ${phone.substring(0, 4)}***:`, responseText);
+
+            if (!response.ok) {
+              console.error(`[AllMySMS] Failed to send SMS to ${phone}:`, responseText);
+              return false;
+            }
+
+            try {
+              const result = JSON.parse(responseText);
+              return result.status === 100 || result.status === '100' || response.ok;
+            } catch {
+              return response.ok;
+            }
+          } catch (fetchError) {
+            clearTimeout(timeoutId);
+            if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+              console.error(`[AllMySMS] Timeout sending SMS to ${phone}`);
+            } else {
+              console.error(`[AllMySMS] Error sending SMS to ${phone}:`, fetchError);
+            }
+            return false;
           }
         });
 
         const results = await Promise.all(smsPromises);
         smsSent = results.filter(r => r === true).length;
-        console.log(`${smsSent}/${supportPhones.length} SMS notifications sent successfully`);
-      } catch (smsError) {
-        console.error('Error sending SMS notifications:', smsError);
-        // Continue même si les SMS échouent
+        console.log(`[NOTIFY-SUPPORT-TICKET] ${smsSent}/${supportPhones.length} SMS sent successfully`);
+      } catch (err) {
+        console.error('[NOTIFY-SUPPORT-TICKET] SMS batch error:', err);
+        smsError = err instanceof Error ? err : new Error('Unknown SMS error');
       }
     } else if (!notificationSettings.sms_enabled) {
       console.log('[NOTIFY-SUPPORT-TICKET] SMS notifications disabled, skipping');
     } else {
-      console.log('AllMySMS not configured, skipping SMS notifications');
+      console.log('[NOTIFY-SUPPORT-TICKET] AllMySMS not configured, skipping SMS');
       console.log(`Config check: LOGIN=${!!ALLMYSMS_LOGIN}, KEY=${!!ALLMYSMS_API_KEY}, PHONES=${!!ALLMYSMS_SUPPORT_PHONES}`);
+    }
+
+    // Return partial success even if one channel failed
+    const partialFailure = (emailError && !smsError) || (!emailError && smsError);
+    const totalFailure = emailError && smsError && emailsSent === 0 && smsSent === 0;
+    
+    if (totalFailure) {
+      console.error('[NOTIFY-SUPPORT-TICKET] All notification channels failed');
+      return withCors(req, new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'All notification channels failed',
+          emailError: emailError?.message,
+          smsError: smsError?.message,
+          emailsSent: 0,
+          smsSent: 0
+        }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
 
     return withCors(req, new Response(
       JSON.stringify({ 
         success: true, 
+        partialFailure,
         emailsSent,
         smsSent,
-        emailIds: emailData 
+        emailIds: emailData,
+        warnings: [
+          emailError ? `Email: ${emailError.message}` : null,
+          smsError ? `SMS: ${smsError.message}` : null
+        ].filter(Boolean)
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     ));
   } catch (error) {
-    console.error('Error in notify-support-ticket function:', error);
+    console.error('[NOTIFY-SUPPORT-TICKET] Critical error:', error);
     return withCors(req, new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ 
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        emailsSent: 0,
+        smsSent: 0
+      }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     ));
   }

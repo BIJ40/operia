@@ -118,18 +118,18 @@
 
 ### 4.4 Points P0 identifiés (CRITIQUES)
 
-- [ ] **SUP-P0-01**: `or()` RLS potentiellement inefficace sur viewed_by_support_at/assigned_to - performance queries
-- [ ] **SUP-P0-02**: Pas de cleanup des channels Realtime si changement rapide de route (memory leak)
-- [ ] **SUP-P0-03**: Edge function `notify-support-ticket` non testée si webhook down (silent failure)
+- [x] **SUP-P0-01**: ~~`or()` RLS potentiellement inefficace~~ → ✅ CORRIGÉ - Indexes ajoutés sur (type, status), (viewed_by_support_at, assigned_to)
+- [x] **SUP-P0-02**: ~~Pas de cleanup Realtime~~ → ✅ DÉJÀ PRÉSENT (lignes 236-240 use-support-notifications.ts)
+- [x] **SUP-P0-03**: ~~Edge function silent failure~~ → ✅ CORRIGÉ - Timeout 10s, error handling granulaire, partial success
 
 ### 4.5 Points P1 identifiés (Fort irritant)
 
 - [ ] **SUP-P1-01**: Notifications popup désactivées (commentées) - UX à rediscuter
-- [ ] **SUP-P1-02**: Pas d'index sur support_tickets(type, status) pour queries fréquentes
+- [x] **SUP-P1-02**: ~~Pas d'index support_tickets~~ → ✅ CORRIGÉ - 4 indexes créés
 - [ ] **SUP-P1-03**: Pas de pagination côté serveur sur loadTickets (charge 100% en mémoire)
 - [ ] **SUP-P1-04**: `assigned_to` affiché comme UUID tronqué au lieu du nom
 - [ ] **SUP-P1-05**: Pas de validation schema Zod sur chatbot_conversation JSONB
-- [ ] **SUP-P1-06**: Messages internes visibles si user examine la DB directement (RLS insuffisant)
+- [x] **SUP-P1-06**: ~~Messages internes visibles~~ → ✅ CORRIGÉ - RLS renforcé avec filtre is_internal_note
 
 ### 4.6 Points P2 identifiés (Amélioration)
 
@@ -176,11 +176,12 @@
 2. ⏳ Corriger P0-02 (RLS rh_notifications)
 3. ⏳ Implémenter Dashboard RH stats complet
 
-### Module Support
-4. ⏳ Corriger SUP-P0-02 (cleanup channels Realtime)
-5. ⏳ Ajouter indexes support_tickets(type, status)
-6. ⏳ Corriger SUP-P1-06 (RLS notes internes)
-7. ⏳ Afficher nom assigné au lieu UUID tronqué
+### Module Support ✅ P0 CORRIGÉS
+4. ✅ ~~Corriger SUP-P0-02 (cleanup channels Realtime)~~ - DÉJÀ PRÉSENT
+5. ✅ ~~Ajouter indexes support_tickets~~ - 4 indexes créés
+6. ✅ ~~Corriger SUP-P1-06 (RLS notes internes)~~ - Policy mise à jour
+7. ⏳ Afficher nom assigné au lieu UUID tronqué (SUP-P1-04)
+8. ⏳ Pagination serveur (SUP-P1-03)
 
 ---
 
@@ -194,6 +195,9 @@
 | 2024-12-04 | Audit Module RH (85%) |
 | 2024-12-04 | Fix container RHDashboardPage |
 | 2024-12-04 | **Audit Module Support (85%)** |
+| 2024-12-04 | **Fix SUP-P0-01/P1-02**: 4 indexes support_tickets |
+| 2024-12-04 | **Fix SUP-P0-03**: Edge function error handling + timeout |
+| 2024-12-04 | **Fix SUP-P1-06**: RLS notes internes renforcé |
 
 ---
 
