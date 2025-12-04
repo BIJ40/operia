@@ -95,30 +95,32 @@ export const useAdminSupport = () => {
       return;
     }
     
-    // Pour chaque ticket, vérifier s'il y a des réponses support non lues
-    const ticketsWithUnreadStatus = await Promise.all(
-      result.data.map(async (ticket) => {
-        const msgResult = await safeQuery<{ is_from_support: boolean; read_at: string | null }[]>(
-          supabase.from('support_messages')
-            .select('is_from_support, read_at')
-            .eq('ticket_id', ticket.id)
-            .order('created_at', { ascending: false })
-            .limit(5),
-          'ADMIN_SUPPORT_CHECK_UNREAD'
-        );
-        
-        const hasUnreadSupportResponse = msgResult.data?.some(
-          msg => msg.is_from_support && !msg.read_at
-        ) || false;
-        
-        return {
-          ...ticket,
-          has_unread_support_response: hasUnreadSupportResponse
-        };
-      })
-    );
+    // P1 FIX: Single batch query for unread status instead of N+1 queries
+    const ticketIds = result.data.map(t => t.id);
     
-    setTickets(ticketsWithUnreadStatus);
+    if (ticketIds.length > 0) {
+      // Single query to get unread support messages for all tickets
+      const unreadResult = await safeQuery<{ ticket_id: string }[]>(
+        supabase.from('support_messages')
+          .select('ticket_id')
+          .in('ticket_id', ticketIds)
+          .eq('is_from_support', true)
+          .is('read_at', null),
+        'ADMIN_SUPPORT_BATCH_UNREAD'
+      );
+      
+      // Create a Set of ticket IDs that have unread support responses
+      const ticketsWithUnread = new Set(unreadResult.data?.map(m => m.ticket_id) || []);
+      
+      const ticketsWithUnreadStatus = result.data.map(ticket => ({
+        ...ticket,
+        has_unread_support_response: ticketsWithUnread.has(ticket.id)
+      }));
+      
+      setTickets(ticketsWithUnreadStatus);
+    } else {
+      setTickets(result.data);
+    }
   };
 
   const selectTicket = async (ticket: SupportTicket) => {
