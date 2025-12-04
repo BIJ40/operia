@@ -2,7 +2,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   GraduationCap, FileText, FolderOpen, BarChart3, ListTodo, Tv,
   Headset, Network, Building2, PieChart, GitCompare, Briefcase,
-  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, HelpCircle, Sparkles
+  Coins, Settings, Users, Database, Activity, ChevronRight, Home, Calendar, LifeBuoy, MessageCircle, Kanban, HelpCircle, Sparkles, Wrench
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import {
@@ -235,6 +235,15 @@ export function UnifiedSidebar() {
         { title: 'Demandes RH', url: ROUTES.pilotage.demandesRh, icon: FileText, description: 'Traiter les demandes de documents', minRole: 'franchisee_admin' },
       ],
       accessKey: 'canAccessPilotageAgence',
+    },
+    {
+      label: 'Espace Technicien',
+      labelKey: 'technicien',
+      indexUrl: ROUTES.pilotage.techInterventions,
+      icon: Wrench,
+      items: [
+        { title: 'APP', url: ROUTES.pilotage.techInterventions, icon: Wrench, description: 'Interventions et relevés techniques' },
+      ],
     },
     {
       label: 'Support',
