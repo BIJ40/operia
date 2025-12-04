@@ -606,7 +606,16 @@ export function UnifiedSidebar() {
         })}
       </SidebarContent>
       
-      <SidebarFooter className="border-t p-2">
+      <SidebarFooter className="border-t p-2 space-y-2">
+        {/* P1 FIX: Bouton "Tout replier" pour les utilisateurs avec beaucoup de sections */}
+        {filteredGroups.length > 4 && !collapsed && (
+          <button
+            onClick={() => setOpenGroups(new Set())}
+            className="text-xs text-muted-foreground hover:text-primary transition-colors w-full text-left px-2 py-1 rounded hover:bg-muted"
+          >
+            ↑ Tout replier
+          </button>
+        )}
         <Link
           to="/changelog"
           className={`text-xs font-semibold text-muted-foreground hover:text-primary transition-colors block ${collapsed ? 'text-center' : 'text-left'}`}

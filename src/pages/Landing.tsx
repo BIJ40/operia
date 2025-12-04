@@ -219,7 +219,9 @@ export default function Landing() {
 const DashboardTileCard = memo(function DashboardTileCard({ tile, dynamicBadge, isAdmin }: { tile: DashboardTile; dynamicBadge?: number; isAdmin?: boolean }) {
   const Icon = tile.icon;
   const badgeContent = dynamicBadge ?? tile.badge;
-  const isDisabled = tile.isDisabled && !isAdmin;
+  // P1 FIX: Les tuiles disabled ne sont JAMAIS cliquables, même pour les admins
+  // Les admins voient la tuile mais ne peuvent pas cliquer dessus
+  const isDisabled = tile.isDisabled === true;
 
   const content = (
     <div className={`
@@ -256,6 +258,7 @@ const DashboardTileCard = memo(function DashboardTileCard({ tile, dynamicBadge, 
     </div>
   );
 
+  // P1 FIX: Ne jamais rendre cliquable une tuile disabled
   if (isDisabled) {
     return content;
   }

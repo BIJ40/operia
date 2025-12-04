@@ -148,13 +148,15 @@ export function MessagingWidget() {
 
   return (
     <div className="relative">
-      {/* Bubble button with label */}
+      {/* Bubble button with label - P1 FIX: indicateur visible même fermé */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200",
+          "relative flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200",
           "bg-primary/10 hover:bg-primary/20 border border-primary/20",
-          isOpen && "bg-primary text-primary-foreground"
+          isOpen && "bg-primary text-primary-foreground",
+          // Highlight si messages non lus et widget fermé
+          !isOpen && unreadCount > 0 && "ring-2 ring-destructive/50 animate-pulse"
         )}
       >
         {isOpen ? (
@@ -168,9 +170,10 @@ export function MessagingWidget() {
         )}>
           Messagerie interne
         </span>
+        {/* Badge de messages non lus - toujours visible quand fermé */}
         {!isOpen && unreadCount > 0 && (
-          <span className="bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-            {unreadCount > 9 ? '9+' : unreadCount}
+          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 shadow-md">
+            {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
