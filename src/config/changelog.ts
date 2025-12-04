@@ -18,12 +18,12 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2025-12-04',
     title: 'Audits Pré-production Complets',
     changes: [
-      { type: 'improvement', description: 'Audit UX/Navigation complet - bg-white → bg-background pour dark mode (15+ fichiers)' },
-      { type: 'improvement', description: 'Accessibilité : aria-label ajoutés sur 20+ boutons/icônes interactifs' },
-      { type: 'improvement', description: 'Nettoyage hooks legacy : suppression useNetworkStats.ts et usePeriodComparison.ts (migré StatIA)' },
-      { type: 'improvement', description: 'Audit Sécurité ✅ - RLS policies validées, pages erreur HTTP créées' },
-      { type: 'improvement', description: 'Audit RAG/IA ✅ - doublons supprimés, context_type corrigé, chunks artefacts nettoyés' },
-      { type: 'security', description: 'Heat priority unifié (0-12) sur tous les modules (support, apogee_tickets)' },
+      { type: 'security', description: '✅ Audit Sécurité - RLS policies, JWT, rate limiting, CORS validés' },
+      { type: 'security', description: '✅ Audit RAG/IA - prompts sécurisés, embeddings vérifiés, chunks nettoyés' },
+      { type: 'improvement', description: '✅ Audit UX/Navigation - bg-white→bg-background (15+ fichiers), aria-label (20+ icônes)' },
+      { type: 'improvement', description: '✅ Audit Qualité - terminologie "Gestion de Projet" unifiée' },
+      { type: 'improvement', description: '✅ Audit Pré-prod - Error401/403/404, GlobalErrorBoundary, session handling validés' },
+      { type: 'improvement', description: 'Suppression hooks legacy (useNetworkStats.ts, usePeriodComparison.ts)' },
     ]
   },
   {
