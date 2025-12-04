@@ -1,6 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
 import { AppLayout } from "@/apogee-connect/components/layout/AppLayout";
-import { DataService } from "@/apogee-connect/services/dataService";
 import { LocalErrorBoundary } from "@/components/system/LocalErrorBoundary";
 import { useFilters } from "@/apogee-connect/contexts/FiltersContext";
 import { useSecondaryFilters } from "@/apogee-connect/contexts/SecondaryFiltersContext";
@@ -13,29 +11,11 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
-import { calculateDashboardStats } from "@/apogee-connect/utils/dashboardCalculations";
 import { PeriodSelector } from "@/apogee-connect/components/filters/PeriodSelector";
 import { SecondaryPeriodSelector } from "@/apogee-connect/components/filters/SecondaryPeriodSelector";
-import { calculateLast7DaysActivity, calculateVariationVs30Days } from "@/apogee-connect/utils/activityCalculations";
 import { ActivityChart } from "@/apogee-connect/components/widgets/ActivityChart";
 import { logApogee } from "@/lib/logger";
-import { calculateMonthlyCA } from "@/apogee-connect/utils/monthlyCalculations";
 import { MonthlyCAChart } from "@/apogee-connect/components/widgets/MonthlyCAChart";
-import { 
-  calculateTop10Apporteurs, 
-  calculateDossiersConfiesParApporteur, 
-  calculateDuGlobal, 
-  calculatePartApporteurs,
-  calculateTauxTransformationMoyen,
-  calculatePanierMoyenHT,
-  calculateDelaiMoyenFacturation,
-  calculateTauxSAV,
-  calculateTauxSAVGlobal,
-  calculateFlop10Apporteurs
-} from "@/apogee-connect/utils/apporteursCalculations";
-import { calculateTypesApporteursStats } from "@/apogee-connect/utils/typesApporteursCalculations";
-import { calculateParticuliersStats } from "@/apogee-connect/utils/particuliersCalculations";
-import { calculateMonthlySegmentation } from "@/apogee-connect/utils/segmentationCalculations";
 import { TopApporteursWidget } from "@/apogee-connect/components/widgets/TopApporteursWidget";
 import { DossiersConfiesWidget } from "@/apogee-connect/components/widgets/DossiersConfiesWidget";
 import { DuGlobalWidget } from "@/apogee-connect/components/widgets/DuGlobalWidget";
@@ -43,6 +23,7 @@ import { FlopApporteursWidget } from "@/apogee-connect/components/widgets/FlopAp
 import { TypesApporteursWidget } from "@/apogee-connect/components/widgets/TypesApporteursWidget";
 import { ParticuliersWidget } from "@/apogee-connect/components/widgets/ParticuliersWidget";
 import { SegmentationChart } from "@/apogee-connect/components/widgets/SegmentationChart";
+import { useDashboardStatia } from "@/apogee-connect/hooks/useDashboardStatia";
 
 export default function Dashboard() {
   const { filters } = useFilters();
@@ -50,181 +31,9 @@ export default function Dashboard() {
   const { isApiEnabled } = useApiToggle();
   const { agencyChangeCounter, currentAgency, isAgencyReady } = useAgency();
   const userAgency = currentAgency?.id || "";
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["dashboard-stats", filters, secondaryFilters, isApiEnabled, agencyChangeCounter],
-    enabled: isAgencyReady && isApiEnabled,
-    queryFn: async () => {
-      // GUARD: Ne pas charger si l'agence n'est pas définie
-      if (!currentAgency?.id) {
-        logApogee.warn('Agence non définie - Chargement des données annulé');
-        return null;
-      }
-      
-      const apiData = await DataService.loadAllData(isApiEnabled);
-      
-      // Calculer les vrais KPIs avec les données de l'API et la période sélectionnée
-      const stats = calculateDashboardStats({
-        projects: apiData.projects || [],
-        interventions: apiData.interventions || [],
-        factures: apiData.factures || [],
-        devis: apiData.devis || [],
-        clients: apiData.clients || [],
-        users: apiData.users || [],
-      }, filters.dateRange, userAgency);
-      
-      // Calculer les données pour le graphique d'activité (7 derniers jours)
-      const activityData = calculateLast7DaysActivity(apiData.projects || []);
-      const activityVariation = calculateVariationVs30Days(apiData.projects || []);
-      
-      // Calculer les données mensuelles CA - année dynamique basée sur les filtres
-      const start = filters.dateRange?.start;
-      const year = start instanceof Date ? start.getFullYear() : new Date().getFullYear();
-      const monthlyCAData = calculateMonthlyCA(
-        apiData.factures || [],
-        apiData.clients || [],
-        apiData.projects || [],
-        year,
-        userAgency
-      );
-      
-      // Calculer TOP 10 apporteurs - lié au filtre secondaire
-      const top10Apporteurs = calculateTop10Apporteurs(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.devis || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      // Calculer les dossiers confiés par apporteur
-      const dossiersConfiesParApporteur = calculateDossiersConfiesParApporteur(
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      // Calculer le dû global
-      const duGlobal = calculateDuGlobal(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      // Calculer la part des apporteurs
-      const partApporteurs = calculatePartApporteurs(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange,
-        userAgency
-      );
-      
-      // Calculer le taux de transformation moyen
-      const tauxTransformationMoyen = calculateTauxTransformationMoyen(
-        apiData.devis || [],
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      // Calculer le panier moyen HT
-      const panierMoyenHT = calculatePanierMoyenHT(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      // Calculer le délai moyen de facturation
-      const delaiMoyenFacturation = calculateDelaiMoyenFacturation(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      // Calculer le taux de SAV apporteurs
-      const tauxSAV = calculateTauxSAV(
-        apiData.interventions || [],
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      // Calculer le taux de SAV global (tous les dossiers) - lié au filtre principal
-      const tauxSAVGlobal = calculateTauxSAVGlobal(
-        apiData.interventions || [],
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        filters.dateRange
-      );
-      
-      // Calculer FLOP 10 apporteurs (plus de dû)
-      const flop10Apporteurs = calculateFlop10Apporteurs(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      // Calculer les statistiques par type d'apporteur (période secondaire)
-      const typesApporteursStats = calculateTypesApporteursStats(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.devis || [],
-        apiData.interventions || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      // Calculer les statistiques des PARTICULIERS (clients directs) - période secondaire
-      const particuliersStats = calculateParticuliersStats(
-        apiData.factures || [],
-        apiData.projects || [],
-        apiData.devis || [],
-        apiData.interventions || [],
-        apiData.clients || [],
-        secondaryFilters.dateRange
-      );
-      
-      // Calculer l'évolution mensuelle Particuliers vs Apporteurs - année dynamique
-      const segmentationData = calculateMonthlySegmentation(
-        apiData.factures || [],
-        apiData.clients || [],
-        apiData.projects || [],
-        year
-      );
-      
-      if (import.meta.env.DEV) {
-        logApogee.debug('Stats calculées pour la période', { dateRange: filters.dateRange, stats, activityData, activityVariation, nbProjects: apiData.projects?.length || 0 });
-      }
-      
-      return {
-        ...stats,
-        activityData,
-        activityVariation,
-        monthlyCAData,
-        top10Apporteurs,
-        dossiersConfiesParApporteur,
-        duGlobal,
-        partApporteurs,
-        tauxTransformationMoyen,
-        panierMoyenHT,
-        delaiMoyenFacturation,
-        tauxSAV,
-        tauxSAVGlobal,
-        flop10Apporteurs,
-        typesApporteursStats,
-        particuliersStats,
-        segmentationData
-      };
-    },
-  });
+  
+  // StatIA Dashboard - source de vérité unique (remplace l'ancien useQuery)
+  const { data, isLoading, error } = useDashboardStatia();
 
   const periodLabel = filters.periodLabel || "aujourd'hui";
   

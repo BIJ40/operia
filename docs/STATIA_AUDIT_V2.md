@@ -133,9 +133,10 @@
 ### Phase 2: Migration Agence 🔄 EN COURS
 1. ✅ Adaptateur DataService → ApogeeDataServices créé
 2. ✅ Hooks useStatiaAgency* créés (contexte agence intégré)
-3. ⏳ Migration Dashboard.tsx vers StatIA
+3. ✅ **Dashboard.tsx migré vers StatIA** (5 KPIs: CA, Taux SAV, Taux Transfo, Panier Moyen, Montant Restant)
 4. ⏳ Migration IndicateursUnivers.tsx vers StatIA
-5. ⏳ Migration use-recouvrement-stats.ts vers StatIA
+5. ⏳ Migration MesIndicateursCard.tsx vers StatIA
+6. ⏳ Migration DiffusionKpiTiles.tsx vers StatIA
 
 ### Phase 3: Migration Franchiseur
 1. Utiliser `getMetricForNetwork()`
