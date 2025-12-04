@@ -23,7 +23,7 @@ const createClientsMap = (clients: any[]): Map<number, any> => {
   return map;
 };
 
-// Filtrer les factures de la période
+// Filtrer les factures de la période (INCLUANT les avoirs)
 const filterFacturesPeriode = (
   factures: any[],
   clients: any[],
@@ -34,12 +34,8 @@ const filterFacturesPeriode = (
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   
   return factures.filter(facture => {
-    // Type facture uniquement (pas les avoirs)
-    const typeFacture = facture.typeFacture || facture.data?.type || facture.state;
-    if (typeFacture === "avoir") return false;
-    
-    // NE PAS exclure la facture d'init - elle sera traitée spécialement
-    // (part apporteurs = montant total - part particuliers)
+    // RÈGLE STATIA: Ne plus exclure les avoirs - ils seront traités comme montants négatifs
+    // Les avoirs réduisent le CA, ils doivent donc être inclus dans le filtrage
     
     // Filtrer par période
     const dateReelle = facture.dateReelle || facture.dateEmission || facture.created_at;
@@ -85,11 +81,15 @@ export const calculateTop10Apporteurs = (
     
     const apporteurId = project.data?.commanditaireId || project.commanditaireId;
     
-    // Calculer le montant HT
+    // Calculer le montant HT avec traitement des avoirs
     const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
-    const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+    const montantBrut = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
     
-    if (isNaN(montant) || montant === 0) return;
+    if (isNaN(montantBrut) || montantBrut === 0) return;
+    
+    // RÈGLE STATIA: Les avoirs sont traités comme montants négatifs
+    const typeFacture = (facture.typeFacture || facture.data?.type || facture.state || "").toLowerCase();
+    const montant = typeFacture === "avoir" ? -Math.abs(montantBrut) : montantBrut;
     
     // Ajouter au CA
     const currentCA = caApporteur.get(apporteurId) || 0;
@@ -235,11 +235,15 @@ export const calculatePartApporteurs = (
     const project = projectsMap.get(projectId);
     if (!project) return;
     
-    // Montant normal
+    // Calculer le montant avec traitement des avoirs
     const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
-    const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+    const montantBrut = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
     
-    if (isNaN(montant)) return;
+    if (isNaN(montantBrut)) return;
+    
+    // RÈGLE STATIA: Les avoirs sont traités comme montants négatifs
+    const typeFacture = (facture.typeFacture || facture.data?.type || facture.state || "").toLowerCase();
+    const montant = typeFacture === "avoir" ? -Math.abs(montantBrut) : montantBrut;
     
     caTotal += montant;
     
@@ -383,9 +387,13 @@ export const calculatePanierMoyenHT = (
     if (!apporteurId) return;
     
     const montantRaw = facture.totalHT || facture.data?.totalHT || "0";
-    const montant = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
+    const montantBrut = parseFloat(String(montantRaw).replace(/[^0-9.-]/g, ''));
     
-    if (!isNaN(montant)) {
+    if (!isNaN(montantBrut)) {
+      // RÈGLE STATIA: Les avoirs sont traités comme montants négatifs
+      const typeFacture = (facture.typeFacture || facture.data?.type || facture.state || "").toLowerCase();
+      const montant = typeFacture === "avoir" ? -Math.abs(montantBrut) : montantBrut;
+      
       caApporteursTotal += montant;
       dossiersFacturesApporteurs.add(facture.projectId);
     }
