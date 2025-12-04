@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useUnreadAnnouncements, useMarkAnnouncementAsRead } from '@/hooks/use-announcements';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -18,10 +19,11 @@ interface AnnouncementGateProps {
 
 /**
  * Composant global qui affiche les annonces prioritaires non lues
- * à la connexion de l'utilisateur
+ * à la connexion de l'utilisateur, filtrées par rôle
  */
 export function AnnouncementGate({ userId }: AnnouncementGateProps) {
-  const { data: unreadAnnouncements = [] } = useUnreadAnnouncements(userId);
+  const { globalRole } = useAuth();
+  const { data: unreadAnnouncements = [] } = useUnreadAnnouncements(userId, globalRole || undefined);
   const markAsRead = useMarkAnnouncementAsRead();
   
   const [currentIndex, setCurrentIndex] = useState(0);
