@@ -16,11 +16,13 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAgency } from "../hooks/useAgencies";
 import { useAnimators } from "../hooks/useAnimators";
 import { RoyaltyConfigSection } from "./RoyaltyConfigSection";
+import { AgencyStampUpload } from "./AgencyStampUpload";
 
 interface AgencyProfileDialogProps {
   agencyId: string | null;
@@ -355,6 +357,14 @@ export function AgencyProfileDialog({
                 </p>
               )}
             </div>
+
+            {/* Stamp upload section - only for existing agencies */}
+            {agencyId && (
+              <>
+                <Separator />
+                <AgencyStampUpload agencyId={agencyId} disabled={!canManage} />
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="royalties" className="mt-4">
