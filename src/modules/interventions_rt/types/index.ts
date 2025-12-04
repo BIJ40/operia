@@ -79,6 +79,7 @@ export interface QuestionNode {
   type: QuestionType;
   options?: QuestionOption[];
   placeholder?: string;
+  helpText?: string;
   required?: boolean;
   next: {
     default?: string | null;
@@ -86,6 +87,29 @@ export interface QuestionNode {
   };
   isEnd?: boolean;
   isBranchStart?: boolean;
+  backTo?: string;
+  tags?: string[];
+}
+
+export interface QuestionTreeMetadata {
+  univers: string;
+  version: number;
+  label: string;
+  author: string;
+}
+
+export interface QuestionTreeBlock {
+  blockId: string;
+  label: string;
+  entryNodeId: string;
+  nodeIds: string[];
+}
+
+export interface QuestionTreeBranch {
+  branchId: string;
+  label: string;
+  entryNodeId: string;
+  includeBlocks: string[];
 }
 
 export interface QuestionTree {
@@ -93,6 +117,9 @@ export interface QuestionTree {
   version: string;
   startNode: string;
   nodes: Record<string, QuestionNode>;
+  metadata?: QuestionTreeMetadata;
+  blocks?: QuestionTreeBlock[];
+  branches?: QuestionTreeBranch[];
 }
 
 // Runner state

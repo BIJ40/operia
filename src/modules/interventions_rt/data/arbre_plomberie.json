@@ -1,268 +1,1656 @@
 {
-  "univers": "plomberie",
-  "version": "1.0.0",
-  "startNode": "COM-01",
   "metadata": {
-    "label": "Relevé Technique Plomberie",
-    "author": "HelpConfort",
-    "lastUpdate": "2024-12-04"
+    "univers": "plomberie",
+    "version": 1,
+    "label": "Relevés techniques plomberie",
+    "author": "helpconfort-services"
   },
-  "nodes": {
-    "COM-01": {
+  "root": "PLO-00",
+  "blocks": [
+    {
+      "blockId": "COMMON-INTRO",
+      "label": "Bloc commun d'introduction (COM-01 à COM-06)",
+      "entryNodeId": "COM-01",
+      "nodeIds": [
+        "COM-01",
+        "COM-02",
+        "COM-03",
+        "COM-04",
+        "COM-04B",
+        "COM-05",
+        "COM-05B",
+        "COM-05C",
+        "COM-06"
+      ]
+    },
+    {
+      "blockId": "PLO-BLOCK-PIECE",
+      "label": "Bloc détail pièce",
+      "entryNodeId": "PLO-PIECE-01",
+      "nodeIds": [
+        "PLO-PIECE-01",
+        "PLO-PIECE-02",
+        "PLO-PIECE-03"
+      ]
+    },
+    {
+      "blockId": "PLO-BLOCK-APPAREIL",
+      "label": "Bloc appareil sanitaire",
+      "entryNodeId": "PLO-APP-01",
+      "nodeIds": [
+        "PLO-APP-01",
+        "PLO-APP-02"
+      ]
+    },
+    {
+      "blockId": "PLO-BLOCK-ROBINETTERIE",
+      "label": "Bloc robinetterie",
+      "entryNodeId": "PLO-ROB-01",
+      "nodeIds": [
+        "PLO-ROB-01",
+        "PLO-ROB-02"
+      ]
+    },
+    {
+      "blockId": "PLO-BLOCK-CANALISATION",
+      "label": "Bloc canalisation / réseau",
+      "entryNodeId": "PLO-CAN-01",
+      "nodeIds": [
+        "PLO-CAN-01",
+        "PLO-CAN-02",
+        "PLO-CAN-03"
+      ]
+    },
+    {
+      "blockId": "PLO-BLOCK-FUITE",
+      "label": "Bloc fuite générique",
+      "entryNodeId": "PLO-FUIT-01",
+      "nodeIds": [
+        "PLO-FUIT-01",
+        "PLO-FUIT-02",
+        "PLO-FUIT-03",
+        "PLO-FUIT-04"
+      ]
+    },
+    {
+      "blockId": "PLO-BLOCK-METRES",
+      "label": "Bloc métrés DDE / remise en état",
+      "entryNodeId": "PLO-MET-01",
+      "nodeIds": [
+        "PLO-MET-01",
+        "PLO-MET-02",
+        "PLO-MET-03",
+        "PLO-MET-04",
+        "PLO-MET-05"
+      ]
+    }
+  ],
+  "branches": [
+    {
+      "branchId": "PLO-F1",
+      "label": "Fuite sur robinetterie / flexible / siphon",
+      "entryNodeId": "PLO-F1-01",
+      "includeBlocks": [
+        "PLO-BLOCK-APPAREIL",
+        "PLO-BLOCK-ROBINETTERIE",
+        "PLO-BLOCK-FUITE"
+      ]
+    },
+    {
+      "branchId": "PLO-F2",
+      "label": "Fuite sur canalisation alimentation / évacuation",
+      "entryNodeId": "PLO-F2-01",
+      "includeBlocks": [
+        "PLO-BLOCK-CANALISATION",
+        "PLO-BLOCK-FUITE"
+      ]
+    },
+    {
+      "branchId": "PLO-RF",
+      "label": "Recherche de fuite / dégâts des eaux",
+      "entryNodeId": "PLO-RF-01",
+      "includeBlocks": [
+        "PLO-BLOCK-METRES"
+      ]
+    },
+    {
+      "branchId": "PLO-BAL",
+      "label": "Ballon d'eau chaude / ECS",
+      "entryNodeId": "PLO-BAL-01",
+      "includeBlocks": []
+    },
+    {
+      "branchId": "PLO-WC",
+      "label": "WC / chasse / bâti-support",
+      "entryNodeId": "PLO-WC-01",
+      "includeBlocks": [
+        "PLO-BLOCK-FUITE"
+      ]
+    },
+    {
+      "branchId": "PLO-EV",
+      "label": "Problème d'évacuation (bouchée / lente / odeurs)",
+      "entryNodeId": "PLO-EV-01",
+      "includeBlocks": [
+        "PLO-BLOCK-APPAREIL"
+      ]
+    },
+    {
+      "branchId": "PLO-REM",
+      "label": "Remplacement / installation appareil sanitaire",
+      "entryNodeId": "PLO-REM-01",
+      "includeBlocks": [
+        "PLO-BLOCK-APPAREIL"
+      ]
+    },
+    {
+      "branchId": "PLO-PRES",
+      "label": "Problème de pression / coups de bélier / bruits",
+      "entryNodeId": "PLO-PRES-01",
+      "includeBlocks": []
+    },
+    {
+      "branchId": "PLO-CH",
+      "label": "Chauffage hydraulique (radiateurs / nourrice / plancher)",
+      "entryNodeId": "PLO-CH-01",
+      "includeBlocks": [
+        "PLO-BLOCK-CANALISATION",
+        "PLO-BLOCK-FUITE"
+      ]
+    },
+    {
+      "branchId": "PLO-EXT",
+      "label": "Réseaux et points d'eau extérieurs",
+      "entryNodeId": "PLO-EXT-01",
+      "includeBlocks": [
+        "PLO-BLOCK-CANALISATION",
+        "PLO-BLOCK-FUITE"
+      ]
+    },
+    {
+      "branchId": "PLO-ADOUC",
+      "label": "Adoucisseur / traitement d'eau",
+      "entryNodeId": "PLO-ADOUC-01",
+      "includeBlocks": []
+    },
+    {
+      "branchId": "PLO-COL",
+      "label": "Colonnes communes / copropriété",
+      "entryNodeId": "PLO-COL-01",
+      "includeBlocks": [
+        "PLO-BLOCK-CANALISATION",
+        "PLO-BLOCK-FUITE",
+        "PLO-BLOCK-METRES"
+      ]
+    },
+    {
+      "branchId": "PLO-CONF",
+      "label": "Contrôle / diagnostic sans travaux immédiats",
+      "entryNodeId": "PLO-CONF-01",
+      "includeBlocks": []
+    }
+  ],
+  "nodes": [
+    {
       "id": "COM-01",
-      "branch": "contexte",
-      "question": "Type de rendez-vous ?",
+      "group": "COMMON",
+      "label": "Type de rendez-vous ?",
       "type": "single_choice",
+      "required": true,
       "options": [
         { "value": "depannage", "label": "Dépannage" },
-        { "value": "dde", "label": "DDE (Devis Demandé par Expert)" },
-        { "value": "diagnostic", "label": "Diagnostic seul" },
-        { "value": "travaux", "label": "Travaux suite devis" }
+        { "value": "recherche_fuite", "label": "Recherche de fuite" },
+        { "value": "travaux_programmes", "label": "Travaux programmés" },
+        { "value": "degats_eaux", "label": "Dégâts des eaux / remise en état" },
+        { "value": "diagnostic", "label": "Contrôle / diagnostic" }
       ],
-      "required": true,
-      "next": { "default": "COM-02" }
+      "next": { "default": "COM-02" },
+      "tags": ["contexte"]
     },
-    "COM-02": {
+    {
       "id": "COM-02",
-      "branch": "contexte",
-      "question": "Le client est-il présent sur place ?",
-      "type": "boolean",
-      "next": { "default": "COM-03" }
+      "group": "COMMON",
+      "label": "Description de la demande / du sinistre (en langage client)",
+      "type": "text_long",
+      "required": true,
+      "next": { "default": "COM-03" },
+      "tags": ["contexte"]
     },
-    "COM-03": {
+    {
       "id": "COM-03",
-      "branch": "contexte",
-      "question": "Accès au logement / local ?",
+      "group": "COMMON",
+      "label": "Type de local ?",
       "type": "single_choice",
+      "required": true,
       "options": [
-        { "value": "ok", "label": "Accès OK" },
-        { "value": "difficile", "label": "Accès difficile" },
-        { "value": "impossible", "label": "Accès impossible" }
+        { "value": "maison", "label": "Maison individuelle" },
+        { "value": "appartement", "label": "Appartement" },
+        { "value": "parties_communes", "label": "Parties communes" },
+        { "value": "locaux_pro", "label": "Locaux professionnels" },
+        { "value": "autre", "label": "Autre" }
       ],
-      "next": {
-        "default": "COM-04",
-        "byAnswer": { "impossible": "COM-END-ACCES" }
-      }
+      "next": { "default": "COM-04" }
     },
-    "COM-04": {
+    {
       "id": "COM-04",
-      "branch": "contexte",
-      "question": "Origine du sinistre connue ?",
-      "type": "boolean",
+      "group": "COMMON",
+      "label": "Pièce principale concernée ?",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "cuisine", "label": "Cuisine" },
+        { "value": "sdb", "label": "Salle de bains" },
+        { "value": "wc", "label": "WC" },
+        { "value": "buanderie", "label": "Buanderie" },
+        { "value": "chaufferie", "label": "Chaufferie" },
+        { "value": "cave", "label": "Cave" },
+        { "value": "exterieur", "label": "Extérieur" },
+        { "value": "autre", "label": "Autre" }
+      ],
+      "next": { "default": "COM-04B" }
+    },
+    {
+      "id": "COM-04B",
+      "group": "COMMON",
+      "label": "Précision sur la pièce",
+      "type": "text_short",
+      "required": false,
+      "helpText": "Ex : WC RDC, SDB étage 1",
       "next": { "default": "COM-05" }
     },
-    "COM-05": {
+    {
       "id": "COM-05",
-      "branch": "contexte",
-      "question": "Description rapide du problème constaté",
+      "group": "COMMON",
+      "label": "Situation à sécuriser ?",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "fuite_importante", "label": "Fuite active importante" },
+        { "value": "fuite_goutte", "label": "Fuite goutte à goutte" },
+        { "value": "plus_eau_chaude", "label": "Plus d'eau chaude" },
+        { "value": "plus_eau", "label": "Plus d'eau (générale)" },
+        { "value": "degats_surfaces", "label": "Dégâts sur plafond / murs / sols" },
+        { "value": "risque_inondation", "label": "Risque d'inondation" }
+      ],
+      "next": { "default": "COM-05B" }
+    },
+    {
+      "id": "COM-05B",
+      "group": "COMMON",
+      "label": "La coupure d'eau générale a-t-elle été réalisée ?",
+      "type": "boolean",
+      "required": false,
+      "next": { "default": "COM-05C" }
+    },
+    {
+      "id": "COM-05C",
+      "group": "COMMON",
+      "label": "Précisions sur les mesures de sécurité prises",
       "type": "text_long",
-      "placeholder": "Décrivez le problème...",
+      "required": false,
       "next": { "default": "COM-06" }
     },
-    "COM-06": {
+    {
       "id": "COM-06",
-      "branch": "contexte",
-      "question": "Quelle est la nature principale du problème ?",
-      "type": "single_choice",
-      "isBranchStart": true,
+      "group": "COMMON",
+      "label": "Accès et contraintes particulières",
+      "type": "multi_choice",
+      "required": false,
       "options": [
-        { "value": "fuite", "label": "Fuite d'eau" },
-        { "value": "bouchage", "label": "Bouchage / Engorgement" },
-        { "value": "robinetterie", "label": "Robinetterie défectueuse" },
-        { "value": "chauffe_eau", "label": "Chauffe-eau / Ballon" },
-        { "value": "wc", "label": "WC / Sanitaires" },
-        { "value": "autre", "label": "Autre problème" }
+        { "value": "acces_simple", "label": "Accès simple" },
+        { "value": "acces_difficile", "label": "Accès difficile / étroit" },
+        { "value": "hauteur", "label": "Travail en hauteur" },
+        { "value": "trappe", "label": "Accès par trappe" },
+        { "value": "amiante_suspecte", "label": "Présence / suspicion d'amiante" },
+        { "value": "contraintes_horaires", "label": "Contraintes horaires" }
       ],
-      "next": {
-        "byAnswer": {
-          "fuite": "PLO-F1-01",
-          "bouchage": "PLO-B1-01",
-          "robinetterie": "PLO-R1-01",
-          "chauffe_eau": "PLO-CE-01",
-          "wc": "PLO-WC-01",
-          "autre": "PLO-AUTRE-01"
-        },
-        "default": "PLO-F1-01"
-      }
-    },
-    "COM-END-ACCES": {
-      "id": "COM-END-ACCES",
-      "branch": "contexte",
-      "question": "Fin du relevé - Accès impossible. Veuillez noter les raisons.",
-      "type": "text_long",
-      "isEnd": true,
-      "next": { "default": null }
+      "next": { "default": "PLO-00" }
     },
 
-    "PLO-F1-01": {
-      "id": "PLO-F1-01",
-      "branch": "fuite",
-      "question": "Localisation de la fuite ?",
-      "type": "single_choice",
-      "options": [
-        { "value": "visible", "label": "Fuite visible / apparente" },
-        { "value": "encastree", "label": "Fuite encastrée / derrière cloison" },
-        { "value": "enterree", "label": "Fuite enterrée / sous dalle" },
-        { "value": "recherche", "label": "Recherche de fuite nécessaire" }
-      ],
-      "next": { "default": "PLO-F1-02" }
+    {
+      "id": "PLO-PIECE-01",
+      "group": "PLO-BLOCK-PIECE",
+      "label": "Hauteur sous plafond approximative (m)",
+      "type": "number",
+      "required": false,
+      "next": { "default": "PLO-PIECE-02" }
     },
-    "PLO-F1-02": {
-      "id": "PLO-F1-02",
-      "branch": "fuite",
-      "question": "Type de canalisation concernée ?",
+    {
+      "id": "PLO-PIECE-02",
+      "group": "PLO-BLOCK-PIECE",
+      "label": "Type de sol ?",
       "type": "single_choice",
+      "required": false,
       "options": [
-        { "value": "cuivre", "label": "Cuivre" },
-        { "value": "per", "label": "PER" },
-        { "value": "multicouche", "label": "Multicouche" },
-        { "value": "pvc", "label": "PVC" },
-        { "value": "acier", "label": "Acier / Galva" },
-        { "value": "plomb", "label": "Plomb" },
-        { "value": "inconnu", "label": "Non identifiable" }
+        { "value": "carrelage", "label": "Carrelage" },
+        { "value": "parquet", "label": "Parquet" },
+        { "value": "stratifie", "label": "Stratifié" },
+        { "value": "lino", "label": "Lino / PVC" },
+        { "value": "beton", "label": "Béton brut" },
+        { "value": "autre", "label": "Autre" }
       ],
-      "next": { "default": "PLO-F1-03" }
+      "next": { "default": "PLO-PIECE-03" }
     },
-    "PLO-F1-03": {
-      "id": "PLO-F1-03",
-      "branch": "fuite",
-      "question": "Diamètre approximatif ?",
+    {
+      "id": "PLO-PIECE-03",
+      "group": "PLO-BLOCK-PIECE",
+      "label": "Type de plinthes ?",
       "type": "single_choice",
+      "required": false,
       "options": [
-        { "value": "12", "label": "12mm" },
-        { "value": "14", "label": "14mm" },
-        { "value": "16", "label": "16mm" },
-        { "value": "20", "label": "20mm" },
-        { "value": "25", "label": "25mm" },
-        { "value": "32", "label": "32mm" },
-        { "value": "autre", "label": "Autre / Non mesuré" }
-      ],
-      "next": { "default": "PLO-MAT-01" }
+        { "value": "carrelage", "label": "Carrelage" },
+        { "value": "bois", "label": "Bois" },
+        { "value": "mdf", "label": "MDF" },
+        { "value": "aucune", "label": "Aucune" },
+        { "value": "autre", "label": "Autre" }
+      ]
     },
 
-    "PLO-B1-01": {
-      "id": "PLO-B1-01",
-      "branch": "bouchage",
-      "question": "Localisation du bouchage ?",
+    {
+      "id": "PLO-APP-01",
+      "group": "PLO-BLOCK-APPAREIL",
+      "label": "Appareil sanitaire / équipement concerné",
       "type": "single_choice",
+      "required": true,
       "options": [
-        { "value": "evier", "label": "Évier / Lavabo" },
-        { "value": "douche", "label": "Douche / Baignoire" },
+        { "value": "evier_cuisine", "label": "Évier cuisine" },
+        { "value": "lavabo", "label": "Lavabo" },
+        { "value": "douche", "label": "Douche" },
+        { "value": "baignoire", "label": "Baignoire" },
+        { "value": "lave_mains", "label": "Lave-mains" },
         { "value": "wc", "label": "WC" },
-        { "value": "regard", "label": "Regard extérieur" },
-        { "value": "colonne", "label": "Colonne d'immeuble" }
+        { "value": "lave_vaisselle", "label": "Lave-vaisselle" },
+        { "value": "lave_linge", "label": "Lave-linge" },
+        { "value": "seche_linge", "label": "Sèche-linge" },
+        { "value": "autre", "label": "Autre" }
       ],
-      "next": { "default": "PLO-MAT-01" }
+      "next": { "default": "PLO-APP-02" }
+    },
+    {
+      "id": "PLO-APP-02",
+      "group": "PLO-BLOCK-APPAREIL",
+      "label": "Marque / modèle si visible",
+      "type": "text_short",
+      "required": false
     },
 
-    "PLO-R1-01": {
-      "id": "PLO-R1-01",
-      "branch": "robinetterie",
-      "question": "Type d'équipement concerné ?",
+    {
+      "id": "PLO-ROB-01",
+      "group": "PLO-BLOCK-ROBINETTERIE",
+      "label": "Type de robinetterie",
       "type": "single_choice",
+      "required": true,
       "options": [
         { "value": "mitigeur", "label": "Mitigeur" },
         { "value": "melangeur", "label": "Mélangeur" },
-        { "value": "robinet", "label": "Robinet simple" },
-        { "value": "thermostatique", "label": "Thermostatique" }
+        { "value": "thermostatique", "label": "Mitigeur thermostatique" },
+        { "value": "robinet_arret", "label": "Robinet d'arrêt" },
+        { "value": "groupe_securite", "label": "Groupe de sécurité" },
+        { "value": "autre", "label": "Autre" }
       ],
-      "next": { "default": "PLO-MAT-01" }
+      "next": { "default": "PLO-ROB-02" }
     },
-
-    "PLO-CE-01": {
-      "id": "PLO-CE-01",
-      "branch": "chauffe_eau",
-      "question": "Type de chauffe-eau ?",
+    {
+      "id": "PLO-ROB-02",
+      "group": "PLO-BLOCK-ROBINETTERIE",
+      "label": "Mode de pose de la robinetterie",
       "type": "single_choice",
+      "required": false,
       "options": [
-        { "value": "electrique", "label": "Électrique (cumulus)" },
-        { "value": "gaz", "label": "Gaz" },
-        { "value": "thermodynamique", "label": "Thermodynamique" },
-        { "value": "solaire", "label": "Solaire" }
-      ],
-      "next": { "default": "PLO-MAT-01" }
+        { "value": "mural", "label": "Mural" },
+        { "value": "sur_plage", "label": "Sur plage / plan de travail" },
+        { "value": "sur_baignoire", "label": "Sur baignoire" },
+        { "value": "sur_meuble", "label": "Sur meuble" },
+        { "value": "autre", "label": "Autre" }
+      ]
     },
 
-    "PLO-WC-01": {
-      "id": "PLO-WC-01",
-      "branch": "wc",
-      "question": "Nature du problème WC ?",
+    {
+      "id": "PLO-CAN-01",
+      "group": "PLO-BLOCK-CANALISATION",
+      "label": "Type de réseau concerné",
       "type": "single_choice",
+      "required": true,
       "options": [
-        { "value": "fuite_reservoir", "label": "Fuite réservoir" },
-        { "value": "chasse", "label": "Chasse d'eau défectueuse" },
-        { "value": "bouchage", "label": "WC bouché" },
-        { "value": "fixation", "label": "Problème de fixation" }
+        { "value": "alimentation_ef", "label": "Alimentation eau froide" },
+        { "value": "alimentation_ec", "label": "Alimentation eau chaude" },
+        { "value": "evacuation_eu", "label": "Évacuation eaux usées" },
+        { "value": "evacuation_ev", "label": "Évacuation eaux vannes" },
+        { "value": "chauffage", "label": "Circuit de chauffage" },
+        { "value": "autre", "label": "Autre" }
       ],
-      "next": { "default": "PLO-MAT-01" }
+      "next": { "default": "PLO-CAN-02" }
+    },
+    {
+      "id": "PLO-CAN-02",
+      "group": "PLO-BLOCK-CANALISATION",
+      "label": "Matériau de la canalisation",
+      "type": "single_choice",
+      "required": false,
+      "options": [
+        { "value": "per", "label": "PER" },
+        { "value": "cuivre", "label": "Cuivre" },
+        { "value": "multicouche", "label": "Multicouche" },
+        { "value": "pvc", "label": "PVC" },
+        { "value": "fonte", "label": "Fonte" },
+        { "value": "autre", "label": "Autre" }
+      ],
+      "next": { "default": "PLO-CAN-03" }
+    },
+    {
+      "id": "PLO-CAN-03",
+      "group": "PLO-BLOCK-CANALISATION",
+      "label": "Mode de pose",
+      "type": "single_choice",
+      "required": false,
+      "options": [
+        { "value": "apparente", "label": "Apparente" },
+        { "value": "coffrage", "label": "En coffrage démontable" },
+        { "value": "encastree_mur", "label": "Encastrée dans mur / cloison" },
+        { "value": "encastree_sol", "label": "Encastrée dans sol" },
+        { "value": "vide_sanitaire", "label": "Vide sanitaire" },
+        { "value": "combles", "label": "Combles" }
+      ]
     },
 
-    "PLO-AUTRE-01": {
-      "id": "PLO-AUTRE-01",
-      "branch": "autre",
-      "question": "Décrivez le problème rencontré",
-      "type": "text_long",
-      "placeholder": "Description détaillée...",
-      "next": { "default": "PLO-MAT-01" }
-    },
-
-    "PLO-MAT-01": {
-      "id": "PLO-MAT-01",
-      "branch": "materiel",
-      "question": "Matériel nécessaire pour la réparation / travaux ?",
+    {
+      "id": "PLO-FUIT-01",
+      "group": "PLO-BLOCK-FUITE",
+      "label": "Fuite constatée visuellement ?",
       "type": "boolean",
+      "required": true,
       "next": {
-        "byAnswer": { "true": "PLO-MAT-02", "false": "PLO-END" },
-        "default": "PLO-END"
+        "byAnswer": {
+          "true": "PLO-FUIT-02",
+          "false": "PLO-FUIT-04"
+        }
       }
     },
-    "PLO-MAT-02": {
-      "id": "PLO-MAT-02",
-      "branch": "materiel",
-      "question": "Matériel standard à prévoir",
-      "type": "multi_choice",
-      "options": [
-        { "value": "raccords_per", "label": "Raccords PER" },
-        { "value": "raccords_cuivre", "label": "Raccords cuivre" },
-        { "value": "raccords_multicouche", "label": "Raccords multicouche" },
-        { "value": "raccords_pvc", "label": "Raccords PVC" },
-        { "value": "robinets", "label": "Robinets / Mitigeurs" },
-        { "value": "flexibles", "label": "Flexibles" },
-        { "value": "siphons", "label": "Siphons / Bondes" },
-        { "value": "tubes", "label": "Tubes (préciser matériau)" },
-        { "value": "joints", "label": "Joints / Manchons / Colliers" },
-        { "value": "autre", "label": "Autre (préciser)" }
-      ],
-      "next": { "default": "PLO-MAT-03" }
-    },
-    "PLO-MAT-03": {
-      "id": "PLO-MAT-03",
-      "branch": "materiel",
-      "question": "Matériel spécifique / Référence à commander ?",
-      "type": "text_long",
-      "placeholder": "Références, marques, dimensions particulières...",
-      "next": { "default": "PLO-MAT-04" }
-    },
-    "PLO-MAT-04": {
-      "id": "PLO-MAT-04",
-      "branch": "materiel",
-      "question": "Urgence d'approvisionnement ?",
+    {
+      "id": "PLO-FUIT-02",
+      "group": "PLO-BLOCK-FUITE",
+      "label": "Type de fuite observée",
       "type": "single_choice",
+      "required": true,
       "options": [
-        { "value": "stock", "label": "Stock dépôt" },
-        { "value": "standard", "label": "Commande standard" },
-        { "value": "urgent", "label": "Commande urgente" }
+        { "value": "goutte_goutte", "label": "Goutte à goutte" },
+        { "value": "filet", "label": "Filet continu" },
+        { "value": "rupture", "label": "Rupture importante" },
+        { "value": "traces_anciennes", "label": "Traces anciennes, pas de fuite active" }
       ],
-      "next": { "default": "PLO-END" }
+      "next": { "default": "PLO-FUIT-03" }
+    },
+    {
+      "id": "PLO-FUIT-03",
+      "group": "PLO-BLOCK-FUITE",
+      "label": "Localisation précise de la fuite",
+      "type": "text_long",
+      "required": true
+    },
+    {
+      "id": "PLO-FUIT-04",
+      "group": "PLO-BLOCK-FUITE",
+      "label": "Pas de fuite visible : précisions / indices",
+      "type": "text_long",
+      "required": false
     },
 
-    "PLO-END": {
-      "id": "PLO-END",
-      "branch": "fin",
-      "question": "Relevé technique terminé. Vous pouvez maintenant valider et générer le PDF.",
-      "type": "info",
-      "isEnd": true,
-      "next": { "default": null }
+    {
+      "id": "PLO-MET-01",
+      "group": "PLO-BLOCK-METRES",
+      "label": "Support impacté",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "plafond", "label": "Plafond" },
+        { "value": "mur", "label": "Mur" },
+        { "value": "sol", "label": "Sol" },
+        { "value": "menuiseries", "label": "Menuiseries" },
+        { "value": "autre", "label": "Autre" }
+      ],
+      "next": { "default": "PLO-MET-02" }
+    },
+    {
+      "id": "PLO-MET-02",
+      "group": "PLO-BLOCK-METRES",
+      "label": "Surface totale de la pièce (m²)",
+      "type": "number",
+      "required": false,
+      "next": { "default": "PLO-MET-03" }
+    },
+    {
+      "id": "PLO-MET-03",
+      "group": "PLO-BLOCK-METRES",
+      "label": "Surface endommagée (m²)",
+      "type": "number",
+      "required": false,
+      "next": { "default": "PLO-MET-04" }
+    },
+    {
+      "id": "PLO-MET-04",
+      "group": "PLO-BLOCK-METRES",
+      "label": "Surface non endommagée (m²)",
+      "type": "number",
+      "required": false,
+      "next": { "default": "PLO-MET-05" }
+    },
+    {
+      "id": "PLO-MET-05",
+      "group": "PLO-BLOCK-METRES",
+      "label": "Observations complémentaires sur les supports",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-00",
+      "group": "PLO-ROOT",
+      "label": "Quel est le problème principal constaté en plomberie ?",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "fuite_robinetterie", "label": "Fuite sur robinetterie / flexible / siphon" },
+        { "value": "fuite_canalisation", "label": "Fuite sur canalisation alimentation / évacuation" },
+        { "value": "recherche_fuite", "label": "Recherche de fuite / dégâts des eaux" },
+        { "value": "ballon_ecs", "label": "Ballon d'eau chaude / ECS" },
+        { "value": "wc", "label": "Problème de WC / chasse / bâti-support" },
+        { "value": "evacuation", "label": "Problème d'évacuation (bouchée / lente / odeurs)" },
+        { "value": "remplacement_appareil", "label": "Remplacement / installation d'un appareil sanitaire" },
+        { "value": "pression_bruit", "label": "Problème de pression / coups de bélier / bruits" },
+        { "value": "chauffage", "label": "Problème de chauffage hydraulique" },
+        { "value": "reseaux_exterieurs", "label": "Réseaux / points d'eau extérieurs" },
+        { "value": "adoucisseur", "label": "Adoucisseur / traitement d'eau" },
+        { "value": "colonnes", "label": "Colonnes communes / copropriété" },
+        { "value": "diagnostic_seul", "label": "Contrôle / diagnostic sans travaux immédiats" }
+      ],
+      "next": {
+        "byAnswer": {
+          "fuite_robinetterie": "PLO-F1-01",
+          "fuite_canalisation": "PLO-F2-01",
+          "recherche_fuite": "PLO-RF-01",
+          "ballon_ecs": "PLO-BAL-01",
+          "wc": "PLO-WC-01",
+          "evacuation": "PLO-EV-01",
+          "remplacement_appareil": "PLO-REM-01",
+          "pression_bruit": "PLO-PRES-01",
+          "chauffage": "PLO-CH-01",
+          "reseaux_exterieurs": "PLO-EXT-01",
+          "adoucisseur": "PLO-ADOUC-01",
+          "colonnes": "PLO-COL-01",
+          "diagnostic_seul": "PLO-CONF-01"
+        }
+      }
+    },
+
+    {
+      "id": "PLO-F1-01",
+      "group": "PLO-F1",
+      "label": "Sur quel appareil se situe la robinetterie / le siphon concernés ?",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "evier_cuisine", "label": "Évier cuisine" },
+        { "value": "lavabo", "label": "Lavabo" },
+        { "value": "douche", "label": "Douche" },
+        { "value": "baignoire", "label": "Baignoire" },
+        { "value": "lave_mains", "label": "Lave-mains" },
+        { "value": "autre", "label": "Autre" }
+      ],
+      "next": { "default": "PLO-F1-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-F1-02",
+      "group": "PLO-F1",
+      "label": "Où se situe précisément la fuite sur cet ensemble ?",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "corps_robinet", "label": "Au niveau du corps du robinet" },
+        { "value": "base_flexible", "label": "À la base du flexible / douchette" },
+        { "value": "flexible_intermediaire", "label": "Sur la longueur du flexible" },
+        { "value": "raccord_sous_meuble", "label": "Au raccordement sous évier / meuble" },
+        { "value": "siphon", "label": "Au niveau du siphon / garde d'eau" },
+        { "value": "autre", "label": "Autre" }
+      ],
+      "next": { "default": "PLO-F1-03" }
+    },
+    {
+      "id": "PLO-F1-03",
+      "group": "PLO-F1",
+      "label": "État général de la robinetterie et des raccords",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "etat_bon", "label": "Bon état apparent" },
+        { "value": "etat_ancien", "label": "Équipement ancien" },
+        { "value": "etat_vetuste", "label": "Très vétuste / fin de vie" },
+        { "value": "entartrage", "label": "Fort entartrage visible" },
+        { "value": "oxydation", "label": "Oxydation / corrosion" },
+        { "value": "montage_bricole", "label": "Montage bricolé / non conforme" }
+      ],
+      "next": { "default": "PLO-F1-04" }
+    },
+    {
+      "id": "PLO-F1-04",
+      "group": "PLO-F1",
+      "label": "Travaux de dépose / accès nécessaires ?",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "depose_meuble", "label": "Dépose de meuble" },
+        { "value": "depose_plan", "label": "Dépose de plan de travail" },
+        { "value": "depose_trappe", "label": "Ouverture / dépose de trappe" },
+        { "value": "aucun", "label": "Aucun, accès direct" }
+      ],
+      "next": { "default": "PLO-F1-05" }
+    },
+    {
+      "id": "PLO-F1-05",
+      "group": "PLO-F1",
+      "label": "Actions techniques envisagées (à chiffrer)",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "resserrage", "label": "Resserage / reprise d'étanchéité" },
+        { "value": "remplacement_flexible", "label": "Remplacement du flexible / douchette" },
+        { "value": "remplacement_robinet", "label": "Remplacement complet du robinet" },
+        { "value": "remplacement_siphon", "label": "Remplacement du siphon / garde d'eau" },
+        { "value": "reprise_raccords", "label": "Reprise des raccords d'alimentation" },
+        { "value": "autre", "label": "Autre (détailler en commentaire)" }
+      ],
+      "next": { "default": "PLO-F1-06" }
+    },
+    {
+      "id": "PLO-F1-06",
+      "group": "PLO-F1",
+      "label": "Temps de main d'œuvre estimatif (h)",
+      "type": "number",
+      "required": false,
+      "helpText": "Ex : 1.5 pour 1h30",
+      "next": { "default": "PLO-F1-07" }
+    },
+    {
+      "id": "PLO-F1-07",
+      "group": "PLO-F1",
+      "label": "Commentaire technique complémentaire",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-F2-01",
+      "group": "PLO-F2",
+      "label": "Quel réseau de canalisation est concerné ?",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "ef", "label": "Alimentation eau froide" },
+        { "value": "ec", "label": "Alimentation eau chaude" },
+        { "value": "eu", "label": "Évacuation eaux usées" },
+        { "value": "ev", "label": "Évacuation eaux vannes" },
+        { "value": "chauffage", "label": "Circuit de chauffage" },
+        { "value": "autre", "label": "Autre" }
+      ],
+      "next": { "default": "PLO-F2-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-F2-02",
+      "group": "PLO-F2",
+      "label": "Localisation générale de la fuite sur le réseau",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "interieur_piece", "label": "À l'intérieur de la pièce principale" },
+        { "value": "traversée_mur", "label": "En traversée de mur / cloison" },
+        { "value": "plafond", "label": "Au-dessus (plafond / étage supérieur)" },
+        { "value": "sol", "label": "Sous le sol de la pièce" },
+        { "value": "vide_sanitaire", "label": "En vide sanitaire / sous-sol" },
+        { "value": "autre", "label": "Autre" }
+      ],
+      "next": { "default": "PLO-F2-03" }
+    },
+    {
+      "id": "PLO-F2-03",
+      "group": "PLO-F2",
+      "label": "Travaux d'accès prévisibles pour atteindre la fuite",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "depose_coffrage", "label": "Dépose de coffrage" },
+        { "value": "ouverture_placo", "label": "Ouverture cloison placo" },
+        { "value": "ouverture_plafond", "label": "Ouverture plafond" },
+        { "value": "ouverture_sol", "label": "Ouverture sol (carrelage / parquet)" },
+        { "value": "acces_vide_sanitaire", "label": "Accès vide sanitaire" },
+        { "value": "acces_combles", "label": "Accès combles" },
+        { "value": "aucun", "label": "Aucun, accès direct" }
+      ],
+      "next": { "default": "PLO-F2-04" }
+    },
+    {
+      "id": "PLO-F2-04",
+      "group": "PLO-F2",
+      "label": "Supports à reprendre suite à la fuite ?",
+      "type": "boolean",
+      "required": true,
+      "next": {
+        "byAnswer": {
+          "true": "PLO-MET-01",
+          "false": "PLO-F2-05"
+        }
+      }
+    },
+    {
+      "id": "PLO-F2-05",
+      "group": "PLO-F2",
+      "label": "État général du réseau visible",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "etat_bon", "label": "Bon état apparent" },
+        { "value": "etat_ancien", "label": "Installation ancienne" },
+        { "value": "etat_vetuste", "label": "Réseau très vétuste" },
+        { "value": "corrosion", "label": "Corrosion / piqûres" },
+        { "value": "bricolage", "label": "Bricolage / ajout non conforme" }
+      ],
+      "next": { "default": "PLO-F2-06" }
+    },
+    {
+      "id": "PLO-F2-06",
+      "group": "PLO-F2",
+      "label": "Solutions techniques envisagées (à chiffrer)",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "reparation_localisee", "label": "Réparation localisée" },
+        { "value": "deviation", "label": "Déviation du réseau" },
+        { "value": "remplacement_troncon", "label": "Remplacement d'un tronçon" },
+        { "value": "remplacement_ligne", "label": "Remplacement complet de la ligne" },
+        { "value": "mise_norme", "label": "Mise en conformité / reprise des fixations" },
+        { "value": "autre", "label": "Autre (détailler)" }
+      ],
+      "next": { "default": "PLO-F2-07" }
+    },
+    {
+      "id": "PLO-F2-07",
+      "group": "PLO-F2",
+      "label": "Commentaire technique sur l'origine probable / certaine de la fuite",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-RF-01",
+      "group": "PLO-RF",
+      "label": "Contexte de la recherche de fuite",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "degats_visibles", "label": "Fuite non localisée avec dégâts visibles" },
+        { "value": "degats_non_visibles", "label": "Fuite non localisée sans dégâts visibles" },
+        { "value": "suspicion_reseau_encastre", "label": "Suspicion de fuite sur réseau encastré" },
+        { "value": "controle_suite_sinistre", "label": "Contrôle de réseau suite à sinistre antérieur" }
+      ],
+      "next": { "default": "PLO-RF-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-RF-02",
+      "group": "PLO-RF",
+      "label": "Supports impactés par les dégâts (si visibles)",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "plafond", "label": "Plafond" },
+        { "value": "mur", "label": "Mur" },
+        { "value": "sol", "label": "Sol" },
+        { "value": "menuiseries", "label": "Menuiseries" },
+        { "value": "autre", "label": "Autre" }
+      ],
+      "next": { "default": "PLO-RF-03" }
+    },
+    {
+      "id": "PLO-RF-03",
+      "group": "PLO-RF",
+      "label": "Périmètre de recherche envisagé",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "alimentation_ef_ec", "label": "Réseau alimentation EF/EC" },
+        { "value": "evacuation", "label": "Réseau évacuation (EU / EV)" },
+        { "value": "chauffage", "label": "Réseau chauffage" },
+        { "value": "toiture_terrasse", "label": "Toiture / terrasse (si cohérent)" }
+      ],
+      "next": { "default": "PLO-RF-04" }
+    },
+    {
+      "id": "PLO-RF-04",
+      "group": "PLO-RF",
+      "label": "Moyens de recherche utilisés / prévus",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "inspection_visuelle", "label": "Inspection visuelle" },
+        { "value": "mise_en_eau", "label": "Mise en eau ciblée" },
+        { "value": "coupures_sequentielles", "label": "Coupures séquentielles de réseau" },
+        { "value": "camera", "label": "Caméra" },
+        { "value": "gaz_traceur", "label": "Gaz traceur" },
+        { "value": "autre", "label": "Autre méthode" }
+      ],
+      "next": { "default": "PLO-RF-05" }
+    },
+    {
+      "id": "PLO-RF-05",
+      "group": "PLO-RF",
+      "label": "La fuite a-t-elle été identifiée ?",
+      "type": "boolean",
+      "required": true,
+      "next": {
+        "byAnswer": {
+          "true": "PLO-RF-06",
+          "false": "PLO-RF-08"
+        }
+      }
+    },
+    {
+      "id": "PLO-RF-06",
+      "group": "PLO-RF",
+      "label": "Description de la fuite identifiée",
+      "type": "text_long",
+      "required": true,
+      "next": { "default": "PLO-RF-07" }
+    },
+    {
+      "id": "PLO-RF-07",
+      "group": "PLO-RF",
+      "label": "Une réparation a-t-elle été réalisée lors de l'intervention ?",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "id": "PLO-RF-08",
+      "group": "PLO-RF",
+      "label": "Pas de fuite identifiée : mesures, tests et conclusions",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-BAL-01",
+      "group": "PLO-BAL",
+      "label": "Type de ballon d'eau chaude",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "electrique", "label": "Ballon électrique" },
+        { "value": "gaz", "label": "Ballon gaz" },
+        { "value": "thermodynamique", "label": "Ballon thermodynamique" },
+        { "value": "autre", "label": "Autre" }
+      ],
+      "next": { "default": "PLO-BAL-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-BAL-02",
+      "group": "PLO-BAL",
+      "label": "Capacité approximative et âge du ballon",
+      "type": "text_short",
+      "required": false,
+      "helpText": "Ex : 200 L, ~8 ans",
+      "next": { "default": "PLO-BAL-03" }
+    },
+    {
+      "id": "PLO-BAL-03",
+      "group": "PLO-BAL",
+      "label": "Mode d'implantation du ballon",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "mural_vertical", "label": "Mural vertical" },
+        { "value": "mural_horizontal", "label": "Mural horizontal" },
+        { "value": "sol", "label": "Sur socle / au sol" },
+        { "value": "combles", "label": "En combles" },
+        { "value": "local_technique", "label": "Local technique / chaufferie" }
+      ],
+      "next": { "default": "PLO-BAL-04" }
+    },
+    {
+      "id": "PLO-BAL-04",
+      "group": "PLO-BAL",
+      "label": "Symptômes constatés",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "plus_eau_chaude", "label": "Plus d'eau chaude" },
+        { "value": "temp_insuffisante", "label": "Température insuffisante" },
+        { "value": "disjonction", "label": "Déclenchement disjoncteur / sécurité" },
+        { "value": "fuite_ballon", "label": "Fuite sur le ballon" },
+        { "value": "fuite_groupe", "label": "Fuite sur groupe de sécurité" },
+        { "value": "bruits_anormaux", "label": "Bruits anormaux" },
+        { "value": "baisse_pression", "label": "Baisse de pression en eau chaude" }
+      ],
+      "next": { "default": "PLO-BAL-05" }
+    },
+    {
+      "id": "PLO-BAL-05",
+      "group": "PLO-BAL",
+      "label": "État visuel de l'installation ballon",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "etat_bon", "label": "Bon état apparent" },
+        { "value": "corrosion", "label": "Corrosion visible" },
+        { "value": "entartrage", "label": "Entartrage important" },
+        { "value": "groupe_vieux", "label": "Groupe de sécurité très ancien" },
+        { "value": "pertes_eau_ecoulement", "label": "Écoulement permanent au groupe" }
+      ],
+      "next": { "default": "PLO-BAL-06" }
+    },
+    {
+      "id": "PLO-BAL-06",
+      "group": "PLO-BAL",
+      "label": "Accès au ballon et contraintes de remplacement",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "acces_simple", "label": "Accès simple" },
+        { "value": "espace_restreint", "label": "Espace restreint" },
+        { "value": "passage_escalier", "label": "Passage escalier / trémie étroite" },
+        { "value": "hauteur_limitee", "label": "Hauteur limitée" },
+        { "value": "autre_contrainte", "label": "Autre contrainte" }
+      ],
+      "next": { "default": "PLO-BAL-07" }
+    },
+    {
+      "id": "PLO-BAL-07",
+      "group": "PLO-BAL",
+      "label": "Orientation technique envisagée",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "diag_complementaire", "label": "Diagnostic complémentaire" },
+        { "value": "depannage", "label": "Dépannage ciblé" },
+        { "value": "remplacement_ballon", "label": "Remplacement complet du ballon" },
+        { "value": "mise_norme", "label": "Mise en conformité hydrauliques / électriques" }
+      ],
+      "next": { "default": "PLO-BAL-08" }
+    },
+    {
+      "id": "PLO-BAL-08",
+      "group": "PLO-BAL",
+      "label": "Commentaire technique (diagnostic et recommandations)",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-WC-01",
+      "group": "PLO-WC",
+      "label": "Type de WC concerné",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "wc_sol", "label": "WC sur pied" },
+        { "value": "wc_suspendu", "label": "WC suspendu sur bâti-support" },
+        { "value": "wc_broyeur", "label": "WC broyeur" },
+        { "value": "autre", "label": "Autre" }
+      ],
+      "next": { "default": "PLO-WC-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-WC-02",
+      "group": "PLO-WC",
+      "label": "Type de réservoir / chasse",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "reservoir_apparent", "label": "Réservoir apparent" },
+        { "value": "reservoir_encastre", "label": "Réservoir encastré" },
+        { "value": "bloc_mono", "label": "Bloc monopièce" },
+        { "value": "inconnu", "label": "Non déterminé" }
+      ],
+      "next": { "default": "PLO-WC-03" }
+    },
+    {
+      "id": "PLO-WC-03",
+      "group": "PLO-WC",
+      "label": "Problème principal constaté",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "fuite_sol", "label": "Fuite au sol" },
+        { "value": "fuite_cuve", "label": "Fuite de cuvette" },
+        { "value": "chasse_continue", "label": "Chasse qui coule en permanence" },
+        { "value": "chasse_ne_remplit_pas", "label": "Réservoir qui ne se remplit pas" },
+        { "value": "bruit_important", "label": "Bruit important à l'alimentation" },
+        { "value": "evacuation_bouchee", "label": "Évacuation bouchée / lente" }
+      ],
+      "next": { "default": "PLO-WC-04" }
+    },
+    {
+      "id": "PLO-WC-04",
+      "group": "PLO-WC",
+      "label": "État général du WC et de la fixation",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "etat_bon", "label": "Bon état apparent" },
+        { "value": "cuvette_fissuree", "label": "Cuvette fissurée" },
+        { "value": "fixations_faibles", "label": "Fixations faibles / instables" },
+        { "value": "vieux_mecanisme", "label": "Mécanisme de chasse très ancien" },
+        { "value": "bricolage", "label": "Raccords bricolés / non conformes" }
+      ],
+      "next": { "default": "PLO-WC-05" }
+    },
+    {
+      "id": "PLO-WC-05",
+      "group": "PLO-WC",
+      "label": "Travaux envisageables (à chiffrer)",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "chgt_mecanisme", "label": "Changement mécanisme de chasse" },
+        { "value": "chgt_robinet_flotteur", "label": "Changement robinet flotteur" },
+        { "value": "chgt_joints_cuves", "label": "Changement joints cuvette / réservoir" },
+        { "value": "chgt_wc_complet", "label": "Remplacement complet du WC" },
+        { "value": "reprise_fixations", "label": "Reprise de la fixation de la cuvette" },
+        { "value": "debouchage_ev", "label": "Débouchage de l'évacuation" },
+        { "value": "autre", "label": "Autre (détailler)" }
+      ],
+      "next": { "default": "PLO-WC-06" }
+    },
+    {
+      "id": "PLO-WC-06",
+      "group": "PLO-WC",
+      "label": "Commentaire technique et recommandations",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-EV-01",
+      "group": "PLO-EV",
+      "label": "Équipement principal concerné par le problème d'évacuation",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "evier_cuisine", "label": "Évier cuisine" },
+        { "value": "lavabo", "label": "Lavabo" },
+        { "value": "douche", "label": "Douche" },
+        { "value": "baignoire", "label": "Baignoire" },
+        { "value": "wc", "label": "WC" },
+        { "value": "plusieurs_equipements", "label": "Plusieurs équipements" }
+      ],
+      "next": { "default": "PLO-EV-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-EV-02",
+      "group": "PLO-EV",
+      "label": "Nature du problème d'évacuation",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "eau_ne_s_ecoule_pas", "label": "L'eau ne s'écoule pas" },
+        { "value": "evac_lente", "label": "Évacuation très lente" },
+        { "value": "remontee_eaux", "label": "Remontée d'eaux usées" },
+        { "value": "glouglou", "label": "Bruits de glou-glou" },
+        { "value": "odeurs", "label": "Odeurs d'égout" }
+      ],
+      "next": { "default": "PLO-EV-03" }
+    },
+    {
+      "id": "PLO-EV-03",
+      "group": "PLO-EV",
+      "label": "Nombre d'équipements impactés",
+      "type": "single_choice",
+      "required": false,
+      "options": [
+        { "value": "un", "label": "Un seul équipement" },
+        { "value": "plusieurs_meme_piece", "label": "Plusieurs dans la même pièce" },
+        { "value": "plusieurs_niveaux", "label": "Plusieurs étages / pièces différentes" }
+      ],
+      "next": { "default": "PLO-EV-04" }
+    },
+    {
+      "id": "PLO-EV-04",
+      "group": "PLO-EV",
+      "label": "Accessibilité aux siphons / regards / colonne",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "siphon_accessible", "label": "Siphon accessible" },
+        { "value": "regard_accessible", "label": "Regard accessible" },
+        { "value": "colonne_visible", "label": "Colonne visible" },
+        { "value": "aucun_acces", "label": "Accès difficile / aucun accès direct" }
+      ],
+      "next": { "default": "PLO-EV-05" }
+    },
+    {
+      "id": "PLO-EV-05",
+      "group": "PLO-EV",
+      "label": "Interventions de débouchage envisageables",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "debouchage_siphon", "label": "Démontage / débouchage du siphon" },
+        { "value": "debouchage_mecanique", "label": "Débouchage mécanique (furet, pompe)" },
+        { "value": "debouchage_chimique", "label": "Traitement chimique (si adapté)" },
+        { "value": "curage_colonne", "label": "Curage / hydrocurage colonne" },
+        { "value": "controle_camera", "label": "Contrôle caméra" }
+      ],
+      "next": { "default": "PLO-EV-06" }
+    },
+    {
+      "id": "PLO-EV-06",
+      "group": "PLO-EV",
+      "label": "Commentaire technique (origine probable et recommandations)",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-REM-01",
+      "group": "PLO-REM",
+      "label": "Appareil à remplacer / installer",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "evier_cuisine", "label": "Évier cuisine" },
+        { "value": "lavabo", "label": "Lavabo" },
+        { "value": "douche", "label": "Receveur / ensemble de douche" },
+        { "value": "baignoire", "label": "Baignoire" },
+        { "value": "wc", "label": "WC" },
+        { "value": "autre", "label": "Autre appareil sanitaire" }
+      ],
+      "next": { "default": "PLO-REM-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-REM-02",
+      "group": "PLO-REM",
+      "label": "État de l'appareil existant",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "fonctionnel", "label": "Fonctionnel mais à moderniser" },
+        { "value": "fissure_casse", "label": "Fissuré / cassé" },
+        { "value": "fortement_entartré", "label": "Fortement entartré" },
+        { "value": "non_conforme", "label": "Non conforme" },
+        { "value": "fuite", "label": "Présence de fuite" }
+      ],
+      "next": { "default": "PLO-REM-03" }
+    },
+    {
+      "id": "PLO-REM-03",
+      "group": "PLO-REM",
+      "label": "Type de remplacement envisagé",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "a_l_identique", "label": "Remplacement à l'identique" },
+        { "value": "gamme_superieure", "label": "Montée en gamme" },
+        { "value": "adaptation_pmr", "label": "Adaptation PMR / accessibilité" },
+        { "value": "reorganisation", "label": "Réorganisation de l'implantation" }
+      ],
+      "next": { "default": "PLO-REM-04" }
+    },
+    {
+      "id": "PLO-REM-04",
+      "group": "PLO-REM",
+      "label": "Contraintes dimensionnelles et de pose",
+      "type": "text_long",
+      "required": false,
+      "helpText": "Dimensions, réservations, hauteurs, sens d'ouverture...",
+      "next": { "default": "PLO-REM-05" }
+    },
+    {
+      "id": "PLO-REM-05",
+      "group": "PLO-REM",
+      "label": "Adaptations réseaux à prévoir",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "adaptation_alim", "label": "Adaptation alimentation EF/EC" },
+        { "value": "adaptation_evac", "label": "Adaptation évacuation" },
+        { "value": "adaptation_chauffage", "label": "Adaptation sur circuit chauffage" },
+        { "value": "aucune", "label": "Aucune adaptation particulière" }
+      ],
+      "next": { "default": "PLO-REM-06" }
+    },
+    {
+      "id": "PLO-REM-06",
+      "group": "PLO-REM",
+      "label": "Dépose et évacuation de l'ancien matériel",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "simple_depose", "label": "Dépose simple" },
+        { "value": "depose_complexe", "label": "Dépose complexe (carrelage, coffrage...)" },
+        { "value": "evacuation_dechetterie", "label": "Évacuation en déchetterie" }
+      ],
+      "next": { "default": "PLO-REM-07" }
+    },
+    {
+      "id": "PLO-REM-07",
+      "group": "PLO-REM",
+      "label": "Commentaire technique (choix matériel conseillé, remarques)",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-PRES-01",
+      "group": "PLO-PRES",
+      "label": "Type de problème de pression / bruit",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "pression_faible", "label": "Pression insuffisante" },
+        { "value": "pression_trop_forte", "label": "Pression trop forte" },
+        { "value": "coups_belier", "label": "Coups de bélier" },
+        { "value": "bruit_circulation", "label": "Bruits de circulation d'eau" }
+      ],
+      "next": { "default": "PLO-PRES-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-PRES-02",
+      "group": "PLO-PRES",
+      "label": "Zones concernées par le problème",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "toute_installation", "label": "Toute l'installation" },
+        { "value": "points_eau_specifiques", "label": "Certains points d'eau uniquement" },
+        { "value": "ec_uniquement", "label": "Uniquement en eau chaude" },
+        { "value": "ef_uniquement", "label": "Uniquement en eau froide" }
+      ],
+      "next": { "default": "PLO-PRES-03" }
+    },
+    {
+      "id": "PLO-PRES-03",
+      "group": "PLO-PRES",
+      "label": "Équipements de régulation présents",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "reducteur_pression", "label": "Réducteur de pression" },
+        { "value": "groupe_securite", "label": "Groupe de sécurité" },
+        { "value": "clapets", "label": "Clapets anti-retour" },
+        { "value": "aucun", "label": "Aucun dispositif identifié" }
+      ],
+      "next": { "default": "PLO-PRES-04" }
+    },
+    {
+      "id": "PLO-PRES-04",
+      "group": "PLO-PRES",
+      "label": "Tests / mesures réalisés ou à prévoir",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "test_seau", "label": "Test au seau (débit)" },
+        { "value": "mesure_mano", "label": "Mesure manomètre" },
+        { "value": "essais_fermeture_ouverture", "label": "Essais fermeture / ouverture robinetteries" },
+        { "value": "autres_tests", "label": "Autres tests" }
+      ],
+      "next": { "default": "PLO-PRES-05" }
+    },
+    {
+      "id": "PLO-PRES-05",
+      "group": "PLO-PRES",
+      "label": "Solutions techniques envisagées",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "reglage_reducteur", "label": "Réglage / remplacement réducteur de pression" },
+        { "value": "pose_reducteur", "label": "Pose d'un réducteur de pression" },
+        { "value": "pose_amortisseur", "label": "Pose amortisseur de coups de bélier" },
+        { "value": "reprise_fixe", "label": "Reprise de la fixation des canalisations" },
+        { "value": "autre", "label": "Autre (détailler)" }
+      ],
+      "next": { "default": "PLO-PRES-06" }
+    },
+    {
+      "id": "PLO-PRES-06",
+      "group": "PLO-PRES",
+      "label": "Commentaire technique (origine probable, recommandations)",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-CH-01",
+      "group": "PLO-CH",
+      "label": "Type d'installation de chauffage hydraulique",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "radiateurs", "label": "Radiateurs" },
+        { "value": "plancher_chauffant", "label": "Plancher chauffant" },
+        { "value": "mixte", "label": "Mixte (radiateurs + plancher)" }
+      ],
+      "next": { "default": "PLO-CH-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-CH-02",
+      "group": "PLO-CH",
+      "label": "Problème principal constaté",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "radiateurs_froids", "label": "Radiateurs froids / tièdes" },
+        { "value": "zone_non_chauffee", "label": "Zone / boucle non chauffée" },
+        { "value": "fuite", "label": "Fuite sur circuit de chauffage" },
+        { "value": "bruits_circulation", "label": "Bruits de circulation / gargouillis" }
+      ],
+      "next": { "default": "PLO-CH-03" }
+    },
+    {
+      "id": "PLO-CH-03",
+      "group": "PLO-CH",
+      "label": "Éléments concernés",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "radiateurs", "label": "Radiateurs" },
+        { "value": "nourrice", "label": "Nourrice / collecteur" },
+        { "value": "boucle_plancher", "label": "Boucle de plancher chauffant" },
+        { "value": "tuyauterie", "label": "Tuyauterie apparente" }
+      ],
+      "next": { "default": "PLO-CH-04" }
+    },
+    {
+      "id": "PLO-CH-04",
+      "group": "PLO-CH",
+      "label": "Actions possibles sur l'installation",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "purge", "label": "Purge des radiateurs / boucles" },
+        { "value": "equilibrage", "label": "Équilibrage du réseau" },
+        { "value": "reparation_fuite", "label": "Réparation fuite localisée" },
+        { "value": "remplacement_organe", "label": "Remplacement robinet / tête / vanne" },
+        { "value": "desembouage", "label": "Désembouage" }
+      ],
+      "next": { "default": "PLO-CH-05" }
+    },
+    {
+      "id": "PLO-CH-05",
+      "group": "PLO-CH",
+      "label": "Commentaire technique (diagnostic et recommandations)",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-EXT-01",
+      "group": "PLO-EXT",
+      "label": "Type de point d'eau / équipement extérieur",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "robinet_jardin", "label": "Robinet de jardin" },
+        { "value": "reseau_arrosage", "label": "Réseau d'arrosage" },
+        { "value": "regard", "label": "Regard / boîte de dérivation" },
+        { "value": "autre", "label": "Autre équipement extérieur" }
+      ],
+      "next": { "default": "PLO-EXT-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-EXT-02",
+      "group": "PLO-EXT",
+      "label": "Contexte de la fuite / problème extérieur",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "gel", "label": "Suite à un gel" },
+        { "value": "fuite_active", "label": "Fuite active visible" },
+        { "value": "terre_humide", "label": "Zone de terre anormalement humide" },
+        { "value": "regard_inonde", "label": "Regard inondé" }
+      ],
+      "next": { "default": "PLO-EXT-03" }
+    },
+    {
+      "id": "PLO-EXT-03",
+      "group": "PLO-EXT",
+      "label": "Travaux d'accès / terrassement éventuels",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "terrassement_leger", "label": "Terrassement léger" },
+        { "value": "terrassement_lourd", "label": "Terrassement plus important" },
+        { "value": "demolition_dalle", "label": "Démolition de dalle / béton" },
+        { "value": "aucun", "label": "Aucun" }
+      ],
+      "next": { "default": "PLO-EXT-04" }
+    },
+    {
+      "id": "PLO-EXT-04",
+      "group": "PLO-EXT",
+      "label": "Solutions techniques envisagées",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "reparation_localisee", "label": "Réparation localisée du réseau" },
+        { "value": "remplacement_troncon", "label": "Remplacement d'un tronçon enterré" },
+        { "value": "deviation_reseau", "label": "Déviation du réseau extérieur" },
+        { "value": "mise_hors_gel", "label": "Protection / mise hors-gel" }
+      ],
+      "next": { "default": "PLO-EXT-05" }
+    },
+    {
+      "id": "PLO-EXT-05",
+      "group": "PLO-EXT",
+      "label": "Commentaire technique extérieur",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-ADOUC-01",
+      "group": "PLO-ADOUC",
+      "label": "Type d'équipement de traitement d'eau",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "adoucisseur", "label": "Adoucisseur" },
+        { "value": "filtre_simple", "label": "Filtre simple" },
+        { "value": "filtre_triple", "label": "Filtration multiple" },
+        { "value": "autre", "label": "Autre dispositif" }
+      ],
+      "next": { "default": "PLO-ADOUC-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-ADOUC-02",
+      "group": "PLO-ADOUC",
+      "label": "Symptômes constatés sur l'équipement",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "fuite", "label": "Fuite" },
+        { "value": "perte_pression", "label": "Perte de pression" },
+        { "value": "eau_mauvaise_qualite", "label": "Eau mauvaise qualité (trop dure / trop salée...)" },
+        { "value": "bruit_anormal", "label": "Bruits anormaux" },
+        { "value": "panne_totale", "label": "Panne totale" }
+      ],
+      "next": { "default": "PLO-ADOUC-03" }
+    },
+    {
+      "id": "PLO-ADOUC-03",
+      "group": "PLO-ADOUC",
+      "label": "Type d'installation",
+      "type": "single_choice",
+      "required": false,
+      "options": [
+        { "value": "sur_arrivee_generale", "label": "Sur arrivée d'eau générale" },
+        { "value": "sur_circuit_partiel", "label": "Sur circuit partiel" },
+        { "value": "inconnu", "label": "Non déterminé" }
+      ],
+      "next": { "default": "PLO-ADOUC-04" }
+    },
+    {
+      "id": "PLO-ADOUC-04",
+      "group": "PLO-ADOUC",
+      "label": "Actions envisageables",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "maintenance", "label": "Maintenance / entretien complet" },
+        { "value": "changement_cartouches", "label": "Changement cartouches / médias filtrants" },
+        { "value": "reparation_fuite", "label": "Réparation fuite / raccordement" },
+        { "value": "remplacement_complet", "label": "Remplacement complet de l'appareil" }
+      ],
+      "next": { "default": "PLO-ADOUC-05" }
+    },
+    {
+      "id": "PLO-ADOUC-05",
+      "group": "PLO-ADOUC",
+      "label": "Commentaire technique (réglages, préconisations)",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-COL-01",
+      "group": "PLO-COL",
+      "label": "Type de colonne / réseau commun concerné",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "colonne_eu", "label": "Colonne eaux usées" },
+        { "value": "colonne_ev", "label": "Colonne eaux vannes" },
+        { "value": "colonne_ef", "label": "Colonne eau froide" },
+        { "value": "autre", "label": "Autre colonne / réseau commun" }
+      ],
+      "next": { "default": "PLO-COL-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-COL-02",
+      "group": "PLO-COL",
+      "label": "Niveaux / logements impactés",
+      "type": "text_long",
+      "required": false,
+      "helpText": "Ex : RDC + R+1, appartement 3B, cage A...",
+      "next": { "default": "PLO-COL-03" }
+    },
+    {
+      "id": "PLO-COL-03",
+      "group": "PLO-COL",
+      "label": "Nature du problème sur la colonne",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "fuite", "label": "Fuite" },
+        { "value": "bouchon", "label": "Bouchon / refoulement" },
+        { "value": "corrosion", "label": "Corrosion avancée" },
+        { "value": "bruit", "label": "Bruits importants" }
+      ],
+      "next": { "default": "PLO-COL-04" }
+    },
+    {
+      "id": "PLO-COL-04",
+      "group": "PLO-COL",
+      "label": "Supports à reprendre en parties privatives / communes ?",
+      "type": "boolean",
+      "required": true,
+      "next": {
+        "byAnswer": {
+          "true": "PLO-MET-01",
+          "false": "PLO-COL-05"
+        }
+      }
+    },
+    {
+      "id": "PLO-COL-05",
+      "group": "PLO-COL",
+      "label": "Responsabilité apparente (à confirmer)",
+      "type": "single_choice",
+      "required": false,
+      "options": [
+        { "value": "partie_privative", "label": "Partie privative" },
+        { "value": "partie_commune", "label": "Partie commune / syndic" },
+        { "value": "indetermine", "label": "Indéterminé" }
+      ],
+      "next": { "default": "PLO-COL-06" }
+    },
+    {
+      "id": "PLO-COL-06",
+      "group": "PLO-COL",
+      "label": "Commentaire technique colonnes / copropriété",
+      "type": "text_long",
+      "required": false
+    },
+
+    {
+      "id": "PLO-CONF-01",
+      "group": "PLO-CONF",
+      "label": "Contexte du contrôle / diagnostic",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "pre_achat", "label": "Visite pré-achat" },
+        { "value": "avis_technique", "label": "Avis technique simple" },
+        { "value": "controle_assureur", "label": "Contrôle demandé par assureur" },
+        { "value": "autre", "label": "Autre contexte" }
+      ],
+      "next": { "default": "PLO-CONF-02" },
+      "backTo": "PLO-00"
+    },
+    {
+      "id": "PLO-CONF-02",
+      "group": "PLO-CONF",
+      "label": "Type d'installation contrôlée",
+      "type": "multi_choice",
+      "required": true,
+      "options": [
+        { "value": "alimentation", "label": "Alimentation EF/EC" },
+        { "value": "evacuation", "label": "Évacuations EU/EV" },
+        { "value": "ecs", "label": "Production ECS" },
+        { "value": "chauffage", "label": "Chauffage hydraulique" }
+      ],
+      "next": { "default": "PLO-CONF-03" }
+    },
+    {
+      "id": "PLO-CONF-03",
+      "group": "PLO-CONF",
+      "label": "Contrôles réalisés",
+      "type": "multi_choice",
+      "required": false,
+      "options": [
+        { "value": "controle_visuel", "label": "Contrôle visuel" },
+        { "value": "essais_mise_en_eau", "label": "Essais de mise en eau" },
+        { "value": "controle_pression", "label": "Contrôle pression / débit" },
+        { "value": "tests_fonctionnels", "label": "Tests fonctionnels équipements" }
+      ],
+      "next": { "default": "PLO-CONF-04" }
+    },
+    {
+      "id": "PLO-CONF-04",
+      "group": "PLO-CONF",
+      "label": "Conclusion générale sur l'installation",
+      "type": "single_choice",
+      "required": true,
+      "options": [
+        { "value": "etat_satisfaisant", "label": "État globalement satisfaisant" },
+        { "value": "points_vigilance", "label": "Points de vigilance" },
+        { "value": "travaux_a_prevoir", "label": "Travaux à prévoir à court terme" },
+        { "value": "installation_a_renover", "label": "Installation à rénover" }
+      ],
+      "next": { "default": "PLO-CONF-05" }
+    },
+    {
+      "id": "PLO-CONF-05",
+      "group": "PLO-CONF",
+      "label": "Commentaire détaillé (diagnostic et recommandations)",
+      "type": "text_long",
+      "required": false
     }
-  }
+  ]
 }
