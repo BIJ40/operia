@@ -13,3 +13,4 @@ export { DraggableDocumentItem } from './DraggableDocumentItem';
 export { DroppableFolder, DroppableRoot } from './DroppableFolder';
 export { SubfolderButtons } from './SubfolderButtons';
 export { ReadOnlySubfolderButtons } from './ReadOnlySubfolderButtons';
+export { DocumentSearchBar } from './DocumentSearchBar';

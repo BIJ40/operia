@@ -80,3 +80,6 @@ verify_jwt = true
 
 [functions.proxy-apogee]
 verify_jwt = true
+
+[functions.export-rh-documents]
+verify_jwt = true

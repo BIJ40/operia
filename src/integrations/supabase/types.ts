@@ -1267,6 +1267,58 @@ export type Database = {
         }
         Relationships: []
       }
+      collaborator_document_folders: {
+        Row: {
+          collaborator_id: string
+          created_at: string | null
+          created_by: string | null
+          doc_type: string
+          id: string
+          name: string
+          parent_folder_id: string | null
+        }
+        Insert: {
+          collaborator_id: string
+          created_at?: string | null
+          created_by?: string | null
+          doc_type: string
+          id?: string
+          name: string
+          parent_folder_id?: string | null
+        }
+        Update: {
+          collaborator_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          doc_type?: string
+          id?: string
+          name?: string
+          parent_folder_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_document_folders_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_document_folders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_document_folders_parent_folder_id_fkey"
+            columns: ["parent_folder_id"]
+            isOneToOne: false
+            referencedRelation: "collaborator_document_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collaborator_documents: {
         Row: {
           agency_id: string
@@ -1281,6 +1333,7 @@ export type Database = {
           id: string
           period_month: number | null
           period_year: number | null
+          search_vector: unknown
           subfolder: string | null
           title: string
           updated_at: string | null
@@ -1300,6 +1353,7 @@ export type Database = {
           id?: string
           period_month?: number | null
           period_year?: number | null
+          search_vector?: unknown
           subfolder?: string | null
           title: string
           updated_at?: string | null
@@ -1319,6 +1373,7 @@ export type Database = {
           id?: string
           period_month?: number | null
           period_year?: number | null
+          search_vector?: unknown
           subfolder?: string | null
           title?: string
           updated_at?: string | null
@@ -3918,6 +3973,35 @@ export type Database = {
           to: "document_requests"
           isOneToOne: true
           isSetofReturn: false
+        }
+      }
+      search_collaborator_documents: {
+        Args: { p_collaborator_id: string; p_search_query: string }
+        Returns: {
+          agency_id: string
+          collaborator_id: string
+          created_at: string | null
+          description: string | null
+          doc_type: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          period_month: number | null
+          period_year: number | null
+          search_vector: unknown
+          subfolder: string | null
+          title: string
+          updated_at: string | null
+          uploaded_by: string | null
+          visibility: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "collaborator_documents"
+          isOneToOne: false
+          isSetofReturn: true
         }
       }
       unlock_document_request: { Args: { p_request_id: string }; Returns: Json }
