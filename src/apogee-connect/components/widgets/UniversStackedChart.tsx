@@ -98,7 +98,7 @@ export const UniversStackedChart = ({ data, universes, loading }: UniversStacked
             </defs>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis 
-              dataKey="month" 
+              dataKey="monthLabel" 
               className="text-xs"
               tick={{ fill: 'hsl(var(--muted-foreground))' }}
             />
