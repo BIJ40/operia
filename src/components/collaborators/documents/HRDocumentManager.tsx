@@ -34,9 +34,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { FolderOpen, Loader2, Upload } from 'lucide-react';
+import { FolderOpen, Loader2, Upload, Download } from 'lucide-react';
 import { useCollaboratorDocuments } from '@/hooks/useCollaboratorDocuments';
 import { useSubfolders } from '@/hooks/useSubfolders';
+import { useDocumentSearch } from '@/hooks/useDocumentSearch';
+import { useRHExport } from '@/hooks/useRHExport';
 import { CollaboratorDocument, DocumentType, DocumentVisibility, DOCUMENT_TYPES, DOCUMENT_VISIBILITY } from '@/types/collaboratorDocument';
 import { DocumentCategoryTabs } from './DocumentCategoryTabs';
 import { DocumentGrid } from './DocumentGrid';
@@ -45,6 +47,7 @@ import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { DocumentBreadcrumb } from './DocumentBreadcrumb';
 import { SubfolderButtons } from './SubfolderButtons';
 import { DocumentItem } from './DocumentItem';
+import { DocumentSearchBar } from './DocumentSearchBar';
 import { toast } from 'sonner';
 
 interface HRDocumentManagerProps {
@@ -72,6 +75,20 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
   } = useCollaboratorDocuments(collaboratorId);
 
   const { getSubfolders, addSubfolder, removeSubfolder, syncWithDocuments } = useSubfolders(collaboratorId);
+  
+  // Search hook (P2-02)
+  const { 
+    searchQuery, 
+    setSearchQuery, 
+    searchResults, 
+    isSearchLoading, 
+    isSearching, 
+    startSearch, 
+    cancelSearch 
+  } = useDocumentSearch(collaboratorId);
+
+  // Export hook (P2-03)
+  const { exportDocuments, isExporting } = useRHExport();
 
   // State
   const [activeCategory, setActiveCategory] = useState<DocumentType | 'ALL'>('ALL');
@@ -137,8 +154,13 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     return counts;
   }, [documents, activeCategory]);
 
-  // Filter documents by active category and subfolder
+  // Filter documents by active category and subfolder (or show search results)
   const filteredDocuments = useMemo(() => {
+    // If searching, show search results
+    if (isSearching && searchQuery.length >= 2) {
+      return searchResults;
+    }
+
     let filtered = documents;
     
     if (activeCategory !== 'ALL') {
@@ -153,7 +175,7 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     }
     
     return filtered;
-  }, [documents, activeCategory, activeSubfolder]);
+  }, [documents, activeCategory, activeSubfolder, isSearching, searchQuery, searchResults]);
 
   // Handle category change - reset subfolder
   const handleCategoryChange = (category: DocumentType | 'ALL') => {
@@ -370,10 +392,35 @@ export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManag
     >
       <Card className="border-l-4 border-l-helpconfort-blue bg-gradient-to-br from-helpconfort-blue/5 via-background to-background">
         <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2">
-            <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
-            Documents RH
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
+              Documents RH
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <DocumentSearchBar
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                isSearching={isSearching}
+                onStartSearch={startSearch}
+                onCancelSearch={cancelSearch}
+                resultCount={searchResults.length}
+                isLoading={isSearchLoading}
+              />
+              {selectedDocIds.size > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportDocuments.mutate({ document_ids: Array.from(selectedDocIds) })}
+                  disabled={isExporting}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Exporter ({selectedDocIds.size})
+                </Button>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Category Tabs */}
