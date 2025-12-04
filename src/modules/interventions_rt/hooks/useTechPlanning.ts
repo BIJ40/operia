@@ -109,19 +109,54 @@ export function useTechPlanning(): UseTechPlanningResult {
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [rtStatuses, setRtStatuses] = useState<Record<string, RtStatus>>({});
 
-  // Récupérer le profil utilisateur avec first_name, last_name
+  // Récupérer l'apogee_user_id depuis la table collaborators (lien direct)
+  const { data: collaboratorData } = useQuery({
+    queryKey: ['tech-collaborator', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      
+      // Récupérer le collaborateur lié à ce user
+      const { data } = await supabase
+        .from('collaborators')
+        .select('id, first_name, last_name, apogee_user_id')
+        .eq('user_id', user.id)
+        .single();
+      
+      console.log('[TechPlanning] Collaborator data:', data);
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fallback: si pas d'apogee_user_id dans collaborators, matcher par nom
   const { data: profileData } = useQuery({
     queryKey: ['tech-profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await supabase
+      
+      // D'abord essayer la table profiles
+      const { data: profilesData } = await supabase
         .from('profiles')
         .select('first_name, last_name')
         .eq('id', user.id)
         .single();
-      return data;
+      
+      // Si les champs sont remplis dans profiles, les utiliser
+      if (profilesData?.first_name && profilesData?.last_name) {
+        console.log('[TechPlanning] Profile from DB:', profilesData);
+        return profilesData;
+      }
+      
+      // Sinon, utiliser user_metadata du JWT
+      const userMeta = user.user_metadata as { first_name?: string; last_name?: string } | undefined;
+      const fallbackData = {
+        first_name: userMeta?.first_name || profilesData?.first_name || '',
+        last_name: userMeta?.last_name || profilesData?.last_name || '',
+      };
+      console.log('[TechPlanning] Profile from user_metadata:', fallbackData);
+      return fallbackData;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !collaboratorData?.apogee_user_id,
   });
 
   // Récupérer les interventions via l'API
@@ -147,20 +182,51 @@ export function useTechPlanning(): UseTechPlanningResult {
   });
 
   // Trouver l'ID Apogée du technicien connecté
+  // Priorité: collaborators.apogee_user_id > matching par nom
   const apogeeUserId = useMemo(() => {
+    // 1. Utiliser le lien direct si disponible
+    if (collaboratorData?.apogee_user_id) {
+      console.log('[TechPlanning] Using direct apogee_user_id from collaborators:', collaboratorData.apogee_user_id);
+      return collaboratorData.apogee_user_id;
+    }
+    
+    // 2. Fallback: matcher par nom
     if (!profileData?.first_name || !profileData?.last_name || !apiData?.users) {
+      console.log('[TechPlanning] Missing data for matching:', {
+        hasCollaborator: !!collaboratorData,
+        apogeeUserIdFromCollab: collaboratorData?.apogee_user_id,
+        firstName: profileData?.first_name,
+        lastName: profileData?.last_name,
+        usersCount: apiData?.users?.length || 0
+      });
       return null;
     }
-    return findApogeeUserId(
+    
+    const foundId = findApogeeUserId(
       apiData.users,
       profileData.first_name,
       profileData.last_name
     );
-  }, [profileData, apiData?.users]);
+    
+    console.log('[TechPlanning] Apogée user matching by name:', {
+      searchFirstName: profileData.first_name,
+      searchLastName: profileData.last_name,
+      foundApogeeUserId: foundId,
+      availableUsers: apiData.users.slice(0, 5).map((u: any) => ({
+        id: u.id,
+        firstname: u.firstname,
+        name: u.name
+      }))
+    });
+    
+    return foundId;
+  }, [collaboratorData, profileData, apiData?.users]);
 
-  const technicienName = profileData 
-    ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 
-    : null;
+  const technicienName = collaboratorData 
+    ? `${collaboratorData.first_name || ''} ${collaboratorData.last_name || ''}`.trim()
+    : profileData 
+      ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 
+      : null;
 
   // Transformer et filtrer les interventions
   const interventions = useMemo(() => {
@@ -177,6 +243,18 @@ export function useTechPlanning(): UseTechPlanningResult {
     // Filtrer par date et technicien
     const today = startOfDay(new Date());
     const tomorrow = startOfDay(addDays(new Date(), 1));
+
+    // Debug: voir toutes les interventions et leurs userIds
+    console.log('[TechPlanning] Filtering interventions:', {
+      totalInterventions: apiData.interventions.length,
+      filterByApogeeUserId: apogeeUserId,
+      sampleInterventions: apiData.interventions.slice(0, 5).map((i: any) => ({
+        id: i.id,
+        userId: i.userId || i.user_id,
+        date: i.date || i.dateIntervention,
+        state: i.state
+      }))
+    });
 
     const mapped = apiData.interventions
       .filter((int: any) => {
