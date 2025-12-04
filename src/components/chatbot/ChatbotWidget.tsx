@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, X, Send, RotateCcw } from 'lucide-react';
+import { Bot, X, Send, RotateCcw, BookOpen, Users, Building2, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,12 +8,41 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getApogeeContext, getNoContentResponse } from '@/lib/rag-michu';
 import { safeQuery } from '@/lib/safeQuery';
-import { logError, logDebug } from '@/lib/logger';
+import { logError } from '@/lib/logger';
 
 type Message = {
   role: 'user' | 'assistant';
   content: string;
 };
+
+type ChatContext = 'apogee' | 'apporteurs' | 'helpconfort' | 'autre';
+
+const themes = [
+  { 
+    id: 'apogee' as ChatContext, 
+    label: 'Apogée', 
+    description: 'Logiciel métier',
+    icon: BookOpen,
+  },
+  { 
+    id: 'apporteurs' as ChatContext, 
+    label: 'Apporteurs', 
+    description: 'Gestion partenaires',
+    icon: Users,
+  },
+  { 
+    id: 'helpconfort' as ChatContext, 
+    label: 'HelpConfort', 
+    description: 'Services & process',
+    icon: Building2,
+  },
+  { 
+    id: 'autre' as ChatContext, 
+    label: 'Autre', 
+    description: 'Question générale',
+    icon: HelpCircle,
+  },
+];
 
 export function ChatbotWidget() {
   const { user } = useAuth();
@@ -21,19 +50,22 @@ export function ChatbotWidget() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedContext, setSelectedContext] = useState<ChatContext | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Reset conversation
   const resetConversation = () => {
     setMessages([]);
+    setSelectedContext(null);
   };
 
-  // Build contextual query
+  const handleSelectTheme = (theme: ChatContext) => {
+    setSelectedContext(theme);
+  };
+
   const buildContextualQuery = (currentQuery: string, conversationHistory: Message[]): string => {
     if (conversationHistory.length < 2 || currentQuery.length > 50) {
       return currentQuery;
@@ -70,7 +102,6 @@ export function ChatbotWidget() {
     return currentQuery;
   };
 
-  // Send message
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -90,7 +121,6 @@ export function ChatbotWidget() {
         return;
       }
 
-      // Get user name
       let userName = 'Utilisateur';
       if (user) {
         const profileResult = await safeQuery<{ first_name: string | null }>(
@@ -107,7 +137,6 @@ export function ChatbotWidget() {
         }
       }
 
-      // Get session token
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       
@@ -117,7 +146,6 @@ export function ChatbotWidget() {
         return;
       }
 
-      // SSE streaming call
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-guide`,
         {
@@ -131,7 +159,7 @@ export function ChatbotWidget() {
             guideContent: ragResult.formattedDocs,
             userId: user?.id || null,
             userName: userName,
-            chatContext: 'apogee',
+            chatContext: selectedContext || 'apogee',
             hasRagContent: true,
           }),
         }
@@ -203,7 +231,7 @@ export function ChatbotWidget() {
 
   return (
     <div className="relative">
-      {/* Bubble button with label */}
+      {/* Simple button with label */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
@@ -254,59 +282,94 @@ export function ChatbotWidget() {
           </div>
         </div>
 
-        {/* Messages */}
-        <ScrollArea className="h-[320px] p-4">
-          {messages.length === 0 && (
-            <div className="text-center text-muted-foreground text-sm py-8">
-              Posez votre question à Mme Michu !
-            </div>
-          )}
-          {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`mb-4 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}
-            >
-              <div
-                className={cn(
-                  "inline-block max-w-[85%] p-3 rounded-lg text-sm",
-                  msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
-                )}
-              >
-                <div className="whitespace-pre-wrap">{msg.content}</div>
+        {/* Content */}
+        <div className="h-[400px] flex flex-col">
+          {!selectedContext && messages.length === 0 ? (
+            /* Theme selector */
+            <div className="flex flex-col items-center justify-center h-full gap-3 px-4 py-6">
+              <div className="text-center mb-2">
+                <h4 className="font-semibold text-base mb-1">Votre demande concerne :</h4>
+                <p className="text-xs text-muted-foreground">Sélectionnez un thème pour commencer</p>
+              </div>
+
+              <div className="w-full space-y-2">
+                {themes.map((theme) => {
+                  const Icon = theme.icon;
+                  return (
+                    <button
+                      key={theme.id}
+                      onClick={() => handleSelectTheme(theme.id)}
+                      className="w-full group border border-border hover:border-primary/40 bg-muted/30 hover:bg-muted/60 rounded-lg px-4 py-3 transition-all duration-200 flex items-center gap-3"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-background border border-border flex items-center justify-center flex-shrink-0 group-hover:border-primary/40 transition-colors">
+                        <Icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="font-medium text-sm">{theme.label}</div>
+                        <div className="text-xs text-muted-foreground">{theme.description}</div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          ))}
-          {isLoading && (
-            <div className="text-left">
-              <div className="inline-block bg-muted p-3 rounded-lg">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
-                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
+          ) : (
+            /* Chat interface */
+            <>
+              <ScrollArea className="flex-1 p-4">
+                {messages.length === 0 && (
+                  <div className="text-center text-muted-foreground text-sm py-8">
+                    Posez votre question à Mme Michu !
+                  </div>
+                )}
+                {messages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`mb-4 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}
+                  >
+                    <div
+                      className={cn(
+                        "inline-block max-w-[85%] p-3 rounded-lg text-sm",
+                        msg.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      )}
+                    >
+                      <div className="whitespace-pre-wrap">{msg.content}</div>
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="text-left">
+                    <div className="inline-block bg-muted p-3 rounded-lg">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </ScrollArea>
+
+              <div className="p-3 border-t">
+                <div className="flex gap-2">
+                  <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Tapez votre message..."
+                    disabled={isLoading}
+                    className="flex-1"
+                  />
+                  <Button onClick={sendMessage} disabled={!input.trim() || isLoading} size="icon">
+                    <Send className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-            </div>
+            </>
           )}
-          <div ref={messagesEndRef} />
-        </ScrollArea>
-
-        {/* Input */}
-        <div className="p-3 border-t">
-          <div className="flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Tapez votre message..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button onClick={sendMessage} disabled={!input.trim() || isLoading} size="icon">
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </div>
     </div>
