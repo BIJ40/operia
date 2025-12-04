@@ -99,7 +99,7 @@ interface EditUserDialogProps {
   onOpenChange: (open: boolean) => void;
   onSave: (data: { first_name?: string; last_name?: string; agence?: string; role_agence?: string; support_level?: number; global_role?: GlobalRole }) => void;
   onUpdateEmail: (newEmail: string) => void;
-  onResetPassword: (newPassword: string) => void;
+  onResetPassword: (newPassword: string, sendEmail?: boolean) => void;
   isPending: boolean;
   isEmailPending: boolean;
   isPasswordPending: boolean;

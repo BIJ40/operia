@@ -506,8 +506,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
   });
 
   const resetPasswordMutation = useMutation({
-    mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
-      const { data, error } = await supabase.functions.invoke('reset-user-password', { body: { targetUserId: userId, newPassword } });
+    mutationFn: async ({ userId, newPassword, sendEmail = true }: { userId: string; newPassword: string; sendEmail?: boolean }) => {
+      const { data, error } = await supabase.functions.invoke('reset-user-password', { body: { targetUserId: userId, newPassword, sendEmail } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
