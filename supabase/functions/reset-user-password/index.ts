@@ -54,6 +54,8 @@ serve(async (req) => {
     // Récupérer les données de la requête
     const { userId: targetUserId, newPassword, sendEmail } = await req.json()
 
+    console.log(`[reset-user-password] Requête reçue pour userId: ${targetUserId}, password length: ${newPassword?.length || 0}`)
+
     if (!targetUserId || !newPassword) {
       throw new Error('userId et newPassword sont requis')
     }
@@ -77,9 +79,16 @@ serve(async (req) => {
       throw new Error(resetCheck.reason || 'Action non autorisée')
     }
 
-    // Validation du mot de passe
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/])[A-Za-z\d!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]{8,100}$/;
-    if (!passwordRegex.test(newPassword)) {
+    // Validation simplifiée - 8 caractères minimum avec majuscule, minuscule, chiffre et symbole
+    const hasLower = /[a-z]/.test(newPassword)
+    const hasUpper = /[A-Z]/.test(newPassword)
+    const hasDigit = /\d/.test(newPassword)
+    const hasSymbol = /[!@#$%&*_+\-]/.test(newPassword)
+    const validLength = newPassword.length >= 8 && newPassword.length <= 100
+
+    console.log(`[reset-user-password] Validation: lower=${hasLower}, upper=${hasUpper}, digit=${hasDigit}, symbol=${hasSymbol}, length=${validLength}`)
+
+    if (!hasLower || !hasUpper || !hasDigit || !hasSymbol || !validLength) {
       throw new Error('Le mot de passe doit contenir au moins 8 caractères avec majuscule, minuscule, chiffre et symbole')
     }
 
