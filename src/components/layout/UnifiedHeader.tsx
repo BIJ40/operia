@@ -46,6 +46,7 @@ import { getPageConfigByPath, getPageDefaultByKey } from '@/config/pageDefaults'
 import { ROUTES } from '@/config/routes';
 import { logError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
+import { MessagingWidget } from '@/components/messaging';
 
 // Mapping des noms d'icônes vers les composants
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -332,11 +333,19 @@ export function UnifiedHeader() {
         {/* Subtitle bar - below main header */}
         {displaySubtitle && (
           <div 
-            className={`px-4 py-2 border-t border-border/50 ${subtitleBgClass}`}
+            className={`px-4 py-2 border-t border-border/50 ${subtitleBgClass} flex items-center justify-between`}
           >
-            <p className={`${subtitleTextSizeClass} text-muted-foreground text-center truncate`}>
+            <p className={`${subtitleTextSizeClass} text-muted-foreground truncate flex-1`}>
               {displaySubtitle}
             </p>
+            <MessagingWidget />
+          </div>
+        )}
+        
+        {/* Show MessagingWidget even if no subtitle */}
+        {!displaySubtitle && (
+          <div className="px-4 py-2 border-t border-border/50 bg-background flex justify-end">
+            <MessagingWidget />
           </div>
         )}
       </header>
