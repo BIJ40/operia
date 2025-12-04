@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAgencyDocumentRequests } from '@/hooks/useDocumentRequests';
 import { 
   DOCUMENT_REQUEST_TYPES, 
@@ -18,7 +18,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Inbox, Upload, FileText, X, User, Eye, EyeOff, FolderOpen, FileSignature } from 'lucide-react';
+import { Loader2, Inbox, Upload, FileText, X, User, Eye, EyeOff, FolderOpen, FileSignature, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dialog';
 import type { CollaboratorDocument } from '@/types/collaboratorDocument';
 import { GenerateDocumentDialog } from '@/components/rh/GenerateDocumentDialog';
+import { useLockDocumentRequest, useUnlockDocumentRequest, isLockExpired } from '@/hooks/rh/useDocumentRequestLock';
 
 const STATUS_BADGE_VARIANTS: Record<DocumentRequestStatus, 'outline' | 'default' | 'secondary' | 'destructive'> = {
   PENDING: 'outline',
@@ -128,12 +129,51 @@ export default function DemandesRHPage() {
     setShowDocPicker(false);
   };
 
-  const handleSelectRequest = (req: typeof requests[0]) => {
+  const lockMutation = useLockDocumentRequest();
+  const unlockMutation = useUnlockDocumentRequest();
+
+  // Cleanup: unlock on unmount or deselect
+  useEffect(() => {
+    return () => {
+      if (selectedRequestId) {
+        unlockMutation.mutate(selectedRequestId);
+      }
+    };
+  }, []);
+
+  const handleSelectRequest = async (req: typeof requests[0]) => {
+    // Check if locked by someone else
+    if (req.locked_by && req.locked_by !== user?.id && !isLockExpired(req.locked_at)) {
+      toast.error('Cette demande est en cours de traitement par un autre utilisateur');
+      return;
+    }
+
+    // Unlock previous if any
+    if (selectedRequestId && selectedRequestId !== req.id) {
+      unlockMutation.mutate(selectedRequestId);
+    }
+
+    // Try to lock new request
+    const result = await lockMutation.mutateAsync(req.id);
+    if (!result.success) {
+      return; // Toast already shown by hook
+    }
+
     setSelectedRequestId(req.id);
     setResponseNote(req.response_note || '');
     setNewStatus(req.status === 'PENDING' ? 'IN_PROGRESS' : (req.status as DocumentRequestStatus));
     setSelectedFile(null);
     setSelectedDocumentId(req.response_document_id || null);
+  };
+
+  const handleDeselectRequest = () => {
+    if (selectedRequestId) {
+      unlockMutation.mutate(selectedRequestId);
+    }
+    setSelectedRequestId(null);
+    setResponseNote('');
+    setSelectedFile(null);
+    setSelectedDocumentId(null);
   };
 
   const handleSubmit = async () => {
@@ -194,7 +234,10 @@ export default function DemandesRHPage() {
         response_document_id: documentId,
       });
 
-      // Reset form
+      // Unlock and reset form
+      if (currentRequest.id) {
+        unlockMutation.mutate(currentRequest.id);
+      }
       setSelectedRequestId(null);
       setResponseNote('');
       setSelectedFile(null);
@@ -266,15 +309,19 @@ export default function DemandesRHPage() {
                     req.request_type;
                   const collaboratorName = collaborators[req.collaborator_id] || 'Collaborateur';
                   const isSeenByEmployee = !!req.employee_seen_at;
+                  const isLockedByOther = req.locked_by && req.locked_by !== user?.id && !isLockExpired(req.locked_at);
 
                   return (
                     <button
                       key={req.id}
                       type="button"
                       onClick={() => handleSelectRequest(req)}
+                      disabled={isLockedByOther}
                       className={`w-full rounded-md border px-3 py-2 text-left text-sm transition ${
                         selectedRequestId === req.id
                           ? 'border-primary bg-primary/5'
+                          : isLockedByOther
+                          ? 'opacity-50 cursor-not-allowed bg-muted/30'
                           : 'hover:bg-muted'
                       }`}
                     >
@@ -283,6 +330,11 @@ export default function DemandesRHPage() {
                           <div className="font-medium flex items-center gap-2">
                             <User className="h-3 w-3 text-muted-foreground" />
                             {collaboratorName}
+                            {isLockedByOther && (
+                              <span title="En cours de traitement par un autre utilisateur">
+                                <Lock className="h-3 w-3 text-amber-500" />
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
                             {typeLabel} • {formatDate(req.requested_at)}
@@ -297,7 +349,12 @@ export default function DemandesRHPage() {
                           <Badge variant={STATUS_BADGE_VARIANTS[req.status]}>
                             {DOCUMENT_REQUEST_STATUS_LABELS[req.status]}
                           </Badge>
-                          {(req.status === 'COMPLETED' || req.status === 'REJECTED') && (
+                          {isLockedByOther && (
+                            <span className="text-[10px] text-amber-600 flex items-center gap-1">
+                              <Lock className="h-3 w-3" /> En traitement
+                            </span>
+                          )}
+                          {!isLockedByOther && (req.status === 'COMPLETED' || req.status === 'REJECTED') && (
                             <span className={`text-[10px] flex items-center gap-1 ${isSeenByEmployee ? 'text-green-600' : 'text-amber-600'}`}>
                               {isSeenByEmployee ? (
                                 <><Eye className="h-3 w-3" /> Lu</>

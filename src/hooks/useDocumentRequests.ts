@@ -135,7 +135,10 @@ export function useAgencyDocumentRequests() {
         .order('requested_at', { ascending: false });
 
       if (error) throw error;
-      return data as DocumentRequestWithDoc[];
+      return data as (DocumentRequestWithDoc & { 
+        locked_by: string | null;
+        locked_at: string | null;
+      })[];
     },
   });
 
