@@ -15,12 +15,12 @@ function StatCard({ title, value, icon: Icon, description, isLoading, variant }:
   if (variant === 1) {
     return (
       <div className="group h-full rounded-xl border border-helpconfort-blue/20 p-5
-        bg-gradient-to-br from-white to-helpconfort-blue/5
+        bg-gradient-to-br from-background to-helpconfort-blue/5
         shadow-sm transition-all duration-300
         hover:to-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
         <div className="flex items-center gap-4">
           <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
-            group-hover:border-helpconfort-blue group-hover:bg-white/50 transition-all">
+            group-hover:border-helpconfort-blue group-hover:bg-background/50 transition-all">
             <Icon className="w-5 h-5 text-helpconfort-blue" />
           </div>
           <div className="flex-1">
@@ -40,12 +40,12 @@ function StatCard({ title, value, icon: Icon, description, isLoading, variant }:
   if (variant === 2) {
     return (
       <div className="group h-full rounded-xl border border-helpconfort-blue/15 p-5
-        bg-gradient-to-b from-helpconfort-blue/5 to-white
+        bg-gradient-to-b from-helpconfort-blue/5 to-background
         shadow-sm transition-all duration-300
         hover:from-helpconfort-blue/15 hover:shadow-lg hover:-translate-y-1">
         <div className="flex items-center gap-4">
           <div className="w-11 h-11 rounded-lg border-2 border-helpconfort-blue/25 flex items-center justify-center
-            group-hover:border-helpconfort-blue group-hover:bg-white transition-all">
+            group-hover:border-helpconfort-blue group-hover:bg-background transition-all">
             <Icon className="w-5 h-5 text-helpconfort-blue" />
           </div>
           <div className="flex-1">

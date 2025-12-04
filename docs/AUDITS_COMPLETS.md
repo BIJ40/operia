@@ -67,9 +67,10 @@
 
 ### 3.1 Cohérence visuelle
 
-- [ ] Boutons: variantes identiques partout (primary, outline, ghost)
-- [ ] Marges: container mx-auto py-8 px-4 space-y-6
-- [ ] Couleurs: border-l-helpconfort-blue sur toutes les tiles
+- [x] ✅ Boutons: variantes identiques partout (primary, outline, ghost)
+- [x] ✅ Marges: container mx-auto py-8 px-4 space-y-6
+- [x] ✅ Couleurs: border-l-helpconfort-blue sur toutes les tiles
+- [x] ✅ bg-white → bg-background: 15+ fichiers corrigés pour dark mode
 - [ ] Typographie: h1/h2/h3 uniformes
 
 ### 3.2 Chemins utilisateur
@@ -84,9 +85,9 @@
 - [ ] Tab order logique sur tous les formulaires
 - [ ] Focus visible sur tous les éléments interactifs
 - [ ] Contrastes suffisants (WCAG AA minimum)
-- [ ] aria-label sur icônes sans texte
+- [x] ✅ aria-label sur icônes sans texte: 20+ boutons corrigés
 
-**STATUS**: ⚪ PENDING
+**STATUS**: 🟡 EN COURS (P1 terminé, P2 en cours)
 
 ---
 

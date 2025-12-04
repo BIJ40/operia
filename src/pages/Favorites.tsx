@@ -312,6 +312,7 @@ export default function Favorites() {
                                       variant="ghost"
                                       size="icon"
                                       title="Voir dans la catégorie"
+                                      aria-label="Voir dans la catégorie"
                                       className="text-white hover:bg-white/20 h-8 w-8"
                                     >
                                       <ExternalLink className="w-4 h-4" />
@@ -321,6 +322,7 @@ export default function Favorites() {
                                       variant="ghost"
                                       size="icon"
                                       title="Retirer des favoris"
+                                      aria-label="Retirer des favoris"
                                       className="text-white hover:bg-red-500/80 h-8 w-8"
                                     >
                                       <Trash2 className="w-4 h-4" />

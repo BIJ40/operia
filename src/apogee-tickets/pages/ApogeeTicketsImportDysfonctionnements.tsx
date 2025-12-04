@@ -72,7 +72,7 @@ export default function ApogeeTicketsImportDysfonctionnements() {
     <div className="container mx-auto py-8 px-4 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="Retour">
           <Link to={ROUTES.projects.kanban}>
             <ArrowLeft className="h-4 w-4" />
           </Link>

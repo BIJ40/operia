@@ -154,6 +154,7 @@ export default function CategoryApporteur() {
                         size="icon" 
                         className="h-8 w-8"
                         disabled={!prevSubcategory}
+                        aria-label="Section précédente"
                       >
                         <ChevronLeft className="h-5 w-5" />
                       </Button>
@@ -195,6 +196,7 @@ export default function CategoryApporteur() {
                         size="icon" 
                         className="h-8 w-8"
                         disabled={!nextSubcategory}
+                        aria-label="Section suivante"
                       >
                         <ChevronRight className="h-5 w-5" />
                       </Button>

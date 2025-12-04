@@ -161,6 +161,7 @@ const SortableCategory = ({
                 size="icon"
                 variant="outline"
                 className="h-7 w-7 bg-background shadow-md"
+                aria-label="Modifier"
               >
                 <Icons.Edit className="w-3 h-3" />
               </Button>
@@ -169,6 +170,7 @@ const SortableCategory = ({
                 size="icon"
                 variant="destructive"
                 className="h-7 w-7 shadow-md"
+                aria-label="Supprimer"
               >
                 <Trash2 className="w-3 h-3" />
               </Button>

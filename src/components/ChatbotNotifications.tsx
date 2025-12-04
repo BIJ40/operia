@@ -60,6 +60,7 @@ export function ChatbotNotifications() {
       className="relative"
       onClick={() => navigate('/admin/chatbot-queries')}
       title="Questions Mme MICHU en attente"
+      aria-label="Questions Mme MICHU en attente"
     >
       <Bell className="h-5 w-5" />
       {pendingCount > 0 && (

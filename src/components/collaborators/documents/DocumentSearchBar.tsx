@@ -102,6 +102,7 @@ export function DocumentSearchBar({
         size="icon"
         onClick={onCancelSearch}
         className="shrink-0"
+        aria-label="Annuler la recherche"
       >
         <X className="h-4 w-4" />
       </Button>

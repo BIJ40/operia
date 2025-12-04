@@ -362,7 +362,7 @@ function ApogeeTicketsKanbanContent({ roleInfo }: { roleInfo: TicketRoleInfo }) 
                   Permissions
                 </Button>
               </Link>
-              <Button variant="ghost" size="icon" onClick={() => setShowConfigDialog(true)}>
+              <Button variant="ghost" size="icon" onClick={() => setShowConfigDialog(true)} aria-label="Configuration">
                 <Settings className="h-4 w-4" />
               </Button>
             </>

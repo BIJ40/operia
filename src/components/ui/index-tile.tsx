@@ -64,8 +64,8 @@ function UnifiedTile({ title, description, icon: Icon, href, badge }: IndexTileP
         <div className="flex items-center gap-4">
           {/* Icône avec anneau bleu au survol */}
           <div className="w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center
-            bg-white/50 dark:bg-background/50 
-            group-hover:border-helpconfort-blue group-hover:ring-2 group-hover:ring-helpconfort-blue/30 group-hover:bg-white dark:group-hover:bg-background 
+            bg-background/50 
+            group-hover:border-helpconfort-blue group-hover:ring-2 group-hover:ring-helpconfort-blue/30 group-hover:bg-background 
             transition-all duration-300">
             <Icon className="w-5 h-5 text-helpconfort-blue" />
           </div>
@@ -144,10 +144,10 @@ export function UnifiedTileWrapper({ children, title, className = '', onClick }:
 // Export des constantes pour réutilisation dans d'autres composants
 export const UNIFIED_TILE_CLASSES = {
   base: 'rounded-xl border border-helpconfort-blue/20 border-l-4 border-l-helpconfort-blue shadow-sm transition-all duration-300',
-  gradient: 'from-helpconfort-blue/10 via-white to-white dark:via-background dark:to-background',
+  gradient: 'from-helpconfort-blue/10 via-background to-background',
   hover: 'hover:from-helpconfort-blue/20 hover:shadow-lg hover:-translate-y-0.5',
-  iconWrapper: 'w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-white/50 dark:bg-background/50',
-  iconWrapperHover: 'group-hover:border-helpconfort-blue group-hover:ring-2 group-hover:ring-helpconfort-blue/30 group-hover:bg-white dark:group-hover:bg-background transition-all duration-300',
+  iconWrapper: 'w-11 h-11 rounded-full border-2 border-helpconfort-blue/30 flex items-center justify-center bg-background/50',
+  iconWrapperHover: 'group-hover:border-helpconfort-blue group-hover:ring-2 group-hover:ring-helpconfort-blue/30 group-hover:bg-background transition-all duration-300',
   icon: 'w-5 h-5 text-helpconfort-blue',
 };
 
