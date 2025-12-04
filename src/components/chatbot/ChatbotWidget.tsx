@@ -203,22 +203,27 @@ export function ChatbotWidget() {
 
   return (
     <div className="relative">
-      {/* Bubble button */}
-      <Button
-        variant="ghost"
-        size="icon"
+      {/* Bubble button with label */}
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "relative rounded-full transition-all duration-200 h-10 w-10",
+          "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200",
+          "bg-primary/10 hover:bg-primary/20 border border-primary/20",
           isOpen && "bg-primary text-primary-foreground"
         )}
       >
         {isOpen ? (
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         ) : (
-          <Bot className="w-5 h-5" />
+          <Bot className="w-4 h-4 text-primary" />
         )}
-      </Button>
+        <span className={cn(
+          "text-xs font-semibold uppercase tracking-wide",
+          isOpen ? "text-primary-foreground" : "text-primary"
+        )}>
+          Aide en direct
+        </span>
+      </button>
 
       {/* Dropdown panel */}
       <div
