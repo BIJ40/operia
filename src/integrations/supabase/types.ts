@@ -2803,8 +2803,10 @@ export type Database = {
           message: string | null
           notification_type: string
           read_at: string | null
+          recipient_id: string | null
           related_document_id: string | null
           related_request_id: string | null
+          sender_id: string | null
           title: string
         }
         Insert: {
@@ -2816,8 +2818,10 @@ export type Database = {
           message?: string | null
           notification_type: string
           read_at?: string | null
+          recipient_id?: string | null
           related_document_id?: string | null
           related_request_id?: string | null
+          sender_id?: string | null
           title: string
         }
         Update: {
@@ -2829,8 +2833,10 @@ export type Database = {
           message?: string | null
           notification_type?: string
           read_at?: string | null
+          recipient_id?: string | null
           related_document_id?: string | null
           related_request_id?: string | null
+          sender_id?: string | null
           title?: string
         }
         Relationships: [
@@ -2849,6 +2855,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "rh_notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "rh_notifications_related_document_id_fkey"
             columns: ["related_document_id"]
             isOneToOne: false
@@ -2860,6 +2873,13 @@ export type Database = {
             columns: ["related_request_id"]
             isOneToOne: false
             referencedRelation: "document_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_notifications_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3625,6 +3645,7 @@ export type Database = {
         Returns: boolean
       }
       get_current_collaborator_id: { Args: never; Returns: string }
+      get_unread_rh_notifications_count: { Args: never; Returns: number }
       get_user_agency: { Args: { _user_id: string }; Returns: string }
       get_user_agency_id: { Args: { _user_id: string }; Returns: string }
       get_user_assigned_agencies: {
@@ -3718,6 +3739,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      mark_rh_notifications_read: {
+        Args: { p_notification_ids: string[] }
+        Returns: number
       }
       request_document: {
         Args: { p_description?: string; p_request_type: string }

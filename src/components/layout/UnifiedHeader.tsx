@@ -48,6 +48,7 @@ import { logError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { MessagingWidget } from '@/components/messaging';
 import { ChatbotWidget } from '@/components/chatbot/ChatbotWidget';
+import { RHNotificationBadge } from '@/components/rh/RHNotificationBadge';
 
 // Mapping des noms d'icônes vers les composants
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -303,6 +304,9 @@ export function UnifiedHeader() {
                 </Button>
               </Link>
             )}
+
+            {/* RH Notifications */}
+            <RHNotificationBadge />
 
             {/* User menu */}
             <DropdownMenu>
