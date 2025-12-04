@@ -1,80 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { TrendingUp, AlertCircle, Clock, Euro } from "lucide-react";
-import { DataService } from "@/apogee-connect/services/dataService";
-import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
-import { calculateDashboardStats } from "@/apogee-connect/utils/dashboardCalculations";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/contexts/AuthContext";
 import { ROUTES } from "@/config/routes";
-import { logDebug, logError } from "@/lib/logger";
+import { useMesIndicateursStatia } from "./useMesIndicateursStatia";
 
 export function MesIndicateursCard() {
-  const { agence } = useAuth();
-  const { isAgencyReady, currentAgency } = useAgency();
-
-  const { data: kpis, isLoading, error } = useQuery({
-    queryKey: ["landing-kpis-preview", agence],
-    enabled: !!agence && isAgencyReady,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    queryFn: async () => {
-      logDebug('LANDING_CARD', `Chargement KPIs pour agence: ${agence}, isAgencyReady: ${isAgencyReady}`);
-      try {
-        const apiData = await DataService.loadAllData(true);
-        
-        // Utiliser l'année en cours comme période par défaut pour les KPIs
-        const now = new Date();
-        const yearStart = new Date(now.getFullYear(), 0, 1);
-        const yearEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-        
-        const stats = calculateDashboardStats({
-          projects: apiData.projects || [],
-          interventions: apiData.interventions || [],
-          factures: apiData.factures || [],
-          devis: apiData.devis || [],
-          clients: apiData.clients || [],
-          users: apiData.users || [],
-        }, { start: yearStart, end: yearEnd }, currentAgency?.id || '');
-
-        // Calculer le taux SAV global
-        let tauxSAV = 0;
-        const savProjectIds = new Set<number>();
-        apiData.interventions?.forEach((intervention: any) => {
-          const type2 = intervention.type2 || intervention.data?.type2 || "";
-          const type = intervention.type || intervention.data?.type || "";
-          const isSAV = type2.toLowerCase().includes("sav") || type.toLowerCase().includes("sav");
-          
-          if (isSAV && intervention.projectId) {
-            savProjectIds.add(intervention.projectId);
-          }
-        });
-        
-        const totalProjects = apiData.projects?.length || 0;
-        if (totalProjects > 0) {
-          tauxSAV = (savProjectIds.size / totalProjects) * 100;
-        }
-
-        // Calculer le délai moyen dossier -> facture
-        const { calculateDelaiMoyenDossierFacture } = await import("@/apogee-connect/utils/dashboardCalculations");
-        const delaiDossierFacture = calculateDelaiMoyenDossierFacture(
-          apiData.factures || [],
-          apiData.projects || [],
-          { start: yearStart, end: yearEnd }
-        );
-
-        return {
-          caTotal: stats.caJour || 0,
-          tauxSAV: tauxSAV,
-          delaiMoyen: delaiDossierFacture.delaiMoyen,
-          nbProjets: stats.dossiersJour || 0,
-        };
-      } catch (error) {
-        logError('LANDING_CARD', 'Erreur chargement KPIs preview', { error });
-        return null;
-      }
-    },
-  });
+  // Hook StatIA pour les indicateurs
+  const { data: kpis, isLoading } = useMesIndicateursStatia();
 
   return (
     <Link
