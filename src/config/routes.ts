@@ -93,6 +93,7 @@ export const ROUTES = {
     tableaux: '/hc-reseau/tableaux',
     periodes: '/hc-reseau/periodes',
     comparatif: '/hc-reseau/comparatif',
+    graphiques: '/hc-reseau/graphiques',
     redevances: '/hc-reseau/redevances',
     parametres: '/hc-reseau/parametres',
   },

@@ -1,4 +1,4 @@
-import { Network, Building2, Users, UserCog, PieChart, GitCompare, Coins, Bell } from 'lucide-react';
+import { Network, Building2, Users, UserCog, PieChart, GitCompare, Coins, Bell, BarChart3, AreaChart } from 'lucide-react';
 import { IndexTile, getVariantForIndex } from '@/components/ui/index-tile';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasMinimumRole } from '@/types/globalRoles';
@@ -12,6 +12,8 @@ const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.reseau.animateurs]: 'reseau_animateurs',
   [ROUTES.reseau.tableaux]: 'reseau_stats',
   [ROUTES.reseau.periodes]: 'reseau_periodes',
+  [ROUTES.reseau.comparatif]: 'reseau_comparatif',
+  [ROUTES.reseau.graphiques]: 'reseau_graphiques',
   [ROUTES.reseau.redevances]: 'reseau_redevances',
 };
 
@@ -61,6 +63,20 @@ export default function ReseauIndex() {
       description: 'Comparer les performances',
       icon: GitCompare,
       href: ROUTES.reseau.periodes,
+      visible: true,
+    },
+    {
+      title: 'Comparatif',
+      description: 'Tableau comparatif par agence',
+      icon: BarChart3,
+      href: ROUTES.reseau.comparatif,
+      visible: true,
+    },
+    {
+      title: 'Graphiques',
+      description: 'Visualisations des KPI réseau',
+      icon: AreaChart,
+      href: ROUTES.reseau.graphiques,
       visible: true,
     },
     {

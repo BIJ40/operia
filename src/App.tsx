@@ -71,6 +71,7 @@ const FranchiseurAgencyProfile = lazy(() => import("./franchiseur/pages/Franchis
 const FranchiseurStats = lazy(() => import("./franchiseur/pages/FranchiseurStats"));
 const FranchiseurComparison = lazy(() => import("./franchiseur/pages/FranchiseurComparison"));
 const ComparatifAgencesPage = lazy(() => import("./franchiseur/pages/ComparatifAgencesPage"));
+const ReseauGraphiquesPage = lazy(() => import("./franchiseur/pages/ReseauGraphiquesPage"));
 const FranchiseurRoyalties = lazy(() => import("./franchiseur/pages/FranchiseurRoyalties"));
 const FranchiseurSettings = lazy(() => import("./franchiseur/pages/FranchiseurSettings"));
 const FranchiseurAnimateurs = lazy(() => import("./franchiseur/pages/FranchiseurAnimateurs"));
@@ -280,6 +281,9 @@ function AppContent() {
           </Route>
           <Route path="/hc-reseau/comparatif" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<ComparatifAgencesPage />} />
+          </Route>
+          <Route path="/hc-reseau/graphiques" element={<MainLayout><RoleGuard minRole="franchisor_user"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
+            <Route index element={<ReseauGraphiquesPage />} />
           </Route>
           <Route path="/hc-reseau/redevances" element={<MainLayout><RoleGuard minRole="franchisor_admin"><ModuleGuard moduleKey="reseau_franchiseur"><FranchiseurLayout /></ModuleGuard></RoleGuard></MainLayout>}>
             <Route index element={<FranchiseurRoyalties />} />
