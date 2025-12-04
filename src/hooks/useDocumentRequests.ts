@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useLogRHAction } from '@/hooks/rh/useRHAuditLog';
 import type {
   DocumentRequest,
   DocumentRequestWithDoc,
@@ -26,6 +27,7 @@ interface UpdateDocumentRequestPayload {
  */
 export function useMyDocumentRequests() {
   const queryClient = useQueryClient();
+  const logAction = useLogRHAction();
 
   const {
     data: requests = [],
@@ -65,8 +67,17 @@ export function useMyDocumentRequests() {
       if (!data) throw new Error('Aucune donnée retournée par request_document');
       return data as DocumentRequest;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['my-document-requests'] });
+      // Log audit
+      logAction.mutate({
+        actionType: 'REQUEST_CREATE',
+        entityType: 'request',
+        collaboratorId: data.collaborator_id,
+        entityId: data.id,
+        newValues: { request_type: data.request_type, status: data.status },
+        metadata: { request_type: data.request_type },
+      });
       toast({
         title: 'Demande envoyée',
         description: 'Votre demande a été transmise au service RH',
@@ -117,6 +128,7 @@ export function useMyDocumentRequests() {
  */
 export function useAgencyDocumentRequests() {
   const queryClient = useQueryClient();
+  const logAction = useLogRHAction();
 
   const {
     data: requests = [],
@@ -156,10 +168,19 @@ export function useAgencyDocumentRequests() {
       if (error) throw error;
       return data as DocumentRequest;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['agency-document-requests'] });
       queryClient.invalidateQueries({ queryKey: ['my-document-requests'] });
       queryClient.invalidateQueries({ queryKey: ['agency-document-requests-count'] });
+      // Log audit
+      logAction.mutate({
+        actionType: 'REQUEST_UPDATE',
+        entityType: 'request',
+        collaboratorId: data.collaborator_id,
+        entityId: variables.id,
+        newValues: { status: variables.status, response_note: variables.response_note },
+        metadata: { status: variables.status },
+      });
       toast({
         title: 'Demande mise à jour',
         description: 'Le statut de la demande a été enregistré',

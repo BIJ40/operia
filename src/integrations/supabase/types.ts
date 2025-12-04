@@ -2806,6 +2806,76 @@ export type Database = {
         }
         Relationships: []
       }
+      rh_audit_log: {
+        Row: {
+          action_type: string
+          agency_id: string
+          collaborator_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          agency_id: string
+          collaborator_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          agency_id?: string
+          collaborator_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rh_audit_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_audit_log_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_audit_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rh_notifications: {
         Row: {
           agency_id: string
@@ -3733,6 +3803,18 @@ export type Database = {
       }
       is_support_agent: { Args: { _user_id: string }; Returns: boolean }
       lock_document_request: { Args: { p_request_id: string }; Returns: Json }
+      log_rh_action: {
+        Args: {
+          p_action_type: string
+          p_collaborator_id?: string
+          p_entity_id?: string
+          p_entity_type: string
+          p_metadata?: Json
+          p_new_values?: Json
+          p_old_values?: Json
+        }
+        Returns: string
+      }
       mark_document_request_seen: {
         Args: { p_request_id: string }
         Returns: {

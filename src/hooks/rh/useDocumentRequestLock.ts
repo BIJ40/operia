@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLogRHAction } from '@/hooks/rh/useRHAuditLog';
 
 interface LockResult {
   success: boolean;
@@ -12,6 +13,7 @@ interface LockResult {
 export function useLockDocumentRequest() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const logAction = useLogRHAction();
 
   return useMutation({
     mutationFn: async (requestId: string): Promise<LockResult> => {
@@ -27,6 +29,13 @@ export function useLockDocumentRequest() {
           title: "Impossible de verrouiller",
           description: data.error || "Cette demande est en cours de traitement",
           variant: "destructive"
+        });
+      } else {
+        // Log audit on successful lock
+        logAction.mutate({
+          actionType: 'REQUEST_LOCK',
+          entityType: 'request',
+          entityId: requestId,
         });
       }
       queryClient.invalidateQueries({ queryKey: ['document-requests'] });
@@ -44,6 +53,7 @@ export function useLockDocumentRequest() {
 export function useUnlockDocumentRequest() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const logAction = useLogRHAction();
 
   return useMutation({
     mutationFn: async (requestId: string): Promise<LockResult> => {
@@ -53,12 +63,19 @@ export function useUnlockDocumentRequest() {
       if (error) throw error;
       return data as unknown as LockResult;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, requestId) => {
       if (!data.success) {
         toast({
           title: "Erreur",
           description: data.error,
           variant: "destructive"
+        });
+      } else {
+        // Log audit on successful unlock
+        logAction.mutate({
+          actionType: 'REQUEST_UNLOCK',
+          entityType: 'request',
+          entityId: requestId,
         });
       }
       queryClient.invalidateQueries({ queryKey: ['document-requests'] });
