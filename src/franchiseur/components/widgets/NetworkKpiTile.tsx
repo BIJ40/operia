@@ -5,7 +5,7 @@ import { useMemo } from "react";
 
 interface NetworkKpiTileProps {
   title: string;
-  value: number | string;
+  value: number | string | null;
   icon: LucideIcon;
   format?: 'currency' | 'number' | 'percentage';
   subtitle?: string;
@@ -27,6 +27,8 @@ export function NetworkKpiTile({ title, value, icon: Icon, format = 'number', su
   }, [title]);
 
   const formattedValue = (() => {
+    // IMPORTANT: Si null, afficher "–" au lieu de 0
+    if (value === null || value === undefined) return '–';
     if (typeof value === 'string') return value;
     
     switch (format) {

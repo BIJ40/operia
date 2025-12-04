@@ -428,7 +428,11 @@ export default function IndicateursAccueil() {
                   <p className="text-xs font-medium text-muted-foreground">Délai Dossier → 1er Devis</p>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <p className="text-xl font-bold">{data?.delaiDossierPremierDevis?.delaiMoyen || 0}j</p>
+                  <p className="text-xl font-bold">
+                    {data?.delaiDossierPremierDevis?.delaiMoyen === null || data?.delaiDossierPremierDevis?.delaiMoyen === undefined
+                      ? '–'
+                      : `${data.delaiDossierPremierDevis.delaiMoyen}j`}
+                  </p>
                 </div>
               </Card>
             </div>

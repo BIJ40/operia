@@ -29,7 +29,7 @@ export interface ReseauDashboardData {
     redevancesMois: number;
     delaiMoyenTraitement: number;
     tauxOneShot: number;
-    delaiDossierDevis: number;
+    delaiDossierDevis: number | null;
     visitesParDossier: number;
     tauxMultiUnivers: number;
   };
@@ -312,16 +312,24 @@ function computeTauxOneShot(projects: any[], interventions: any[], params: Resea
   return total > 0 ? Math.round((oneShot / total) * 1000) / 10 : 0;
 }
 
-function computeDelaiDossierDevis(projects: any[], devis: any[], params: ReseauDashboardParams): number {
+function computeDelaiDossierDevis(projects: any[], devis: any[], params: ReseauDashboardParams): number | null {
   const projectsMap = new Map(projects.map(p => [p.id, p]));
   const firstDevisByProject = new Map<any, Date>();
   
   for (const d of devis) {
-    const dateStr = d.dateReelle || d.date || d.created_at || d.createdAt;
+    // IMPORTANT: Filtrer sur state === "sent" et dateReelle uniquement
+    const state = (d.state || '').toLowerCase();
+    if (state !== 'sent') continue;
+    
+    const dateStr = d.dateReelle;
+    if (!dateStr) continue;
+    
     const date = parseDate(dateStr);
     if (!date) continue;
+    
     const projectId = d.projectId || d.project_id;
     if (!projectId) continue;
+    
     const existing = firstDevisByProject.get(projectId);
     if (!existing || date < existing) {
       firstDevisByProject.set(projectId, date);
@@ -335,7 +343,7 @@ function computeDelaiDossierDevis(projects: any[], devis: any[], params: ReseauD
     const project = projectsMap.get(projectId);
     if (!project) continue;
     
-    const projectDate = parseDate(project.date || project.created_at || project.createdAt);
+    const projectDate = parseDate(project.created_at || project.date || project.createdAt);
     if (!projectDate) continue;
     if (devisDate < params.dateStart || devisDate > params.dateEnd) continue;
     
@@ -346,7 +354,8 @@ function computeDelaiDossierDevis(projects: any[], devis: any[], params: ReseauD
     validCount++;
   }
   
-  return validCount > 0 ? Math.round(totalDays / validCount) : 0;
+  // IMPORTANT: Retourner null si aucune donnée exploitable, pas 0
+  return validCount > 0 ? Math.round(totalDays / validCount) : null;
 }
 
 function computeVisitesParDossier(interventions: any[], params: ReseauDashboardParams): number {
@@ -621,7 +630,7 @@ function getEmptyDashboard(): ReseauDashboardData {
       redevancesMois: 0,
       delaiMoyenTraitement: 0,
       tauxOneShot: 0,
-      delaiDossierDevis: 0,
+      delaiDossierDevis: null,
       visitesParDossier: 0,
       tauxMultiUnivers: 0,
     },
