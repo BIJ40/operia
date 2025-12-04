@@ -97,13 +97,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Mon Agence',
     labelKey: 'pilotage',
     items: [
-      { 
-        title: 'Mon équipe', 
-        url: ROUTES.pilotage.equipe, 
-        icon: Users, 
-        scope: 'mes_indicateurs', 
-        description: 'Gestion des collaborateurs de l\'agence'
-      },
+      // === STATISTIQUES ===
       { 
         title: 'Statistiques', 
         url: ROUTES.pilotage.statsHub,
@@ -146,30 +140,73 @@ export const NAV_GROUPS: NavGroup[] = [
             scope: 'mes_indicateurs', 
             description: 'Statistiques SAV' 
           },
+          { 
+            title: 'Diffusion', 
+            url: ROUTES.pilotage.diffusion, 
+            icon: Tv, 
+            scope: 'diffusion', 
+            description: 'Mode affichage TV agence' 
+          },
         ]
       },
+      // === RESSOURCES HUMAINES ===
       { 
-        title: 'Actions à Mener', 
-        url: ROUTES.pilotage.actions, 
+        title: 'Ressources humaines', 
+        url: ROUTES.pilotage.equipe,
+        icon: Users, 
+        scope: 'mes_indicateurs',
+        description: 'Gestion RH de l\'agence',
+        children: [
+          { 
+            title: 'Mon équipe', 
+            url: ROUTES.pilotage.equipe, 
+            icon: Users, 
+            scope: 'mes_indicateurs', 
+            description: 'Gestion des collaborateurs de l\'agence'
+          },
+          { 
+            title: 'Demandes RH', 
+            url: ROUTES.pilotage.demandesRh, 
+            icon: FileText, 
+            scope: 'mes_indicateurs', 
+            description: 'Traitement des demandes de documents'
+          },
+          { 
+            title: 'Dashboard RH', 
+            url: ROUTES.pilotage.dashboardRh, 
+            icon: BarChart3, 
+            scope: 'mes_indicateurs', 
+            description: 'Statistiques RH',
+            badge: 'Bientôt',
+            isDisabled: true,
+          },
+          { 
+            title: 'Validation plannings', 
+            url: ROUTES.pilotage.rhTech, 
+            icon: Calendar, 
+            scope: 'mes_indicateurs', 
+            description: 'Validation des plannings hebdomadaires',
+            badge: 'Bientôt',
+            isDisabled: true,
+          },
+        ]
+      },
+      // === AUTRES ===
+      { 
+        title: 'Autres', 
+        url: ROUTES.pilotage.actions,
         icon: ListTodo, 
-        scope: 'actions_a_mener', 
-        description: 'Suivi des actions et tâches en cours' 
-      },
-      { 
-        title: 'Diffusion', 
-        url: ROUTES.pilotage.diffusion, 
-        icon: Tv, 
-        scope: 'diffusion', 
-        description: 'Mode affichage TV agence' 
-      },
-      { 
-        title: 'Validation plannings', 
-        url: ROUTES.pilotage.rhTech, 
-        icon: Calendar, 
-        scope: 'mes_indicateurs', 
-        description: 'Validation des plannings hebdomadaires',
-        badge: 'Bientôt',
-        isDisabled: true,
+        scope: 'actions_a_mener',
+        description: 'Autres outils agence',
+        children: [
+          { 
+            title: 'Actions à Mener', 
+            url: ROUTES.pilotage.actions, 
+            icon: ListTodo, 
+            scope: 'actions_a_mener', 
+            description: 'Suivi des actions et tâches en cours' 
+          },
+        ]
       },
     ],
   },
