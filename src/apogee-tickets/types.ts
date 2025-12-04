@@ -37,8 +37,8 @@ export interface ApogeeOwnerSide {
   created_at: string;
 }
 
-// Qui porte le sujet (contrainte DB: HC, APOGEE, PARTAGE uniquement)
-export type OwnerSide = 'HC' | 'APOGEE' | 'PARTAGE';
+// Qui porte le sujet (5 niveaux de répartition)
+export type OwnerSide = 'HC' | 'APOGEE' | '75_25' | '50_50' | '25_75' | 'PARTAGE';
 // Qui a rapporté/identifié le ticket
 export type ReportedBy = 'JEROME' | 'FLORIAN' | 'ERIC' | 'APOGEE' | 'AUTRE';
 export type Severity = 'CRITIQUE' | 'MAJEUR' | 'CONFORT';
