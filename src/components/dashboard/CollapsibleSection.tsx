@@ -59,13 +59,13 @@ export const CollapsibleSection = memo(function CollapsibleSection({
 
   const IconBox = (
     <div className={cn(
-      "w-12 h-12 rounded-xl flex items-center justify-center",
+      "w-14 h-14 rounded-xl flex items-center justify-center",
       "bg-gradient-to-br from-helpconfort-blue/15 to-helpconfort-blue/5",
       "border border-helpconfort-blue/20",
       "transition-all duration-300",
       href && "hover:from-helpconfort-blue/25 hover:to-helpconfort-blue/10 hover:border-helpconfort-blue/40 cursor-pointer"
     )}>
-      <Icon className={cn("w-6 h-6", colorClass)} />
+      <Icon className={cn("w-7 h-7", colorClass)} />
     </div>
   );
 
