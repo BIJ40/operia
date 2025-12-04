@@ -31,22 +31,7 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
   const { isAgencyReady } = useAgency();
   const [weekDate, setWeekDate] = useState<Date>(new Date());
 
-  // Fetch créneaux
-  const {
-    data: creneaux,
-    isLoading: loadingCreneaux,
-    error: errorCreneaux,
-  } = useQuery<RawCreneau[] | null>({
-    queryKey: ["planning-creneaux"],
-    queryFn: async () => {
-      logApogee.debug("Fetching créneaux planning via proxy...");
-      const result = await apogeeProxy.getInterventionsCreneaux();
-      logApogee.debug(`Créneaux récupérés: ${(result as RawCreneau[] | null)?.length || 0}`);
-      return result as RawCreneau[] | null;
-    },
-    enabled: isAgencyReady,
-    staleTime: 5 * 60 * 1000,
-  });
+  // Note: créneaux endpoint doesn't exist in Apogée API - visites are extracted from interventions
 
   // Fetch users
   const {
@@ -113,24 +98,23 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
   });
 
   const isLoading =
-    loadingCreneaux ||
     loadingUsers ||
     loadingInterventions ||
     loadingProjects ||
     loadingClients;
 
   const error =
-    errorCreneaux || errorUsers || errorInterventions || errorProjects || errorClients;
+    errorUsers || errorInterventions || errorProjects || errorClients;
 
   // Build planning data
-  // Note: creneaux peut être null/vide, les visites sont extraites des interventions
+  // Note: créneaux endpoint doesn't exist - visites sont extraites des interventions directement
   const { planningByTech, weeklyData } = useMemo(() => {
     if (isLoading || error || !users) {
       return { planningByTech: undefined, weeklyData: undefined };
     }
 
     const planning = buildPlanningByTech({
-      creneaux: creneaux ?? [],
+      creneaux: [], // No créneaux endpoint in Apogée API
       users,
       interventions: interventions ?? [],
       projects: projects ?? [],
@@ -146,7 +130,7 @@ export function useWeeklyTechPlanning(techFilterId?: number, showInactiveTechs =
     }
 
     return { planningByTech: planning, weeklyData: weekly };
-  }, [creneaux, users, interventions, projects, clients, weekDate, techFilterId, showInactiveTechs, isLoading, error]);
+  }, [users, interventions, projects, clients, weekDate, techFilterId, showInactiveTechs, isLoading, error]);
 
   const goToPrevWeek = () => setWeekDate((prev) => subWeeks(prev, 1));
   const goToNextWeek = () => setWeekDate((prev) => addWeeks(prev, 1));
